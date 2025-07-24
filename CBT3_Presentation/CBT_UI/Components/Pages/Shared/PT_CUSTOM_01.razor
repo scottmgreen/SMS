@@ -1,0 +1,289 @@
+﻿@page "/custom01"
+@using Radzen
+@using Blazored.Video
+@using Blazored.Video.Support
+@inject DialogService _dialogService
+<style>
+    .container {
+        display: flex;
+        justify-content: left;
+        align-items: flex-start; /* Align items to the start to place them at 1/3 down */
+        padding-left:50px;
+        padding-top: calc(100vh /7); /* Position the grid one-third down from the top */
+        /* background-color:black; */
+    }
+
+    .question-grid {
+        display: grid;
+        grid-template-columns: auto auto;
+        grid-gap: 5px; /* Space between the grid items */
+        width: 220px;
+        margin-right: 5px; /* Adjust this value to move the panel more or less to the right */
+        gap: 5px; /* Add gap between buttons */
+    }
+
+    .grid-item {
+        display: flex;
+        align-items: center; /* Center items vertically within the grid cell */
+        color: white;
+        font-size: 35px;
+    }
+
+    .incursion {
+        background-image: url('/images/incursion_background.png'); /* Specify the path to your image */
+        background-repeat: no-repeat; /* Prevent tiling */
+        background-size: cover; /* Scale the image to cover the entire element */
+        margin: 5px auto;
+        /*width: 75%;*/
+        width: 1280px;
+        height: 720px;
+        /* background-color: #f5f6f6; */
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: -20px 20px 30px rgba(0,0,0,0.3);
+        background-color: black;
+    }
+
+    .cbt-button {
+        width: 320px; /* Adjusted width for a larger button */
+        height: 120px; /* Adjusted height for a taller button */
+        font-size: 18px; /* Adjust font size for larger text */
+        background-color: #006AA9 !important;
+        color: #ffffff !important;
+    }
+
+    .incursion-title {
+        margin: 30px auto;
+        padding: 10px;
+        font-size: 15pt;
+        width: 100%;
+        text-align: center;
+    }
+
+    .custom-button {
+        width: 900px;
+        height: 100px;
+        background-image: url('/images/steelplate_background.jpg');
+        color: white;
+        position: relative;
+        font-size: 15pt;
+    }
+
+    .panel {
+        display: grid;
+        grid-template-rows: repeat(6, 1fr);
+        width: 320px;
+        margin-left: 80px; /* Adjust this value to move the panel more or less to the right */
+        gap: 20px; /* Add gap between buttons */
+    }
+
+    .centered-button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .video {
+        margin: 5px auto;
+        width: 100%;
+        height: 800px;
+        background-color: black;
+        border-radius: 10px;
+        padding: 15px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        /* box-shadow: -20px 20px 30px rgba(0,0,0,0.3); */
+        /* width: 1200px; */
+    }
+
+    .checkbox {
+        font-size: 50px;
+        cursor: pointer;
+        user-select: none;
+        color: yellow;
+    }
+
+    .button-container {
+        position: fixed;
+        top: 65%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        white-space: nowrap;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+</style>
+<div class="incursion incursion-title" style="@showhide">
+    <br />
+    
+    <div class="container">
+        <div class="question-grid">
+            <div class="grid-item">
+                <span @onclick="() => ToggleCheckbox(1)" class="checkbox">@(isChecked1 ? "☑" : "☐")</span>
+            </div>
+            <div class="grid-item">
+                A. No
+            </div>
+
+            <div class="grid-item">
+                <span @onclick="() => ToggleCheckbox(2)" class="checkbox">@(isChecked2 ? "☑" : "☐")</span>
+            </div>
+            <div class="grid-item">
+               B. Yes
+            </div>
+            <div class="grid-item">
+                &nbsp;
+            </div>
+
+        </div>
+        <div class="button-container">
+            <br /><br /> <br /><br /> <br /><br />
+            <button style="@showhideSubmit" class="btn cbt-button" @onclick="() => Submit()">SUBMIT</button>
+        </div>
+    </div>
+
+
+</div>
+<div class="video" style="@video1showhide">
+    <BlazoredVideo @ref="video1"
+                   Ended=@(s=>OnEnd(s))
+                   Pause=@(p=>OnPause(p))
+                   VideoEventOptions="options"
+                   style="width:1200px;height:600px "
+                   controls="controls">
+        <source src="./video/custom_incursion.mp4" type="video/mp4" />
+    </BlazoredVideo>
+
+</div>
+
+<div class="video" style="@video2showhide">
+    <BlazoredVideo @ref="video2"
+                   Ended=@(s=>OnEnd(s))
+                   Pause=@(p=>OnPause(p))
+                   VideoEventOptions="options"
+                   style="width:1200px;height:600px "
+                   controls="controls">
+        <source src="./video/custom_incursion.mp4" type="video/mp4" />
+    </BlazoredVideo>
+</div>
+@code {
+    private bool isChecked1 = false;
+    private bool isChecked2 = false;
+
+    private void ToggleCheckbox(int checkboxNumber)
+    {
+        if (checkboxNumber == 1)
+        {
+            isChecked1 = !isChecked1;
+            isChecked2 = false;
+        }
+        else if (checkboxNumber == 2)
+        {
+            isChecked1 = false;
+            isChecked2 = !isChecked2;
+        }
+
+        if (isChecked1 || isChecked2)
+        {
+            showhideSubmit = "";
+        }
+        if (isChecked1 == false && isChecked2 == false)
+        {
+            showhideSubmit = "display:none";
+        }
+    }
+
+    private string showhide = "";
+    private string video1showhide = "display:none";
+    private string video2showhide = "display:none";
+    private string showhideSubmit = "display:none";
+    string videoFileName = string.Empty;
+
+    Dictionary<VideoEvents, VideoStateOptions> options = new Dictionary<VideoEvents, VideoStateOptions>();
+    BlazoredVideo video1;
+    BlazoredVideo video2;
+    private int checkedButton = 0;
+
+
+
+    private string GetCheckmarkClass(int buttonId)
+    {
+        return checkedButton == buttonId ? "checkmark" : string.Empty;
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+
+            var pausedOption = new VideoStateOptions() { Paused = true };
+            options[VideoEvents.CanPlay] = pausedOption;
+            options[VideoEvents.Ended] = pausedOption;
+            options[VideoEvents.Pause] = pausedOption;
+            options[VideoEvents.Play] = pausedOption;
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions
+            // For example, log the exception or display an error message
+        }
+        await base.OnInitializedAsync();
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            GetCheckmarkClass(1);
+            GetCheckmarkClass(2);
+        }
+    }
+
+    private void Submit()
+    {
+        if (isChecked1)
+        {
+            // Show video related to option 1
+            showhide = "display:none";
+            video1showhide = "";
+            video1.StartPlayback();
+        }
+        else if (isChecked2)
+        {
+            // Show video related to option 2
+            showhide = "display:none";
+            video2showhide = "";
+            video2.StartPlayback();
+        }
+        else
+        {
+            // Handle no option selected scenario
+            Console.WriteLine("No option selected to play video");
+
+        }
+
+
+
+    }
+    private void OnEnd(VideoState state)
+    {
+        _dialogService.Close(true);
+    }
+    private void OnPause(VideoState state)
+    {
+        _dialogService.Close(true);
+    }
+    void OnEvent(VideoState videoState)
+    {
+        if (videoState.Ended)
+        {
+            _dialogService.Close(true);
+        }
+
+        /*  id = videoState.Id; */
+        StateHasChanged();
+    }
+
+
+}

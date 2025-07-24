@@ -1,0 +1,136 @@
+﻿@rendermode InteractiveServer
+@inject IJSRuntime _jsRuntime
+
+@using Radzen
+@inject Radzen.DialogService dialogService
+@inject CBT3_Application.Services.SystemService _systemService 
+<style>
+    .debug-button {
+        /*width: 320px;  
+        height: 120px;   */
+        font-size: 12px; 
+        background-color: #006AA9 !important;
+        color: #ffffff !important;
+        border: none; /* Remove any default borders */
+        /*border-radius: 8px;  Add rounded corners */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Create a raised shadow effect */
+        transition: box-shadow 0.3s ease; /* Smooth transition for shadow on hover */
+    }
+    .rz-dialog.rz-dialog-alert {
+        width: 700px !important; /* Adjust as needed */
+        max-width: 90vw; /* Prevents it from being too wide on smaller screens */
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: auto 1fr; /* Two columns: label (auto), data (flexible width) */
+        gap: 5px 15px; /* Adjusts spacing */
+        margin-top: 35px;
+        font-weight: bold;
+    }
+
+    .label {
+        text-align: right; /* Right-aligns the labels */
+    }
+
+    .data {
+        text-align: left; /* Left-aligns the data */
+    }
+</style>
+<script>
+    function closeWindow() {
+        window.close();
+    }
+</script>
+    <div>
+        <span style="font-size:12px;color:white">
+        @if (@AppState?.TrainingStation.HostName != null)
+        {
+            @AppState?.TrainingStation.HostName
+
+
+        }
+        else
+        {
+
+        }
+        &nbsp;</span>
+    @if (AppState?.TrainingSession?.Id.Value != null)
+    {
+        <span style="font-size:12px;color:white">
+            &nbsp;(@SessionDurationDisplay)
+        </span>
+    }
+
+        @if (_systemService.GetFeatureEnabledAsync("DebugEnabled").Result.Value)
+        {
+            <span style="font-size:12px;color:white">
+                @if (AppState?.TrainingSession?.Id.Value != null)
+                {
+                <RadzenButton class="debug-button" Text="Session Debug" Style="font-size: 12px; color: white;" Click="ShowDebug" />
+                }
+                
+            </span> 
+        }
+    </div>
+
+
+
+
+
+@code {
+    [CascadingParameter]
+    public CascadingAppState AppState { get; set; }
+    private string SessionDurationDisplay => $"{_sessionDuration:mm\\:ss}";
+    private TimeSpan _sessionDuration = TimeSpan.Zero;
+    private DateTime _sessionStartTime;
+    private bool _timerRunning = false;
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (AppState?.TrainingSession?.Id != null)
+        {
+            _sessionStartTime = DateTime.Now;
+            _timerRunning = true;
+
+            // Start the asynchronous loop to update the session duration every second
+            await StartSessionTimer();
+        }
+        await base.OnParametersSetAsync();
+    }
+    private async Task StartSessionTimer()
+    {
+        while (_timerRunning)
+        {
+            _sessionDuration = DateTime.Now - _sessionStartTime;
+            InvokeAsync(StateHasChanged);  // Refresh UI
+
+            await Task.Delay(1000);  // Wait for 1 second before updating again
+        }
+    }
+    public void Dispose()
+    {
+        _timerRunning = false;  // Stop the timer loop
+    }
+
+    
+    private async Task ShowDebug()
+    {
+
+        ConfirmOptions _confirmOptions = new ConfirmOptions() {OkButtonText = "OK",  CancelButtonText = "No", ShowClose = false };
+        string dialogMessage = $@"
+        <div class='info-grid'>
+            <div class='label'>Host Name:</div>    
+            <div class='data'>{AppState?.TrainingStation.HostName}</div>
+
+            <div class='label'>Session ID:</div>
+            <div class='data'>{AppState?.TrainingSession?.Id}</div>
+
+             <br>
+        </div>";
+        
+               
+        var dialog = await dialogService.Alert("", dialogMessage, _confirmOptions);
+    }
+}

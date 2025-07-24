@@ -1,0 +1,671 @@
+﻿@page "/registration"
+@using CBT3_Application.Interfaces
+@using CBT3_UI
+@using CBT_UI.Components.Pages.Shared
+@using Radzen.Blazor;
+@using Radzen;
+
+@using CBT3_Application.Messaging;
+@using CBT3_Application.Messaging.Commands;
+@using CBT3_Application.Messaging.Queries;
+@using CBT3_Application.Services;
+
+@using CBT3_Domain.Common;
+@using CBT3_Domain.Entities;
+@using CBT3_Domain.Errors;
+@using CBT3_Domain.ValueObjects;
+@using Microsoft.AspNetCore.Components.Forms;
+@using Microsoft.AspNetCore.Components
+
+@inject NavigationManager _navManager
+@inject CBT3_App _cbtApp
+@inject DialogService _dialogService
+@inject IMediator mediator
+
+@rendermode InteractiveServer
+<style>
+    body {
+        /* background-color: #b1bed2; */
+        background-image: url('/images/background_opening.jpg'); /* Specify the path to your image */
+        background-size: cover; /* Adjusts the size of the background image to cover the entire body */
+        background-repeat: no-repeat; /* Prevents the background image from repeating */
+        background-attachment: fixed; /* Fixes the background image when scrolling */
+    }
+    .centered-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh; /* Adjust the height based on your requirement */
+    }
+
+    .keypad {
+        display: flex;
+    }
+
+    .column {
+        display: flex;
+        flex-direction: column;
+        margin: 0 10px; /* Adjust the margin based on your requirement */
+    }
+
+    .keybutton{
+        width: 75px; /* Adjust the width based on your requirement */
+        height: 75px; /* Adjust the height based on your requirement */
+        margin: 10px; /* Adjust the margin based on your requirement */
+        font-size: 18px;
+        background-color: #006AA9 !important;
+        color: #fff !important;
+    }
+
+    .checkboxNotifications {
+        width: 40px !important;
+        height: 40px !important;
+        margin: 20px !important;
+        font-size: 18px !important;
+        font-weight: 400;
+        /* background-color: #006AA9 !important; */
+        color: #fff !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 50px; /* Adds space between checkbox and label */
+    }
+
+    .notification-option {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px; /* Adds space between rows */
+    }
+
+    
+    .keyboardRow {
+        text-align: center
+    }
+
+    .key {
+        display: inline-block;
+        border: 1px solid red;
+        padding: 10px;
+        margin-bottom: 5px;
+    }
+
+    .backspace
+    {
+        width: 110px; /* Adjust the width based on your requirement */
+        height: 75px; /* Adjust the height based on your requirement */
+        margin: 10px; /* Adjust the margin based on your requirement */
+        font-size: 18px;
+        background-color: #006AA9 !important;
+    }
+
+    .submit {
+        width: 110px; /* Adjust the width based on your requirement */
+        height: 75px; /* Adjust the height based on your requirement */
+        margin: 10px; /* Adjust the margin based on your requirement */
+        font-size: 18px;
+        color:white;
+    }
+
+    .custom-width {
+        max-width: 40%; /* Adjust the width as per your requirement */
+    }
+
+      .bigger-input {
+        width: 300px;
+        height: 40px;
+        font-size: 16px;
+    }
+
+    .btn-primary {
+        background-color: #006AA9;
+        outline: none; /* Remove the outline */
+        box-shadow: none; /* Remove the box shadow */
+    }
+
+        .btn-primary:hover {
+            background-color: #006AA9; /* Restore default background color on hover */
+            border-color: #007bff; /* Restore default border color on hover */
+            outline: none; /* Remove the outline */
+            box-shadow: none; /* Remove the box shadow */
+        }
+
+    .btn-success {
+        background-color: forestgreen;
+        outline: none; /* Remove the outline */
+        box-shadow: none; /* Remove the box shadow */
+        color: white;
+    }
+
+        .btn-success:hover {
+        background-color: forestgreen; /* Restore default background color on hover */
+            border-color: #007bff; /* Restore default border color on hover */
+            outline: none; /* Remove the outline */
+            box-shadow: none; /* Remove the box shadow */
+            color:white;
+        }
+
+    .heading-container {
+        position: fixed;
+        top: 20%;
+        left: 50%;
+        white-space: nowrap;
+        transform: translate(-50%, -50%);
+        text-align: center
+    }
+    radzenlabel{
+        font-size: 18px;
+        font-weight: 600
+    }
+    .radzenfieldset{
+        /* margin: 220px auto; */
+        background-color: rgba(28, 62, 98, 0.5);
+    }
+
+    .rz-steps-number{
+        color:black;
+    }
+
+    .course-button-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px; /* Adjust the gap between buttons as needed */
+        position: fixed;
+        justify-content: center;
+    }
+
+    .course-button-grid button {
+        margin: 5px; /* Add margin to create a gap around each button */
+        width: 300px;
+    }
+
+    .course-button-container {
+        display: inline-block;
+        text-align: center;
+        position: fixed;
+        top: 10%;
+        left: 50%;
+        width: 950px;
+        transform: translate(-50%, -50%);
+    }
+
+    .course-button-container RadzenButton {
+            display: inline-block;
+            margin-right: 10px; /* Optional: Add some space between the buttons */
+        }
+
+    .course-button-style {
+        width: 320px; /* Adjusted width for a larger button */
+        height: 120px; /* Adjusted height for a taller button */
+        font-size: 18px; /* Adjust font size for larger text */
+        background-color: #006AA9 !important;
+        color: #ffffff !important;
+    }
+
+    .radzen-dialog {
+        /* background-color: rgba(28, 62, 98, 0.5); */
+        background-color: white;
+        padding: 20px; /* Add padding as needed */
+
+    }
+
+    .rz-dialog-confirm-buttons > .rz-secondary {
+        width: 220px;
+        color: #ffffff !important;
+        height: 60px;
+        font-size: 18px;
+        background-color: red !important;
+    }
+
+    .rz-dialog-confirm-buttons > .rz-primary {
+        width: 220px;
+        color: #ffffff !important;
+        height: 60px;
+        font-size: 18px;
+        background-color: #006AA9 !important;
+    }
+
+    .rz-steps .rz-steps-item .rz-steps-number {display: none;}
+
+    a.rz-steps-next {
+        display: none;
+    }
+
+    a.rz-steps-prev {
+        display: none;
+    }
+
+    .admin-button {
+        /* opacity: 0; */
+        position: fixed;
+        font-size: 24px; /* Adjust button font size as needed */
+        padding: 10px 20px; /* Adjust button padding as needed */
+        border: none;
+        pointer-events: auto
+    }
+    /* Button positions */
+    .container .admin-button-top-left {
+        top: 0;
+        left: 0;
+    }
+
+    .container .admin-button-top-right {
+        top: 0;
+        right: 0;
+    }
+
+    .container .admin-button-bottom-left {
+        bottom: 0;
+        left: 0;
+    }
+
+    .container .admin-button-bottom-right {
+        bottom: 0;
+        right: 0;
+    }
+
+    .rz-dialog.rz-dialog-alert {
+        width: 600px !important; /* Adjust as needed */
+        max-width: 90vw; /* Prevents it from being too wide on smaller screens */
+    }
+
+    .rz-dialog.rz-dialog-confirm {
+        width: 800px !important; /* Adjust as needed */
+        max-width: 90vw; /* Prevents it from being too wide on smaller screens */
+    }
+
+    .rz-dialog-titlebar {
+        
+        justify-content: center; 
+        display: flex; 
+    }
+    .info-grid {
+        display: grid;
+        grid-template-columns: 350px 200px; /* Fixed width for label (200px) and data (300px) */
+        gap: 5px 15px; /* Adjusts spacing */
+        width: 700px; /* Total fixed width */
+        margin-top: 35px;
+        font-weight: bold;
+    }
+
+    .label {
+        text-align: right; /* Right-aligns the labels */
+    }
+
+    .data {
+        text-align: left; /* Left-aligns the data */
+    }
+
+    .rz-chkbox-icon {
+        font-weight: bold;
+        transform: scale(1.7);
+    }
+
+    .rz-chkbox-box {
+        width: 40px !important; /* Increase width */
+        height: 40px !important; /* Increase height */
+    }
+
+    </style>
+
+
+
+<div class="heading-container">
+    <h3 style="font-size: 35px;font-weight:600"> @Message </h3>
+
+</div>
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<RadzenSteps Change="@OnChange" CanChange="@CanChange" @bind-SelectedIndex="@_selectedIndex" style="@_registationStyle">
+    <Steps >
+        <RadzenStepsItem>
+            <RadzenTemplateForm TItem="Trainee" Data=@_cbtApp.Trainee InvalidSubmit="OnInvalidSubmit" Submit="@(args => ShowNameConfirmation())">
+                <RadzenFieldset class="radzenfieldset">
+                    <HeaderTemplate>
+                        <span class="d-inline-flex align-items-center align-middle">
+                            @* <RadzenIcon Icon="account_box" class="me-1" /><b>Please Enter Your First and Last Name</b> *@
+                        </span>
+                    </HeaderTemplate>
+                    <ChildContent>
+                        
+                    <div class="keyboard" style="@keyboardStyle">
+                            
+                        <div class="container">
+                          <div class="row justify-content-md-center">
+                                    <div class="col-md-auto">
+                                        <RadzenLabel Style="font-size: 35px;font-weight:600;color:white" Component="FirstName">First Name</RadzenLabel>
+                                        <RadzenTextBox Style="width:400px;font-size: 35px;font-weight:600" AutoComplete="false" type="text" name="FirstName" @bind-Value="@_traineeDTO.FirstName" class="form-control bigger-input" @ref="firstNameInput" />
+                                        <RadzenRequiredValidator Component="FirstName" Text="First name is required" Popup=@popup Style="position: absolute; font-weight:600" /> 
+                                        <RadzenCustomValidator Component="FirstName" Validator="@(() => ValidateFirstNameAsync(_traineeDTO.FirstName).Result.IsSuccess)" Text=@_errorMsgs Popup=@popup Style="position: absolute; font-weight:600" />
+                                    </div>
+                                    <div class="col-md-auto">
+                                        <RadzenLabel Style="font-size: 35px;font-weight:600;color:white" Component="LastName">Last Name</RadzenLabel>
+                                        <RadzenTextBox Style="width:400px;font-size: 35px;font-weight:600" AutoComplete="false" type="text" name="LastName" @bind-Value="@_traineeDTO.LastName" class="form-control bigger-input" @ref="lastNameInput" />
+                                        <RadzenRequiredValidator Component="LastName" Text="Last name is required" Popup=@popup Style="position: absolute; font-weight:600" />
+                                        <RadzenCustomValidator Component="LastName" Validator="@(() => ValidateLastNameAsync(_traineeDTO.LastName).Result.IsSuccess)" Text=@_errorMsgs Popup=@popup Style="position: absolute; font-weight:600" />
+                                    </div>
+                           </div>
+                    </div>
+            
+            
+                        <br /><br />
+                        <div class="keyboardRow">
+                                <RadzenButton class="btn keybutton btn-primary" Click="@(()=>NameKeyPressed("TAB"))">TAB</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-primary" type="button" Click="@(()=> NameKeyPressed("Q"))">Q</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-primary" type="button" Click="@(()=> NameKeyPressed("W"))">W</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NameKeyPressed("E"))">E</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NameKeyPressed("R"))">R</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NameKeyPressed("T"))">T</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NameKeyPressed("Y"))">Y</RadzenButton>
+                                <RadzenButton class="btn keybutton  btn-primary" Click="@(()=> NameKeyPressed("U"))">U</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NameKeyPressed("I"))">I</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NameKeyPressed("O"))">O</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NameKeyPressed("P"))">P</RadzenButton>
+                        </div>
+                        <div class="keyboardRow">
+                                <RadzenButton class="btn keybutton" Click="@(()=> NameKeyPressed("A"))">A</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NameKeyPressed("S"))">S</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NameKeyPressed("D"))">D</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NameKeyPressed("F"))">F</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NameKeyPressed("G"))">G</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NameKeyPressed("H"))">H</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NameKeyPressed("J"))">J</RadzenButton>
+                                <RadzenButton class="btn keybutton  btn-primary" Click="@(()=> NameKeyPressed("K"))">K</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NameKeyPressed("L"))">L</RadzenButton>
+                        </div>
+                        <div class="keyboardRow">
+                                <RadzenButton class="btn backspace btn-sm btn-primary" Click="@(()=>BackspacePressed())">BKSPC</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-sm btn-primary" Click="@(()=> NameKeyPressed("Z"))">Z</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-sm btn-primary" Click="@(()=> NameKeyPressed("X"))">X</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-sm btn-primary" Click="@(()=> NameKeyPressed("C"))">C</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-sm btn-primary" Click="@(()=> NameKeyPressed("V"))">V</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-sm btn-primary" Click="@(()=> NameKeyPressed("B"))">B</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-sm btn-primary" Click="@(()=> NameKeyPressed("N"))">N</RadzenButton>
+                                <RadzenButton class="btn keybutton btn-sm btn-primary" Click="@(()=> NameKeyPressed("M"))">M</RadzenButton>
+                                <RadzenButton class="btn submit btn-sm btn-success" Text="ENTER" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" />
+                            </div>
+                </div>
+                </ChildContent>
+            </RadzenFieldset>
+            </RadzenTemplateForm>
+        </RadzenStepsItem>
+        <RadzenStepsItem>
+            <RadzenFieldset class="radzenfieldset">
+                <HeaderTemplate></HeaderTemplate>
+                    <ChildContent>
+            
+            <RadzenStack Class="rz-p-0 rz-p-md-12">
+                        <RadzenTemplateForm TItem="Trainee" Data=@_cbtApp.Trainee Submit=@SubmitUPID>
+                    
+                            <RadzenRow class="col-md-6 mx-auto d-flex align-items-center">
+                                <RadzenColumn>
+                                <div class="upidkeyboard" style="@upidkeyboardStyle">
+                                <div class="container">
+                                    <div class="row justify-content-md-center">
+                                                <div class="col-md-auto">
+                                                    <RadzenLabel Text="UPID" Component="UPID" Style="font-size: 35px;font-weight:600;color:white" />
+                                                    <RadzenTextBox Name="UPID" Style="width:200px;text-align:center;font-size: 35px;font-weight:600" @bind-Value="@_traineeDTO.UPID" @ref="upidInput" />
+                                                    <RadzenRequiredValidator Component="UPID" Text="UPID is required" Popup=@popup Style="font-weight:600" />
+                                                    <RadzenCustomValidator Component="UPID" Validator="@(() => ValidateFirstUPIDAsync(_traineeDTO.UPID).Result.IsSuccess)" Text=@_errorMsgs Popup=@popup Style="position: absolute; font-weight:600" />
+                                                </div>
+                                   </div>
+                                </div>
+                                        <br />
+                                        <div class="keyboardRow">
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("1"))">1</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("2"))">2</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("3"))">3</RadzenButton>
+                                        </div>
+                                        <div class="keyboardRow">
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("4"))">4</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("5"))">5</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("6"))">6</RadzenButton>
+                                        </div>
+                                        <div class="keyboardRow">
+                                                    <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("7"))">7</RadzenButton>
+                                                    <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("8"))">8</RadzenButton>
+                                                    <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("9"))">9</RadzenButton>
+                                        </div>
+                                
+                                
+                                <div class="keyboardRow">
+                                            <RadzenButton class="btn backspace btn-sm btn-primary" Click="@(()=>BackspacePressed())">BKSPC</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("0"))">0</RadzenButton>
+                                            <RadzenButton class="btn submit btn-sm btn-primary" Text="SUBMIT" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" />
+                                        </div>
+                            </div>
+                            </RadzenColumn>
+                         </RadzenRow>
+                    
+                </RadzenTemplateForm>
+            </RadzenStack>
+            </ChildContent>
+            </RadzenFieldset>
+        </RadzenStepsItem>
+        <RadzenStepsItem>
+            <RadzenFieldset class="radzenfieldset">
+                <HeaderTemplate></HeaderTemplate>
+                    <ChildContent>
+                    <RadzenStack Class="rz-p-0 rz-p-md-12">
+                        <RadzenTemplateForm TItem="Trainee" Data=@_cbtApp.Trainee Submit=@SubmitUPID>
+                        
+                            <RadzenRow class="col-md-6 mx-auto d-flex align-items-center">
+                                <RadzenColumn>
+                                    <div class="upidkeyboard" style="@upidkeyboardStyle">
+                                        <div class="container">
+                                            <div class="row justify-content-md-center">
+                                                <div class="col-md-auto">
+                                                    <RadzenLabel Text="UPID" Component="RepeatUPID" Style="font-size: 35px;font-weight:600;color:white" />
+                                                    <RadzenTextBox Name="RepeatUPID" Style="width:200px;text-align:center;font-size: 35px;font-weight:600;" @bind-Value="@_traineeDTO.UPID" @ref="upidRepeatInput" />
+                                                    <RadzenRequiredValidator Component="RepeatUPID" Text="Repeat your UPID" Popup=@popup Style="position: absolute" />
+                                                    <RadzenCustomValidator Component="RepeatUPID" Validator="@(() => ValidateSecondUPIDAsync(_traineeDTO.UPID).Result.IsSuccess)" Text=@_errorMsgs Popup=@popup Style="position:absolute; font-weight:600" /> 
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <br />
+                                        <div class="keyboardRow">
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("1"))">1</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("2"))">2</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("3"))">3</RadzenButton>
+                                        </div>
+                                        <div class="keyboardRow">
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("4"))">4</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("5"))">5</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("6"))">6</RadzenButton>
+                                        </div>
+                                        <div class="keyboardRow">
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("7"))">7</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("8"))">8</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("9"))">9</RadzenButton>
+                                        </div>
+                                        
+                                        
+                                        <div class="keyboardRow">
+                                            <RadzenButton class="btn backspace btn-sm btn-primary" Click="@(()=>BackspacePressed())">BKSPC</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("0"))">0</RadzenButton>
+                                            <RadzenButton class="btn submit btn-sm btn-primary" Text="SUBMIT" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" />
+                                        </div>
+                                    </div>
+                                </RadzenColumn>
+                            </RadzenRow>
+                        
+                    </RadzenTemplateForm>
+                </RadzenStack>
+            </ChildContent>
+            </RadzenFieldset>
+        </RadzenStepsItem>
+        <RadzenStepsItem >
+            <RadzenFieldset class="radzenfieldset">
+                <HeaderTemplate></HeaderTemplate>
+                    <ChildContent>
+                <RadzenStack Class="rz-p-0 rz-p-md-12">
+                        <RadzenTemplateForm TItem="Trainee" Data=@_cbtApp.Trainee Submit=@SubmitYOB>
+                        
+                            <RadzenRow class="col-md-6 mx-auto d-flex align-items-center">
+                                <RadzenColumn>
+                                    <div class="upidkeyboard" style="@yobkeyboardStyle">
+                                        <div class="container">
+                                            <div class="row justify-content-md-center">
+                                                <div class="col-md-auto">
+                                                    <RadzenLabel Text="Year of Birth" Component="YearOfBirth" Style="font-size: 35px;font-weight:600;color:white" />
+                                                    <RadzenTextBox Name="YearOfBirth" Style="width:200px;text-align:center;font-size: 35px;font-weight:600;" @bind-Value="@_traineeDTO.YearOfBirth" @ref="yobInput" />
+                                                    <RadzenRequiredValidator Component="YearOfBirth" Text="Year Of Birth is required" Popup=@popup Style="font-weight:600" />
+                                                    <RadzenCustomValidator Component="YearOfBirth" Validator="@(() => ValidateFirstYearOfBirthAsync(_traineeDTO.YearOfBirth).Result.IsSuccess)" Text=@_errorMsgs Popup=@popup Style="position: absolute; font-weight:600" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <br />
+                                        <div class="keyboardRow">
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("1"))">1</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("2"))">2</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("3"))">3</RadzenButton>
+                                        </div>
+                                        <div class="keyboardRow">
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("4"))">4</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("5"))">5</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("6"))">6</RadzenButton>
+                                        </div>
+                                        <div class="keyboardRow">
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("7"))">7</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("8"))">8</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("9"))">9</RadzenButton>
+                                        </div>
+                                        
+                                        
+                                        <div class="keyboardRow">
+                                            <RadzenButton class="btn backspace btn-sm btn-primary" Click="@(()=>BackspacePressed())">BKSPC</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("0"))">0</RadzenButton>
+                                            <RadzenButton class="btn submit btn-sm btn-primary" Text="SUBMIT" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" />
+                                        </div>
+                                    </div>
+                                </RadzenColumn>
+                            </RadzenRow>
+                        
+                    </RadzenTemplateForm>
+                </RadzenStack>
+                </ChildContent>
+            </RadzenFieldset>
+        </RadzenStepsItem>
+        <RadzenStepsItem>
+            <RadzenFieldset class="radzenfieldset">
+                <HeaderTemplate></HeaderTemplate>
+                    <ChildContent>
+               
+                    <RadzenStack Class="rz-p-0 rz-p-md-12">
+                        <RadzenTemplateForm TItem="Trainee" Data=@_cbtApp.Trainee Submit=@SubmitYOB>
+                        
+                            <RadzenRow class="col-md-6 mx-auto d-flex align-items-center">
+                                <RadzenColumn>
+                                    <div class="upidkeyboard" style="@yobkeyboardStyle">
+                                        <div class="container">
+                                            <div class="row justify-content-md-center">
+                                                <div class="col-md-auto">
+                                                    <div class="col-md-auto">
+                                                        <RadzenLabel Text="Year of Birth" Component="RepeatYearofBirth" Style="font-size: 35px;font-weight:600;color:white" />
+                                                        <RadzenTextBox Name="RepeatYearofBirth" Style="width:200px;text-align:center;font-size: 35px;font-weight:600;" @bind-Value="@_traineeDTO.YearOfBirth" @ref="yobRepeatInput" />
+                                                        <RadzenRequiredValidator Component="RepeatYearofBirth" Text="Repeat your Year of Birth" Popup=@popup Style="position: absolute" />
+                                                        <RadzenCustomValidator Component="RepeatYearofBirth" Validator="@(() => ValidateSecondYearOfBirthAsync(_traineeDTO.YearOfBirth).Result.IsSuccess)" Text=@_errorMsgs Popup=@popup Style="position: absolute; font-weight:600" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <br />
+                                        <div class="keyboardRow">
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("1"))">1</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("2"))">2</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("3"))">3</RadzenButton>
+                                        </div>
+                                        <div class="keyboardRow">
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("4"))">4</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("5"))">5</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("6"))">6</RadzenButton>
+                                        </div>
+                                        <div class="keyboardRow">
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("7"))">7</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("8"))">8</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("9"))">9</RadzenButton>
+                                        </div>
+                                       
+                                        
+                                        <div class="keyboardRow">
+                                            <RadzenButton class="btn backspace btn-sm btn-primary" Click="@(()=>BackspacePressed())">BKSPC</RadzenButton>
+                                            <RadzenButton class="btn keybutton btn-primary" Click="@(()=> NumKeyPressed("0"))">0</RadzenButton>
+                                            <RadzenButton class="btn submit btn-sm btn-primary" Text="SUBMIT" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" />
+                                        </div>
+                                    </div>
+                                </RadzenColumn>
+                            </RadzenRow>
+                        
+                    </RadzenTemplateForm>
+                </RadzenStack>
+                 </ChildContent>
+            </RadzenFieldset>
+        </RadzenStepsItem>
+        <RadzenStepsItem>
+            <RadzenFieldset class="radzenfieldset">
+                <HeaderTemplate></HeaderTemplate>
+                    <ChildContent>
+               
+                    <RadzenStack Class="rz-p-0 rz-p-md-12">
+                        <RadzenTemplateForm TItem="Trainee" Data=@_cbtApp.Trainee Submit=@SubmitNotificationChoices>
+                        
+                            <RadzenRow class="col-md-12 mx-auto d-flex align-items-center">
+                                <RadzenColumn>
+                                    <div class="upidkeyboard" style="@yobkeyboardStyle">
+                                        <div class="container">
+                                            <div class="row justify-content-md-center">
+                                                <div class="col-md-auto">
+                                                    <div class="notification-option">
+                                                        <RadzenCheckBox Style="font-size: 45px;color:black" Name="chkSubscribeToEmailNewsletter" class="checkboxNotifications" @bind-Value="@_traineeDTO.SubscribeToEmailNewsletter"></RadzenCheckBox>
+                                                        <RadzenLabel Style="font-size: 35px;font-weight:600;color:white" Component="chkSubscribeToEmailNewsletter">Sign me up for the PDX People weekly newsletter in my email inbox</RadzenLabel>
+                                                    </div>
+
+                                                    <div class="notification-option">
+                                                        <RadzenCheckBox Style="font-size: 45px;font-weight:600;color:black" Name="chkSubscribeToTextNewsletter" class="checkboxNotifications" @bind-Value="@_traineeDTO.SubscribeToTextNewsletter"></RadzenCheckBox>
+                                                        <RadzenLabel Style="font-size: 35px;font-weight:600;color:white" Component="chkSubscribeToTextNewsletter">Sign me up for the PDX People weekly newsletter by text message</RadzenLabel>
+                                                    </div>
+
+                                                    <div class="notification-option">
+                                                        <RadzenCheckBox Style="font-size: 45px;font-weight:600;color:black" Name="chkSubscribeToOperationalTexts" class="checkboxNotifications" @bind-Value="@_traineeDTO.SubscribeToOperationalTexts"></RadzenCheckBox>
+                                                        <RadzenLabel Style="font-size: 35px;font-weight:600;color:white" Component="chkSubscribeToOperationalTexts">Sign me up for operational and safety messages sent by text message</RadzenLabel>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <br />
+                                                                                                                       
+                                        <div class="keyboardRow">
+                                            <RadzenButton class="btn submit btn-sm btn-primary" Text="SUBMIT" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" />
+                                        </div> 
+                                    </div>
+                                </RadzenColumn>
+                            </RadzenRow>
+                        
+                    </RadzenTemplateForm>
+                </RadzenStack>
+                 </ChildContent>
+            </RadzenFieldset>
+        </RadzenStepsItem>
+
+    </Steps>
+</RadzenSteps>
+
+
+@code {
+    
+
+    protected override async Task OnInitializedAsync()
+    {
+        _mediator = mediator ; //CBT3_Application.Configuration.DependencyInjection.ServiceProvider.GetRequiredService<CBT3_Application.Interfaces.IMediator>();
+        InitializeTraineeRegistration();
+        firstNameFocus = true;
+        await base.OnInitializedAsync();
+    }
+    private bool[] adminbuttonClicked = new bool[4];
+    private bool isChecked;
+    
+}

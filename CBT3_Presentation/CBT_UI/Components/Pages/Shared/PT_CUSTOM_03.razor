@@ -1,0 +1,203 @@
+﻿@page "/custom03"
+@using Radzen
+@using Blazored.Video
+@using Blazored.Video.Support
+
+@inject DialogService _dialogService
+<style>
+    .custom03 {
+        margin: 10px auto;
+        width: 1280px;
+        height: 720px;
+        background-image: url('/images/mostdangerous_background.png');
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-color: black;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: -20px 20px 30px rgba(0,0,0,0.3);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .custom03-title {
+        font-size: 20pt;
+        width: 100%;
+        text-align: center;
+        padding: 10px;
+    }
+
+    .buttons-container {
+        margin-top: 20px;
+    }
+
+    .cbt-button {
+        width: 320px;
+        height: 120px;
+        font-size: 18px;
+        background-color: #006AA9 !important;
+        color: #ffffff !important;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .image-container {
+        display: flex;
+        align-items: center;
+        position: relative; /* Makes it the container for absolute positioning */
+        gap: 20px;
+    }
+
+    .checkbox-container {
+        position: absolute;
+        left: -80px; /* Adjust to place checkbox to the left of the image */
+        display: flex;
+        align-items: center;
+    }
+
+        .checkbox-container input {
+            margin-right: 10px;
+        }
+
+    .checkboxNotifications {
+        width: 40px !important;
+        height: 40px !important;
+        margin: 20px !important;
+        font-size: 18px !important;
+        font-weight: 400;
+        color: #fff !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 20px; /* Adds space between checkbox and label */
+    }
+
+    .video {
+        display: none; /* Initially hidden */
+        width: 1280px;
+        height: 720px;
+        top:0;
+        z-index: 1; /* Ensures the video is on top */
+        background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent background to darken it */
+    }
+</style>
+
+<div class="custom03">
+    <div class="custom03-title">
+        <!-- <p>MOST DANGEROUS LOCATIONS</p> -->
+    </div>
+    <div class="video" style="@videoshowhide">
+        <BlazoredVideo @ref="video1"
+                       Ended=@(s=>OnEnd(s))
+                       Pause=@(p=>OnPause(p))
+                       VideoEventOptions="options"
+                       class="w-100"
+                       style="width:100%; height:100%;"
+                       controls="controls">
+            <source src="/video/custom_most_dangerous_location.mp4" type="video/mp4" />
+        </BlazoredVideo>
+    </div>
+    <!-- Content section with images and checkboxes -->
+    <div style="height: 100vh; display: flex; flex-direction: column; align-items: center; padding-top: 10vh;">
+        @if (showhide == "display:inline")
+        {
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                @foreach (var image in imagePaths)
+                {
+                    <div class="image-container">
+                        @* Conditionally render the checkbox for the selected image *@
+                        @if (selectedIndex == imagePaths.IndexOf(image))
+                        {
+                            <div class="checkbox-container">
+                                <input class="checkboxNotifications" type="checkbox" checked="true" />
+                            </div>
+                        }
+
+                        <RadzenImage Path="@image" Style="width: 1000px;" @onclick="() => ToggleSelection(image)" />
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- Video section, will be shown after Submit -->
+        
+    </div>
+   
+    @* Conditionally render the submit button based on whether a checkbox is selected *@
+    @if (IsAnySelected())
+    {
+        <div class="buttons-container" style="@showhide; margin-top: 20px;">
+            <RadzenButton Text="SUBMIT" class="btn cbt-button" Click="() => Submit()" />
+        </div>
+    }
+</div>
+
+@code {
+    private string showhide = "display:inline"; // Show images and checkboxes
+    private string videoshowhide = "display:none"; // Hide video initially
+    BlazoredVideo video1;
+    Dictionary<VideoEvents, VideoStateOptions> options = new Dictionary<VideoEvents, VideoStateOptions>();
+
+    private List<string> imagePaths = new List<string>
+    {
+        "images/mostdangerous_a.png",
+        "images/mostdangerous_b.png",
+        "images/mostdangerous_c.png",
+        "images/mostdangerous_d.png",
+        "images/mostdangerous_e.png"
+    };
+
+    private int selectedIndex = -1;  // Track the selected image index
+
+    private void ToggleSelection(string image)
+    {
+        // Toggle the selected index based on image click
+        int index = imagePaths.IndexOf(image);
+        selectedIndex = (selectedIndex == index) ? -1 : index;  // Deselect if same image is clicked again
+    }
+    private bool IsAnySelected()
+    {
+        return selectedIndex != -1; // Returns true if any image is selected
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var pausedOption = new VideoStateOptions() { Paused = true };
+            options[VideoEvents.CanPlay] = pausedOption;
+            options[VideoEvents.Ended] = pausedOption;
+            options[VideoEvents.Pause] = pausedOption;
+            options[VideoEvents.Play] = pausedOption;
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions
+        }
+        await base.OnInitializedAsync();
+    }
+
+    private void Submit()
+    {
+        // Hide images and checkboxes
+        showhide = "display:none";
+
+        // Show the video
+        videoshowhide = "display:block";
+
+        // Start the video playback
+        video1.StartPlayback();
+    }
+
+    private void OnEnd(VideoState state)
+    {
+        _dialogService.Close(true);
+    }
+
+    private void OnPause(VideoState state)
+    {
+        _dialogService.Close(true);
+    }
+}

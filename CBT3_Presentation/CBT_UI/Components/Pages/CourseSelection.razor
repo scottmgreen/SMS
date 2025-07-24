@@ -1,0 +1,349 @@
+﻿@page "/courseselection/{traineeId}"
+@using CBT3_Application.Interfaces
+@using CBT3_Domain.Entities
+
+@using CBT3_Domain.Enums
+@using CBT3_Domain.Events
+@using CBT3_Domain.Interfaces
+
+
+@using Radzen
+@using System.Collections.Concurrent
+@inject CBT3_Application.Services.TrainingService _trainingSvc
+@rendermode InteractiveServer
+
+@inject DialogService _dialogService
+@inject NavigationManager _navManager
+@inject IMediator _mediator
+@inject IMessenger _messenger
+
+<style>
+    body {
+        /* background-color: #b1bed2; */
+        background-image: url('/images/background_opening.jpg'); /* Specify the path to your image */
+        background-size: cover; /* Adjusts the size of the background image to cover the entire body */
+        background-repeat: no-repeat; /* Prevents the background image from repeating */
+        background-attachment: fixed; /* Fixes the background image when scrolling */
+    }
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .loading-spinner {
+        /* Style your loading spinner */
+    }
+
+    .loading-message {
+        /* Style your loading message */
+    }
+
+
+   
+
+    .button-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px; /* Adjust the gap between buttons as needed */
+        position: fixed;
+        justify-content: center;
+    }
+
+        .button-grid button {
+            margin: 5px; /* Add margin to create a gap around each button */
+            width: 300px;
+        }
+
+    .sida-button-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px; /* Adjust the gap between buttons as needed */
+        position: fixed;
+        top: 75%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+
+    .sida-button-container {
+        width: calc(25% - 15px); /* 3 buttons per row with a 10px gap */
+    }
+
+    .cbt-button {
+        width: 320px; /* Adjusted width for a larger button */
+        height: 120px; /* Adjusted height for a taller button */
+        font-size: 18px; /* Adjust font size for larger text */
+        background-color: #006AA9 !important;
+        color: #ffffff !important;
+        border: none; /* Remove any default borders */
+        /*border-radius: 8px;  Add rounded corners */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Create a raised shadow effect */
+        transition: box-shadow 0.3s ease; /* Smooth transition for shadow on hover */
+    }
+
+        .cbt-button:hover {
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3); /* Increase shadow on hover for an elevated effect */
+        }
+
+    .sida_button-style {
+        font-size: 18px; /* Adjust font size for larger text */
+        background-color: black !important;
+        ; /* Your custom background color */
+        color: #ffffff !important;
+    }
+
+    .custom-radzen-button {
+        background-color: #006AA9 !important;
+        color: #ffffff !important;
+        ; /* Your custom text color */
+        /* Add any other custom styles you need */
+    }
+
+    .button-container {
+        display: inline-block;
+        text-align: center;
+        position: fixed;
+        top: 25%;
+        left: 50%;
+        width: 950px;
+        transform: translate(-50%, -50%);
+    }
+
+        .button-container RadzenButton {
+            display: inline-block;
+            margin-right: 10px; /* Optional: Add some space between the buttons */
+        }
+
+    .center-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+    }
+
+    .message-container {
+        display: inline-block;
+        height: 500px;
+        width: 500px;
+        background-color: black;
+        color: yellow;
+        max-height: 500px; /* Adjust the max height as needed */
+        overflow-y: auto;
+        padding: 10px;
+        /* left: 50%; */
+    }
+
+    .message-list {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+    }
+
+        .message-list li {
+            margin-bottom: 5px;
+        }
+
+    .radzen-dialog {
+        /* background-color: rgba(28, 62, 98, 0.5); */
+         background-color: rgb(255, 255, 255); 
+        
+        padding: 20px; /* Add padding as needed */
+    }
+
+    .radzenfieldset {
+        /* margin: 220px auto; */
+        background-color: rgba(28, 62, 98, 0.5);
+    }
+
+    .rz-dialog-confirm-buttons > .rz-secondary {
+        width: 220px;
+        color: #ffffff !important;
+        height: 60px;
+        font-size: 18px;
+        background-color: red !important;
+    }
+
+    .rz-dialog-confirm-buttons > .rz-primary {
+        width: 220px;
+        color: #ffffff !important;
+        height: 60px;
+        font-size: 18px;
+        background-color: #006AA9 !important;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: auto 1fr; /* Two columns: label (auto), data (flexible width) */
+        gap: 5px 15px; /* Adjusts spacing */
+        margin-top: 35px;
+        font-weight: bold;
+    }
+
+    .label {
+        text-align: right; /* Right-aligns the labels */
+    }
+
+    .data {
+        text-align: left; /* Left-aligns the data */
+    }
+
+    .rz-dialog.rz-dialog-confirm {
+        width: 600px !important; /* Adjust as needed */
+        max-width: 90vw; /* Prevents it from being too wide on smaller screens */
+    }
+</style>
+
+@if (!IsDataLoading)
+{
+    <div class="button-container">
+        <div class="button-grid">
+            @foreach (Course course in othercourses)
+            {
+
+                <RadzenButton Text="@course.CourseName" class="btn cbt-button" Click="() => HandleCourseSelectionClick(course)" />
+                
+            }
+            <br /> <br />
+            <RadzenButton Text="SIDA Training" class="btn cbt-button" Click="() => OpenSIDACourses(sidacourses)" />
+            
+        </div>
+        <br />
+    </div>
+}
+else
+{
+    <div class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-message">Loading...</div>
+    </div>
+}
+
+
+
+@code {
+    [Parameter]
+    public string TraineeId { get; set; }
+    private string _traineeId;
+
+    private List<Course> courses = new();
+    private ConcurrentDictionary<string, Course> courseDict;
+    private List<Course> sidacourses = new();
+    private List<Course> othercourses = new();
+    private Radzen.ConfirmOptions _confirmOptions = new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No", ShowClose = false };
+        
+    private bool IsDataLoading { get; set; }
+    async Task BusyDialog()
+    {
+        await _dialogService.OpenAsync("", ds =>
+    @<div>
+        <div class="row">
+            <div class="col-md-12">
+                Loading...
+            </div>
+        </div>
+    </div>
+    , new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto" });
+    }
+    async Task BusyDialog(string message)
+    {
+        await _dialogService.OpenAsync("", ds =>
+        {
+            RenderFragment content = b =>
+            {
+                b.OpenElement(0, "RadzenRow");
+
+                b.OpenElement(1, "RadzenColumn");
+                b.AddAttribute(2, "Size", "12");
+
+                b.AddContent(3, message);
+
+                b.CloseElement();
+                b.CloseElement();
+            };
+            return content;
+        }, new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _traineeId = TraineeId;
+        TraineeID traineeId = new(_traineeId);
+        IsDataLoading = true;
+        
+        courses = _trainingSvc.GetCoursesAsync(traineeId).Result.Value;
+        sidacourses = courses.Where(x => x.CourseType == CourseType.SIDA).ToList();
+        othercourses = courses.Where(x => x.CourseType == CourseType.OTHER).ToList();
+        
+        // After the operation is complete, set isLoading to false
+        IsDataLoading = false;
+        await base.OnInitializedAsync();
+    }
+    public async Task OpenSIDACourses(List<Course> sidacourses)
+    {
+       await _dialogService.OpenAsync<SIDACourseSelection>($"SIDA Courses {sidacourses.Count}",
+            new Dictionary<string, object>() { 
+                { "SIDACourses", sidacourses }, 
+                {"TraineeId",_traineeId}
+            },
+            new DialogOptions() { Width = "1100px", Height = "700px", Resizable = false, Draggable = false, ShowClose = true, ShowTitle = false, CssClass = "radzen-dialog" });
+    }
+           
+    private async Task<bool> ShowConfirmation(string message)
+    {
+        MarkupString dialogTitle = new MarkupString($@"<div style=""font-size: 25px;font-weight:400;text-align: center;"">You have selected <b>{message}</b> </div>");
+        string dialogMessage = $@"
+        <div style='font-size:25px;font-weight:400;text-align: center;display: flex; justify-content: center; align-items: center; width: 100%;'>
+             <b>  Is this Correct? </b>
+        </div>";
+
+        var parameters = new Dictionary<string, object>();
+        parameters.Add("ContentText", dialogMessage);
+        parameters.Add("CssClass", "radzen-dialog");
+
+        bool? result = await _dialogService.Confirm(dialogMessage, dialogTitle.ToString(), _confirmOptions);
+
+        if (result is not null)
+        {
+            if (result.Value)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    private async Task HandleCourseSelectionClick(Course course)
+    {
+        string _courseId = course.Id.Value;
+        bool confirmed = await ShowConfirmation(course.CourseName);
+        if (confirmed)
+        {
+            _cbtApp.Course = course;
+            UpdateToolBarMessage(course);
+            _navManager.NavigateTo($"/courseplayer/{_traineeId}/{_courseId}");
+            return;
+        }
+
+    }
+     
+    private void UpdateToolBarMessage(Course course)
+    {
+        AppState.SetProperty(this, "Course", course);
+    }
+    
+}

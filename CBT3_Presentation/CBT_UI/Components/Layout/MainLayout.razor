@@ -1,0 +1,133 @@
+﻿@inherits LayoutComponentBase
+@using CBT3_Application.Messaging.Commands
+@using CBT3_Domain.Common
+@using CBT3_Domain.Entities
+@using CBT_UI.Components.Pages.Shared
+@using Radzen
+@using Radzen.Blazor
+@using System.Diagnostics;
+@using Microsoft.JSInterop
+@inject Radzen.DialogService _dialogService
+@inject IJSRuntime JS
+
+@inject CBT3_UI.CBT3_App _cbtApp
+@inject CBT3_Application.Interfaces.IMediator _mediator
+@inject NavigationManager _navManager
+
+<style>
+    .admin-dialog {
+        /* background-color: rgba(28, 62, 98, 0.5); */
+        background-color: black;
+        /*background-color: white;*/
+        padding: 20px; /* Add padding as needed */
+    }
+     .admin-button {
+        opacity: 0;
+        position: fixed;
+        font-size: 24px; /* Adjust button font size as needed */
+        padding: 10px 20px; /* Adjust button padding as needed */
+        border: none;
+        z-index: 9999;
+       /*  pointer-events: auto */
+    }
+    /* Button positions */
+    .admin-button-top-left {
+        top: 0;
+        left: 0;
+    }
+
+    .admin-button-top-right {
+        top: 0;
+        right: 0;
+    }
+
+    .admin-button-bottom-left {
+        bottom: 0;
+        left: 0;
+    }
+
+    .admin-button-bottom-right {
+        bottom: 0;
+        right: 0;
+    }
+</style>
+<script>
+    function closeWindow() {
+        window.close();
+    }
+    function openNewWindow() {
+      window.open('https://localhost:7230/', '_blank'); // Replace 'https://example.com' with the URL you want to open
+      
+    }
+    
+</script>
+<script src="cbt.js"></script>
+<RadzenDialog></RadzenDialog>
+<div class="page">
+    
+    <main>
+        <div class="d-flex justify-content-between px-4 top-row" style="background-color: transparent">
+            <div>
+                <TraineeCourseToolbar/>
+                
+            </div>
+            <div>
+                <!-- Right-aligned content -->
+                <SessionToolbar />
+            </div>
+        </div>
+        <article class="content px-4" >
+
+            @Body
+            
+                
+           
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+@code{
+    [CascadingParameter]
+    public CascadingAppState AppState { get; set; }
+
+
+    private async Task CloseAndRelaunchBrowser()
+    {
+        // Close the current browser window
+        // _jsRuntime.InvokeVoidAsync("closeWindow");
+
+        // // Wait for a short duration to ensure the window is closed before opening a new one
+        // await Task.Delay(3000); // Adjust the delay duration as needed
+
+        // Call JavaScript function to open a new browser window
+        AppState.SetProperty(this, "Trainee", null);
+        AppState.SetProperty(this, "Course", null);
+        AppState.SetProperty(this, "LessonPage", null);
+        AppState.SetProperty(this, "CoursePass", false);
+
+        TrainingSession session = _cbtApp.TrainingSession;
+        session.CourseEndedAt = DateTime.Now;
+        AppState.SetProperty(this, "TrainingSession", session);
+
+        TrainingStation station = _cbtApp.TrainingStation;
+        station.Status = CBT3_Domain.Enums.TrainingStationStatus.MachineIdle;
+        AppState.SetProperty(this, "TrainingStation", station);
+
+        // _cbtApp.Trainee = null;
+        // _cbtApp.Course = null;
+        // _cbtApp.LessonPage = null;
+        // _cbtApp.CoursePass = false;
+        // _cbtApp.Session = string.Empty;
+
+        _navManager.NavigateTo("/");
+
+    }
+    
+
+}

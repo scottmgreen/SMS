@@ -1,0 +1,116 @@
+﻿@page "/"
+@inject NavigationManager _navManager
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@using CBT3_Application.Interfaces
+@using CBT3_Application.Messaging
+@using CBT3_Domain.Common
+@using CBT3_Domain.Entities
+@using CBT3_Domain.Interfaces
+@using CBT3_Infrastructure.Configuration
+@using CBT3_Infrastructure.Interfaces
+@using Radzen.Blazor
+@using CBT_UI.Components.Pages.Shared
+@inject IJSRuntime JS
+@inject IMediator _mediator
+@rendermode InteractiveServer
+
+<style>
+    body {
+        background-image: url('/images/background_opening.jpg'); /* Specify the path to your image */
+        background-size: cover; /* Adjusts the size of the background image to cover the entire body */
+        background-repeat: no-repeat; /* Prevents the background image from repeating */
+        background-attachment: fixed; /* Fixes the background image when scrolling */
+    }
+
+    .heading-container {
+        position: fixed;
+        top: 20%;
+        left: 50%;
+        white-space: nowrap;
+        transform: translate(-50%, -50%);
+        text-align: center
+        
+    }
+    .button-container {
+        position: fixed;
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .cbt-button {
+        width: 320px; /* Adjusted width for a larger button */
+        height: 120px; /* Adjusted height for a taller button */
+        font-size: 18px; /* Adjust font size for larger text */
+        background-color: #006AA9 !important;
+        color: #ffffff !important;
+        border: none; /* Remove any default borders */
+        /*border-radius: 8px;  Add rounded corners */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Create a raised shadow effect */
+        transition: box-shadow 0.3s ease; /* Smooth transition for shadow on hover */
+    }
+
+        .cbt-button:hover {
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3); /* Increase shadow on hover for an elevated effect */
+        }
+</style>
+
+<div class="heading-container">
+    <h3 style="font-size: 35px;font-weight:600">PORTLAND INTERNATIONAL AIRPORT</h3>
+    <h3 style="font-size: 35px;font-weight:600">This interactive training uses a touchscreen.<br> Please touch the Start button to begin.</h3>
+</div>
+
+<div class="button-container">
+    <RadzenButton class="btn cbt-button" Click="NavigateToInstruction" Text="START" />
+    
+</div>
+
+
+@code {
+    [CascadingParameter] public CascadingAppState AppState { get; set; }
+    private TrainingStation trainingstation = new();
+    private TrainingSession trainingsession;
+    protected override async Task OnInitializedAsync()
+    {
+
+        var connectionId = HttpContextAccessor.HttpContext?.Connection?.Id;
+        if (!string.IsNullOrEmpty(connectionId))
+        {
+            var info = CircuitUserTrackingMiddleware.GetUserInfoFromConnectionId(connectionId);
+            var circuitid = info.circuitid;
+            if (info.host != null)
+            {
+                trainingstation.HostName = info.host;
+                trainingstation.CircuitId = info.circuitid;
+                trainingstation.Status= CBT3_Domain.Enums.TrainingStationStatus.MachineRunning;
+
+                // UpdateTrainingStationCommand request = new UpdateTrainingStationCommand(trainingstation);
+                // var result = Task.Run(() => _mediator.SendAsync(request, default)).Result;
+            }
+
+        }
+        // trainingstation.TrainingStationStatus = CBT3_Domain.Enums.TrainingStationStatus.MachineRunning;
+        AppState.SetProperty(this, "TrainingSession", null);
+        AppState.SetProperty(this, "TrainingStation", trainingstation);
+        AppState.SetProperty(this, "Trainee", null);
+        AppState.SetProperty(this, "Course", null);
+        AppState.SetProperty(this, "LessonPage", null);
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task NavigateToInstruction()
+    {
+        TrainingSessionID trainingsessionID = new(Guid.NewGuid().ToString());
+        trainingsession = new(trainingsessionID);
+        trainingsession.HostName = trainingstation.HostName;
+        trainingsession.CourseStartedAt = DateTime.Now;
+                
+        AppState.SetProperty(this, "TrainingSession", trainingsession);
+
+        _navManager.NavigateTo("/instructionpage");
+
+    }
+    
+    
+}

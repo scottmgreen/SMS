@@ -1,0 +1,55 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.EventLog" Version="8.0.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+	  <ProjectReference Include="..\CBT3_Domain\CBT3_Domain.csproj" />
+	  <ProjectReference Include="..\CBT3_Infrastructure\CBT3_Infrastructure.csproj" />
+	  <ProjectReference Include="..\CBT3_Shared\CBT3_Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="CBT3_Application.Common" />
+    <Using Include="CBT3_Application.Interfaces" />
+    <Using Include="CBT3_Application.Messaging" />
+    <Using Include="CBT3_Application.Messaging.Commands" />
+    <Using Include="CBT3_Application.Services" />
+    <Using Include="CBT3_Application.Services.CourseMachine">
+      <Static>True</Static>
+    </Using>
+    <Using Include="CBT3_Application.Services.CourseMachine.LessonMachine">
+      <Static>True</Static>
+    </Using>
+    <Using Include="CBT3_Application.States" />
+    <Using Include="CBT3_Domain.Common" />
+    <Using Include="CBT3_Domain.Entities" />
+    <Using Include="CBT3_Domain.Enums" />
+    <Using Include="CBT3_Domain.Enums" />
+    <Using Include="CBT3_Domain.Errors" />
+    <Using Include="CBT3_Domain.Events.DomainEvents" />
+    <Using Include="CBT3_Domain.Events.SystemEvents" />
+    <Using Include="CBT3_Domain.Interfaces" />
+    <Using Include="CBT3_Domain.ValueObjects" />
+    <Using Include="CBT3_Infrastructure.Services" />
+    <Using Include="Microsoft.Extensions.DependencyInjection" />
+    <Using Include="Microsoft.Extensions.DependencyInjection.Extensions" />
+    <Using Include="System.Collections.Concurrent" />
+    <Using Include="System.Diagnostics" />
+    <Using Include="System.Reflection" />
+  </ItemGroup>
+
+</Project>

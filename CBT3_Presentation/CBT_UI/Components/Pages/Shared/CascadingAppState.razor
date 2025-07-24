@@ -1,0 +1,184 @@
+﻿@using CBT3_Application.Interfaces
+@using CBT3_Application.Messaging
+@using CBT3_Domain.Entities
+@using CBT3_Domain.Interfaces
+@using CBT3_Domain.Enums;
+@using CBT3_UI
+@using System.Text.Json;
+
+@inject CBT3_App _cbtApp
+@inject IMediator _mediator
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+<CascadingValue Value="this">
+    @ChildContent
+</CascadingValue>
+
+@code {
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    private string Caller = "";
+
+    public void SetProperty(ComponentBase caller, string PropertyName,object PropertyValue)
+    {
+        try
+        {
+            var prop = this.GetType().GetProperty(PropertyName);
+            if (prop != null)
+            {
+                this.Caller = caller.GetType().Name;
+                prop.SetValue(this, PropertyValue);
+                InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (Exception ex)
+        {
+
+        }
+    }
+
+
+    public Trainee? Trainee
+    {
+        get => _cbtApp.Trainee; 
+        private set
+        {
+            _cbtApp.Trainee = value;
+            string jsonString = JsonSerializer.Serialize(_cbtApp.Trainee);
+            HttpContextAccessor.HttpContext.Session.SetString("Trainee", jsonString);
+
+            if (_cbtApp.Trainee != null)
+            {
+                _cbtApp.TrainingSession.TraineeID = new TraineeID(_cbtApp.Trainee.Id.Value);
+                UpdateTrainingSessionCommand cmd = new(_cbtApp.TrainingSession);
+                _ = _mediator.SendAsync(cmd, default).Result;
+            }
+            if (Caller == "TraineeCourseToolbar")
+            {
+                // The Toolbar component changed the AppState Message property
+            }
+        }
+    }
+
+
+    public Course? Course
+    {
+        get => _cbtApp.Course; 
+        private set
+        {
+            _cbtApp.Course = value;
+            string jsonString = JsonSerializer.Serialize(_cbtApp.Course);
+            HttpContextAccessor.HttpContext.Session.SetString("Course", jsonString);
+
+            if (_cbtApp.Course !=null)
+            {
+                _cbtApp.TrainingSession.CourseID = new CourseID(_cbtApp.Course.Id.Value);
+                UpdateTrainingSessionCommand cmd = new(_cbtApp.TrainingSession);
+                _ = _mediator.SendAsync(cmd, default).Result;
+                InvokeAsync(StateHasChanged);
+            }
+
+
+            if (Caller == "TraineeCourseToolbar")
+            {
+                //InvokeAsync(StateHasChanged); // The Toolbar component changed the AppState Message property
+            }
+        }
+    }
+
+    public LessonPage? LessonPage
+    {
+        get => _cbtApp.LessonPage; 
+        private set
+        {
+            _cbtApp.LessonPage = value;
+            string jsonString = JsonSerializer.Serialize(_cbtApp.LessonPage);
+            HttpContextAccessor.HttpContext.Session.SetString("LessonPage", jsonString);
+            InvokeAsync(StateHasChanged);
+
+            if (Caller == "TraineeCourseToolbar")
+            {
+                // The Toolbar component changed the AppState Message property
+            }
+        }
+    }
+
+    public bool CoursePass
+    {
+        get => _cbtApp.CoursePass;
+        private set
+        {
+            _cbtApp.CoursePass = value;
+            string jsonString = JsonSerializer.Serialize(_cbtApp.CoursePass);
+            HttpContextAccessor.HttpContext.Session.SetString("CoursePass", jsonString);
+
+            if (Caller == "TraineeCourseToolbar")
+            {
+                // The Toolbar component changed the AppState Message property
+            }
+        }
+    }
+    public TrainingSession? TrainingSession
+    {
+        get => _cbtApp.TrainingSession;
+        private set
+        {
+            _cbtApp.TrainingSession = value;
+            string jsonString = JsonSerializer.Serialize(_cbtApp.TrainingSession);
+            HttpContextAccessor.HttpContext.Session.SetString("TrainingSession", jsonString);
+
+            if (_cbtApp.TrainingSession !=null)
+            {
+                StartTrainingSessionCommand cmd = new(_cbtApp.TrainingSession);
+                _ = _mediator.SendAsync(cmd, default).Result;
+            }
+
+
+            if (Caller == "SessionToolbar")
+            {
+                // The Toolbar component changed the AppState Message property
+            }
+        }
+    }
+
+    public TrainingStation TrainingStation
+    {
+        get => _cbtApp.TrainingStation;
+
+        private set
+        {
+            _cbtApp.TrainingStation = value;
+            string jsonString = JsonSerializer.Serialize(_cbtApp.TrainingStation);
+            HttpContextAccessor.HttpContext.Session.SetString("TrainingStation", jsonString);
+
+            // if (_cbtApp.TrainingStation !=null)
+            // {
+            //     TrainingStationCommand cmd = new(_cbtApp.TrainingStation);
+            //     _ = _mediator.SendAsync(cmd, default).Result;
+            // }
+            
+            if (Caller == "SessionToolbar")
+            {
+                // The Toolbar component changed the AppState Message property
+            }
+        }
+    }
+    
+    
+    
+    
+    
+    
+    private bool enabled = false;
+    public bool Enabled
+    {
+        get => enabled;
+        private set
+        {
+            enabled = value;
+        }
+    }
+
+    
+}

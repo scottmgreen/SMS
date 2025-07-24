@@ -1,0 +1,90 @@
+﻿@page "/instructionpage/"
+@using Microsoft.JSInterop
+@inject IJSRuntime _jsRuntime
+@inject NavigationManager _navManager
+@rendermode InteractiveServer
+<style>
+    body{
+        /* background-color: #b1bed2; */
+        background-image: url('/images/background_opening.jpg'); /* Specify the path to your image */
+        background-size: cover; /* Adjusts the size of the background image to cover the entire body */
+        background-repeat: no-repeat; /* Prevents the background image from repeating */
+        background-attachment: fixed; /* Fixes the background image when scrolling */
+    }
+
+    .heading-container {
+        position: fixed;
+        top: 20%;
+        left: 50%;
+        white-space: nowrap;
+        transform: translate(-50%, -50%);
+        text-align: center
+    }
+
+    .button-container {
+        position: fixed;
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    /* .custom-radzen-button {
+        background-color: #006AA9 !important;
+        width: 220px;
+        color: #ffffff !important;
+        height: 60px;
+        font-size: 18px;
+    } */
+
+    .cbt-button {
+        width: 320px; /* Adjusted width for a larger button */
+        height: 120px; /* Adjusted height for a taller button */
+        font-size: 18px; /* Adjust font size for larger text */
+        background-color: #006AA9 !important;
+        color: #ffffff !important;
+    }
+</style>
+
+<div class="heading-container">
+    <h3 style="font-size: 35px;font-weight:600">Please place the headset on and use the control <br /> on the headset cord to adjust the volume. <br /> </h3>
+    
+</div>
+<div class="button-container" style="@displaybutton">
+    <h3 style="font-size: 35px;font-weight:600">Touch the Continue button when you are ready.</h3><br />
+    <RadzenButton class="btn cbt-button" Click="NavigateToTraineeSetup" Text="CONTINUE" />
+</div>
+@code {
+    
+    private string displaybutton = "display:none";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Perform operations that involve the rendered DOM elements.
+            PlayAudio();
+            StateHasChanged(); // Request a re-render to update the UI.
+        }
+
+        // Call the base implementation of OnAfterRenderAsync
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+
+
+    private async Task PlayAudio()
+    {
+        await _jsRuntime.InvokeVoidAsync("playAudio", "./audio/AUD_SET_HEADPHONE_LEVELS.mp3");
+        await Task.Delay(7000);
+        displaybutton = "";
+        StateHasChanged();
+    }
+    private async Task NavigateToTraineeSetup()
+    {
+        //UpdateMessageButtonClicked();
+        _navManager.NavigateTo("/registration");
+
+    }
+}

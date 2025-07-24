@@ -1,0 +1,252 @@
+﻿@page "/realtime"
+@using CBT3_Domain.Enums
+@using Radzen
+@using Radzen.Blazor
+@using CBT3_Application.Interfaces
+@using CBT3_Application.Messaging.Queries
+@using CBT3_Domain.Common
+@using CBT3_Domain.Entities
+
+@inject DialogService _DialogService
+@inject IConfiguration _Configuration
+@inject IMediator _mediator
+<style>
+
+
+
+    .container {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        justify-content: center;
+        align-content: center;
+        width:stretch;
+        margin: 0 auto;
+    }
+
+    .box {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        /* height: 65px; */
+        height: 45px; 
+        width: 85px;
+        font-size: .75em;
+        position: relative;
+        border-width: 2px;
+        border-style: none;
+        }
+
+        .box.Running {
+            border-color: green; /* Running status border color */
+        }
+
+        .box.Stopped {
+            border-color: red; /* Idle status border color */
+        }
+
+        .pc-icon {
+            font-size: 32px;
+            color: #444;
+        }
+
+        .box.Running .pc-icon {
+            color: green;
+        }
+
+        .box.Stopped .pc-icon {
+            color: red;
+        }
+    
+        .status {
+        font-size: 0.75em;
+        color: white;
+        padding: 2px 5px;
+        border-radius: 5px;
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        font-weight: bold;
+        text-align: center;
+    }
+
+        .status.Running {
+            background-color: green;
+        }
+
+        .status.Stopped {
+            background-color: red;
+        }
+
+    .clickable {
+        cursor: pointer;
+    }
+</style>
+<div style="display: flex; align-items: center; justify-content: flex-end; margin-top: 10px;">
+    <!-- Status Box -->
+    <div style="width: 12px; height: 12px; border-radius: 3px; margin-right: 8px;
+                background-color: @(isUpdating ? "green" : "white");
+                transition: background-color 0.5s ease-out;">
+    </div>
+
+    <!-- Last Updated Text -->
+    <span style="font-size: 0.9em; color: gray;">
+        Last Updated at: @lastUpdated.ToString("hh:mm:ss tt")
+    </span>
+</div>
+<div style="width: 100%; height: 2px; background-color: black;"></div>
+<br />
+<h5>SBO Training</h5>
+<div style="width: 100%; height: 2px; background-color: black;"></div>
+<br />
+<div class="container">
+    
+    @foreach (var number in SBOLayout)
+    {
+        if (number !=null)
+        {
+            var stationDetails = StationDetails[number]; 
+
+            
+            <CBTTrainingStation HostName="@stationDetails.Item1"
+                                Status="@stationDetails.Item2"
+                                SessionID="@stationDetails.Item3"
+                                TraineeID="@stationDetails.Item4"
+                                CourseID="@stationDetails.Item5"
+                                CourseStartedAt="@stationDetails.Item6"
+                                CourseEndedAt="@stationDetails.Item7"
+                                OnClick="ShowDialog"  />
+        }
+        else
+        {
+            <div></div>
+        }
+    }
+</div>
+<br />
+<div style="width: 100%; height: 2px; background-color: black;"></div>
+<br />
+<h5>Remote Training</h5>
+<div style="width: 100%; height: 2px; background-color: black;"></div>
+<br />
+<div class="container">
+
+    @foreach (var number in RemoteLayout)
+    {
+        if (number != null)
+        {
+            var stationDetails = StationDetails[number];
+            <CBTTrainingStation HostName="@stationDetails.Item1"
+                                Status="@stationDetails.Item2"
+                                SessionID="@stationDetails.Item3"
+                                TraineeID="@stationDetails.Item4"
+                                CourseID="@stationDetails.Item5"
+                                CourseStartedAt="@stationDetails.Item6"
+                                CourseEndedAt="@stationDetails.Item7"
+                                OnClick="ShowDialog" />
+        }
+        else
+        {
+            <div></div>
+        }
+    }
+</div>
+@code {
+    private DateTime lastUpdated;
+    private bool isUpdating = false;
+
+    private Dictionary<string?, (string HostName, string Status, string SessionID, string TraineeID, string CourseID, string CourseStartedAt, string CourseEndedAt)> 
+    
+    StationDetails = new Dictionary<string?, (string, string, string, string, string, string, string)>();
+    
+    
+    
+    
+    private System.Threading.Timer _updateTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTrainingStations();
+
+        _updateTimer = new System.Threading.Timer(state => { InvokeAsync(LoadTrainingStations); }, null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(20));
+    }
+    private void MapBoxNumbersToTrainingStations()
+    {
+        foreach (var boxNumber in SBOLayout)
+        {
+            if (boxNumber != null && StationDetails.ContainsKey(boxNumber))
+            {
+                var station = StationDetails[boxNumber];
+                // Here you can map the HostName and Status to a UI element or handle the display as needed.
+                // For example, if you're displaying this data on a page, you could add this information to your model/view.
+            }
+            else
+            {
+                // Handle null values or missing data if necessary.
+            }
+        }
+    }
+    private async Task LoadTrainingStations()
+    {
+        GetTrainingStationsQuery query = new();
+        Result<List<TrainingStation>> trainingstations_result = await _mediator.SendAsync(query, default);
+
+        foreach (TrainingStation ts in trainingstations_result.Value)
+        {
+            // StationDetails[ts.HostName] = (ts.HostName, ts.Status, ts.SessionID,ts.TraineeID,ts.CourseID,ts.CourseStartedAt,ts.CourseEndedAt); 
+            StationDetails[ts.HostName] = (
+            ts.HostName,
+            ts.Status?.Value ?? "Unknown",
+            ts.SessionID?.Value ?? "N/A",
+            ts.TraineeID?.Value ?? "N/A",
+            ts.CourseID?.Value ?? "N/A",
+            ts.CourseStartedAt?.ToString("G") ?? "Not Started",
+            ts.CourseEndedAt?.ToString("G") ?? "Not Ended"
+        );
+        }
+
+        lastUpdated = DateTime.Now;  // Store last update time
+        isUpdating = true;
+        await InvokeAsync(() => StateHasChanged());
+        // Wait a short period (1 second) to show the green flash
+        //await Task.Delay(1000);
+
+        // Hold the green color for a few seconds (3 seconds)
+        await Task.Delay(2000);
+
+        // After holding, turn it red
+        isUpdating = false;
+        await InvokeAsync(() => StateHasChanged());
+
+        MapBoxNumbersToTrainingStations();
+        
+    }
+
+
+
+    private void ShowDialog(string number)
+    {
+        //_DialogService.Alert(number.ToString());
+
+        
+    }
+    private List<string?> RemoteLayout = new List<string?>
+    {
+        "PDXCBT17", "PDXCBT18", "PDXCBT19", "PDXCBT20"
+    };
+    private List<string?> SBOLayout = new List<string?>
+    {
+        "PDXCBT39", null, null, "PDXCBT40",
+        "PDXCBT38", "PDXCBT49", "PDXCBT54", "PDXCBT41",
+        "PDXCBT37", "PDXCBT50", "PDXCBT55", "PDXCBT42",
+        "PDXCBT36", "PDXCBT51", "PDXCBT56", "PDXCBT43",
+        "PDXCBT35", "PDXCBT52", "PDXCBT57", "PDXCBT44",
+        "PDXCBT34", "PDXCBT53", "PDXCBT58", "PDXCBT45",
+        "PDXCBT33", null, null, "PDXCBT46",
+        "PDXCBT32", null, null, "PDXCBT47",
+        "PDXCBT31", null, null, "PDXCBT48",
+        "P401848",null,null,null
+    };
+}
+
+

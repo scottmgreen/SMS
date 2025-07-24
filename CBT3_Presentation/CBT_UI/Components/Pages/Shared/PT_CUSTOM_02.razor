@@ -1,0 +1,188 @@
+﻿@page "/custom02"
+@using Radzen
+@using Microsoft.JSInterop
+@inject IJSRuntime _jsRuntime
+@inject DialogService _dialogService
+<style>
+    .phonetic {
+        
+        font-family: Arial, sans-serif;
+        background-color: #f0f0f0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr); /* 6 columns */
+        grid-template-rows: repeat(4, 100px); /* 4 rows */
+        gap: 10px;
+        padding: 20px;
+        border-radius: 5px;
+    }
+
+    .phonetic-button {
+        background-image: url('/images/empty_button.png'); /* Background image for buttons */
+        background-size: cover; /* Cover the entire button */
+        background-repeat: no-repeat;
+        background-position: center;
+
+        width: 100%;
+        
+        padding: 10px;
+        font-weight: 600;
+        color: white;
+        font-size: 18px;
+        height: 80px;
+        
+        border: solid;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+        
+
+    .grid-item {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 10px;
+        border-radius: 5px;
+    }
+
+    .custom02 {
+        background-image: url('/images/steelplate_background.jpg'); /* Specify the path to your image */
+        background-size: cover; /* Adjusts the size of the background image to cover the entire body */
+        background-repeat: no-repeat; /* Prevents the background image from repeating */
+        background-attachment: fixed; /* Fixes the background image when scrolling */
+        
+                
+        
+        margin: 10px auto;
+        width: 1200px;
+        height: 800px;
+        /* background-color: black; */
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: -20px 20px 30px rgba(0,0,0,0.3);
+    }
+
+    .continue-button {
+        width: 320px;
+        height: 120px;
+        font-size: 18px;
+        background-color: #006AA9 !important;
+        color: #ffffff !important;
+    }
+
+    .custom02-title {
+        margin: 30px auto;
+        padding: 10px;
+        font-size: 20pt;
+        width: 100%;
+        text-align: center;
+    }
+
+    .button-container {
+        position: fixed;
+        top: 80%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        white-space: nowrap;
+    }
+    
+</style>
+
+<div class="custom02 custom02-title">
+    <h3 style="color:yellow;font-weight:600">Phonetic Alphabet</h3>
+    <p style="color:yellow;font-weight:600">Select each of the terms</p>
+    <div class="grid-container">
+        @for (int i = 0; i < Alphabet.Length; i++)
+        {
+            int localIndex = i; // Local variable to capture current index
+            <div class="grid-item">
+
+                <RadzenButton class="phonetic-button" Click="@(() => PhoneticButtonClicked(localIndex))" Image="@buttonback">
+
+                    <span style="color:yellow;font-size:18px;font-weight:600" class="checkbox">@RenderCheckbox(localIndex)</span>
+                    &nbsp;&nbsp;&nbsp;@Alphabet[localIndex].ToUpper()
+                </RadzenButton>
+            </div>
+        }
+    </div>
+    <div class="button-container" style="@showhide">
+        <RadzenButton Style="color:yellow;font-weight:600" Text="CONTINUE" class="btn continue-button" Click="Finish" />
+    </div>
+</div>
+
+@code {
+    private string buttonback = "./images/empty_button.jpg";
+    private readonly string[] Alphabet = { "Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot",
+                                           "Golf", "Hotel", "India", "Juliet", "Kilo", "Lima",
+                                           "Mike", "November", "Oscar", "Papa", "Quebec", "Romeo",
+                                           "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu" };
+
+    private string showhide = "display:none";
+    private bool[] buttonClicked;
+
+    protected override void OnInitialized()
+    {
+        buttonClicked = new bool[Alphabet.Length];
+        Console.WriteLine($"buttonClicked array initialized with length: {buttonClicked.Length}");
+    }
+
+    private void PhoneticButtonClicked(int index)
+    {
+        if (index >= 0 && index < Alphabet.Length)
+        {
+            buttonClicked[index] = true;
+            _ = PlayAudio($"{Alphabet[index][0]}"); // Fire and forget the async method
+            CheckAllButtonsClicked();
+            StateHasChanged(); // Notify Blazor that state has changed
+        }
+        else
+        {
+            Console.WriteLine($"PhoneticButtonClicked: Index {index} is out of bounds");
+        }
+    }
+
+    private void CheckAllButtonsClicked()
+    {
+        bool allClicked = buttonClicked.All(clicked => clicked);
+        if (allClicked)
+        {
+            showhide = "";
+        }
+    }
+
+    private string RenderCheckbox(int index)
+    {
+        if (index >= 0 && index < buttonClicked.Length)
+        {
+            return buttonClicked[index] ? "✔" : "";
+        }
+        else
+        {
+            Console.WriteLine($"RenderCheckbox: Index {index} is out of bounds");
+            return "";
+        }
+    }
+
+    private async Task PlayAudio(string letter)
+    {
+        string filename = $"./audio/custom_phonetic_{letter}.mp3";
+        await _jsRuntime.InvokeVoidAsync("playAudio", filename);
+        await Task.Delay(7000); // Simulate audio playback
+        StateHasChanged();
+    }
+
+    private void Finish()
+    {
+        _dialogService.Close(true);
+    }
+}

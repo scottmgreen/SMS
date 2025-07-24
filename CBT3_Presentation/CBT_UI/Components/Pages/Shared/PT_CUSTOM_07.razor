@@ -1,0 +1,433 @@
+﻿@page "/custom07"
+@using Radzen
+@using Blazored.Video
+@using Blazored.Video.Support
+@inject DialogService _dialogService
+<style>
+    .custom07 {
+        margin: 10px auto;
+        /*width: 75%;*/
+        width: 1200px;
+        height: 800px;
+        background-image: url('/images/aircraft_ready_to_move_background.png');
+        background-size: cover; /* Alternatively, use 'background-size: 100% 100%;' for exact stretching */
+        background-repeat: no-repeat;
+        background-position: center;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: -20px 20px 30px rgba(0,0,0,0.3);
+    }
+
+    .video {
+        position: fixed;
+        top: 5%;
+        margin: 20px auto;
+        /*  width: 100%; */
+        height: 800px;
+        background-color: black;
+        border-radius: 10px;
+        padding: 15px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: -20px 20px 30px rgba(0,0,0,0.3);
+        /* width: 1200px; */
+    }
+
+    .cbt-button {
+        width: 320px; /* Adjusted width for a larger button */
+        height: 120px; /* Adjusted height for a taller button */
+        font-size: 18px; /* Adjust font size for larger text */
+        background-color: #006AA9 !important;
+        color: #ffffff !important;
+    }
+    /* .cbt-button:disabled
+    {
+        background-color:gray !important;
+        cursor:not-allowed;
+    } */
+
+    .custom07-title {
+        margin: 30px auto;
+        padding: 10px;
+        font-size: 20pt;
+        width: 100%;
+        text-align: center;
+    }
+
+    .centered-button-container {
+        display: inline-block;
+        text-align: center;
+        position: fixed;
+        top: 80%;
+        left: 50%;
+        width: 900px;
+        transform: translate(-50%, -50%);
+    }
+
+    .button-container {
+        position: fixed;
+        top: 80%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        white-space: nowrap;
+    }
+    .panel {
+        display: grid;
+        grid-template-rows: repeat(6, 1fr);
+        width: 320px;
+        margin-left: 80px; /* Adjust this value to move the panel more or less to the right */
+        gap: 20px; /* Add gap between buttons */
+    }
+
+        .panel button {
+            width: 320px; /* Adjusted width for a larger button */
+            height: 80px; /* Adjusted height for a taller button */
+            font-size: 18px; /* Adjust font size for larger text */
+            background-color: #006AA9 !important;
+            color: #ffffff !important;
+            border: none;
+            cursor: pointer;
+            padding: 30px; /* Add padding inside each button */
+            box-sizing: border-box; /* Ensure padding does not increase button size */
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2); /* Create a 3D shadow effect */
+            border-radius: 5px; /* Rounded corners for a softer look */
+            transition: transform 0.1s, box-shadow 0.1s; /* Smooth transition for hover effect */
+            background-image: url('/images/empty_button.png'); /* Background image for buttons */
+            background-size: cover; /* Cover the entire button */
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+            .panel button .checkbox {
+                position: relative;
+               /*  top: 50%; */
+                /* right: 10px; /* Adjust horizontal position */ */
+                /* transform: translateY(-50%); */
+                font-size: 50px; /* Font size for checkbox */
+                color: yellow; /* Yellow color for checkbox */
+                
+            }
+
+            .panel button.clicked .checkbox {
+                display: inline-block; /* Show the checkbox when button is clicked */
+            }
+
+            .panel button:active {
+                transform: translateY(4px); /* Simulate button press */
+                box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2); /* Reduce shadow on press */
+            }
+
+    
+</style>
+<div class="custom07 custom07-title">
+    <h3 style="color:yellow;font-weight:600">Aircraft Ready to Move</h3>
+    <p style="color:yellow;font-weight:600">Select each item to learn more.</p>
+    <div class="panel">
+        <button @onclick="() => OnButtonClick(0)" disabled="@(buttonClicked[0])">
+            <span class="checkbox">@RenderCheckbox(0)&nbsp;&nbsp;&nbsp;</span>
+            SUPPORT VEHICLES
+        </button>
+        <button @onclick="() => OnButtonClick(1)" disabled="@(buttonClicked[1])">
+            <span class="checkbox">@RenderCheckbox(1)&nbsp;&nbsp;&nbsp;</span>
+            FLASHING LIGHTS
+        </button>
+        <button @onclick="() => OnButtonClick(2)" disabled="@(buttonClicked[2])">
+            <span class="checkbox">@RenderCheckbox(2)&nbsp;&nbsp;&nbsp;</span>
+            WHEEL CHOKES
+        </button>
+        <button @onclick="() => OnButtonClick(3)" disabled="@(buttonClicked[3])">
+            <span class="checkbox">@RenderCheckbox(3)&nbsp;&nbsp;&nbsp;</span>
+            PUSHBACK TUGS
+        </button>
+        <button @onclick="() => OnButtonClick(4)" disabled="@(buttonClicked[4])">
+            <span class="checkbox">@RenderCheckbox(4)&nbsp;&nbsp;&nbsp;</span>
+            MARSHALLERS
+        </button>
+        <button @onclick="() => OnButtonClick(5)" disabled="@(buttonClicked[5])">
+            <span class="checkbox">@RenderCheckbox(5)&nbsp;&nbsp;&nbsp;</span>
+            LOADING BRIDGE
+        </button>
+    </div>
+    <div class="button-container" style="@showhide">
+        <RadzenButton Text="CONTINUE" class="btn cbt-button" Click="() => Finish()" />
+    </div>
+
+    <div class="video" style="@video0showhide">
+    <BlazoredVideo @ref="video0"
+                       Ended=@(s=>OnEndVideo0(s))
+                       Pause=@(p=>OnPauseVideo0(p))
+                   VideoEventOptions="options"
+                       style="width:1200px;height:600px "
+                   controls="controls">
+        <source src="./video/custom_aircraft_ready_to_move_support_vehicles.mp4" type="video/mp4" />
+    </BlazoredVideo>
+
+</div>
+<div class="video" style="@video1showhide">
+    <BlazoredVideo @ref="video1"
+                       Ended=@(s=>OnEndVideo1(s))
+                       Pause=@(p=>OnPauseVideo1(p))
+                   VideoEventOptions="options"
+                       style="width:1200px;height:600px "
+                   controls="controls">
+        <source src="./video/custom_aircraft_ready_to_move_flashing_lights.mp4" type="video/mp4" />
+    </BlazoredVideo>
+</div>
+<div class="video" style="@video2showhide">
+    <BlazoredVideo @ref="video2"
+                       Ended=@(s=>OnEndVideo2(s))
+                       Pause=@(p=>OnPauseVideo2(p))
+                   VideoEventOptions="options"
+                       style="width:1200px;height:600px "
+                   controls="controls">
+        <source src="./video/custom_aircraft_ready_to_move_wheel_chocks.mp4" type="video/mp4" />
+    </BlazoredVideo>
+
+</div>
+<div class="video" style="@video3showhide">
+    <BlazoredVideo @ref="video3"
+                       Ended=@(s=>OnEndVideo3(s))
+                       Pause=@(p=>OnPauseVideo3(p))
+                   VideoEventOptions="options"
+                       style="width:1200px;height:600px "
+                   controls="controls">
+        <source src="./video/custom_aircraft_ready_to_move_tug.mp4" type="video/mp4" />
+    </BlazoredVideo>
+</div>
+    <div class="video" style="@video4showhide">
+    <BlazoredVideo @ref="video4"
+                       Ended=@(s=>OnEndVideo4(s))
+                       Pause=@(p=>OnPauseVideo4(p))
+                   VideoEventOptions="options"
+                       style="width:1200px;height:600px "
+                   controls="controls">
+        <source src="./video/custom_aircraft_ready_to_move_marshallers.mp4" type="video/mp4" />
+    </BlazoredVideo>
+
+</div>
+<div class="video" style="@video5showhide">
+    <BlazoredVideo @ref="video5"
+                   Ended=@(s=>OnEndVideo5(s))
+                       Pause=@(p=>OnPauseVideo5(p))
+                   VideoEventOptions="options"
+                       style="width:1200px;height:600px "
+                   controls="controls">
+        <source src="./video/custom_aircraft_ready_to_move_bridge.mp4" type="video/mp4" />
+    </BlazoredVideo>
+</div>
+</div>
+@code {
+    Dictionary<VideoEvents, VideoStateOptions> options = new Dictionary<VideoEvents, VideoStateOptions>();
+    BlazoredVideo video0;
+    BlazoredVideo video1;
+    BlazoredVideo video2;
+    BlazoredVideo video3;
+    BlazoredVideo video4;
+    BlazoredVideo video5;
+
+    private string showhide = "display:none";
+    private string video0showhide = "display:none";
+    private string video1showhide = "display:none";
+    private string video2showhide = "display:none";
+    private string video3showhide = "display:none";
+    private string video4showhide = "display:none";
+    private string video5showhide = "display:none";
+
+    private bool allButtonsClicked = false;
+    private bool[] buttonClicked = new bool[6];
+    private void OnButtonClick(int buttonIndex)
+    {
+        buttonClicked[buttonIndex] = true;
+        CheckAllButtonsClicked();
+        StateHasChanged(); // Notify Blazor that state has changed
+
+        switch (buttonIndex)
+        {
+            case 0:
+                video0showhide = "";
+                video1showhide = "display:none";
+                video2showhide = "display:none";
+                video3showhide = "display:none";
+                video4showhide = "display:none";
+                video5showhide = "display:none";
+                video0.StartPlayback();
+
+
+                break;
+            case 1:
+                video0showhide = "display:none";
+                video1showhide = "";
+                video2showhide = "display:none";
+                video3showhide = "display:none";
+                video4showhide = "display:none";
+                video5showhide = "display:none";
+                video1.StartPlayback();
+                break;
+            case 2:
+                video0showhide = "display:none";
+                video1showhide = "display:none";
+                video2showhide = "";
+                video3showhide = "display:none";
+                video4showhide = "display:none";
+                video5showhide = "display:none";
+                video2.StartPlayback();
+                break;
+            case 3:
+                video0showhide = "display:none";
+                video1showhide = "display:none";
+                video2showhide = "display:none";
+                video3showhide = "";
+                video4showhide = "display:none";
+                video5showhide = "display:none";
+                video3.StartPlayback();
+                break;
+            case 4:
+                video0showhide = "display:none";
+                video1showhide = "display:none";
+                video2showhide = "display:none";
+                video3showhide = "display:none";
+                video4showhide = "";
+                video5showhide = "display:none";
+                video4.StartPlayback();
+                break;
+            case 5:
+                video0showhide = "display:none";
+                video1showhide = "display:none";
+                video2showhide = "display:none";
+                video3showhide = "display:none";
+                video4showhide = "display:none";
+                video5showhide = "";
+                video5.StartPlayback();
+                break;
+
+            default:
+                Console.WriteLine("Invalid option");
+                // Code to handle invalid options
+                break;
+        }
+    }
+    private void CheckAllButtonsClicked()
+    {
+        allButtonsClicked = buttonClicked.All(clicked => clicked);
+        if (allButtonsClicked)
+        {
+            showhide = "";
+        }
+    }
+    private string RenderCheckbox(int index)
+    {
+        return buttonClicked[index] ? "✔" : "";
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var pausedOption = new VideoStateOptions() { Paused = true };
+            options[VideoEvents.CanPlay] = pausedOption;
+            options[VideoEvents.Ended] = pausedOption;
+            options[VideoEvents.Pause] = pausedOption;
+            options[VideoEvents.Play] = pausedOption;
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions
+            // For example, log the exception or display an error message
+        }
+        await base.OnInitializedAsync();
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+
+        }
+    }
+
+    private void Finish()
+    {
+        _dialogService.Close(true);
+
+    }
+
+    private void OnEndVideo0(VideoState state)
+    {
+        video0showhide = "display:none";
+        StateHasChanged();
+        //_dialogService.Close(true);
+    }
+    private void OnPauseVideo0(VideoState state)
+    {
+        video0showhide = "display:none";
+        StateHasChanged();
+        //_dialogService.Close(true);
+    }
+    private void OnEndVideo1(VideoState state)
+    {
+        video1showhide = "display:none";
+        StateHasChanged();
+        //_dialogService.Close(true);
+    }
+    private void OnPauseVideo1(VideoState state)
+    {
+        video1showhide = "display:none";
+        StateHasChanged();
+        //_dialogService.Close(true);
+    }
+    private void OnEndVideo2(VideoState state)
+    {
+        video2showhide = "display:none";
+        StateHasChanged();
+        //_dialogService.Close(true);
+    }
+    private void OnPauseVideo2(VideoState state)
+    {
+        video2showhide = "display:none";
+        StateHasChanged();
+        //_dialogService.Close(true);
+    }
+    private void OnEndVideo3(VideoState state)
+    {
+        video3showhide = "display:none";
+        StateHasChanged();
+        //_dialogService.Close(true);
+    }
+    private void OnPauseVideo3(VideoState state)
+    {
+        video3showhide = "display:none";
+        StateHasChanged();
+        //_dialogService.Close(true);
+    }
+    private void OnEndVideo4(VideoState state)
+    {
+        video4showhide = "display:none";
+        StateHasChanged();
+        //_dialogService.Close(true);
+    }
+    private void OnPauseVideo4(VideoState state)
+    {
+        video4showhide = "display:none";
+        StateHasChanged();
+        //_dialogService.Close(true);
+    }
+    private void OnEndVideo5(VideoState state)
+    {
+        video5showhide = "display:none";
+        StateHasChanged();
+        //_dialogService.Close(true);
+    }
+    private void OnPauseVideo5(VideoState state)
+    {
+        video5showhide = "display:none";
+        StateHasChanged();
+        //_dialogService.Close(true);
+    }
+
+    void OnEvent(VideoState videoState)
+    {
+        
+        /*  id = videoState.Id; */
+        //StateHasChanged();
+    }
+}

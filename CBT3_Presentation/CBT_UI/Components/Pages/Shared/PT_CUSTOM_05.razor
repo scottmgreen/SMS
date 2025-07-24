@@ -1,0 +1,228 @@
+﻿@page "/custom05"
+@using Radzen
+@using Blazored.Video
+@using Blazored.Video.Support
+@inject DialogService _dialogService
+<style>
+    .fod {
+        height: 500px;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center; 
+        background-color: black;
+    }
+
+    .grid-container {
+        display: inline-grid; 
+        /* grid-template-rows: 1fr 1fr;
+        grid-template-columns: 1fr 1fr 1fr; */
+        grid-template-columns: repeat(3, 200px); /* Each column has a fixed width of 200px */
+        gap: 10px;
+        /*  width: 60%;
+        max-width: 600px; */ 
+    }
+
+    .grid-item button {
+        padding: 10px 20px;
+        border: none;
+        cursor: pointer;
+    }
+
+    .grid-item:hover {
+        background-color: #d0d0d0;
+    }
+    .grid-item {
+        position: relative;
+        /* width: 270px; */
+        position: relative;
+        width: 200px; /* Fixed width */
+        height: 200px; /* Fixed height */
+        background-color: black;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #ccc;
+        transition: background-color 0.3s;
+        overflow: hidden; /* Ensure the image doesn't overflow the cell */
+    }
+
+    .grid-image {
+        width: 100%;
+        height: auto;
+        display: block;
+        max-height: 100%; /* Ensure the image doesn't exceed the cell's height */
+    }
+    .custom05 {
+        margin: 10px auto;
+        /*width: 75%;*/
+        
+        width: 1200px;
+        height:850px;
+        background-color: black;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: -20px 20px 30px rgba(0,0,0,0.3);
+    }
+
+    .submit-button {
+        width: 320px; /* Adjusted width for a larger button */
+        height: 120px; /* Adjusted height for a taller button */
+        font-size: 18px; /* Adjust font size for larger text */
+        background-color: #006AA9 !important;
+        color: #ffffff !important;
+    }
+
+    .custom05-title {
+        margin: 30px auto;
+        padding: 10px;
+        font-size: 20pt;
+        width: 100%;
+        text-align: center;
+    }
+
+    .buttons-container {
+        display: inline-block;
+        text-align: center;
+        position: fixed;
+        top: 80%;
+        left: 50%;
+        width: 900px;
+        transform: translate(-50%, -50%);
+    }
+
+    .video {
+        margin: 5px auto;
+        width: 100%;
+        height: 800px;
+        background-color: black;
+        border-radius: 10px;
+        padding: 15px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        /* box-shadow: -20px 20px 30px rgba(0,0,0,0.3); */
+        /* width: 1200px; */
+    }
+</style>
+<div class="custom05 custom05-title" style="@showhide">
+    <h3 style="color:yellow;font-weight:600">Which of these items are considered Foreign Object Debris (FOD)?</h3>
+    <p style="color:yellow;font-weight:600">Select all that apply</p>
+    <div class="fod">
+        <div class="grid-container">
+            @for (int i = 0; i < TotalRows; i++)
+            {
+                @for (int j = 0; j < TotalColumns; j++)
+                {
+                    int index = i * TotalColumns + j;
+                    <div class="grid-item"
+                         style="background-color:@(Checkmarks[index] ? "#d0d0d0" : "black");"
+                         @onclick="() => ToggleCheckmark(index)" >
+                        @* <button>@($"Button {index + 1}")</button> *@
+                        <img src="@ImageUrls[index]" alt="Image @index" class="grid-image" />
+                        @if (Checkmarks[index])
+                        {
+                            <span class="checkmark">✔</span>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <div class="buttons-container" style="@showhide">
+        <RadzenButton Text="SUBMIT" class="btn submit-button" Click="() => Submit()" />
+    </div>
+    
+</div>
+<div class="video" style="@videoshowhide">
+    <BlazoredVideo @ref="video1"
+                   Ended=@(s=>OnEnd(s))
+                   Pause=@(p=>OnPause(p))
+                   VideoEventOptions="options"
+                   class="w-100"
+                   style="width:1200px;height:600px "
+                   controls="controls">
+        <source src="/video/fod_review.mp4" type="video/mp4" />
+    </BlazoredVideo>
+
+</div>
+@code {
+    private const int TotalRows = 2;
+    private const int TotalColumns = 3;
+    private bool[] Checkmarks = new bool[TotalRows * TotalColumns];
+    private string[] ImageUrls = new string[]
+    {
+        "/images/fod_newspaper.png",
+        "/images/fod_paper_bag.png",
+        "/images/fod_plastic_bottle.png",
+        "/images/fod_reflector_parts.png",
+        "/images/fod_screw.png",
+        "/images/fod_wrench.png"
+    };
+
+    private string showhide ="";
+    private string videoshowhide = "display:none";
+    
+
+    Dictionary<VideoEvents, VideoStateOptions> options = new Dictionary<VideoEvents, VideoStateOptions>();
+    BlazoredVideo video1;
+
+    private void ToggleCheckmark(int index)
+    {
+        Checkmarks[index] = !Checkmarks[index];
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var pausedOption = new VideoStateOptions() { Paused = true };
+            options[VideoEvents.CanPlay] = pausedOption;
+            options[VideoEvents.Ended] = pausedOption;
+            options[VideoEvents.Pause] = pausedOption;
+            options[VideoEvents.Play] = pausedOption;
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions
+            // For example, log the exception or display an error message
+        }
+        await base.OnInitializedAsync();
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+
+        }
+    }
+    private void Submit()
+    {
+        showhide = "display:none";
+        videoshowhide = "";
+        video1.StartPlayback();
+
+
+        //_dialogService.Close(true);
+
+    }
+    private void OnEnd(VideoState state)
+    {
+        _dialogService.Close(true);
+    }
+    private void OnPause(VideoState state)
+    {
+        _dialogService.Close(true);
+    }
+    void OnEvent(VideoState videoState)
+    {
+        if (videoState.Ended)
+        {
+            _dialogService.Close(true);
+        }
+
+        /*  id = videoState.Id; */
+        StateHasChanged();
+    }
+}
