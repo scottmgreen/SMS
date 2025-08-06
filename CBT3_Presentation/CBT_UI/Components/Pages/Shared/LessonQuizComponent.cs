@@ -1,47 +1,77 @@
-﻿using System.Net.NetworkInformation;
+﻿// -----------------------------------------------------------------------------
+// <copyright file="LessonQuizComponent.cs" company="">
+//     Author: Scott Green
+//     Date: 2025-07-24
+//     Summary: Blazor component for handling lesson quizzes, answer submission, and video feedback.
+// </copyright>
+// -----------------------------------------------------------------------------
 
+using System.Net.NetworkInformation;
 using CBT_UI.Components.Pages.Shared;
-
 using CBT3_Application.Interfaces;
 using CBT3_Application.Messaging;
 using CBT3_Application.Services;
-
 using CBT3_Domain.Common;
 using CBT3_Domain.Entities;
 using CBT3_Domain.Enums;
 using CBT3_Domain.Errors;
 using CBT3_Domain.Events.DomainEvents;
 using CBT3_Domain.Interfaces;
-
 using Microsoft.AspNetCore.Components;
-
 using Radzen;
 
 namespace CBT3_UI.Components.Shared
 {
-    public partial class LessonQuizComponent : ComponentBase , IDisposable
+    /// <summary>
+    /// Blazor component for handling lesson quizzes, answer submission, and video feedback.
+    /// </summary>
+    public partial class LessonQuizComponent : ComponentBase, IDisposable
     {
+        /// <summary>
+        /// Mediator for sending commands and queries.
+        /// </summary>
         [Inject]
-        IMediator _mediator { get; set; }   
+        IMediator _mediator { get; set; }
 
+        /// <summary>
+        /// Messenger service for notifications.
+        /// </summary>
         [Inject]
-        IMessenger _messenger { get; set; } 
+        IMessenger _messenger { get; set; }
 
+        /// <summary>
+        /// System service for file and system operations.
+        /// </summary>
         [Inject]
         SystemService _systemService { get; set; }
 
+        /// <summary>
+        /// Dialog service for showing dialogs.
+        /// </summary>
         [Inject]
         DialogService _dialogService { get; set; }
 
+        /// <summary>
+        /// Lesson quiz service for quiz logic.
+        /// </summary>
         [Inject]
         LessonQuizService _lessonQuizService { get; set; }
 
+        /// <summary>
+        /// The lesson quiz to display.
+        /// </summary>
         [Parameter]
         public LessonQuiz LessonQuiz { get; set; }
 
+        /// <summary>
+        /// The trainee taking the quiz.
+        /// </summary>
         [Parameter]
         public Trainee Trainee { get; set; }
 
+        /// <summary>
+        /// The course ID for the quiz.
+        /// </summary>
         [Parameter]
         public CourseID CourseID { get; set; }
 
@@ -107,6 +137,11 @@ namespace CBT3_UI.Components.Shared
             await InvokeAsync(StateHasChanged); // Ensure the UI updates with the new question
         }
 
+        /// <summary>
+        /// Submits a selected answer for the current question.
+        /// </summary>
+        /// <param name="selectedAnswer">The selected answer.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
         public async Task SubmitAnswer(Answer selectedAnswer)
         {
             try
@@ -141,6 +176,7 @@ namespace CBT3_UI.Components.Shared
                         if (fileExists)
                         {
                             string fullfilename = $"{basePath}{filename}#t={jumpback.JumpBackStart},{jumpback.JumpBackEnd}";
+
                             await ShowVideo(fullfilename);
                         }
                         else
@@ -161,6 +197,11 @@ namespace CBT3_UI.Components.Shared
                 Console.WriteLine($"Error in SubmitAnswer: {ex.Message}");
             }
         }
+        /// <summary>
+        /// Submits multiple selected answers for the current question.
+        /// </summary>
+        /// <param name="providedAnswers">The list of provided answers.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
         public async Task SubmitAnswers(List<Answer> providedAnswers)
         {
             try
@@ -172,15 +213,13 @@ namespace CBT3_UI.Components.Shared
                 var selectedAnswers = providedAnswers.Where(a => a.IsSelected).ToList();
                 if (!selectedAnswers.Any())
                 {
-                    MarkupString alertmessage = (MarkupString)"";
+                    MarkupString alertmessage = (MarkupString)""; 
                     await _dialogService.Alert("", "Please select an answer before submitting", ao);
                     return;
                 }
                 bool isCorrect = selectedAnswers.All(a => a.IsCorrect ?? false);
                 _questionAttemptCount = isCorrect ? 0 : _questionAttemptCount + 1;
                
-                await InvokeAsync(StateHasChanged);
-
 
                 SubmitAnswersCommand cmd = new(selectedAnswers);
                 var result = await _mediator.SendAsync(cmd, default);
@@ -203,6 +242,7 @@ namespace CBT3_UI.Components.Shared
                         if (fileExists)
                         {
                             string fullfilename = $"{basePath}{filename}#t={jumpback.JumpBackStart},{jumpback.JumpBackEnd}";
+
                             await ShowVideo(fullfilename);
                         }
                         else
@@ -228,13 +268,18 @@ namespace CBT3_UI.Components.Shared
         //    bool fileExists = _systemService.IsFileExists(filePath).Result.IsSuccess;
         //    return fileExists;
         //}
-        
 
+
+        /// <summary>
+        /// Shows a video in a dialog.
+        /// </summary>
+        /// <param name="filename">The filename of the video.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
         public async Task<Result<bool>> ShowVideo(string filename)
         {
             string fileName = filename;
 
-            bool dialog = await Task.Run(() => _dialogService.OpenAsync<VideoComponent>($"Video",
+            bool dialog = await Task.Run(() => _dialogService.OpenAsync<VideoComponent>("Video",
                 new Dictionary<string, object>() { { "FileName", fileName } },
                 new DialogOptions() { Width = "1300px", Height = "1000px", Resizable = false, Draggable = false, ShowClose = true, ShowTitle = false, CssClass = "radzen-dialog" }));
 
@@ -249,16 +294,26 @@ namespace CBT3_UI.Components.Shared
             }
         }
 
+        /// <summary>
+        /// Finishes the quiz and closes the dialog.
+        /// </summary>
         protected void Finish()
         {
             _dialogService.Close(true);
         }
 
+        /// <summary>
+        /// Restarts the quiz by resetting the score.
+        /// </summary>
         protected void RestartQuiz()
         {
             Score = 0;
         }
 
+        /// <summary>
+        /// Handles the event fired by child components.
+        /// </summary>
+        /// <param name="answer">The answer object from the child component.</param>
         public void ChildFiredEvent(Answer answer)
         {
             _parentAnswer = answer;
@@ -283,6 +338,7 @@ namespace CBT3_UI.Components.Shared
              <br>
         </div>";
 
+
             
             var dialog = await _dialogService.Alert("", dialogMessage, _confirmOptions);
         }
@@ -290,6 +346,9 @@ namespace CBT3_UI.Components.Shared
 
 
         private bool disposedValue = false;
+        /// <summary>
+        /// Disposes the component, releasing resources.
+        /// </summary>
         public void Dispose()
         {
             Dispose(true);

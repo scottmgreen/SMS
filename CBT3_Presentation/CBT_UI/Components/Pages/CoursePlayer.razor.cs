@@ -1,4 +1,12 @@
-﻿using Blazored.Video.Support;
+﻿// -----------------------------------------------------------------------------
+// <copyright file="CoursePlayer.razor.cs" company="">
+//     Author: Scott Green
+//     Date: 2025-07-24
+//     Summary: Blazor component for playing courses, handling video, quizzes, and navigation.
+// </copyright>
+// -----------------------------------------------------------------------------
+
+using Blazored.Video.Support;
 
 using CBT_UI.Components.Pages.Shared;
 
@@ -22,13 +30,16 @@ using Microsoft.AspNetCore.Components;
 
 using Radzen;
 
-
-
-
 namespace CBT_UI.Components.Pages;
 
+/// <summary>
+/// Blazor component for playing courses, handling video, quizzes, and navigation.
+/// </summary>
 public partial class CoursePlayer :ComponentBase
 {
+    /// <summary>
+    /// System service for file and system operations.
+    /// </summary>
     [Inject]
     protected SystemService _systemService { get; set; }
     
@@ -418,7 +429,7 @@ public partial class CoursePlayer :ComponentBase
             HideContinueButton();
             StateHasChanged();
             _videoFileName = $"./video/{lessonpage.VideoURL}";
-            _ = await ShowVideo(_videoFileName);
+            _= await ShowVideo(_videoFileName);
         }
 
         // Handle Course Fail logic

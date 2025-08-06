@@ -1,4 +1,12 @@
-﻿using System;
+﻿// -----------------------------------------------------------------------------
+// <copyright file="TrainingRecord.cs" company="">
+//     Author: Scott Green
+//     Date: 2025-07-24
+//     Summary: Represents a training record for a trainee, including course and audit details.
+// </copyright>
+// -----------------------------------------------------------------------------
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
@@ -9,6 +17,10 @@ using System.Xml.Linq;
 using System.Xml;
 
 namespace CBT3_Domain.Entities;
+
+/// <summary>
+/// Represents a training record for a trainee, including course and audit details.
+/// </summary>
 public class TrainingRecord : IRecord
 {
 
