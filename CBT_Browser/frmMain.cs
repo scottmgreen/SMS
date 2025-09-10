@@ -99,7 +99,12 @@ public partial class frmMain : Form
         }
     }
 
-    // Method that triggers when all labels have been clicked at least once
+    // Remove this line from AllLabelsClickedAsync:
+    // using Microsoft.Web.WebView2.Core; // Add this using directive at the top of the file
+
+    // The correct usage is to have the using directive at the top of the file, not inside a method.
+    // The following code block shows the corrected AllLabelsClickedAsync method:
+
     private async Task AllLabelsClickedAsync()
     {
         List<CoreWebView2Cookie> cookies = await this.cbtWebView.CoreWebView2.CookieManager.GetCookiesAsync("https://localhost:7230");

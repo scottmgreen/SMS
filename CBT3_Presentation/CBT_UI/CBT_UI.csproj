@@ -10,7 +10,7 @@
 		<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.5" />
 		<PackageReference Include="Microsoft.AspNetCore.SignalR.Client.Core" Version="8.0.5" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.0" />
-		<PackageReference Include="Radzen.Blazor" Version="4.30.0" />
+		<PackageReference Include="Radzen.Blazor" Version="7.3.3" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\..\CBT3_Application\CBT3_Application.csproj" />
