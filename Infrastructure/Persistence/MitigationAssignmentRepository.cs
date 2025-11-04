@@ -46,15 +46,18 @@ public sealed class MitigationAssignmentRepository : BaseRepository<MitigationAs
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
-            var outputParam = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
-            cmd.Parameters.Add(outputParam);
+            var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            var newCode = new SqlParameter("@pNewMitigationAssignmentCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
+            cmd.Parameters.Add(newID);
+            cmd.Parameters.Add(newCode);
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            int newId = (int)outputParam.Value;
-            MitigationAssignmentID mitigationAssignmentId = new(newId.ToString());
+            int newIdValue = (int)newID.Value;
+            string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
+            MitigationAssignmentID mitigationAssignmentId = new (newCodeValue);
 
             return await GetMitigationAssignmentByIdAsync(mitigationAssignmentId, ct).ConfigureAwait(false);
         }
@@ -82,7 +85,7 @@ public sealed class MitigationAssignmentRepository : BaseRepository<MitigationAs
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, Convert.ToInt32(id.Value)));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
 
             MitigationAssignment? response = null;
 
@@ -163,7 +166,7 @@ public sealed class MitigationAssignmentRepository : BaseRepository<MitigationAs
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, Convert.ToInt32(mitigationAssignment.Id.Value)));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, mitigationAssignment.Id.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignmentCode, mitigationAssignment.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignmentMitigationCode, mitigationAssignment.MitigationCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignmentDepartmentCode, mitigationAssignment.DepartmentCode));
@@ -200,7 +203,7 @@ public sealed class MitigationAssignmentRepository : BaseRepository<MitigationAs
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, Convert.ToInt32(id.Value)));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId,id.Value));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

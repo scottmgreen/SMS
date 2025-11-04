@@ -47,7 +47,7 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
 
             // Add all parameters - REQUIRED ReportID first
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetCode, airportSharedDataset.Code));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetReportID, airportSharedDataset.ReportID));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetReportCode, airportSharedDataset.ReportID));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetHazardCode, airportSharedDataset.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmPrivateNarrative, airportSharedDataset.PrivateNarrative));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSharedNarrative, airportSharedDataset.SharedNarrative));
@@ -83,15 +83,18 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
-            var outputParam = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
-            cmd.Parameters.Add(outputParam);
+            var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            var newCode = new SqlParameter("@pNewAirportSharedDatasetCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
+            cmd.Parameters.Add(newID);
+            cmd.Parameters.Add(newCode);
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            int newId = (int)outputParam.Value;
-            AirportSharedDatasetID datasetId = new(newId.ToString());
+            int newIdValue = (int)newID.Value;
+            string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
+            AirportSharedDatasetID datasetId = new (newCodeValue);
 
             return await GetAirportSharedDatasetByIdAsync(datasetId, ct).ConfigureAwait(false);
         }
@@ -119,7 +122,7 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetCode, id.Value.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetId, id.Value.ToString()));
 
             AirportSharedDataset? response = null;
 
@@ -207,9 +210,9 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
             };
 
             // Add all parameters for update
-            //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, Convert.ToInt32(airportSharedDataset.Id.Value)));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, airportSharedDataset.Id.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetCode, airportSharedDataset.Code));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetReportID, Convert.ToInt32(airportSharedDataset.ReportID)));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetReportCode, airportSharedDataset.ReportID));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetHazardCode, airportSharedDataset.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmPrivateNarrative, airportSharedDataset.PrivateNarrative));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSharedNarrative, airportSharedDataset.SharedNarrative));
@@ -275,7 +278,7 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, Convert.ToInt32(id.Value)));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

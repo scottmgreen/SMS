@@ -51,14 +51,14 @@ public static class ParameterNames
     /// <summary>
     /// Airport Shared Dataset parameters
     /// </summary>
-    private static readonly Lazy<string> _pmAirportSharedDatasetId = new Lazy<string>(() => "@pAirportSharedDatasetID");
+    private static readonly Lazy<string> _pmAirportSharedDatasetId = new Lazy<string>(() => "@pID");
     public static string pmAirportSharedDatasetId => _pmAirportSharedDatasetId.Value;
 
     private static readonly Lazy<string> _pmAirportSharedDatasetCode = new Lazy<string>(() => "@pCode");
     public static string pmAirportSharedDatasetCode => _pmAirportSharedDatasetCode.Value;
 
-    private static readonly Lazy<string> _pmAirportSharedDatasetReportID = new Lazy<string>(() => "@pReportID");
-    public static string pmAirportSharedDatasetReportID => _pmAirportSharedDatasetReportID.Value;
+    private static readonly Lazy<string> _pmAirportSharedDatasetReportCode = new Lazy<string>(() => "@pReportCode");
+    public static string pmAirportSharedDatasetReportCode => _pmAirportSharedDatasetReportCode.Value;
 
     private static readonly Lazy<string> _pmAirportSharedDatasetHazardCode = new Lazy<string>(() => "@pHazardCode");
     public static string pmAirportSharedDatasetHazardCode => _pmAirportSharedDatasetHazardCode.Value;

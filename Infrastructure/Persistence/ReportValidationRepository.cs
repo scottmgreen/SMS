@@ -48,15 +48,18 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
-            var outputParam = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
-            cmd.Parameters.Add(outputParam);
+            var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            var newCode = new SqlParameter("@pNewReportValidationCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
+            cmd.Parameters.Add(newID);
+            cmd.Parameters.Add(newCode);
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            int newId = (int)outputParam.Value;
-            ReportValidationID reportValidationId = new(newId.ToString());
+            int newIdValue = (int)newID.Value;
+            string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
+            ReportValidationID reportValidationId = new (newCodeValue);
 
             return await GetReportValidationByIdAsync(reportValidationId, ct).ConfigureAwait(false);
         }
@@ -84,7 +87,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, Convert.ToInt32(id.Value)));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
 
             ReportValidation? response = null;
 
@@ -165,7 +168,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, Convert.ToInt32(reportValidation.Id.Value)));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, reportValidation.Id.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationCode, reportValidation.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationReportCode, reportValidation.ReportCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationDecision, reportValidation.ValidationDecision));
@@ -204,7 +207,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, Convert.ToInt32(id.Value)));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId,id.Value));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

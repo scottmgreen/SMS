@@ -49,15 +49,18 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
-            var outputParam = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
-            cmd.Parameters.Add(outputParam);
+            var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            var newCode = new SqlParameter("@pNewScoringPanelCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
+            cmd.Parameters.Add(newID);
+            cmd.Parameters.Add(newCode);
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            int newId = (int)outputParam.Value;
-            ScoringPanelID scoringPanelId = new(newId.ToString());
+            int newIdValue = (int)newID.Value;
+            string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
+            ScoringPanelID scoringPanelId = new (newCodeValue);
 
             return await GetScoringPanelByIdAsync(scoringPanelId, ct).ConfigureAwait(false);
         }
@@ -85,7 +88,7 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, Convert.ToInt32(id.Value)));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
 
             ScoringPanel? response = null;
 
@@ -166,7 +169,7 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, Convert.ToInt32(scoringPanel.Id.Value)));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, scoringPanel.Id.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelCode, scoringPanel.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelHazardCode, scoringPanel.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelSMSUserCode, scoringPanel.SMSUserCode));
@@ -206,7 +209,7 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, Convert.ToInt32(id.Value)));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

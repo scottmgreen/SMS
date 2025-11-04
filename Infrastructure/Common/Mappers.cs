@@ -60,11 +60,11 @@ public static class Mappers
     /// </summary>
     public static AirportSharedDataset MapToAirportSharedDataset(SqlDataReader reader)
     {
-        AirportSharedDatasetID datasetID = new(reader.GetValue<int>(FieldNames.fId).ToString());
+        AirportSharedDatasetID datasetID = new(reader.GetValue<string>(FieldNames.fAirportSharedDatasetCode).ToString());
         AirportSharedDataset dataset = new(datasetID);
 
         dataset.Code = reader.GetValue<string>(FieldNames.fAirportSharedDatasetCode) ?? string.Empty;
-        dataset.ReportID = reader.GetValue<int>(FieldNames.fAirportSharedDatasetReportID).ToString();
+        dataset.ReportID = reader.GetValue<string>(FieldNames.fAirportSharedDatasetReportCode).ToString();
         dataset.HazardCode = reader.GetValue<string>(FieldNames.fAirportSharedDatasetHazardCode);
         dataset.PrivateNarrative = reader.GetValue<string>(FieldNames.fPrivateNarrative);
         dataset.SharedNarrative = reader.GetValue<string>(FieldNames.fSharedNarrative);
@@ -123,7 +123,7 @@ public static class Mappers
     /// </summary>
     public static Report MapToReport(SqlDataReader reader)
     {
-        ReportID reportID = new(reader.GetValue<int>(FieldNames.fId).ToString());
+        ReportID reportID = new(reader.GetValue<string>(FieldNames.fReportCode).ToString());
         Report report = new(reportID);
 
         report.Code = reader.GetValue<string>(FieldNames.fReportCode) ?? string.Empty;
@@ -140,7 +140,7 @@ public static class Mappers
     /// </summary>
     public static Investigation MapToInvestigation(SqlDataReader reader)
     {
-        InvestigationID investigationID = new(reader.GetValue<int>(FieldNames.fId).ToString());
+        InvestigationID investigationID = new(reader.GetValue<string>(FieldNames.fInvestigationCode).ToString());
         Investigation investigation = new(investigationID);
 
         investigation.Code = reader.GetValue<string>(FieldNames.fInvestigationCode);
@@ -155,7 +155,7 @@ public static class Mappers
     /// </summary>
     public static Interview MapToInterview(SqlDataReader reader)
     {
-        InterviewID interviewID = new(reader.GetValue<int>(FieldNames.fId).ToString());
+        InterviewID interviewID = new(reader.GetValue<string>(FieldNames.fInterviewCode).ToString());
         Interview interview = new(interviewID);
 
         interview.Code = reader.GetValue<string>(FieldNames.fInterviewCode);
@@ -173,7 +173,7 @@ public static class Mappers
     /// </summary>
     public static RiskAnalysis MapToRiskAnalysis(SqlDataReader reader)
     {
-        RiskAnalysisID riskAnalysisID = new(reader.GetValue<int>(FieldNames.fId).ToString());
+        RiskAnalysisID riskAnalysisID = new(reader.GetValue<string>(FieldNames.fRiskAnalysisCode).ToString());
         RiskAnalysis riskAnalysis = new(riskAnalysisID);
 
         riskAnalysis.Code = reader.GetValue<string>(FieldNames.fRiskAnalysisCode);
@@ -193,7 +193,7 @@ public static class Mappers
     /// </summary>
     public static RiskAssessment MapToRiskAssessment(SqlDataReader reader)
     {
-        RiskAssessmentID riskAssessmentID = new(reader.GetValue<int>(FieldNames.fId).ToString());
+        RiskAssessmentID riskAssessmentID = new(reader.GetValue<string>(FieldNames.fRiskAssessmentCode).ToString());
         RiskAssessment riskAssessment = new(riskAssessmentID);
 
         riskAssessment.Code = reader.GetValue<string>(FieldNames.fRiskAssessmentCode);
@@ -212,7 +212,7 @@ public static class Mappers
     /// </summary>
     public static Mitigation MapToMitigation(SqlDataReader reader)
     {
-        MitigationID mitigationID = new(reader.GetValue<int>(FieldNames.fId).ToString());
+        MitigationID mitigationID = new(reader.GetValue<string>(FieldNames.fMitigationCode).ToString());
         Mitigation mitigation = new(mitigationID);
 
         mitigation.Code = reader.GetValue<string>(FieldNames.fMitigationCode);
@@ -226,7 +226,7 @@ public static class Mappers
     /// </summary>
     public static MitigationAssignment MapToMitigationAssignment(SqlDataReader reader)
     {
-        MitigationAssignmentID mitigationAssignmentID = new(reader.GetValue<int>(FieldNames.fId).ToString());
+        MitigationAssignmentID mitigationAssignmentID = new(reader.GetValue<string>(FieldNames.fMitigationAssignmentCode).ToString());
         MitigationAssignment mitigationAssignment = new(mitigationAssignmentID);
 
         mitigationAssignment.Code = reader.GetValue<string>(FieldNames.fMitigationAssignmentCode);
@@ -241,7 +241,7 @@ public static class Mappers
     /// </summary>
     public static ReportValidation MapToReportValidation(SqlDataReader reader)
     {
-        ReportValidationID reportValidationID = new(reader.GetValue<int>(FieldNames.fId).ToString());
+        ReportValidationID reportValidationID = new(reader.GetValue<string>(FieldNames.fReportValidationCode).ToString());
         ReportValidation reportValidation = new(reportValidationID);
 
         reportValidation.Code = reader.GetValue<string>(FieldNames.fReportValidationCode);
@@ -258,7 +258,7 @@ public static class Mappers
     /// </summary>
     public static ScoringPanel MapToScoringPanel(SqlDataReader reader)
     {
-        ScoringPanelID scoringPanelID = new(reader.GetValue<int>(FieldNames.fId).ToString());
+        ScoringPanelID scoringPanelID = new(reader.GetValue<string>(FieldNames.fScoringPanelCode).ToString());
         ScoringPanel scoringPanel = new(scoringPanelID);
 
         scoringPanel.Code = reader.GetValue<string>(FieldNames.fScoringPanelCode);

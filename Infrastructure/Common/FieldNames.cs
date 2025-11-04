@@ -27,7 +27,7 @@ public static class FieldNames
     /// Airport Shared Dataset field names - Using "fldv_", "fldd_", "fldi_" conventions
     /// </summary>
     public static readonly string fAirportSharedDatasetCode = "fldv_Code";
-    public static readonly string fAirportSharedDatasetReportID = "fldi_ReportID";
+    public static readonly string fAirportSharedDatasetReportCode = "fldv_ReportCode";
     public static readonly string fAirportSharedDatasetHazardCode = "fldv_HazardCode";
     public static readonly string fPrivateNarrative = "fldv_PrivateNarrative";
     public static readonly string fSharedNarrative = "fldv_SharedNarrative";

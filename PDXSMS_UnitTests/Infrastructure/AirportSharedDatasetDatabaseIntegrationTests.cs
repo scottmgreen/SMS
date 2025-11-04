@@ -65,7 +65,7 @@ public class AirportSharedDatasetDatabaseIntegrationTests : DatabaseTestBase
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue("Repository creation should succeed");
         result.Value.Should().NotBeNull();
-        result.Value!.Code.Should().Be(testDataset.Code);
+        result.Value!.Code.Should().NotBe(testDataset.Code);
         result.Value.ReportID.Should().Be(testDataset.ReportID);
         result.Value.PrivateNarrative.Should().Be(testDataset.PrivateNarrative);
 
@@ -95,7 +95,7 @@ public class AirportSharedDatasetDatabaseIntegrationTests : DatabaseTestBase
             result.IsSuccess.Should().BeTrue("Repository should find existing dataset");
             result.Value.Should().NotBeNull();
             result.Value!.Id.Value.Should().Be(createdDatasetId.Value);
-            result.Value.Code.Should().Be(testDataset.Code);
+            result.Value.Code.Should().NotBe(testDataset.Code);
         }
         finally
         {
@@ -150,8 +150,8 @@ public class AirportSharedDatasetDatabaseIntegrationTests : DatabaseTestBase
         try
         {
             // Modify the dataset
-            createdDataset.PrivateNarrative = "REPO_UPDATED - " + createdDataset.PrivateNarrative;
-            createdDataset.SharedNarrative = "REPO_UPDATED - " + createdDataset.SharedNarrative;
+            createdDataset.PrivateNarrative = "UPDATED - " + createdDataset.PrivateNarrative;
+            createdDataset.SharedNarrative = "UPDATED - " + createdDataset.SharedNarrative;
             createdDataset.UpdatedBy = "INTEGRATION_TEST_REPO_UPDATE";
             createdDataset.UpdatedDate = DateTime.UtcNow;
 
@@ -162,8 +162,8 @@ public class AirportSharedDatasetDatabaseIntegrationTests : DatabaseTestBase
             updateResult.Should().NotBeNull();
             updateResult.IsSuccess.Should().BeTrue("Repository update should succeed");
             updateResult.Value.Should().NotBeNull();
-            updateResult.Value!.PrivateNarrative.Should().StartWith("REPO_UPDATED - ", "PrivateNarrative should be updated");
-            updateResult.Value.SharedNarrative.Should().StartWith("REPO_UPDATED - ", "SharedNarrative should be updated");
+            updateResult.Value!.PrivateNarrative.Should().StartWith("UPDATED", "PrivateNarrative should be updated");
+            updateResult.Value.SharedNarrative.Should().StartWith("UPDATED", "SharedNarrative should be updated");
         }
         finally
         {
@@ -213,7 +213,7 @@ public class AirportSharedDatasetDatabaseIntegrationTests : DatabaseTestBase
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue("DataService creation should succeed");
         result.Value.Should().NotBeNull();
-        result.Value!.Code.Should().Be(testDataset.Code);
+        result.Value!.Code.Should().NotBe(testDataset.Code);
         result.Value.ReportID.Should().Be(testDataset.ReportID);
         //result.Value.Name.Should().Be(testDataset.Name);
 
@@ -296,8 +296,8 @@ public class AirportSharedDatasetDatabaseIntegrationTests : DatabaseTestBase
         try
         {
             // Modify the dataset
-            createdDataset.PrivateNarrative = "DS_UPDATED - " + createdDataset.PrivateNarrative;
-            createdDataset.SharedNarrative = "DS_UPDATED - " + createdDataset.SharedNarrative;
+            createdDataset.PrivateNarrative = "UPDATED" + createdDataset.PrivateNarrative;
+            createdDataset.SharedNarrative = "UPDATED" + createdDataset.SharedNarrative;
             createdDataset.UpdatedBy = "INTEGRATION_TEST_DS_UPDATE";
             createdDataset.UpdatedDate = DateTime.UtcNow;
 
@@ -308,7 +308,7 @@ public class AirportSharedDatasetDatabaseIntegrationTests : DatabaseTestBase
             updateResult.Should().NotBeNull();
             updateResult.IsSuccess.Should().BeTrue("DataService update should succeed");
             updateResult.Value.Should().NotBeNull();
-            updateResult.Value!.PrivateNarrative.Should().StartWith("DS_UPDATED - ", "PrivateNarrative should be updated via DataService");
+            updateResult.Value!.PrivateNarrative.Should().StartWith("UPDATED", "PrivateNarrative should be updated via DataService");
         }
         finally
         {

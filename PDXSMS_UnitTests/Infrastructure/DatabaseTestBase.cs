@@ -86,11 +86,13 @@ public abstract class DatabaseTestBase : IDisposable
 
     #endregion
 
-    #region Test Entity Creation Helpers
+    #region Test ID Generation Utilities
 
     /// <summary>
-    /// Generates a unique test identifier to avoid conflicts
+    /// Generates a unique test identifier for use in integration tests.
+    /// Format: TEST-####, where #### is a 4-digit random number (0000-9999)
     /// </summary>
+    /// <returns>A unique test identifier string</returns>
     protected string GenerateTestId()
     {
         int number = Random.Shared.Next(0, 10000); // 0 to 9999
@@ -98,13 +100,54 @@ public abstract class DatabaseTestBase : IDisposable
     }
 
     /// <summary>
+    /// Generates a unique test identifier with a custom prefix.
+    /// Format: {prefix}-####, where #### is a 4-digit random number (0000-9999)
+    /// </summary>
+    /// <param name="prefix">Custom prefix for the test ID (e.g., "PERF", "LOAD", "STRESS")</param>
+    /// <returns>A unique test identifier string with custom prefix</returns>
+    protected string GenerateTestId(string prefix)
+    {
+        int number = Random.Shared.Next(0, 10000); // 0 to 9999
+        return $"{prefix}-{number:D4}";
+    }
+
+    /// <summary>
+    /// Generates a unique test identifier with timestamp for guaranteed uniqueness.
+    /// Format: TEST-####-HHMMSS, where #### is random and HHMMSS is current time
+    /// </summary>
+    /// <returns>A unique test identifier string with timestamp</returns>
+    protected string GenerateUniqueTestId()
+    {
+        int number = Random.Shared.Next(0, 10000); // 0 to 9999
+        string timestamp = DateTime.Now.ToString("HHmmss");
+        return $"TEST-{number:D4}-{timestamp}";
+    }
+
+    /// <summary>
+    /// Generates a unique test identifier with custom prefix and timestamp.
+    /// Format: {prefix}-####-HHMMSS, where #### is random and HHMMSS is current time
+    /// </summary>
+    /// <param name="prefix">Custom prefix for the test ID</param>
+    /// <returns>A unique test identifier string with custom prefix and timestamp</returns>
+    protected string GenerateUniqueTestId(string prefix)
+    {
+        int number = Random.Shared.Next(0, 10000); // 0 to 9999
+        string timestamp = DateTime.Now.ToString("HHmmss");
+        return $"{prefix}-{number:D4}-{timestamp}";
+    }
+
+    #endregion
+
+    #region Test Entity Creation Helpers
+
+    /// <summary>
     /// Creates a test hazard entity with unique values
     /// </summary>
     protected Hazard CreateTestHazard(string? reportCode = null)
     {
-        var testId = GenerateTestId();
+        var testId = GenerateTestId("HZ");
         // Use a temporary ID - the repository will generate the actual code
-        var tempId = new HazardID($"HZ-{testId}");
+        var tempId = new HazardID(testId);
         
         var hazard = new Hazard(tempId)
         {
@@ -124,14 +167,14 @@ public abstract class DatabaseTestBase : IDisposable
     /// </summary>
     protected Interview CreateTestInterview(string? investigationCode = null)
     {
-        var testId = GenerateTestId();
+        var testId = GenerateTestId("IV");
         var tempId = new InterviewID(testId);
         
         var interview = new Interview(tempId)
         {
-            Code = $"INT-{testId}",
-            InvestigationCode = investigationCode ?? $"INV-{testId}",
-            SMSInvestigatorCode = $"SINV-{testId}",
+            Code = testId,
+            InvestigationCode = GenerateTestId("IN"),
+            SMSInvestigatorCode = GenerateTestId("SMS"),
             PersonInterviewed = $"Test Person {testId}",
             PersonInterviewedNotes = $"Test person interview notes - {testId}",
             InvestigatorNotes = $"Test investigator notes - {testId}",
@@ -147,13 +190,13 @@ public abstract class DatabaseTestBase : IDisposable
     /// </summary>
     protected AirportSharedDataset CreateTestAirportSharedDataset()
     {
-        var testId = GenerateTestId();
-        var tempId = new AirportSharedDatasetID($"ASD-{testId}");
+        var testId = GenerateTestId("AS");
+        var tempId = new AirportSharedDatasetID(testId);
         
         var dataset = new AirportSharedDataset(tempId)
         {
-            Code = $"ASD-{testId}",
-            ReportID = $"RPT-{testId}",
+            Code = testId,
+            ReportID = GenerateTestId("RP"),
             PrivateNarrative = $"Test airport shared dataset - {testId}",
             SharedNarrative = $"Test shared narrative - {testId}",
             CreatedBy = "INTEGRATION_TEST",
@@ -168,12 +211,12 @@ public abstract class DatabaseTestBase : IDisposable
     /// </summary>
     protected Report CreateTestReport()
     {
-        var testId = GenerateTestId();
-        var tempId = new ReportID($"RPT-{testId}");
+        var testId = GenerateTestId("RP");
+        var tempId = new ReportID(testId);
         
         var report = new Report(tempId)
         {
-            Code = $"RPT-{testId}",
+            Code = testId,
             Name = $"Test Report {testId}",
             Description = $"Test report created for integration testing - {testId}",
             Status = "Active",
@@ -190,14 +233,14 @@ public abstract class DatabaseTestBase : IDisposable
     /// </summary>
     protected ScoringPanel CreateTestScoringPanel()
     {
-        var testId = GenerateTestId();
-        var tempId = new ScoringPanelID($"SP-{testId}");
+        var testId = GenerateTestId("SP");
+        var tempId = new ScoringPanelID(testId);
         
         var scoringPanel = new ScoringPanel(tempId)
         {
-            Code = $"SP-{testId}",
-            HazardCode = $"HZ-{testId}",
-            SMSUserCode = $"USER-{testId}",
+            Code = testId,
+            HazardCode = GenerateTestId("HZ"),
+            SMSUserCode = GenerateTestId("SMS"),
             Likelihood = "Medium",
             Severity = "High",
             Score = "75",
@@ -213,13 +256,13 @@ public abstract class DatabaseTestBase : IDisposable
     /// </summary>
     protected Mitigation CreateTestMitigation()
     {
-        var testId = GenerateTestId();
-        var tempId = new MitigationID($"MIT-{testId}");
+        var testId = GenerateTestId("MT");
+        var tempId = new MitigationID(testId);
         
         var mitigation = new Mitigation(tempId)
         {
-            Code = $"MIT-{testId}",
-            HazardCode = $"HZ-{testId}",
+            Code = testId,
+            HazardCode = GenerateTestId("HZ"),
             CreatedBy = "INTEGRATION_TEST",
             CreatedDate = DateTime.UtcNow
         };

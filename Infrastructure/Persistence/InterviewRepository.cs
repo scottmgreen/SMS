@@ -49,15 +49,18 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
-            var outputParam = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
-            cmd.Parameters.Add(outputParam);
+            var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            var newCode = new SqlParameter("@pNewInterviewCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
+            cmd.Parameters.Add(newID);
+            cmd.Parameters.Add(newCode);
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            int newId = (int)outputParam.Value;
-            InterviewID interviewId = new(newId.ToString());
+            int newIdValue = (int)newID.Value;
+            string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
+            InterviewID interviewId = new (newCodeValue);
 
             return await GetInterviewByIdAsync(interviewId, ct).ConfigureAwait(false);
         }
@@ -85,7 +88,7 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, Convert.ToInt32(id.Value)));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
 
             Interview? response = null;
 
@@ -166,7 +169,7 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, Convert.ToInt32(interview.Id.Value)));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, interview.Id.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewCode, interview.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewInvestigationCode, interview.InvestigationCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewSMSInvestigatorCode, interview.SMSInvestigatorCode));
@@ -206,7 +209,7 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, Convert.ToInt32(id.Value)));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

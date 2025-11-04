@@ -278,7 +278,7 @@ public class InfrastructureCommonTests
     public void ParameterNames_AirportSharedDatasetParameters_HaveCorrectNames()
     {
         // Assert
-        ParameterNames.pmAirportSharedDatasetId.Should().Be("@pAirportSharedDatasetID");
+        ParameterNames.pmAirportSharedDatasetId.Should().Be("@pID");
         ParameterNames.pmAirportSharedDatasetCode.Should().Be("@pCode");
         ParameterNames.pmPrivateNarrative.Should().Be("@pPrivateNarrative");
         ParameterNames.pmSharedNarrative.Should().Be("@pSharedNarrative");
@@ -307,7 +307,7 @@ public class InfrastructureCommonTests
     {
         // Assert
         FieldNames.fAirportSharedDatasetCode.Should().Be("fldv_Code");
-        FieldNames.fAirportSharedDatasetReportID.Should().Be("fldi_ReportID");
+        FieldNames.fAirportSharedDatasetReportCode.Should().Be("fldv_ReportCode");
         FieldNames.fPrivateNarrative.Should().Be("fldv_PrivateNarrative");
         FieldNames.fSharedNarrative.Should().Be("fldv_SharedNarrative");
         FieldNames.fLocationArea.Should().Be("fldv_LocationArea");

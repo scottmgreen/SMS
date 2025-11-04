@@ -62,7 +62,7 @@ public class ReportDatabaseIntegrationTests : DatabaseTestBase
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue("Repository creation should succeed");
         result.Value.Should().NotBeNull();
-        result.Value!.Code.Should().Be(testReport.Code);
+        result.Value!.Code.Should().NotBe(testReport.Code);
         result.Value.Name.Should().Be(testReport.Name);
         result.Value.Description.Should().Be(testReport.Description);
 
@@ -92,7 +92,7 @@ public class ReportDatabaseIntegrationTests : DatabaseTestBase
             result.IsSuccess.Should().BeTrue("Repository should find existing report");
             result.Value.Should().NotBeNull();
             result.Value!.Code.Should().Be(createdReportId.Value);
-            result.Value.Code.Should().Be(testReport.Code);
+            result.Value.Code.Should().NotBe(testReport.Code);
         }
         finally
         {
@@ -210,7 +210,7 @@ public class ReportDatabaseIntegrationTests : DatabaseTestBase
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue("DataService creation should succeed");
         result.Value.Should().NotBeNull();
-        result.Value!.Code.Should().Be(testReport.Code);
+        result.Value!.Code.Should().NotBe(testReport.Code);
         result.Value.Name.Should().Be(testReport.Name);
 
         _logger.LogInformation("DataService successfully created report with ID: {Id}", result.Value.Id);
@@ -292,8 +292,8 @@ public class ReportDatabaseIntegrationTests : DatabaseTestBase
         try
         {
             // Modify the report
-            createdReport.Name = "DS_UPDATED - " + createdReport.Name;
-            createdReport.Description = "DS_UPDATED - " + createdReport.Description;
+            createdReport.Name = "DS_UPDATED" + createdReport.Name;
+            createdReport.Description = "DS_UPDATED" + createdReport.Description;
             createdReport.UpdatedBy = "INTEGRATION_TEST_DS_UPDATE";
             createdReport.UpdatedDate = DateTime.UtcNow;
 
@@ -304,7 +304,7 @@ public class ReportDatabaseIntegrationTests : DatabaseTestBase
             updateResult.Should().NotBeNull();
             updateResult.IsSuccess.Should().BeTrue("DataService update should succeed");
             updateResult.Value.Should().NotBeNull();
-            updateResult.Value!.Name.Should().StartWith("DS_UPDATED - ", "Name should be updated via DataService");
+            updateResult.Value!.Name.Should().StartWith("DS_UPDATED", "Name should be updated via DataService");
         }
         finally
         {
