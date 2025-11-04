@@ -1,0 +1,48 @@
+﻿using SMS_Infrastructure.Interfaces;
+using SMS_Infrastructure.Repositories;
+using SMS_Infrastructure.Services;
+
+namespace SMS_Infrastructure.Configuration;
+
+internal static class ServiceCollectionExtensions
+{
+    public static IServiceCollection AddDataServices(this IServiceCollection services, IConfiguration configuration)
+    {
+        // File Services
+        services.AddScoped<FileService>();
+
+        // System Services
+        services.AddScoped<SystemRepository>();
+        services.AddScoped<SystemDataService>();
+
+        // SMS Repositories
+        services.AddScoped<HazardRepository>();
+        services.AddScoped<AirportSharedDatasetRepository>();
+        services.AddScoped<ReportRepository>();
+        services.AddScoped<InterviewRepository>();
+        services.AddScoped<InvestigationRepository>();
+        services.AddScoped<RiskAnalysisRepository>();
+        services.AddScoped<RiskAssessmentRepository>();
+        services.AddScoped<MitigationRepository>();
+        services.AddScoped<MitigationAssignmentRepository>();
+        services.AddScoped<ReportValidationRepository>();
+        services.AddScoped<ScoringPanelRepository>();
+
+        // SMS Data Services - All Available Services
+        services.AddScoped<HazardDataService>();
+        services.AddScoped<AirportSharedDatasetDataService>();
+        services.AddScoped<ReportDataService>();
+        services.AddScoped<InterviewDataService>();
+        services.AddScoped<InvestigationDataService>();
+        services.AddScoped<RiskAnalysisDataService>();
+        services.AddScoped<RiskAssessmentDataService>();
+        services.AddScoped<MitigationDataService>();
+        services.AddScoped<MitigationAssignmentDataService>();
+        services.AddScoped<ReportValidationDataService>();
+        services.AddScoped<ScoringPanelDataService>();
+
+        
+
+        return services;
+    }
+}
