@@ -1,0 +1,394 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using SMS_Domain.Entities;
+using SMS_Domain.Interfaces;
+using SMS_Domain.Errors;
+using SMS_Infrastructure.Common;
+using SMS_Infrastructure.Interfaces;
+using SMS_Infrastructure.Persistence;
+using SMS_Shared.Common;
+
+namespace SMS_Infrastructure.Services;
+
+/// <summary>
+/// Data service for SMS Stakeholder User operations
+/// Provides high-level data access abstraction over repository layer
+/// </summary>
+public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserDataService>
+{
+    private readonly ISMSStakeholderUserRepository _repository;
+    private readonly ILogger<SMSStakeholderUserDataService> _logger;
+
+    public SMSStakeholderUserDataService(
+        ILogger<SMSStakeholderUserDataService> logger,
+        IServiceScopeFactory serviceScopeFactory,
+        IConfiguration configuration,
+        ISMSStakeholderUserRepository repository)
+        : base(logger, serviceScopeFactory, configuration)
+    {
+        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    /// <summary>
+    /// Creates a new SMS Stakeholder User
+    /// </summary>
+    public async Task<Result<SMSStakeholderUser>> CreateSMSStakeholderUserAsync(SMSStakeholderUser user, CancellationToken ct = default)
+    {
+        try
+        {
+            if (user is null)
+            {
+                _logger.LogError("CreateSMSStakeholderUserAsync received null user");
+                return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Creating SMS Stakeholder User with code: {Code}", user.Code);
+            
+            // Check if username already exists
+            var existsResult = await _repository.UserNameExistsAsync(user.UserName.Value);
+            if (existsResult.IsSuccess && existsResult.Value)
+            {
+                _logger.LogWarning("Username {UserName} already exists", user.UserName.Value);
+                return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.UserNameError.AlreadyExists);
+            }
+
+            var result = await _repository.AddAsync(user);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully created SMS Stakeholder User with ID: {Id}", result.Value?.UserId);
+            }
+            else
+            {
+                _logger.LogError("Failed to create SMS Stakeholder User. Error: {Error}", result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error creating SMS Stakeholder User");
+            return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.CreateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Gets SMS Stakeholder User by ID
+    /// </summary>
+    public async Task<Result<SMSStakeholderUser>> GetSMSStakeholderUserByIdAsync(string id, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving SMS Stakeholder User with ID: {Id}", id);
+            return await _repository.GetByIdAsync(id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving SMS Stakeholder User with ID: {Id}", id);
+            return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NotFound);
+        }
+    }
+
+    /// <summary>
+    /// Gets SMS Stakeholder User by username
+    /// </summary>
+    public async Task<Result<SMSStakeholderUser>> GetSMSStakeholderUserByUserNameAsync(string userName, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving SMS Stakeholder User with UserName: {UserName}", userName);
+            return await _repository.GetByUserNameAsync(userName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving SMS Stakeholder User with UserName: {UserName}", userName);
+            return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NotFound);
+        }
+    }
+
+    /// <summary>
+    /// Gets all SMS Stakeholder Users
+    /// </summary>
+    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetAllSMSStakeholderUsersAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving all SMS Stakeholder Users");
+            return await _repository.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving all SMS Stakeholder Users");
+            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
+        }
+    }
+
+    /// <summary>
+    /// Gets all active SMS Stakeholder Users
+    /// </summary>
+    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetActiveSMSStakeholderUsersAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving active SMS Stakeholder Users");
+            return await _repository.GetActiveUsersAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving active SMS Stakeholder Users");
+            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
+        }
+    }
+
+    /// <summary>
+    /// Gets SMS Stakeholder Users by stakeholder type
+    /// </summary>
+    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetSMSStakeholderUsersByTypeAsync(string stakeholderType, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving SMS Stakeholder Users by type: {StakeholderType}", stakeholderType);
+            return await _repository.GetByStakeholderTypeAsync(stakeholderType);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving SMS Stakeholder Users by type: {StakeholderType}", stakeholderType);
+            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
+        }
+    }
+
+    /// <summary>
+    /// Gets SMS Stakeholder Users by organization
+    /// </summary>
+    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetSMSStakeholderUsersByOrganizationAsync(string organization, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving SMS Stakeholder Users by organization: {Organization}", organization);
+            return await _repository.GetByOrganizationAsync(organization);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving SMS Stakeholder Users by organization: {Organization}", organization);
+            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
+        }
+    }
+
+    /// <summary>
+    /// Gets airline stakeholders
+    /// </summary>
+    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetAirlineStakeholdersAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving airline stakeholders");
+            return await _repository.GetAirlineStakeholdersAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving airline stakeholders");
+            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
+        }
+    }
+
+    /// <summary>
+    /// Gets ground handler stakeholders
+    /// </summary>
+    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetGroundHandlerStakeholdersAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving ground handler stakeholders");
+            return await _repository.GetGroundHandlerStakeholdersAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving ground handler stakeholders");
+            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
+        }
+    }
+
+    /// <summary>
+    /// Gets contractor stakeholders
+    /// </summary>
+    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetContractorStakeholdersAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving contractor stakeholders");
+            return await _repository.GetContractorStakeholdersAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving contractor stakeholders");
+            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
+        }
+    }
+
+    /// <summary>
+    /// Gets users requiring AOA access
+    /// </summary>
+    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetUsersRequiringAOAAccessAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving users requiring AOA access");
+            return await _repository.GetUsersRequiringAOAAccessAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving users requiring AOA access");
+            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
+        }
+    }
+
+    /// <summary>
+    /// Updates an existing SMS Stakeholder User
+    /// </summary>
+    public async Task<Result<SMSStakeholderUser>> UpdateSMSStakeholderUserAsync(SMSStakeholderUser user, CancellationToken ct = default)
+    {
+        try
+        {
+            if (user is null)
+            {
+                _logger.LogError("UpdateSMSStakeholderUserAsync received null user");
+                return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Updating SMS Stakeholder User with ID: {Id}", user.UserId);
+            
+            var updateResult = await _repository.UpdateAsync(user);
+            if (updateResult.IsFailure)
+            {
+                _logger.LogError("Failed to update SMS Stakeholder User. Error: {Error}", updateResult.Error?.Message);
+                return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(updateResult.Error);
+            }
+
+            // Return the updated user
+            return await _repository.GetByIdAsync(user.UserId.Value);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error updating SMS Stakeholder User with ID: {Id}", user?.UserId);
+            return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.UpdateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Deletes an SMS Stakeholder User
+    /// </summary>
+    public async Task<Result<bool>> DeleteSMSStakeholderUserAsync(string userId, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Deleting SMS Stakeholder User with ID: {Id}", userId);
+            var result = await _repository.DeleteAsync(userId);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully deleted SMS Stakeholder User with ID: {Id}", userId);
+            }
+            else
+            {
+                _logger.LogError("Failed to delete SMS Stakeholder User. Error: {Error}", result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error deleting SMS Stakeholder User with ID: {Id}", userId);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.DeleteFailed);
+        }
+    }
+
+    /// <summary>
+    /// Authenticates SMS Stakeholder User
+    /// </summary>
+    public async Task<Result<SMSStakeholderUser>> AuthenticateSMSStakeholderUserAsync(string userName, string plainTextPassword, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Authenticating SMS Stakeholder User: {UserName}", userName);
+            
+            var userResult = await _repository.GetByUserNameAsync(userName);
+            if (userResult.IsFailure)
+            {
+                _logger.LogWarning("Authentication failed - user not found: {UserName}", userName);
+                return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.LoginFailed);
+            }
+
+            var user = userResult.Value;
+            
+            if (!user.Authenticate(plainTextPassword))
+            {
+                _logger.LogWarning("Authentication failed - invalid password for user: {UserName}", userName);
+                return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.LoginFailed);
+            }
+
+            // Record the login
+            user.RecordLogin();
+            await _repository.UpdateAsync(user);
+
+            _logger.LogInformation("Successfully authenticated SMS Stakeholder User: {UserName}", userName);
+            return Result<SMSStakeholderUser>.Success(user);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during authentication for user: {UserName}", userName);
+            return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.LoginFailed);
+        }
+    }
+
+    /// <summary>
+    /// Gets stakeholder type statistics
+    /// </summary>
+    public async Task<Result<Dictionary<string, int>>> GetStakeholderTypeStatisticsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving stakeholder type statistics");
+            return await _repository.GetStakeholderTypeStatisticsAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving stakeholder type statistics");
+            return Result<Dictionary<string, int>>.Failure<Dictionary<string, int>>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+
+    /// <summary>
+    /// Gets organization statistics
+    /// </summary>
+    public async Task<Result<Dictionary<string, int>>> GetOrganizationStatisticsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving organization statistics");
+            return await _repository.GetOrganizationStatisticsAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving organization statistics");
+            return Result<Dictionary<string, int>>.Failure<Dictionary<string, int>>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+
+    /// <summary>
+    /// Gets SMS Stakeholder User statistics
+    /// </summary>
+    public async Task<Result<UserStatistics>> GetSMSStakeholderUserStatisticsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving SMS Stakeholder User statistics");
+            return await _repository.GetUserStatisticsAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving SMS Stakeholder User statistics");
+            return Result<UserStatistics>.Failure<UserStatistics>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+}

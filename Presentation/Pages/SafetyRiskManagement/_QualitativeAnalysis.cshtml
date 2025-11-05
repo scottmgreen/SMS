@@ -1,0 +1,221 @@
+@model PDXSMS_Presentation.Pages.SafetyRiskManagement.RiskAssessmentWizardModel
+
+<!-- Qualitative Assessment Analysis -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-comments"></i> Qualitative Assessment Guidelines</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-lightbulb"></i> Assessment Approach</h6>
+                        <ul class="small">
+                            <li>Use descriptive terms rather than numerical scales</li>
+                            <li>Focus on expert judgment and experience</li>
+                            <li>Consider operational context and environmental factors</li>
+                            <li>Document reasoning and assumptions clearly</li>
+                            <li>Use comparative analysis when possible</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-scale-balanced"></i> Risk Categories</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <tr>
+                                    <td class="bg-success text-white"><strong>Very Low</strong></td>
+                                    <td class="small">Negligible impact, routine operations</td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-info text-white"><strong>Low</strong></td>
+                                    <td class="small">Minor impact, manageable with standard procedures</td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-warning text-dark"><strong>Medium</strong></td>
+                                    <td class="small">Moderate impact, requires additional controls</td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-danger text-white"><strong>High</strong></td>
+                                    <td class="small">Significant impact, immediate attention required</td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-dark text-white"><strong>Very High</strong></td>
+                                    <td class="small">Severe impact, may require operational changes</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Qualitative Analysis Form -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0"><i class="fas fa-pen-fancy"></i> Qualitative Risk Analysis</h6>
+            </div>
+            <div class="card-body">
+                @if (Model.AssessmentData.IdentifiedHazards?.Any() == true)
+                {
+                    <form method="post">
+                        <!-- Hidden fields to maintain state -->
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="StepNumber" />
+                        <input type="hidden" asp-for="AssessmentData.RiskAnalysisMethod" />
+                        <input type="hidden" asp-for="AssessmentData.RiskCriteria" />
+
+                        @for (int i = 0; i < Model.AssessmentData.IdentifiedHazards.Count; i++)
+                        {
+                            var hazard = Model.AssessmentData.IdentifiedHazards[i];
+                            
+                            <!-- Hidden fields to preserve hazard data -->
+                            <input type="hidden" name="AssessmentData.IdentifiedHazards[@i].Id" value="@hazard.Id" />
+                            <input type="hidden" name="AssessmentData.IdentifiedHazards[@i].Description" value="@hazard.Description" />
+                            <input type="hidden" name="AssessmentData.IdentifiedHazards[@i].Category" value="@hazard.Category" />
+                            <input type="hidden" name="AssessmentData.IdentifiedHazards[@i].WorstCredibleOutcome" value="@hazard.WorstCredibleOutcome" />
+                            
+                            <div class="card border-secondary mb-3">
+                                <div class="card-header">
+                                    <div class="row align-items-center">
+                                        <div class="col">
+                                            <strong>@hazard.Id: @hazard.Description</strong>
+                                            @if (!string.IsNullOrEmpty(hazard.Category))
+                                            {
+                                                <span class="badge bg-info ms-2">@hazard.Category</span>
+                                            }
+                                        </div>
+                                        <div class="col-auto">
+                                            @if (!string.IsNullOrEmpty(hazard.RiskLevel))
+                                            {
+                                                var riskClass = GetQualitativeRiskClass(hazard.RiskLevel);
+                                                <span class="badge bg-@riskClass">@hazard.RiskLevel</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Not Assessed</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Risk Assessment <span class="text-danger">*</span></label>
+                                                <select class="form-select" name="AssessmentData.IdentifiedHazards[@i].RiskLevel">
+                                                    <option value="">Select risk level...</option>
+                                                    <option value="Very Low" selected="@(hazard.RiskLevel == "Very Low")">Very Low Risk</option>
+                                                    <option value="Low" selected="@(hazard.RiskLevel == "Low")">Low Risk</option>
+                                                    <option value="Medium" selected="@(hazard.RiskLevel == "Medium")">Medium Risk</option>
+                                                    <option value="High" selected="@(hazard.RiskLevel == "High")">High Risk</option>
+                                                    <option value="Very High" selected="@(hazard.RiskLevel == "Very High")">Very High Risk</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Confidence Level</label>
+                                                <select class="form-select" name="AssessmentData.IdentifiedHazards[@i].Likelihood">
+                                                    <option value="">Select confidence...</option>
+                                                    <option value="High" selected="@(hazard.Likelihood == "High")">High Confidence</option>
+                                                    <option value="Medium" selected="@(hazard.Likelihood == "Medium")">Medium Confidence</option>
+                                                    <option value="Low" selected="@(hazard.Likelihood == "Low")">Low Confidence</option>
+                                                </select>
+                                                <div class="form-text">
+                                                    <small>How confident are you in this assessment?</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="mb-3">
+                                                <label class="form-label">Assessment Rationale <span class="text-danger">*</span></label>
+                                                <textarea class="form-control" name="AssessmentData.IdentifiedHazards[@i].Severity" rows="3"
+                                                          placeholder="Explain your risk assessment reasoning, considering factors such as potential consequences, likelihood of occurrence, existing controls, and operational context...">@hazard.Severity</textarea>
+                                                <div class="form-text">
+                                                    <small>Document your reasoning for this risk assessment</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    @if (!string.IsNullOrEmpty(hazard.WorstCredibleOutcome))
+                                    {
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <div class="alert alert-warning small">
+                                                    <strong>Worst Credible Outcome:</strong> @hazard.WorstCredibleOutcome
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Save Assessment Button - FIXED -->
+                        <div class="row mb-3">
+                            <div class="col-12 text-center">
+                                <button type="button" class="btn btn-success" onclick="saveQualitativeAssessmentAnalysis()">
+                                    <i class="fas fa-save"></i> Save Qualitative Assessment
+                                </button>
+                                <div class="form-text">
+                                    Save your qualitative risk assessments and rationale
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                        <p>No hazards identified yet.</p>
+                        <p class="small">Please complete Step 2 (Identify Hazards) before proceeding with qualitative analysis.</p>
+                        <a href="/SafetyRiskManagement/RiskAssessmentWizard/@Model.Id/step/2" class="btn btn-warning">
+                            <i class="fas fa-arrow-left"></i> Go to Step 2
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function saveQualitativeAssessmentAnalysis() {
+    console.log('Saving qualitative assessment (Analysis version)');
+    
+    // Show brief success indicator
+    const button = event.target;
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check"></i> Saved!';
+    
+    setTimeout(() => {
+        button.innerHTML = originalContent;
+    }, 1500);
+}
+</script>
+
+@functions {
+    private string GetQualitativeRiskClass(string riskLevel)
+    {
+        return riskLevel?.ToLowerInvariant() switch
+        {
+            "very low" => "success",
+            "low" => "info", 
+            "medium" => "warning",
+            "high" => "danger",
+            "very high" => "dark",
+            _ => "secondary"
+        };
+    }
+}
+

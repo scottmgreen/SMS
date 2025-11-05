@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - PDXSMS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    @{
+        // Updated to work with unified user architecture
+        var isAuthenticated = Context.Session.GetString("UserId") != null;
+        var isGuest = Context.Session.GetString("IsGuest") == "true";
+        var userName = Context.Session.GetString("UserName") ?? "Guest User";
+        var userEmail = Context.Session.GetString("UserEmail") ?? "";
+        var department = Context.Session.GetString("Department") ?? "";
+        var jobTitle = Context.Session.GetString("JobTitle") ?? "";
+        
+        // Get roles and permissions from the new unified architecture
+        var applicationRolesStr = Context.Session.GetString("ApplicationRoles") ?? "";
+        var permissionsStr = Context.Session.GetString("Permissions") ?? "";
+        var applicationRoles = applicationRolesStr.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+        var userPermissions = permissionsStr.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+        
+        // Role-based permissions using the new architecture
+        var isAdmin = applicationRoles.Contains("Administrator") || applicationRoles.Contains("SystemManager");
+        var isSafetyManager = applicationRoles.Contains("SafetyManager") || isAdmin;
+        var isAuditor = applicationRoles.Contains("Auditor") || isSafetyManager;
+        var canAccessSystem = isAdmin || isSafetyManager;
+        var isOperationsManager = applicationRoles.Contains("OperationsManager");
+        var isSafetyOfficer = applicationRoles.Contains("SafetyOfficer");
+        
+        // Get primary role for display
+        var primaryRole = isAdmin ? "Administrator" :
+                         isSafetyManager ? "Safety Manager" :
+                         isAuditor ? "Safety Auditor" :
+                         isOperationsManager ? "Operations Manager" :
+                         isSafetyOfficer ? "Safety Officer" :
+                         "User";
+        
+        // Don't show navigation for guests
+        var showFullNavigation = isAuthenticated && !isGuest;
+    }
+    
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/">
+                    <h5 class="card-title mb-1">
+                        <i class="fas fa-shield-alt"></i> PDX Safety Management System (PDXSMS)
+                    </h5>
+                </a>
+                
+                @if (showFullNavigation)
+                {
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav me-auto">
+                            <li class="nav-item">
+                                <a class="nav-link" href="/">
+                                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                                </a>
+                            </li>
+                            
+                            <!-- Safety Risk Management - Available to all authenticated users -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                    <i class="fas fa-exclamation-triangle"></i> Risk Management
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/SafetyRiskManagement/HazardReporting">
+                                        <i class="fas fa-plus-circle"></i> Submit Hazard Report
+                                    </a></li>
+                                    
+                                    @if (isSafetyManager)
+                                    {
+                                        <li><a class="dropdown-item" href="/SafetyRiskManagement/HazardProcessing">
+                                            <i class="fas fa-cogs"></i> Process Hazard Reports
+                                        </a></li>
+                                    }
+                                    
+                                    <li><a class="dropdown-item" href="/SafetyRiskManagement/RiskAssessment">
+                                        <i class="fas fa-clipboard-list"></i> Risk Assessment
+                                    </a></li>
+                                    
+                                    @if (isSafetyManager)
+                                    {
+                                        <li><a class="dropdown-item" href="/SafetyRiskManagement/MitigationTracking">
+                                            <i class="fas fa-tasks"></i> Mitigation Tracking
+                                        </a></li>
+                                    }
+                                </ul>
+                            </li>
+
+                            <!-- Safety Assurance - Restricted based on role -->
+                            @if (isAuditor)
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                        <i class="fas fa-shield-alt"></i> Assurance
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="/SafetyAssurance">
+                                            <i class="fas fa-home"></i> Safety Assurance Overview
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="/SafetyAssurance/SafetyPerformanceMonitoring">
+                                            <i class="fas fa-chart-line"></i> Performance Monitoring
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="/SafetyAssurance/SafetyAudits">
+                                            <i class="fas fa-clipboard-check"></i> Safety Audits
+                                        </a></li>
+                                        
+                                        @if (isSafetyManager)
+                                        {
+                                            <li><a class="dropdown-item" href="/SafetyAssurance/SafetyAssuranceReporting">
+                                                <i class="fas fa-chart-pie"></i> Assurance Reporting
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="/SafetyAssurance/ComplianceReporting">
+                                                <i class="fas fa-file-contract"></i> Compliance Reporting
+                                            </a></li>
+                                        }
+                                    </ul>
+                                </li>
+                            }
+
+                            <!-- Safety Policy - Management level access -->
+                            @if (isSafetyManager)
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                        <i class="fas fa-book"></i> Policy
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="/SafetyPolicy/SafetyPolicy">
+                                            <i class="fas fa-file-alt"></i> Safety Policy Management
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="/SafetyPolicy/OrganizationalStructure">
+                                            <i class="fas fa-users"></i> Organizational Structure
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="/SafetyPolicy/ResponsibilitiesAndAccountability">
+                                            <i class="fas fa-user-tie"></i> Responsibilities & Accountability
+                                        </a></li>
+                                    </ul>
+                                </li>
+                            }
+
+                            <!-- Safety Promotion - Available to most users -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                    <i class="fas fa-bullhorn"></i> Promotion
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/SafetyPromotion/SafetyCommunications">
+                                        <i class="fas fa-comments"></i> Communications
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/SafetyPromotion/SafetyTraining">
+                                        <i class="fas fa-graduation-cap"></i> Training
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/SafetyPromotion/SafetyCulture">
+                                        <i class="fas fa-users"></i> Culture
+                                    </a></li>
+                                </ul>
+                            </li>
+
+                            <!-- System Administration - Admin and Safety Manager only -->
+                            @if (canAccessSystem)
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                        <i class="fas fa-server"></i> System
+                                        @if (isAdmin)
+                                        {
+                                            <span class="badge bg-danger ms-1">Admin</span>
+                                        }
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="/System">
+                                            <i class="fas fa-home"></i> System Overview
+                                        </a></li>
+                                        
+                                        @if (isAdmin)
+                                        {
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><h6 class="dropdown-header">User Management</h6></li>
+                                            <li><a class="dropdown-item" href="/System/UserManagement">
+                                                <i class="fas fa-users"></i> User Accounts
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="/System/RolesAndPermissions">
+                                                <i class="fas fa-user-shield"></i> Roles & Permissions
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><h6 class="dropdown-header">System Administration</h6></li>
+                                            <li><a class="dropdown-item" href="/System/SystemConfiguration">
+                                                <i class="fas fa-cogs"></i> System Configuration
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="/System/SystemMonitoring">
+                                                <i class="fas fa-heartbeat"></i> System Monitoring
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="/System/DataManagement">
+                                                <i class="fas fa-database"></i> Data Management
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><h6 class="dropdown-header">Development</h6></li>
+                                            <li><a class="dropdown-item" href="/api/users/debug" target="_blank">
+                                                <i class="fas fa-database"></i> User Repository Debug
+                                            </a></li>
+                                        }
+                                        else
+                                        {
+                                            <li><a class="dropdown-item" href="/System/SystemStatus">
+                                                <i class="fas fa-heartbeat"></i> System Status
+                                            </a></li>
+                                        }
+                                    </ul>
+                                </li>
+                            }
+                        </ul>
+                        
+                        <!-- Right side navigation -->
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link" href="/System/SystemStatus">
+                                    <i class="fas fa-circle text-success"></i> System Status
+                                </a>
+                            </li>
+                            
+                            <!-- Notifications -->
+                            <li class="nav-item">
+                                <a class="nav-link position-relative" href="/Account/Notifications">
+                                    <i class="fas fa-bell"></i>
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        3
+                                        <span class="visually-hidden">unread notifications</span>
+                                    </span>
+                                </a>
+                            </li>
+                            
+                            <!-- User Menu -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user"></i> @userName
+                                    <small class="text-light opacity-75">(@primaryRole)</small>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li class="dropdown-header">
+                                        <div class="text-center">
+                                            <div class="avatar bg-light text-primary rounded-circle mx-auto mb-2" 
+                                                 style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                                @{
+                                                    var initials = userName.Split(' ').Select(n => n.FirstOrDefault()).Take(2);
+                                                    var initialsString = string.Join("", initials).ToUpper();
+                                                }
+                                                @initialsString
+                                            </div>
+                                            <div>
+                                                <strong>@userName</strong><br>
+                                                <small class="text-muted">@userEmail</small><br>
+                                                <small class="text-muted">@department</small><br>
+                                                <span class="badge bg-primary">@primaryRole</span>
+                                                @if (isAdmin)
+                                                {
+                                                    <span class="badge bg-danger ms-1">Admin</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li class="dropdown-header">
+                                        <small class="text-muted">
+                                            <strong>Job Title:</strong> @jobTitle<br>
+                                            <strong>Department:</strong> @department<br>
+                                            <strong>Roles:</strong> @string.Join(", ", applicationRoles)
+                                            @if (isAdmin && userPermissions.Any())
+                                            {
+                                                <br><strong>Permissions:</strong> @userPermissions.Count()
+                                            }
+                                        </small>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="/Account/Profile">
+                                        <i class="fas fa-user"></i> Profile
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/Account/Settings">
+                                        <i class="fas fa-cog"></i> Settings
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/Account/Notifications">
+                                        <i class="fas fa-bell"></i> Notifications
+                                        <span class="badge bg-danger ms-2">3</span>
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="/Account/Logout">
+                                        <i class="fas fa-sign-out-alt"></i> Logout
+                                    </a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                }
+                else if (isGuest)
+                {
+                    <!-- Guest user - minimal navigation for security -->
+                    <div class="navbar-nav ms-auto">
+                        <span class="navbar-text text-warning">
+                            <i class="fas fa-user-secret"></i> Anonymous Session
+                        </span>
+                        <a class="nav-link text-danger" href="/Account/Login" onclick="clearGuestSession()">
+                            <i class="fas fa-times"></i> End Session
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <!-- Not authenticated - show minimal navigation -->
+                    <div class="navbar-nav ms-auto">
+                        <a class="nav-link" href="/Account/Login">
+                            <i class="fas fa-sign-in-alt"></i> Sign In
+                        </a>
+                    </div>
+                }
+            </div>
+        </nav>
+
+        @if (showFullNavigation)
+        {
+            <!-- Role indicator banner for non-admin users -->
+            @if (!isAdmin && primaryRole != "Safety Manager")
+            {
+                <div class="bg-info text-white py-1">
+                    <div class="container-fluid">
+                        <small>
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Access Level:</strong> @primaryRole (@department) - 
+                            @if (!canAccessSystem)
+                            {
+                                <span>Limited system access. Contact your administrator for additional permissions.</span>
+                            }
+                            else
+                            {
+                                <span>Standard system access granted.</span>
+                            }
+                        </small>
+                    </div>
+                </div>
+            }
+            else if (isAdmin)
+            {
+               @*  <div class="bg-danger text-white py-1">
+                    <div class="container-fluid">
+                        <small>
+                            <i class="fas fa-crown"></i>
+                            <strong>Administrator Access:</strong> Full system privileges enabled - Handle with care!
+                        </small>
+                    </div>
+                </div> *@
+            }
+        }
+        else if (isGuest)
+        {
+            <!-- Guest session warning banner -->
+            <div class="bg-warning text-dark py-2">
+                <div class="container-fluid">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small>
+                            <i class="fas fa-shield-alt"></i>
+                            <strong>Anonymous Session:</strong> You are submitting a confidential report. Your identity is protected.
+                        </small>
+                        <small>
+                            <i class="fas fa-clock"></i> Session expires in <span id="session-timer">30:00</span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        }
+    </header>
+
+    <main role="main" class="py-4">
+        @RenderBody()
+    </main>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" 
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" 
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        // Clear guest session helper
+        function clearGuestSession() {
+            fetch('/Account/Login?handler=ClearGuestSession', { method: 'POST' });
+        }
+    </script>
+    
+    @if (isGuest)
+    {
+        <script>
+        // Guest session timer
+        let guestTimeLeft = 30 * 60; // 30 minutes in seconds
+        const timerElement = document.getElementById('session-timer');
+        
+        if (timerElement) {
+            const timer = setInterval(function() {
+                const minutes = Math.floor(guestTimeLeft / 60);
+                const seconds = guestTimeLeft % 60;
+                timerElement.textContent = minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
+                
+                if (guestTimeLeft <= 0) {
+                    clearInterval(timer);
+                    clearGuestSession();
+                    window.location.href = '/Account/Login';
+                }
+                guestTimeLeft--;
+            }, 1000);
+        }
+        </script>
+    }
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

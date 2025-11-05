@@ -1,0 +1,284 @@
+@model PDXSMS_Presentation.Pages.SafetyRiskManagement.RiskAssessmentWizardModel
+
+<!-- Expert Judgment Assessment Analysis -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><i class="fas fa-user-graduate"></i> Expert Judgment Assessment Guidelines</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-users"></i> Expert Panel Approach</h6>
+                        <ul class="small">
+                            <li><strong>Multi-disciplinary expertise:</strong> Include various technical and operational perspectives</li>
+                            <li><strong>Structured elicitation:</strong> Use formal methods to gather expert opinions</li>
+                            <li><strong>Consensus building:</strong> Work toward agreement on risk assessments</li>
+                            <li><strong>Document assumptions:</strong> Record reasoning and expert qualifications</li>
+                            <li><strong>Uncertainty handling:</strong> Address areas of disagreement or uncertainty</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-clipboard-check"></i> Assessment Framework</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Confidence</th>
+                                        <th>Expert Agreement</th>
+                                        <th>Data Quality</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="bg-success text-white"><strong>High</strong></td>
+                                        <td class="small">Strong consensus</td>
+                                        <td class="small">Extensive data</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="bg-warning text-dark"><strong>Medium</strong></td>
+                                        <td class="small">General agreement</td>
+                                        <td class="small">Limited data</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="bg-danger text-white"><strong>Low</strong></td>
+                                        <td class="small">Significant disagreement</td>
+                                        <td class="small">Minimal data</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Expert Judgment Analysis Form -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0"><i class="fas fa-balance-scale"></i> Expert Judgment Risk Analysis</h6>
+            </div>
+            <div class="card-body">
+                @if (Model.AssessmentData.IdentifiedHazards?.Any() == true)
+                {
+                    <!-- Expert Panel Information -->
+                    <div class="card mb-4 bg-light">
+                        <div class="card-body">
+                            <h6><i class="fas fa-users"></i> Expert Panel Information</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Panel Lead</label>
+                                        <input type="text" class="form-control" value="@User.Identity.Name" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Assessment Date</label>
+                                        <input type="date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Panel Members & Expertise</label>
+                                <textarea class="form-control" rows="2" 
+                                          placeholder="List expert panel members and their relevant expertise areas..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <form method="post">
+                        <!-- Hidden fields to maintain state -->
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="StepNumber" />
+                        <input type="hidden" asp-for="AssessmentData.RiskAnalysisMethod" />
+                        <input type="hidden" asp-for="AssessmentData.RiskCriteria" />
+
+                        @for (int i = 0; i < Model.AssessmentData.IdentifiedHazards.Count; i++)
+                        {
+                            var hazard = Model.AssessmentData.IdentifiedHazards[i];
+                            
+                            <!-- Hidden fields to preserve hazard data -->
+                            <input type="hidden" name="AssessmentData.IdentifiedHazards[@i].Id" value="@hazard.Id" />
+                            <input type="hidden" name="AssessmentData.IdentifiedHazards[@i].Description" value="@hazard.Description" />
+                            <input type="hidden" name="AssessmentData.IdentifiedHazards[@i].Category" value="@hazard.Category" />
+                            <input type="hidden" name="AssessmentData.IdentifiedHazards[@i].WorstCredibleOutcome" value="@hazard.WorstCredibleOutcome" />
+                            
+                            <div class="card border-secondary mb-3">
+                                <div class="card-header">
+                                    <div class="row align-items-center">
+                                        <div class="col">
+                                            <strong>@hazard.Id: @hazard.Description</strong>
+                                            @if (!string.IsNullOrEmpty(hazard.Category))
+                                            {
+                                                <span class="badge bg-info ms-2">@hazard.Category</span>
+                                            }
+                                        </div>
+                                        <div class="col-auto">
+                                            @if (!string.IsNullOrEmpty(hazard.RiskLevel))
+                                            {
+                                                var riskClass = GetExpertRiskClass(hazard.RiskLevel);
+                                                <span class="badge bg-@riskClass">@hazard.RiskLevel</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Pending Assessment</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label class="form-label">Expert Risk Assessment <span class="text-danger">*</span></label>
+                                                <select class="form-select" name="AssessmentData.IdentifiedHazards[@i].RiskLevel">
+                                                    <option value="">Panel consensus...</option>
+                                                    <option value="Acceptable" selected="@(hazard.RiskLevel == "Acceptable")">Acceptable Risk</option>
+                                                    <option value="Tolerable" selected="@(hazard.RiskLevel == "Tolerable")">Tolerable Risk</option>
+                                                    <option value="Review Required" selected="@(hazard.RiskLevel == "Review Required")">Review Required</option>
+                                                    <option value="Unacceptable" selected="@(hazard.RiskLevel == "Unacceptable")">Unacceptable Risk</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label class="form-label">Assessment Confidence</label>
+                                                <select class="form-select" name="AssessmentData.IdentifiedHazards[@i].Likelihood">
+                                                    <option value="">Select confidence...</option>
+                                                    <option value="High" selected="@(hazard.Likelihood == "High")">High Confidence</option>
+                                                    <option value="Medium" selected="@(hazard.Likelihood == "Medium")">Medium Confidence</option>
+                                                    <option value="Low" selected="@(hazard.Likelihood == "Low")">Low Confidence</option>
+                                                </select>
+                                                <div class="form-text">
+                                                    <small>Level of expert agreement and data quality</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label class="form-label">Uncertainty Level</label>
+                                                <select class="form-select" name="AssessmentData.IdentifiedHazards[@i].Severity">
+                                                    <option value="">Select uncertainty...</option>
+                                                    <option value="Low" selected="@(hazard.Severity == "Low")">Low Uncertainty</option>
+                                                    <option value="Medium" selected="@(hazard.Severity == "Medium")">Medium Uncertainty</option>
+                                                    <option value="High" selected="@(hazard.Severity == "High")">High Uncertainty</option>
+                                                </select>
+                                                <div class="form-text">
+                                                    <small>Degree of unknown factors</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="mb-3">
+                                                <label class="form-label">Expert Panel Consensus & Rationale <span class="text-danger">*</span></label>
+                                                <textarea class="form-control" rows="4"
+                                                          placeholder="Document the expert panel's reasoning, areas of agreement/disagreement, key assumptions, and supporting evidence for this risk assessment..."></textarea>
+                                                <div class="form-text">
+                                                    <small>Include panel member input, voting results if applicable, and minority opinions</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Recommended Actions</label>
+                                                <textarea class="form-control" rows="2"
+                                                          placeholder="Expert-recommended risk control measures..."></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Further Study Required</label>
+                                                <textarea class="form-control" rows="2"
+                                                          placeholder="Areas requiring additional research or analysis..."></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    @if (!string.IsNullOrEmpty(hazard.WorstCredibleOutcome))
+                                    {
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <div class="alert alert-warning small">
+                                                    <strong>Worst Credible Outcome:</strong> @hazard.WorstCredibleOutcome
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Finalize Assessment Button - FIXED -->
+                        <div class="row mb-3">
+                            <div class="col-12 text-center">
+                                <button type="button" class="btn btn-primary" onclick="finalizeExpertAssessmentAnalysis()">
+                                    <i class="fas fa-gavel"></i> Finalize Expert Assessment
+                                </button>
+                                <div class="form-text">
+                                    Record the final expert panel risk assessments
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                        <p>No hazards identified yet.</p>
+                        <p class="small">Please complete Step 2 (Identify Hazards) before proceeding with expert judgment analysis.</p>
+                        <a href="/SafetyRiskManagement/RiskAssessmentWizard/@Model.Id/step/2" class="btn btn-warning">
+                            <i class="fas fa-arrow-left"></i> Go to Step 2
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function finalizeExpertAssessmentAnalysis() {
+    console.log('Finalizing expert assessment (Analysis version)');
+    
+    // Show brief success indicator
+    const button = event.target;
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check"></i> Finalized!';
+    button.classList.remove('btn-primary');
+    button.classList.add('btn-success');
+    
+    setTimeout(() => {
+        button.innerHTML = originalContent;
+        button.classList.remove('btn-success');
+        button.classList.add('btn-primary');
+    }, 1500);
+}
+</script>
+
+@functions {
+    private string GetExpertRiskClass(string riskLevel)
+    {
+        return riskLevel?.ToLowerInvariant() switch
+        {
+            "acceptable" => "success",
+            "tolerable" => "info",
+            "review required" => "warning", 
+            "unacceptable" => "danger",
+            _ => "secondary"
+        };
+    }
+}
+

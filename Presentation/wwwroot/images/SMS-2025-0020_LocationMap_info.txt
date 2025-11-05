@@ -1,0 +1,28 @@
+PDX SMS - Hazard Location Map Thumbnail
+==========================================
+
+Report ID: SMS-2025-0020
+Generated: 2025-10-30 13:26:21
+
+LOCATION COORDINATES:
+• Latitude:  45.589146
+• Longitude: -122.596886
+• Description: With Map
+
+MAP DETAILS:
+• Coordinate System: WGS84 (GPS standard)
+• Airport: Portland International Airport (PDX)
+• Boundary: 45.580° to 45.595°N, -122.610° to -122.580°W
+• Map Source: OpenStreetMap contributors
+• Accuracy: GPS-level precision
+
+FILES GENERATED:
+• SVG Map: SMS-2025-0020_LocationMap.svg
+• Info File: SMS-2025-0020_LocationMap_info.txt
+
+NOTE: This is a detailed placeholder map. For interactive viewing,
+visit the Hazard Reporting page in the SMS system.
+
+ENHANCEMENT OPPORTUNITY:
+This service can be upgraded to generate actual screenshots
+of interactive maps using browser automation (Playwright).

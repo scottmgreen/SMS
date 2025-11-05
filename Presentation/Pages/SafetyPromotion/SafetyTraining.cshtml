@@ -1,0 +1,427 @@
+@page
+@model PDXSMS_Presentation.Pages.SafetyPromotion.SafetyTrainingModel
+@{
+    ViewData["Title"] = "Safety Training";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/SafetyPromotion">Safety Promotion</a></li>
+                    <li class="breadcrumb-item active">Safety Training</li>
+                </ol>
+            </nav>
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h1 class="card-title"><i class="fas fa-graduation-cap"></i> Safety Training</h1>
+                            <p class="card-text">Manage training programs, track completion, and ensure safety competency across the organization</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <h3 class="mb-0">@Model.Dashboard.TrainingComplianceRate%</h3>
+                                    <small>Compliance Rate</small>
+                                </div>
+                                <div class="col-6">
+                                    <h3 class="mb-0">@Model.Dashboard.ActivePrograms</h3>
+                                    <small>Active Programs</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Training Dashboard -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h3 class="text-primary">@Model.Dashboard.TotalEmployees</h3>
+                    <p class="mb-0">Total Employees</p>
+                    <small class="text-muted">Requiring training</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h3 class="text-success">@Model.Dashboard.TrainingComplianceRate%</h3>
+                    <p class="mb-0">Compliance Rate</p>
+                    <small class="text-muted">Organization-wide</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <h3 class="text-info">@Model.Dashboard.CompletedThisMonth</h3>
+                    <p class="mb-0">Completed</p>
+                    <small class="text-muted">This month</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <h3 class="text-warning">@Model.Dashboard.OverdueTraining</h3>
+                    <p class="mb-0">Overdue</p>
+                    <small class="text-muted">Requires attention</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <h3 class="text-danger">@Model.Dashboard.CertificationsExpiring</h3>
+                    <p class="mb-0">Expiring Soon</p>
+                    <small class="text-muted">Next 30 days</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-secondary">
+                <div class="card-body text-center">
+                    <h3 class="text-secondary">@Model.Dashboard.ActivePrograms</h3>
+                    <p class="mb-0">Active Programs</p>
+                    <small class="text-muted">Available</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Tabs -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#programs" data-bs-toggle="tab">
+                                <i class="fas fa-book"></i> Training Programs
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#completions" data-bs-toggle="tab">
+                                <i class="fas fa-check-circle"></i> Recent Completions
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#requirements" data-bs-toggle="tab">
+                                <i class="fas fa-clock"></i> Upcoming Requirements
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#reports" data-bs-toggle="tab">
+                                <i class="fas fa-chart-bar"></i> Training Reports
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <!-- Training Programs Tab -->
+                        <div class="tab-pane fade show active" id="programs" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5>Active Training Programs</h5>
+                                <div>
+                                    <button type="button" class="btn btn-primary">
+                                        <i class="fas fa-plus"></i> Create New Program
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary">
+                                        <i class="fas fa-calendar"></i> Schedule Session
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                @foreach (var program in Model.Programs)
+                                {
+                                    <div class="col-lg-6 mb-4">
+                                        <div class="card h-100">
+                                            <div class="card-header bg-light">
+                                                <div class="row align-items-center">
+                                                    <div class="col">
+                                                        <h6 class="mb-0">@program.Title</h6>
+                                                        <small class="text-muted">@program.Category | @program.Duration</small>
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        <span class="badge bg-success">@program.Status</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="text-muted small">@program.Description</p>
+                                                
+                                                <div class="row mb-3">
+                                                    <div class="col-6">
+                                                        <strong>@program.EnrolledCount</strong><br>
+                                                        <small class="text-muted">Enrolled</small>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <strong>@program.CompletionRate%</strong><br>
+                                                        <small class="text-muted">Completion Rate</small>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="progress mb-3">
+                                                    <div class="progress-bar bg-success" style="width: @program.CompletionRate%"></div>
+                                                </div>
+                                                
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <strong>Next Session:</strong> @program.NextSession.ToString("MMM dd, yyyy")
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer">
+                                                <div class="btn-group w-100">
+                                                    <button type="button" class="btn btn-outline-primary btn-sm">
+                                                        <i class="fas fa-eye"></i> View Details
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm">
+                                                        <i class="fas fa-users"></i> Manage Enrollment
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-info btn-sm">
+                                                        <i class="fas fa-edit"></i> Edit Program
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Recent Completions Tab -->
+                        <div class="tab-pane fade" id="completions" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5>Recent Training Completions</h5>
+                                <button type="button" class="btn btn-outline-primary">
+                                    <i class="fas fa-download"></i> Export Records
+                                </button>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Employee</th>
+                                            <th>Training Program</th>
+                                            <th>Completion Date</th>
+                                            <th>Score</th>
+                                            <th>Status</th>
+                                            <th>Certification Expiry</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var record in Model.RecentCompletions)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <strong>@record.EmployeeName</strong>
+                                                </td>
+                                                <td>@record.ProgramTitle</td>
+                                                <td>@record.CompletionDate.ToString("MM/dd/yyyy")</td>
+                                                <td>
+                                                    <span class="badge @(record.Score >= 90 ? "bg-success" : record.Score >= 80 ? "bg-warning" : "bg-danger")">
+                                                        @record.Score%
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-success">@record.Status</span>
+                                                </td>
+                                                <td>@record.CertificationExpiry.ToString("MM/dd/yyyy")</td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button type="button" class="btn btn-outline-primary">
+                                                            <i class="fas fa-certificate"></i> Certificate
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-secondary">
+                                                            <i class="fas fa-eye"></i> Details
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Upcoming Requirements Tab -->
+                        <div class="tab-pane fade" id="requirements" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5>Upcoming Training Requirements</h5>
+                                <button type="button" class="btn btn-outline-warning">
+                                    <i class="fas fa-bell"></i> Send Reminders
+                                </button>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Employee</th>
+                                            <th>Department</th>
+                                            <th>Required Training</th>
+                                            <th>Due Date</th>
+                                            <th>Priority</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var requirement in Model.UpcomingRequirements)
+                                        {
+                                            <tr>
+                                                <td><strong>@requirement.EmployeeName</strong></td>
+                                                <td>@requirement.Department</td>
+                                                <td>@requirement.ProgramTitle</td>
+                                                <td>@requirement.DueDate.ToString("MM/dd/yyyy")</td>
+                                                <td>
+                                                    <span class="badge @(requirement.Priority == "High" ? "bg-danger" : requirement.Priority == "Medium" ? "bg-warning" : "bg-info")">
+                                                        @requirement.Priority
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button type="button" class="btn btn-outline-primary">
+                                                            <i class="fas fa-user-plus"></i> Enroll
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-warning">
+                                                            <i class="fas fa-envelope"></i> Remind
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Training Reports Tab -->
+                        <div class="tab-pane fade" id="reports" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6><i class="fas fa-chart-pie"></i> Training Completion by Department</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <canvas id="departmentChart" width="400" height="200"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6><i class="fas fa-chart-line"></i> Monthly Training Trends</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <canvas id="trendsChart" width="400" height="200"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6><i class="fas fa-download"></i> Training Reports</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-3 mb-3">
+                                                    <button type="button" class="btn btn-outline-primary w-100">
+                                                        <i class="fas fa-file-excel"></i><br>
+                                                        Training Compliance Report
+                                                    </button>
+                                                </div>
+                                                <div class="col-md-3 mb-3">
+                                                    <button type="button" class="btn btn-outline-success w-100">
+                                                        <i class="fas fa-certificate"></i><br>
+                                                        Certification Status Report
+                                                    </button>
+                                                </div>
+                                                <div class="col-md-3 mb-3">
+                                                    <button type="button" class="btn btn-outline-warning w-100">
+                                                        <i class="fas fa-clock"></i><br>
+                                                        Overdue Training Report
+                                                    </button>
+                                                </div>
+                                                <div class="col-md-3 mb-3">
+                                                    <button type="button" class="btn btn-outline-info w-100">
+                                                        <i class="fas fa-chart-bar"></i><br>
+                                                        Training Analytics Report
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Department Training Chart
+        const deptCtx = document.getElementById('departmentChart').getContext('2d');
+        new Chart(deptCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Operations', 'Safety', 'Maintenance', 'Ground Services', 'Administration'],
+                datasets: [{
+                    data: [95, 98, 92, 89, 97],
+                    backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6f42c1']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+        // Monthly Trends Chart
+        const trendsCtx = document.getElementById('trendsChart').getContext('2d');
+        new Chart(trendsCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Training Completions',
+                    data: [45, 52, 38, 61, 47, 55],
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    </script>
+}
+

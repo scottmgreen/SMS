@@ -6,7 +6,9 @@
 // </copyright>
 // ----------------------------------------------------------------------------->
 
-using Microsoft.FeatureManagement;
+using Microsoft.Extensions.DependencyInjection;
+using SMS_Application.Interfaces;
+using SMS_Application.Services;
 
 namespace SMS_Application.Configuration
 {
@@ -23,23 +25,32 @@ namespace SMS_Application.Configuration
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
             // Core Application Services
-            services.AddScoped<IMessenger, MessengerService>();
-            services.AddMediator(Assembly.GetExecutingAssembly());
-
-            // System and Training Services  
-            services.AddScoped<SystemService>();
+            services.AddScoped<IMediator, Mediator>();
+            services.AddScoped<Mediator>();
             
-            // SMS Application Services - Safety Management System
+            // SMS User Application Services
+            services.AddScoped<SMSApplicationUserService>();
+            services.AddScoped<SMSOrganizationalUserService>();
+            services.AddScoped<SMSStakeholderUserService>();
+            
+            // Existing Application Services - only add ones that exist
+            services.AddScoped<SystemService>();
+            services.AddScoped<MessengerService>();
             services.AddScoped<HazardService>();
+            services.AddScoped<AirportSharedDatasetService>(); // This was missing!
             services.AddScoped<ReportService>();
-            services.AddScoped<InvestigationService>();
             services.AddScoped<InterviewService>();
+            services.AddScoped<InvestigationService>();
             services.AddScoped<RiskAnalysisService>();
             services.AddScoped<RiskAssessmentService>();
             services.AddScoped<MitigationService>();
             services.AddScoped<MitigationAssignmentService>();
             services.AddScoped<ReportValidationService>();
             services.AddScoped<ScoringPanelService>();
+            
+
+            // Note: Command and Query handlers are already registered in the existing project
+            // They will be extended to include SMS User handlers as needed
 
             return services;
         }

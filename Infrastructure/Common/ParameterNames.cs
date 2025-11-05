@@ -31,6 +31,7 @@ public static class ParameterNames
 
     private static readonly Lazy<string> _pmDescription = new Lazy<string>(() => "@pDescription");
     public static string pmDescription => _pmDescription.Value;
+
     /// <summary>
     /// Common parameters used across all entities
     /// </summary>
@@ -48,6 +49,121 @@ public static class ParameterNames
 
     private static readonly Lazy<string> _pmUpdatedDate = new Lazy<string>(() => "@pUpdatedDate");
     public static string pmUpdatedDate => _pmUpdatedDate.Value;
+
+    /// <summary>
+    /// SMS Application User parameters
+    /// </summary>
+    private static readonly Lazy<string> _pmSMSApplicationUserId = new Lazy<string>(() => "@pID");
+    public static string pmSMSApplicationUserId => _pmSMSApplicationUserId.Value;
+
+    private static readonly Lazy<string> _pmSMSApplicationUserCode = new Lazy<string>(() => "@pCode");
+    public static string pmSMSApplicationUserCode => _pmSMSApplicationUserCode.Value;
+
+    private static readonly Lazy<string> _pmSMSApplicationUserFirstName = new Lazy<string>(() => "@pFirstName");
+    public static string pmSMSApplicationUserFirstName => _pmSMSApplicationUserFirstName.Value;
+
+    private static readonly Lazy<string> _pmSMSApplicationUserLastName = new Lazy<string>(() => "@pLastName");
+    public static string pmSMSApplicationUserLastName => _pmSMSApplicationUserLastName.Value;
+
+    private static readonly Lazy<string> _pmSMSApplicationUserUserName = new Lazy<string>(() => "@pUserName");
+    public static string pmSMSApplicationUserUserName => _pmSMSApplicationUserUserName.Value;
+
+    private static readonly Lazy<string> _pmSMSApplicationUserPassword = new Lazy<string>(() => "@pPassword");
+    public static string pmSMSApplicationUserPassword => _pmSMSApplicationUserPassword.Value;
+
+    private static readonly Lazy<string> _pmSMSApplicationUserApplicationRole = new Lazy<string>(() => "@pApplicationRole");
+    public static string pmSMSApplicationUserApplicationRole => _pmSMSApplicationUserApplicationRole.Value;
+
+    private static readonly Lazy<string> _pmSMSApplicationUserPermissionLevel = new Lazy<string>(() => "@pPermissionLevel");
+    public static string pmSMSApplicationUserPermissionLevel => _pmSMSApplicationUserPermissionLevel.Value;
+
+    private static readonly Lazy<string> _pmSMSApplicationUserIsActive = new Lazy<string>(() => "@pIsActive");
+    public static string pmSMSApplicationUserIsActive => _pmSMSApplicationUserIsActive.Value;
+
+    private static readonly Lazy<string> _pmSMSApplicationUserLastLoginDate = new Lazy<string>(() => "@pLastLoginDate");
+    public static string pmSMSApplicationUserLastLoginDate => _pmSMSApplicationUserLastLoginDate.Value;
+
+    private static readonly Lazy<string> _pmSMSApplicationUserLoginDate = new Lazy<string>(() => "@pLoginDate");
+    public static string pmSMSApplicationUserLoginDate => _pmSMSApplicationUserLoginDate.Value;
+
+    /// <summary>
+    /// SMS Organizational User parameters
+    /// </summary>
+    private static readonly Lazy<string> _pmSMSOrganizationalUserId = new Lazy<string>(() => "@pID");
+    public static string pmSMSOrganizationalUserId => _pmSMSOrganizationalUserId.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalUserCode = new Lazy<string>(() => "@pCode");
+    public static string pmSMSOrganizationalUserCode => _pmSMSOrganizationalUserCode.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalUserFirstName = new Lazy<string>(() => "@pFirstName");
+    public static string pmSMSOrganizationalUserFirstName => _pmSMSOrganizationalUserFirstName.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalUserLastName = new Lazy<string>(() => "@pLastName");
+    public static string pmSMSOrganizationalUserLastName => _pmSMSOrganizationalUserLastName.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalUserUserName = new Lazy<string>(() => "@pUserName");
+    public static string pmSMSOrganizationalUserUserName => _pmSMSOrganizationalUserUserName.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalUserPassword = new Lazy<string>(() => "@pPassword");
+    public static string pmSMSOrganizationalUserPassword => _pmSMSOrganizationalUserPassword.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalUserDepartment = new Lazy<string>(() => "@pDepartment");
+    public static string pmSMSOrganizationalUserDepartment => _pmSMSOrganizationalUserDepartment.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalUserPosition = new Lazy<string>(() => "@pPosition");
+    public static string pmSMSOrganizationalUserPosition => _pmSMSOrganizationalUserPosition.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalUserOrganizationLevel = new Lazy<string>(() => "@pOrganizationLevel");
+    public static string pmSMSOrganizationalUserOrganizationLevel => _pmSMSOrganizationalUserOrganizationLevel.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalUserIsActive = new Lazy<string>(() => "@pIsActive");
+    public static string pmSMSOrganizationalUserIsActive => _pmSMSOrganizationalUserIsActive.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalUserLastLoginDate = new Lazy<string>(() => "@pLastLoginDate");
+    public static string pmSMSOrganizationalUserLastLoginDate => _pmSMSOrganizationalUserLastLoginDate.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalUserLoginDate = new Lazy<string>(() => "@pLoginDate");
+    public static string pmSMSOrganizationalUserLoginDate => _pmSMSOrganizationalUserLoginDate.Value;
+
+    /// <summary>
+    /// SMS Stakeholder User parameters
+    /// </summary>
+    private static readonly Lazy<string> _pmSMSStakeholderUserId = new Lazy<string>(() => "@pID");
+    public static string pmSMSStakeholderUserId => _pmSMSStakeholderUserId.Value;
+
+    private static readonly Lazy<string> _pmSMSStakeholderUserCode = new Lazy<string>(() => "@pCode");
+    public static string pmSMSStakeholderUserCode => _pmSMSStakeholderUserCode.Value;
+
+    private static readonly Lazy<string> _pmSMSStakeholderUserFirstName = new Lazy<string>(() => "@pFirstName");
+    public static string pmSMSStakeholderUserFirstName => _pmSMSStakeholderUserFirstName.Value;
+
+    private static readonly Lazy<string> _pmSMSStakeholderUserLastName = new Lazy<string>(() => "@pLastName");
+    public static string pmSMSStakeholderUserLastName => _pmSMSStakeholderUserLastName.Value;
+
+    private static readonly Lazy<string> _pmSMSStakeholderUserUserName = new Lazy<string>(() => "@pUserName");
+    public static string pmSMSStakeholderUserUserName => _pmSMSStakeholderUserUserName.Value;
+
+    private static readonly Lazy<string> _pmSMSStakeholderUserPassword = new Lazy<string>(() => "@pPassword");
+    public static string pmSMSStakeholderUserPassword => _pmSMSStakeholderUserPassword.Value;
+
+    private static readonly Lazy<string> _pmSMSStakeholderUserStakeholderType = new Lazy<string>(() => "@pStakeholderType");
+    public static string pmSMSStakeholderUserStakeholderType => _pmSMSStakeholderUserStakeholderType.Value;
+
+    private static readonly Lazy<string> _pmSMSStakeholderUserOrganization = new Lazy<string>(() => "@pOrganization");
+    public static string pmSMSStakeholderUserOrganization => _pmSMSStakeholderUserOrganization.Value;
+
+    private static readonly Lazy<string> _pmSMSStakeholderUserAccessLevel = new Lazy<string>(() => "@pAccessLevel");
+    public static string pmSMSStakeholderUserAccessLevel => _pmSMSStakeholderUserAccessLevel.Value;
+
+    private static readonly Lazy<string> _pmSMSStakeholderUserIsActive = new Lazy<string>(() => "@pIsActive");
+    public static string pmSMSStakeholderUserIsActive => _pmSMSStakeholderUserIsActive.Value;
+
+    private static readonly Lazy<string> _pmSMSStakeholderUserLastLoginDate = new Lazy<string>(() => "@pLastLoginDate");
+    public static string pmSMSStakeholderUserLastLoginDate => _pmSMSStakeholderUserLastLoginDate.Value;
+
+    private static readonly Lazy<string> _pmSMSStakeholderUserLoginDate = new Lazy<string>(() => "@pLoginDate");
+    public static string pmSMSStakeholderUserLoginDate => _pmSMSStakeholderUserLoginDate.Value;
+
     /// <summary>
     /// Airport Shared Dataset parameters
     /// </summary>
@@ -155,6 +271,7 @@ public static class ParameterNames
 
     private static readonly Lazy<string> _pmFactorsOtherDescription = new Lazy<string>(() => "@pFactorsOtherDescription");
     public static string pmFactorsOtherDescription => _pmFactorsOtherDescription.Value;
+
     /// <summary>
     /// Hazard parameters
     /// </summary>

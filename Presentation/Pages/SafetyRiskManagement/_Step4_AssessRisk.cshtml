@@ -1,0 +1,1102 @@
+@model PDXSMS_Presentation.Pages.SafetyRiskManagement.RiskAssessmentWizardModel
+@{
+    ViewData["Title"] = "Step 4 - Assess Risk & Tolerability";
+}
+
+<div class="row">
+    <div class="col-12">
+        <!-- Header with Panel Management -->
+        <div class="card border-primary mb-4">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line"></i> Step 4: Assess Risk Level & Tolerability
+                    </h5>
+                    <div>
+                        <span class="badge bg-light text-dark">
+                            @(Model.AssessmentData?.IdentifiedHazards?.Count ?? 0) Hazards
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">
+                    Use the 5x5 risk matrix to assess each identified hazard. Each panel member scores independently using severity (impact) and likelihood (probability) 
+                    to determine their individual risk assessment. The system calculates average scores per hazard.
+                </p>
+                
+                @if (Model.SelectedPanelMembers?.Any() == true)
+                {
+                   @*  <div class="alert alert-info">
+                        <i class="fas fa-users"></i>
+                        <strong>Scoring Panel Active:</strong> 
+                        @Model.SelectedPanelMembers.Count panel members ready for collaborative hazard scoring.
+                    </div> *@
+                }
+                else
+                {
+                   @*  <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Hazard-Specific Scoring:</strong> 
+                        Click "Manage Scoring Panel" on each hazard below to assign SMS users (isEmployee = true) for collaborative scoring.
+                    </div> *@
+                }
+            </div>
+        </div>
+
+        <!-- Hidden fields for form binding -->
+        <input type="hidden" name="Id" value="@Model.Id" />
+        <input type="hidden" name="StepNumber" value="@Model.StepNumber" />
+        @Html.AntiForgeryToken()
+
+        @if (Model.AssessmentData?.IdentifiedHazards?.Any() == true)
+        {
+            @foreach (var hazard in Model.AssessmentData.IdentifiedHazards)
+            {
+                var hazardScores = Model.PanelScores.ContainsKey(hazard.Id) ? Model.PanelScores[hazard.Id] : new List<RiskAssessmentWizardModel.PanelMemberScoreData>();
+                var averageScore = Model.HazardAverageScores.ContainsKey(hazard.Id) ? (double?)Model.HazardAverageScores[hazard.Id] : null;
+                var completedScores = hazardScores.Count(s => s.IsComplete);
+                
+                // Get panel members for THIS SPECIFIC HAZARD only
+                var hazardPanelMembers = Model.HazardPanelMembers.ContainsKey(hazard.Id) ? Model.HazardPanelMembers[hazard.Id] : new List<string>();
+                var totalPanelMembers = hazardPanelMembers.Count;
+                
+                <div class="card border-secondary mb-4">
+                    <div class="card-header bg-light">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                                    <strong>@hazard.Id: @hazard.Description</strong>
+                                </h5>
+                                @if (!string.IsNullOrEmpty(hazard.Category))
+                                {
+                                    <span class="badge bg-info ms-2">@hazard.Category</span>
+                                }
+                            </div>
+                            <div class="col-auto">
+                                <!-- Manage Scoring Panel button for THIS specific hazard -->
+                                <button type="button" class="btn btn-primary btn-sm me-2" 
+                                        data-bs-toggle="modal" data-bs-target="#scoringPanelModal" 
+                                        onclick="setCurrentHazard('@hazard.Id', '@hazard.Description')">
+                                    <i class="fas fa-users"></i> Manage Scoring Panel
+                                </button>
+                                
+                                @if (averageScore.HasValue)
+                                {
+                                    <span class="badge bg-success fs-6" id="hazard-badge-@hazard.Id">
+                                        Panel Average: @averageScore.Value.ToString("F1")
+                                    </span>
+                                    <br><small class="text-muted" id="hazard-progress-@hazard.Id">
+                                        (@completedScores/@totalPanelMembers SMS users scored)
+                                    </small>
+                                }
+                                else if (totalPanelMembers > 0)
+                                {
+                                    <span class="badge bg-warning" id="hazard-badge-@hazard.Id">
+                                        @completedScores/@totalPanelMembers Scored
+                                    </span>
+                                    <br><small class="text-muted" id="hazard-progress-@hazard.Id">
+                                        Waiting for more scores...
+                                    </small>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary" id="hazard-badge-@hazard.Id">No Scores Yet</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                                               
+                        
+                        <!-- Separate Scoring Panel for THIS Hazard -->
+                        @if (hazardPanelMembers.Any())
+                        {
+                            @if (Model.AvailableSMSUsers?.Any() == true)
+                            {
+                                @* <div class="alert alert-primary">
+                                    <h6 class="mb-2">
+                                        <i class="fas fa-users text-primary"></i> 
+                                        <strong>Scoring Panel for Hazard @hazard.Id</strong>
+                                    </h6>
+                                    <p class="mb-0 small">
+                                        Each SMS user (isEmployee = true) provides independent scoring using 5x5 risk matrix for this specific hazard.
+                                    </p>
+                                </div> *@
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover">
+                                        <thead class="table-primary">
+                                            <tr>
+                                                <th width="25%">
+                                                    <i class="fas fa-user"></i> SMS User (Panelist)
+                                                </th>
+                                                <th width="20%" class="text-center">
+                                                    <i class="fas fa-exclamation-circle"></i> Severity (1-5)
+                                                </th>
+                                                <th width="20%" class="text-center">
+                                                    <i class="fas fa-clock"></i> Likelihood (1-5)
+                                                </th>
+                                                <th width="15%" class="text-center">
+                                                    <i class="fas fa-calculator"></i> Individual Score
+                                                </th>
+                                                <th width="20%" class="text-center">
+                                                    <i class="fas fa-save"></i> Action
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var panelistId in hazardPanelMembers)
+                                            {
+                                                // Look for panelist in AvailableSMSUsers instead of EmployeeStakeholders
+                                                var panelist = Model.AvailableSMSUsers?.FirstOrDefault(u => u.Id == panelistId);
+                                                if (panelist != null)
+                                                {
+                                                    var memberScore = hazardScores.FirstOrDefault(s => s.MemberId == panelistId);
+                                                    var isCompleted = memberScore?.IsComplete == true;
+                                                    var rowId = $"scoring-row-{hazard.Id}-{panelistId}";
+                
+                                                    <tr id="@rowId" class="scoring-row @(isCompleted ? "table-success" : "table-light")" 
+                                                        data-member-id="@panelistId" data-hazard-id="@hazard.Id">
+                                                        
+                                                        <!-- SMS User Info -->
+                                                        <td>
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="me-2">
+                                                                    <i class="fas fa-user-tie text-primary fa-lg"></i>
+                                                                </div>
+                                                                <div>
+                                                                    <strong>@(panelist.DisplayName ?? panelist.Id)</strong><br>
+                                                                    <small class="text-muted">@(panelist.OrganizationName ?? "SMS Employee")</small><br>
+                                                                    @if (isCompleted)
+                                                                    {
+                                                                        <span class="badge bg-success mt-1">
+                                                                            <i class="fas fa-check"></i> Scored
+                                                                        </span>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <span class="badge bg-warning mt-1">
+                                                                            <i class="fas fa-clock"></i> Pending Score
+                                                                        </span>
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                            
+                                                        @if (isCompleted)
+                                                        {
+                                                            <!-- Show completed scoring (read-only) -->
+                                                            <td class="text-center align-middle">
+                                                                <div class="badge bg-primary fs-6 p-2">
+                                                                    @memberScore.SeverityScore
+                                                                </div>
+                                                                <br><small class="text-muted mt-1">@GetSeverityLabel(memberScore.SeverityScore)</small>
+                                                            </td>
+                                                            <td class="text-center align-middle">
+                                                                <div class="badge bg-primary fs-6 p-2">
+                                                                    @memberScore.LikelihoodScore
+                                                                </div>
+                                                                <br><small class="text-muted mt-1">@GetLikelihoodLabel(memberScore.LikelihoodScore)</small>
+                                                            </td>
+                                                            <td class="text-center align-middle">
+                                                                <div class="badge bg-success fs-5 p-2">
+                                                                    @memberScore.CalculatedScore.ToString("F1")
+                                                                </div>
+                                                            </td>
+                                                            <td class="text-center align-middle">
+                                                                <button type="button" class="btn btn-outline-secondary btn-sm" 
+                                                                        onclick="editScore('@panelistId', '@hazard.Id', @memberScore.SeverityScore, @memberScore.LikelihoodScore)">
+                                                                    <i class="fas fa-edit"></i> Edit Score
+                                                                </button>
+                                                            </td>
+                                                        }
+                                                        else
+                                                        {
+                                                            <!-- Show 5x5 scoring dropdowns for this panelist and this hazard -->
+                                                            <td class="align-middle">
+                                                                <select class="form-select severity-select" 
+                                                                        name="severityScore" 
+                                                                        onchange="calculateScore('@rowId')" required>
+                                                                    <option value="">Select Severity...</option>
+                                                                    <option value="1">1 - Minor Impact</option>
+                                                                    <option value="2">2 - Moderate Impact</option>
+                                                                    <option value="3">3 - Serious Impact</option>
+                                                                    <option value="4">4 - Major Impact</option>
+                                                                    <option value="5">5 - Catastrophic Impact</option>
+                                                                </select>
+                                                                <small class="text-muted">Choose impact level</small>
+                                                            </td>
+                                                            <td class="align-middle">
+                                                                <select class="form-select likelihood-select" 
+                                                                        name="likelihoodScore" 
+                                                                        onchange="calculateScore('@rowId')" required>
+                                                                    <option value="">Select Likelihood...</option>
+                                                                    <option value="1">1 - Rare (A)</option>
+                                                                    <option value="2">2 - Unlikely (B)</option>
+                                                                    <option value="3">3 - Possible (C)</option>
+                                                                    <option value="4">4 - Likely (D)</option>
+                                                                    <option value="5">5 - Frequent (E)</option>
+                                                                </select>
+                                                                <small class="text-muted">Choose probability</small>
+                                                            </td>
+                                                            <td class="text-center align-middle">
+                                                                <div class="score-display badge bg-secondary fs-6 p-2">-</div>
+                                                                <br><small class="text-muted">Auto-calculated</small>
+                                                            </td>
+                                                            <td class="text-center align-middle">
+                                                                <button type="button" class="btn btn-success btn-sm submit-btn" 
+                                                                        onclick="submitScore('@panelistId', '@hazard.Id')" disabled>
+                                                                    <i class="fas fa-save"></i> Submit Score
+                                                                </button>
+                                                            </td>
+                                                        }
+                                                    </tr>
+                                                }
+                                                else
+                                                {
+                                                    <!-- Debug: Show missing panelist with more detail -->
+                                                    <tr class="table-warning">
+                                                        <td colspan="5">
+                                                            <div class="alert alert-warning mb-0">
+                                                                <i class="fas fa-exclamation-triangle"></i>
+                                                                <strong>Panelist Not Found:</strong> ID "@panelistId"<br>
+                                                                <small class="text-muted">
+                                                                    The assigned panelist could not be found in the SMS user list.<br>
+                                                                    Available SMS Users: @(Model.AvailableSMSUsers?.Count ?? 0)<br>
+                                                                    Panel Members for this hazard: @hazardPanelMembers.Count<br>
+                                                                    @if (Model.AvailableSMSUsers?.Any() == true)
+                                                                    {
+                                                                        <span>Available IDs: @string.Join(", ", Model.AvailableSMSUsers.Take(3).Select(u => u.Id))</span>
+                                                                        if (Model.AvailableSMSUsers.Count > 3)
+                                                                        {
+                                                                            <span>...</span>
+                                                                        }
+                                                                    }
+                                                                </small>
+                                                                <br>
+                                                                <button type="button" class="btn btn-sm btn-primary ms-2" onclick="location.reload()">
+                                                                    <i class="fas fa-refresh"></i> Reload Page
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <strong>SMS Users Not Loaded:</strong> 
+                                    Panel members are assigned (@hazardPanelMembers.Count users) but SMS user data is not available.
+                                    <br><br>
+                                    <button type="button" class="btn btn-primary" onclick="location.reload()">
+                                        <i class="fas fa-refresh"></i> Reload Page to Load SMS Users
+                                    </button>
+                                </div>
+                            }
+                            
+                            <!-- Panel Summary for this Hazard -->
+                            @if (averageScore.HasValue && completedScores > 0)
+                            {
+                                @* <div class="alert alert-success mt-3"> *@
+                                    <div class="row align-items-center">
+                                        <div class="col-md-8">
+                                            <h6 class="mb-1">
+                                                <i class="fas fa-calculator text-success"></i> 
+                                                <strong>Panel Consensus for @hazard.Id</strong>
+                                            </h6>
+                                            <p class="mb-0">
+                                                <strong>Average Score: @averageScore.Value.ToString("F1")</strong> 
+                                                (calculated from @completedScores panelist scores)
+                                            </p>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="progress mb-2" style="height: 25px;">
+                                                <div class="progress-bar bg-success" 
+                                                     style="width: @((completedScores / (double)totalPanelMembers) * 100)%">
+                                                    @completedScores/@totalPanelMembers
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">Completion Progress</small>
+                                        </div>
+                                    </div>
+                               @*  </div> *@
+                            }
+                            else if (totalPanelMembers > 0)
+                            {
+                                <div class="alert alert-info mt-3">
+                                    
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>Scoring in Progress:</strong> 
+                                    @completedScores of @totalPanelMembers panelists have scored this hazard.
+                                    @if (completedScores == 0)
+                                    {
+                                        <span class="text-muted">Ready for panelist scoring...</span>
+                                    }
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>No Scoring Panel for @hazard.Id:</strong> 
+                                Click "Manage Scoring Panel" above to assign SMS users to score this hazard.
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                No hazards have been identified yet. Please complete Step 2 first.
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Scoring Panel Management Modal -->
+<div class="modal fade" id="scoringPanelModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-users"></i> <span id="modalTitle">Select SMS Users for Scoring Panel</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Current Hazard Info -->
+                <div class="alert alert-primary" id="currentHazardInfo" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Configuring scoring panel for:</strong> <span id="currentHazardDisplay"></span>
+                </div>
+                
+                <!-- Load SMS Users Section -->
+                <div class="card border-primary mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-database"></i> Load Existing SMS Users
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <p class="mb-2">
+                                    <strong>Available SMS Users:</strong> @(Model.AvailableSMSUsers?.Count ?? 0) loaded
+                                    @if (Model.AvailableSMSUsers?.Any() == true)
+                                    {
+                                        <span class="text-success">? Ready for selection</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-warning">? No users loaded</span>
+                                    }
+                                </p>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-primary w-100" onclick="loadExistingSMSUsers()">
+                                    <i class="fas fa-refresh"></i> Load SMS Users
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- SMS User Selection -->
+                <div class="card border-success">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-check-square"></i> Select SMS Users for This Hazard
+                        </h6>
+                    </div>
+                    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                        <!-- DIAGNOSTIC: Show raw data -->
+                        <div class="alert alert-info small mb-2">
+                            <strong>?? DIAGNOSTIC:</strong><br>
+                            Model.AvailableSMSUsers?.Count: @(Model.AvailableSMSUsers?.Count ?? -1)<br>
+                            Model.AvailableSMSUsers?.Any(): @(Model.AvailableSMSUsers?.Any() == true ? "TRUE" : "FALSE")<br>
+                            Will render form: @(Model.AvailableSMSUsers?.Any() == true ? "YES" : "NO")
+                        </div>
+                        
+                        <!-- Always show the selection area -->
+                        <div id="smsUserList">
+                            @if (Model.AvailableSMSUsers?.Any() == true)
+                            {
+                                <!-- ? FIX: Use div instead of form to avoid nesting issues -->
+                                <div id="smsUserSelectionContainer">
+                                    <div class="alert alert-info mb-3">
+                                        <i class="fas fa-info-circle"></i>
+                                        <strong>Found @Model.AvailableSMSUsers.Count SMS Users:</strong> Select the users you want to assign to this hazard's scoring panel.
+                                    </div>
+                                    <div class="row">
+                                        @foreach (var smsUser in Model.AvailableSMSUsers)
+                                        {
+                                            <!-- Check if this user is assigned to the CURRENT hazard being managed -->
+                                            <div class="col-md-12 mb-3">
+                                                <div class="card border-light">
+                                                    <div class="card-body p-3">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input sms-user-checkbox" type="checkbox" 
+                                                                   name="selectedSMSUsers" value="@smsUser.Id" 
+                                                                   id="smsuser_@smsUser.Id" 
+                                                                   data-user-id="@smsUser.Id"
+                                                                   data-user-name="@(smsUser.DisplayName ?? smsUser.Id)">
+                                                            <label class="form-check-label w-100" for="smsuser_@smsUser.Id">
+                                                                <div class="d-flex align-items-center">
+                                                                    <div class="me-3">
+                                                                        <i class="fas fa-user-tie text-success fa-2x"></i>
+                                                                    </div>
+                                                                    <div class="flex-grow-1">
+                                                                        <h6 class="mb-1">@(smsUser.DisplayName ?? smsUser.Id)</h6>
+                                                                        <p class="mb-1 text-muted">
+                                                                            <i class="fas fa-envelope"></i> @smsUser.Email
+                                                                        </p>
+                                                                        <p class="mb-1 text-muted">
+                                                                            <i class="fas fa-building"></i> @(smsUser.OrganizationName ?? "SMS Employee")
+                                                                        </p>
+                                                                        <span class="badge bg-success">isEmployee = true</span>
+                                                                        <span class="badge bg-info ms-1 current-assignment-badge" style="display: none;">
+                                                                            Currently Assigned to This Hazard
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                    
+                                    <!-- DIAGNOSTIC: Show what was rendered -->
+                                    <div class="alert alert-secondary small">
+                                        <strong>?? CONTAINER DIAGNOSTIC:</strong><br>
+                                        Container ID: smsUserSelectionContainer<br>
+                                        Rendered @Model.AvailableSMSUsers.Count user checkboxes with class 'sms-user-checkbox'<br>
+                                        First user: @(Model.AvailableSMSUsers.FirstOrDefault()?.DisplayName ?? "NONE")<br>
+                                        JavaScript should find checkboxes by class 'sms-user-checkbox'
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <strong>No SMS Users Available</strong><br>
+                                    Click "Load SMS Users" above to load existing SMS users with isEmployee = true from the system.
+                                    <hr>
+                                    <h6>What happens when you click "Load SMS Users":</h6>
+                                    <ul class="mb-0">
+                                        <li>System will search for existing SMS users with isEmployee = true</li>
+                                        <li>If no users found, sample SMS users will be created for testing</li>
+                                        <li>You'll then see a list of checkboxes to select users for this hazard</li>
+                                    </ul>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" 
+                        onclick="console.log('?? BUTTON CLICKED!'); assignSelectedUsersToHazard();" 
+                        @(Model.AvailableSMSUsers?.Any() != true ? "disabled" : "")>
+                    <i class="fas fa-users"></i> Update Scoring Panel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.scoring-row {
+    background-color: #f8f9fa;
+}
+
+.scoring-row:nth-child(even) {
+    background-color: #ffffff;
+}
+
+.table th {
+    background-color: #e3f2fd !important;
+    font-weight: bold;
+}
+
+.individual-score {
+    font-size: 1.1em;
+    padding: 8px 12px;
+}
+
+.form-check-label {
+    cursor: pointer;
+    width: 100%;
+}
+
+.form-check-input:checked + .form-check-label {
+    background-color: #e3f2fd;
+    border-radius: 5px;
+    padding: 5px;
+}
+
+.badge.fs-6 {
+    font-size: 1rem !important;
+}
+
+.badge.fs-5 {
+    font-size: 1.25rem !important;
+}
+
+.badge-update {
+    animation: pulse 0.5s ease-in-out;
+}
+
+/* Modal user selection styling */
+.card.border-primary .current-assignment-badge {
+    display: inline-block !important;
+}
+
+.current-assignment-badge {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Simple fade in animation */
+.current-assignment-badge {
+    transition: opacity 0.3s ease-in-out;
+}
+</style>
+
+@functions {
+    private string GetSeverityLabel(int severity)
+    {
+        return severity switch
+        {
+            1 => "Minor",
+            2 => "Moderate", 
+            3 => "Serious",
+            4 => "Major",
+            5 => "Catastrophic",
+            _ => "Unknown"
+        };
+    }
+    
+    private string GetLikelihoodLabel(int likelihood)
+    {
+        return likelihood switch
+        {
+            1 => "Rare",
+            2 => "Unlikely",
+            3 => "Possible", 
+            4 => "Likely",
+            5 => "Frequent",
+            _ => "Unknown"
+        };
+    }
+}
+
+<script type="text/javascript">
+// Step 4 Scoring Panel Management JavaScript
+// Global variables to track current hazard being managed
+let currentHazardId = '';
+let currentHazardDescription = '';
+
+// DOM Ready - Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('?? Step 4 JavaScript loaded and ready');
+});
+
+/**
+ * Set the current hazard being managed in the modal
+ */
+function setCurrentHazard(hazardId, hazardDescription) {
+    console.log('?? Setting current hazard: ' + hazardId + ' - ' + hazardDescription);
+    
+    currentHazardId = hazardId;
+    currentHazardDescription = hazardDescription;
+    
+    // Update the modal header with null checks
+    const currentHazardDisplay = document.getElementById('currentHazardDisplay');
+    const currentHazardInfo = document.getElementById('currentHazardInfo');
+    const modalTitle = document.getElementById('modalTitle');
+    
+    if (currentHazardDisplay) {
+        currentHazardDisplay.textContent = hazardId + ': ' + hazardDescription;
+    } else {
+        console.warn('?? currentHazardDisplay element not found');
+    }
+    
+    if (currentHazardInfo) {
+        currentHazardInfo.style.display = 'block';
+    } else {
+        console.warn('?? currentHazardInfo element not found');
+    }
+    
+    if (modalTitle) {
+        modalTitle.textContent = 'Select SMS Users for ' + hazardId;
+    } else {
+        console.warn('?? modalTitle element not found');
+    }
+    
+    // Load existing panel assignments for this hazard
+    loadExistingPanelAssignments(hazardId);
+    
+    console.log('? Current hazard set successfully');
+}
+
+/**
+ * Load existing panel assignments for the current hazard
+ */
+function loadExistingPanelAssignments(hazardId) {
+    console.log('?? Loading existing panel assignments for ' + hazardId);
+    
+    // Reset all checkboxes
+    const checkboxes = document.querySelectorAll('.sms-user-checkbox');
+    checkboxes.forEach(function(cb) {
+        cb.checked = false;
+        const badge = cb.closest('.card-body').querySelector('.current-assignment-badge');
+        if (badge) badge.style.display = 'none';
+    });
+}
+
+/**
+ * Assign selected users to the current hazard's scoring panel
+ */
+async function assignSelectedUsersToHazard() {
+    console.log('?? STARTING assignSelectedUsersToHazard function');
+    
+    if (!currentHazardId) {
+        console.error('? No currentHazardId set');
+        alert('No hazard selected. Please try again.');
+        return;
+    }
+    
+    console.log('? Current hazard ID: ' + currentHazardId);
+    
+    try {
+        console.log('?? Looking for checkboxes using class selector...');
+        
+        const selectedUsers = [];
+        const allCheckboxes = document.querySelectorAll('.sms-user-checkbox');
+        const checkedBoxes = document.querySelectorAll('.sms-user-checkbox:checked');
+        
+        console.log('?? Found ' + allCheckboxes.length + ' total checkboxes, ' + checkedBoxes.length + ' checked');
+        
+        // Debug: Log all checkbox states
+        allCheckboxes.forEach(function(cb, index) {
+            console.log('?? Checkbox ' + index + ': ID=' + cb.value + ', Checked=' + cb.checked + ', Name=' + (cb.dataset.userName || 'Unknown'));
+        });
+        
+        checkedBoxes.forEach(function(cb) {
+            const userName = cb.dataset.userName || cb.closest('.form-check').querySelector('h6')?.textContent?.trim() || 'Unknown User';
+            
+            selectedUsers.push({
+                id: cb.value,
+                name: userName
+            });
+            
+            console.log('? Selected user: ' + cb.value + ' - ' + userName);
+        });
+        
+        if (selectedUsers.length === 0) {
+            console.warn('?? No users selected');
+            alert('Please select at least one SMS user for the scoring panel.\n\nFound ' + allCheckboxes.length + ' users available for selection.');
+            return;
+        }
+        
+        console.log('?? Ready to process ' + selectedUsers.length + ' selected users');
+        
+        // Show loading state
+        console.log('?? Looking for Update button...');
+        const button = document.querySelector('#scoringPanelModal .btn-success');
+        if (!button) {
+            console.error('? Update button not found in modal');
+            alert('Error: Update button not found. Please try refreshing the page.');
+            return;
+        }
+        
+        console.log('? Found Update button, setting loading state...');
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating Panel...';
+        
+        console.log('?? Calling server to update scoring panel...');
+        // Send to server
+        const success = await updateScoringPanelOnServer(currentHazardId, selectedUsers);
+        
+        console.log('?? Server response: ' + (success ? 'SUCCESS' : 'FAILED'));
+        
+        if (success) {
+            // Update the hazard card immediately
+            updateHazardPanelDisplay(currentHazardId, selectedUsers);
+            
+            // Show success message
+            console.log('? SUCCESS: Assigned ' + selectedUsers.length + ' users to ' + currentHazardId + ' scoring panel!');
+            
+            // Close the modal
+            console.log('?? Closing modal...');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('scoringPanelModal'));
+            if (modal) {
+                modal.hide();
+            } else {
+                console.warn('?? Could not get modal instance for closing');
+            }
+            
+            // Refresh the page to show updated panel
+            console.log('?? Refreshing page in 1.5 seconds...');
+            setTimeout(function() {
+                window.location.reload();
+            }, 1500);
+        } else {
+            alert('Failed to update scoring panel. Please try again.');
+        }
+        
+        // Restore button
+        console.log('?? Restoring button state...');
+        button.disabled = false;
+        button.innerHTML = originalText;
+        
+    } catch (error) {
+        console.error('?? CRITICAL ERROR in assignSelectedUsersToHazard:', error);
+        alert('Error updating scoring panel. Please try again.');
+        
+        // Restore button state
+        const button = document.querySelector('#scoringPanelModal .btn-success');
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-users"></i> Update Scoring Panel';
+        }
+    }
+}
+
+/**
+ * Update scoring panel on server (actual server call)
+ */
+async function updateScoringPanelOnServer(hazardId, selectedUsers) {
+    console.log('?? STARTING updateScoringPanelOnServer');
+    console.log('?? Input: hazardId=' + hazardId + ', userCount=' + selectedUsers.length);
+    
+    try {
+        // Get current assessment ID from the form
+        console.log('?? Looking for form fields...');
+        const assessmentIdField = document.querySelector('input[name="Id"]');
+        const tokenField = document.querySelector('input[name="__RequestVerificationToken"]');
+        
+        console.log('?? Form fields found: assessmentId=' + (assessmentIdField ? 'YES' : 'NO') + ', token=' + (tokenField ? 'YES' : 'NO'));
+        
+        if (!assessmentIdField) {
+            console.error('? Assessment ID field not found');
+            throw new Error('Assessment ID not found');
+        }
+        
+        if (!tokenField) {
+            console.error('? Anti-forgery token not found');
+            throw new Error('Anti-forgery token not found');
+        }
+        
+        const assessmentId = assessmentIdField.value;
+        const userIds = selectedUsers.map(function(u) { return u.id; }).join(',');
+        
+        console.log('?? Request data prepared: assessmentId=' + assessmentId + ', hazardId=' + hazardId + ', userIds=' + userIds);
+        
+        // Create form data
+        console.log('?? Creating FormData...');
+        const formData = new FormData();
+        formData.append('hazardId', hazardId);
+        formData.append('userIds', userIds);
+        formData.append('Id', assessmentId);
+        formData.append('StepNumber', '4');
+        formData.append('__RequestVerificationToken', tokenField.value);
+        
+        const requestUrl = window.location.pathname + '?handler=AssignScoringPanel';
+        console.log('?? Making POST request to: ' + requestUrl);
+        
+        const response = await fetch(requestUrl, {
+            method: 'POST',
+            body: formData
+        });
+        
+        console.log('?? Server response received: status=' + response.status + ', ok=' + response.ok);
+        
+        if (response.ok) {
+            const contentType = response.headers.get('content-type');
+            console.log('?? Response content type: ' + contentType);
+            
+            if (contentType && contentType.includes('application/json')) {
+                const result = await response.json();
+                console.log('? JSON response data:', result);
+                return result.success;
+            } else {
+                const textResponse = await response.text();
+                console.log('?? Text response (first 500 chars): ' + textResponse.substring(0, 500));
+                console.error('? Expected JSON response but got: ' + contentType);
+                return false;
+            }
+        } else {
+            const errorText = await response.text();
+            console.error('? Server error response: status=' + response.status + ', error=' + errorText.substring(0, 500));
+            throw new Error('Server error: ' + response.status + ' - ' + response.statusText);
+        }
+    } catch (error) {
+        console.error('?? Network/Server error in updateScoringPanelOnServer:', error);
+        return false;
+    }
+}
+
+/**
+ * Update hazard panel display on the main page
+ */
+function updateHazardPanelDisplay(hazardId, selectedUsers) {
+    const hazardBadge = document.getElementById('hazard-badge-' + hazardId);
+    const hazardProgress = document.getElementById('hazard-progress-' + hazardId);
+    
+    if (hazardBadge) {
+        hazardBadge.className = 'badge bg-warning fs-6';
+        hazardBadge.textContent = '0/' + selectedUsers.length + ' Scored';
+    }
+    
+    if (hazardProgress) {
+        hazardProgress.innerHTML = '<small class="text-muted">Panel configured with ' + selectedUsers.length + ' SMS users</small>';
+    }
+    
+    console.log('? Updated display for ' + hazardId + ' with ' + selectedUsers.length + ' panel members');
+}
+
+/**
+ * Load existing SMS users (refresh functionality)
+ */
+function loadExistingSMSUsers() {
+    console.log('?? Refreshing SMS users...');
+    
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+    
+    // Simulate loading delay, then refresh the page to reload users
+    setTimeout(function() {
+        window.location.reload();
+    }, 1000);
+}
+
+/**
+ * Calculate score when severity or likelihood changes
+ */
+function calculateScore(rowId) {
+    console.log('?? Calculating score for row: ' + rowId);
+    
+    const row = document.getElementById(rowId);
+    if (!row) {
+        console.error('? Row not found: ' + rowId);
+        return;
+    }
+    
+    const severitySelect = row.querySelector('.severity-select');
+    const likelihoodSelect = row.querySelector('.likelihood-select');
+    const scoreDisplay = row.querySelector('.score-display');
+    const submitButton = row.querySelector('.submit-btn');
+    
+    if (!severitySelect || !likelihoodSelect || !scoreDisplay || !submitButton) {
+        console.error('? Missing elements in row: ' + rowId);
+        return;
+    }
+    
+    const severity = parseInt(severitySelect.value);
+    const likelihood = parseInt(likelihoodSelect.value);
+    
+    if (severity && likelihood) {
+        const calculatedScore = severity * likelihood;
+        
+        // Update the score display
+        scoreDisplay.textContent = calculatedScore.toFixed(1);
+        scoreDisplay.className = 'score-display badge bg-primary fs-6 p-2';
+        
+        // Enable the submit button
+        submitButton.disabled = false;
+        
+        console.log('? Calculated score: ' + severity + ' × ' + likelihood + ' = ' + calculatedScore);
+    } else {
+        // Reset display if incomplete
+        scoreDisplay.textContent = '-';
+        scoreDisplay.className = 'score-display badge bg-secondary fs-6 p-2';
+        submitButton.disabled = true;
+        
+        console.log('? Waiting for both severity and likelihood selections');
+    }
+}
+
+/**
+ * Submit individual panel member score
+ */
+async function submitScore(memberId, hazardId) {
+    console.log('?? Submitting score for member ' + memberId + ' on hazard ' + hazardId);
+    
+    const rowId = 'scoring-row-' + hazardId + '-' + memberId;
+    const row = document.getElementById(rowId);
+    
+    if (!row) {
+        console.error('? Row not found: ' + rowId);
+        alert('Error: Could not find scoring row. Please refresh the page.');
+        return;
+    }
+    
+    const severitySelect = row.querySelector('.severity-select');
+    const likelihoodSelect = row.querySelector('.likelihood-select');
+    const submitBtn = row.querySelector('.submit-btn');
+    
+    if (!severitySelect || !likelihoodSelect || !submitBtn) {
+        console.error('? Missing form elements');
+        alert('Error: Missing form elements. Please refresh the page.');
+        return;
+    }
+    
+    const severity = parseInt(severitySelect.value);
+    const likelihood = parseInt(likelihoodSelect.value);
+    
+    if (!severity || !likelihood) {
+        alert('Please select both severity and likelihood before submitting.');
+        return;
+    }
+    
+    const score = severity * likelihood;
+    
+    try {
+        // Show loading state
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+        
+        console.log('?? Submitting score: Severity=' + severity + ', Likelihood=' + likelihood + ', Score=' + score);
+        
+        // Get form data
+        const assessmentIdField = document.querySelector('input[name="Id"]');
+        const tokenField = document.querySelector('input[name="__RequestVerificationToken"]');
+        
+        if (!assessmentIdField || !tokenField) {
+            throw new Error('Missing form fields');
+        }
+        
+        // Create form data for submission
+        const formData = new FormData();
+        formData.append('hazardId', hazardId);
+        formData.append('memberId', memberId);
+        formData.append('severityScore', severity.toString());
+        formData.append('likelihoodScore', likelihood.toString());
+        formData.append('Id', assessmentIdField.value);
+        formData.append('StepNumber', '4');
+        formData.append('__RequestVerificationToken', tokenField.value);
+        
+        console.log('?? Submitting score data for ' + hazardId + '/' + memberId);
+        
+        // Submit to server
+        const response = await fetch(window.location.pathname + '?handler=SubmitScore', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            console.log('? Score submission response:', result);
+            
+            if (result.success) {
+                console.log('? Score submitted for ' + hazardId + ': ' + score);
+                
+                // Refresh page after a short delay to show updated data
+                setTimeout(function() {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                console.error('? Failed to submit score: ' + (result.message || 'Unknown error'));
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                alert('Failed to submit score: ' + (result.message || 'Unknown error'));
+            }
+        } else {
+            throw new Error('Server responded with ' + response.status + ': ' + response.statusText);
+        }
+        
+    } catch (error) {
+        console.error('?? Error submitting score:', error);
+        alert('Error submitting score. Please try again.');
+        
+        // Restore button
+        const submitBtn = row.querySelector('.submit-btn');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Submit Score';
+        }
+    }
+}
+
+/**
+ * Edit existing score (convert back to dropdowns)
+ */
+function editScore(memberId, hazardId, currentSeverity, currentLikelihood) {
+    console.log('?? Editing score for member ' + memberId + ' on hazard ' + hazardId);
+    
+    const rowId = 'scoring-row-' + hazardId + '-' + memberId;
+    const row = document.getElementById(rowId);
+    
+    if (!row) {
+        console.error('? Row not found: ' + rowId);
+        return;
+    }
+    
+    // Convert back to editing mode
+    row.classList.remove('table-success');
+    row.classList.add('table-light');
+    
+    // Restore dropdown controls
+    const severityCell = row.children[1];
+    severityCell.innerHTML = 
+        '<select class="form-select severity-select" name="severityScore" onchange="calculateScore(\'' + rowId + '\')" required>' +
+        '<option value="">Select Severity...</option>' +
+        '<option value="1"' + (currentSeverity === 1 ? ' selected' : '') + '>1 - Minor Impact</option>' +
+        '<option value="2"' + (currentSeverity === 2 ? ' selected' : '') + '>2 - Moderate Impact</option>' +
+        '<option value="3"' + (currentSeverity === 3 ? ' selected' : '') + '>3 - Serious Impact</option>' +
+        '<option value="4"' + (currentSeverity === 4 ? ' selected' : '') + '>4 - Major Impact</option>' +
+        '<option value="5"' + (currentSeverity === 5 ? ' selected' : '') + '>5 - Catastrophic Impact</option>' +
+        '</select>' +
+        '<small class="text-muted">Choose impact level</small>';
+    
+    const likelihoodCell = row.children[2];
+    likelihoodCell.innerHTML = 
+        '<select class="form-select likelihood-select" name="likelihoodScore" onchange="calculateScore(\'' + rowId + '\')" required>' +
+        '<option value="">Select Likelihood...</option>' +
+        '<option value="1"' + (currentLikelihood === 1 ? ' selected' : '') + '>1 - Rare (A)</option>' +
+        '<option value="2"' + (currentLikelihood === 2 ? ' selected' : '') + '>2 - Unlikely (B)</option>' +
+        '<option value="3"' + (currentLikelihood === 3 ? ' selected' : '') + '>3 - Possible (C)</option>' +
+        '<option value="4"' + (currentLikelihood === 4 ? ' selected' : '') + '>4 - Likely (D)</option>' +
+        '<option value="5"' + (currentLikelihood === 5 ? ' selected' : '') + '>5 - Frequent (E)</option>' +
+        '</select>' +
+        '<small class="text-muted">Choose probability</small>';
+    
+    const scoreCell = row.children[3];
+    scoreCell.innerHTML = 
+        '<div class="score-display badge bg-primary fs-6 p-2">' + (currentSeverity * currentLikelihood).toFixed(1) + '</div>' +
+        '<br><small class="text-muted">Auto-calculated</small>';
+    
+    const actionCell = row.children[4];
+    actionCell.innerHTML = 
+        '<button type="button" class="btn btn-success btn-sm submit-btn" onclick="submitScore(\'' + memberId + '\', \'' + hazardId + '\')">' +
+        '<i class="fas fa-save"></i> Submit Score' +
+        '</button>';
+    
+    // Update user info badge
+    const userInfoCell = row.children[0];
+    const badge = userInfoCell.querySelector('.badge');
+    if (badge) {
+        badge.className = 'badge bg-warning mt-1';
+        badge.innerHTML = '<i class="fas fa-clock"></i> Pending Score';
+    }
+}
+</script>

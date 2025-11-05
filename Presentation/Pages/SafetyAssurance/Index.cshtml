@@ -1,0 +1,240 @@
+@page
+@model PDXSMS_Presentation.Pages.SafetyAssurance.IndexModel
+@{
+    ViewData["Title"] = "Section 2: Safety Assurance";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Safety Assurance</li>
+                </ol>
+            </nav>
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-9">
+                            <h4 class="card-title"><i class="fas fa-shield-alt"></i> Safety Assurance</h4>
+                            <p class="card-text">Monitor safety performance, conduct audits, and ensure continuous improvement of safety management systems</p>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <h3 class="mb-0">@Model.Dashboard.OverallComplianceRating%</h3>
+                                    <small>Compliance Rating</small>
+                                </div>
+                                <div class="col-6">
+                                    <h3 class="mb-0">@Model.Dashboard.ActiveSPIs</h3>
+                                    <small>Active SPIs</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h3 class="text-success">@Model.Dashboard.SPIsWithinTarget</h3>
+                    <p class="mb-0">SPIs Within Target</p>
+                    <small class="text-muted">Out of @Model.Dashboard.ActiveSPIs total</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <h3 class="text-warning">@Model.Dashboard.SPIsRequiringAttention</h3>
+                    <p class="mb-0">SPIs Requiring Attention</p>
+                    <small class="text-muted">Below target threshold</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <h3 class="text-info">@Model.Dashboard.UpcomingAudits</h3>
+                    <p class="mb-0">Upcoming Audits</p>
+                    <small class="text-muted">Next 30 days</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h3 class="text-primary">@Model.Dashboard.ReportsGeneratedThisMonth</h3>
+                    <p class="mb-0">Reports This Month</p>
+                    <small class="text-muted">Generated and distributed</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Navigation Cards -->
+    <div class="row mb-4">
+        <!-- Safety Performance Monitoring -->
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 border-warning">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> Safety Performance Monitoring</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Monitor and analyze safety performance indicators (SPIs) to track system effectiveness.</p>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-check text-success"></i> Establish and monitor SPIs</li>
+                        <li><i class="fas fa-check text-success"></i> Track performance trends</li>
+                        <li><i class="fas fa-check text-success"></i> Generate alerts and notifications</li>
+                        <li><i class="fas fa-check text-success"></i> Performance dashboards</li>
+                    </ul>
+                    <div class="mb-3">
+                        <small class="text-muted">Current Status:</small>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" style="width: 83%">83% On Target</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="/SafetyAssurance/SafetyPerformanceMonitoring" class="btn btn-warning w-100">
+                        <i class="fas fa-tachometer-alt"></i> Access Performance Monitoring
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Safety Audits -->
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-clipboard-check"></i> Safety Audits</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Schedule, conduct, and manage comprehensive safety audits and inspections.</p>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-check text-success"></i> Schedule audits and inspections</li>
+                        <li><i class="fas fa-check text-success"></i> Manage audit teams</li>
+                        <li><i class="fas fa-check text-success"></i> Track findings and actions</li>
+                        <li><i class="fas fa-check text-success"></i> Compliance verification</li>
+                    </ul>
+                    <div class="mb-3">
+                        <small class="text-muted">Upcoming Audits:</small>
+                        <div class="d-flex justify-content-between">
+                            <span class="badge bg-info">@Model.Dashboard.UpcomingAudits Scheduled</span>
+                            <span class="badge bg-warning">@Model.Dashboard.ActiveAudits In Progress</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="/SafetyAssurance/SafetyAudits" class="btn btn-info w-100">
+                        <i class="fas fa-search"></i> Access Safety Audits
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Safety Assurance Reporting -->
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Assurance Reporting</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Generate and distribute comprehensive safety assurance reports.</p>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-check text-success"></i> Generate automated reports</li>
+                        <li><i class="fas fa-check text-success"></i> Customizable templates</li>
+                        <li><i class="fas fa-check text-success"></i> Scheduled distribution</li>
+                        <li><i class="fas fa-check text-success"></i> Analytics and insights</li>
+                    </ul>
+                    <div class="mb-3">
+                        <small class="text-muted">This Month:</small>
+                        <div class="d-flex justify-content-between">
+                            <span class="badge bg-success">@Model.Dashboard.ReportsGeneratedThisMonth Generated</span>
+                            <span class="badge bg-primary">3 Scheduled</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="/SafetyAssurance/SafetyAssuranceReporting" class="btn btn-success w-100">
+                        <i class="fas fa-file-alt"></i> Access Reporting
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supporting Functions -->
+    <div class="row">
+        <!-- Additional Safety Assurance Tools -->
+        <div class="col-lg-12 mb-4">
+            <div class="card h-100 border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-tools"></i> Additional Safety Assurance Tools</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Data Analysis Tools</h6>
+                            <ul class="list-unstyled small">
+                                <li><i class="fas fa-chart-bar text-info"></i> Advanced SPI analytics and trending</li>
+                                <li><i class="fas fa-database text-info"></i> Data export and integration tools</li>
+                                <li><i class="fas fa-filter text-info"></i> Custom filtering and search capabilities</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Communication Tools</h6>
+                            <ul class="list-unstyled small">
+                                <li><i class="fas fa-envelope text-info"></i> Automated notification systems</li>
+                                <li><i class="fas fa-calendar text-info"></i> Meeting and review scheduling</li>
+                                <li><i class="fas fa-share-alt text-info"></i> Report distribution and sharing</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <small class="text-muted">Administrative functions have been moved to <a href="/System">System Administration</a></small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-clock"></i> Recent Safety Assurance Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Performance Monitoring</h6>
+                            <ul class="list-unstyled small">
+                                <li><i class="fas fa-chart-line text-success"></i> Monthly SPI report generated</li>
+                                <li><i class="fas fa-exclamation-triangle text-warning"></i> 2 SPIs below target threshold</li>
+                                <li><i class="fas fa-bell text-info"></i> Alert sent for runway incursion rate</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Audits & Reporting</h6>
+                            <ul class="list-unstyled small">
+                                <li><i class="fas fa-clipboard-check text-success"></i> Emergency response audit completed</li>
+                                <li><i class="fas fa-calendar text-info"></i> Terminal operations audit scheduled</li>
+                                <li><i class="fas fa-file-alt text-primary"></i> Q1 compliance report distributed</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

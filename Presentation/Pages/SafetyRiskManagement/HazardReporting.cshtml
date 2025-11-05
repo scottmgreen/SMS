@@ -1,0 +1,1610 @@
+﻿@page
+@model PDXSMS_Presentation.Pages.SafetyRiskManagement.HazardReportingModel
+@{
+    ViewData["Title"] = "Submit Hazard Report";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="#"> Safety Risk Management</a></li>
+                    <li class="breadcrumb-item active"> Submit Hazard Report</li>
+                </ol>
+            </nav>
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h4 class="card-title"><i class="fas fa-exclamation-triangle"></i> Submit Hazard Report</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+   
+    <!-- Hazard Report Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Success Message Display -->
+@*             @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                        <div class="col">
+                            <h5 class="alert-heading mb-1">
+                                <i class="fas fa-clipboard-check"></i> Success!
+                            </h5>
+                            <p class="mb-1">@TempData["SuccessMessage"]</p>
+                            @if (TempData["HazardReportId"] != null)
+                            {
+                                <p class="mb-0">
+                                    <strong>Reference ID:</strong> 
+                                    <span class="badge bg-primary fs-6">@TempData["HazardReportId"]</span>
+                                </p>
+                            }
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            } *@
+            
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-edit"></i> Hazard Report Details</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        <!-- Hidden fields to preserve geolocation data across all form operations -->
+                        <input type="hidden" asp-for="SelectedGeoLocation.Latitude" />
+                        <input type="hidden" asp-for="SelectedGeoLocation.Longitude" />
+                        <input type="hidden" asp-for="SelectedGeoLocation.Description" />
+                        <input type="hidden" asp-for="SelectedGeoLocation.SelectedDateTime" />
+                        
+                        <!-- UI State preservation -->
+                        <input type="hidden" asp-for="ShowMapModal" />
+                        <input type="hidden" asp-for="ShowCustomLocation" />
+                        <input type="hidden" asp-for="ShowConfidentialInfo" />
+                        
+                        <!-- Hazard Type -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label for="hazardType" class="form-label mb-0">Hazard Type <span class="text-danger">*</span></label>
+                            </div>
+                            <div class="input-group">
+                                <select class="form-select" id="hazardType" asp-for="HazardReport.HazardType" 
+                                        asp-items="Model.HazardTypeOptions" required>
+                                </select>
+                                
+                            </div>
+                           
+                            <span asp-validation-for="HazardReport.HazardType" class="text-danger"></span>
+                        </div>
+
+                        <!-- Reported By and Reported On -->
+                        <div class="mb-3">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <label for="reportedBy" class="form-label">Reported By <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="reportedBy" asp-for="HazardReport.ReportedBy" 
+                                           placeholder="Provide the name and position of the person reporting this hazard (e.g., 'John Smith - Ground Operations Supervisor')" 
+                                           required maxlength="200">
+                                    
+                                    <span asp-validation-for="HazardReport.ReportedBy" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="reportedOn" class="form-label">Reported On <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" class="form-control" id="reportedOn" asp-for="HazardReport.ReportedOn" 
+                                           required max="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" 
+                                           step="60">
+                                    <span asp-validation-for="HazardReport.ReportedOn" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Department -->
+                        <div class="mb-3">
+                            <label for="department" class="form-label">Reporting Department</label>
+                            <select class="form-select" id="department" asp-for="HazardReport.Department" 
+                                    asp-items="Model.DepartmentOptions">
+                                <option value="">Select your department...</option>
+                            </select>
+                            <span asp-validation-for="HazardReport.Department" class="text-danger"></span>
+                        </div>
+
+                        <!-- Location -->
+                        <div class="mb-3">
+                            <label for="location" class="form-label">Location <span class="text-danger">*</span></label>
+                                                       
+                            <!-- Map-Only Location Selection -->
+                            <div class="input-group">
+                                <button type="submit" class="btn btn-primary" formaction="?handler=OpenMapSelector" formnovalidate>
+                                    <i class="fas fa-map-marked-alt"></i> Select on Map
+                                </button>
+                                <input type="text" class="form-control" id="locationDisplay" 
+                                       value="@(Model.HasGeoLocation ? Model.GetSelectedLocationText() : "No location selected - click 'Select on Map'")" 
+                                       readonly placeholder="Use the map to select a location">
+                            </div>
+                            
+                                                       
+                            <span asp-validation-for="HazardReport.Location" class="text-danger"></span>
+                        </div>
+                      
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Hazard Description <span class="text-danger">*</span></label>
+                            <textarea class="form-control @(Model.DescriptionAtLimit ? "border-danger" : Model.DescriptionNearLimit ? "border-warning" : "")" 
+                                      id="description" asp-for="HazardReport.Description" rows="6" 
+                                      placeholder="Provide a detailed description of the hazard, including:
+                                                                                            • What happened or was observed?
+                                                                                            • When did it occur? (date/time)
+                                                                                            • Who was involved?
+                                                                                            • What were the weather/operating conditions?
+                                                                                            • What immediate actions were taken?
+                                                                                            • What could have been the consequences?
+                                                                                            • What do you think contributed to this hazard?" required maxlength="2000"></textarea>
+                            <div class="form-text">
+                                <span class="float-end">
+                                    <span class="@(Model.DescriptionAtLimit ? "text-danger" : Model.DescriptionNearLimit ? "text-warning" : "")">
+                                        @Model.DescriptionCharacterCount
+                                    </span>/2000 characters
+                                </span>
+                            </div>
+                            <span asp-validation-for="HazardReport.Description" class="text-danger"></span>
+                        </div>
+
+                        <!-- Confidential Flag -->
+                        <div class="mb-3">
+                            <div class="card border-info">
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="isConfidential" asp-for="HazardReport.IsConfidential">
+                                        <label class="form-check-label" for="isConfidential">
+                                            <i class="fas fa-lock text-primary"></i> <strong>Submit as Confidential Report</strong>
+                                        </label>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary ms-2" formaction="?handler=ToggleConfidential">
+                                            <i class="fas fa-info-circle"></i> Info
+                                        </button>
+                                    </div>
+                                    
+                                    @if (Model.ShowConfidentialInfo)
+                                    {
+                                        <div class="mt-2">
+                                            <div class="alert alert-info small mb-0">
+                                                <i class="fas fa-shield-alt"></i> 
+                                                <strong>Confidential Protection:</strong> Your identity will be protected and access to this report will be restricted to authorized SMS personnel only.
+                                                <br><strong>Benefits:</strong> Enhanced protection from retaliation, restricted access, anonymous follow-up options.
+                                                <br><strong>Note:</strong> Confidential reports may take longer to process due to additional security measures.
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- File Attachments -->
+                        <div class="mb-3">
+                            <label for="attachments" class="form-label">Supporting Documents</label>
+                            <input type="file" class="form-control" id="attachments" asp-for="HazardReport.Attachments" multiple 
+                                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt">
+                            <div class="form-text">
+                                <i class="fas fa-paperclip"></i> Attach photos, documents, or other supporting evidence
+                                <br><strong>Supported formats:</strong> JPG, PNG, PDF, DOC, DOCX, TXT (Max 10MB per file)
+                            </div>
+                            
+                            @* Server-side file list display *@
+                            @if (Model.SelectedFiles.Any())
+                            {
+                                <div class="mt-2">
+                                    <div class="alert alert-info small">
+                                        <strong>Selected files:</strong>
+                                        <ul class="mb-0 mt-1">
+                                            @foreach (var file in Model.SelectedFiles)
+                                            {
+                                                <li>@file.Name (@file.SizeDisplay)</li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row">
+                            <div class="col-12">
+                                <hr>
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                                    <div>
+                                        <button type="submit" class="btn btn-outline-info" formaction="?handler=ShowPreview" formnovalidate>
+                                            <i class="fas fa-eye"></i> Preview Report
+                                        </button>
+                                    </div>
+                                    <div>
+                                        <button type="submit" class="btn btn-secondary" formaction="?handler=ClearForm">
+                                            <i class="fas fa-times"></i> Clear Form
+                                        </button>
+                                        <button type="submit" class="btn btn-danger" formaction="?handler=ShowSubmissionConfirmation" formnovalidate>
+                                            <i class="fas fa-paper-plane"></i> Submit Hazard Report
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Server-side Preview Modal (conditionally rendered) -->
+            @if (Model.ShowPreview)
+            {
+                <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header bg-primary text-white">
+                                <div class="row w-100 align-items-center">
+                                    <div class="col">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-eye"></i> Hazard Report Preview
+                                        </h5>
+                                        @* <small>Review your report before submitting</small> *@
+                                    </div>
+                                    <div class="col-auto">
+                                        <form method="post" style="display: inline;">
+                                            <!-- Hidden fields to preserve all data -->
+                                            <input type="hidden" asp-for="HazardReport.HazardType" />
+                                            <input type="hidden" asp-for="HazardReport.ReportedBy" />
+                                            <input type="hidden" asp-for="HazardReport.ReportedOn" />
+                                            <input type="hidden" asp-for="HazardReport.Department" />
+                                            <input type="hidden" asp-for="HazardReport.Description" />
+                                            <input type="hidden" asp-for="HazardReport.IsConfidential" />
+                                            <input type="hidden" asp-for="HazardReport.Priority" />
+                                            <input type="hidden" asp-for="HazardReport.Location" />
+                                            <input type="hidden" asp-for="SelectedGeoLocation.Latitude" />
+                                            <input type="hidden" asp-for="SelectedGeoLocation.Longitude" />
+                                            <input type="hidden" asp-for="SelectedGeoLocation.Description" />
+                                            <input type="hidden" asp-for="SelectedGeoLocation.SelectedDateTime" />
+                                            <input type="hidden" asp-for="ShowMapModal" />
+                                            <input type="hidden" asp-for="ShowCustomLocation" />
+                                            <input type="hidden" asp-for="ShowConfidentialInfo" />
+                                            
+                                            <button type="submit" class="btn-close btn-close-white" formaction="?handler=HidePreview" formnovalidate></button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal-body">
+                                <!-- Hidden form to preserve all data during preview operations -->
+                                <form method="post" style="display: none;">
+                                    <!-- Main form data -->
+                                    <input type="hidden" asp-for="HazardReport.HazardType" />
+                                    <input type="hidden" asp-for="HazardReport.ReportedBy" />
+                                    <input type="hidden" asp-for="HazardReport.ReportedOn" />
+                                    <input type="hidden" asp-for="HazardReport.Department" />
+                                    <input type="hidden" asp-for="HazardReport.Description" />
+                                    <input type="hidden" asp-for="HazardReport.IsConfidential" />
+                                    <input type="hidden" asp-for="HazardReport.Priority" />
+                                    <input type="hidden" asp-for="HazardReport.Location" />
+                                    
+                                    <!-- Geolocation data -->
+                                    <input type="hidden" asp-for="SelectedGeoLocation.Latitude" />
+                                    <input type="hidden" asp-for="SelectedGeoLocation.Longitude" />
+                                    <input type="hidden" asp-for="SelectedGeoLocation.Description" />
+                                    <input type="hidden" asp-for="SelectedGeoLocation.SelectedDateTime" />
+                                    
+                                    <!-- UI state -->
+                                    <input type="hidden" asp-for="ShowPreview" value="true" />
+                                    <input type="hidden" asp-for="ShowMapModal" />
+                                    <input type="hidden" asp-for="ShowCustomLocation" />
+                                    <input type="hidden" asp-for="ShowConfidentialInfo" />
+                                </form>
+                                
+                                <!-- Preview Header Summary -->
+                                <div class="row mb-4">
+                                    <div class="col-md-12">
+                                        <div class="card border-primary">
+                                            <div class="card-header bg-primary text-white">
+                                                <h6 class="mb-0"><i class="fas fa-info-circle"></i> Report Summary
+                                                </h6>
+                                            </div>
+                                            <div class="card-body">
+                                                                       
+                                                <div class="row">
+                                            <div class="col-12">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-hover">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th width="25%" class="text-primary">Field</th>
+                                                        <th class="text-primary">Details</th>
+                                                        <th width="10%" class="text-center text-primary">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <th class="bg-light">
+                                                            <i class="fas fa-exclamation-triangle text-danger"></i> Hazard Type
+                                                        </th>
+                                                        <td>
+                                                            @if (!string.IsNullOrEmpty(Model.HazardReport.HazardType))
+                                                            {
+                                                                <span class="fw-bold">@Model.GetSelectedHazardTypeText()</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <em class="text-muted">Not selected - Please select a hazard type</em>
+                                                            }
+                                                        </td>
+                                                        <td class="text-center">
+                                                            @if (!string.IsNullOrEmpty(Model.HazardReport.HazardType))
+                                                            {
+                                                                <i class="fas fa-check-circle text-success"></i>
+                                                            }
+                                                            else
+                                                            {
+                                                                <i class="fas fa-times-circle text-danger"></i>
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="bg-light">
+                                                            <i class="fas fa-map-marker-alt text-primary"></i> Location
+                                                        </th>
+                                                        <td>
+                                                            @if (!string.IsNullOrEmpty(Model.HazardReport.Location) || Model.HasGeoLocation)
+                                                            {
+                                                                <div>
+                                                                     
+                                                                    @if (Model.HasGeoLocation)
+                                                                    {
+                                                                        
+                                                                        <span class="fw-bold">@Model.GetSelectedLocationText()</span>
+                                    
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        
+                                                                        <small class="text-warning">
+                                                                            <i class="fas fa-exclamation-triangle"></i> 
+                                                                            <strong>No geolocation data</strong> - Location: "@Model.HazardReport.Location"
+                                                                        </small>
+                                                                    }
+                                                                </div>
+                                                            }
+                                                            else
+                                                            {
+                                                                <em class="text-muted">Not specified - Please select or enter a location</em>
+                                                            }
+                                                        </td>
+                                                        <td class="text-center">
+                                                            @if (!string.IsNullOrEmpty(Model.HazardReport.Location) || Model.HasGeoLocation)
+                                                            {
+                                                                <i class="fas fa-check-circle text-success"></i>
+                                                            }
+                                                            else
+                                                            {
+                                                                <i class="fas fa-times-circle text-danger"></i>
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="bg-light">
+                                                            <i class="fas fa-user text-info"></i> Reported By
+                                                        </th>
+                                                        <td>
+                                                            @if (!string.IsNullOrEmpty(Model.HazardReport.ReportedBy))
+                                                            {
+                                                                <span class="fw-bold">@Model.HazardReport.ReportedBy</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <em class="text-muted">Not specified - Please enter who is reporting this hazard</em>
+                                                            }
+                                                        </td>
+                                                        <td class="text-center">
+                                                            @if (!string.IsNullOrEmpty(Model.HazardReport.ReportedBy))
+                                                            {
+                                                                <i class="fas fa-check-circle text-success"></i>
+                                                            }
+                                                            else
+                                                            {
+                                                                <i class="fas fa-times-circle text-danger"></i>
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="bg-light">
+                                                            <i class="fas fa-clock text-info"></i> Reported On
+                                                        </th>
+                                                        <td>
+                                                            <span class="fw-bold">@Model.HazardReport.ReportedOn.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt")</span>
+                                                            <br>
+                                                            <small class="text-muted">
+                                                                @{
+                                                                    var timeAgo = DateTime.Now - Model.HazardReport.ReportedOn;
+                                                                    string timeAgoText = timeAgo.TotalDays >= 1 
+                                                                        ? $"{Math.Floor(timeAgo.TotalDays)} day(s) ago"
+                                                                        : timeAgo.TotalHours >= 1 
+                                                                            ? $"{Math.Floor(timeAgo.TotalHours)} hour(s) ago"
+                                                                            : $"{Math.Floor(timeAgo.TotalMinutes)} minute(s) ago";
+                                                                }
+                                                                <i class="fas fa-history"></i> @timeAgoText
+                                                            </small>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <i class="fas fa-check-circle text-success"></i>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="bg-light">
+                                                            <i class="fas fa-building text-info"></i> Department
+                                                        </th>
+                                                        <td>
+                                                            @if (!string.IsNullOrEmpty(Model.HazardReport.Department))
+                                                            {
+                                                                <span class="fw-bold">@Model.GetSelectedDepartmentText()</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <em class="text-muted">Not specified (Optional)</em>
+                                                            }
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <i class="fas fa-info-circle text-info" title="Optional field"></i>
+                                                        </td>
+                                                    </tr>
+                                                    @*<tr>
+                                                        <th class="bg-light">
+                                                            <i class="fas fa-flag text-warning"></i> Priority
+                                                        </th>
+                                                        <td>
+                                                            <span class="@Model.PriorityBadgeClass">@Model.GetSelectedPriorityText()</span>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <i class="fas fa-check-circle text-success"></i>
+                                                        </td>
+                                                    </tr>
+                                                    *@
+                                                    <tr>
+                                                        <th class="bg-light">
+                                                            <i class="fas fa-file-alt text-success"></i> Description
+                                                        </th>
+                                                        <td>
+                                                            @if (!string.IsNullOrEmpty(Model.HazardReport.Description))
+                                                            {
+                                                                <div class="description-preview">
+                                                                    <div style="white-space: pre-wrap; max-height: 150px; overflow-y: auto; border: 1px solid #dee2e6; padding: 0.5rem; border-radius: 0.25rem; background-color: #f8f9fa;">@Model.HazardReport.Description</div>
+                                                                    <small class="text-muted mt-1 d-block">
+                                                                        <i class="fas fa-chart-bar"></i> 
+                                                                        Character count: @Model.DescriptionCharacterCount/2000
+                                                                        @if (Model.DescriptionNearLimit)
+                                                                        {
+                                                                            <span class="@(Model.DescriptionAtLimit ? "text-danger" : "text-warning")">
+                                                                                (@(Model.DescriptionAtLimit ? "At limit" : "Near limit"))
+                                                                            </span>
+                                                                        }
+                                                                    </small>
+                                                                </div>
+                                                            }
+                                                            else
+                                                            {
+                                                                <em class="text-muted">No description provided - Please describe the hazard</em>
+                                                            }
+                                                        </td>
+                                                        <td class="text-center">
+                                                            @if (!string.IsNullOrEmpty(Model.HazardReport.Description))
+                                                            {
+                                                                <i class="fas fa-check-circle text-success"></i>
+                                                            }
+                                                            else
+                                                            {
+                                                                <i class="fas fa-times-circle text-danger"></i>
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="bg-light">
+                                                            <i class="fas fa-paperclip text-secondary"></i> Attachments
+                                                        </th>
+                                                        <td>
+                                                            @if (Model.SelectedFiles.Any())
+                                                            {
+                                                                <div class="attachment-preview">
+                                                                    <span class="fw-bold text-success">@Model.SelectedFiles.Count file(s) attached:</span>
+                                                                    <ul class="mb-0 mt-1">
+                                                                        @foreach (var file in Model.SelectedFiles)
+                                                                        {
+                                                                            <li>
+                                                                                <i class="fas fa-file"></i> 
+                                                                                <strong>@file.Name</strong> 
+                                                                                <small class="text-muted">(@file.SizeDisplay)</small>
+                                                                            </li>
+                                                                        }
+                                                                    </ul>
+                                                                </div>
+                                                            }
+                                                            else
+                                                            {
+                                                                <em class="text-muted">No files attached (Optional)</em>
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="bg-light">
+                                                            <i class="fas fa-shield-alt text-warning"></i> Confidentiality
+                                                        </th>
+                                                        <td>
+                                                            @if (Model.HazardReport.IsConfidential)
+                                                            {
+                                                                // <div class="alert alert-warning mb-0 py-2">
+                                                                    <i class="fas fa-lock"></i> 
+                                                                    <strong>Confidential Report</strong>
+                                                                    <br><small>Your identity will be protected and access will be restricted to authorized SMS personnel only.</small>
+                                                                // </div>
+                                                            }
+                                                            else
+                                                            {
+                                                                // <div class="alert alert-info mb-0 py-2">
+                                                                    <i class="fas fa-unlock"></i> 
+                                                                    <strong>Standard Report</strong>
+                                                                    <br><small>Report will follow normal processing and visibility procedures.</small>
+                                                                // </div>
+                                                            }
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <i class="fas fa-check-circle text-success"></i>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @* <div class="col-md-4">
+                                        <div class="card border-secondary">
+                                            <div class="card-header bg-secondary text-white">
+                                                <h6 class="mb-0"><i class="fas fa-chart-pie"></i> Completion Status</h6>
+                                            </div>
+                                            <div class="card-body text-center">
+                                               
+                                                
+                                                <div class="progress mb-2">
+                                                    <div class="progress-bar @(previewIsComplete ? "bg-success" : "bg-warning")" 
+                                                         style="width: @previewProgressPercent%">
+                                                        @previewProgressPercent%
+                                                    </div>
+                                                </div>
+                                                <small class="@(previewIsComplete ? "text-success" : "text-warning")">
+                                                    <i class="fas fa-@(previewIsComplete ? "check-circle" : "exclamation-triangle")"></i>
+                                                    @previewCompletedFields of @previewTotalFields required fields completed
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div> *@
+                                </div>
+
+                                <!-- Detailed Information -->
+                                
+
+                                <!-- Validation Summary -->
+                                 @{
+                                    var previewCompletedFields = 0;
+                                    var previewTotalFields = 5; // Updated to include ReportedOn
+                                    if (!string.IsNullOrEmpty(Model.HazardReport.HazardType)) previewCompletedFields++;
+                                    if (!string.IsNullOrEmpty(Model.HazardReport.Location) || Model.HasGeoLocation) previewCompletedFields++;
+                                    if (!string.IsNullOrEmpty(Model.HazardReport.Description)) previewCompletedFields++;
+                                    if (!string.IsNullOrEmpty(Model.HazardReport.ReportedBy)) previewCompletedFields++; // Added ReportedBy check
+                                    previewCompletedFields++; // ReportedOn always has a value due to default
+                                    var previewProgressPercent = (previewCompletedFields * 100) / previewTotalFields;
+                                    var previewIsComplete = previewCompletedFields == previewTotalFields;
+                                 }
+                                
+                                @* Show validation message if form is not ready for submission *@
+                                @if (!Model.IsFormValidForSubmission)
+                                {
+                                    <div class="row mt-3">
+                                        <div class="col-12">
+                                            <div class="alert alert-warning">
+                                                <h6><i class="fas fa-exclamation-triangle"></i> Required Fields Missing</h6>
+                                                <p class="mb-2">The following required fields need to be completed before submission:</p>
+                                                <ul class="mb-0">
+                                                    @if (string.IsNullOrEmpty(Model.HazardReport.HazardType))
+                                                    {
+                                                        <li><strong>Hazard Type</strong> - Please select the type of hazard being reported</li>
+                                                    }
+                                                    @if (string.IsNullOrEmpty(Model.HazardReport.Location) && !Model.HasGeoLocation)
+                                                    {
+                                                        <li><strong>Location</strong> - Please specify where the hazard occurred using the map</li>
+                                                    }
+                                                    @if (string.IsNullOrEmpty(Model.HazardReport.Description))
+                                                    {
+                                                        <li><strong>Description</strong> - Please provide details about the hazard</li>
+                                                    }
+                                                    @if (string.IsNullOrEmpty(Model.HazardReport.ReportedBy))
+                                                    {
+                                                        <li><strong>Reported By</strong> - Please specify who is reporting this hazard</li>
+                                                    }
+                                                    @if (Model.HazardReport.ReportedOn > DateTime.Now)
+                                                    {
+                                                        <li><strong>Reported Date</strong> - Date cannot be in the future</li>
+                                                    }
+                                                    @if (Model.HazardReport.ReportedOn < DateTime.Now.AddDays(-30))
+                                                    {
+                                                        <li><strong>Reported Date</strong> - Date cannot be more than 30 days in the past</li>
+                                                    }
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="row mt-3">
+                                        <div class="col-12">
+                                            <div class="alert alert-success">
+                                                <h6><i class="fas fa-check-circle"></i> Report Ready for Submission</h6>
+                                                <p class="mb-0">All required fields have been completed. Your hazard report is ready to be submitted to the SMS system.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                                <div class="modal-footer">
+                                <div class="row w-100">
+                                    <div class="col">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle"></i>
+                                            Review all information carefully. Once submitted, you will receive a tracking number for follow-up.
+                                        </small>
+                                    </div>
+                                    <div class="col-auto">
+                                        <form method="post" class="d-inline">
+                                            <!-- Hidden fields to preserve all data -->
+                                            <input type="hidden" asp-for="HazardReport.HazardType" />
+                                            <input type="hidden" asp-for="HazardReport.ReportedBy" />
+                                            <input type="hidden" asp-for="HazardReport.ReportedOn" />
+                                            <input type="hidden" asp-for="HazardReport.Department" />
+                                            <input type="hidden" asp-for="HazardReport.Description" />
+                                            <input type="hidden" asp-for="HazardReport.IsConfidential" />
+                                            <input type="hidden" asp-for="HazardReport.Priority" />
+                                            <input type="hidden" asp-for="HazardReport.Location" />
+                                            <input type="hidden" asp-for="SelectedGeoLocation.Latitude" />
+                                            <input type="hidden" asp-for="SelectedGeoLocation.Longitude" />
+                                            <input type="hidden" asp-for="SelectedGeoLocation.Description" />
+                                            <input type="hidden" asp-for="SelectedGeoLocation.SelectedDateTime" />
+                                            <input type="hidden" asp-for="ShowMapModal" />
+                                            <input type="hidden" asp-for="ShowCustomLocation" />
+                                            <input type="hidden" asp-for="ShowConfidentialInfo" />
+                                            
+                                            <button type="submit" class="btn btn-secondary me-2" formaction="?handler=HidePreview" formnovalidate>
+                                                <i class="fas fa-edit"></i> Continue Editing
+                                            </button>
+                                            
+                                            @* Only show Submit button if form is valid for submission *@
+                                            @if (Model.IsFormValidForSubmission)
+                                            {
+                                                <button type="submit" class="btn btn-success" formaction="?handler=ShowSubmissionConfirmation" formnovalidate>
+                                                    <i class="fas fa-paper-plane"></i> Submit Report
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" class="btn btn-outline-secondary" disabled title="Please complete all required fields to enable submission">
+                                                    <i class="fas fa-exclamation-triangle"></i> Complete Required Fields
+                                                </button>
+                                            }
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div> <!-- Fix: Add missing closing div tag for col-lg-8 -->
+
+        <!-- Help Panel -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5><i class="fas fa-question-circle"></i> Reporting Guidelines</h5>
+                </div>
+                <div class="card-body">
+                    <h6>What to Report:</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> Actual incidents or accidents</li>
+                        <li><i class="fas fa-check text-success"></i> Near-miss events</li>
+                        <li><i class="fas fa-check text-success"></i> Unsafe conditions</li>
+                        <li><i class="fas fa-check text-success"></i> Equipment malfunctions</li>
+                        <li><i class="fas fa-check text-success"></i> Procedural violations</li>
+                        <li><i class="fas fa-check text-success"></i> Security concerns</li>
+                        <li><i class="fas fa-check text-success"></i> Environmental hazards</li>
+                    </ul>
+                    <!--Help Panel 
+                    <h6 class="mt-3">Priority Guidelines:</h6>
+                    <div class="small">
+                        <div class="mb-2">
+                            <span class="badge bg-success">Low</span> Minor safety concern, no immediate threat
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-warning">Medium</span> Moderate risk, should be addressed promptly
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-danger">High</span> Significant risk, requires immediate attention
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-danger">Critical</span> Imminent threat, emergency response needed
+                        </div>
+                    </div>
+                   -->
+                    <h6 class="mt-3">Confidential Reporting:</h6>
+                    <p class="small">
+                        Use confidential reporting when concerned about:
+                    </p>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-shield-alt text-primary"></i> Personal safety or retaliation</li>
+                        <li><i class="fas fa-shield-alt text-primary"></i> Sensitive operational information</li>
+                        <li><i class="fas fa-shield-alt text-primary"></i> Personnel-related issues</li>
+                        <li><i class="fas fa-shield-alt text-primary"></i> Management or supervisory concerns</li>
+                    </ul>
+
+                    <div class="mt-3">
+                        <h6>Need Help?</h6>
+                        <p class="small">
+                            Contact the SMS Team:
+                            <br><i class="fas fa-phone"></i> (503) 555-0100
+                            <br><i class="fas fa-envelope"></i> sms@flypdx.com
+                            <br><i class="fas fa-clock"></i> 24/7 Emergency Hotline
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            
+            
+            
+
+            
+        </div>
+    </div>
+</div>
+
+<!-- Map Location Selection Modal (Interactive Map) -->
+@if (Model.ShowMapModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <div>
+                            <h5 class="modal-title mb-0">
+                                <i class="fas fa-map-marked-alt"></i> Select Hazard Location
+                            </h5>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-warning btn-sm" id="getCurrentLocationBtn" onclick="getCurrentLocation()">
+                                <i class="fas fa-crosshairs"></i> Get Current Location
+                            </button>
+                            <form method="post" style="display: inline;">
+                                <button type="submit" class="btn-close btn-close-white" formaction="?handler=CloseMapSelector"></button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-body p-0">
+                    <!-- Map Instructions 
+                    <div class="alert alert-info mb-0 border-0 rounded-0">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Instructions:</strong> Click on the map to select the exact location of the hazard.
+                            </div>
+                            <div class="col-auto">
+                                <span class="badge bg-primary">
+                                    <i class="fas fa-crosshairs"></i> PDX Airport: @Model.AirportCenterLatitude, @Model.AirportCenterLongitude
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    -->
+                    <!-- Interactive Map Container -->
+                    <div id="hazardLocationMap" style="height: 500px; width: 100%;"></div>
+                    
+                    <!-- Location Form and Controls -->
+                    <div class="p-4">
+                        <form method="post" id="locationForm">
+                            <!-- Hidden fields to preserve main form data -->
+                            <input type="hidden" asp-for="HazardReport.HazardType" />
+                            <input type="hidden" asp-for="HazardReport.ReportedBy" />
+                            <input type="hidden" asp-for="HazardReport.ReportedOn" />
+                            <input type="hidden" asp-for="HazardReport.Department" />
+                            <input type="hidden" asp-for="HazardReport.Description" />
+                            <input type="hidden" asp-for="HazardReport.IsConfidential" />
+                            <input type="hidden" asp-for="HazardReport.Priority" />
+                            <input type="hidden" asp-for="HazardReport.Location" />
+                            
+                            <!-- Selected Coordinates Display -->
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label for="selectedLatitude" class="form-label">Selected Latitude</label>
+                                    <input type="number" class="form-control" id="selectedLatitude" name="manualLatitude"
+                                           step="0.000001" min="45.5" max="45.7" readonly
+                                           value="@(Model.HasGeoLocation ? Model.SelectedGeoLocation.Latitude.ToString("F6") : "")">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="selectedLongitude" class="form-label">Selected Longitude</label>
+                                    <input type="number" class="form-control" id="selectedLongitude" name="manualLongitude"
+                                           step="0.000001" min="-122.7" max="-122.5" readonly
+                                           value="@(Model.HasGeoLocation ? Model.SelectedGeoLocation.Longitude.ToString("F6") : "")">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="locationDescription" class="form-label">Location Description</label>
+                                    <input type="text" class="form-control" id="locationDescription" name="locationDescription"
+                                           placeholder="Optional description"
+                                           value="@(Model.SelectedGeoLocation?.Description ?? "")">
+                                </div>
+                            </div>
+
+                            <!-- Current Location Section -->
+                            
+                            <!-- Current Selection Display -->
+                            @if (Model.HasGeoLocation)
+                            {
+                                // <div class="alert alert-success">
+                                //     <h6 class="alert-heading"><i class="fas fa-map-pin"></i> Current Selection</h6>
+                                //     <p class="mb-1">
+                                //         <strong>Coordinates:</strong> @Model.GeoLocationDisplay
+                                //     </p>
+                                //     @if (!string.IsNullOrEmpty(Model.GeoLocationDescription))
+                                //     {
+                                //         <p class="mb-1">
+                                //             <strong>Description:</strong> @Model.GeoLocationDescription
+                                //         </p>
+                                //     }
+                                // </div>
+                            }
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-secondary" formaction="?handler=CloseMapSelector" formnovalidate>
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                                <button type="button" class="btn btn-warning" onclick="clearMapSelection()">
+                                    <i class="fas fa-eraser"></i> Clear Selection
+                                </button>
+                                <button type="submit" class="btn btn-success" formaction="?handler=SetManualLocation" formnovalidate>
+                                    <i class="fas fa-check"></i> Use Selected Location
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Submission Confirmation Modal -->
+@if (Model.ShowSubmissionConfirmation)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle"></i> Confirm Hazard Report Submission
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <!-- Confirmation Message -->
+                            <div class="alert alert-warning">
+                                <div class="row align-items-center">
+                                    <div class="col-auto">
+                                        <i class="fas fa-question-circle fa-3x"></i>
+                                    </div>
+                                    <div class="col">
+                                        <h5 class="alert-heading mb-2">Are you sure you want to submit this hazard report?</h5>
+                                        <p class="mb-1">
+                                            <strong>Once submitted, this report will be entered into the SMS system for processing.</strong>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Report Summary -->
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-file-alt"></i> Report Summary
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p class="mb-2">
+                                                <strong>Hazard Type:</strong><br>
+                                                <span class="text-muted">@Model.GetSelectedHazardTypeText()</span>
+                                            </p>
+                                            <p class="mb-2">
+                                                <strong>Location:</strong><br>
+                                                <span class="text-muted">@Model.GetSelectedLocationText()</span>
+                                            </p>
+                                            <p class="mb-2">
+                                                <strong>Reported By:</strong><br>
+                                                <span class="text-muted">@Model.HazardReport.ReportedBy</span>
+                                            </p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p class="mb-2">
+                                                <strong>Reported On:</strong><br>
+                                                <span class="text-muted">@Model.HazardReport.ReportedOn.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt")</span>
+                                            </p>
+                                            @if (!string.IsNullOrEmpty(Model.HazardReport.Department))
+                                            {
+                                                <p class="mb-2">
+                                                    <strong>Department:</strong><br>
+                                                    <span class="text-muted">@Model.GetSelectedDepartmentText()</span>
+                                                </p>
+                                            }
+                                            <p class="mb-2">
+                                                <strong>Confidential:</strong><br>
+                                                <span class="text-muted">@(Model.HazardReport.IsConfidential ? "Yes" : "No")</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <hr>
+                                    
+                                    <p class="mb-2">
+                                        <strong>Description:</strong>
+                                    </p>
+                                    <div class="bg-light p-3 rounded" style="max-height: 150px; overflow-y: auto;">
+                                        <small style="white-space: pre-wrap;">@Model.HazardReport.Description</small>
+                                    </div>
+                                    
+                                    @if (Model.SelectedFiles.Any())
+                                    {
+                                        <hr>
+                                        <p class="mb-2">
+                                            <strong>Attachments:</strong> @Model.SelectedFiles.Count file(s)
+                                        </p>
+                                        <ul class="list-unstyled small">
+                                            @foreach (var file in Model.SelectedFiles)
+                                            {
+                                                <li><i class="fas fa-paperclip"></i> @file.Name (@file.SizeDisplay)</li>
+                                            }
+                                        </ul>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="mt-3 text-center">
+                                <h5 class="text-primary mb-3">
+                                    <i class="fas fa-question-circle"></i> Submit this hazard report?
+                                </h5>
+                                
+                                <div class="d-grid gap-2 d-md-flex justify-content-center">
+                                    <form method="post" class="d-inline">
+                                        <!-- Preserve all form data -->
+                                        <input type="hidden" asp-for="HazardReport.HazardType" />
+                                        <input type="hidden" asp-for="HazardReport.ReportedBy" />
+                                        <input type="hidden" asp-for="HazardReport.ReportedOn" />
+                                        <input type="hidden" asp-for="HazardReport.Department" />
+                                        <input type="hidden" asp-for="HazardReport.Description" />
+                                        <input type="hidden" asp-for="HazardReport.IsConfidential" />
+                                        <input type="hidden" asp-for="HazardReport.Priority" />
+                                        <input type="hidden" asp-for="HazardReport.Location" />
+                                        <input type="hidden" asp-for="SelectedGeoLocation.Latitude" />
+                                        <input type="hidden" asp-for="SelectedGeoLocation.Longitude" />
+                                        <input type="hidden" asp-for="SelectedGeoLocation.Description" />
+                                        <input type="hidden" asp-for="SelectedGeoLocation.SelectedDateTime" />
+                                        
+                                        <button type="submit" class="btn btn-success btn-lg me-md-2" formaction="?handler=SubmitConfirmed">
+                                            <i class="fas fa-check"></i> Yes, Submit Report
+                                        </button>
+                                    </form>
+                                    
+                                    <form method="post" class="d-inline">
+                                        <!-- Preserve all form data -->
+                                        <input type="hidden" asp-for="HazardReport.HazardType" />
+                                        <input type="hidden" asp-for="HazardReport.ReportedBy" />
+                                        <input type="hidden" asp-for="HazardReport.ReportedOn" />
+                                        <input type="hidden" asp-for="HazardReport.Department" />
+                                        <input type="hidden" asp-for="HazardReport.Description" />
+                                        <input type="hidden" asp-for="HazardReport.IsConfidential" />
+                                        <input type="hidden" asp-for="HazardReport.Priority" />
+                                        <input type="hidden" asp-for="HazardReport.Location" />
+                                        <input type="hidden" asp-for="SelectedGeoLocation.Latitude" />
+                                        <input type="hidden" asp-for="SelectedGeoLocation.Longitude" />
+                                        <input type="hidden" asp-for="SelectedGeoLocation.Description" />
+                                        <input type="hidden" asp-for="SelectedGeoLocation.SelectedDateTime" />
+                                        
+                                        <button type="submit" class="btn btn-outline-secondary btn-lg" formaction="?handler=CancelSubmission">
+                                            <i class="fas fa-times"></i> No, Continue Editing
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Final Success Confirmation Modal -->
+@if (Model.ShowFinalSuccessConfirmation)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-check-circle"></i> Hazard Report Successfully Submitted!
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <!-- Success Message -->
+                            <div class="alert alert-success">
+                                <div class="row align-items-center">
+                                    <div class="col-auto">
+                                        <i class="fas fa-clipboard-check fa-4x"></i>
+                                    </div>
+                                    <div class="col">
+                                        <h4 class="alert-heading mb-3">Report Successfully Submitted!</h4>
+                                        <p class="mb-2">
+                                            <strong>Your Hazard Report ID:</strong>
+                                        </p>
+                                        <h2 class="text-success mb-3">
+                                            <i class="fas fa-id-badge"></i> @Model.GeneratedHazardReportId
+                                        </h2>
+                                        <p class="mb-0">
+                                            <small class="text-muted">Please save this ID for your records and future reference.</small>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Email Notification Alert -->
+                            <div class="alert alert-info">
+                                <div class="row align-items-center">
+                                    <div class="col-auto">
+                                        <i class="fas fa-envelope-circle-check fa-3x text-primary"></i>
+                                    </div>
+                                    <div class="col">
+                                        <h6 class="alert-heading mb-2">
+                                            <i class="fas fa-email"></i> Email Confirmation Sent
+                                        </h6>
+                                        <p class="mb-1">
+                                            <strong>A confirmation email has been sent to your registered email address</strong> with:
+                                        </p>
+                                        <ul class="mb-0 small">
+                                            <li>Complete hazard report details and summary</li>
+                                            <li>Hazard Report ID: <strong>@Model.GeneratedHazardReportId</strong></li>
+                                            <li>Submission timestamp and tracking information</li>
+                                            <li>Next steps and contact information for follow-up</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Report Details -->
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-info-circle"></i> Report Details
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p class="mb-2">
+                                                <strong>Hazard Report ID:</strong><br>
+                                                <span class="badge bg-primary fs-6">@Model.GeneratedHazardReportId</span>
+                                            </p>
+                                            <p class="mb-2">
+                                                <strong>Tracking ID:</strong><br>
+                                                <span class="text-muted">@Model.GeneratedReportId</span>
+                                            </p>
+                                            <p class="mb-2">
+                                                <strong>Submission Date:</strong><br>
+                                                <span class="text-muted">@(Model.SubmissionDateTime?.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt") ?? DateTime.Now.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt"))</span>
+                                            </p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p class="mb-2">
+                                                <strong>Status:</strong><br>
+                                                <span class="badge bg-success">Submitted</span>
+                                            </p>
+                                            <p class="mb-2">
+                                                <strong>Priority:</strong><br>
+                                                <span class="text-muted">@Model.HazardReport.Priority</span>
+                                            </p>
+                                            <p class="mb-2">
+                                                <strong>Confidential:</strong><br>
+                                                <span class="text-muted">@(Model.HazardReport.IsConfidential ? "Yes" : "No")</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Next Steps -->
+                            <div class="mt-3">
+                                <div class="alert alert-info">
+                                    <h6 class="alert-heading">
+                                        <i class="fas fa-route"></i> What Happens Next:
+                                    </h6>
+                                    <ul class="mb-2">
+                                        <li><strong>Email Confirmation:</strong> You will receive a detailed confirmation email within 5 minutes</li>
+                                        <li><strong>Initial Review:</strong> Your report will be reviewed by SMS personnel within 24-48 hours</li>
+                                        <li><strong>Validation:</strong> The hazard will be validated for SMS risk assessment</li>
+                                        <li><strong>Assessment:</strong> If validated, a formal risk assessment will be conducted</li>
+                                        <li><strong>Follow-up Updates:</strong> You will receive email notifications of any status changes or requests for additional information</li>
+                                    </ul>
+                                    <div class="small text-muted">
+                                        <i class="fas fa-clock"></i> <strong>Timeline:</strong> Most hazard reports are processed within 5-7 business days from submission to initial assessment completion.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Contact Information -->
+                            <div class="mt-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6><i class="fas fa-phone"></i> Need Help?</h6>
+                                        <p class="mb-2">
+                                            For questions about this report, contact:
+                                        </p>
+                                        <p class="mb-0">
+                                            <strong>SMS Team:</strong> (503) 555-0100<br>
+                                            <strong>Email:</strong> sms@flypdx.com<br>
+                                            <strong>Reference:</strong> @Model.GeneratedHazardReportId
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-center mt-4">
+                                <form method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-primary btn-lg" formaction="?handler=CloseFinalConfirmation">
+                                        <i class="fas fa-check"></i> Continue & Clear Form
+                                    </button>
+                                </form>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle"></i> Clicking this button will clear the form for a new hazard report
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <!-- Leaflet.js CSS and JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- Success Modal Fallback -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if success modal should be showing
+            const showSuccessModal = @Model.ShowFinalSuccessConfirmation.ToString().ToLower();
+            const hazardReportId = '@Model.GeneratedHazardReportId';
+            
+            // If success modal should be showing but modal element is not found, show fallback alert
+            if (showSuccessModal && hazardReportId && hazardReportId.startsWith('HZ-')) {
+                // Check if the modal is actually visible after a short delay
+                setTimeout(function() {
+                    const modalElement = document.querySelector('[data-bs-backdrop="static"][data-bs-keyboard="false"]');
+                    
+                    // If no modal found or modal is not visible, show fallback
+                    if (!modalElement || modalElement.style.display === 'none') {
+                        const message = `🎉 HAZARD REPORT SUBMITTED SUCCESSFULLY!\n\n` +
+                                      `Your Hazard Report ID: ${hazardReportId}\n\n` +
+                                      `✅ Please save this ID for your records\n` +
+                                      `✅ Your report will be reviewed within 24-48 hours\n` +
+                                      `✅ You will be notified of any status changes\n\n` +
+                                      `Contact SMS Team: (503) 555-0100\n` +
+                                      `Email: sms@flypdx.com`;
+                        
+                        alert(message);
+                        
+                        // Optional: Clear the form after successful submission
+                        setTimeout(function() {
+                            if (confirm('Would you like to clear the form to submit another report?')) {
+                                const clearButton = document.querySelector('button[formaction*="ClearForm"]');
+                                if (clearButton) {
+                                    clearButton.click();
+                                }
+                            }
+                        }, 1000);
+                    }
+                }, 500);
+            }
+        });
+    </script>
+
+    @if (Model.ShowMapModal)
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Initialize map with specific options to ensure click events work
+                var map = L.map('hazardLocationMap', {
+                    center: [@Model.AirportCenterLatitude, @Model.AirportCenterLongitude],
+                    zoom: @Model.DefaultZoomLevel,
+                    zoomControl: true,
+                    doubleClickZoom: true,
+                    closePopupOnClick: true,
+                    trackResize: true
+                });
+
+                // Add OpenStreetMap tiles
+                var streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                    maxZoom: 19
+                });
+
+                // Add satellite imagery as an option
+                var satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+                    maxZoom: 19
+                });
+
+                // Add default layer
+                streetMap.addTo(map);
+
+                // Layer control
+                var baseMaps = {
+                    "Street Map": streetMap,
+                    "Satellite": satellite
+                };
+                L.control.layers(baseMaps).addTo(map);
+
+                // Global variables
+                window.mapInstance = map;
+                window.selectedMarker = null;
+
+                // Function to check if coordinates are within bounds - PROPER PDX AIRPORT BOUNDS
+                window.isWithinBounds = function(lat, lng) {
+                    // CORRECTED PDX Airport bounds - actual airport property boundaries
+                    return lat >= 45.580 && lat <= 45.595 && lng >= -122.610 && lng <= -122.580;
+                };
+
+                // Custom icon for selected location
+                var selectedIcon = L.divIcon({
+                    html: '<div style="background-color: #dc3545; border: 3px solid #fff; border-radius: 50%; width: 24px; height: 24px; box-shadow: 0 3px 6px rgba(0,0,0,0.4); position: relative;"><div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #dc3545;"></div></div>',
+                    iconSize: [24, 32],
+                    iconAnchor: [12, 32],
+                    popupAnchor: [0, -32],
+                    className: 'custom-red-marker'
+                });
+
+                // Function to set map location
+                window.setMapLocation = function(lat, lng, description) {
+                    // Remove existing selected marker
+                    if (window.selectedMarker) {
+                        map.removeLayer(window.selectedMarker);
+                        window.selectedMarker = null;
+                    }
+                    
+                    // Add new marker
+                    window.selectedMarker = L.marker([lat, lng], {icon: selectedIcon})
+                        .addTo(map)
+                        .bindPopup('<strong>Selected Location</strong><br>' + description + '<br><small>Coordinates: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) + '</small>');
+                    
+                    // Update form fields
+                    var latField = document.getElementById('selectedLatitude');
+                    var lngField = document.getElementById('selectedLongitude');
+                    var descField = document.getElementById('locationDescription');
+                    
+                    if (latField) latField.value = lat.toFixed(6);
+                    if (lngField) lngField.value = lng.toFixed(6); // FIXED: was incorrectly lat.toFixed(6)
+                    if (descField) descField.value = description;
+                    
+                    // Update hidden form fields with current main form data
+                    var mainForm = document.querySelector('form[method="post"]:not(#locationForm)');
+                    if (mainForm) {
+                        var hazardTypeField = mainForm.querySelector('[name="HazardReport.HazardType"]');
+                        var reportedByField = mainForm.querySelector('[name="HazardReport.ReportedBy"]');
+                        var reportedOnField = mainForm.querySelector('[name="HazardReport.ReportedOn"]');
+                        var departmentField = mainForm.querySelector('[name="HazardReport.Department"]');
+                        var descriptionField = mainForm.querySelector('[name="HazardReport.Description"]');
+                        var confidentialField = mainForm.querySelector('[name="HazardReport.IsConfidential"]');
+                        var priorityField = mainForm.querySelector('[name="HazardReport.Priority"]');
+                        
+                        // Update hidden fields in location form
+                        var locationForm = document.getElementById('locationForm');
+                        if (locationForm) {
+                            updateHiddenField(locationForm, 'HazardReport.HazardType', hazardTypeField?.value || '');
+                            updateHiddenField(locationForm, 'HazardReport.ReportedBy', reportedByField?.value || '');
+                            updateHiddenField(locationForm, 'HazardReport.ReportedOn', reportedOnField?.value || '');
+                            updateHiddenField(locationForm, 'HazardReport.Department', departmentField?.value || '');
+                            updateHiddenField(locationForm, 'HazardReport.Description', descriptionField?.value || '');
+                            updateHiddenField(locationForm, 'HazardReport.IsConfidential', confidentialField?.checked || false);
+                            updateHiddenField(locationForm, 'HazardReport.Priority', priorityField?.value || 'MEDIUM');
+                        }
+                    }
+                    
+                    // Center map on selection
+                    map.setView([lat, lng], 17);
+                    
+                    // Update coordinates display
+                    var coordsDiv = document.querySelector('.leaflet-control-coordinates');
+                    if(coordsDiv) {
+                        coordsDiv.innerHTML = '<span style="color: #0066cc;">📍 Location selected: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) + '</span>';
+                    }
+                };
+                
+                // Helper function to update hidden fields
+                function updateHiddenField(form, name, value) {
+                    var field = form.querySelector('[name="' + name + '"]');
+                    if (field) {
+                        field.value = value;
+                    } else {
+                        var hiddenField = document.createElement('input');
+                        hiddenField.type = 'hidden';
+                        hiddenField.name = name;
+                        hiddenField.value = value;
+                        form.appendChild(hiddenField);
+                    }
+                }
+
+                // Set initial marker if coordinates exist
+                @if (Model.HasGeoLocation)
+                {
+                    <text>
+                    setTimeout(function() {
+                        setMapLocation(@Model.SelectedGeoLocation.Latitude, @Model.SelectedGeoLocation.Longitude, '@Html.Raw(Model.GeoLocationDescription)');
+                    }, 500);
+                    </text>
+                }
+
+                // Function to clear selection - FIXED to return to PDX center
+                window.clearMapSelection = function() {
+                    if (window.selectedMarker) {
+                        map.removeLayer(window.selectedMarker);
+                        window.selectedMarker = null;
+                    }
+                    
+                    var latField = document.getElementById('selectedLatitude');
+                    var lngField = document.getElementById('selectedLongitude');
+                    var descField = document.getElementById('locationDescription');
+                    
+                    if (latField) latField.value = '';
+                    if (lngField) lngField.value = '';
+                    if (descField) descField.value = '';
+                    
+                    // FIXED: Return to PDX airport center instead of random location
+                    map.setView([@Model.AirportCenterLatitude, @Model.AirportCenterLongitude], @Model.DefaultZoomLevel);
+                    
+                    var coordsDiv = document.querySelector('.leaflet-control-coordinates');
+                    if (coordsDiv) {
+                        coordsDiv.innerHTML = '<span style="color: #0066cc;">🔍 Click anywhere on the map to select location</span>';
+                    }
+                };
+                
+                // Add PDX airport boundary - ENSURE it doesn't block clicks
+                var pdxBounds = [
+                    [45.580, -122.610], [45.580, -122.580], [45.595, -122.580], 
+                    [45.595, -122.610], [45.580, -122.610]
+                ];
+                
+                var boundaryPolygon = L.polygon(pdxBounds, {
+                    color: '#0066cc',
+                    weight: 3,
+                    opacity: 0.8,
+                    fillColor: '#0066cc',
+                    fillOpacity: 0.1,
+                    dashArray: '10, 10',
+                    interactive: false,  // CRITICAL: Non-interactive
+                    bubblingMouseEvents: false,  // CRITICAL: Don't interfere with events
+                    pane: 'overlayPane' // Put it in the right pane
+                }).addTo(map);
+                
+                // Force cursor to crosshair initially
+                map.getContainer().style.cursor = 'crosshair';
+
+                // Add scale control
+                L.control.scale({
+                    position: 'bottomright',
+                    imperial: true,
+                    metric: true
+                }).addTo(map);
+
+                // Add coordinates display control
+                var coordsControl = L.control({position: 'bottomleft'});
+                coordsControl.onAdd = function(map) {
+                    var div = L.DomUtil.create('div', 'leaflet-control-coordinates');
+                    div.style.background = 'rgba(255, 255, 255, 0.95)';
+                    div.style.padding = '10px';
+                    div.style.fontSize = '13px';
+                    div.style.borderRadius = '6px';
+                    div.style.border = '2px solid #0066cc';
+                    div.style.boxShadow = '0 3px 6px rgba(0,0,0,0.3)';
+                    div.style.fontWeight = 'bold';
+                    div.innerHTML = '<span style="color: #0066cc;">🔍 Click anywhere on the map to select location</span>';
+                    return div;
+                };
+                coordsControl.addTo(map);
+                
+                // SIMPLIFIED CSS - don't override Leaflet's default behavior
+                var style = document.createElement('style');
+                style.textContent = `
+                    .leaflet-container {
+                        cursor: crosshair;
+                    }
+                    .leaflet-control button {
+                        cursor: pointer !important;
+                    }
+                `;
+                document.head.appendChild(style);
+
+                // Update coordinates display on mouse move with CORRECT cursor feedback
+                map.on('mousemove', function(e) {
+                    var coords = e.latlng.lat.toFixed(6) + ', ' + e.latlng.lng.toFixed(6);
+                    var withinBounds = window.isWithinBounds(e.latlng.lat, e.latlng.lng);
+                    var coordsDiv = document.querySelector('.leaflet-control-coordinates');
+                    
+                    // CORRECT cursor behavior: crosshair inside, grab (hand) outside
+                    if (withinBounds) {
+                        map.getContainer().style.cursor = 'crosshair';
+                    } else {
+                        map.getContainer().style.cursor = 'grab'; // Hand cursor outside boundary
+                    }
+                    
+                    if (coordsDiv && !window.selectedMarker) {
+                        if (withinBounds) {
+                            coordsDiv.innerHTML = '<span style="color: green; font-weight: bold;">👆 CLICK HERE: ' + coords + '</span>';
+                        } else {
+                            coordsDiv.innerHTML = '<span style="color: red;">❌ Outside bounds: ' + coords + '</span>';
+                        }
+                    }
+                });
+
+                // Main map click handler - ENHANCED with debugging
+                map.on('click', function(e) {
+                    console.log('=== MAP CLICK DETECTED ===');
+                    console.log('Click coordinates:', e.latlng.lat, e.latlng.lng);
+                    
+                    var lat = e.latlng.lat;
+                    var lng = e.latlng.lng;
+                    
+                    // Check if within bounds
+                    var withinBounds = window.isWithinBounds(lat, lng);
+                    console.log('Within bounds:', withinBounds);
+                    
+                    if (!withinBounds) {
+                        console.log('Click outside bounds - showing alert');
+                        alert('Please click within the PDX airport boundary (blue dashed area).\n\nYour click: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) + '');
+                        return;
+                    }
+                    
+                    console.log('Valid click - calling setMapLocation');
+                    setMapLocation(lat, lng, 'Custom map location');
+                });
+            });
+
+            // Geolocation Functions
+            function tryAutoDetectLocation() {
+                if (!navigator.geolocation) return;
+
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        var userLat = position.coords.latitude;
+                        var userLng = position.coords.longitude;
+                        
+                        // Check if user is within PDX airport area
+                        if (isWithinExpandedBounds(userLat, userLng)) {
+                            setMapLocation(userLat, userLng, 'Your current location (GPS)');
+                        } else {
+                            // Just center the map on airport but don't select location
+                            map.setView([userLat, userLng], 13);
+                        }
+                    },
+                    function(error) {
+                        // Silent fail - user can select manually
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 60000
+                    }
+                );
+            }
+
+            // Manual current location button
+            window.getCurrentLocation = function() {
+                if (!navigator.geolocation) {
+                    alert('Geolocation is not supported by your browser.');
+                    return;
+                }
+
+                var btn = document.getElementById('getCurrentLocationBtn');
+                var originalHtml = btn.innerHTML;
+                
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Getting Location...';
+                btn.disabled = true;
+
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        var userLat = position.coords.latitude;
+                        var userLng = position.coords.longitude;
+                        
+                        btn.innerHTML = originalHtml;
+                        btn.disabled = false;
+                        
+                        if (isWithinExpandedBounds(userLat, userLng)) {
+                            setMapLocation(userLat, userLng, 'Your current location (GPS)');
+                        } else {
+                            setMapLocation(userLat, userLng, 'Your current location (GPS) - Outside airport area');
+                            map.setView([userLat, userLng], 12);
+                        }
+                    },
+                    function(error) {
+                        btn.innerHTML = originalHtml;
+                        btn.disabled = false;
+                        
+                        var errorMsg = 'Unable to get your location. Please select manually on the map.';
+                        alert(errorMsg);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 15000,
+                        maximumAge: 30000
+                    }
+                );
+            };
+
+            // Helper function to check expanded bounds - CORRECTED PDX bounds
+            function isWithinExpandedBounds(lat, lng) {
+                // CORRECTED PDX Airport bounds - actual airport property boundaries
+                return lat >= 45.580 && lat <= 45.595 && lng >= -122.610 && lng <= -122.580;
+            }
+
+            // Add validation function for form submission - CORRECTED bounds
+            window.validateCoordinates = function() {
+                var lat = document.getElementById('selectedLatitude').value;
+                var lng = document.getElementById('selectedLongitude').value;
+                
+                if (!lat || !lng) {
+                    alert('Please select a location on the map first.');
+                    return false;
+                }
+                
+                var latNum = parseFloat(lat);
+                var lngNum = parseFloat(lng);
+                
+                // Use CORRECTED PDX airport bounds
+                if (latNum < 45.580 || latNum > 45.595 || lngNum < -122.610 || lngNum > -122.580) {
+                    alert('Selected coordinates are outside the valid PDX airport area.');
+                    return false;
+                }
+                
+                return true;
+            };
+        </script>
+    }
+}
+

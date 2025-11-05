@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace SMS_Infrastructure.Common;
 
-public static class Mappers
+public static partial class Mappers
 {
     #region Generic Helper Methods
 
@@ -54,7 +54,165 @@ public static class Mappers
     #endregion
 
     #region SMS Entity Mappers
+    /// <summary>
+    /// Maps SqlDataReader to SMSApplicationUser entity
+    /// </summary>
+    public static SMSApplicationUser MapToSMSApplicationUser(SqlDataReader reader)
+    {
+        try
+        {
+            // Extract database values
+            var code = reader.GetString(FieldNames.fSMSApplicationUserCode);
+            var firstName = reader.GetString(FieldNames.fSMSApplicationUserFirstName);
+            var lastName = reader.GetString(FieldNames.fSMSApplicationUserLastName);
+            var userName = reader.GetString(FieldNames.fSMSApplicationUserUserName);
+            var hashedPassword = reader.GetString(FieldNames.fSMSApplicationUserPassword);
+            var applicationRole = reader.GetString(FieldNames.fSMSApplicationUserApplicationRole);
+            var permissionLevel = reader.GetString(FieldNames.fSMSApplicationUserPermissionLevel);
+            var isActive = reader.GetBoolean(FieldNames.fSMSApplicationUserIsActive);
+            var lastLoginDate = reader.IsDBNull(FieldNames.fSMSApplicationUserLastLoginDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSApplicationUserLastLoginDate);
+            var createdBy = reader.GetString(FieldNames.fCreatedBy);
+            var createdDate = reader.GetDateTime(FieldNames.fCreatedDate);
 
+            // Create value objects
+            var firstNameVO = FirstName.Create(firstName).Value;
+            var lastNameVO = LastName.Create(lastName).Value;
+            var userNameVO = UserName.Create(userName).Value;
+            var passwordVO = Password.FromHash(hashedPassword, createdDate);
+
+            // Create entity using factory method
+            var user = SMSApplicationUser.Create(
+                code,
+                firstNameVO,
+                lastNameVO,
+                userNameVO,
+                passwordVO,
+                applicationRole,
+                permissionLevel,
+                createdBy);
+
+            // Set additional properties that aren't part of creation
+            if (!isActive)
+                user.Deactivate();
+
+            if (lastLoginDate.HasValue)
+                user.RecordLogin(); // This will set to current time, but we'll need to adjust
+
+            return user;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Error mapping SqlDataReader to SMSApplicationUser: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Maps SqlDataReader to SMSOrganizationalUser entity
+    /// </summary>
+    public static SMSOrganizationalUser MapToSMSOrganizationalUser(SqlDataReader reader)
+    {
+        try
+        {
+            // Extract database values
+            var code = reader.GetString(FieldNames.fSMSOrganizationalUserCode);
+            var firstName = reader.GetString(FieldNames.fSMSOrganizationalUserFirstName);
+            var lastName = reader.GetString(FieldNames.fSMSOrganizationalUserLastName);
+            var userName = reader.GetString(FieldNames.fSMSOrganizationalUserUserName);
+            var hashedPassword = reader.GetString(FieldNames.fSMSOrganizationalUserPassword);
+            var department = reader.GetString(FieldNames.fSMSOrganizationalUserDepartment);
+            var position = reader.GetString(FieldNames.fSMSOrganizationalUserPosition);
+            var organizationLevel = reader.GetString(FieldNames.fSMSOrganizationalUserOrganizationLevel);
+            var isActive = reader.GetBoolean(FieldNames.fSMSOrganizationalUserIsActive);
+            var lastLoginDate = reader.IsDBNull(FieldNames.fSMSOrganizationalUserLastLoginDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSOrganizationalUserLastLoginDate);
+            var createdBy = reader.GetString(FieldNames.fCreatedBy);
+            var createdDate = reader.GetDateTime(FieldNames.fCreatedDate);
+
+            // Create value objects
+            var firstNameVO = FirstName.Create(firstName).Value;
+            var lastNameVO = LastName.Create(lastName).Value;
+            var userNameVO = UserName.Create(userName).Value;
+            var passwordVO = Password.FromHash(hashedPassword, createdDate);
+
+            // Create entity using factory method
+            var user = SMSOrganizationalUser.Create(
+                code,
+                firstNameVO,
+                lastNameVO,
+                userNameVO,
+                passwordVO,
+                department,
+                position,
+                organizationLevel,
+                createdBy);
+
+            // Set additional properties that aren't part of creation
+            if (!isActive)
+                user.Deactivate();
+
+            if (lastLoginDate.HasValue)
+                user.RecordLogin();
+
+            return user;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Error mapping SqlDataReader to SMSOrganizationalUser: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Maps SqlDataReader to SMSStakeholderUser entity
+    /// </summary>
+    public static SMSStakeholderUser MapToSMSStakeholderUser(SqlDataReader reader)
+    {
+        try
+        {
+            // Extract database values
+            var code = reader.GetString(FieldNames.fSMSStakeholderUserCode);
+            var firstName = reader.GetString(FieldNames.fSMSStakeholderUserFirstName);
+            var lastName = reader.GetString(FieldNames.fSMSStakeholderUserLastName);
+            var userName = reader.GetString(FieldNames.fSMSStakeholderUserUserName);
+            var hashedPassword = reader.GetString(FieldNames.fSMSStakeholderUserPassword);
+            var stakeholderType = reader.GetString(FieldNames.fSMSStakeholderUserStakeholderType);
+            var organization = reader.GetString(FieldNames.fSMSStakeholderUserOrganization);
+            var accessLevel = reader.GetString(FieldNames.fSMSStakeholderUserAccessLevel);
+            var isActive = reader.GetBoolean(FieldNames.fSMSStakeholderUserIsActive);
+            var lastLoginDate = reader.IsDBNull(FieldNames.fSMSStakeholderUserLastLoginDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSStakeholderUserLastLoginDate);
+            var createdBy = reader.GetString(FieldNames.fCreatedBy);
+            var createdDate = reader.GetDateTime(FieldNames.fCreatedDate);
+
+            // Create value objects
+            var firstNameVO = FirstName.Create(firstName).Value;
+            var lastNameVO = LastName.Create(lastName).Value;
+            var userNameVO = UserName.Create(userName).Value;
+            var passwordVO = Password.FromHash(hashedPassword, createdDate);
+
+            // Create entity using factory method
+            var user = SMSStakeholderUser.Create(
+                code,
+                firstNameVO,
+                lastNameVO,
+                userNameVO,
+                passwordVO,
+                stakeholderType,
+                organization,
+                accessLevel,
+                createdBy);
+
+            // Set additional properties that aren't part of creation
+            if (!isActive)
+                user.Deactivate();
+
+            if (lastLoginDate.HasValue)
+                user.RecordLogin();
+
+            return user;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Error mapping SqlDataReader to SMSStakeholderUser: {ex.Message}", ex);
+        }
+    }
     /// <summary>
     /// Maps SqlDataReader to AirportSharedDataset entity using updated field names
     /// </summary>
@@ -272,4 +430,6 @@ public static class Mappers
     }
 
     #endregion
+
+   
 }

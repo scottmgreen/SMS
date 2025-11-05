@@ -1,0 +1,144 @@
+@page
+@model PDXSMS_Presentation.Pages.Account.GuestSubmissionSuccessModel
+@{
+    ViewData["Title"] = "Report Submitted Successfully - PDXSMS";
+    Layout = "_LoginLayout";
+}
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-body text-center">
+            <!-- Success Icon -->
+            <div class="mb-4">
+                <i class="fas fa-check-circle fa-4x text-success"></i>
+            </div>
+            
+            <!-- Success Message -->
+            <h3 class="text-success mb-3">Report Submitted Successfully</h3>
+            <p class="lead mb-4">Your confidential safety report has been securely submitted to the PDX Safety Management System.</p>
+            
+            <!-- Tracking Information -->
+            <div class="card bg-light mb-4">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">
+                        <i class="fas fa-barcode"></i> Your Tracking ID
+                    </h5>
+                    <div class="alert alert-warning">
+                        <h4 class="text-dark mb-2">@Model.TrackingId</h4>
+                        <small>
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Important:</strong> Save this ID to check your report status anonymously
+                        </small>
+                    </div>
+                    <p class="card-text small text-muted">
+                        Use this tracking ID to check the status of your report or provide additional information if needed.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Next Steps -->
+            <div class="mb-4">
+                <h6>What Happens Next?</h6>
+                <ul class="text-start small text-muted">
+                    <li><i class="fas fa-eye text-info"></i> Your report will be reviewed by SMS personnel within 24-48 hours</li>
+                    <li><i class="fas fa-shield-alt text-success"></i> Your identity remains completely anonymous and protected</li>
+                    <li><i class="fas fa-bell text-warning"></i> You can track progress using your tracking ID</li>
+                    <li><i class="fas fa-users text-primary"></i> Appropriate personnel will be notified as needed</li>
+                </ul>
+            </div>
+            
+            <!-- Security Notice -->
+            <div class="alert alert-info">
+                <h6><i class="fas fa-user-secret"></i> Your Session Has Been Secured</h6>
+                <p class="mb-0 small">
+                    Your anonymous session has been automatically ended to protect your identity. 
+                    No login information was stored or tracked during your visit.
+                </p>
+            </div>
+            
+            <!-- Actions -->
+            <div class="d-grid gap-2">
+                <button type="button" class="btn btn-primary btn-lg" onclick="copyTrackingId()">
+                    <i class="fas fa-copy"></i> Copy Tracking ID
+                </button>
+                <a href="/Account/Login" class="btn btn-outline-secondary">
+                    <i class="fas fa-sign-in-alt"></i> Return to Login
+                </a>
+            </div>
+            
+            <!-- Contact Information -->
+            <div class="mt-4 pt-3 border-top">
+                <small class="text-muted">
+                    <strong>Need immediate assistance?</strong><br>
+                    <i class="fas fa-phone"></i> Confidential Hotline: (503) 555-0199<br>
+                    <i class="fas fa-envelope"></i> confidential@flypdx.com
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Auto-redirect notice -->
+    <div class="text-center mt-3">
+        <small class="text-muted">
+            <i class="fas fa-clock"></i> 
+            You will be automatically redirected to the login page in <span id="countdown">60</span> seconds
+        </small>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Copy tracking ID to clipboard
+        function copyTrackingId() {
+            const trackingId = '@Model.TrackingId';
+            navigator.clipboard.writeText(trackingId).then(function() {
+                // Show success feedback
+                const button = document.querySelector('button[onclick="copyTrackingId()"]');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                button.classList.remove('btn-primary');
+                button.classList.add('btn-success');
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-primary');
+                }, 2000);
+            });
+        }
+        
+        // Auto-redirect countdown
+        let countdown = 60;
+        const countdownElement = document.getElementById('countdown');
+        
+        function updateCountdown() {
+            countdown--;
+            countdownElement.textContent = countdown;
+            
+            if (countdown <= 0) {
+                window.location.href = '/Account/Login';
+            }
+        }
+        
+        // Update countdown every second
+        setInterval(updateCountdown, 1000);
+        
+        // Disable back button and browser navigation for security
+        history.pushState(null, null, location.href);
+        window.onpopstate = function () {
+            history.go(1);
+        };
+        
+        // Clear any cached form data for security
+        if ('localStorage' in window) {
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('confidentialReport_')) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+        }
+    </script>
+}

@@ -1,0 +1,325 @@
+/* Custom CSS for PDXSMS */
+
+/* ===== CUSTOM PRIMARY COLOR OVERRIDE ===== */
+/* Bootstrap Primary Color: #212e61 */
+
+:root {
+    --bs-primary: #212e61;
+    --bs-primary-rgb: 33, 46, 97;
+    --bs-info: #006AA9;
+    --bs-info-rgb: 0, 106, 169;
+}
+
+/* Primary Button Styles */
+.btn-primary {
+    background-color: #212e61 !important;
+    border-color: #212e61 !important;
+    color: white !important;
+}
+
+.btn-primary:hover {
+    background-color: #1a2450 !important;
+    border-color: #1a2450 !important;
+}
+
+.btn-primary:focus,
+.btn-primary.focus {
+    background-color: #1a2450 !important;
+    border-color: #1a2450 !important;
+    box-shadow: 0 0 0 0.2rem rgba(33, 46, 97, 0.25) !important;
+}
+
+.btn-primary:active,
+.btn-primary.active {
+    background-color: #151e3f !important;
+    border-color: #151e3f !important;
+}
+
+/* Primary Outline Button */
+.btn-outline-primary {
+    color: #212e61 !important;
+    border-color: #212e61 !important;
+}
+
+.btn-outline-primary:hover {
+    color: white !important;
+    background-color: #212e61 !important;
+    border-color: #212e61 !important;
+}
+
+/* Primary Badge */
+.badge.bg-primary {
+    background-color: #212e61 !important;
+}
+
+/* Primary Alert */
+.alert-primary {
+    color: #0c1220 !important;
+    background-color: #d1d7e8 !important;
+    border-color: #b8c4dd !important;
+}
+
+/* Primary Text Color */
+.text-primary {
+    color: #212e61 !important;
+}
+
+/* Primary Links */
+a.text-primary:hover,
+a.text-primary:focus {
+    color: #1a2450 !important;
+}
+
+/* Primary Background */
+.bg-primary {
+    background-color: #212e61 !important;
+}
+
+/* Primary Border */
+.border-primary {
+    border-color: #212e61 !important;
+}
+
+/* Navbar Primary */
+.navbar.bg-primary {
+    background-color: #212e61 !important;
+}
+
+/* Card Header Primary */
+.card-header.bg-primary {
+    background-color: #212e61 !important;
+    color: white !important;
+}
+
+/* Progress Bar Primary */
+.progress-bar.bg-primary {
+    background-color: #212e61 !important;
+}
+
+/* Form Controls (when focused) */
+.form-control:focus,
+.form-select:focus {
+    border-color: #212e61 !important;
+    box-shadow: 0 0 0 0.2rem rgba(33, 46, 97, 0.25) !important;
+}
+
+/* Nav Pills Primary */
+.nav-pills .nav-link.active {
+    background-color: #212e61 !important;
+}
+
+/* Pagination Primary */
+.pagination .page-link {
+    color: #212e61 !important;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #212e61 !important;
+    border-color: #212e61 !important;
+}
+
+/* List Group Primary */
+.list-group-item.active {
+    background-color: #212e61 !important;
+    border-color: #212e61 !important;
+}
+
+/* Dropdown Primary */
+.dropdown-item.active,
+.dropdown-item:active {
+    background-color: #212e61 !important;
+}
+
+/* Table Primary */
+.table-primary,
+.table-primary > th,
+.table-primary > td {
+    background-color: #d1d7e8 !important;
+    border-color: #b8c4dd !important;
+}
+
+/* ===== CUSTOM INFO COLOR OVERRIDE ===== */
+/* Bootstrap Info Color: #006AA9 */
+
+/* Info Button Styles */
+.btn-info {
+    background-color: #006AA9 !important;
+    border-color: #006AA9 !important;
+    color: white !important;
+}
+
+.btn-info:hover {
+    background-color: #005a8f !important;
+    border-color: #005a8f !important;
+}
+
+.btn-info:focus,
+.btn-info.focus {
+    background-color: #005a8f !important;
+    border-color: #005a8f !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 106, 169, 0.25) !important;
+}
+
+.btn-info:active,
+.btn-info.active {
+    background-color: #004a75 !important;
+    border-color: #004a75 !important;
+}
+
+/* Info Outline Button */
+.btn-outline-info {
+    color: #006AA9 !important;
+    border-color: #006AA9 !important;
+}
+
+.btn-outline-info:hover {
+    color: white !important;
+    background-color: #006AA9 !important;
+    border-color: #006AA9 !important;
+}
+
+/* Info Badge */
+.badge.bg-info {
+    background-color: #006AA9 !important;
+    color: white !important;
+}
+
+/* Info Alert */
+.alert-info {
+    color: #003752 !important;
+    background-color: #cce6f7 !important;
+    border-color: #b3d9f0 !important;
+}
+
+/* Info Text Color */
+.text-info {
+    color: #006AA9 !important;
+}
+
+/* Info Links */
+a.text-info:hover,
+a.text-info:focus {
+    color: #005a8f !important;
+}
+
+/* Info Background */
+.bg-info {
+    background-color: #006AA9 !important;
+    color: white !important;
+}
+
+/* Info Border */
+.border-info {
+    border-color: #006AA9 !important;
+}
+
+/* Card Header Info */
+.card-header.bg-info {
+    background-color: #006AA9 !important;
+    color: white !important;
+}
+
+/* Progress Bar Info */
+.progress-bar.bg-info {
+    background-color: #006AA9 !important;
+}
+
+/* Nav Pills Info */
+.nav-pills .nav-link.bg-info {
+    background-color: #006AA9 !important;
+}
+
+/* Table Info */
+.table-info,
+.table-info > th,
+.table-info > td {
+    background-color: #cce6f7 !important;
+    border-color: #b3d9f0 !important;
+}
+
+/* Spinner Info */
+.spinner-border.text-info {
+    color: #006AA9 !important;
+}
+
+.spinner-grow.text-info {
+    color: #006AA9 !important;
+}
+
+/* Toast Info */
+.toast-header.bg-info {
+    background-color: #006AA9 !important;
+    color: white !important;
+}
+
+/* Offcanvas Info */
+.offcanvas-header.bg-info {
+    background-color: #006AA9 !important;
+    color: white !important;
+}
+
+/* ===== END COLOR OVERRIDES ===== */
+
+/* Existing Custom Styles */
+.card-header {
+    font-weight: 600;
+}
+
+.list-group-item-action:hover {
+    background-color: #f8f9fa;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.btn-group .btn {
+    border-radius: 0.25rem;
+    margin-right: 0.25rem;
+}
+
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+
+.modal-header {
+    background-color: #212e61; /* Updated to use custom primary */
+    color: white;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+/* Additional Primary Color Applications */
+.spinner-border.text-primary {
+    color: #212e61 !important;
+}
+
+.spinner-grow.text-primary {
+    color: #212e61 !important;
+}
+
+/* Accordion Primary */
+.accordion-button:not(.collapsed) {
+    background-color: rgba(33, 46, 97, 0.1) !important;
+    color: #212e61 !important;
+}
+
+/* Offcanvas Primary */
+.offcanvas-header.bg-primary {
+    background-color: #212e61 !important;
+}
+
+/* Toast Primary */
+.toast-header.bg-primary {
+    background-color: #212e61 !important;
+    color: white !important;
+}

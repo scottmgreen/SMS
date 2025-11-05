@@ -1,0 +1,388 @@
+@page
+@model PDXSMS_Presentation.Pages.SafetyAssurance.ComplianceReportingModel
+@{
+    ViewData["Title"] = "Compliance Reporting - Safety Assurance";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/SafetyAssurance">Safety Assurance</a></li>
+                    <li class="breadcrumb-item active">Compliance Reporting</li>
+                </ol>
+            </nav>
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="card-title"><i class="fas fa-file-contract"></i> Compliance Reporting</h4>
+                            <p class="card-text">Generate regulatory compliance reports and maintain documentation for aviation safety standards</p>
+                        </div>
+                        <div class="text-end">
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <h3 class="mb-0">@Model.Overview.OverallComplianceRate%</h3>
+                                    <small>Compliance Rate</small>
+                                </div>
+                                <div class="col-6">
+                                    <h3 class="mb-0">@Model.Overview.UpcomingDeadlines</h3>
+                                    <small>Upcoming Deadlines</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compliance Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h3 class="text-success">@Model.Overview.OverallComplianceRate%</h3>
+                    <p class="mb-0">Overall Compliance</p>
+                    <small class="text-muted">All requirements</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <h3 class="text-info">@Model.Overview.ReportsGenerated</h3>
+                    <p class="mb-0">Reports Generated</p>
+                    <small class="text-muted">This quarter</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <h3 class="text-warning">@Model.Overview.UpcomingDeadlines</h3>
+                    <p class="mb-0">Upcoming Deadlines</p>
+                    <small class="text-muted">Next 30 days</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h3 class="text-primary">@Model.Overview.ActiveRequirements</h3>
+                    <p class="mb-0">Active Requirements</p>
+                    <small class="text-muted">Regulatory items</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Tabs -->
+    <div class="row">
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="complianceTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab">
+                        <i class="fas fa-file-alt"></i> Compliance Reports
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="requirements-tab" data-bs-toggle="tab" data-bs-target="#requirements" type="button" role="tab">
+                        <i class="fas fa-gavel"></i> Regulatory Requirements
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="templates-tab" data-bs-toggle="tab" data-bs-target="#templates" type="button" role="tab">
+                        <i class="fas fa-file-download"></i> Report Templates
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="archive-tab" data-bs-toggle="tab" data-bs-target="#archive" type="button" role="tab">
+                        <i class="fas fa-archive"></i> Documentation Archive
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="complianceTabContent">
+                <!-- Compliance Reports Tab -->
+                <div class="tab-pane fade show active" id="reports" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5><i class="fas fa-file-alt"></i> Compliance Reports</h5>
+                                <div>
+                                    <button type="button" class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-download"></i> Export All
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-plus"></i> New Report
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Report ID</th>
+                                            <th>Title</th>
+                                            <th>Type</th>
+                                            <th>Regulation</th>
+                                            <th>Status</th>
+                                            <th>Generated</th>
+                                            <th>Due Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var report in Model.Reports)
+                                        {
+                                            <tr>
+                                                <td><strong>@report.Id</strong></td>
+                                                <td>@report.Title</td>
+                                                <td>@report.Type</td>
+                                                <td><span class="badge bg-info">@report.Regulation</span></td>
+                                                <td>
+                                                    @switch (report.Status)
+                                                    {
+                                                        case "Completed":
+                                                            <span class="badge bg-success">@report.Status</span>
+                                                            break;
+                                                        case "In Progress":
+                                                            <span class="badge bg-warning">@report.Status</span>
+                                                            break;
+                                                        case "Draft":
+                                                            <span class="badge bg-secondary">@report.Status</span>
+                                                            break;
+                                                        case "Scheduled":
+                                                            <span class="badge bg-primary">@report.Status</span>
+                                                            break;
+                                                        default:
+                                                            <span class="badge bg-secondary">@report.Status</span>
+                                                            break;
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (report.GeneratedDate.HasValue)
+                                                    {
+                                                        @report.GeneratedDate.Value.ToString("MM/dd/yyyy")
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">Not generated</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @report.DueDate.ToString("MM/dd/yyyy")
+                                                    @if (report.DueDate <= DateTime.Now.AddDays(7))
+                                                    {
+                                                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button type="button" class="btn btn-outline-primary">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                        @if (report.Status == "Completed")
+                                                        {
+                                                            <button type="button" class="btn btn-outline-success">
+                                                                <i class="fas fa-download"></i>
+                                                            </button>
+                                                        }
+                                                        else
+                                                        {
+                                                            <button type="button" class="btn btn-outline-warning">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                        }
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Regulatory Requirements Tab -->
+                <div class="tab-pane fade" id="requirements" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-gavel"></i> Regulatory Requirements</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                @foreach (var requirement in Model.Requirements)
+                                {
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card border-@(requirement.ComplianceLevel >= 95 ? "success" : requirement.ComplianceLevel >= 80 ? "warning" : "danger")">
+                                            <div class="card-header">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <h6 class="mb-0">@requirement.Title</h6>
+                                                    <span class="badge bg-@(requirement.ComplianceLevel >= 95 ? "success" : requirement.ComplianceLevel >= 80 ? "warning" : "danger")">
+                                                        @requirement.ComplianceLevel%
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-6">
+                                                        <small class="text-muted">Regulation:</small><br>
+                                                        <strong>@requirement.Regulation</strong>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <small class="text-muted">Frequency:</small><br>
+                                                        <strong>@requirement.Frequency</strong>
+                                                    </div>
+                                                </div>
+                                                <div class="row mt-2">
+                                                    <div class="col-12">
+                                                        <small class="text-muted">Next Deadline:</small><br>
+                                                        <strong>@requirement.NextDeadline.ToString("MM/dd/yyyy")</strong>
+                                                        @if (requirement.NextDeadline <= DateTime.Now.AddDays(30))
+                                                        {
+                                                            <span class="badge bg-warning ms-2">Due Soon</span>
+                                                        }
+                                                    </div>
+                                                </div>
+                                                <div class="progress mt-2">
+                                                    <div class="progress-bar bg-@(requirement.ComplianceLevel >= 95 ? "success" : requirement.ComplianceLevel >= 80 ? "warning" : "danger")" 
+                                                         style="width: @requirement.ComplianceLevel%">
+                                                        @requirement.ComplianceLevel%
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Templates Tab -->
+                <div class="tab-pane fade" id="templates" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-file-download"></i> Report Templates</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> <strong>Template Library</strong>
+                                <p class="mb-0">Standardized templates for generating compliance reports according to FAA regulations and industry best practices.</p>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-primary">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-file-alt fa-3x text-primary mb-3"></i>
+                                            <h6>SMS Annual Report</h6>
+                                            <p class="small text-muted">Comprehensive annual safety management system report</p>
+                                            <button class="btn btn-primary btn-sm">Download Template</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-success">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-chart-bar fa-3x text-success mb-3"></i>
+                                            <h6>Performance Report</h6>
+                                            <p class="small text-muted">Safety performance indicators and metrics</p>
+                                            <button class="btn btn-success btn-sm">Download Template</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-warning">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                                            <h6>Emergency Response</h6>
+                                            <p class="small text-muted">Emergency preparedness compliance documentation</p>
+                                            <button class="btn btn-warning btn-sm">Download Template</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-info">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-graduation-cap fa-3x text-info mb-3"></i>
+                                            <h6>Training Records</h6>
+                                            <p class="small text-muted">Personnel training and certification tracking</p>
+                                            <button class="btn btn-info btn-sm">Download Template</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-secondary">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-paw fa-3x text-secondary mb-3"></i>
+                                            <h6>Wildlife Management</h6>
+                                            <p class="small text-muted">Wildlife hazard assessment and mitigation</p>
+                                            <button class="btn btn-secondary btn-sm">Download Template</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-dark">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-road fa-3x text-dark mb-3"></i>
+                                            <h6>Pavement Assessment</h6>
+                                            <p class="small text-muted">Runway and taxiway condition reporting</p>
+                                            <button class="btn btn-dark btn-sm">Download Template</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documentation Archive Tab -->
+                <div class="tab-pane fade" id="archive" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-archive"></i> Documentation Archive</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-warning">
+                                <i class="fas fa-construction"></i> <strong>Archive System Under Development</strong>
+                                <p class="mb-0">The documentation archive system is currently under development. This will provide long-term storage and retrieval of compliance documentation with regulatory retention requirements.</p>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Archive Features (Coming Soon)</h6>
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-check text-success"></i> Long-term document storage</li>
+                                        <li><i class="fas fa-check text-success"></i> Regulatory retention compliance</li>
+                                        <li><i class="fas fa-check text-success"></i> Advanced search capabilities</li>
+                                        <li><i class="fas fa-check text-success"></i> Automated archival workflows</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Retention Periods</h6>
+                                    <ul class="list-unstyled small">
+                                        <li><strong>SMS Reports:</strong> 5 years</li>
+                                        <li><strong>Training Records:</strong> 3 years</li>
+                                        <li><strong>Emergency Plans:</strong> 2 years</li>
+                                        <li><strong>Audit Reports:</strong> 7 years</li>
+                                        <li><strong>Incident Reports:</strong> 10 years</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

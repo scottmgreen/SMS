@@ -1,0 +1,1144 @@
+﻿@page "/SafetyRiskManagement/SMSRiskValidation/{hazardId}"
+@model PDXSMS_Presentation.Pages.SafetyRiskManagement.SMSRiskValidationModel
+@{
+    ViewData["Title"] = "SMS Risk Validation";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/"><i class="fas fa-home"></i> Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/SafetyRiskManagement">Safety Risk Management</a></li>
+                    <li class="breadcrumb-item"><a href="/SafetyRiskManagement/HazardProcessing">Hazard Processing</a></li>
+                    <li class="breadcrumb-item active">SMS Risk Validation</li>
+                </ol>
+            </nav>
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="card-title">
+                                <i class="fas fa-check-circle"></i> SMS Risk Validation &nbsp; <strong>@(Model.HazardDetails?.TrackingNumber ?? Model.HazardId)</strong>
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column - Main Form Content -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-clipboard-check"></i> SMS Risk Validation Decision</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Hazard Description Display -->
+                    <div class="mb-4">
+                        <h6><i class="fas fa-file-text"></i> Hazard Description</h6>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <p class="mb-0">@(Model.HazardDetails?.Description ?? "Hazard description not available")</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" novalidate>
+                        <input type="hidden" asp-for="HazardId" />
+                        
+                        <!-- Display any validation errors -->
+                        @if (!ViewData.ModelState.IsValid)
+                        {
+                            <div class="alert alert-danger">
+                                <h6><i class="fas fa-exclamation-triangle"></i> Please correct the following errors:</h6>
+                                <ul class="mb-0">
+                                    @foreach (var modelError in ViewData.ModelState.Where(ms => ms.Value.Errors.Any()))
+                                    {
+                                        foreach (var error in modelError.Value.Errors)
+                                        {
+                                            <li>@error.ErrorMessage</li>
+                                        }
+                                    }
+                                </ul>
+                            </div>
+                        }
+
+                        <!-- SMS Risk Decision -->
+                        <div class="mb-4">
+                            <h6><i class="fas fa-decision"></i> SMS Risk Determination <span class="text-danger">*</span></h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="card h-100 @(Model.ProcessingDecision == "sms_risk" ? "border-success bg-light" : "border-light")">
+                                        <div class="card-body text-center">
+                                            <div class="form-check">
+                                                <input class="form-check-input radio-trigger" type="radio" asp-for="ProcessingDecision" 
+                                                       value="sms_risk" id="smsRisk" required>
+                                                <label class="form-check-label" for="smsRisk">
+                                                    <i class="fas fa-check-circle text-success fa-2x d-block mb-2"></i>
+                                                    <strong>SMS Risk</strong>
+                                                    <small class="d-block text-muted">Proceed with formal risk assessment</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card h-100 @(Model.ProcessingDecision == "not_sms_risk" ? "border-danger bg-light" : "border-light")">
+                                        <div class="card-body text-center">
+                                            <div class="form-check">
+                                                <input class="form-check-input radio-trigger" type="radio" asp-for="ProcessingDecision" 
+                                                       value="not_sms_risk" id="noSmsRisk" required>
+                                                <label class="form-check-label" for="noSmsRisk">
+                                                    <i class="fas fa-times-circle text-danger fa-2x d-block mb-2"></i>
+                                                    <strong>Not SMS Risk</strong>
+                                                    <small class="d-block text-muted">Refer to other department or close</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card h-100 @(Model.ProcessingDecision == "investigation" ? "border-warning bg-light" : "border-light")">
+                                        <div class="card-body text-center">
+                                            <div class="form-check">
+                                                <input class="form-check-input radio-trigger" type="radio" asp-for="ProcessingDecision" 
+                                                       value="investigation" id="needsInvestigation" required>
+                                                <label class="form-check-label" for="needsInvestigation">
+                                                    <i class="fas fa-search text-warning fa-2x d-block mb-2"></i>
+                                                    <strong>Need More Info</strong>
+                                                    <small class="d-block text-muted">Gather additional information first</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Conditional Fields Container -->
+                        <div id="conditionalFieldsContainer" class="mb-4" >
+                            <!-- SMS Risk Fields -->
+                            <div id="smsRiskFields" class="conditional-fields" style="display: @(Model.ProcessingDecision == "sms_risk" ? "block" : "none");">
+                                <!-- Risk Assessment Method - Simple Dropdown (conditional) -->
+                                <div class="mb-3">
+                                    <label class="form-label">Risk Assessment Method <span class="text-danger">*</span></label>
+                                    <select class="form-select" asp-for="RiskAssessmentMethod" required>
+                                        <option value="">Select assessment method...</option>
+                                        <option value="Simplified">Preliminary Assessment</option>
+                                        <option value="SMS5Step">Technical Risk Assessment (5-Step)</option>
+                                        <option value="Limited">Limited Assessment</option>
+                                    </select>
+                                    <div class="form-text">Choose the appropriate risk assessment method based on hazard complexity</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Initial Assessor Assignment</label>
+                                    <select class="form-select" asp-for="AssignedToUserId">
+                                        <option value="">Auto-assign based on hazard type</option>
+                                        <option value="user1">Sarah Johnson - Senior Safety Officer</option>
+                                        <option value="user2">Mike Chen - Safety Analyst</option>
+                                        <option value="user3">Lisa Wilson - Risk Assessment Specialist</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Not SMS Risk Fields -->
+                            <div id="notSmsRiskFields" class="conditional-fields" style="display: @(Model.ProcessingDecision == "not_sms_risk" ? "block" : "none");">
+                                <div class="mb-3">
+                                    <label class="form-label">Referral Action</label>
+                                    <select class="form-select" asp-for="ReferralAction">
+                                        <option value="">Select action...</option>
+                                        <option value="ReferMaintenance">Refer to Maintenance Department</option>
+                                        <option value="ReferSecurity">Refer to Security Department</option>
+                                        <option value="ReferOperations">Refer to Operations</option>
+                                        <option value="ReferFacilities">Refer to Facilities Management</option>
+                                        <option value="Close">Close - No action required</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Closure/Referral Reason</label>
+                                    <textarea class="form-control" asp-for="ClosureReason" rows="3" 
+                                              placeholder="Explain why this is not an SMS risk and what action should be taken..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Investigation Fields -->
+                            <div id="investigationFields" class="conditional-fields" style="display: @(Model.ProcessingDecision == "investigation" ? "block" : "none");">
+                                <div class="mb-3">
+                                    <label class="form-label">Information Needed</label>
+                                    <textarea class="form-control" asp-for="InformationNeeded" rows="3" 
+                                              placeholder="Specify what additional information or investigation is required..."></textarea>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Assigned Investigator</label>
+                                        <select class="form-select" asp-for="AssignedToUserId">
+                                            <option value="">Select investigator...</option>
+                                            <option value="user1">Mike Chen - Safety Analyst</option>
+                                            <option value="user2">Sarah Johnson - Senior Safety Officer</option>
+                                            <option value="user3">Robert Kim - Safety Manager</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Investigation Due Date</label>
+                                        <input type="date" class="form-control" asp-for="DueDate" 
+                                               value="@DateTime.Now.AddDays(7).ToString("yyyy-MM-dd")">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Validation Rationale -->
+                        <div class="mb-4">
+                            <label class="form-label">Validation Rationale <span class="text-danger">*</span></label>
+                            <textarea class="form-control" asp-for="ProcessingNotes" rows="4" 
+                                      placeholder="Provide detailed reasoning for your SMS risk determination decision..." required></textarea>
+                        </div>
+
+                        <!-- SMS Risk Minimum Dataset Cards - Only shown when SMS Risk selected -->
+                        <div id="smsRiskMinimumDatasetCards" style="display: @(Model.ProcessingDecision == "sms_risk" ? "block" : "none");">
+                            <div class="alert alert-info mb-4">
+                                <i class="fas fa-database"></i> <strong>SMS Risk Minimum Dataset (12 Elements)</strong><br>
+                                <small>Complete the following dataset elements as available. All fields are optional but recommended for comprehensive SMS Risk processing and regulatory compliance.</small>
+                            </div>
+
+                            <!-- Dataset Section 1: Narratives -->
+                            <div class="card mb-3 border-light">
+                                <div class="card-header bg-light py-2">
+                                    <h6 class="mb-0"><i class="fas fa-edit"></i> Narratives</h6>
+                                </div>
+                                <div class="card-body py-2">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label small">Private Narrative</label>
+                                            <textarea class="form-control form-control-sm" asp-for="AirportSharedDataset.PrivateNarrative" rows="3" readonly>@(Model.HazardDetails?.Description ?? "")</textarea>
+                                            <div class="form-text small">Original hazard description (internal use)</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small">Shared Narrative <span class="text-info">*</span></label>
+                                            <textarea class="form-control form-control-sm" asp-for="AirportSharedDataset.SharedNarrative" rows="3" 
+                                                      placeholder="Enter narrative suitable for external sharing"></textarea>
+                                            <div class="form-text small">Sanitized version for external stakeholders</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dataset Section 2: Location Details -->
+                            <div class="card mb-3 border-light">
+                                <div class="card-header bg-light py-2">
+                                    <h6 class="mb-0"><i class="fas fa-map-marker-alt"></i> Location Classification</h6>
+                                </div>
+                                <div class="card-body py-2">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label class="form-label small">Location Area <span class="text-info">*</span></label>
+                                            <select class="form-select form-select-sm" asp-for="AirportSharedDataset.LocationArea" id="locationArea">
+                                                <option value="">Select area...</option>
+                                                <option value="Movement Area">Movement Area</option>
+                                                <option value="Non-movement Area">Non-movement Area</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4" id="subLocationContainer" style="display: none;">
+                                            <label class="form-label small">Specific Location</label>
+                                            <select class="form-select form-select-sm" asp-for="AirportSharedDataset.LocationSubArea" id="locationSubArea">
+                                               <option value="">Select specific area...</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4" id="otherLocationContainer" style="display: none;">
+                                            <label class="form-label small">Other Location</label>
+                                            <input type="text" class="form-control form-control-sm" asp-for="AirportSharedDataset.LocationOther" 
+                                                   placeholder="Describe location...">
+                                        </div>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-12">
+                                            <label class="form-label small">Original Reported Location</label>
+                                            <input type="text" class="form-control form-control-sm" 
+                                                   value="@(Model.HazardDetails?.Location ?? "Not specified")" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dataset Section 3: Environmental & Event Details -->
+                            <div class="card mb-3 border-light">
+                                <div class="card-header bg-light py-2">
+                                    <h6 class="mb-0"><i class="fas fa-cloud-sun"></i> Environmental & Event Details</h6>
+                                </div>
+                                <div class="card-body py-2">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label small">Weather Conditions <span class="text-info">*</span></label>
+                                            <select class="form-select form-select-sm" asp-for="AirportSharedDataset.Weather">
+                                                <option value="">Select weather...</option>
+                                                <option value="Clear">Clear</option>
+                                                <option value="Cloudy">Cloudy</option>
+                                                <option value="Rain">Rain</option>
+                                                <option value="Snow">Snow</option>
+                                                <option value="Fog">Fog</option>
+                                                <option value="High Winds">High Winds</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small">Triggering Event <span class="text-info">*</span></label>
+                                            <select class="form-select form-select-sm" asp-for="AirportSharedDataset.TriggeringEvent" id="triggeringEvent">
+                                                <option value="">Select triggering event...</option>
+                                                <option value="Aircraft Accident">Aircraft Accident</option>
+                                                <option value="Aircraft Incident">Aircraft Incident</option>
+                                                <option value="Surface Incident (Movement)">Surface Incident (Movement)</option>
+                                                <option value="Surface Incident (Non-movement)">Surface Incident (Non-movement)</option>
+                                                <option value="Runway Incursion">Runway Incursion</option>
+                                                <option value="Near Midair Collision (NMAC)">Near Midair Collision (NMAC)</option>
+                                                <option value="FOD">FOD</option>
+                                                <option value="Wildlife">Wildlife</option>
+                                                <option value="Biological">Biological Hazard</option>
+                                                <option value="Hazardous Substances">Hazardous Substances</option>
+                                                <option value="Physical">Physical Hazard</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dataset Section 4: Involved Components & Issues (shown for accidents/incidents) -->
+                            <div class="card mb-3 border-light" id="involvedComponentsSection" style="display: none;">
+                                <div class="card-header bg-light py-2">
+                                    <h6 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Involved Components & Resulting Issues</h6>
+                                </div>
+                                <div class="card-body py-2">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label small"><strong>Involved Components</strong></label>
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" asp-for="AirportSharedDataset.AircraftInvolved">
+                                                <label class="form-check-label small" asp-for="AirportSharedDataset.AircraftInvolved">Aircraft</label>
+                                            </div>
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" asp-for="AirportSharedDataset.PoweredEquipmentInvolved">
+                                                <label class="form-check-label small" asp-for="AirportSharedDataset.PoweredEquipmentInvolved">Powered Equipment</label>
+                                            </div>
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" asp-for="AirportSharedDataset.NonPoweredEquipmentInvolved">
+                                                <label class="form-check-label small" asp-for="AirportSharedDataset.NonPoweredEquipmentInvolved">Non-powered Equipment</label>
+                                            </div>
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" asp-for="AirportSharedDataset.PedestrianInvolved">
+                                                <label class="form-check-label small" asp-for="AirportSharedDataset.PedestrianInvolved">Pedestrian</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small"><strong>Resulting Issues</strong></label>
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" asp-for="AirportSharedDataset.PropertyDamage">
+                                                <label class="form-check-label small" asp-for="AirportSharedDataset.PropertyDamage">Property Damage</label>
+                                            </div>
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" asp-for="AirportSharedDataset.PersonalInjury">
+                                                <label class="form-check-label small" asp-for="AirportSharedDataset.PersonalInjury">Personal Injury</label>
+                                            </div>
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" asp-for="AirportSharedDataset.Fatality">
+                                                <label class="form-check-label small" asp-for="AirportSharedDataset.Fatality">Fatality</label>
+                                            </div>
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" asp-for="AirportSharedDataset.OtherIssues">
+                                                <label class="form-check-label small" asp-for="AirportSharedDataset.OtherIssues">Other Issues</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dataset Section 5: Operational Details -->
+                            <div class="card mb-3 border-light">
+                                <div class="card-header bg-light py-2">
+                                    <h6 class="mb-0"><i class="fas fa-building"></i> Operational Details</h6>
+                                </div>
+                                <div class="card-body py-2">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label small">Airline/Company/Operator</label>
+                                            <input type="text" class="form-control form-control-sm" asp-for="AirportSharedDataset.AirlineCompanyOperator" 
+                                                   placeholder="Enter company/operator name">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small">Were operators authorized?</label>
+                                            <select class="form-select form-select-sm" asp-for="AirportSharedDataset.OperatorsAuthorized">
+                                                <option value="">Select...</option>
+                                                <option value="Yes">Yes</option>
+                                                <option value="No">No</option>
+                                                <option value="Unknown">Unknown</option>
+                                                <option value="N/A">N/A</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dataset Section 6: Impact Assessment -->
+                            <div class="card mb-3 border-light">
+                                <div class="card-header bg-light py-2">
+                                    <h6 class="mb-0"><i class="fas fa-cogs"></i> Operational Impact Assessment</h6>
+                                </div>
+                                <div class="card-body py-2">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label class="form-label small">Flight Delay</label>
+                                            <select class="form-select form-select-sm" asp-for="AirportSharedDataset.FlightDelay">
+                                                <option value="">Select...</option>
+                                                <option value="Yes">Yes</option>
+                                                <option value="No">No</option>
+                                                <option value="N/A">N/A</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small">Equipment Out of Service</label>
+                                            <select class="form-select form-select-sm" asp-for="AirportSharedDataset.EquipmentRemovedFromService">
+                                                <option value="">Select...</option>
+                                                <option value="Yes">Yes</option>
+                                                <option value="No">No</option>
+                                                <option value="N/A">N/A</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small">Police Report</label>
+                                            <select class="form-select form-select-sm" asp-for="AirportSharedDataset.PoliceReport">
+                                                <option value="">Select...</option>
+                                                <option value="Yes">Yes</option>
+                                                <option value="No">No</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dataset Section 7: Contributing Factors -->
+                            <div class="card mb-3 border-light">
+                                <div class="card-header bg-light py-2">
+                                    <h6 class="mb-0"><i class="fas fa-search"></i> Contributing Factors (select all that apply)</h6>
+                                </div>
+                                <div class="card-body py-2">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" name="AirportSharedDataset.ContributingFactors" value="Fatigue" id="factorFatigue">
+                                                <label class="form-check-label small" for="factorFatigue">Fatigue</label>
+                                            </div>
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" name="AirportSharedDataset.ContributingFactors" value="Speed" id="factorSpeed">
+                                                <label class="form-check-label small" for="factorSpeed">Speed</label>
+                                            </div>
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" name="AirportSharedDataset.ContributingFactors" value="Weather" id="factorWeather">
+                                                <label class="form-check-label small" for="factorWeather">Weather</label>
+                                            </div>
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" name="AirportSharedDataset.ContributingFactors" value="Lighting" id="factorLighting">
+                                                <label class="form-check-label small" for="factorLighting">Lighting</label>
+                                            </div>
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" name="AirportSharedDataset.ContributingFactors" value="Signage/Markings" id="factorSignage">
+                                                <label class="form-check-label small" for="factorSignage">Signage/Markings</label>
+                                            </div>
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" name="AirportSharedDataset.ContributingFactors" value="Training" id="factorTraining">
+                                                <label class="form-check-label small" for="factorTraining">Training</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" name="AirportSharedDataset.ContributingFactors" value="Construction" id="factorConstruction">
+                                                <label class="form-check-label small" for="factorConstruction">Construction</label>
+                                            </div>
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" name="AirportSharedDataset.ContributingFactors" value="Administrative Controls" id="factorAdmin">
+                                                <label class="form-check-label small" for="factorAdmin">Administrative Controls</label>
+                                            </div>
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" name="AirportSharedDataset.ContributingFactors" value="Human Factors" id="factorHuman">
+                                                <label class="form-check-label small" for="factorHuman">Human Factors</label>
+                                            </div>
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" name="AirportSharedDataset.ContributingFactors" value="Engineering" id="factorEngineering">
+                                                <label class="form-check-label small" for="factorEngineering">Engineering</label>
+                                            </div>
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" name="AirportSharedDataset.ContributingFactors" value="Mechanical" id="factorMechanical">
+                                                <label class="form-check-label small" for="factorMechanical">Mechanical</label>
+                                            </div>
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" name="AirportSharedDataset.ContributingFactors" value="Other" id="factorOther">
+                                                <label class="form-check-label small" for="factorOther">Other</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="row">
+                            <div class="col-12">
+                                <hr>
+        
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <a href="/SafetyRiskManagement/HazardProcessing" class="btn btn-outline-secondary">
+                                            <i class="fas fa-arrow-left"></i> Back to Processing Queue
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <!-- Save Draft button - saves directly to files -->
+                                        <button type="submit" class="btn btn-outline-info" formaction="?handler=SaveDraft" formnovalidate>
+                                            <i class="fas fa-save"></i> Save Draft
+                                            <small class="d-block">Save progress to file</small>
+                                        </button>
+                                                
+                                        @if (Model.ProcessingDecision == "sms_risk")
+                                        {
+                                            <button type="submit" class="btn btn-success btn-lg" formaction="?handler=ProceedToAssessment">
+                                                <i class="fas fa-arrow-right"></i> Proceed to Risk Assessment
+                                                <small class="d-block">Complete validation & continue</small>
+                                            </button>
+                                        }
+                                        else if (Model.ProcessingDecision == "not_sms_risk")
+                                        {
+                                            <button type="submit" class="btn btn-danger btn-lg">
+                                                <i class="fas fa-times-circle"></i> Close/Refer Hazard
+                                                <small class="d-block">Complete validation</small>
+                                            </button>
+                                        }
+                                        else if (Model.ProcessingDecision == "investigation")
+                                        {
+                                            <button type="submit" class="btn btn-warning btn-lg">
+                                                <i class="fas fa-search"></i> Assign Investigation
+                                                <small class="d-block">Complete validation</small>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="submit" class="btn btn-primary btn-lg">
+                                                <i class="fas fa-check-circle"></i> Submit Validation Decision
+                                                <small class="d-block">Complete validation</small>
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column - Summary and Guidance Cards -->
+        <div class="col-lg-4">
+            <!-- Hazard Report Summary Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-file-alt"></i> Hazard Report Summary</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td class="fw-bold">Tracking #:</td>
+                                <td>@(Model.HazardDetails?.TrackingNumber ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Type:</td>
+                                <td>@(Model.HazardDetails?.HazardType ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Priority:</td>
+                                <td>
+                                    <span class="badge @((Model.HazardDetails?.Priority == "High") ? "bg-danger" : (Model.HazardDetails?.Priority == "Medium") ? "bg-warning" : "bg-info")">
+                                        @(Model.HazardDetails?.Priority ?? "N/A")
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Location:</td>
+                                <td>@(Model.HazardDetails?.Location ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Reported:</td>
+                                <td>@(Model.HazardDetails?.ReportedDate.ToString("MM/dd/yyyy HH:mm") ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Reporter:</td>
+                                <td>@(Model.HazardDetails?.ReportedBy ?? "N/A")</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SMS Risk Criteria & Minimum Dataset Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0"><i class="fas fa-lightbulb"></i> SMS Risk Determination Guidance</h6>
+                </div>
+                <div class="card-body">
+                    <!-- SMS Risk Criteria Guidance -->
+                    <div class="alert alert-info small">
+                        <i class="fas fa-lightbulb"></i> <strong>SMS Risk Determination Criteria</strong>
+                    </div>
+                    <h6 class="small">A hazard is an SMS Risk if it:</h6>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-check text-success"></i> Could affect safety of flight operations</li>
+                        <li><i class="fas fa-check text-success"></i> Involves safety-critical systems or procedures</li>
+                        <li><i class="fas fa-check text-success"></i> Has potential for serious injury or damage</li>
+                        <li><i class="fas fa-check text-success"></i> Represents a recurring safety issue</li>
+                        <li><i class="fas fa-check text-success"></i> Indicates system or process deficiency</li>
+                    </ul>
+
+                    <h6 class="small mt-3">Not an SMS Risk if it:</h6>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-times text-danger"></i> Routine maintenance issue only</li>
+                        <li><i class="fas fa-times text-danger"></i> Security concern (refer to Security)</li>
+                        <li><i class="fas fa-times text-danger"></i> Administrative/procedural only</li>
+                        <li><i class="fas fa-times text-danger"></i> One-time isolated incident</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Risk Assessment Method Guidance -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="fas fa-route"></i> Assessment Method Guide</h6>
+                </div>
+                <div class="card-body">
+                    <h6 class="small mb-2"><i class="fas fa-tachometer-alt text-primary"></i> Simplified Assessment</h6>
+                    <ul class="list-unstyled small mb-3">
+                        <li>• Low to medium risk hazards</li>
+                        <li>• Straightforward scenarios</li>
+                        <li>• Quick turnaround needed</li>
+                        <li>• Clear mitigation path</li>
+                    </ul>
+
+                    <h6 class="small mb-2"><i class="fas fa-cogs text-success"></i> Technical (5-Step)</h6>
+                    <ul class="list-unstyled small mb-3">
+                        <li>• Complex or high-risk hazards</li>
+                        <li>• System-wide implications</li>
+                        <li>• Multiple stakeholders involved</li>
+                        <li>• Detailed analysis required</li>
+                    </ul>
+
+                    <h6 class="small mb-2"><i class="fas fa-fast-forward text-warning"></i> Limited Assessment</h6>
+                    <ul class="list-unstyled small">
+                        <li>• Specific operational contexts</li>
+                        <li>• Pre-defined scenarios</li>
+                        <li>• Time-sensitive situations</li>
+                        <li>• Focused scope analysis</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .process-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .process-arrow {
+            font-size: 20px;
+            margin: 0 15px;
+            color: #6c757d;
+        }
+        .conditional-fields {
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: #f8f9fa;
+            height:238px;
+        }
+        
+        /* Enhanced styling for minimum dataset */
+        #smsRiskMinimumDataset {
+            max-height: 70vh;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        #smsRiskMinimumDataset .form-label.small {
+            color: #495057;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        #smsRiskMinimumDataset .form-control-sm,
+        #smsRiskMinimumDataset .form-select-sm {
+            font-size: 0.85rem;
+        }
+        
+        #smsRiskMinimumDataset .form-check-sm {
+            margin-bottom: 0.25rem;
+        }
+        
+        #smsRiskMinimumDataset .form-check-sm .form-check-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        #smsRiskMinimumDataset .alert-info {
+            border-left: 4px solid #0d6efd;
+            margin-bottom: 1rem;
+        }
+        
+        #smsRiskMinimumDataset .mb-3 {
+            margin-bottom: 0.75rem !important;
+        }
+        
+        /* Scrollbar styling for webkit browsers */
+        #smsRiskMinimumDataset::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #smsRiskMinimumDataset::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        
+        #smsRiskMinimumDataset::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+        
+        #smsRiskMinimumDataset::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        /* Field grouping visual improvements */
+        #smsRiskMinimumDataset .row .col-6 {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+        
+        /* Required field asterisk styling */
+        .text-danger {
+            color: #dc3545 !important;
+        }
+        
+        /* Enhanced validation message styling */
+        span.text-danger.small {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: block;
+        }
+
+        /* Minimum Dataset Help Popover Styling */
+        .minimum-dataset-help-popover {
+            max-width: 350px;
+        }
+
+        .minimum-dataset-help-popover .popover-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .minimum-dataset-help-popover .popover-body {
+            font-size: 0.8rem;
+            padding: 0.75rem;
+        }
+
+        .minimum-dataset-help-popover .popover-body ul {
+            margin-bottom: 0;
+            padding-left: 1.2rem;
+        }
+
+        .minimum-dataset-help-popover .popover-body li {
+            margin-bottom: 0.25rem;
+            line-height: 1.4;
+        }
+
+        /* Help button hover effect for dataset cards */
+        .card-header .btn-outline-secondary:hover {
+            background-color: rgba(108, 117, 125, 0.1);
+            border-color: rgba(108, 117, 125, 0.3);
+        }
+
+        /* Ensure popovers appear above other elements */
+        .popover {
+            z-index: 1060;
+        }
+
+        /* Minimum dataset cards styling */
+        #smsRiskMinimumDatasetCards .card {
+            border: 1px solid #dee2e6;
+        }
+
+        #smsRiskMinimumDatasetCards .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        #smsRiskMinimumDatasetCards .card-body {
+            padding: 0.75rem;
+        }
+
+        /* Improved guidance panel styling */
+        #mitigationGuidance .table td {
+            vertical-align: middle;
+            padding: 0.5rem;
+        }
+
+        #mitigationGuidance .table td:first-child {
+            width: 60px;
+        }
+
+        #mitigationGuidance .alert {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Disable jQuery validation for conditional fields if it exists
+            if (typeof $ !== 'undefined' && $.validator) {
+                // Remove validation rules for conditional fields
+                const conditionalFields = ['ClosureReason', 'ReferralAction', 'InformationNeeded', 'PriorityOverride'];
+                conditionalFields.forEach(fieldName => {
+                    const field = $(`[name="${fieldName}"]`);
+                    if (field.length > 0) {
+                        field.rules('remove');
+                        // Remove any existing validation messages
+                        field.next('.field-validation-error').remove();
+                        field.removeClass('input-validation-error');
+                    }
+                });
+            }
+            
+            // Get all radio buttons with the radio-trigger class
+            const radioButtons = document.querySelectorAll('.radio-trigger');
+            const conditionalFields = {
+                'sms_risk': document.getElementById('smsRiskFields'),
+                'not_sms_risk': document.getElementById('notSmsRiskFields'),
+                'investigation': document.getElementById('investigationFields')
+            };
+
+            // Minimum dataset elements
+            const smsRiskDatasetCards = document.getElementById('smsRiskMinimumDatasetCards');
+
+            // Initialize Bootstrap popovers for help buttons
+            initializeMinimumDatasetPopovers();
+
+            // Function to hide all conditional fields
+            function hideAllConditionalFields() {
+                Object.values(conditionalFields).forEach(field => {
+                    if (field) {
+                        field.style.display = 'none';
+                    }
+                });
+            }
+
+            // Function to show the appropriate conditional fields
+            function showConditionalFields(selectedValue) {
+                hideAllConditionalFields();
+                
+                if (conditionalFields[selectedValue]) {
+                    conditionalFields[selectedValue].style.display = 'block';
+                    
+                    // Smooth scroll to the conditional fields
+                    setTimeout(() => {
+                        conditionalFields[selectedValue].scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'start' 
+                        });
+                    }, 100);
+                }
+
+                // Handle minimum dataset cards visibility
+                if (selectedValue === 'sms_risk') {
+                    if (smsRiskDatasetCards) smsRiskDatasetCards.style.display = 'block';
+                } else {
+                    if (smsRiskDatasetCards) smsRiskDatasetCards.style.display = 'none';
+                }
+                
+                // Clear validation errors for hidden conditional fields
+                clearConditionalValidationErrors(selectedValue);
+            }
+
+            // Function to clear validation errors for conditional fields that should not be validated
+            function clearConditionalValidationErrors(selectedValue) {
+                // Define which fields should be cleared based on the selected value
+                const fieldsTolear = [];
+                
+                switch(selectedValue) {
+                    case 'sms_risk':
+                        // For SMS Risk, clear validation for non-SMS and investigation fields
+                        fieldsTolear.push('ClosureReason', 'ReferralAction', 'InformationNeeded');
+                        break;
+                    case 'not_sms_risk':
+                        // For Non-SMS Risk, clear validation for SMS and investigation fields  
+                        fieldsTolear.push('InformationNeeded');
+                        break;
+                    case 'investigation':
+                        // For Investigation, clear validation for SMS and non-SMS fields
+                        fieldsTolear.push('ClosureReason', 'ReferralAction');
+                        break;
+                }
+                
+                // Always clear PriorityOverride as it's optional
+                fieldsTolear.push('PriorityOverride');
+                
+                // Clear validation errors
+                fieldsTolear.forEach(fieldName => {
+                    const field = document.querySelector(`[name="${fieldName}"]`);
+                    if (field) {
+                        // Remove validation classes
+                        field.classList.remove('is-invalid', 'input-validation-error');
+                        
+                        // Remove validation messages
+                        const validationMessage = field.parentElement.querySelector('.invalid-feedback, .field-validation-error');
+                        if (validationMessage) {
+                            validationMessage.remove();
+                        }
+                        
+                        // Clear jQuery validation if it exists
+                        if (typeof $ !== 'undefined' && $.validator) {
+                            $(field).rules('remove');
+                        }
+                    }
+                });
+            }
+
+            // Function to update card styling
+            function updateCardStyling(selectedValue) {
+                // Reset all cards to default styling
+                document.querySelectorAll('.card.h-100').forEach(card => {
+                    card.classList.remove('border-success', 'border-danger', 'border-warning', 'bg-light');
+                    card.classList.add('border-light');
+                });
+
+                // Apply styling to selected card
+                const radioButton = document.querySelector(`input[value="${selectedValue}"]`);
+                if (radioButton) {
+                    const card = radioButton.closest('.card');
+                    if (card) {
+                        card.classList.remove('border-light');
+                        card.classList.add('bg-light');
+                        
+                        switch(selectedValue) {
+                            case 'sms_risk':
+                                card.classList.add('border-success');
+                                break;
+                            case 'not_sms_risk':
+                                card.classList.add('border-danger');
+                                break;
+                            case 'investigation':
+                                card.classList.add('border-warning');
+                                break;
+                        }
+                    }
+                }
+            }
+
+            // Add event listeners to all radio buttons
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        const selectedValue = this.value;
+                        console.log('🎯 Radio button selected:', selectedValue);
+                        console.log('🎯 Available conditional fields:', Object.keys(conditionalFields));
+                        console.log('🎯 Target field element:', conditionalFields[selectedValue]);
+                        
+                        // Update card styling
+                        updateCardStyling(selectedValue);
+                        
+                        // Show appropriate conditional fields
+                        showConditionalFields(selectedValue);
+                    }
+                });
+            });
+
+            // Show appropriate fields on page load if a selection exists
+            const checkedRadio = document.querySelector('.radio-trigger:checked');
+            if (checkedRadio) {
+                const selectedValue = checkedRadio.value;
+                console.log('🎯 Page load - Found checked radio:', selectedValue);
+                updateCardStyling(selectedValue);
+                showConditionalFields(selectedValue);
+            } else {
+                console.log('🎯 Page load - No checked radio found');
+            }
+
+            // ========================================
+            // MINIMUM DATASET POPOVERS INITIALIZATION
+            // ========================================
+
+            function initializeMinimumDatasetPopovers() {
+                // Initialize all popovers
+                var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+                var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+                    return new bootstrap.Popover(popoverTriggerEl, {
+                        container: 'body',
+                        sanitize: false,
+                        customClass: 'minimum-dataset-help-popover'
+                    });
+                });
+                
+                // Close other popovers when one is opened
+                popoverTriggerList.forEach(function(popoverTriggerEl) {
+                    popoverTriggerEl.addEventListener('show.bs.popover', function () {
+                        // Hide all other popovers
+                        popoverList.forEach(function(popoverInstance) {
+                            if (popoverInstance._element !== popoverTriggerEl) {
+                                popoverInstance.hide();
+                            }
+                        });
+                    });
+                });
+                
+                // Close popover when clicking outside
+                document.addEventListener('click', function (e) {
+                    var isPopoverButton = e.target.closest('[data-bs-toggle="popover"]');
+                    var isPopoverContent = e.target.closest('.popover');
+                    
+                    if (!isPopoverButton && !isPopoverContent) {
+                        popoverList.forEach(function(popoverInstance) {
+                            popoverInstance.hide();
+                        });
+                    }
+                });
+            }
+
+            // ========================================
+            // MINIMUM DATASET DYNAMIC BEHAVIOR
+            // ========================================
+
+            // Location Area sub-fields
+            const locationArea = document.getElementById('locationArea');
+            const subLocationContainer = document.getElementById('subLocationContainer');
+            const locationSubArea = document.getElementById('locationSubArea');
+            const otherLocationContainer = document.getElementById('otherLocationContainer');
+
+            if (locationArea) {
+                locationArea.addEventListener('change', function() {
+                    const selectedArea = this.value;
+                    
+                    // Show/hide sub-location fields
+                    if (selectedArea && selectedArea !== 'Other') {
+                        subLocationContainer.style.display = 'block';
+                        otherLocationContainer.style.display = 'none';
+                        
+                        // Clear existing options
+                        locationSubArea.innerHTML = '<option value="">Select specific area...</option>';
+                        
+                        // Populate sub-area options based on selection
+                        let subOptions = [];
+                        switch(selectedArea) {
+                            case 'Movement Area':
+                                subOptions = ['Runway', 'Taxiway', 'Apron'];
+                                break;
+                            case 'Non-movement Area':
+                                subOptions = ['Ramp', 'Baggage Tunnel', 'Fuel Farm', 'Terminal Building', 'Cargo Area', 'Maintenance Area'];
+                                break;
+                        }
+                        
+                        subOptions.forEach(option => {
+                            const optionElement = document.createElement('option');
+                            optionElement.value = option;
+                            optionElement.textContent = option;
+                            locationSubArea.appendChild(optionElement);
+                        });
+                    } else if (selectedArea === 'Other') {
+                        subLocationContainer.style.display = 'none';
+                        otherLocationContainer.style.display = 'block';
+                    } else {
+                        subLocationContainer.style.display = 'none';
+                        otherLocationContainer.style.display = 'none';
+                    }
+                });
+            }
+
+            // Triggering Event - show/hide involved components
+            const triggeringEvent = document.getElementById('triggeringEvent');
+            const involvedComponentsSection = document.getElementById('involvedComponentsSection');
+
+            if (triggeringEvent && involvedComponentsSection) {
+                triggeringEvent.addEventListener('change', function() {
+                    const selectedEvent = this.value;
+                    const showComponents = [
+                        'Aircraft Accident',
+                        'Aircraft Incident', 
+                        'Surface Incident (Movement)',
+                        'Surface Incident (Non-movement)'
+                    ].includes(selectedEvent);
+                    
+                    involvedComponentsSection.style.display = showComponents ? 'block' : 'none';
+                });
+            }
+
+            // Initialize dynamic fields on page load
+            setTimeout(() => {
+                if (locationArea && locationArea.value) {
+                    locationArea.dispatchEvent(new Event('change'));
+                }
+                if (triggeringEvent && triggeringEvent.value) {
+                    triggeringEvent.dispatchEvent(new Event('change'));
+                }
+            }, 500);
+
+            // Initialize popovers for help buttons
+            const popoverTriggers = document.querySelectorAll('[data-bs-toggle="popover"]');
+            if (popoverTriggers) {
+                const popoverList = [];
+
+                // Initialize all popovers
+                popoverTriggers.forEach(trigger => {
+                    const popoverInstance = new bootstrap.Popover(trigger, {
+                        html: true,
+                        trigger: 'click',
+                        placement: 'left',
+                        boundary: 'viewport',
+                        container: 'body'
+                    });
+                    
+                    popoverList.push(popoverInstance);
+                });
+
+                // Close popovers when clicking outside
+                document.addEventListener('click', function (e) {
+                    if (!e.target.closest('.popover') && !e.target.matches('[data-bs-toggle="popover"]')) {
+                        popoverList.forEach(popover => {
+                            popover.hide();
+                        });
+                    }
+                });
+            }
+        });
+    </script>
+}
+
+
+

@@ -1,0 +1,1724 @@
+﻿@page
+@model PDXSMS_Presentation.Pages.SafetyPolicy.ResponsibilitiesAndAccountabilityModel
+@{
+    ViewData["Title"] = "SMS Organizational Management";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/SafetyPolicy">Safety Policy</a></li>
+                    <li class="breadcrumb-item active">SMS Organizational Management</li>
+                </ol>
+            </nav>
+            <div class="card bg-gradient-success text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="card-title">🎯 SMS Organizational Management</h4>
+                            <p class="card-text">Manage SMS Organizational Users, Stakeholder Users, Teams, and Group assignments for safety management operations</p>
+                            <small><i class="fas fa-info-circle"></i> Note: Application Users are managed under System → User Management</small>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button type="button" class="btn btn-outline-light" onclick="loadUserStats()">
+                                <i class="fas fa-sync-alt"></i> Refresh Stats
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Dashboard -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <div class="h3 text-success">@Model.Stats.TotalSMSUsers</div>
+                    <small>SMS Users</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <div class="h3 text-info">@Model.Stats.TotalStakeholderUsers</div>
+                    <small>Stakeholder Users</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-dark">
+                <div class="card-body text-center">
+                    <div class="h3 text-dark">@Model.Stats.SMSTeams</div>
+                    <small>SMS Teams</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-secondary">
+                <div class="card-body text-center">
+                    <div class="h3 text-secondary">@Model.Stats.StakeholderGroups</div>
+                    <small>Stakeholder Groups</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Tab Navigation - Application Users removed, they're managed under System menu -->
+    <ul class="nav nav-tabs" id="userManagementTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="sms-users-tab" data-bs-toggle="tab" data-bs-target="#sms-users" type="button" role="tab">
+                <i class="fas fa-user-tie"></i> SMS Users (@Model.Stats.TotalSMSUsers)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="stakeholder-users-tab" data-bs-toggle="tab" data-bs-target="#stakeholder-users" type="button" role="tab">
+                <i class="fas fa-handshake"></i> Stakeholder Users (@Model.Stats.TotalStakeholderUsers)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="sms-teams-tab" data-bs-toggle="tab" data-bs-target="#sms-teams" type="button" role="tab">
+                <i class="fas fa-users-cog"></i> SMS Teams (@Model.Stats.SMSTeams)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="stakeholder-groups-tab" data-bs-toggle="tab" data-bs-target="#stakeholder-groups" type="button" role="tab">
+                <i class="fas fa-layer-group"></i> Stakeholder Groups (@Model.Stats.StakeholderGroups)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="debug-tab" data-bs-toggle="tab" data-bs-target="#debug" type="button" role="tab">
+                <i class="fas fa-bug"></i> Debug & Export
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="userManagementTabContent">
+        <!-- SMS Users Tab -->
+        <div class="tab-pane fade show active" id="sms-users" role="tabpanel">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-user-tie"></i> SMS Organizational Users Management</h5>
+                        <button type="button" class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#createSMSUserModal">
+                            <i class="fas fa-plus"></i> Add SMS User
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Employee ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Department</th>
+                                    <th>SMS Teams</th>
+                                    <th>Employee Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var user in Model.SMSUsers)
+                                {
+                                    <tr>
+                                        <td>@user.EmployeeId</td>
+                                        <td>
+                                            <div class="fw-bold">@user.DisplayName</div>
+                                            <small class="text-muted">@user.JobTitle</small>
+                                        </td>
+                                        <td>@user.Email</td>
+                                        <td>@user.Department</td>
+                                        <td>
+                                            @if (user.SMSTeamMemberships.Any())
+                                            {
+                                                @foreach (var team in user.SMSTeamMemberships)
+                                                {
+                                                    <span class="badge bg-success me-1">@team</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">No teams</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (user.IsEmployee && user.EmploymentStatus == "Active")
+                                            {
+                                                <span class="badge bg-success">Active Employee</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning">@user.EmploymentStatus</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary" onclick="openEditSMSUserModal('@user.Id', '@user.DisplayName', '@user.Email', '@user.Department', '@user.JobTitle', '@user.EmployeeId', '@user.Phone')" title="Edit SMS User">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-outline-info" onclick="openManageSMSTeamsModal('@user.Id', '@user.DisplayName')" title="Manage Teams">
+                                                    <i class="fas fa-users-cog"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger" onclick="deleteSMSUser('@user.Id', '@user.DisplayName')" title="Delete SMS User">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stakeholder Users Tab -->
+        <div class="tab-pane fade" id="stakeholder-users" role="tabpanel">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-handshake"></i> Stakeholder Users Management</h5>
+                        <button type="button" class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#createStakeholderUserModal">
+                            <i class="fas fa-plus"></i> Add Stakeholder User
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Organization</th>
+                                    <th>Type</th>
+                                    <th>Category</th>
+                                    <th>Groups</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var user in Model.StakeholderUsers)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold">@user.DisplayName</div>
+                                            <small class="text-muted">@user.PreferredContactMethod</small>
+                                        </td>
+                                        <td>@user.Email</td>
+                                        <td>@user.OrganizationName</td>
+                                        <td><span class="badge bg-info">@user.StakeholderType</span></td>
+                                        <td><span class="badge bg-@(user.StakeholderCategory == "Critical" ? "danger" : user.StakeholderCategory == "Important" ? "warning" : "secondary")">@user.StakeholderCategory</span></td>
+                                        <td>
+                                            @if (user.StakeholderGroups.Any())
+                                            {
+                                                @foreach (var group in user.StakeholderGroups)
+                                                {
+                                                    <span class="badge bg-info me-1">@group</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">No groups</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary" onclick="openEditStakeholderUserModal('@user.Id', '@user.DisplayName', '@user.Email', '@user.OrganizationName', '@user.Phone', '@user.StakeholderType', '@user.StakeholderCategory', '@user.PreferredContactMethod')" title="Edit Stakeholder User">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-outline-info" onclick="openManageStakeholderGroupsModal('@user.Id', '@user.DisplayName')" title="Manage Groups">
+                                                    <i class="fas fa-layer-group"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger" onclick="deleteStakeholderUser('@user.Id', '@user.DisplayName')" title="Delete Stakeholder User">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SMS Teams Tab -->
+        <div class="tab-pane fade" id="sms-teams" role="tabpanel">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-users-cog"></i> SMS Teams Management</h5>
+                        <button type="button" class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#createSMSTeamModal">
+                            <i class="fas fa-plus"></i> Create SMS Team
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Team Name</th>
+                                    <th>Description</th>
+                                    <th>Type</th>
+                                    <th>Members</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var team in Model.AllGroups.Where(g => g.Type == "SMSTeam"))
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold">@team.Name</div>
+                                            <small class="text-muted">Created: @team.CreatedDate.ToString("yyyy-MM-dd")</small>
+                                        </td>
+                                        <td>@team.Description</td>
+                                        <td><span class="badge bg-primary">@team.Category</span></td>
+                                        <td>@team.MemberCount</td>
+                                        <td>
+                                            @if (team.IsActive)
+                                            {
+                                                <span class="badge bg-success">Active</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary" onclick="editSMSTeam('@team.Id', '@team.Name')" title="Edit Team">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-outline-info" onclick="manageSMSTeamMembers('@team.Id', '@team.Name')" title="Manage Members">
+                                                    <i class="fas fa-users"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger" onclick="deleteSMSTeam('@team.Id', '@team.Name')" title="Delete Team">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success/Error Messages -->
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <!-- Tab Navigation - Application Users removed, they're managed under System menu -->
+        <ul class="nav nav-tabs" id="userManagementTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="sms-users-tab" data-bs-toggle="tab" data-bs-target="#sms-users" type="button" role="tab">
+                    <i class="fas fa-user-tie"></i> SMS Users (@Model.Stats.TotalSMSUsers)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="stakeholder-users-tab" data-bs-toggle="tab" data-bs-target="#stakeholder-users" type="button" role="tab">
+                    <i class="fas fa-handshake"></i> Stakeholder Users (@Model.Stats.TotalStakeholderUsers)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="sms-teams-tab" data-bs-toggle="tab" data-bs-target="#sms-teams" type="button" role="tab">
+                    <i class="fas fa-users-cog"></i> SMS Teams (@Model.Stats.SMSTeams)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="stakeholder-groups-tab" data-bs-toggle="tab" data-bs-target="#stakeholder-groups" type="button" role="tab">
+                    <i class="fas fa-layer-group"></i> Stakeholder Groups (@Model.Stats.StakeholderGroups)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="debug-tab" data-bs-toggle="tab" data-bs-target="#debug" type="button" role="tab">
+                    <i class="fas fa-bug"></i> Debug & Export
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="userManagementTabContent">
+            <!-- SMS Users Tab -->
+            <div class="tab-pane fade show active" id="sms-users" role="tabpanel">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-user-tie"></i> SMS Organizational Users Management</h5>
+                            <button type="button" class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#createSMSUserModal">
+                                <i class="fas fa-plus"></i> Add SMS User
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Employee ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Department</th>
+                                        <th>SMS Teams</th>
+                                        <th>Employee Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var user in Model.SMSUsers)
+                                    {
+                                        <tr>
+                                            <td>@user.EmployeeId</td>
+                                            <td>
+                                                <div class="fw-bold">@user.DisplayName</div>
+                                                <small class="text-muted">@user.JobTitle</small>
+                                            </td>
+                                            <td>@user.Email</td>
+                                            <td>@user.Department</td>
+                                            <td>
+                                                @if (user.SMSTeamMemberships.Any())
+                                                {
+                                                    @foreach (var team in user.SMSTeamMemberships)
+                                                    {
+                                                        <span class="badge bg-success me-1">@team</span>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No teams</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (user.IsEmployee && user.EmploymentStatus == "Active")
+                                                {
+                                                    <span class="badge bg-success">Active Employee</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning">@user.EmploymentStatus</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <button class="btn btn-outline-primary" onclick="openEditSMSUserModal('@user.Id', '@user.DisplayName', '@user.Email', '@user.Department', '@user.JobTitle', '@user.EmployeeId', '@user.Phone')" title="Edit SMS User">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-info" onclick="openManageSMSTeamsModal('@user.Id', '@user.DisplayName')" title="Manage Teams">
+                                                        <i class="fas fa-users-cog"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-danger" onclick="deleteSMSUser('@user.Id', '@user.DisplayName')" title="Delete SMS User">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stakeholder Users Tab -->
+            <div class="tab-pane fade" id="stakeholder-users" role="tabpanel">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-handshake"></i> Stakeholder Users Management</h5>
+                            <button type="button" class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#createStakeholderUserModal">
+                                <i class="fas fa-plus"></i> Add Stakeholder User
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Organization</th>
+                                        <th>Type</th>
+                                        <th>Category</th>
+                                        <th>Groups</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var user in Model.StakeholderUsers)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold">@user.DisplayName</div>
+                                                <small class="text-muted">@user.PreferredContactMethod</small>
+                                            </td>
+                                            <td>@user.Email</td>
+                                            <td>@user.OrganizationName</td>
+                                            <td><span class="badge bg-info">@user.StakeholderType</span></td>
+                                            <td><span class="badge bg-@(user.StakeholderCategory == "Critical" ? "danger" : user.StakeholderCategory == "Important" ? "warning" : "secondary")">@user.StakeholderCategory</span></td>
+                                            <td>
+                                                @if (user.StakeholderGroups.Any())
+                                                {
+                                                    @foreach (var group in user.StakeholderGroups)
+                                                    {
+                                                        <span class="badge bg-info me-1">@group</span>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No groups</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <button class="btn btn-outline-primary" onclick="openEditStakeholderUserModal('@user.Id', '@user.DisplayName', '@user.Email', '@user.OrganizationName', '@user.Phone', '@user.StakeholderType', '@user.StakeholderCategory', '@user.PreferredContactMethod')" title="Edit Stakeholder User">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-info" onclick="openManageStakeholderGroupsModal('@user.Id', '@user.DisplayName')" title="Manage Groups">
+                                                        <i class="fas fa-layer-group"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-danger" onclick="deleteStakeholderUser('@user.Id', '@user.DisplayName')" title="Delete Stakeholder User">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SMS Teams Tab -->
+            <div class="tab-pane fade" id="sms-teams" role="tabpanel">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-users-cog"></i> SMS Teams Management</h5>
+                            <button type="button" class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#createSMSTeamModal">
+                                <i class="fas fa-plus"></i> Create SMS Team
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Team Name</th>
+                                        <th>Description</th>
+                                        <th>Type</th>
+                                        <th>Members</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var team in Model.AllGroups.Where(g => g.Type == "SMSTeam"))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold">@team.Name</div>
+                                                <small class="text-muted">Created: @team.CreatedDate.ToString("yyyy-MM-dd")</small>
+                                            </td>
+                                            <td>@team.Description</td>
+                                            <td><span class="badge bg-primary">@team.Category</span></td>
+                                            <td>@team.MemberCount</td>
+                                            <td>
+                                                @if (team.IsActive)
+                                                {
+                                                    <span class="badge bg-success">Active</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Inactive</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <button class="btn btn-outline-primary" onclick="editSMSTeam('@team.Id', '@team.Name')" title="Edit Team">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-info" onclick="manageSMSTeamMembers('@team.Id', '@team.Name')" title="Manage Members">
+                                                        <i class="fas fa-users"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-danger" onclick="deleteSMSTeam('@team.Id', '@team.Name')" title="Delete Team">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🆕 NEW: Stakeholder Groups Tab -->
+            <div class="tab-pane fade" id="stakeholder-groups" role="tabpanel">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-layer-group"></i> Stakeholder Groups Management</h5>
+                            <button type="button" class="btn btn-outline-dark btn-sm" data-bs-toggle="modal" data-bs-target="#createStakeholderGroupModal">
+                                <i class="fas fa-plus"></i> Create Stakeholder Group
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Stakeholder Groups:</strong> Organize external stakeholders by type and priority level. 
+                            These groups are used in risk assessments to efficiently select relevant stakeholders for consultation and communication.
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Group Name</th>
+                                        <th>Description</th>
+                                        <th>Category</th>
+                                        <th>Members</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var group in Model.AllGroups.Where(g => g.Type == "StakeholderGroup"))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold">@group.Name</div>
+                                                <small class="text-muted">Created: @group.CreatedDate.ToString("yyyy-MM-dd")</small>
+                                            </td>
+                                            <td>@group.Description</td>
+                                            <td><span class="badge bg-@(group.Category == "Critical" ? "danger" : group.Category == "Important" ? "warning" : "secondary")">@group.Category</span></td>
+                                            <td>
+                                                <span class="fw-bold">@group.MemberCount</span>
+                                                <small class="text-muted">stakeholder(s)</small>
+                                            </td>
+                                            <td>
+                                                @if (group.IsActive)
+                                                {
+                                                    <span class="badge bg-success">Active</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Inactive</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <button class="btn btn-outline-primary" onclick="editStakeholderGroup('@group.Id', '@group.Name', '@group.Description', '@group.Category')" title="Edit Group">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-info" onclick="viewStakeholderGroupMembers('@group.Id', '@group.Name')" title="View Members">
+                                                        <i class="fas fa-users"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-danger" onclick="deleteStakeholderGroup('@group.Id', '@group.Name')" title="Delete Group">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                            @if (!Model.AllGroups.Any(g => g.Type == "StakeholderGroup"))
+                            {
+                                <div class="text-center py-4">
+                                    <i class="fas fa-layer-group fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">No Stakeholder Groups</h5>
+                                    <p class="text-muted">Create stakeholder groups to organize external stakeholders by type and priority.</p>
+                                    <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#createStakeholderGroupModal">
+                                        <i class="fas fa-plus"></i> Create First Stakeholder Group
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Debug Tab -->
+            <div class="tab-pane fade" id="debug" role="tabpanel">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0"><i class="fas fa-bug"></i> Debug & Export Tools</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-download"></i> Export Data</h6>
+                                <div class="d-grid gap-2">
+                                    <a href="/api/users/sms" target="_blank" class="btn btn-outline-success">
+                                        <i class="fas fa-user-tie"></i> Export SMS Users JSON
+                                    </a>
+                                    <a href="/api/users/stakeholders" target="_blank" class="btn btn-outline-info">
+                                        <i class="fas fa-handshake"></i> Export Stakeholder Users JSON
+                                    </a>
+                                    <a href="/api/groups" target="_blank" class="btn btn-outline-warning">
+                                        <i class="fas fa-sitemap"></i> Export Groups JSON
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-chart-bar"></i> Real-time Statistics</h6>
+                                <div id="liveStats" class="bg-light p-3 rounded">
+                                    <div class="text-center">
+                                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                                        <span class="ms-2">Loading stats...</span>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <button class="btn btn-outline-primary" onclick="loadUserStats()">
+                                        <i class="fas fa-sync-alt"></i> Refresh Statistics
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create SMS User Modal -->
+<div class="modal fade" id="createSMSUserModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="CreateSMSUser">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="fas fa-user-plus"></i> Create SMS Organizational User</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Display Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" asp-for="CreateSMSUser.DisplayName" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Employee ID <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" asp-for="CreateSMSUser.EmployeeId" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" asp-for="CreateSMSUser.Email" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Department</label>
+                                <select class="form-select" asp-for="CreateSMSUser.Department">
+                                    <option value="">Select Department...</option>
+                                    <option value="Safety Management">Safety Management</option>
+                                    <option value="Airport Operations">Airport Operations</option>
+                                    <option value="Quality Assurance">Quality Assurance</option>
+                                    <option value="Regulatory">Regulatory</option>
+                                    <option value="Management">Management</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Job Title</label>
+                                <input type="text" class="form-control" asp-for="CreateSMSUser.JobTitle">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Phone</label>
+                                <input type="tel" class="form-control" asp-for="CreateSMSUser.Phone">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Create SMS User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit SMS User Modal -->
+<div class="modal fade" id="editSMSUserModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="EditSMSUser">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-user-edit"></i> Edit SMS User</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="userId" id="editSMSUserId">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Display Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="displayName" id="editSMSUserDisplayName" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Employee ID <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="employeeId" id="editSMSUserEmployeeId" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" name="email" id="editSMSUserEmail" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Department</label>
+                                <select class="form-select" name="department" id="editSMSUserDepartment">
+                                    <option value="">Select Department...</option>
+                                    <option value="Safety Management">Safety Management</option>
+                                    <option value="Airport Operations">Airport Operations</option>
+                                    <option value="Quality Assurance">Quality Assurance</option>
+                                    <option value="Regulatory">Regulatory</option>
+                                    <option value="Management">Management</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Job Title</label>
+                                <input type="text" class="form-control" name="jobTitle" id="editSMSUserJobTitle">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Phone</label>
+                                <input type="tel" class="form-control" name="phone" id="editSMSUserPhone">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update SMS User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Manage SMS Teams Modal -->
+<div class="modal fade" id="manageSMSTeamsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="UpdateSMSUserTeams">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title"><i class="fas fa-users-cog"></i> Manage SMS Teams</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="userId" id="manageSMSTeamsUserId">
+                    <div class="alert alert-info">
+                        <i class="fas fa-user"></i>
+                        <strong>User:</strong> <span id="manageSMSTeamsUserName"></span>
+                    </div>
+                    
+                    <h6>Assign SMS Teams:</h6>
+                    <div class="row">
+                        @foreach (var team in Model.AllGroups.Where(g => g.Type == "SMSTeam" && g.IsActive))
+                        {
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input sms-team-checkbox" type="checkbox" 
+                                           name="selectedTeams" value="@team.Name" 
+                                           id="smsTeam_@team.Id">
+                                    <label class="form-check-label" for="smsTeam_@team.Id">
+                                        <strong>@team.Name</strong><br>
+                                        <small class="text-muted">@team.Description</small><br>
+                                        <small class="text-info">@team.MemberCount member(s)</small>
+                                    </label>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info">Update Teams</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Create Stakeholder User Modal -->
+<div class="modal fade" id="createStakeholderUserModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="CreateStakeholderUser">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title"><i class="fas fa-user-plus"></i> Create Stakeholder User</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Display Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" asp-for="CreateStakeholderUser.DisplayName" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" asp-for="CreateStakeholderUser.Email" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Organization</label>
+                                <input type="text" class="form-control" asp-for="CreateStakeholderUser.OrganizationName">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Phone</label>
+                                <input type="tel" class="form-control" asp-for="CreateStakeholderUser.Phone">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Stakeholder Type</label>
+                                <select class="form-select" asp-for="CreateStakeholderUser.StakeholderType">
+                                    <option value="">Select Type...</option>
+                                    <option value="Contractor">Contractor</option>
+                                    <option value="Vendor">Vendor</option>
+                                    <option value="Regulatory">Regulatory</option>
+                                    <option value="Community">Community</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Stakeholder Category</label>
+                                <select class="form-select" asp-for="CreateStakeholderUser.StakeholderCategory">
+                                    <option value="">Select Category...</option>
+                                    <option value="Critical">Critical</option>
+                                    <option value="Important">Important</option>
+                                    <option value="Minor">Minor</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label">Groups</label>
+                                <input type="text" class="form-control" asp-for="CreateStakeholderUser.SelectedGroups" placeholder="Group1,Group2 (comma-separated)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info">Create Stakeholder User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Manage Stakeholder Groups Modal -->
+<div class="modal fade" id="manageStakeholderGroupsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="UpdateStakeholderUserGroups">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title"><i class="fas fa-layer-group"></i> Manage Stakeholder Groups</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="userId" id="manageStakeholderGroupsUserId">
+                    <div class="alert alert-info">
+                        <i class="fas fa-handshake"></i>
+                        <strong>Stakeholder:</strong> <span id="manageStakeholderGroupsUserName"></span>
+                    </div>
+                    
+                    <h6>Assign Stakeholder Groups:</h6>
+                    <div id="stakeholderGroupsContainer">
+                        @if (Model.AllGroups.Any(g => g.Type == "StakeholderGroup" && g.IsActive))
+                        {
+                            <div class="row">
+                                @foreach (var group in Model.AllGroups.Where(g => g.Type == "StakeholderGroup" && g.IsActive))
+                                {
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input stakeholder-group-assignment-checkbox" type="checkbox" 
+                                                   name="selectedGroups" value="@group.Name" 
+                                                   id="stakeholderGroup_@group.Id">
+                                            <label class="form-check-label" for="stakeholderGroup_@group.Id">
+                                                <strong>@group.Name</strong><br>
+                                                <small class="text-muted">@group.Description</small><br>
+                                                <small class="text-info">@group.MemberCount member(s)</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                No stakeholder groups available. Create stakeholder groups in the System Management section.
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Update Groups</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Stakeholder User Modal -->
+<div class="modal fade" id="editStakeholderUserModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="EditStakeholderUser">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-user-edit"></i> Edit Stakeholder User</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="userId" id="editStakeholderUserId">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Display Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="displayName" id="editStakeholderUserDisplayName" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" name="email" id="editStakeholderUserEmail" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Organization</label>
+                                <input type="text" class="form-control" name="organizationName" id="editStakeholderUserOrganization">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Phone</label>
+                                <input type="tel" class="form-control" name="phone" id="editStakeholderUserPhone">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Stakeholder Type</label>
+                                <select class="form-select" name="stakeholderType" id="editStakeholderUserType">
+                                    <option value="">Select Type...</option>
+                                    <option value="Contractor">Contractor</option>
+                                    <option value="Vendor">Vendor</option>
+                                    <option value="Regulatory">Regulatory</option>
+                                    <option value="Community">Community</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Stakeholder Category</label>
+                                <select class="form-select" name="stakeholderCategory" id="editStakeholderUserCategory">
+                                    <option value="">Select Category...</option>
+                                    <option value="Critical">Critical</option>
+                                    <option value="Important">Important</option>
+                                    <option value="Minor">Minor</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label">Preferred Contact Method</label>
+                                <select class="form-select" name="preferredContactMethod" id="editStakeholderUserContactMethod">
+                                    <option value="Email">Email</option>
+                                    <option value="Phone">Phone</option>
+                                    <option value="Both">Both</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Stakeholder User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Create Stakeholder Group Modal -->
+<div class="modal fade" id="createStakeholderGroupModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="CreateStakeholderGroup">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title"><i class="fas fa-layer-group"></i> Create Stakeholder Group</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Purpose:</strong> Stakeholder groups organize external parties by type and priority for efficient selection in risk assessments.
+                    </div>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label class="form-label">Group Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" asp-for="CreateStakeholderGroup.Name" required placeholder="e.g., Regulatory - Critical, Contractors - Important">
+                                <div class="form-text">Use format: [Type] - [Priority Level] for consistency</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Priority Category <span class="text-danger">*</span></label>
+                                <select class="form-select" asp-for="CreateStakeholderGroup.Category" required>
+                                    <option value="">Select Priority...</option>
+                                    <option value="Critical">Critical</option>
+                                    <option value="Important">Important</option>
+                                    <option value="Minor">Minor</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label">Description <span class="text-danger">*</span></label>
+                                <textarea class="form-control" asp-for="CreateStakeholderGroup.Description" rows="3" required 
+                                          placeholder="Describe the stakeholder group's role and when to engage them..."></textarea>
+                                <div class="form-text">Explain when and why this group should be included in risk assessments</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Stakeholder Type</label>
+                                <select class="form-select" asp-for="CreateStakeholderGroup.StakeholderType">
+                                    <option value="">Select Type...</option>
+                                    <option value="Regulatory">Regulatory</option>
+                                    <option value="Contractor">Contractor</option>
+                                    <option value="Vendor">Vendor</option>
+                                    <option value="Community">Community</option>
+                                    <option value="Government">Government</option>
+                                    <option value="Airline">Airline</option>
+                                    <option value="Mixed">Mixed</option>
+                                </select>
+                                <div class="form-text">Primary stakeholder type for this group</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Purpose</label>
+                                <input type="text" class="form-control" asp-for="CreateStakeholderGroup.Purpose" 
+                                       placeholder="e.g., Regulatory compliance, Safety consultation">
+                                <div class="form-text">Primary purpose of engaging this group</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Create Stakeholder Group</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Stakeholder Group Modal -->
+<div class="modal fade" id="editStakeholderGroupModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="EditStakeholderGroup">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-layer-group"></i> Edit Stakeholder Group</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="groupId" id="editStakeholderGroupId">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label class="form-label">Group Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="groupName" id="editStakeholderGroupName" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Priority Category <span class="text-danger">*</span></label>
+                                <select class="form-select" name="groupCategory" id="editStakeholderGroupCategory" required>
+                                    <option value="">Select Priority...</option>
+                                    <option value="Critical">Critical</option>
+                                    <option value="Important">Important</option>
+                                    <option value="Minor">Minor</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label">Description <span class="text-danger">*</span></label>
+                                <textarea class="form-control" name="groupDescription" id="editStakeholderGroupDescription" rows="3" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Stakeholder Group</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View Stakeholder Group Members Modal -->
+<div class="modal fade" id="viewStakeholderGroupMembersModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fas fa-users"></i> Stakeholder Group Members</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-users"></i>
+                    <strong>Group:</strong> <span id="viewGroupMembersGroupName"></span>
+                </div>
+                
+                <div id="groupMembersContainer">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading members...</span>
+                        </div>
+                        <p class="mt-2">Loading group members...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="/SafetyPolicy/ResponsibilitiesAndAccountability" class="btn btn-info">
+                    <i class="fas fa-user-plus"></i> Manage Stakeholder Users
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Debug Tab Content - moved here to avoid duplication -->
+<div class="tab-pane fade" id="debug" role="tabpanel">
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0"><i class="fas fa-bug"></i> Debug & Export Tools</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6><i class="fas fa-download"></i> Export Data</h6>
+                    <div class="d-grid gap-2">
+                        <a href="/api/users/sms" target="_blank" class="btn btn-outline-success">
+                            <i class="fas fa-user-tie"></i> Export SMS Users JSON
+                        </a>
+                        <a href="/api/users/stakeholders" target="_blank" class="btn btn-outline-info">
+                            <i class="fas fa-handshake"></i> Export Stakeholder Users JSON
+                        </a>
+                        <a href="/api/groups" target="_blank" class="btn btn-outline-warning">
+                            <i class="fas fa-sitemap"></i> Export Groups JSON
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6><i class="fas fa-chart-bar"></i> Real-time Statistics</h6>
+                    <div id="liveStats" class="bg-light p-3 rounded">
+                        <div class="text-center">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                            <span class="ms-2">Loading stats...</span>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-outline-primary" onclick="loadUserStats()">
+                            <i class="fas fa-sync-alt"></i> Refresh Statistics
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserStats();
+        });
+
+        async function loadUserStats() {
+            try {
+                const response = await fetch('?handler=UserStats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('liveStats').innerHTML = `
+                        <div class="row text-center">
+                            <div class="col-md-6">
+                                <div class="h4 text-success">${data.stats.smsUsers}</div>
+                                <small>SMS Users</small>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="h4 text-info">${data.stats.stakeholderUsers}</div>
+                                <small>Stakeholders</small>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row text-center small">
+                            <div class="col-md-6">
+                                <div class="text-success">${data.stats.smsTeams}</div>
+                                <small>SMS Teams</small>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="text-info">${data.stats.stakeholderGroups}</div>
+                                <small>Stakeholder Groups</small>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                document.getElementById('liveStats').innerHTML = '<div class="text-danger">Error loading statistics</div>';
+            }
+        }
+
+        // SMS User Management Functions
+        function openEditSMSUserModal(userId, displayName, email, department, jobTitle, employeeId, phone) {
+            document.getElementById('editSMSUserId').value = userId;
+            document.getElementById('editSMSUserDisplayName').value = displayName;
+            document.getElementById('editSMSUserEmail').value = email;
+            document.getElementById('editSMSUserDepartment').value = department || '';
+            document.getElementById('editSMSUserJobTitle').value = jobTitle || '';
+            document.getElementById('editSMSUserEmployeeId').value = employeeId;
+            document.getElementById('editSMSUserPhone').value = phone || '';
+            
+            var modal = new bootstrap.Modal(document.getElementById('editSMSUserModal'));
+            modal.show();
+        }
+
+        function openManageSMSTeamsModal(userId, userName) {
+            console.log(`Opening team management modal for user: ${userName} (${userId})`);
+            
+            document.getElementById('manageSMSTeamsUserId').value = userId;
+            document.getElementById('manageSMSTeamsUserName').textContent = userName;
+            
+            // Clear all checkboxes first
+            document.querySelectorAll('.sms-team-checkbox').forEach(cb => {
+                cb.checked = false;
+            });
+            
+            // Find user's current teams and check them
+            const smsUsers = @Html.Raw(Json.Serialize(Model.SMSUsers));
+            console.log('Available SMS Users:', smsUsers);
+            
+            const currentUser = smsUsers.find(u => u.id === userId);
+            console.log('Found current user:', currentUser);
+            
+            if (currentUser && currentUser.smsTeamMemberships && currentUser.smsTeamMemberships.length > 0) {
+                console.log('User has team memberships:', currentUser.smsTeamMemberships);
+                
+                currentUser.smsTeamMemberships.forEach(teamName => {
+                    console.log(`Looking for checkbox with value: "${teamName}"`);
+                    const teamCheckbox = document.querySelector(`input[name="selectedTeams"][value="${teamName}"]`);
+                    if (teamCheckbox) {
+                        teamCheckbox.checked = true;
+                        console.log(`✅ Checked team: ${teamName}`);
+                    } else {
+                        console.log(`❌ Team checkbox not found for: "${teamName}"`);
+                        // Debug: show all available checkboxes
+                        const allCheckboxes = document.querySelectorAll('input[name="selectedTeams"]');
+                        console.log('Available team checkboxes:');
+                        allCheckboxes.forEach(cb => console.log(`  - "${cb.value}"`));
+                    }
+                });
+            } else {
+                console.log('No team memberships found for user');
+            }
+            
+            var modal = new bootstrap.Modal(document.getElementById('manageSMSTeamsModal'));
+            modal.show();
+        }
+
+        // Stakeholder User Management Functions
+        function openEditStakeholderUserModal(userId, displayName, email, organization, phone, stakeholderType, stakeholderCategory, preferredContactMethod) {
+            console.log(`Opening edit stakeholder modal for: ${displayName} (${userId})`);
+            
+            document.getElementById('editStakeholderUserId').value = userId;
+            document.getElementById('editStakeholderUserDisplayName').value = displayName || '';
+            document.getElementById('editStakeholderUserEmail').value = email || '';
+            document.getElementById('editStakeholderUserOrganization').value = organization || '';
+            document.getElementById('editStakeholderUserPhone').value = phone || '';
+            document.getElementById('editStakeholderUserType').value = stakeholderType || '';
+            document.getElementById('editStakeholderUserCategory').value = stakeholderCategory || '';
+            document.getElementById('editStakeholderUserContactMethod').value = preferredContactMethod || 'Email';
+            
+            console.log('Populated stakeholder edit form with data');
+            
+            var modal = new bootstrap.Modal(document.getElementById('editStakeholderUserModal'));
+            modal.show();
+        }
+
+        function openManageStakeholderGroupsModal(userId, userName) {
+            console.log(`🎯 Opening stakeholder group management modal for user: ${userName} (${userId})`);
+            
+            // Wait a bit to ensure DOM is ready
+            setTimeout(() => {
+                try {
+                    // Step 1: Check if modal exists
+                    const modal = document.getElementById('manageStakeholderGroupsModal');
+                    if (!modal) {
+                        console.error('❌ Modal element #manageStakeholderGroupsModal not found!');
+                        alert('Error: Stakeholder Groups Modal not found in the page. Please refresh and try again.');
+                        return;
+                    }
+                    console.log('✅ Modal element found');
+                    
+                    // Step 2: Check for required form fields
+                    const userIdField = document.getElementById('manageStakeholderGroupsUserId');
+                    const userNameField = document.getElementById('manageStakeholderGroupsUserName');
+                    
+                    if (!userIdField) {
+                        console.error('❌ Element #manageStakeholderGroupsUserId not found!');
+                        alert('Error: User ID field not found in modal.');
+                        return;
+                    }
+                    
+                    if (!userNameField) {
+                        console.error('❌ Element #manageStakeholderGroupsUserName not found!');
+                        alert('Error: User Name field not found in modal.');
+                        return;
+                    }
+                    
+                    console.log('✅ All required form fields found');
+                    
+                    // Step 3: Populate modal fields
+                    userIdField.value = userId;
+                    userNameField.textContent = userName;
+                    console.log(`✅ Populated modal - UserId: ${userId}, UserName: ${userName}`);
+                    
+                    // Step 4: Handle checkboxes
+                    const checkboxes = document.querySelectorAll('.stakeholder-group-assignment-checkbox');
+                    console.log(`🔄 Found ${checkboxes.length} stakeholder group checkboxes`);
+                    
+                    if (checkboxes.length === 0) {
+                        console.warn('⚠️ No stakeholder group checkboxes found');
+                    }
+                    
+                    // Clear all checkboxes first
+                    checkboxes.forEach(cb => {
+                        cb.checked = false;
+                        console.log(`  Cleared checkbox: ${cb.value}`);
+                    });
+                    
+                    // Step 5: Find and check user's current groups
+                    const stakeholderUsers = @Html.Raw(Json.Serialize(Model.StakeholderUsers));
+                    const currentUser = stakeholderUsers.find(u => u.id === userId);
+                    
+                    if (currentUser) {
+                        console.log(`✅ Found stakeholder user:`, currentUser.displayName);
+                        
+                        if (currentUser.stakeholderGroups && currentUser.stakeholderGroups.length > 0) {
+                            console.log(`📋 User has groups:`, currentUser.stakeholderGroups);
+                            
+                            currentUser.stakeholderGroups.forEach(groupName => {
+                                const groupCheckbox = document.querySelector(`input[name="selectedGroups"][value="${groupName}"]`);
+                                if (groupCheckbox) {
+                                    groupCheckbox.checked = true;
+                                    console.log(`✅ Pre-checked group: ${groupName}`);
+                                } else {
+                                    console.log(`⚠️ Checkbox not found for group: "${groupName}"`);
+                                }
+                            });
+                        } else {
+                            console.log('ℹ️ User has no group assignments');
+                        }
+                    } else {
+                        console.error(`❌ User not found in stakeholder users: ${userId}`);
+                    }
+                    
+                    // Debug: List all available group options
+                    console.log('📋 Available group checkboxes:');
+                    checkboxes.forEach(cb => {
+                        console.log(`  - "${cb.value}" (${cb.checked ? 'checked' : 'unchecked'})`);
+                    });
+                    
+                    // Step 6: Show the modal
+                    const bootstrapModal = new bootstrap.Modal(modal, {
+                        backdrop: 'static',
+                        keyboard: false
+                    });
+                    
+                    bootstrapModal.show();
+                    console.log('✅ Modal displayed successfully');
+                    
+                } catch (error) {
+                    console.error('❌ Error in openManageStakeholderGroupsModal:', error);
+                    alert(`Error opening stakeholder groups modal: ${error.message}`);
+                }
+            }, 100); // Small delay to ensure DOM is ready
+        }
+
+        // Placeholder functions for remaining features
+        function editSMSTeam(teamId, teamName) {
+            alert(`Edit SMS Team: ${teamName}`);
+        }
+
+        function manageSMSTeamMembers(teamId, teamName) {
+            alert(`Manage members for SMS team: ${teamName}`);
+        }
+
+        function deleteSMSTeam(teamId, teamName) {
+            if (confirm(`Delete SMS team ${teamName}?`)) {
+                alert(`Would delete SMS team: ${teamId}`);
+            }
+        }
+
+        // 🆕 NEW: Stakeholder Group Management Functions
+        function editStakeholderGroup(groupId, groupName, groupDescription, groupCategory) {
+            console.log(`Opening edit stakeholder group modal for: ${groupName} (${groupId})`);
+            
+            document.getElementById('editStakeholderGroupId').value = groupId;
+            document.getElementById('editStakeholderGroupName').value = groupName || '';
+            document.getElementById('editStakeholderGroupDescription').value = groupDescription || '';
+            document.getElementById('editStakeholderGroupCategory').value = groupCategory || '';
+            
+            var modal = new bootstrap.Modal(document.getElementById('editStakeholderGroupModal'));
+            modal.show();
+        }
+
+        async function viewStakeholderGroupMembers(groupId, groupName) {
+            console.log(`Viewing members for stakeholder group: ${groupName} (${groupId})`);
+            
+            // Set group name in modal
+            document.getElementById('viewGroupMembersGroupName').textContent = groupName;
+            
+            // Show modal
+            var modal = new bootstrap.Modal(document.getElementById('viewStakeholderGroupMembersModal'));
+            modal.show();
+            
+            // Load members
+            try {
+                const response = await fetch(`?handler=GetStakeholderGroupMembers&groupId=${encodeURIComponent(groupId)}`);
+                const result = await response.json();
+                
+                const container = document.getElementById('groupMembersContainer');
+                
+                if (result.success && result.members && result.members.length > 0) {
+                    let html = `
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Organization</th>
+                                        <th>Type</th>
+                                        <th>Category</th>
+                                        <th>Contact</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+                    
+                    result.members.forEach(member => {
+                        html += `
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">${member.displayName}</div>
+                                </td>
+                                <td>${member.organizationName || 'N/A'}</td>
+                                <td><span class="badge bg-info">${member.stakeholderType}</span></td>
+                                <td><span class="badge bg-${member.stakeholderCategory === 'Critical' ? 'danger' : member.stakeholderCategory === 'Important' ? 'warning' : 'secondary'}">${member.stakeholderCategory}</span></td>
+                                <td>
+                                    ${member.email ? `<small><i class="fas fa-envelope"></i> ${member.email}</small><br>` : ''}
+                                    ${member.phone ? `<small><i class="fas fa-phone"></i> ${member.phone}</small>` : ''}
+                                </td>
+                                <td>
+                                    <span class="badge bg-${member.isActive ? 'success' : 'secondary'}">
+                                        ${member.isActive ? 'Active' : 'Inactive'}
+                                    </span>
+                                </td>
+                            </tr>`;
+                    });
+                    
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-3">
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                <strong>${result.members.length}</strong> stakeholder(s) in this group
+                            </div>
+                        </div>`;
+                    
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = `
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Members Yet</h5>
+                            <p class="text-muted">This stakeholder group doesn't have any members assigned yet.</p>
+                            <p class="small text-info">
+                                <i class="fas fa-info-circle"></i>
+                                Add members by editing stakeholder users and assigning them to this group.
+                            </p>
+                        </div>`;
+                }
+                
+            } catch (error) {
+                console.error('Error loading group members:', error);
+                document.getElementById('groupMembersContainer').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Error:</strong> Could not load group members. Please try again.
+                    </div>`;
+            }
+        }
+
+        function deleteStakeholderGroup(groupId, groupName) {
+            if (confirm(`Delete stakeholder group "${groupName}"?\n\nThis will remove the group but not delete the stakeholder users. Users will need to be reassigned to other groups.`)) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '?handler=DeleteStakeholderGroup';
+                
+                const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                form.innerHTML = `
+                    <input type="hidden" name="__RequestVerificationToken" value="${csrfToken}">
+                    <input type="hidden" name="groupId" value="${groupId}">
+                `;
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    </script>
+}
+
+<style>
+    .tab-content > .tab-pane {
+        padding: 1rem 0;
+    }
+    
+    .card-header h5 {
+        margin-bottom: 0;
+    }
+    
+    .badge {
+        font-size: 0.75em;
+    }
+    
+    .table th {
+        border-top: none;
+        background-color: #f8f9fa;
+    }
+</style>

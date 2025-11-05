@@ -1,0 +1,705 @@
+@page
+@model PDXSMS_Presentation.Pages.SafetyRiskManagement.FiveMMethodologyModel
+@{
+    ViewData["Title"] = "5M Methodology - Human Factors Framework";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="#">Section 1: Safety Risk Management</a></li>
+                    <li class="breadcrumb-item active">5M Methodology</li>
+                </ol>
+            </nav>
+            <div class="card bg-gradient-primary text-white">
+                <div class="card-body">
+                    <h1 class="card-title"><i class="fas fa-project-diagram"></i> 5M Methodology</h1>
+                    <p class="card-text">Traditional Venn Diagram Format - Human Factors Framework for System Analysis</p>
+                    <div class="row mt-3">
+                        <div class="col-auto">
+                            <span class="badge bg-light text-dark">Human Factors</span>
+                        </div>
+                        <div class="col-auto">
+                            <span class="badge bg-light text-dark">System Analysis</span>
+                        </div>
+                        <div class="col-auto">
+                            <span class="badge bg-light text-dark">Risk Assessment</span>
+                        </div>
+                        <div class="col-auto">
+                            <span class="badge bg-light text-dark">SMS Framework</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive 5M Model Visualization -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-eye"></i> Interactive 5M Model Visualization</h5>
+                    <p class="mb-0">Click on any component to explore detailed information and examples</p>
+                </div>
+                <div class="card-body">
+                    <div class="five-m-venn-container position-relative" style="height: 600px;">
+                        <!-- Management (Outer Circle - Encompassing Everything) -->
+                        <div class="management-outer-circle">
+                            <div class="management-label">
+                                <i class="@Model.ModelData.Management.Icon"></i>
+                                <strong>@Model.ModelData.Management.Name</strong>
+                            </div>
+                        </div>
+
+                        <!-- Mission (Center Circle) -->
+                        <div class="mission-center-circle" data-component="mission">
+                            <div class="mission-content">
+                                <i class="@Model.ModelData.Mission.Icon fa-2x"></i>
+                                <div class="mission-text">
+                                    <strong>@Model.ModelData.Mission.Name</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Man (Top Circle) -->
+                        <div class="man-circle venn-circle" data-component="man" style="--component-color: @Model.ModelData.Man.Color">
+                            <div class="circle-content">
+                                <i class="@Model.ModelData.Man.Icon fa-lg"></i>
+                                <div class="circle-text">
+                                    <strong>@Model.ModelData.Man.Name</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Machine (Bottom Left Circle) -->
+                        <div class="machine-circle venn-circle" data-component="machine" style="--component-color: @Model.ModelData.Machine.Color">
+                            <div class="circle-content">
+                                <i class="@Model.ModelData.Machine.Icon fa-lg"></i>
+                                <div class="circle-text">
+                                    <strong>@Model.ModelData.Machine.Name</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Media (Bottom Right Circle) -->
+                        <div class="media-circle venn-circle" data-component="media" style="--component-color: @Model.ModelData.Media.Color">
+                            <div class="circle-content">
+                                <i class="@Model.ModelData.Media.Icon fa-lg"></i>
+                                <div class="circle-text">
+                                    <strong>@Model.ModelData.Media.Name</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Management clickable overlay (invisible but clickable) -->
+                        <div class="management-clickable" data-component="management"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Component Details -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card" id="componentDetails" style="display: none;">
+                <div class="card-header" id="componentHeader">
+                    <h5 id="componentTitle"></h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card border-secondary h-100">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6><i class="fas fa-question-circle"></i> Key Questions</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul id="keyQuestions" class="list-unstyled">
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-info h-100">
+                                <div class="card-header bg-info text-white">
+                                    <h6><i class="fas fa-lightbulb"></i> Examples</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul id="examples" class="list-unstyled">
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-warning h-100">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6><i class="fas fa-exclamation-triangle"></i> Risk Factors</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul id="riskFactors" class="list-unstyled">
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5M Framework Information -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> About the 5M Methodology</h5>
+                </div>
+                <div class="card-body">
+                    <p>The <strong>5M Methodology</strong> is visualized as a Venn diagram showing the interconnected nature of system components. Each overlapping area represents critical interaction points where multiple factors influence safety outcomes:</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Venn Diagram Structure:</h6>
+                            <ul>
+                                <li><strong>Mission (Center):</strong> The core purpose that all other components serve</li>
+                                <li><strong>Overlapping Circles:</strong> Man, Machine, and Media interact and influence each other</li>
+                                <li><strong>Management (Boundary):</strong> Encompasses and controls all system elements</li>
+                                <li><strong>Intersections:</strong> Critical interaction zones requiring special attention</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Critical Interaction Zones:</h6>
+                            <ul>
+                                <li><strong>Human-Machine Interface:</strong> How people interact with equipment and technology</li>
+                                <li><strong>Human-Environment:</strong> How environmental factors affect human performance</li>
+                                <li><strong>Equipment-Environment:</strong> How conditions affect equipment performance</li>
+                                <li><strong>System Integration:</strong> Where all components work together toward the mission</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h5><i class="fas fa-tools"></i> Implementation Tools</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="/SafetyRiskManagement/RiskAssessment" class="btn btn-outline-primary">
+                            <i class="fas fa-clipboard-check"></i> Start Risk Assessment
+                        </a>
+                        <a href="/SafetyRiskManagement/RiskAssessmentScenarios" class="btn btn-outline-info">
+                            <i class="fas fa-play-circle"></i> View Example Scenarios
+                        </a>
+                        <button type="button" class="btn btn-outline-success" onclick="downloadTemplate()">
+                            <i class="fas fa-download"></i> Download 5M Template
+                        </button>
+                        <a href="/SafetyRiskManagement/RiskAssessmentDetails/RA-2024-001" class="btn btn-outline-warning">
+                            <i class="fas fa-eye"></i> View Live Example
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Venn Diagram Legend -->
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6><i class="fas fa-info-circle"></i> 5M Framework Components</h6>
+                    <div class="row text-center">
+                        <div class="col-md-2">
+                            <div class="p-2 border rounded" style="border-color: @Model.ModelData.Mission.Color !important;">
+                                <i class="@Model.ModelData.Mission.Icon" style="color: @Model.ModelData.Mission.Color;"></i>
+                                <strong class="d-block">Mission</strong>
+                                <small>Core Purpose</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="p-2 border rounded" style="border-color: @Model.ModelData.Man.Color !important;">
+                                <i class="@Model.ModelData.Man.Icon" style="color: @Model.ModelData.Man.Color;"></i>
+                                <strong class="d-block">Man</strong>
+                                <small>Personnel</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="p-2 border rounded" style="border-color: @Model.ModelData.Machine.Color !important;">
+                                <i class="@Model.ModelData.Machine.Icon" style="color: @Model.ModelData.Machine.Color;"></i>
+                                <strong class="d-block">Machine</strong>
+                                <small>Equipment</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="p-2 border rounded" style="border-color: @Model.ModelData.Media.Color !important;">
+                                <i class="@Model.ModelData.Media.Icon" style="color: @Model.ModelData.Media.Color;"></i>
+                                <strong class="d-block">Media</strong>
+                                <small>Environment</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-2 border rounded" style="border-color: @Model.ModelData.Management.Color !important; border-style: dashed;">
+                                <i class="@Model.ModelData.Management.Icon" style="color: @Model.ModelData.Management.Color;"></i>
+                                <strong class="d-block">Management</strong>
+                                <small>Encompasses all components</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Component data
+        const componentData = {
+            mission: {
+                name: '@Model.ModelData.Mission.Name',
+                description: '@Model.ModelData.Mission.Description',
+                color: '@Model.ModelData.Mission.Color',
+                icon: '@Model.ModelData.Mission.Icon',
+                questions: @Html.Raw(Json.Serialize(Model.ModelData.Mission.KeyQuestions)),
+                examples: @Html.Raw(Json.Serialize(Model.ModelData.Mission.Examples)),
+                riskFactors: @Html.Raw(Json.Serialize(Model.ModelData.Mission.RiskFactors))
+            },
+            man: {
+                name: '@Model.ModelData.Man.Name',
+                description: '@Model.ModelData.Man.Description',
+                color: '@Model.ModelData.Man.Color',
+                icon: '@Model.ModelData.Man.Icon',
+                questions: @Html.Raw(Json.Serialize(Model.ModelData.Man.KeyQuestions)),
+                examples: @Html.Raw(Json.Serialize(Model.ModelData.Man.Examples)),
+                riskFactors: @Html.Raw(Json.Serialize(Model.ModelData.Man.RiskFactors))
+            },
+            machine: {
+                name: '@Model.ModelData.Machine.Name',
+                description: '@Model.ModelData.Machine.Description',
+                color: '@Model.ModelData.Machine.Color',
+                icon: '@Model.ModelData.Machine.Icon',
+                questions: @Html.Raw(Json.Serialize(Model.ModelData.Machine.KeyQuestions)),
+                examples: @Html.Raw(Json.Serialize(Model.ModelData.Machine.Examples)),
+                riskFactors: @Html.Raw(Json.Serialize(Model.ModelData.Machine.RiskFactors))
+            },
+            media: {
+                name: '@Model.ModelData.Media.Name',
+                description: '@Model.ModelData.Media.Description',
+                color: '@Model.ModelData.Media.Color',
+                icon: '@Model.ModelData.Media.Icon',
+                questions: @Html.Raw(Json.Serialize(Model.ModelData.Media.KeyQuestions)),
+                examples: @Html.Raw(Json.Serialize(Model.ModelData.Media.Examples)),
+                riskFactors: @Html.Raw(Json.Serialize(Model.ModelData.Media.RiskFactors))
+            },
+            management: {
+                name: '@Model.ModelData.Management.Name',
+                description: '@Model.ModelData.Management.Description',
+                color: '@Model.ModelData.Management.Color',
+                icon: '@Model.ModelData.Management.Icon',
+                questions: @Html.Raw(Json.Serialize(Model.ModelData.Management.KeyQuestions)),
+                examples: @Html.Raw(Json.Serialize(Model.ModelData.Management.Examples)),
+                riskFactors: @Html.Raw(Json.Serialize(Model.ModelData.Management.RiskFactors))
+            }
+        };
+
+        // Initialize component interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add click handlers to all components
+            document.querySelectorAll('[data-component]').forEach(function(component) {
+                component.addEventListener('click', function() {
+                    const componentId = this.getAttribute('data-component');
+                    showComponentDetails(componentId);
+                });
+            });
+
+            // Add smooth hover effects for circles
+            document.querySelectorAll('.venn-circle, .mission-center-circle').forEach(function(circle) {
+                circle.addEventListener('mouseenter', function() {
+                    if (!this.classList.contains('active')) {
+                        this.style.opacity = '1';
+                    }
+                });
+
+                circle.addEventListener('mouseleave', function() {
+                    if (!this.classList.contains('active')) {
+                        this.style.opacity = '0.9';
+                    }
+                });
+            });
+
+            // Management hover effect
+            const managementClickable = document.querySelector('.management-clickable');
+            managementClickable.addEventListener('mouseenter', function() {
+                const managementOuter = document.querySelector('.management-outer-circle');
+                if (!managementOuter.classList.contains('active')) {
+                    managementOuter.style.borderColor = '#7d3c98';
+                    managementOuter.style.borderWidth = '5px';
+                }
+            });
+
+            managementClickable.addEventListener('mouseleave', function() {
+                const managementOuter = document.querySelector('.management-outer-circle');
+                if (!managementOuter.classList.contains('active')) {
+                    managementOuter.style.borderColor = '#9b59b6';
+                    managementOuter.style.borderWidth = '4px';
+                }
+            });
+        });
+
+        function showComponentDetails(componentId) {
+            const data = componentData[componentId];
+            if (!data) return;
+
+            // Reset all components
+            document.querySelectorAll('.venn-circle, .mission-center-circle').forEach(function(comp) {
+                comp.classList.remove('active');
+            });
+            document.querySelector('.management-outer-circle').classList.remove('active');
+
+            // Highlight selected component
+            if (componentId === 'management') {
+                document.querySelector('.management-outer-circle').classList.add('active');
+            } else {
+                const selectedElement = document.querySelector(`[data-component="${componentId}"]`);
+                if (selectedElement) {
+                    selectedElement.classList.add('active');
+                }
+            }
+
+            // Update header
+            const header = document.getElementById('componentHeader');
+            header.style.backgroundColor = data.color;
+            header.style.color = 'white';
+
+            // Update title
+            document.getElementById('componentTitle').innerHTML = 
+                `<i class="${data.icon}"></i> ${data.name} - ${data.description}`;
+
+            // Clear previous content
+            const detailsBody = document.getElementById('componentDetails').querySelector('.card-body');
+            detailsBody.innerHTML = '';
+
+            // Create new content structure
+            const contentHTML = `
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card border-secondary h-100">
+                            <div class="card-header bg-secondary text-white">
+                                <h6><i class="fas fa-question-circle"></i> Key Questions</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-unstyled">
+                                    ${data.questions.map(q => `<li class="mb-2"><i class="fas fa-question-circle text-secondary me-2"></i>${q}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-info h-100">
+                            <div class="card-header bg-info text-white">
+                                <h6><i class="fas fa-lightbulb"></i> Examples</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-unstyled">
+                                    ${data.examples.map(e => `<li class="mb-2"><i class="fas fa-check-circle text-info me-2"></i>${e}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-warning h-100">
+                            <div class="card-header bg-warning text-dark">
+                                <h6><i class="fas fa-exclamation-triangle"></i> Risk Factors</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-unstyled">
+                                    ${data.riskFactors.map(r => `<li class="mb-2"><i class="fas fa-exclamation-triangle text-warning me-2"></i>${r}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            detailsBody.innerHTML = contentHTML;
+
+            // Show details panel
+            document.getElementById('componentDetails').style.display = 'block';
+            document.getElementById('componentDetails').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function downloadTemplate() {
+            // This would generate and download a 5M assessment template
+            alert('5M Assessment Template Download\n\nThis would download a comprehensive template including:\n\n• Mission analysis worksheet\n• Personnel assessment checklist\n• Machine/equipment inventory\n• Media/environment evaluation\n• Management/procedures review\n\nTemplate includes examples from airport operations.');
+        }
+    </script>
+}
+
+<style>
+    .five-m-venn-container {
+        position: relative;
+        margin: 20px 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Management - Outer encompassing circle */
+    .management-outer-circle {
+        position: absolute;
+        width: 480px;
+        height: 480px;
+        border: 4px dashed @Model.ModelData.Management.Color;
+        border-radius: 50%;
+        background: linear-gradient(45deg, transparent 0%, rgba(155, 89, 182, 0.03) 50%, transparent 100%);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1;
+    }
+
+    .management-label {
+        position: absolute;
+        top: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        color: @Model.ModelData.Management.Color;
+        font-weight: bold;
+        background: white;
+        padding: 8px 20px;
+        border-radius: 25px;
+        border: 2px solid @Model.ModelData.Management.Color;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        font-size: 0.9em;
+    }
+
+    .management-clickable {
+        position: absolute;
+        width: 480px;
+        height: 480px;
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        cursor: pointer;
+        z-index: 2;
+        background: transparent;
+    }
+
+    /* All circles same size - 140px diameter */
+    .mission-center-circle,
+    .venn-circle {
+        position: absolute;
+        width: 175px;
+        height: 175px;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 5;
+    }
+
+    /* Mission - Dead center of management circle */
+    .mission-center-circle {
+        background: linear-gradient(135deg, @Model.ModelData.Mission.Color 0%, #c0392b 100%);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+        opacity: 1;
+    }
+
+    .mission-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: white;
+        text-align: center;
+        padding: 15px;
+    }
+
+    .mission-text {
+        margin-top: 8px;
+        font-size: 0.85em;
+    }
+
+    /* Venn diagram circles - minimal overlap, tangent to mission */
+    .venn-circle {
+        background: var(--component-color);
+        opacity: 0.85;
+    }
+
+    .circle-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: white;
+        text-align: center;
+        padding: 15px;
+    }
+
+    .circle-text {
+        margin-top: 8px;
+        font-size: 0.85em;
+        font-weight: bold;
+    }
+
+    /* Precise geometric positioning - exact equidistant from Management boundary */
+    .man-circle {
+        top: 15%;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .machine-circle {
+        bottom: 25%;
+        left: 50%;
+        transform: translateX(-175px);
+    }
+
+    .media-circle {
+        bottom: 25%;
+        left: 50%;
+        transform: translateX(-0px);
+    }
+
+    /* Hover effects */
+    .venn-circle:hover,
+    .mission-center-circle:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+        z-index: 12;
+        opacity: 1;
+    }
+
+    .man-circle:hover {
+        transform: scale(1.05) translateX(-50%);
+    }
+
+    .machine-circle:hover {
+        transform: scale(1.05) translateX(-120px);
+    }
+
+    .media-circle:hover {
+        transform: scale(1.05) translateX(-10px);
+    }
+
+    .mission-center-circle:hover {
+        transform: scale(1.05) translate(-50%, -50%);
+    }
+
+    .management-clickable:hover + .management-outer-circle {
+        border-color: #7d3c98;
+        background: linear-gradient(45deg, transparent 0%, rgba(155, 89, 182, 0.08) 50%, transparent 100%);
+        border-width: 5px;
+    }
+
+    /* Active states */
+    .venn-circle.active,
+    .mission-center-circle.active {
+        border: 4px solid #ffd700;
+        z-index: 15;
+        opacity: 1;
+        transform: scale(1.03);
+    }
+
+    .man-circle.active {
+        transform: scale(1.03) translateX(-50%);
+    }
+
+    .machine-circle.active {
+        transform: scale(1.03) translateX(-120px);
+    }
+
+    .media-circle.active {
+        transform: scale(1.03) translateX(120px);
+    }
+
+    .mission-center-circle.active {
+        transform: scale(1.03) translate(-50%, -50%);
+    }
+
+    .management-outer-circle.active {
+        border-color: #ffd700;
+        border-width: 6px;
+        background: linear-gradient(45deg, transparent 0%, rgba(255, 215, 0, 0.1) 50%, transparent 100%);
+    }
+
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    /* Responsive design */
+    @@media (max-width: 768px) {
+        .five-m-venn-container {
+            height: 400px;
+        }
+        
+        .management-outer-circle,
+        .management-clickable {
+            width: 360px;
+            height: 360px;
+        }
+        
+        .venn-circle,
+        .mission-center-circle {
+            width: 110px;
+            height: 110px;
+        }
+        
+        .circle-content,
+        .mission-content {
+            padding: 10px;
+            font-size: 0.8em;
+        }
+        
+        .management-label {
+            font-size: 0.8em;
+            padding: 6px 15px;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .five-m-venn-container {
+            height: 320px;
+        }
+        
+        .management-outer-circle,
+        .management-clickable {
+            width: 280px;
+            height: 280px;
+        }
+        
+        .venn-circle,
+        .mission-center-circle {
+            width: 85px;
+            height: 85px;
+        }
+        
+        .circle-content,
+        .mission-content {
+            padding: 8px;
+            font-size: 0.7em;
+        }
+        
+        .management-label {
+            font-size: 0.7em;
+            padding: 4px 10px;
+        }
+    }
+</style>
+

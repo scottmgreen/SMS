@@ -1,0 +1,68 @@
+[
+  {
+    "id": "11111111-1111-1111-1111-111111111111",
+    "name": "Accountable Executive (AE)",
+    "title": "Accountable Executive",
+    "description": "Ultimate accountability for SMS performance, resource allocation, and compliance with 14 CFR Part 139 Subpart E.",
+    "roleType": "Executive",
+    "hierarchyLevel": 1,
+    "keyResponsibilities": [
+      "Overall SMS accountability and oversight",
+      "Resource allocation for SMS implementation",
+      "Policy approval and strategic direction",
+      "Regulatory compliance assurance"
+    ],
+    "permissions": [
+      "SMS_Management",
+      "Policy_Approval",
+      "Resource_Allocation"
+    ],
+    "assignedUsersCount": 0,
+    "isActive": true,
+    "createdDate": "2025-04-15T19:25:14.1099975Z"
+  },
+  {
+    "id": "22222222-2222-2222-2222-222222222222",
+    "name": "SMS Manager",
+    "title": "SMS Manager",
+    "description": "Day-to-day SMS process management and coordination.",
+    "roleType": "Management",
+    "hierarchyLevel": 2,
+    "keyResponsibilities": [
+      "Daily SMS operations management",
+      "Hazard identification and reporting coordination",
+      "Risk assessment facilitation",
+      "Team management and coordination"
+    ],
+    "permissions": [
+      "Hazard_Management",
+      "Risk_Assessment",
+      "Team_Management"
+    ],
+    "assignedUsersCount": 0,
+    "isActive": true,
+    "createdDate": "2025-04-15T19:25:14.1100567Z"
+  },
+  {
+    "id": "33333333-3333-3333-3333-333333333333",
+    "name": "Safety Officer",
+    "title": "Safety Officer",
+    "description": "Safety oversight and hazard investigation responsibilities.",
+    "roleType": "Operational",
+    "hierarchyLevel": 3,
+    "keyResponsibilities": [
+      "Safety oversight and monitoring",
+      "Hazard investigation and analysis",
+      "Training program management",
+      "Safety data collection and reporting"
+    ],
+    "permissions": [
+      "Hazard_Investigation",
+      "Safety_Oversight",
+      "Training_Management"
+    ],
+    "assignedUsersCount": 0,
+    "isActive": true,
+    "createdDate": "2025-04-15T19:25:14.1100572Z"
+  }
+]

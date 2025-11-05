@@ -1,0 +1,439 @@
+@page
+@model PDXSMS_Presentation.Pages.SafetyRiskManagement.ConfidentialReportingModel
+@{
+    ViewData["Title"] = "Submit Confidential Report - PDXSMS";
+    
+    // Use guest layout if user is a guest, otherwise use normal layout
+    var isGuest = HttpContext.Session.GetString("IsGuest") == "true";
+    Layout = isGuest ? "_GuestLayout" : "_Layout";
+}
+
+@if (isGuest)
+{
+    <!-- Prevent navigation history for guest users -->
+    <script>
+        // Prevent back button navigation for guests
+        (function() {
+            // Replace current history entry to prevent back navigation
+            if (window.history && window.history.pushState) {
+                window.history.replaceState(null, null, window.location.href);
+                
+                // Push a new state to block back navigation
+                window.history.pushState(null, null, window.location.href);
+                
+                // Handle popstate (back/forward button)
+                window.addEventListener('popstate', function(event) {
+                    // For guests, always redirect to login instead of allowing navigation
+                    window.location.href = '/Account/Login';
+                });
+            }
+            
+            // Disable keyboard shortcuts that could be used for navigation
+            document.addEventListener('keydown', function(e) {
+                // Disable Alt+Left (back), Alt+Right (forward)
+                if (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                
+                // Disable Backspace key (can trigger back navigation)
+                if (e.key === 'Backspace' && 
+                    !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) && 
+                    !document.activeElement.isContentEditable) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            });
+            
+            // Clear any existing navigation history on page load
+            setTimeout(() => {
+                window.history.replaceState(null, null, '/SafetyRiskManagement/ConfidentialReporting');
+            }, 100);
+        })();
+    </script>
+}
+
+<div class="container-fluid">
+    @if (!isGuest)
+    {
+        <!-- Header for authenticated users -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="#">Safety Risk Management</a></li>
+                        <li class="breadcrumb-item active">Submit Confidential Report</li>
+                    </ol>
+                </nav>
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-user-secret"></i> Submit Confidential Report</h5>
+                        <p class="card-text">Enhanced protection for sensitive safety reports with reporter anonymity</p>
+                        <div class="alert alert-light" role="alert">
+                            <i class="fas fa-shield-alt text-primary"></i> 
+                            <strong>Your identity is protected:</strong> This report will be processed anonymously with enhanced security measures.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Header for guest users -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-user-secret"></i> Anonymous Confidential Report</h5>
+                        @* <p class="card-text">Submit safety concerns completely anonymously</p> *@
+                        @* <div class="alert alert-warning" role="alert">
+                            <i class="fas fa-shield-alt"></i> 
+                            <strong>Complete Anonymity:</strong> This session is anonymous and will automatically end after submission to protect your identity.
+                        </div>
+                        <div class="alert alert-info" role="alert">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Navigation Restricted:</strong> For security, you cannot navigate away from this page. Your session will end if you try to access other areas.
+                        </div> *@
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            @if (TempData["TrackingId"] != null)
+            {
+                <br><strong>Save this tracking ID:</strong> @TempData["TrackingId"]
+                <br><small>Use this ID to check the status of your report anonymously.</small>
+            }
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    } *@
+
+    <!-- Confidential Report Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card border-warning">
+                @* <div class="card-header bg-warning text-dark">
+                    <h4><i class="fas fa-lock"></i> Confidential Safety Report</h4>
+                    <p class="mb-0">All information submitted through this form is protected and handled with strict confidentiality</p>
+                </div> *@
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        <!-- Security Notice -->
+                        @* <div class="alert alert-info" role="alert">
+                            <h6><i class="fas fa-info-circle"></i> Confidentiality Assurance</h6>
+                            <ul class="mb-0">
+                                <li>Your identity will not be recorded or disclosed</li>
+                                <li>Reports are processed by designated SMS personnel only</li>
+                                <li>Information is protected from retaliation</li>
+                                <li>Anonymous tracking allows you to follow up securely</li>
+                                @if (isGuest)
+                                {
+                                    <li><strong>Guest Session:</strong> No login information is stored or tracked</li>
+                                    <li><strong>Navigation Protection:</strong> Session will end if you navigate away from this page</li>
+                                }
+                            </ul>
+                        </div> *@
+
+                        <!-- Report Type -->
+                        <div class="mb-3">
+                            <label for="reportType" class="form-label">Report Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="reportType" asp-for="ConfidentialReport.ReportType" required>
+                                <option value="">Select report type...</option>
+                                <option value="Safety Concern">General Safety Concern</option>
+                                <option value="Retaliation">Retaliation or Intimidation</option>
+                                <option value="Personnel Issue">Personnel Safety Issue</option>
+                                <option value="Compliance Violation">Regulatory Compliance Violation</option>
+                                <option value="Management Issue">Management Safety Issue</option>
+                                <option value="System Failure">Safety System Failure</option>
+                                <option value="Cover-up">Attempted Cover-up</option>
+                                <option value="Other">Other Sensitive Matter</option>
+                            </select>
+                        </div>
+
+                        <!-- Special Circumstances -->
+                        <div class="mb-3">
+                            <label class="form-label">Special Circumstances (Check all that apply)</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="isRetaliation" asp-for="ConfidentialReport.IsRetaliation">
+                                <label class="form-check-label" for="isRetaliation">
+                                    <strong>Retaliation Concern:</strong> Fear of retaliation for reporting this issue
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="isPersonnelIssue" asp-for="ConfidentialReport.IsPersonnelIssue">
+                                <label class="form-check-label" for="isPersonnelIssue">
+                                    <strong>Personnel Issue:</strong> Involves specific individuals or management
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="isComplianceViolation" asp-for="ConfidentialReport.IsComplianceViolation">
+                                <label class="form-check-label" for="isComplianceViolation">
+                                    <strong>Compliance Violation:</strong> Potential regulatory or policy violation
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Location -->
+                        <div class="mb-3">
+                            <label for="location" class="form-label">Location <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="location" asp-for="ConfidentialReport.Location" 
+                                   placeholder="General area or facility (avoid specific identifying details)" required>
+                            <div class="form-text">Provide general location information. Avoid details that might identify you.</div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Detailed Description <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="description" asp-for="ConfidentialReport.Description" rows="6" 
+                                      placeholder="Describe the safety concern, incident, or issue in detail. Include what happened, when it occurred, and why it's a safety concern. Avoid information that could identify you personally." required></textarea>
+                            <div class="form-text">Be thorough but avoid personal identifying information</div>
+                        </div>
+
+                        <!-- Priority -->
+                        <div class="mb-3">
+                            <label for="priority" class="form-label">Urgency Level</label>
+                            <select class="form-select" id="priority" asp-for="ConfidentialReport.Priority">
+                                <option value="Low">Low - General concern</option>
+                                <option value="Medium" selected>Medium - Moderate safety impact</option>
+                                <option value="High">High - Significant safety risk</option>
+                                <option value="Critical">Critical - Imminent danger</option>
+                            </select>
+                        </div>
+
+                        <!-- Additional Protection -->
+                        <div class="mb-3">
+                            <label for="additionalProtection" class="form-label">Additional Protection Needed</label>
+                            <textarea class="form-control" id="additionalProtection" asp-for="ConfidentialReport.AdditionalProtection" rows="3" 
+                                      placeholder="Describe any specific protection concerns or special handling requirements..."></textarea>
+                            <div class="form-text">Optional: Any special considerations for handling this report</div>
+                        </div>
+
+                        <!-- File Attachments -->
+                        <div class="mb-3">
+                            <label for="attachments" class="form-label">Supporting Documents (Optional)</label>
+                            <input type="file" class="form-control" id="attachments" asp-for="ConfidentialReport.Attachments" multiple 
+                                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                            <div class="form-text">
+                                <strong>Warning:</strong> Ensure attachments do not contain identifying information about you
+                                <br>Supported formats: JPG, PNG, PDF, DOC, DOCX (Max 10MB per file)
+                            </div>
+                        </div>
+
+                        <!-- Legal Notice -->
+                        <div class="alert alert-warning" role="alert">
+                            <h6><i class="fas fa-gavel"></i> Legal Protection Notice</h6>
+                            <p class="mb-2">
+                                Your confidential report is protected under:
+                            </p>
+                            <ul class="mb-0">
+                                <li>Federal Aviation Regulations (14 CFR Part 139)</li>
+                                <li>Whistleblower Protection provisions</li>
+                                <li>PDX Safety Management System policies</li>
+                                <li>Employee protection against retaliation</li>
+                            </ul>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-paper-plane"></i> Submit Confidential Report
+                                @if (isGuest)
+                                {
+                                    <small class="d-block">Session will end automatically after submission</small>
+                                }
+                            </button>
+                            <div class="text-center">
+                                <small class="text-muted">
+                                    By submitting this report, you confirm that the information provided is accurate to the best of your knowledge.
+                                </small>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help and Information Panel -->
+        <div class="col-lg-4">
+            <!-- Confidentiality Information -->
+            <div class="card border-primary mb-3">
+                <div class="card-header bg-primary text-white">
+                    <h5><i class="fas fa-shield-alt"></i> How We Protect You</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Technical Protection:</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> Encrypted transmission</li>
+                        <li><i class="fas fa-check text-success"></i> Anonymous processing</li>
+                        <li><i class="fas fa-check text-success"></i> Secure storage</li>
+                        <li><i class="fas fa-check text-success"></i> Limited access</li>
+                        @if (isGuest)
+                        {
+                            <li><i class="fas fa-check text-success"></i> No login tracking</li>
+                            <li><i class="fas fa-check text-success"></i> Auto-session cleanup</li>
+                            <li><i class="fas fa-check text-success"></i> Navigation protection</li>
+                        }
+                    </ul>
+
+                    <h6 class="mt-3">Legal Protection:</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> Anti-retaliation policies</li>
+                        <li><i class="fas fa-check text-success"></i> Whistleblower protection</li>
+                        <li><i class="fas fa-check text-success"></i> Regulatory compliance</li>
+                    </ul>
+                </div>
+            </div>
+
+            @if (isGuest)
+            {
+                <!-- Guest Session Information -->
+                <div class="card border-warning mb-3">
+                    <div class="card-header bg-warning text-dark">
+                        <h5><i class="fas fa-user-secret"></i> Anonymous Session</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="small">Your anonymous session provides:</p>
+                        <ul class="list-unstyled small">
+                            <li><i class="fas fa-check text-success"></i> No login required</li>
+                            <li><i class="fas fa-check text-success"></i> No identity tracking</li>
+                            <li><i class="fas fa-check text-success"></i> Automatic logout</li>
+                            <li><i class="fas fa-check text-success"></i> Session time limit</li>
+                            <li><i class="fas fa-check text-success"></i> Secure cleanup</li>
+                            <li><i class="fas fa-shield text-warning"></i> Navigation restricted</li>
+                        </ul>
+                        <div class="alert alert-danger alert-sm mt-2">
+                            <small>
+                                <i class="fas fa-exclamation-triangle"></i> 
+                                <strong>Security Notice:</strong> Attempting to navigate away from this page will end your session and redirect you to the login page.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- When to Use Confidential Reporting -->
+            <div class="card border-warning mb-3">
+                <div class="card-header bg-warning text-dark">
+                    <h5><i class="fas fa-question-circle"></i> When to Use This</h5>
+                </div>
+                <div class="card-body">
+                    <p class="small">Use confidential reporting when:</p>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-exclamation-triangle text-warning"></i> Fear of retaliation</li>
+                        <li><i class="fas fa-exclamation-triangle text-warning"></i> Management involvement</li>
+                        <li><i class="fas fa-exclamation-triangle text-warning"></i> Personnel conflicts</li>
+                        <li><i class="fas fa-exclamation-triangle text-warning"></i> Regulatory violations</li>
+                        <li><i class="fas fa-exclamation-triangle text-warning"></i> Attempted cover-ups</li>
+                        <li><i class="fas fa-exclamation-triangle text-warning"></i> Sensitive information</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="card border-secondary">
+                <div class="card-header bg-secondary text-white">
+                    <h5><i class="fas fa-phone"></i> Need Help?</h5>
+                </div>
+                <div class="card-body">
+                    <p class="small">For immediate assistance:</p>
+                    <p class="small">
+                        <strong>SMS Confidential Hotline:</strong><br>
+                        <i class="fas fa-phone"></i> (503) 555-0199<br>
+                        <i class="fas fa-envelope"></i> confidential@flypdx.com<br>
+                        <i class="fas fa-clock"></i> 24/7 Available
+                    </p>
+                    <div class="alert alert-light alert-sm">
+                        <small>
+                            <i class="fas fa-info-circle"></i> 
+                            Hotline calls are not recorded and handled by independent SMS personnel.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        const isGuest = @Json.Serialize(isGuest);
+        
+        // Auto-save form data to prevent loss (only for non-guests for security)
+        if (!isGuest) {
+            const formInputs = document.querySelectorAll('input, textarea, select');
+            
+            formInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    localStorage.setItem('confidentialReport_' + this.name, this.value);
+                });
+                
+                // Restore saved data
+                const savedValue = localStorage.getItem('confidentialReport_' + input.name);
+                if (savedValue && !input.value) {
+                    input.value = savedValue;
+                }
+            });
+            
+            // Clear saved data on successful submission
+            document.querySelector('form').addEventListener('submit', function() {
+                formInputs.forEach(input => {
+                    localStorage.removeItem('confidentialReport_' + input.name);
+                });
+            });
+        }
+        
+        // Warn before leaving with unsaved changes (only for non-guests)
+        if (!isGuest) {
+            let formChanged = false;
+            const formInputs = document.querySelectorAll('input, textarea, select');
+            formInputs.forEach(input => {
+                input.addEventListener('change', () => formChanged = true);
+            });
+            
+            window.addEventListener('beforeunload', function(e) {
+                if (formChanged) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+        }
+        
+        // Guest-specific security functionality
+        if (isGuest) {
+            // Disable right-click and certain keyboard shortcuts for additional security
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+            });
+            
+            document.addEventListener('keydown', function(e) {
+                // Disable F12, Ctrl+Shift+I, Ctrl+U, etc.
+                if (e.key === 'F12' || 
+                    (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+                    (e.ctrlKey && e.key === 'u')) {
+                    e.preventDefault();
+                }
+            });
+
+            // Monitor for attempts to navigate away and redirect to login
+            let navigationAttempted = false;
+            
+            window.addEventListener('beforeunload', function(e) {
+                if (!navigationAttempted) {
+                    navigationAttempted = true;
+                    // Clear guest session via fetch call
+                    fetch('/Account/Login?handler=ClearGuestSession', { method: 'POST' });
+                }
+            });
+        }
+    </script>
+}
+

@@ -1,0 +1,1137 @@
+@page
+@model PDXSMS_Presentation.Pages.SafetyRiskManagement.HazardProcessingModel
+@{
+    ViewData["Title"] = "SMS Hazard Processing Workflow";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/SafetyRiskManagement">Safety Risk Management</a></li>
+                    <li class="breadcrumb-item active">Hazard Processing Workflow</li>
+                </ol>
+            </nav>
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="card-title"><i class="fas fa-cogs"></i> SMS Hazard Processing Workflow</h4>
+                            @* <p class="card-text">Complete SMS methodology for hazard validation, risk assessment, and mitigation tracking</p> *@
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <h3 class="mb-0">@Model.Dashboard.TotalActive</h3>
+                                    <small>Active Hazards</small>
+                                </div>
+                                <div class="col-6">
+                                    <h3 class="mb-0">@Model.Dashboard.AverageProcessingTime</h3>
+                                    <small>Avg Days</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Process Flow Dashboard -->
+    <div class="row mb-4">
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-2">
+            <div class="card border-primary text-center">
+                <div class="card-body p-2">
+                    <h4 class="text-primary mb-1">@Model.Dashboard.PendingValidation</h4>
+                    <p class="mb-0 small">Pending Validation</p>
+                    <small class="text-muted">SMS Risk Determination</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-2">
+            <div class="card border-info text-center">
+                <div class="card-body p-2">
+                    <h4 class="text-info mb-1">@Model.Dashboard.PendingRiskAssessment</h4>
+                    <p class="mb-0 small">Risk Assessment</p>
+                    <small class="text-muted">Preliminary Assessment</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-2">
+            <div class="card border-purple text-center" style="border-color: #6f42c1 !important;">
+                <div class="card-body p-2">
+                    <h4 class="mb-1" style="color: #6f42c1;">@Model.Dashboard.PendingInvestigation</h4>
+                    <p class="mb-0 small">Investigation</p>
+                    <small class="text-muted">Information Needed</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-2">
+            <div class="card border-warning text-center">
+                <div class="card-body p-2">
+                    <h4 class="text-warning mb-1">@Model.Dashboard.PendingTRA</h4>
+                    <p class="mb-0 small">Pending TRA</p>
+                    <small class="text-muted">Technical Risk Assessment</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-2">
+            <div class="card border-danger text-center">
+                <div class="card-body p-2">
+                    <h4 class="text-danger mb-1">@Model.Dashboard.PendingLeadershipApproval</h4>
+                    <p class="mb-0 small">Leadership</p>
+                    <small class="text-muted">SMS Leadership Approval</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-2">
+            <div class="card border-success text-center">
+                <div class="card-body p-2">
+                    <h4 class="text-success mb-1">@Model.Dashboard.InMitigation</h4>
+                    <p class="mb-0 small">Mitigation</p>
+                    <small class="text-muted">Implementation</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-2">
+            <div class="card border-secondary text-center">
+                <div class="card-body p-2">
+                    <h4 class="text-secondary mb-1">@Model.Dashboard.ClosedThisMonth</h4>
+                    <p class="mb-0 small">Closed</p>
+                    <small class="text-muted">This Month</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Process Flow Visualization -->
+    @* <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-sitemap"></i> SMS Hazard Processing Flow</h5>
+                </div>
+                <div class="card-body">
+                    <div class="process-flow">
+                        <div class="flow-step">
+                            <div class="step-box bg-primary text-white">
+                                <i class="fas fa-file-alt"></i><br>
+                                <strong>Report</strong><br>
+                                <small>Hazard/Change</small>
+                            </div>
+                        </div>
+                        <div class="flow-arrow">?</div>
+                        <div class="flow-step">
+                            <div class="step-box bg-info text-white">
+                                <i class="fas fa-check-circle"></i><br>
+                                <strong>SMS Validate</strong><br>
+                                <small>Risk Determination</small>
+                            </div>
+                        </div>
+                        <div class="flow-split">
+                            <div class="flow-path">
+                                <div class="flow-arrow">? No</div>
+                                <div class="step-box bg-secondary text-white">
+                                    <i class="fas fa-times-circle"></i><br>
+                                    <strong>Close</strong><br>
+                                    <small>No SMS Risk</small>
+                                </div>
+                            </div>
+                            <div class="flow-path">
+                                <div class="flow-arrow">? Yes</div>
+                                <div class="step-box bg-warning text-dark">
+                                    <i class="fas fa-search"></i><br>
+                                    <strong>Assess</strong><br>
+                                    <small>Risk Score</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flow-split">
+                            <div class="flow-path">
+                                <div class="flow-arrow">? Low/Med</div>
+                                <div class="step-box bg-success text-white">
+                                    <i class="fas fa-eye"></i><br>
+                                    <strong>Track</strong><br>
+                                    <small>Monitor</small>
+                                </div>
+                            </div>
+                            <div class="flow-path">
+                                <div class="flow-arrow">? High/Critical</div>
+                                <div class="step-box bg-danger text-white">
+                                    <i class="fas fa-microscope"></i><br>
+                                    <strong>TRA</strong><br>
+                                    <small>Technical Risk</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="flow-arrow">?</div>
+                            <div class="step-box bg-dark text-white">
+                                <i class="fas fa-user-tie"></i><br>
+                                <strong>Leadership</strong><br>
+                                <small>SMS Approval</small>
+                            </div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="flow-arrow">?</div>
+                            <div class="step-box bg-primary text-white">
+                                <i class="fas fa-tools"></i><br>
+                                <strong>Mitigate</strong><br>
+                                <small>Implement</small>
+                            </div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="flow-arrow">?</div>
+                            <div class="step-box bg-success text-white">
+                                <i class="fas fa-chart-line"></i><br>
+                                <strong>Assurance</strong><br>
+                                <small>Reassess</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> *@
+
+    <!-- Workflow Stages -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#validation" data-bs-toggle="tab">
+                                <i class="fas fa-check-circle"></i> Validation (@Model.PendingValidation.Count)
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#riskassessment" data-bs-toggle="tab">
+                                <i class="fas fa-search"></i> Risk Assessment (@Model.PendingRiskAssessment.Count)
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#investigation" data-bs-toggle="tab">
+                                <i class="fas fa-search-plus"></i> Investigation (@Model.PendingInvestigation.Count)
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#tra" data-bs-toggle="tab">
+                                <i class="fas fa-microscope"></i> TRA (@Model.PendingTRA.Count)
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#leadership" data-bs-toggle="tab">
+                                <i class="fas fa-user-tie"></i> Leadership (@Model.PendingLeadershipApproval.Count)
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#mitigation" data-bs-toggle="tab">
+                                <i class="fas fa-tools"></i> Mitigation (@Model.InMitigation.Count)
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#closed" data-bs-toggle="tab">
+                                <i class="fas fa-archive"></i> Closed (@Model.ClosedReferred.Count)
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <!-- Validation Tab -->
+                        <div class="tab-pane fade show active" id="validation" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5>SMS Risk Validation</h5>
+                                @* <div class="alert alert-info small mb-0">
+                                    <i class="fas fa-info-circle"></i> Determine if reported hazards constitute SMS risks requiring formal processing
+                                </div> *@
+                            </div>
+                            
+                            @if (Model.PendingValidation.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Hazard ID</th>
+                                                <th>Type</th>
+                                                <th>Location</th>
+                                                <th>Priority</th>
+                                                <th>Reported</th>
+                                                <th>Days in Stage</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var hazard in Model.PendingValidation)
+                                            {
+                                                <tr>
+                                                    <td><strong>@hazard.Id</strong></td>
+                                                    <td>@hazard.Type</td>
+                                                    <td>@hazard.Location</td>
+                                                    <td>
+                                                        <span class="badge @(hazard.Priority == "High" ? "bg-danger" : hazard.Priority == "Medium" ? "bg-warning" : "bg-info")">
+                                                            @hazard.Priority
+                                                        </span>
+                                                    </td>
+                                                    <td>@hazard.ReportedDate.ToString("MM/dd/yyyy")</td>
+                                                    <td>
+                                                        <span class="badge @(hazard.DaysInStage > 2 ? "bg-warning" : "bg-secondary")">
+                                                            @hazard.DaysInStage days
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="/SafetyRiskManagement/HazardReview?hazardId=@hazard.Id" class="btn btn-outline-primary">
+                                                <i class="fas fa-eye"></i> Review
+                                            </a>
+                                            <a href="/SafetyRiskManagement/SMSRiskValidation/@hazard.HazardId" class="btn btn-outline-success">
+                                                <i class="fas fa-check-circle"></i> Validate SMS Risk
+                                            </a>
+                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-check-circle fa-3x"></i>
+                                    <p class="mt-3">No hazards pending validation</p>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Risk Assessment Tab -->
+                        <div class="tab-pane fade" id="riskassessment" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5>Preliminary Risk Assessment</h5>
+                                <div class="alert alert-warning small mb-0">
+                                    <i class="fas fa-exclamation-triangle"></i> High/Critical risks automatically trigger Technical Risk Assessment (TRA)
+                                </div>
+                            </div>
+                            
+                            @if (Model.PendingRiskAssessment.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Hazard ID</th>
+                                                <th>Type</th>
+                                                <th>Location</th>
+                                                <th>Priority</th>
+                                                <th>Assigned To</th>
+                                                <th>Days in Stage</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var hazard in Model.PendingRiskAssessment)
+                                            {
+                                                <tr>
+                                                    <td><strong>@hazard.Id</strong></td>
+                                                    <td>@hazard.Type</td>
+                                                    <td>@hazard.Location</td>
+                                                    <td>
+                                                        <span class="badge @(hazard.Priority == "High" ? "bg-danger" : hazard.Priority == "Medium" ? "bg-warning" : "bg-info")">
+                                                            @hazard.Priority
+                                                        </span>
+                                                    </td>
+                                                    <td>@hazard.AssignedTo</td>
+                                                    <td>
+                                                        <span class="badge @(hazard.DaysInStage > 3 ? "bg-danger" : hazard.DaysInStage > 1 ? "bg-warning" : "bg-secondary")">
+                                                            @hazard.DaysInStage days
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            @{
+                                                                var navigationUrl = hazard.GetAssessmentNavigationUrl();
+                                                                var buttonText = hazard.AssessmentMethod?.ToLowerInvariant() switch
+                                                                {
+                                                                    "simplified" => "Start Simplified Assessment",
+                                                                    "sms5step" => "Start Technical Assessment", 
+                                                                    "technical" => "Start Technical Assessment",
+                                                                    "initial" => "Start Technical Assessment",
+                                                                    "documentation" => "View Documentation",
+                                                                    _ => "Start Technical Assessment" // ?? DEFAULT to Technical Assessment
+                                                                };
+                                                                var iconClass = hazard.AssessmentMethod?.ToLowerInvariant() switch
+                                                                {
+                                                                    "simplified" => "tachometer-alt",
+                                                                    "sms5step" => "calculator",
+                                                                    "technical" => "calculator", 
+                                                                    "initial" => "calculator",
+                                                                    "documentation" => "file-alt",
+                                                                    _ => "calculator" // ?? DEFAULT to calculator icon
+                                                                };
+                                                            }
+                                                            
+                                                            @* ?? DEBUG: Add hidden span to show method for debugging *@
+                                                            <span class="d-none">Method: @hazard.AssessmentMethod | URL: @navigationUrl</span>
+                                                            
+                                                            <a href="@navigationUrl" class="btn btn-outline-primary">
+                                                                <i class="fas fa-@iconClass"></i> @buttonText
+                                                            </a>
+                                                            <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#riskAssessmentModal" 
+                                                                    data-hazard-id="@hazard.HazardId">
+                                                                <i class="fas fa-chart-line"></i> Quick Score
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-chart-line fa-3x"></i>
+                                    <p class="mt-3">No hazards pending risk assessment</p>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Investigation Tab -->
+                        <div class="tab-pane fade" id="investigation" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5>Investigation Required</h5>
+                                <div class="alert alert-info small mb-0">
+                                    <i class="fas fa-search-plus"></i> Additional information needed before SMS risk assessment can proceed
+                                </div>
+                            </div>
+                            
+                            @if (Model.PendingInvestigation.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Report ID</th>
+                                                <th>Hazard ID</th>
+                                                <th>Type</th>
+                                                <th>Location</th>
+                                                <th>Priority</th>
+                                                <th>Reported Date</th>
+                                                <th>Days Pending</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var hazard in Model.PendingInvestigation)
+                                            {
+                                                <tr>
+                                                    <td><strong>@hazard.Id</strong></td>
+                                                    <td><strong>@hazard.HazardId</strong></td>
+                                                    <td>@hazard.Type</td>
+                                                    <td>@hazard.Location</td>
+                                                    <td>
+                                                        <span class="badge @(hazard.Priority == "High" ? "bg-danger" : hazard.Priority == "Medium" ? "bg-warning" : "bg-info")">
+                                                            @hazard.Priority
+                                                        </span>
+                                                    </td>
+                                                    <td>@hazard.ReportedDate.ToString("MM/dd/yyyy")</td>
+                                                    <td>
+                                                        <span class="badge @(hazard.DaysInStage > 5 ? "bg-danger" : hazard.DaysInStage > 2 ? "bg-warning" : "bg-secondary")">
+                                                            @hazard.DaysInStage days
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <a href="/SafetyRiskManagement/HazardInvestigation?hazardId=@hazard.HazardId&reportId=@hazard.Id" class="btn btn-primary">
+                                                                <i class="fas fa-search-plus"></i> Investigate
+                                                            </a>
+                                                            <a href="/SafetyRiskManagement/HazardReview?hazardId=@hazard.HazardId" class="btn btn-outline-secondary">
+                                                                <i class="fas fa-eye"></i> Review
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-search-plus fa-3x"></i>
+                                    <p class="mt-3">No hazards requiring investigation</p>
+                                    <small class="text-muted">Reports needing more information will appear here</small>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- TRA Tab -->
+                        <div class="tab-pane fade" id="tra" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5>Technical Risk Assessment (TRA)</h5>
+                                <div class="alert alert-danger small mb-0">
+                                    <i class="fas fa-microscope"></i> Formal TRA required for High/Critical risk hazards
+                                </div>
+                            </div>
+                            
+                            @if (Model.PendingTRA.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Hazard ID</th>
+                                                <th>Type</th>
+                                                <th>Risk Score</th>
+                                                <th>Assigned To</th>
+                                                <th>Days in Stage</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var hazard in Model.PendingTRA)
+                                            {
+                                                <tr>
+                                                    <td><strong>@hazard.Id</strong></td>
+                                                    <td>@hazard.Type</td>
+                                                    <td>
+                                                        <span class="badge bg-danger">@hazard.RiskScore</span>
+                                                    </td>
+                                                    <td>@hazard.AssignedTo</td>
+                                                    <td>
+                                                        <span class="badge @(hazard.DaysInStage > 5 ? "bg-danger" : hazard.DaysInStage > 3 ? "bg-warning" : "bg-secondary")">
+                                                            @hazard.DaysInStage days
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <button type="button" class="btn btn-outline-primary">
+                                                                <i class="fas fa-microscope"></i> Conduct TRA
+                                                            </button>
+                                                            <button type="button" class="btn btn-outline-info">
+                                                                <i class="fas fa-file-alt"></i> TRA Report
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-microscope fa-3x"></i>
+                                    <p class="mt-3">No hazards requiring TRA</p>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Leadership Approval Tab -->
+                        <div class="tab-pane fade" id="leadership" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5>SMS Leadership Approval</h5>
+                                <div class="alert alert-info small mb-0">
+                                    <i class="fas fa-user-tie"></i> SMS Leadership approval required before mitigation implementation
+                                </div>
+                            </div>
+                            
+                            @if (Model.PendingLeadershipApproval.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Hazard ID</th>
+                                                <th>Type</th>
+                                                <th>Risk Score</th>
+                                                <th>TRA Status</th>
+                                                <th>Days Pending</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var hazard in Model.PendingLeadershipApproval)
+                                            {
+                                                <tr>
+                                                    <td><strong>@hazard.Id</strong></td>
+                                                    <td>@hazard.Type</td>
+                                                    <td>
+                                                        <span class="badge @(hazard.RiskScore == "Critical" ? "bg-danger" : "bg-warning")">@hazard.RiskScore</span>
+                                                    </td>
+                                                    <td>
+                                                        @if (hazard.TRACompleted)
+                                                        {
+                                                            <span class="badge bg-success"><i class="fas fa-check"></i> Completed</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-warning"><i class="fas fa-clock"></i> Pending</span>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge @(hazard.DaysInStage > 3 ? "bg-danger" : "bg-secondary")">
+                                                            @hazard.DaysInStage days
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#leadershipModal" 
+                                                                    data-hazard-id="@hazard.Id" data-action="approve">
+                                                                <i class="fas fa-check"></i> Approve
+                                                            </button>
+                                                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#leadershipModal" 
+                                                                    data-hazard-id="@hazard.Id" data-action="reject">
+                                                                <i class="fas fa-times"></i> Reject
+                                                            </button>
+                                                            <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#leadershipModal" 
+                                                                    data-hazard-id="@hazard.Id" data-action="override">
+                                                                <i class="fas fa-arrow-up"></i> Override
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-user-tie fa-3x"></i>
+                                    <p class="mt-3">No hazards pending leadership approval</p>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Mitigation Tab -->
+                        <div class="tab-pane fade" id="mitigation" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5>Mitigation Implementation & Tracking</h5>
+                                <div class="alert alert-success small mb-0">
+                                    <i class="fas fa-tools"></i> Track mitigation implementation and effectiveness monitoring with MS-xxxx summaries
+                                </div>
+                            </div>
+                            
+                            @if (Model.InMitigation.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Report ID</th>
+                                                <th>Hazard ID</th>
+                                                <th>Type</th>
+                                                <th>Risk Level</th>
+                                                <th>Mitigation Summary</th>
+                                                <th>Status & Progress</th>
+                                                <th>Responsible Party</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var hazard in Model.InMitigation)
+                                            {
+                                                <tr>
+                                                    <td><strong>@hazard.Id</strong></td>
+                                                    <td><strong>@hazard.HazardId</strong></td>
+                                                    <td>@hazard.Type</td>
+                                                    <td>
+                                                        @if (hazard.RiskScore != null)
+                                                        {
+                                                            <span class="badge @(hazard.RiskScore == "Critical" ? "bg-danger" : hazard.RiskScore == "High" ? "bg-warning" : hazard.RiskScore == "Medium" ? "bg-info" : "bg-success")">
+                                                                @hazard.RiskScore
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-secondary">TBD</span>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @if (!string.IsNullOrEmpty(hazard.MitigationSummaryId))
+                                                        {
+                                                            <div>
+                                                                <strong class="text-primary">@hazard.MitigationSummaryId</strong>
+                                                                @if (!string.IsNullOrEmpty(hazard.MitigationType))
+                                                                {
+                                                                    <br><span class="badge bg-outline-secondary">@hazard.MitigationType</span>
+                                                                }
+                                                            </div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">
+                                                                <i class="fas fa-clock"></i> Pending Creation
+                                                            </span>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @if (hazard.Status == "Tracking")
+                                                        {
+                                                            <div>
+                                                                <span class="badge bg-success">
+                                                                    <i class="fas fa-check-circle"></i> Assessment Complete
+                                                                </span>
+                                                                <br>
+                                                                <small class="text-muted">@hazard.ProcessStage</small>
+                                                                @if (!string.IsNullOrEmpty(hazard.MitigationStatus))
+                                                                {
+                                                                    <br><span class="badge bg-info">@hazard.MitigationStatus</span>
+                                                                }
+                                                            </div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-primary">@hazard.ProcessStage</span>
+                                                            @if (hazard.MitigationProgress.HasValue)
+                                                            {
+                                                                <div class="progress mt-1" style="width: 100px;">
+                                                                    <div class="progress-bar @(hazard.MitigationProgress >= 80 ? "bg-success" : hazard.MitigationProgress >= 50 ? "bg-warning" : "bg-danger")" 
+                                                                         style="width: @hazard.MitigationProgress%">
+                                                                        @hazard.MitigationProgress%
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        }
+                                                        <br>
+                                                        @if (hazard.NextReviewDate.HasValue)
+                                                        {
+                                                            var daysUntilReview = (hazard.NextReviewDate.Value - DateTime.UtcNow).Days;
+                                                            <small class="text-muted">
+                                                                Next Review: 
+                                                                <span class="badge @(daysUntilReview < 0 ? "bg-danger" : daysUntilReview <= 3 ? "bg-warning" : "bg-secondary")">
+                                                                    @hazard.NextReviewDate.Value.ToString("MM/dd")
+                                                                </span>
+                                                            </small>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @hazard.ResponsibleParty
+                                                        <br>
+                                                        <small class="text-muted">
+                                                            @hazard.DaysInStage days in stage
+                                                        </small>
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            @if (!string.IsNullOrEmpty(hazard.MitigationSummaryId))
+                                                            {
+                                                                <a href="/SafetyRiskManagement/MitigationTracking?mitigationId=@hazard.MitigationSummaryId" class="btn btn-outline-success">
+                                                                    <i class="fas fa-chart-line"></i> Track
+                                                                </a>
+                                                                <button type="button" class="btn btn-outline-info" title="View Mitigation Summary @hazard.MitigationSummaryId">
+                                                                    <i class="fas fa-eye"></i> View
+                                                                </button>
+                                                            }
+                                                            else
+                                                            {
+                                                                <a href="/SafetyRiskManagement/MitigationTracking?hazardId=@hazard.HazardId" class="btn btn-outline-primary">
+                                                                    <i class="fas fa-plus"></i> Create Summary
+                                                                </a>
+                                                            }
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- Mitigation Status Summary -->
+                                <div class="row mt-3">
+                                    <div class="col-md-12">
+                                        <div class="alert alert-info">
+                                            <h6><i class="fas fa-info-circle"></i> Mitigation Summary Status Legend</h6>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <small>
+                                                        <span class="badge bg-success me-2">Assessment Complete</span> Risk assessment finished, MS-xxxx created<br>
+                                                        <span class="badge bg-primary me-2">Mitigation Planning</span> Active mitigation planning in progress<br>
+                                                        <span class="badge bg-warning me-2">Implementation</span> Mitigation measures being deployed
+                                                    </small>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <small>
+                                                        <span class="badge bg-info me-2">Monitoring Active</span> Low risk - continuous monitoring with MS-xxxx<br>
+                                                        <span class="badge bg-secondary me-2">Pending Creation</span> Mitigation summary needs to be created<br>
+                                                        <span class="badge bg-danger me-2">Review Overdue</span> Scheduled review is past due
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-tools fa-3x"></i>
+                                    <p class="mt-3">No hazards in mitigation phase</p>
+                                    <small class="text-muted">Completed risk assessments will appear here with MS-xxxx mitigation summaries for tracking</small>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Closed Tab -->
+                        <div class="tab-pane fade" id="closed" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5>Closed & Referred Hazards</h5>
+                                <button type="button" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-download"></i> Export Closed Reports
+                                </button>
+                            </div>
+                            
+                            @if (Model.ClosedReferred.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Hazard ID</th>
+                                                <th>Type</th>
+                                                <th>Status</th>
+                                                <th>Closure Reason</th>
+                                                <th>Closed Date</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var hazard in Model.ClosedReferred)
+                                            {
+                                                <tr>
+                                                    <td><strong>@hazard.Id</strong></td>
+                                                    <td>@hazard.Type</td>
+                                                    <td>
+                                                        <span class="badge bg-secondary">@hazard.Status</span>
+                                                    </td>
+                                                    <td>@hazard.ClosureReason</td>
+                                                    <td>@hazard.ReportedDate.AddDays(hazard.DaysInStage).ToString("MM/dd/yyyy")</td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <button type="button" class="btn btn-outline-secondary">
+                                                                <i class="fas fa-eye"></i> View
+                                                            </button>
+                                                            <button type="button" class="btn btn-outline-info">
+                                                                <i class="fas fa-file-alt"></i> Report
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-archive fa-3x"></i>
+                                    <p class="mt-3">No recently closed hazards</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Validation Modal -->
+<div class="modal fade" id="validationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">SMS Risk Validation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="ValidateHazard">
+                <div class="modal-body">
+                    <input type="hidden" asp-for="ValidationAction.HazardId" id="validationHazardId" />
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Validation Decision</label>
+                        <select asp-for="ValidationAction.Decision" class="form-select" required>
+                            <option value="">Select decision...</option>
+                            <option value="SMSRisk">SMS Risk - Proceed with formal process</option>
+                            <option value="NoSMSRisk">No SMS Risk - Refer/Close</option>
+                            <option value="NeedsInvestigation">Needs Investigation - Gather more information</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Rationale</label>
+                        <textarea asp-for="ValidationAction.Rationale" class="form-control" rows="3" 
+                                  placeholder="Explain the reasoning for this validation decision..." required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Validated By</label>
+                        <input asp-for="ValidationAction.ValidatedBy" class="form-control" placeholder="Your name" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Validation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Risk Assessment Modal -->
+<div class="modal fade" id="riskAssessmentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Risk Assessment Scoring</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="ProcessRiskAssessment">
+                <div class="modal-body">
+                    <input type="hidden" asp-for="RiskAction.HazardId" id="riskHazardId" />
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Risk Score</label>
+                        <select asp-for="RiskAction.RiskScore" class="form-select" required>
+                            <option value="">Select risk score...</option>
+                            <option value="Low">Low Risk</option>
+                            <option value="Medium">Medium Risk</option>
+                            <option value="High">High Risk (Triggers TRA)</option>
+                            <option value="Critical">Critical Risk (Triggers TRA)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Note:</strong> High and Critical risk scores will automatically trigger Technical Risk Assessment (TRA)
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Assessment Method</label>
+                        <select asp-for="RiskAction.AssessmentMethod" class="form-select" required>
+                            <option value="">Select method...</option>
+                            <option value="5x5Matrix">5x5 Risk Matrix</option>
+                            <option value="FiveMMethodology">5M Methodology</option>
+                            <option value="QualitativeAssessment">Qualitative Assessment</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Assessment Notes</label>
+                        <textarea asp-for="RiskAction.Notes" class="form-control" rows="3" 
+                                  placeholder="Document key factors considered in risk assessment..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Assessed By</label>
+                        <input asp-for="RiskAction.AssessedBy" class="form-control" placeholder="Your name" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Submit Risk Assessment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Leadership Approval Modal -->
+<div class="modal fade" id="leadershipModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">SMS Leadership Decision</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="LeadershipApproval">
+                <div class="modal-body">
+                    <input type="hidden" asp-for="ApprovalAction.HazardId" id="approvalHazardId" />
+                    <input type="hidden" asp-for="ApprovalAction.Decision" id="approvalDecision" />
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Leadership Decision Required:</strong> Final approval needed before proceeding to mitigation implementation.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Decision Comments</label>
+                        <textarea asp-for="ApprovalAction.Comments" class="form-control" rows="4" 
+                                  placeholder="Provide rationale for leadership decision..." required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Approved By</label>
+                        <input asp-for="ApprovalAction.ApprovedBy" class="form-control" placeholder="SMS Leadership Name" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="submitApproval">Submit Decision</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script type="text/javascript">
+        /**
+         * Set hazard information for validation modal
+         */
+        function setValidationHazard(hazardId, reportId) {
+            console.log('Setting validation hazard:', hazardId, 'from report:', reportId);
+            document.getElementById('validationHazardId').value = hazardId || reportId;
+            
+            // Clear previous form data
+            document.querySelector('select[name="ValidationAction.Decision"]').value = '';
+            document.querySelector('textarea[name="ValidationAction.Rationale"]').value = '';
+            document.querySelector('input[name="ValidationAction.ValidatedBy"]').value = '@(User?.Identity?.Name ?? "")';
+        }
+
+        /**
+         * Set hazard information for risk assessment modal
+         */
+        function setRiskAssessmentHazard(hazardId) {
+            console.log('Setting risk assessment hazard:', hazardId);
+            document.getElementById('riskHazardId').value = hazardId;
+            
+            // Clear previous form data
+            document.querySelector('select[name="RiskAction.RiskScore"]').value = '';
+            document.querySelector('select[name="RiskAction.AssessmentMethod"]').value = '';
+            document.querySelector('textarea[name="RiskAction.Notes"]').value = '';
+            document.querySelector('input[name="RiskAction.AssessedBy"]').value = '@(User?.Identity?.Name ?? "")';
+        }
+
+        /**
+         * Set hazard information and decision for leadership approval modal
+         */
+        function setLeadershipApproval(hazardId, decision) {
+            console.log('Setting leadership approval:', hazardId, 'decision:', decision);
+            document.getElementById('approvalHazardId').value = hazardId;
+            document.getElementById('approvalDecision').value = decision;
+            
+            // Update modal title and button text based on decision
+            const modalTitle = document.querySelector('#leadershipModal .modal-title');
+            const submitButton = document.getElementById('submitApproval');
+            
+            switch (decision) {
+                case 'approve':
+                    modalTitle.textContent = 'SMS Leadership Approval';
+                    submitButton.textContent = 'Approve Hazard';
+                    submitButton.className = 'btn btn-success';
+                    break;
+                case 'reject':
+                    modalTitle.textContent = 'SMS Leadership Rejection';
+                    submitButton.textContent = 'Reject Hazard';
+                    submitButton.className = 'btn btn-danger';
+                    break;
+                case 'override':
+                    modalTitle.textContent = 'SMS Leadership Override';
+                    submitButton.textContent = 'Apply Override';
+                    submitButton.className = 'btn btn-warning';
+                    break;
+            }
+            
+            // Clear previous form data
+            document.querySelector('textarea[name="ApprovalAction.Comments"]').value = '';
+            document.querySelector('input[name="ApprovalAction.ApprovedBy"]').value = '@(User?.Identity?.Name ?? "")';
+        }
+
+        /**
+         * Initialize modal event handlers when the page loads
+         */
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle risk assessment modal trigger
+            document.querySelectorAll('[data-bs-target="#riskAssessmentModal"]').forEach(button => {
+                button.addEventListener('click', function() {
+                    const hazardId = this.getAttribute('data-hazard-id');
+                    if (hazardId) {
+                        setRiskAssessmentHazard(hazardId);
+                    }
+                });
+            });
+
+            // Handle leadership modal triggers
+            document.querySelectorAll('[data-bs-target="#leadershipModal"]').forEach(button => {
+                button.addEventListener('click', function() {
+                    const hazardId = this.getAttribute('data-hazard-id');
+                    const action = this.getAttribute('data-action');
+                    if (hazardId && action) {
+                        setLeadershipApproval(hazardId, action);
+                    }
+                });
+            });
+
+            // Handle form submissions with validation
+            document.querySelector('#validationModal form').addEventListener('submit', function(e) {
+                const decision = document.querySelector('select[name="ValidationAction.Decision"]').value;
+                const rationale = document.querySelector('textarea[name="ValidationAction.Rationale"]').value;
+                
+                if (!decision) {
+                    e.preventDefault();
+                    alert('Please select a validation decision.');
+                    return false;
+                }
+                
+                if (!rationale || rationale.trim().length < 10) {
+                    e.preventDefault();
+                    alert('Please provide a rationale (minimum 10 characters).');
+                    return false;
+                }
+                
+                console.log('Submitting validation decision:', decision, 'for hazard:', 
+                    document.getElementById('validationHazardId').value);
+            });
+
+            // Check URL hash for active tab (for redirects from Investigation page)
+            const hash = window.location.hash;
+            if (hash) {
+                const targetTab = document.querySelector(`a[href="${hash}"]`);
+                if (targetTab) {
+                    targetTab.click();
+                }
+            }
+        });
+        
+        /**
+         * Show alert message
+         */
+        function showAlert(type, message) {
+            // Remove any existing alerts
+            const existingAlerts = document.querySelectorAll('.alert-temp');
+            existingAlerts.forEach(alert => alert.remove());
+            
+            // Create new alert
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show alert-temp`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            // Insert at top of container
+            const container = document.querySelector('.container-fluid');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+    </script>
+}
+

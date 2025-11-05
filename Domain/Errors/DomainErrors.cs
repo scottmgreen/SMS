@@ -18,6 +18,271 @@ public static class DomainErrors
     }
 
     /// <summary>
+    /// Contains base user-related errors.
+    /// </summary>
+    public static class BaseUserError
+    {
+        public static Error NullOrEmpty => new Error("BaseUser.NullOrEmpty", "The user is required.");
+        public static Error UserNotFound => new Error("BaseUser.UserNotFound", "The user was not found.");
+        public static Error InvalidUserType => new Error("BaseUser.InvalidUserType", "The user type is invalid.");
+        public static Error CreateFailed => new Error("BaseUser.CreateFailed", "Failed to create the user.");
+        public static Error UpdateFailed => new Error("BaseUser.UpdateFailed", "Failed to update the user.");
+        public static Error DeleteFailed => new Error("BaseUser.DeleteFailed", "Failed to delete the user.");
+        public static Error UserAlreadyExists => new Error("BaseUser.UserAlreadyExists", "A user with this identifier already exists.");
+        public static Error InvalidOperation => new Error("BaseUser.InvalidOperation", "The operation is not valid for this user.");
+        public static Error InactiveUser => new Error("BaseUser.InactiveUser", "The user account is inactive.");
+        public static Error LockedUser => new Error("BaseUser.LockedUser", "The user account is locked.");
+    }
+
+    /// <summary>
+    /// Contains user name errors.
+    /// </summary>
+    public static class UserNameError
+    {
+        public static Error NullOrEmpty => new Error("UserName.NullOrEmpty", "The user name is required.");
+        public static Error TooShort => new Error("UserName.TooShort", "The user name must be at least 3 characters long.");
+        public static Error TooLong => new Error("UserName.TooLong", "The user name cannot exceed 50 characters.");
+        public static Error InvalidFormat => new Error("UserName.InvalidFormat", "The user name contains invalid characters. Only letters, numbers, dots, hyphens, underscores, and @ symbols are allowed.");
+        public static Error AlreadyExists => new Error("UserName.AlreadyExists", "A user with this username already exists.");
+        public static Error Reserved => new Error("UserName.Reserved", "This username is reserved and cannot be used.");
+    }
+
+    /// <summary>
+    /// Contains password errors.
+    /// </summary>
+    public static class PasswordError
+    {
+        public static Error NullOrEmpty => new Error("Password.NullOrEmpty", "The password is required.");
+        public static Error TooShort => new Error("Password.TooShort", "The password must be at least 8 characters long.");
+        public static Error TooLong => new Error("Password.TooLong", "The password cannot exceed 128 characters.");
+        public static Error MissingUpperCase => new Error("Password.MissingUpperCase", "The password must contain at least one uppercase letter.");
+        public static Error MissingLowerCase => new Error("Password.MissingLowerCase", "The password must contain at least one lowercase letter.");
+        public static Error MissingDigit => new Error("Password.MissingDigit", "The password must contain at least one digit.");
+        public static Error MissingSpecialChar => new Error("Password.MissingSpecialChar", "The password must contain at least one special character.");
+        public static Error InvalidHash => new Error("Password.InvalidHash", "The password hash is invalid.");
+        public static Error VerificationFailed => new Error("Password.VerificationFailed", "Password verification failed.");
+        public static Error Expired => new Error("Password.Expired", "The password has expired and must be changed.");
+        public static Error RecentlyUsed => new Error("Password.RecentlyUsed", "This password has been used recently and cannot be reused.");
+    }
+
+    /// <summary>
+    /// Contains SMS application user errors.
+    /// </summary>
+    public static class SMSApplicationUserError
+    {
+        public static Error NullOrEmpty => new Error("SMSApplicationUser.NullOrEmpty", "The SMS Application User is required.");
+        public static Error CodeRequired => new Error("SMSApplicationUser.CodeRequired", "The SMS Application User Code is required.");
+        public static Error UserNameRequired => new Error("SMSApplicationUser.UserNameRequired", "The Username is required.");
+        public static Error PasswordRequired => new Error("SMSApplicationUser.PasswordRequired", "The Password is required.");
+        public static Error ApplicationRoleRequired => new Error("SMSApplicationUser.ApplicationRoleRequired", "The Application Role is required.");
+        public static Error PermissionLevelRequired => new Error("SMSApplicationUser.PermissionLevelRequired", "The Permission Level is required.");
+        public static Error InvalidCode => new Error("SMSApplicationUser.InvalidCode", "The SMS Application User Code is invalid.");
+        public static Error InvalidApplicationRole => new Error("SMSApplicationUser.InvalidApplicationRole", "The Application Role is invalid.");
+        public static Error InvalidPermissionLevel => new Error("SMSApplicationUser.InvalidPermissionLevel", "The Permission Level is invalid.");
+        public static Error NotFound => new Error("SMSApplicationUser.NotFound", "The SMS Application User was not found.");
+        public static Error CreateFailed => new Error("SMSApplicationUser.CreateFailed", "Failed to create the SMS Application User.");
+        public static Error UpdateFailed => new Error("SMSApplicationUser.UpdateFailed", "Failed to update the SMS Application User.");
+        public static Error DeleteFailed => new Error("SMSApplicationUser.DeleteFailed", "Failed to delete the SMS Application User.");
+        public static Error LoginFailed => new Error("SMSApplicationUser.LoginFailed", "Login failed for SMS Application User.");
+        public static Error PasswordUpdateFailed => new Error("SMSApplicationUser.PasswordUpdateFailed", "Failed to update SMS Application User password.");
+    }
+
+    /// <summary>
+    /// Contains SMS organizational user errors.
+    /// </summary>
+    public static class SMSOrganizationalUserError
+    {
+        public static Error NullOrEmpty => new Error("SMSOrganizationalUser.NullOrEmpty", "The SMS Organizational User is required.");
+        public static Error CodeRequired => new Error("SMSOrganizationalUser.CodeRequired", "The SMS Organizational User Code is required.");
+        public static Error UserNameRequired => new Error("SMSOrganizationalUser.UserNameRequired", "The Username is required.");
+        public static Error PasswordRequired => new Error("SMSOrganizationalUser.PasswordRequired", "The Password is required.");
+        public static Error DepartmentRequired => new Error("SMSOrganizationalUser.DepartmentRequired", "The Department is required.");
+        public static Error PositionRequired => new Error("SMSOrganizationalUser.PositionRequired", "The Position is required.");
+        public static Error OrganizationLevelRequired => new Error("SMSOrganizationalUser.OrganizationLevelRequired", "The Organization Level is required.");
+        public static Error InvalidCode => new Error("SMSOrganizationalUser.InvalidCode", "The SMS Organizational User Code is invalid.");
+        public static Error InvalidDepartment => new Error("SMSOrganizationalUser.InvalidDepartment", "The Department is invalid.");
+        public static Error InvalidPosition => new Error("SMSOrganizationalUser.InvalidPosition", "The Position is invalid.");
+        public static Error InvalidOrganizationLevel => new Error("SMSOrganizationalUser.InvalidOrganizationLevel", "The Organization Level is invalid.");
+        public static Error NotFound => new Error("SMSOrganizationalUser.NotFound", "The SMS Organizational User was not found.");
+        public static Error CreateFailed => new Error("SMSOrganizationalUser.CreateFailed", "Failed to create the SMS Organizational User.");
+        public static Error UpdateFailed => new Error("SMSOrganizationalUser.UpdateFailed", "Failed to update the SMS Organizational User.");
+        public static Error DeleteFailed => new Error("SMSOrganizationalUser.DeleteFailed", "Failed to delete the SMS Organizational User.");
+        public static Error LoginFailed => new Error("SMSOrganizationalUser.LoginFailed", "Login failed for SMS Organizational User.");
+        public static Error PasswordUpdateFailed => new Error("SMSOrganizationalUser.PasswordUpdateFailed", "Failed to update SMS Organizational User password.");
+    }
+
+    /// <summary>
+    /// Contains SMS stakeholder user errors.
+    /// </summary>
+    public static class SMSStakeholderUserError
+    {
+        public static Error NullOrEmpty => new Error("SMSStakeholderUser.NullOrEmpty", "The SMS Stakeholder User is required.");
+        public static Error CodeRequired => new Error("SMSStakeholderUser.CodeRequired", "The SMS Stakeholder User Code is required.");
+        public static Error UserNameRequired => new Error("SMSStakeholderUser.UserNameRequired", "The Username is required.");
+        public static Error PasswordRequired => new Error("SMSStakeholderUser.PasswordRequired", "The Password is required.");
+        public static Error StakeholderTypeRequired => new Error("SMSStakeholderUser.StakeholderTypeRequired", "The Stakeholder Type is required.");
+        public static Error OrganizationRequired => new Error("SMSStakeholderUser.OrganizationRequired", "The Organization is required.");
+        public static Error AccessLevelRequired => new Error("SMSStakeholderUser.AccessLevelRequired", "The Access Level is required.");
+        public static Error InvalidCode => new Error("SMSStakeholderUser.InvalidCode", "The SMS Stakeholder User Code is invalid.");
+        public static Error InvalidStakeholderType => new Error("SMSStakeholderUser.InvalidStakeholderType", "The Stakeholder Type is invalid.");
+        public static Error InvalidOrganization => new Error("SMSStakeholderUser.InvalidOrganization", "The Organization is invalid.");
+        public static Error InvalidAccessLevel => new Error("SMSStakeholderUser.InvalidAccessLevel", "The Access Level is invalid.");
+        public static Error NotFound => new Error("SMSStakeholderUser.NotFound", "The SMS Stakeholder User was not found.");
+        public static Error CreateFailed => new Error("SMSStakeholderUser.CreateFailed", "Failed to create the SMS Stakeholder User.");
+        public static Error UpdateFailed => new Error("SMSStakeholderUser.UpdateFailed", "Failed to update the SMS Stakeholder User.");
+        public static Error DeleteFailed => new Error("SMSStakeholderUser.DeleteFailed", "Failed to delete the SMS Stakeholder User.");
+        public static Error LoginFailed => new Error("SMSStakeholderUser.LoginFailed", "Login failed for SMS Stakeholder User.");
+        public static Error PasswordUpdateFailed => new Error("SMSStakeholderUser.PasswordUpdateFailed", "Failed to update SMS Stakeholder User password.");
+    }
+
+    /// <summary>
+    /// Contains SMS role-related errors.
+    /// </summary>
+    public static class SMSRoleError
+    {
+        public static Error NullOrEmpty => new Error("SMSRole.NullOrEmpty", "The SMS Role is required.");
+        public static Error InvalidRole => new Error("SMSRole.InvalidRole", "The SMS Role is not valid.");
+        public static Error RoleNotFound => new Error("SMSRole.RoleNotFound", "The specified SMS Role was not found.");
+        public static Error InsufficientAuthority => new Error("SMSRole.InsufficientAuthority", "The user does not have sufficient authority for this operation.");
+        public static Error RoleAssignmentFailed => new Error("SMSRole.RoleAssignmentFailed", "Failed to assign the SMS Role to the user.");
+        public static Error RoleRemovalFailed => new Error("SMSRole.RoleRemovalFailed", "Failed to remove the SMS Role from the user.");
+        public static Error DuplicateRoleAssignment => new Error("SMSRole.DuplicateRoleAssignment", "The user already has this SMS Role assigned.");
+        public static Error ExpiredRoleAssignment => new Error("SMSRole.ExpiredRoleAssignment", "The SMS Role assignment has expired.");
+        public static Error InactiveRoleAssignment => new Error("SMSRole.InactiveRoleAssignment", "The SMS Role assignment is inactive.");
+        public static Error InvalidAuthorityLevel => new Error("SMSRole.InvalidAuthorityLevel", "The authority level is invalid.");
+        public static Error InvalidRoleCategory => new Error("SMSRole.InvalidRoleCategory", "The role category is invalid.");
+        public static Error BulkAssignmentFailed => new Error("SMSRole.BulkAssignmentFailed", "Failed to complete bulk role assignment.");
+        public static Error ValidationFailed => new Error("SMSRole.ValidationFailed", "SMS Role validation failed.");
+    }
+
+    /// <summary>
+    /// Contains SMS user role assignment errors.
+    /// </summary>
+    public static class SMSUserRoleError
+    {
+        public static Error NullOrEmpty => new Error("SMSUserRole.NullOrEmpty", "The SMS User Role assignment is required.");
+        public static Error UserIDRequired => new Error("SMSUserRole.UserIDRequired", "The User ID is required.");
+        public static Error UserTypeRequired => new Error("SMSUserRole.UserTypeRequired", "The User Type is required.");
+        public static Error DepartmentRequired => new Error("SMSUserRole.DepartmentRequired", "The Department is required.");
+        public static Error AssignedByRequired => new Error("SMSUserRole.AssignedByRequired", "The AssignedBy field is required.");
+        public static Error InvalidUserType => new Error("SMSUserRole.InvalidUserType", "The User Type is invalid.");
+        public static Error InvalidDepartment => new Error("SMSUserRole.InvalidDepartment", "The Department is invalid.");
+        public static Error InvalidEffectiveDate => new Error("SMSUserRole.InvalidEffectiveDate", "The Effective Date is invalid.");
+        public static Error InvalidExpirationDate => new Error("SMSUserRole.InvalidExpirationDate", "The Expiration Date is invalid.");
+        public static Error NotFound => new Error("SMSUserRole.NotFound", "The SMS User Role assignment was not found.");
+        public static Error CreateFailed => new Error("SMSUserRole.CreateFailed", "Failed to create the SMS User Role assignment.");
+        public static Error UpdateFailed => new Error("SMSUserRole.UpdateFailed", "Failed to update the SMS User Role assignment.");
+        public static Error DeactivationFailed => new Error("SMSUserRole.DeactivationFailed", "Failed to deactivate the SMS User Role assignment.");
+        public static Error ReactivationFailed => new Error("SMSUserRole.ReactivationFailed", "Failed to reactivate the SMS User Role assignment.");
+        public static Error ExtensionFailed => new Error("SMSUserRole.ExtensionFailed", "Failed to extend the SMS User Role assignment.");
+        public static Error AlreadyDeactivated => new Error("SMSUserRole.AlreadyDeactivated", "The SMS User Role assignment is already deactivated.");
+        public static Error AlreadyActive => new Error("SMSUserRole.AlreadyActive", "The SMS User Role assignment is already active.");
+    }
+
+    /// <summary>
+    /// Contains SMS department-related errors.
+    /// </summary>
+    public static class SMSDepartmentError
+    {
+        public static Error NullOrEmpty => new Error("SMSDepartment.NullOrEmpty", "The SMS Department is required.");
+        public static Error InvalidDepartment => new Error("SMSDepartment.InvalidDepartment", "The SMS Department is not valid.");
+        public static Error DepartmentNotFound => new Error("SMSDepartment.DepartmentNotFound", "The specified SMS Department was not found.");
+        public static Error ResponsibilityNotFound => new Error("SMSDepartment.ResponsibilityNotFound", "The specified responsibility is not assigned to this department.");
+    }
+
+    /// <summary>
+    /// Contains committee-related errors.
+    /// </summary>
+    public static class CommitteeError
+    {
+        public static Error NullOrEmpty => new Error("Committee.NullOrEmpty", "The Committee is required.");
+        public static Error InvalidUserId => new Error("Committee.InvalidUserId", "The User ID is invalid.");
+        public static Error InvalidMembershipType => new Error("Committee.InvalidMembershipType", "The Membership Type is invalid.");
+        public static Error UserAlreadyMember => new Error("Committee.UserAlreadyMember", "The user is already a member of this committee.");
+        public static Error MaxMembersExceeded => new Error("Committee.MaxMembersExceeded", "The committee has reached its maximum member limit.");
+        public static Error MemberNotFound => new Error("Committee.MemberNotFound", "The committee member was not found.");
+        public static Error MembershipCreationFailed => new Error("Committee.MembershipCreationFailed", "Failed to create committee membership.");
+        public static Error MemberRemovalFailed => new Error("Committee.MemberRemovalFailed", "Failed to remove committee member.");
+        public static Error MembershipUpdateFailed => new Error("Committee.MembershipUpdateFailed", "Failed to update committee membership.");
+        public static Error MembershipTypeDoesNotSupportVoting => new Error("Committee.MembershipTypeDoesNotSupportVoting", "This membership type does not support voting rights.");
+        public static Error VotingRightsUpdateFailed => new Error("Committee.VotingRightsUpdateFailed", "Failed to update voting rights.");
+        public static Error InvalidExpirationDate => new Error("Committee.InvalidExpirationDate", "The expiration date must be in the future.");
+        public static Error ExpirationUpdateFailed => new Error("Committee.ExpirationUpdateFailed", "Failed to update expiration date.");
+        public static Error MembershipExtensionFailed => new Error("Committee.MembershipExtensionFailed", "Failed to extend membership.");
+        public static Error CannotReactivateExpiredMembership => new Error("Committee.CannotReactivateExpiredMembership", "Cannot reactivate an expired membership.");
+        public static Error MembershipReactivationFailed => new Error("Committee.MembershipReactivationFailed", "Failed to reactivate membership.");
+    }
+
+    /// <summary>
+    /// Contains meeting-related errors.
+    /// </summary>
+    public static class MeetingError
+    {
+        public static Error NullOrEmpty => new Error("Meeting.NullOrEmpty", "The Meeting is required.");
+        public static Error InvalidMeetingDate => new Error("Meeting.InvalidMeetingDate", "The meeting date must be in the future.");
+        public static Error InvalidFacilitator => new Error("Meeting.InvalidFacilitator", "The facilitator ID is invalid.");
+        public static Error MeetingCreationFailed => new Error("Meeting.MeetingCreationFailed", "Failed to create the meeting.");
+        public static Error MeetingUpdateFailed => new Error("Meeting.MeetingUpdateFailed", "Failed to update the meeting.");
+        public static Error CannotModifyCompletedMeeting => new Error("Meeting.CannotModifyCompletedMeeting", "Cannot modify a completed meeting.");
+        public static Error InvalidAgenda => new Error("Meeting.InvalidAgenda", "The agenda cannot be empty.");
+        public static Error AgendaUpdateFailed => new Error("Meeting.AgendaUpdateFailed", "Failed to update the agenda.");
+        public static Error InvalidMinutes => new Error("Meeting.InvalidMinutes", "The minutes cannot be empty.");
+        public static Error CannotSetMinutesForNonActiveMeeting => new Error("Meeting.CannotSetMinutesForNonActiveMeeting", "Cannot set minutes for a non-active meeting.");
+        public static Error MinutesUpdateFailed => new Error("Meeting.MinutesUpdateFailed", "Failed to update the minutes.");
+        public static Error MinutesNotPendingApproval => new Error("Meeting.MinutesNotPendingApproval", "The minutes are not pending approval.");
+        public static Error NoMinutesToApprove => new Error("Meeting.NoMinutesToApprove", "There are no minutes to approve.");
+        public static Error MinutesApprovalFailed => new Error("Meeting.MinutesApprovalFailed", "Failed to approve the minutes.");
+        public static Error CannotStartNonScheduledMeeting => new Error("Meeting.CannotStartNonScheduledMeeting", "Cannot start a non-scheduled meeting.");
+        public static Error MeetingStartFailed => new Error("Meeting.MeetingStartFailed", "Failed to start the meeting.");
+        public static Error CannotEndNonActiveMeeting => new Error("Meeting.CannotEndNonActiveMeeting", "Cannot end a non-active meeting.");
+        public static Error MeetingEndFailed => new Error("Meeting.MeetingEndFailed", "Failed to end the meeting.");
+        public static Error CannotCancelCompletedMeeting => new Error("Meeting.CannotCancelCompletedMeeting", "Cannot cancel a completed meeting.");
+        public static Error MeetingCancellationFailed => new Error("Meeting.MeetingCancellationFailed", "Failed to cancel the meeting.");
+        public static Error CannotPostponeCompletedMeeting => new Error("Meeting.CannotPostponeCompletedMeeting", "Cannot postpone a completed meeting.");
+        public static Error MeetingPostponeFailed => new Error("Meeting.MeetingPostponeFailed", "Failed to postpone the meeting.");
+        public static Error InvalidUserId => new Error("Meeting.InvalidUserId", "The user ID is invalid.");
+        public static Error AttendeeAlreadyExists => new Error("Meeting.AttendeeAlreadyExists", "The attendee already exists for this meeting.");
+        public static Error AttendeeAddFailed => new Error("Meeting.AttendeeAddFailed", "Failed to add attendee to the meeting.");
+        public static Error InvalidAgendaItemTitle => new Error("Meeting.InvalidAgendaItemTitle", "The agenda item title cannot be empty.");
+        public static Error AgendaItemAddFailed => new Error("Meeting.AgendaItemAddFailed", "Failed to add agenda item to the meeting.");
+    }
+
+    /// <summary>
+    /// Contains approval workflow errors.
+    /// </summary>
+    public static class ApprovalError
+    {
+        public static Error CannotApproveNonPendingRequest => new Error("Approval.CannotApproveNonPendingRequest", "Cannot approve a non-pending request.");
+        public static Error InvalidApprover => new Error("Approval.InvalidApprover", "The approver ID is invalid.");
+        public static Error ApprovalProcessFailed => new Error("Approval.ApprovalProcessFailed", "The approval process failed.");
+        public static Error CannotRejectNonPendingRequest => new Error("Approval.CannotRejectNonPendingRequest", "Cannot reject a non-pending request.");
+        public static Error InvalidRejecter => new Error("Approval.InvalidRejecter", "The rejecter ID is invalid.");
+        public static Error RejectionReasonRequired => new Error("Approval.RejectionReasonRequired", "A rejection reason is required.");
+        public static Error RejectionProcessFailed => new Error("Approval.RejectionProcessFailed", "The rejection process failed.");
+        public static Error CannotEscalateCompletedRequest => new Error("Approval.CannotEscalateCompletedRequest", "Cannot escalate a completed request.");
+        public static Error InvalidEscalationTarget => new Error("Approval.InvalidEscalationTarget", "The escalation target ID is invalid.");
+        public static Error EscalationReasonRequired => new Error("Approval.EscalationReasonRequired", "An escalation reason is required.");
+        public static Error EscalationProcessFailed => new Error("Approval.EscalationProcessFailed", "The escalation process failed.");
+        public static Error CannotStartReviewOnNonPendingRequest => new Error("Approval.CannotStartReviewOnNonPendingRequest", "Cannot start review on a non-pending request.");
+        public static Error ReviewStartFailed => new Error("Approval.ReviewStartFailed", "Failed to start the review process.");
+        public static Error CannotExpireCompletedRequest => new Error("Approval.CannotExpireCompletedRequest", "Cannot expire a completed request.");
+        public static Error ExpirationProcessFailed => new Error("Approval.ExpirationProcessFailed", "The expiration process failed.");
+    }
+
+    /// <summary>
+    /// Contains authorization and workflow errors.
+    /// </summary>
+    public static class WorkflowError
+    {
+        public static Error InvalidRiskLevel => new Error("Workflow.InvalidRiskLevel", "The risk level is invalid.");
+        public static Error NoApproverFound => new Error("Workflow.NoApproverFound", "No approver found for the specified authority level.");
+        public static Error ApprovalRequired => new Error("Workflow.ApprovalRequired", "Approval is required for this operation.");
+        public static Error UnauthorizedOperation => new Error("Workflow.UnauthorizedOperation", "User is not authorized to perform this operation.");
+        public static Error EscalationRequired => new Error("Workflow.EscalationRequired", "This item requires escalation to a higher authority level.");
+        public static Error WorkflowViolation => new Error("Workflow.WorkflowViolation", "The operation violates the established workflow rules.");
+    }
+
+    /// <summary>
     /// Contains airport shared dataset-related errors.
     /// </summary>
     public static class AirportSharedDatasetError
@@ -297,19 +562,19 @@ public static class DomainErrors
     public static class SubscribeToEmailNewsletterError
     {
         public static Error NullOrEmpty => new Error("SubscribeToEmailNewsletterError.NullOrEmpty", "The Subscribe To EmailNewsletter option is required.");
-        public static Error InValid => new Error("SubscribeToEmailNewsletterError.InValid", "The Subscribe To Email Newsletter option is invalid.");
+        public static Error InValid => new Error("SubscribeToEmailNewsletterError.InValid", "The Subscribe To Email Newsletter option is invalid.";
     }
 
     public static class SubscribeToTextNewsletterError
     {
         public static Error NullOrEmpty => new Error("SubscribeToTextNewsletterError.NullOrEmpty", "The Subscribe To Text Newsletter option is required.");
-        public static Error InValid => new Error("SubscribeToTextNewsletterError.InValid", "The Subscribe To Text Newsletter option is invalid.");
+        public static Error InValid => new Error("SubscribeToTextNewsletterError.InValid", "The Subscribe To Text Newsletter option is invalid.";
     }
 
     public static class SubscribeToOperationalTextsError
     {
         public static Error NullOrEmpty => new Error("SubscribeToOperationalTextsError.NullOrEmpty", "The Subscribe To Operational Texts option is required.");
-        public static Error InValid => new Error("SubscribeToOperationalTextsError.InValid", "The Subscribe To Operational Texts option is invalid.");
+        public static Error InValid => new Error("SubscribeToOperationalTextsError.InValid", "The Subscribe To Operational Texts option is invalid.";
     }
     */
 

@@ -8,6 +8,180 @@
         private static readonly Lazy<string> _cn_spAddAuditLogEntry = new Lazy<string>(() => "sp_AddAuditLogEntry");
         public static string cn_spAddAuditLogEntry => _cn_spAddAuditLogEntry.Value;
 
+        #region SMS Application User Stored Procedures
+        
+        /// <summary>
+        /// Stored procedures for SMS Application User operations
+        /// </summary>
+        private static readonly Lazy<string> _pr_SMSApplicationUser_Insert = new(() => "pr_SMSApplicationUser_Insert");
+        public static string pr_SMSApplicationUser_Insert => _pr_SMSApplicationUser_Insert.Value;
+        
+        private static readonly Lazy<string> _pr_SMSApplicationUser_Update = new(() => "pr_SMSApplicationUser_Update");
+        public static string pr_SMSApplicationUser_Update => _pr_SMSApplicationUser_Update.Value;
+        
+        private static readonly Lazy<string> _pr_SMSApplicationUser_UpdatePassword = new(() => "pr_SMSApplicationUser_UpdatePassword");
+        public static string pr_SMSApplicationUser_UpdatePassword => _pr_SMSApplicationUser_UpdatePassword.Value;
+        
+        private static readonly Lazy<string> _pr_SMSApplicationUser_Delete = new(() => "pr_SMSApplicationUser_Delete");
+        public static string pr_SMSApplicationUser_Delete => _pr_SMSApplicationUser_Delete.Value;
+        
+        private static readonly Lazy<string> _pr_SMSApplicationUser_GetAll = new(() => "pr_SMSApplicationUser_GetAll");
+        public static string pr_SMSApplicationUser_GetAll => _pr_SMSApplicationUser_GetAll.Value;
+        
+        private static readonly Lazy<string> _pr_SMSApplicationUser_GetById = new(() => "pr_SMSApplicationUser_GetById");
+        public static string pr_SMSApplicationUser_GetById => _pr_SMSApplicationUser_GetById.Value;
+        
+        private static readonly Lazy<string> _pr_SMSApplicationUser_GetByUserName = new(() => "pr_SMSApplicationUser_GetByUserName");
+        public static string pr_SMSApplicationUser_GetByUserName => _pr_SMSApplicationUser_GetByUserName.Value;
+        
+        private static readonly Lazy<string> _pr_SMSApplicationUser_GetByRole = new(() => "pr_SMSApplicationUser_GetByRole");
+        public static string pr_SMSApplicationUser_GetByRole => _pr_SMSApplicationUser_GetByRole.Value;
+        
+        private static readonly Lazy<string> _pr_SMSApplicationUser_GetActiveUsers = new(() => "pr_SMSApplicationUser_GetActiveUsers");
+        public static string pr_SMSApplicationUser_GetActiveUsers => _pr_SMSApplicationUser_GetActiveUsers.Value;
+        
+        private static readonly Lazy<string> _pr_SMSApplicationUser_RecordLogin = new(() => "pr_SMSApplicationUser_RecordLogin");
+        public static string pr_SMSApplicationUser_RecordLogin => _pr_SMSApplicationUser_RecordLogin.Value;
+        
+        #endregion
+        
+        #region SMS Organizational User Stored Procedures
+        
+        /// <summary>
+        /// Stored procedures for SMS Organizational User operations
+        /// </summary>
+        private static readonly Lazy<string> _pr_SMSOrganizationalUser_Insert = new(() => "pr_SMSOrganizationalUser_Insert");
+        public static string pr_SMSOrganizationalUser_Insert => _pr_SMSOrganizationalUser_Insert.Value;
+        
+        private static readonly Lazy<string> _pr_SMSOrganizationalUser_Update = new(() => "pr_SMSOrganizationalUser_Update");
+        public static string pr_SMSOrganizationalUser_Update => _pr_SMSOrganizationalUser_Update.Value;
+        
+        private static readonly Lazy<string> _pr_SMSOrganizationalUser_UpdatePassword = new(() => "pr_SMSOrganizationalUser_UpdatePassword");
+        public static string pr_SMSOrganizationalUser_UpdatePassword => _pr_SMSOrganizationalUser_UpdatePassword.Value;
+        
+        private static readonly Lazy<string> _pr_SMSOrganizationalUser_Delete = new(() => "pr_SMSOrganizationalUser_Delete");
+        public static string pr_SMSOrganizationalUser_Delete => _pr_SMSOrganizationalUser_Delete.Value;
+        
+        private static readonly Lazy<string> _pr_SMSOrganizationalUser_GetAll = new(() => "pr_SMSOrganizationalUser_GetAll");
+        public static string pr_SMSOrganizationalUser_GetAll => _pr_SMSOrganizationalUser_GetAll.Value;
+        
+        private static readonly Lazy<string> _pr_SMSOrganizationalUser_GetById = new(() => "pr_SMSOrganizationalUser_GetById");
+        public static string pr_SMSOrganizationalUser_GetById => _pr_SMSOrganizationalUser_GetById.Value;
+        
+        private static readonly Lazy<string> _pr_SMSOrganizationalUser_GetByUserName = new(() => "pr_SMSOrganizationalUser_GetByUserName");
+        public static string pr_SMSOrganizationalUser_GetByUserName => _pr_SMSOrganizationalUser_GetByUserName.Value;
+        
+        private static readonly Lazy<string> _pr_SMSOrganizationalUser_GetByDepartment = new(() => "pr_SMSOrganizationalUser_GetByDepartment");
+        public static string pr_SMSOrganizationalUser_GetByDepartment => _pr_SMSOrganizationalUser_GetByDepartment.Value;
+        
+        private static readonly Lazy<string> _pr_SMSOrganizationalUser_GetByPosition = new(() => "pr_SMSOrganizationalUser_GetByPosition");
+        public static string pr_SMSOrganizationalUser_GetByPosition => _pr_SMSOrganizationalUser_GetByPosition.Value;
+        
+        private static readonly Lazy<string> _pr_SMSOrganizationalUser_GetActiveUsers = new(() => "pr_SMSOrganizationalUser_GetActiveUsers");
+        public static string pr_SMSOrganizationalUser_GetActiveUsers => _pr_SMSOrganizationalUser_GetActiveUsers.Value;
+        
+        private static readonly Lazy<string> _pr_SMSOrganizationalUser_RecordLogin = new(() => "pr_SMSOrganizationalUser_RecordLogin");
+        public static string pr_SMSOrganizationalUser_RecordLogin => _pr_SMSOrganizationalUser_RecordLogin.Value;
+        
+        #endregion
+        
+        #region SMS Stakeholder User Stored Procedures
+        
+        /// <summary>
+        /// Stored procedures for SMS Stakeholder User operations
+        /// </summary>
+        private static readonly Lazy<string> _pr_SMSStakeholderUser_Insert = new(() => "pr_SMSStakeholderUser_Insert");
+        public static string pr_SMSStakeholderUser_Insert => _pr_SMSStakeholderUser_Insert.Value;
+        
+        private static readonly Lazy<string> _pr_SMSStakeholderUser_Update = new(() => "pr_SMSStakeholderUser_Update");
+        public static string pr_SMSStakeholderUser_Update => _pr_SMSStakeholderUser_Update.Value;
+        
+        private static readonly Lazy<string> _pr_SMSStakeholderUser_UpdatePassword = new(() => "pr_SMSStakeholderUser_UpdatePassword");
+        public static string pr_SMSStakeholderUser_UpdatePassword => _pr_SMSStakeholderUser_UpdatePassword.Value;
+        
+        private static readonly Lazy<string> _pr_SMSStakeholderUser_Delete = new(() => "pr_SMSStakeholderUser_Delete");
+        public static string pr_SMSStakeholderUser_Delete => _pr_SMSStakeholderUser_Delete.Value;
+        
+        private static readonly Lazy<string> _pr_SMSStakeholderUser_GetAll = new(() => "pr_SMSStakeholderUser_GetAll");
+        public static string pr_SMSStakeholderUser_GetAll => _pr_SMSStakeholderUser_GetAll.Value;
+        
+        private static readonly Lazy<string> _pr_SMSStakeholderUser_GetById = new(() => "pr_SMSStakeholderUser_GetById");
+        public static string pr_SMSStakeholderUser_GetById => _pr_SMSStakeholderUser_GetById.Value;
+        
+        private static readonly Lazy<string> _pr_SMSStakeholderUser_GetByUserName = new(() => "pr_SMSStakeholderUser_GetByUserName");
+        public static string pr_SMSStakeholderUser_GetByUserName => _pr_SMSStakeholderUser_GetByUserName.Value;
+        
+        private static readonly Lazy<string> _pr_SMSStakeholderUser_GetByStakeholderType = new(() => "pr_SMSStakeholderUser_GetByStakeholderType");
+        public static string pr_SMSStakeholderUser_GetByStakeholderType => _pr_SMSStakeholderUser_GetByStakeholderType.Value;
+        
+        private static readonly Lazy<string> _pr_SMSStakeholderUser_GetByOrganization = new(() => "pr_SMSStakeholderUser_GetByOrganization");
+        public static string pr_SMSStakeholderUser_GetByOrganization => _pr_SMSStakeholderUser_GetByOrganization.Value;
+        
+        private static readonly Lazy<string> _pr_SMSStakeholderUser_GetActiveUsers = new(() => "pr_SMSStakeholderUser_GetActiveUsers");
+        public static string pr_SMSStakeholderUser_GetActiveUsers => _pr_SMSStakeholderUser_GetActiveUsers.Value;
+        
+        private static readonly Lazy<string> _pr_SMSStakeholderUser_RecordLogin = new(() => "pr_SMSStakeholderUser_RecordLogin");
+        public static string pr_SMSStakeholderUser_RecordLogin => _pr_SMSStakeholderUser_RecordLogin.Value;
+        
+        #endregion
+
+        /// <summary>
+        /// SMS User Role Management CRUD Operations
+        /// </summary>
+        private static readonly Lazy<string> _pr_SMSUserRole_Insert = new Lazy<string>(() => "pr_SMSUserRole_Insert");
+        public static string pr_SMSUserRole_Insert => _pr_SMSUserRole_Insert.Value;
+
+        private static readonly Lazy<string> _pr_SMSUserRole_GetById = new Lazy<string>(() => "pr_SMSUserRole_GetById");
+        public static string pr_SMSUserRole_GetById => _pr_SMSUserRole_GetById.Value;
+
+        private static readonly Lazy<string> _pr_SMSUserRole_GetByUserId = new Lazy<string>(() => "pr_SMSUserRole_GetByUserId");
+        public static string pr_SMSUserRole_GetByUserId => _pr_SMSUserRole_GetByUserId.Value;
+
+        private static readonly Lazy<string> _pr_SMSUserRole_GetActiveByUserId = new Lazy<string>(() => "pr_SMSUserRole_GetActiveByUserId");
+        public static string pr_SMSUserRole_GetActiveByUserId => _pr_SMSUserRole_GetActiveByUserId.Value;
+
+        private static readonly Lazy<string> _pr_SMSUserRole_GetByRoleValue = new Lazy<string>(() => "pr_SMSUserRole_GetByRoleValue");
+        public static string pr_SMSUserRole_GetByRoleValue => _pr_SMSUserRole_GetByRoleValue.Value;
+
+        private static readonly Lazy<string> _pr_SMSUserRole_GetByCategory = new Lazy<string>(() => "pr_SMSUserRole_GetByCategory");
+        public static string pr_SMSUserRole_GetByCategory => _pr_SMSUserRole_GetByCategory.Value;
+
+        private static readonly Lazy<string> _pr_SMSUserRole_GetByDepartment = new Lazy<string>(() => "pr_SMSUserRole_GetByDepartment");
+        public static string pr_SMSUserRole_GetByDepartment => _pr_SMSUserRole_GetByDepartment.Value;
+
+        private static readonly Lazy<string> _pr_SMSUserRole_GetByAuthorityLevel = new Lazy<string>(() => "pr_SMSUserRole_GetByAuthorityLevel");
+        public static string pr_SMSUserRole_GetByAuthorityLevel => _pr_SMSUserRole_GetByAuthorityLevel.Value;
+
+        private static readonly Lazy<string> _pr_SMSUserRole_GetExpiringRoles = new Lazy<string>(() => "pr_SMSUserRole_GetExpiringRoles");
+        public static string pr_SMSUserRole_GetExpiringRoles => _pr_SMSUserRole_GetExpiringRoles.Value;
+
+        private static readonly Lazy<string> _pr_SMSUserRole_GetAll = new Lazy<string>(() => "pr_SMSUserRole_GetAll");
+        public static string pr_SMSUserRole_GetAll => _pr_SMSUserRole_GetAll.Value;
+
+        private static readonly Lazy<string> _pr_SMSUserRole_Update = new Lazy<string>(() => "pr_SMSUserRole_Update");
+        public static string pr_SMSUserRole_Update => _pr_SMSUserRole_Update.Value;
+
+        private static readonly Lazy<string> _pr_SMSUserRole_Deactivate = new Lazy<string>(() => "pr_SMSUserRole_Deactivate");
+        public static string pr_SMSUserRole_Deactivate => _pr_SMSUserRole_Deactivate.Value;
+
+        private static readonly Lazy<string> _pr_SMSUserRole_Reactivate = new Lazy<string>(() => "pr_SMSUserRole_Reactivate");
+        public static string pr_SMSUserRole_Reactivate => _pr_SMSUserRole_Reactivate.Value;
+
+        private static readonly Lazy<string> _pr_SMSUserRole_ExtendAssignment = new Lazy<string>(() => "pr_SMSUserRole_ExtendAssignment");
+        public static string pr_SMSUserRole_ExtendAssignment => _pr_SMSUserRole_ExtendAssignment.Value;
+
+        private static readonly Lazy<string> _pr_SMSUserRole_BulkInsert = new Lazy<string>(() => "pr_SMSUserRole_BulkInsert");
+        public static string pr_SMSUserRole_BulkInsert => _pr_SMSUserRole_BulkInsert.Value;
+
+        private static readonly Lazy<string> _pr_SMSUserRole_GetStatsReport = new Lazy<string>(() => "pr_SMSUserRole_GetStatsReport");
+        public static string pr_SMSUserRole_GetStatsReport => _pr_SMSUserRole_GetStatsReport.Value;
+
+        private static readonly Lazy<string> _pr_SMSUserRole_ValidateUserAuthorization = new Lazy<string>(() => "pr_SMSUserRole_ValidateUserAuthorization");
+        public static string pr_SMSUserRole_ValidateUserAuthorization => _pr_SMSUserRole_ValidateUserAuthorization.Value;
+
+        private static readonly Lazy<string> _pr_SMSUserRole_GetUserMaxAuthorityLevel = new Lazy<string>(() => "pr_SMSUserRole_GetUserMaxAuthorityLevel");
+        public static string pr_SMSUserRole_GetUserMaxAuthorityLevel => _pr_SMSUserRole_GetUserMaxAuthorityLevel.Value;
+
         /// <summary>
         /// SMS Hazard CRUD Operations
         /// </summary>

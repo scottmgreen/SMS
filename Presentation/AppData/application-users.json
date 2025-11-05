@@ -1,0 +1,80 @@
+[
+  {
+    "id": "9137a96f-0cc4-445d-95a7-8a3322799e06",
+    "username": "scott.green@portofportland.com",
+    "email": "scott.green@portofportland.com",
+    "passwordHash": "U0FMVF9UZW1wUGFzc3dvcmQxMjMhX0hBU0g=",
+    "firstName": "Scott",
+    "lastName": "Green",
+    "phone": null,
+    "department": "IT",
+    "jobTitle": "User",
+    "applicationRoles": [
+      "System Administrator",
+      "Safety Manager"
+    ],
+    "permissions": [],
+    "isActive": true,
+    "notificationPreferences": {
+      "emailEnabled": true,
+      "smsEnabled": false,
+      "inAppEnabled": true,
+      "frequency": "Normal",
+      "preferredTiming": "BusinessHours",
+      "topicSubscriptions": [],
+      "topicExclusions": [],
+      "criticalAlertsOnly": false,
+      "hasAnyChannelEnabled": true
+    },
+    "createdDate": "2025-10-15T21:01:07.1953714Z",
+    "lastLoginDate": null,
+    "failedLoginAttempts": 0,
+    "lockoutEndDate": null,
+    "displayName": "Scott Green",
+    "contactSummary": "scott.green@portofportland.com  | IT",
+    "isLockedOut": false
+  },
+  {
+    "id": "470e9b8a-74ff-4000-88da-42c92feaac51",
+    "username": "admin@flypdx.com",
+    "email": "admin@flypdx.com",
+    "passwordHash": "U0FMVF9hZG1pbjEyM19IQVNI",
+    "firstName": "System",
+    "lastName": "Administrator",
+    "phone": "(503) 555-0001",
+    "department": "Information Technology",
+    "jobTitle": "System Administrator",
+    "applicationRoles": [
+      "Administrator",
+      "SystemManager"
+    ],
+    "permissions": [
+      "FullAccess",
+      "UserManagement",
+      "SystemConfig"
+    ],
+    "isActive": true,
+    "notificationPreferences": {
+      "emailEnabled": true,
+      "smsEnabled": false,
+      "inAppEnabled": true,
+      "frequency": "Normal",
+      "preferredTiming": "BusinessHours",
+      "topicSubscriptions": [
+        "System Alerts",
+        "Security Notifications",
+        "User Management"
+      ],
+      "topicExclusions": [],
+      "criticalAlertsOnly": false,
+      "hasAnyChannelEnabled": true
+    },
+    "createdDate": "2025-10-15T19:24:39.407204Z",
+    "lastLoginDate": "2025-10-30T22:12:24.5585628Z",
+    "failedLoginAttempts": 0,
+    "lockoutEndDate": null,
+    "displayName": "System Administrator",
+    "contactSummary": "admin@flypdx.com | (503) 555-0001 | Information Technology",
+    "isLockedOut": false
+  }
+]

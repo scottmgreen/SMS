@@ -1,0 +1,487 @@
+@page
+@model PDXSMS_Presentation.Pages.SafetyRiskManagement.HazardReviewModel
+@{
+    ViewData["Title"] = "Hazard Review";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/SafetyRiskManagement">Safety Risk Management</a></li>
+                    <li class="breadcrumb-item"><a href="/SafetyRiskManagement/HazardProcessing">Process Hazard Reports</a></li>
+                    <li class="breadcrumb-item active">Hazard Review</li>
+                </ol>
+            </nav>
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="card-title"><i class="fas fa-search"></i> Hazard Review</h4>
+                            <p class="card-text">Review and process hazard report: @Model.Hazard.TrackingNumber</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <h4 class="mb-0">@Model.Hazard.Priority</h4>
+                                    <small>Priority Level</small>
+                                </div>
+                                <div class="col-6">
+                                    <h4 class="mb-0">@Model.Hazard.Status</h4>
+                                    <small>Current Status</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hazard Summary -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="mb-0">@Model.Hazard.Title</h5>
+                            <small class="text-muted">Tracking: @Model.Hazard.TrackingNumber | Reported: @Model.Hazard.ReportedDate.ToString("MM/dd/yyyy HH:mm")</small>
+                        </div>
+                        <div class="col-auto">
+                            <span class="badge @(Model.Hazard.Priority == "High" ? "bg-danger" : Model.Hazard.Priority == "Medium" ? "bg-warning" : "bg-info") fs-6">
+                                @Model.Hazard.Priority Priority
+                            </span>
+                            <span class="badge bg-secondary fs-6">@Model.Hazard.Status</span>
+                            @if (Model.Hazard.IsConfidential)
+                            {
+                                <span class="badge bg-dark fs-6"><i class="fas fa-lock"></i> Confidential</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td class="fw-bold">Type:</td>
+                                    <td>@Model.Hazard.Type</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Location:</td>
+                                    <td>@Model.Hazard.Location</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Reported By:</td>
+                                    <td>@Model.Hazard.ReportedBy</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Risk Level:</td>
+                                    <td>
+                                        <span class="badge @(Model.Hazard.RiskLevel == "High" ? "bg-danger" : Model.Hazard.RiskLevel == "Medium" ? "bg-warning" : "bg-success")">
+                                            @Model.Hazard.RiskLevel
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td class="fw-bold">Assigned Reviewer:</td>
+                                    <td>@Model.Hazard.ReviewerAssigned</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Assigned Date:</td>
+                                    <td>@Model.Hazard.AssignedDate?.ToString("MM/dd/yyyy")</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Review Due:</td>
+                                    <td class="@(Model.Hazard.ReviewDueDate < DateTime.Now ? "text-danger" : "")">
+                                        @Model.Hazard.ReviewDueDate?.ToString("MM/dd/yyyy")
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Investigation Required:</td>
+                                    <td>
+                                        @if (Model.Hazard.RequiresInvestigation)
+                                        {
+                                            <span class="badge bg-warning">Yes</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">No</span>
+                                        }
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Left Column - Hazard Details -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#description" data-bs-toggle="tab">
+                                <i class="fas fa-file-alt"></i> Description
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#analysis" data-bs-toggle="tab">
+                                <i class="fas fa-microscope"></i> Analysis
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#documents" data-bs-toggle="tab">
+                                <i class="fas fa-paperclip"></i> Documents (@Model.SupportingDocuments.Length)
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#history" data-bs-toggle="tab">
+                                <i class="fas fa-history"></i> History
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <!-- Description Tab -->
+                        <div class="tab-pane fade show active" id="description" role="tabpanel">
+                            <h6><i class="fas fa-file-text"></i> Hazard Description</h6>
+                            <div class="border-start border-primary border-3 ps-3 mb-4">
+                                <p class="mb-0">@Model.Hazard.Description</p>
+                            </div>
+
+                            <h6><i class="fas fa-bolt"></i> Immediate Actions Taken</h6>
+                            <div class="border-start border-success border-3 ps-3 mb-4">
+                                <pre class="mb-0 text-wrap">@Model.Hazard.ImmediateActions</pre>
+                            </div>
+
+                            <h6><i class="fas fa-exclamation-triangle"></i> Potential Consequences</h6>
+                            <div class="border-start border-danger border-3 ps-3 mb-4">
+                                <pre class="mb-0 text-wrap">@Model.Hazard.PotentialConsequences</pre>
+                            </div>
+
+                            <h6><i class="fas fa-search-plus"></i> Contributing Factors</h6>
+                            <div class="border-start border-warning border-3 ps-3">
+                                <pre class="mb-0 text-wrap">@Model.Hazard.ContributingFactors</pre>
+                            </div>
+                        </div>
+
+                        <!-- Analysis Tab -->
+                        <div class="tab-pane fade" id="analysis" role="tabpanel">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> 
+                                <strong>Review Status:</strong> @Model.Hazard.CurrentReviewStep
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Initial Risk Assessment</h6>
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-auto">
+                                                    <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                                        <strong>@Model.Hazard.RiskLevel</strong>
+                                                    </div>
+                                                </div>
+                                                <div class="col">
+                                                    <p class="mb-0">Preliminary risk level based on initial assessment</p>
+                                                    <small class="text-muted">Formal risk assessment pending</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Investigation Requirements</h6>
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            @if (Model.Hazard.RequiresInvestigation)
+                                            {
+                                                <div class="text-warning">
+                                                    <i class="fas fa-search fa-2x"></i>
+                                                    <p class="mt-2 mb-0">Formal investigation required</p>
+                                                    <small class="text-muted">Complex incident requiring detailed investigation</small>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="text-success">
+                                                    <i class="fas fa-check-circle fa-2x"></i>
+                                                    <p class="mt-2 mb-0">Standard review process</p>
+                                                    <small class="text-muted">No formal investigation required</small>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Documents Tab -->
+                        <div class="tab-pane fade" id="documents" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6>Supporting Documents</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-plus"></i> Add Document
+                                </button>
+                            </div>
+
+                            @if (Model.SupportingDocuments.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Document</th>
+                                                <th>Type</th>
+                                                <th>Size</th>
+                                                <th>Uploaded By</th>
+                                                <th>Date</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var doc in Model.SupportingDocuments)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <i class="fas fa-file-alt text-primary"></i>
+                                                        <strong>@doc.FileName</strong>
+                                                    </td>
+                                                    <td>@doc.DocumentType</td>
+                                                    <td>@doc.FileSize</td>
+                                                    <td>@doc.UploadedBy</td>
+                                                    <td>@doc.UploadDate.ToString("MM/dd/yyyy")</td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <button type="button" class="btn btn-outline-primary">
+                                                                <i class="fas fa-eye"></i> View
+                                                            </button>
+                                                            <button type="button" class="btn btn-outline-secondary">
+                                                                <i class="fas fa-download"></i> Download
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-folder-open fa-3x"></i>
+                                    <p class="mt-3">No supporting documents uploaded</p>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- History Tab -->
+                        <div class="tab-pane fade" id="history" role="tabpanel">
+                            <div class="timeline">
+                                @foreach (var item in Model.ReviewHistoryItems.OrderByDescending(h => h.Date))
+                                {
+                                    <div class="timeline-item">
+                                        <div class="timeline-marker bg-primary"></div>
+                                        <div class="timeline-content">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <h6 class="mb-1">@item.Action</h6>
+                                                    <p class="text-muted mb-1">@item.Comments</p>
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-user"></i> @item.PerformedBy
+                                                    </small>
+                                                </div>
+                                                <small class="text-muted">@item.Date.ToString("MM/dd/yyyy HH:mm")</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Actions Panel -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6><i class="fas fa-cogs"></i> Review Actions</h6>
+                </div>
+                <div class="card-body">
+                    @foreach (var action in Model.AvailableActions)
+                    {
+                        <button type="button" class="btn @action.ButtonClass w-100 mb-2" data-bs-toggle="modal" data-bs-target="#actionModal" 
+                                data-action="@action.Id" data-title="@action.Name">
+                            <i class="@action.Icon"></i> @action.Name
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6><i class="fas fa-comments"></i> Add Review Comment</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="mb-3">
+                            <textarea class="form-control" rows="4" placeholder="Enter your review comments..." name="reviewComment"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-comment"></i> Add Comment
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Modal -->
+<div class="modal fade" id="actionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="actionModalTitle">Confirm Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" id="actionForm">
+                    <div id="actionContent">
+                        <!-- Dynamic content based on action type -->
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="actionForm" class="btn btn-primary" id="confirmAction">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #dee2e6;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .timeline-marker {
+            position: absolute;
+            left: -23px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+        .timeline-content {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #0d6efd;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const actionModal = document.getElementById('actionModal');
+            const actionForm = document.getElementById('actionForm');
+            const actionContent = document.getElementById('actionContent');
+            const actionTitle = document.getElementById('actionModalTitle');
+
+            actionModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const action = button.getAttribute('data-action');
+                const title = button.getAttribute('data-title');
+                
+                actionTitle.textContent = title;
+                
+                // Set form action based on action type
+                switch(action) {
+                    case 'approve':
+                        actionForm.action = '/SafetyRiskManagement/HazardReview?handler=ApproveHazard';
+                        actionContent.innerHTML = `
+                            <div class="mb-3">
+                                <label class="form-label">Approval Comments</label>
+                                <textarea class="form-control" name="approvalComments" rows="3" placeholder="Enter approval comments..."></textarea>
+                            </div>
+                        `;
+                        break;
+                    case 'reject':
+                        actionForm.action = '/SafetyRiskManagement/HazardReview?handler=RejectHazard';
+                        actionContent.innerHTML = `
+                            <div class="mb-3">
+                                <label class="form-label">Rejection Reason</label>
+                                <textarea class="form-control" name="rejectionReason" rows="3" placeholder="Explain why this hazard report is being rejected..." required></textarea>
+                            </div>
+                        `;
+                        break;
+                    case 'assign':
+                        actionForm.action = '/SafetyRiskManagement/HazardReview?handler=AssignReviewer';
+                        actionContent.innerHTML = `
+                            <div class="mb-3">
+                                <label class="form-label">Assign to Reviewer</label>
+                                <select class="form-select" name="assigneeId" required>
+                                    <option value="">Select a reviewer...</option>
+                                    <option value="user1">Mike Chen - Safety Analyst</option>
+                                    <option value="user2">Sarah Johnson - Senior Safety Officer</option>
+                                    <option value="user3">Robert Kim - Safety Manager</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Priority</label>
+                                <select class="form-select" name="priority" required>
+                                    <option value="High">High</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="Low">Low</option>
+                                </select>
+                            </div>
+                        `;
+                        break;
+                    default:
+                        actionForm.action = '/SafetyRiskManagement/HazardReview?handler=UpdateStatus';
+                        actionContent.innerHTML = `
+                            <div class="mb-3">
+                                <label class="form-label">Comments</label>
+                                <textarea class="form-control" name="comments" rows="3" placeholder="Enter comments for this action..."></textarea>
+                            </div>
+                            <input type="hidden" name="newStatus" value="${action}">
+                        `;
+                }
+            });
+        });
+    </script>
+}
+

@@ -1,0 +1,60 @@
+@page
+@model PDXSMS_Presentation.Pages.Account.LogoutModel
+@{
+    ViewData["Title"] = "Logout - PDXSMS";
+    Layout = "_LoginLayout";
+}
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="text-center mb-4">
+                <i class="fas fa-sign-out-alt fa-3x text-warning mb-3"></i>
+                <h2 class="text-primary">PDXSMS</h2>
+                <p class="text-muted">You have been signed out</p>
+            </div>
+        </div>
+        
+        <div class="login-body">
+            <div class="alert alert-success text-center">
+                <i class="fas fa-check-circle"></i> 
+                <strong>Successfully Logged Out</strong>
+                <p class="mb-0 mt-2">Thank you for using the PDX Safety Management System. Your session has been securely terminated.</p>
+            </div>
+            
+            <div class="d-grid mb-3">
+                <a href="/Account/Login" class="btn btn-primary btn-lg">
+                    <i class="fas fa-sign-in-alt"></i> Sign In Again
+                </a>
+            </div>
+            
+            <div class="text-center">
+                <small class="text-muted">
+                    <i class="fas fa-shield-alt"></i> Session terminated at @DateTime.Now.ToString("HH:mm on MM/dd/yyyy")
+                </small>
+            </div>
+        </div>
+        
+        @* <div class="login-footer">
+            <hr>
+            <div class="text-center">
+                <small class="text-muted">
+                    <i class="fas fa-shield-alt"></i> Secure Access Portal<br>
+                    Portland International Airport Safety Management System
+                </small>
+            </div>
+        </div> *@
+    </div>
+    
+    <!-- System Status Indicator -->
+    @* <div class="system-status">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-2">
+                <div class="d-flex align-items-center justify-content-center">
+                    <i class="fas fa-circle text-success me-2"></i>
+                    <small class="text-muted">All Systems Operational</small>
+                </div>
+            </div>
+        </div>
+    </div> *@
+</div>

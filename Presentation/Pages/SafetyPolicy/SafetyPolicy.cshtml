@@ -1,0 +1,203 @@
+@page
+@model PDXSMS_Presentation.Pages.SafetyPolicy.SafetyPolicyModel
+@{
+    ViewData["Title"] = "Safety Policy - PDXSMS";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Safety Policy</li>
+                </ol>
+            </nav>
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h1 class="card-title"><i class="fas fa-book"></i> Safety Policy Management</h1>
+                    <p class="card-text">Access and manage safety policies, procedures, and regulatory documents</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Policy Documents Section -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-file-pdf"></i> Safety Policy Documents</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Sample Policy Document Cards -->
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-primary h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-file-pdf fa-3x text-primary mb-3"></i>
+                                    <h6 class="card-title">SMS Policy Overview</h6>
+                                    <p class="card-text small text-muted">
+                                        14 CFR Part 139
+                                    </p>
+                                    <div class="d-grid gap-2">
+                                        <!-- View in PDF Viewer (same page) -->
+                                        <a href="/Documents/Viewer?file=14 CFR Part 139.pdf&category=policies" class="btn btn-primary">
+                                            <i class="fas fa-eye"></i> View Document
+                                        </a>
+                                        <!-- Direct download link -->
+                                        <a href="~/documents/policies/14 CFR Part 139.pdf" download class="btn btn-outline-success btn-sm">
+                                            <i class="fas fa-download"></i> Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-info h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-file-pdf fa-3x text-info mb-3"></i>
+                                    <h6 class="card-title">Regulatory Compliance</h6>
+                                    <p class="card-text small text-muted">
+                                        FAA Final Rule
+                                    </p>
+                                    <div class="d-grid gap-2">
+                                        <a href="/Documents/Viewer?file=FAA Final Rule.pdf&category=policies" class="btn btn-info">
+                                            <i class="fas fa-eye"></i> View Document
+                                        </a>
+                                        <a href="~/documents/policies/FAA Final Rule.pdf" download class="btn btn-outline-success btn-sm">
+                                            <i class="fas fa-download"></i> Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-warning h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-file-pdf fa-3x text-warning mb-3"></i>
+                                    <h6 class="card-title">Emergency Procedures</h6>
+                                    <p class="card-text small text-muted">
+                                        Emergency response procedures and crisis management protocols.
+                                    </p>
+                                    <div class="d-grid gap-2">
+                                        <a href="/Documents/Viewer?file=part-139-cert-alert-23-02-SMS-rule.pdf&category=policies" class="btn btn-warning text-dark">
+                                            <i class="fas fa-eye"></i> View Document
+                                        </a>
+                                        <a href="~/documents/policies/emergency-procedures.pdf" download class="btn btn-outline-success btn-sm">
+                                            <i class="fas fa-download"></i> Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-success h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-file-pdf fa-3x text-success mb-3"></i>
+                                    <h6 class="card-title">Training Manual</h6>
+                                    <p class="card-text small text-muted">
+                                        Safety training procedures and educational materials for staff.
+                                    </p>
+                                    <div class="d-grid gap-2">
+                                        <a href="/Documents/Viewer?file=safety-training-manual.pdf&category=manuals" class="btn btn-success">
+                                            <i class="fas fa-eye"></i> View Document
+                                        </a>
+                                        <a href="~/documents/manuals/safety-training-manual.pdf" download class="btn btn-outline-success btn-sm">
+                                            <i class="fas fa-download"></i> Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add Your PDFs Here -->
+                    <div class="alert alert-info mt-4">
+                        <h6><i class="fas fa-info-circle"></i> Adding Your PDF Documents</h6>
+                        <p class="mb-2">To add your PDF documents:</p>
+                        <ol class="mb-0">
+                            <li>Copy your PDF files to: <code>Presentation/wwwroot/documents/policies/</code></li>
+                            <li>Update the file names in the links above to match your actual PDF files</li>
+                            <li>The "View Document" buttons will open PDFs in the same page using the embedded viewer</li>
+                            <li>The "Download" buttons allow direct file downloads</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Information Panel -->
+        <div class="col-lg-4">
+            <div class="card border-primary mb-3">
+                <div class="card-header bg-primary text-white">
+                    <h6><i class="fas fa-info-circle"></i> Document Viewer Features</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> View PDFs in the same page</li>
+                        <li><i class="fas fa-check text-success"></i> No new browser tabs required</li>
+                        <li><i class="fas fa-check text-success"></i> Built-in PDF controls (zoom, print, etc.)</li>
+                        <li><i class="fas fa-check text-success"></i> Responsive design for mobile</li>
+                        <li><i class="fas fa-check text-success"></i> Fallback for unsupported browsers</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card border-info mb-3">
+                <div class="card-header bg-info text-white">
+                    <h6><i class="fas fa-folder"></i> Document Categories</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-book text-primary"></i> <strong>Policies:</strong> Safety policies and procedures</li>
+                        <li><i class="fas fa-graduation-cap text-success"></i> <strong>Manuals:</strong> Training and user guides</li>
+                        <li><i class="fas fa-file-alt text-warning"></i> <strong>Templates:</strong> Downloadable forms</li>
+                        <li><i class="fas fa-clipboard text-info"></i> <strong>Forms:</strong> Official documents</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card border-secondary">
+                <div class="card-header bg-secondary text-white">
+                    <h6><i class="fas fa-cog"></i> Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="/SafetyPolicy/OrganizationalStructure" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-sitemap"></i> Organizational Structure
+                        </a>
+                        <a href="/SafetyPolicy/ResponsibilitiesAndAccountability" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-user-tie"></i> Manage Role Assignments
+                        </a>
+                        <a href="/SafetyPromotion/SafetyTraining" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-graduation-cap"></i> Safety Training
+                        </a>
+                        <a href="/SafetyAssurance/ComplianceReporting" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-clipboard-check"></i> Compliance Reports
+                        </a>
+                        <a href="/System" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-cogs"></i> System Administration
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Optional: Add analytics or tracking for document views
+        document.querySelectorAll('a[href*="/Documents/Viewer"]').forEach(function(link) {
+            link.addEventListener('click', function() {
+                console.log('Document viewer opened:', this.href);
+                // Add any tracking code here if needed
+            });
+        });
+    </script>
+}

@@ -1,0 +1,58 @@
+[
+  {
+    "id": "SMS-2025-0016",
+    "hazardId": "HZ-0035",
+    "submittedById": "Tom Reed",
+    "submittedDate": "2025-10-28T10:54:00",
+    "status": "Processing",
+    "trackingId": "SMS-2025-0016",
+    "validatedById": null,
+    "validationNotes": null,
+    "createdDate": "2025-10-28T18:05:00.6210422Z"
+  },
+  {
+    "id": "SMS-2025-0017",
+    "hazardId": "HZ-0036",
+    "submittedById": "JENNIFER",
+    "submittedDate": "2025-10-30T08:25:00",
+    "status": "Under Investigation",
+    "trackingId": "SMS-2025-0017",
+    "validatedById": null,
+    "validationNotes": null,
+    "createdDate": "2025-10-30T15:37:38.6743625Z"
+  },
+  {
+    "id": "SMS-2025-0018",
+    "hazardId": "HZ-0037",
+    "submittedById": "Tom Reed",
+    "submittedDate": "2025-10-30T11:35:00",
+    "status": "Under Investigation",
+    "trackingId": "SMS-2025-0018",
+    "validatedById": null,
+    "validationNotes": null,
+    "createdDate": "2025-10-30T18:46:10.7527139Z"
+  },
+  {
+    "id": "SMS-2025-0019",
+    "hazardId": "HZ-0038",
+    "submittedById": "Scott",
+    "submittedDate": "2025-10-30T12:06:00",
+    "status": "Processing",
+    "trackingId": "SMS-2025-0019",
+    "validatedById": "470e9b8a-74ff-4000-88da-42c92feaac51",
+    "validationNotes": "fgnfdgnfn",
+    "createdDate": "2025-10-30T19:18:42.39127Z"
+  },
+  {
+    "id": "SMS-2025-0020",
+    "hazardId": "HZ-0039",
+    "submittedById": "Scott",
+    "submittedDate": "2025-10-30T13:15:00",
+    "status": "Under Investigation",
+    "trackingId": "SMS-2025-0020",
+    "validatedById": null,
+    "validationNotes": null,
+    "createdDate": "2025-10-30T20:26:21.2518534Z",
+    "lastModifiedDate": "2025-10-30T21:11:23.3186924Z"
+  }
+]

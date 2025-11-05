@@ -67,6 +67,7 @@ public abstract class DatabaseTestBase : IDisposable
     protected RiskAnalysisRepository GetRiskAnalysisRepository() => GetService<RiskAnalysisRepository>();
     protected RiskAssessmentRepository GetRiskAssessmentRepository() => GetService<RiskAssessmentRepository>();
     protected ScoringPanelRepository GetScoringPanelRepository() => GetService<ScoringPanelRepository>();
+    protected SystemRepository GetSystemRepository() => GetService<SystemRepository>();
 
     #endregion
 
@@ -83,6 +84,7 @@ public abstract class DatabaseTestBase : IDisposable
     protected RiskAnalysisDataService GetRiskAnalysisDataService() => GetService<RiskAnalysisDataService>();
     protected RiskAssessmentDataService GetRiskAssessmentDataService() => GetService<RiskAssessmentDataService>();
     protected ScoringPanelDataService GetScoringPanelDataService() => GetService<ScoringPanelDataService>();
+    protected SystemDataService GetSystemDataService() => GetService<SystemDataService>();
 
     #endregion
 
@@ -379,6 +381,27 @@ public abstract class DatabaseTestBase : IDisposable
         };
 
         return investigation;
+    }
+
+    /// <summary>
+    /// Creates a test audit log entry with unique values
+    /// </summary>
+    protected AuditLogEntry CreateTestAuditLogEntry()
+    {
+        var testId = GenerateTestId("AUDIT");
+        var auditEntry = new AuditLogEntry(new AuditLogEntryID(testId))
+        {
+            UserID = $"TEST_USER_{testId}",
+            Workstation = "TEST_WORKSTATION",
+            EventDateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
+            MessageType = "Info",
+            Severity = "Medium",
+            Module = "TestModule",
+            Function = "DatabaseIntegrationTest",
+            Description = $"Test audit log entry created for integration testing - {testId}"
+        };
+
+        return auditEntry;
     }
 
     #endregion
