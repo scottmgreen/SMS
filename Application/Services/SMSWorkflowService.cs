@@ -315,9 +315,9 @@ public class SMSWorkflowService : ISMSWorkflowService
         {
             // In real implementation, would query user repository
             // filtered by role authority level and department
-            
+
             var userIds = new List<string> { "system-admin", "safety-manager", "operations-manager" };
-            return Result<IEnumerable<string>>.Success(userIds);
+            return Result<IEnumerable<string>>.Success((IEnumerable<string>)userIds);
         }
         catch (Exception ex)
         {
