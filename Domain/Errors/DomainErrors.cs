@@ -2,6 +2,7 @@
 
 /// <summary>
 /// Contains the domain errors for Safety Management System (SMS).
+/// All error classes follow the convention: DomainErrors.<EntityName>Error
 /// </summary>
 public static class DomainErrors
 {
@@ -12,9 +13,6 @@ public static class DomainErrors
     {
         public static Error AuditLogEntryError => new Error("SystemError.AuditLogEntryError", "Audit Log Entry Error.");
         public static Error FileExistsError => new Error("SystemError.FileExistsError", "File Does Not Exist Error.");
-        // public static Error VideoPlaybackError => new Error("SystemError.VideoPlaybackError", "Video Playback Error.");
-        // public static Error LessonQuizError => new Error("SystemError.LessonQuizError", "Lesson Quiz Error.");
-        // public static Error CustomPageError => new Error("SystemError.CustomPageError", "Custom Page Error.");
     }
 
     /// <summary>
@@ -177,6 +175,9 @@ public static class DomainErrors
         public static Error ExtensionFailed => new Error("SMSUserRole.ExtensionFailed", "Failed to extend the SMS User Role assignment.");
         public static Error AlreadyDeactivated => new Error("SMSUserRole.AlreadyDeactivated", "The SMS User Role assignment is already deactivated.");
         public static Error AlreadyActive => new Error("SMSUserRole.AlreadyActive", "The SMS User Role assignment is already active.");
+        public static readonly Error DeleteFailed = new Error(
+            "SMSUserRole.DeleteFailed",
+            "Failed to delete SMS user role.");
     }
 
     /// <summary>
@@ -299,6 +300,7 @@ public static class DomainErrors
         public static Error UpdateFailed => new Error("AirportSharedDataset.UpdateFailed", "Failed to update the Airport Shared Dataset.");
         public static Error DeleteFailed => new Error("AirportSharedDataset.DeleteFailed", "Failed to delete the Airport Shared Dataset.");
     }
+
     /// <summary>
     /// Contains hazard-related errors.
     /// </summary>
@@ -306,12 +308,54 @@ public static class DomainErrors
     {
         public static Error NullOrEmpty => new Error("Hazard.NullOrEmpty", "The Hazard is required.");
         public static Error CodeRequired => new Error("Hazard.CodeRequired", "The Hazard Code is required.");
-        public static Error ReportCodeRequired => new Error("Hazard.ReportCodeRequired", "The Report Code is required.");
-        public static Error InvalidCode => new Error("Hazard.InvalidCode", "The Hazard Code is invalid.");
+        public static Error InvalidCode => new Error("Hazard.InvalidCode", "The Hazard Code is invalid or description too short.");
+        public static Error ReportedByRequired => new Error("Hazard.ReportedByRequired", "The ReportedBy field is required.");
         public static Error NotFound => new Error("Hazard.NotFound", "The Hazard was not found.");
         public static Error CreateFailed => new Error("Hazard.CreateFailed", "Failed to create the Hazard.");
         public static Error UpdateFailed => new Error("Hazard.UpdateFailed", "Failed to update the Hazard.");
         public static Error DeleteFailed => new Error("Hazard.DeleteFailed", "Failed to delete the Hazard.");
+    }
+
+    /// <summary>
+    /// Contains interview-related errors.
+    /// </summary>
+    public static class InterviewError
+    {
+        public static Error NullOrEmpty => new Error("Interview.NullOrEmpty", "The Interview is required.");
+        public static Error NotFound => new Error("Interview.NotFound", "The Interview was not found.");
+        public static Error CreateFailed => new Error("Interview.CreateFailed", "Failed to create the Interview.");
+        public static Error UpdateFailed => new Error("Interview.UpdateFailed", "Failed to update the Interview.");
+        public static Error DeleteFailed => new Error("Interview.DeleteFailed", "Failed to delete the Interview.");
+        public static Error CodeRequired => new Error("Interview.CodeRequired", "The Interview Code is required.");
+        public static Error InvestigationCodeRequired => new Error("Interview.InvestigationCodeRequired", "The Investigation Code is required.");
+        public static Error PersonInterviewedRequired => new Error("Interview.PersonInterviewedRequired", "The person being interviewed is required.");
+        public static Error InvestigatorRequired => new Error("Interview.InvestigatorRequired", "An assigned investigator is required.");
+        public static Error CannotModifyCompleted => new Error("Interview.CannotModifyCompleted", "Cannot modify a completed interview.");
+        public static Error CannotComplete => new Error("Interview.CannotComplete", "Cannot complete interview in current status.");
+        public static Error MustBeScheduled => new Error("Interview.MustBeScheduled", "Interview must be scheduled before starting.");
+        public static Error InterviewDateMustBeFuture => new Error("Interview.InterviewDateMustBeFuture", "Interview date must be in the future.");
+        public static Error CancellationReasonRequired => new Error("Interview.CancellationReasonRequired", "A cancellation reason is required.");
+    }
+
+    /// <summary>
+    /// Contains mitigation-related errors.
+    /// </summary>
+    public static class MitigationError
+    {
+        public static Error NullOrEmpty => new Error("Mitigation.NullOrEmpty", "The Mitigation is required.");
+        public static Error CodeRequired => new Error("Mitigation.CodeRequired", "The Mitigation Code is required.");
+        public static Error InvalidCode => new Error("Mitigation.InvalidCode", "The Mitigation Code is invalid.");
+        public static Error NotFound => new Error("Mitigation.NotFound", "The Mitigation was not found.");
+        public static Error CreateFailed => new Error("Mitigation.CreateFailed", "Failed to create the Mitigation.");
+        public static Error UpdateFailed => new Error("Mitigation.UpdateFailed", "Failed to update the Mitigation.");
+        public static Error DeleteFailed => new Error("Mitigation.DeleteFailed", "Failed to delete the Mitigation.");
+        public static Error InvalidType => new Error("Mitigation.InvalidType", "The Mitigation Type is invalid.");
+        public static Error InvalidStatus => new Error("Mitigation.InvalidStatus", "The Mitigation Status is invalid.");
+        public static Error InvalidAssignment => new Error("Mitigation.InvalidAssignment", "The Mitigation assignment is invalid.");
+        public static Error InvalidDueDate => new Error("Mitigation.InvalidDueDate", "The Mitigation due date is invalid.");
+        public static Error InvalidProgress => new Error("Mitigation.InvalidProgress", "The progress percentage must be between 0 and 100.");
+        public static Error AlreadyCompleted => new Error("Mitigation.AlreadyCompleted", "The Mitigation is already completed.");
+        public static Error CannotModifyCompleted => new Error("Mitigation.CannotModifyCompleted", "Cannot modify a completed Mitigation.");
     }
 
     /// <summary>
@@ -321,40 +365,18 @@ public static class DomainErrors
     {
         public static Error NullOrEmpty => new Error("Report.NullOrEmpty", "The Report is required.");
         public static Error CodeRequired => new Error("Report.CodeRequired", "The Report Code is required.");
-        public static Error InvalidStatus => new Error("Report.InvalidStatus", "The Report Status is invalid.");
-        public static Error InvalidStage => new Error("Report.InvalidStage", "The Report Stage is invalid.");
+        public static Error InvalidCode => new Error("Report.InvalidCode", "The Report Code is invalid.");
         public static Error NotFound => new Error("Report.NotFound", "The Report was not found.");
         public static Error CreateFailed => new Error("Report.CreateFailed", "Failed to create the Report.");
         public static Error UpdateFailed => new Error("Report.UpdateFailed", "Failed to update the Report.");
         public static Error DeleteFailed => new Error("Report.DeleteFailed", "Failed to delete the Report.");
-    }
-
-    /// <summary>
-    /// Contains investigation-related errors.
-    /// </summary>
-    public static class InvestigationError
-    {
-        public static Error NullOrEmpty => new Error("Investigation.NullOrEmpty", "The Investigation is required.");
-        public static Error ReportCodeRequired => new Error("Investigation.ReportCodeRequired", "The Report Code is required.");
-        public static Error NotFound => new Error("Investigation.NotFound", "The Investigation was not found.");
-        public static Error InvalidCode => new Error("Investigation.InvalidCode", "The Investigation Code is invalid.");
-        public static Error CreateFailed => new Error("Investigation.CreateFailed", "Failed to create the Investigation.");
-        public static Error UpdateFailed => new Error("Investigation.UpdateFailed", "Failed to update the Investigation.");
-        public static Error DeleteFailed => new Error("Investigation.DeleteFailed", "Failed to delete the Investigation.");
-    }
-
-    /// <summary>
-    /// Contains interview-related errors.
-    /// </summary>
-    public static class InterviewError
-    {
-        public static Error NullOrEmpty => new Error("Interview.NullOrEmpty", "The Interview is required.");
-        public static Error InvestigationCodeRequired => new Error("Interview.InvestigationCodeRequired", "The Investigation Code is required.");
-        public static Error PersonInterviewedRequired => new Error("Interview.PersonInterviewedRequired", "The Person Interviewed is required.");
-        public static Error NotFound => new Error("Interview.NotFound", "The Interview was not found.");
-        public static Error CreateFailed => new Error("Interview.CreateFailed", "Failed to create the Interview.");
-        public static Error UpdateFailed => new Error("Interview.UpdateFailed", "Failed to update the Interview.");
-        public static Error DeleteFailed => new Error("Interview.DeleteFailed", "Failed to delete the Interview.");
+        public static Error InvalidReportType => new Error("Report.InvalidReportType", "The Report Type is invalid.");
+        public static Error InvalidStatus => new Error("Report.InvalidStatus", "The Report Status is invalid.");
+        public static Error InvalidReporter => new Error("Report.InvalidReporter", "The Reporter information is invalid.");
+        public static Error InvalidIncidentDate => new Error("Report.InvalidIncidentDate", "The Incident Date is invalid.");
+        public static Error MissingDescription => new Error("Report.MissingDescription", "The Report description is required.");
+        public static Error CannotModifySubmitted => new Error("Report.CannotModifySubmitted", "Cannot modify a submitted Report.");
+        public static Error AlreadySubmitted => new Error("Report.AlreadySubmitted", "The Report has already been submitted.");
     }
 
     /// <summary>
@@ -363,56 +385,19 @@ public static class DomainErrors
     public static class RiskAnalysisError
     {
         public static Error NullOrEmpty => new Error("RiskAnalysis.NullOrEmpty", "The Risk Analysis is required.");
-        public static Error HazardCodeRequired => new Error("RiskAnalysis.HazardCodeRequired", "The Hazard Code is required.");
-        public static Error InvalidStatus => new Error("RiskAnalysis.InvalidStatus", "The Risk Analysis Status is invalid.");
-        public static Error InvalidStage => new Error("RiskAnalysis.InvalidStage", "The Risk Analysis Stage is invalid.");
+        public static Error CodeRequired => new Error("RiskAnalysis.CodeRequired", "The Risk Analysis Code is required.");
+        public static Error InvalidCode => new Error("RiskAnalysis.InvalidCode", "The Risk Analysis Code is invalid.");
         public static Error NotFound => new Error("RiskAnalysis.NotFound", "The Risk Analysis was not found.");
         public static Error CreateFailed => new Error("RiskAnalysis.CreateFailed", "Failed to create the Risk Analysis.");
         public static Error UpdateFailed => new Error("RiskAnalysis.UpdateFailed", "Failed to update the Risk Analysis.");
         public static Error DeleteFailed => new Error("RiskAnalysis.DeleteFailed", "Failed to delete the Risk Analysis.");
-    }
-
-    /// <summary>
-    /// Contains risk assessment-related errors.
-    /// </summary>
-    public static class RiskAssessmentError
-    {
-        public static Error NullOrEmpty => new Error("RiskAssessment.NullOrEmpty", "The Risk Assessment is required.");
-        public static Error HazardCodeRequired => new Error("RiskAssessment.HazardCodeRequired", "The Hazard Code is required.");
-        public static Error InvalidAssessmentType => new Error("RiskAssessment.InvalidAssessmentType", "The Assessment Type is invalid.");
-        public static Error InvalidStatus => new Error("RiskAssessment.InvalidStatus", "The Risk Assessment Status is invalid.");
-        public static Error NotFound => new Error("RiskAssessment.NotFound", "The Risk Assessment was not found.");
-        public static Error CreateFailed => new Error("RiskAssessment.CreateFailed", "Failed to create the Risk Assessment.");
-        public static Error UpdateFailed => new Error("RiskAssessment.UpdateFailed", "Failed to update the Risk Assessment.");
-        public static Error DeleteFailed => new Error("RiskAssessment.DeleteFailed", "Failed to delete the Risk Assessment.");
-    }
-
-    /// <summary>
-    /// Contains mitigation-related errors.
-    /// </summary>
-    public static class MitigationError
-    {
-        public static Error NullOrEmpty => new Error("Mitigation.NullOrEmpty", "The Mitigation is required.");
-        public static Error HazardCodeRequired => new Error("Mitigation.HazardCodeRequired", "The Hazard Code is required.");
-        public static Error NotFound => new Error("Mitigation.NotFound", "The Mitigation was not found.");
-        public static Error InvalidCode => new Error("Mitigation.InvalidCode", "The Mitigation Code is invalid.");
-        public static Error CreateFailed => new Error("Mitigation.CreateFailed", "Failed to create the Mitigation.");
-        public static Error UpdateFailed => new Error("Mitigation.UpdateFailed", "Failed to update the Mitigation.");
-        public static Error DeleteFailed => new Error("Mitigation.DeleteFailed", "Failed to delete the Mitigation.");
-    }
-
-    /// <summary>
-    /// Contains mitigation assignment-related errors.
-    /// </summary>
-    public static class MitigationAssignmentError
-    {
-        public static Error NullOrEmpty => new Error("MitigationAssignment.NullOrEmpty", "The Mitigation Assignment is required.");
-        public static Error MitigationCodeRequired => new Error("MitigationAssignment.MitigationCodeRequired", "The Mitigation Code is required.");
-        public static Error DepartmentCodeRequired => new Error("MitigationAssignment.DepartmentCodeRequired", "The Department Code is required.");
-        public static Error NotFound => new Error("MitigationAssignment.NotFound", "The Mitigation Assignment was not found.");
-        public static Error CreateFailed => new Error("MitigationAssignment.CreateFailed", "Failed to create the Mitigation Assignment.");
-        public static Error UpdateFailed => new Error("MitigationAssignment.UpdateFailed", "Failed to update the Mitigation Assignment.");
-        public static Error DeleteFailed => new Error("MitigationAssignment.DeleteFailed", "Failed to delete the Mitigation Assignment.");
+        public static Error InvalidAnalysisType => new Error("RiskAnalysis.InvalidAnalysisType", "The Risk Analysis Type is invalid.");
+        public static Error InvalidStatus => new Error("RiskAnalysis.InvalidStatus", "The Risk Analysis Status is invalid.");
+        public static Error InvalidAnalyst => new Error("RiskAnalysis.InvalidAnalyst", "The Risk Analyst information is invalid.");
+        public static Error MissingWorstOutcome => new Error("RiskAnalysis.MissingWorstOutcome", "The worst credible outcome is required.");
+        public static Error MissingRootCause => new Error("RiskAnalysis.MissingRootCause", "The root cause analysis is required.");
+        public static Error IncompleteAnalysis => new Error("RiskAnalysis.IncompleteAnalysis", "The Risk Analysis is incomplete.");
+        public static Error CannotModifyCompleted => new Error("RiskAnalysis.CannotModifyCompleted", "Cannot modify a completed Risk Analysis.");
     }
 
     /// <summary>
@@ -421,84 +406,124 @@ public static class DomainErrors
     public static class ScoringPanelError
     {
         public static Error NullOrEmpty => new Error("ScoringPanel.NullOrEmpty", "The Scoring Panel is required.");
-        public static Error HazardCodeRequired => new Error("ScoringPanel.HazardCodeRequired", "The Hazard Code is required.");
-        public static Error SMSUserCodeRequired => new Error("ScoringPanel.SMSUserCodeRequired", "The SMS User Code is required.");
-        public static Error InvalidLikelihood => new Error("ScoringPanel.InvalidLikelihood", "The Likelihood value is invalid.");
-        public static Error InvalidSeverity => new Error("ScoringPanel.InvalidSeverity", "The Severity value is invalid.");
-        public static Error InvalidScore => new Error("ScoringPanel.InvalidScore", "The Score value is invalid.");
+        public static Error CodeRequired => new Error("ScoringPanel.CodeRequired", "The Scoring Panel Code is required.");
+        public static Error InvalidCode => new Error("ScoringPanel.InvalidCode", "The Scoring Panel Code is invalid.");
         public static Error NotFound => new Error("ScoringPanel.NotFound", "The Scoring Panel was not found.");
         public static Error CreateFailed => new Error("ScoringPanel.CreateFailed", "Failed to create the Scoring Panel.");
         public static Error UpdateFailed => new Error("ScoringPanel.UpdateFailed", "Failed to update the Scoring Panel.");
         public static Error DeleteFailed => new Error("ScoringPanel.DeleteFailed", "Failed to delete the Scoring Panel.");
+        public static Error InvalidPanelType => new Error("ScoringPanel.InvalidPanelType", "The Scoring Panel Type is invalid.");
+        public static Error InvalidStatus => new Error("ScoringPanel.InvalidStatus", "The Scoring Panel Status is invalid.");
+        public static Error InvalidMember => new Error("ScoringPanel.InvalidMember", "The Panel Member information is invalid.");
+        public static Error MemberAlreadyExists => new Error("ScoringPanel.MemberAlreadyExists", "The member is already part of this scoring panel.");
+        public static Error MemberNotFound => new Error("ScoringPanel.MemberNotFound", "The panel member was not found.");
+        public static Error InsufficientMembers => new Error("ScoringPanel.InsufficientMembers", "The scoring panel requires at least 3 members.");
+        public static Error MaxMembersExceeded => new Error("ScoringPanel.MaxMembersExceeded", "The scoring panel has reached its maximum member limit.");
+        public static Error InvalidScore => new Error("ScoringPanel.InvalidScore", "The score value is invalid.");
+        public static Error ScoreOutOfRange => new Error("ScoringPanel.ScoreOutOfRange", "The score must be between 1 and 5.");
+        public static Error DuplicateScore => new Error("ScoringPanel.DuplicateScore", "This member has already submitted a score for this item.");
+        public static Error CannotModifyCompletedPanel => new Error("ScoringPanel.CannotModifyCompletedPanel", "Cannot modify a completed scoring panel.");
+        public static Error PanelNotActive => new Error("ScoringPanel.PanelNotActive", "The scoring panel is not active.");
+        public static Error ScoringNotComplete => new Error("ScoringPanel.ScoringNotComplete", "All panel members must submit scores before completion.");
     }
 
     /// <summary>
-    /// Contains report validation-related errors.
+    /// Contains mitigation assignment-related errors.
     /// </summary>
-    public static class ReportValidationError
+    public static class MitigationAssignmentError
     {
-        public static Error NullOrEmpty => new Error("ReportValidation.NullOrEmpty", "The Report Validation is required.");
-        public static Error ReportCodeRequired => new Error("ReportValidation.ReportCodeRequired", "The Report Code is required.");
-        public static Error ValidationDecisionRequired => new Error("ReportValidation.ValidationDecisionRequired", "The Validation Decision is required.");
-        public static Error InvalidStatus => new Error("ReportValidation.InvalidStatus", "The Validation Status is invalid.");
-        public static Error NotFound => new Error("ReportValidation.NotFound", "The Report Validation was not found.");
-        public static Error CreateFailed => new Error("ReportValidation.CreateFailed", "Failed to create the Report Validation.");
-        public static Error UpdateFailed => new Error("ReportValidation.UpdateFailed", "Failed to update the Report Validation.");
-        public static Error DeleteFailed => new Error("ReportValidation.DeleteFailed", "Failed to delete the Report Validation.");
+        public static Error NullOrEmpty => new Error("MitigationAssignment.NullOrEmpty", "The Mitigation Assignment is required.");
+        public static Error CodeRequired => new Error("MitigationAssignment.CodeRequired", "The Mitigation Assignment Code is required.");
+        public static Error InvalidCode => new Error("MitigationAssignment.InvalidCode", "The Mitigation Assignment Code is invalid.");
+        public static Error NotFound => new Error("MitigationAssignment.NotFound", "The Mitigation Assignment was not found.");
+        public static Error CreateFailed => new Error("MitigationAssignment.CreateFailed", "Failed to create the Mitigation Assignment.");
+        public static Error UpdateFailed => new Error("MitigationAssignment.UpdateFailed", "Failed to update the Mitigation Assignment.");
+        public static Error DeleteFailed => new Error("MitigationAssignment.DeleteFailed", "Failed to delete the Mitigation Assignment.");
+        public static Error InvalidAssignmentType => new Error("MitigationAssignment.InvalidAssignmentType", "The Mitigation Assignment Type is invalid.");
+        public static Error InvalidStatus => new Error("MitigationAssignment.InvalidStatus", "The Mitigation Assignment Status is invalid.");
+        public static Error InvalidAssignee => new Error("MitigationAssignment.InvalidAssignee", "The Assignee information is invalid.");
+        public static Error InvalidAssigner => new Error("MitigationAssignment.InvalidAssigner", "The Assigner information is invalid.");
+        public static Error InvalidDueDate => new Error("MitigationAssignment.InvalidDueDate", "The Due Date is invalid or in the past.");
+        public static Error InvalidPriority => new Error("MitigationAssignment.InvalidPriority", "The Priority level is invalid.");
+        public static Error AlreadyAssigned => new Error("MitigationAssignment.AlreadyAssigned", "This mitigation is already assigned to the specified user.");
+        public static Error AssigneeNotFound => new Error("MitigationAssignment.AssigneeNotFound", "The assigned user was not found.");
+        public static Error CannotModifyCompleted => new Error("MitigationAssignment.CannotModifyCompleted", "Cannot modify a completed Mitigation Assignment.");
+        public static Error CannotReassign => new Error("MitigationAssignment.CannotReassign", "Cannot reassign a mitigation that is in progress or completed.");
+        public static Error InsufficientPermissions => new Error("MitigationAssignment.InsufficientPermissions", "User does not have permission to assign mitigations.");
+        public static Error WorkflowViolation => new Error("MitigationAssignment.WorkflowViolation", "The assignment violates workflow rules.");
+        public static Error DependencyNotMet => new Error("MitigationAssignment.DependencyNotMet", "Cannot assign mitigation until dependencies are resolved.");
+        public static Error InvalidDepartment => new Error("MitigationAssignment.InvalidDepartment", "The assigned department is invalid.");
+        public static Error InvalidProgress => new Error("MitigationAssignment.InvalidProgress", "The progress percentage must be between 0 and 100.");
     }
 
-    // Training/Course-related errors (commented out as they don't relate to SMS POCO classes)
-    /*
-    public static class MachineError
+    /// <summary>
+    /// Contains risk assessment-related errors - MISSION CRITICAL.
+    /// </summary>
+    public static class RiskAssessmentError
     {
-        public static Error CurrentStateNullOrEmpty => new Error("Machine.CurrentStateNullOrEmpty", "The Current State is required.");
+        // Core Risk Assessment Errors
+        public static Error NullOrEmpty => new Error("RiskAssessment.NullOrEmpty", "The Risk Assessment is required.");
+        public static Error NotFound => new Error("RiskAssessment.NotFound", "The Risk Assessment was not found.");
+        public static Error CreateFailed => new Error("RiskAssessment.CreateFailed", "Failed to create the Risk Assessment.");
+        public static Error UpdateFailed => new Error("RiskAssessment.UpdateFailed", "Failed to update the Risk Assessment.");
+        public static Error DeleteFailed => new Error("RiskAssessment.DeleteFailed", "Failed to delete the Risk Assessment.");
+        public static Error DeletionFailed => new Error("RiskAssessment.DeletionFailed", "Failed to delete the Risk Assessment.");
+        public static Error CreationFailed => new Error("RiskAssessment.CreationFailed", "Risk assessment creation failed due to invalid data.");
+
+        // ID and Basic Validation Errors
+        public static Error InvalidId => new Error("RiskAssessment.InvalidId", "The Risk Assessment ID is invalid.");
+        public static Error InvalidIdFormat => new Error("RiskAssessment.InvalidIdFormat", "The Risk Assessment ID format is invalid. Expected format: RA-YYYYMMDD-XXXXXXXX");
+        public static Error InvalidName => new Error("RiskAssessment.InvalidName", "The Risk Assessment name is required and cannot be empty.");
+        public static Error InvalidLeadAssessor => new Error("RiskAssessment.InvalidLeadAssessor", "The Lead Assessor ID is required and cannot be empty.");
+        
+        // Status and Workflow Errors
+        public static Error InvalidStatus => new Error("RiskAssessment.InvalidStatus", "The Risk Assessment Status is invalid.");
+        public static Error InvalidStage => new Error("RiskAssessment.InvalidStage", "The Stage is invalid or required.");
+        public static Error InvalidStep => new Error("RiskAssessment.InvalidStep", "The step number must be between 1 and 5.");
+        public static Error CannotModifyCompleted => new Error("RiskAssessment.CannotModifyCompleted", "Cannot modify a completed Risk Assessment.");
+        public static Error IncompleteSteps => new Error("RiskAssessment.IncompleteSteps", "Cannot complete Risk Assessment - not all steps are completed.");
+        
+        // Hazard-Related Errors
+        public static Error InvalidHazard => new Error("RiskAssessment.InvalidHazard", "The hazard ID is invalid or empty.");
+        public static Error HazardNotFound => new Error("RiskAssessment.HazardNotFound", "The hazard is not part of this Risk Assessment.");
+        public static Error InvalidStakeholder => new Error("RiskAssessment.InvalidStakeholder", "The stakeholder ID is invalid or empty.");
+        public static Error InvalidParentAssessment => new Error("RiskAssessment.InvalidParentAssessment", "The parent assessment ID is required for residual risk assessments.");
+        
+        // Panel Scoring Errors
+        public static Error InvalidPanelMember => new Error("RiskAssessment.InvalidPanelMember", "The panel member ID is invalid or empty.");
+        public static Error InvalidSeverityScore => new Error("RiskAssessment.InvalidSeverityScore", "Severity score must be between 1 and 5.");
+        public static Error InvalidLikelihoodScore => new Error("RiskAssessment.InvalidLikelihoodScore", "Likelihood score must be between 1 and 5.");
+        public static Error InvalidRiskScore => new Error("RiskAssessment.InvalidRiskScore", "Both severity and likelihood scores must be between 1 and 5.");
+        
+        // Mitigation and Assessment Errors
+        public static Error InvalidMitigationStrategy => new Error("RiskAssessment.InvalidMitigationStrategy", "The mitigation strategy is invalid or empty.");
+        public static Error InvalidAssignment => new Error("RiskAssessment.InvalidAssignment", "The mitigation assignment is invalid - department is required.");
+        public static Error InvalidMonitoringRequirement => new Error("RiskAssessment.InvalidMonitoringRequirement", "The monitoring requirement is invalid - frequency is required.");
+        
+        // Legacy Support (for existing RiskAssessmentError references)
+        public static Error HazardCodeRequired => new Error("RiskAssessment.HazardCodeRequired", "The Hazard Code is required.");
+        public static Error InvalidAssessmentType => new Error("RiskAssessment.InvalidAssessmentType", "The Assessment Type is invalid.");
     }
 
-    public static class TraineeError
+    /// <summary>
+    /// Contains mitigation strategy-related errors - MISSION CRITICAL.
+    /// </summary>
+    public static class MitigationStrategyError
     {
-        public static Error NullOrEmpty => new Error("Trainee.NullOrEmpty", "The Trainee is required.");
+        public static Error NullOrEmpty => new Error("MitigationStrategy.NullOrEmpty", "The Mitigation Strategy is required.");
+        public static Error NotFound => new Error("MitigationStrategy.NotFound", "The Mitigation Strategy was not found.");
+        public static Error CreateFailed => new Error("MitigationStrategy.CreateFailed", "Failed to create the Mitigation Strategy.");
+        public static Error UpdateFailed => new Error("MitigationStrategy.UpdateFailed", "Failed to update the Mitigation Strategy.");
+        public static Error DeleteFailed => new Error("MitigationStrategy.DeleteFailed", "Failed to delete the Mitigation Strategy.");
+        
+        // Validation Errors
+        public static Error InvalidId => new Error("MitigationStrategy.InvalidId", "The Mitigation Strategy ID is invalid.");
+        public static Error InvalidIdFormat => new Error("MitigationStrategy.InvalidIdFormat", "The Mitigation Strategy ID format is invalid. Expected format: MS-YYYYMMDD-XXXXXXXX");
+        public static Error InvalidDescription => new Error("MitigationStrategy.InvalidDescription", "The description is required and cannot be empty.");
+        public static Error InvalidHazardId => new Error("MitigationStrategy.InvalidHazardId", "The hazard ID is required and cannot be empty.");
+        public static Error InvalidProgress => new Error("MitigationStrategy.InvalidProgress", "Progress percentage must be between 0 and 100.");
+        public static Error InvalidCompletedBy => new Error("MitigationStrategy.InvalidCompletedBy", "CompletedBy is required when marking as completed.");
     }
-
-    public static class TrainingStationError
-    {
-        public static Error NullOrEmpty => new Error("TrainingStation.NullOrEmpty", "The Training Station can not be null.");
-    }
-
-    public static class TrainingSessionError
-    {
-        public static Error NullOrEmpty => new Error("TrainingSession.NullOrEmpty", "The Training Session can not be null.");
-    }
-
-    public static class CourseError
-    {
-        public static Error NullOrEmpty => new Error("Course.NullOrEmpty", "The Course is required.");
-        public static Error NoLessonsFound => new Error("Course.NoLessonsFound", "The course must have at least one lesson.");
-        public static Error InValidCourse => new Error("Course.InValidCourse", "Cannot start CourseMachine without a valid Course with lessons.");
-        public static Error CourseCheck => new Error("Course.CourseCheck", "Course Check Error");
-    }
-
-    public static class LessonError
-    {
-        public static Error NullOrEmpty => new Error("Lesson.NullOrEmpty", "The Course is required.");
-        public static Error NoLessonPagesFound => new Error("Lesson.NoLessonPagesFound", "The Lesson must have at least one LessonPage.");
-        public static Error InValidLesson => new Error("Lesson.InValidLesson", "Cannot start LessonMachine without a valid Lesson with LessonPages.");
-    }
-
-    public static class LessonQuizError
-    {
-        public static Error NullOrEmpty => new Error("LessonQuiz.NullOrEmpty", "The Lesson Quiz is required.");
-        public static Error NoQuestionPoolsFound => new Error("LessonQuiz.NoQuestionPoolsFound", "The Lesson Quiz must have at least one QuestionPool.");
-        public static Error AnswerNotRecorded => new Error("LessonQuiz.AnswerNotRecorded", "The Answer was not recorded.");
-    }
-
-    public static class TrainingLogEntryError
-    {
-        public static Error NullOrEmptyParam => new Error("TrainingLogEntry.NullOrEmptyParam", "The Training Log Params are required.");
-        public static Error CourseCompletion => new Error("TrainingLogEntry.CourseCompletion", "The Course Completion was not recorded.");
-        public static Error AddTrainingLogEntry => new Error("TrainingLogEntry.AddTrainingLogEntry", "The Add Training Log failed.");
-        public static Error DeleteTrainingLog => new Error("TrainingLogEntry.DeleteTrainingLog", "The Delete Training Log failed.");
-    }
-    */
 
     /// <summary>
     /// Contains the notification errors.
@@ -517,8 +542,9 @@ public static class DomainErrors
         public static Error LongerThanAllowed => new Error("Name.LongerThanAllowed", "The name is longer than allowed.");
     }
 
-    // Personal information errors (commented out as they don't relate to SMS POCO classes)
-    
+    /// <summary>
+    /// Contains first name errors.
+    /// </summary>
     public static class FirstNameError
     {
         public static Error NullOrEmpty => new Error("FirstName.NullOrEmpty", "The first name is required.");
@@ -526,67 +552,69 @@ public static class DomainErrors
         public static Error ContainsSpecialCharactersOrNumbers => new Error("FirstName.ContainsSpecialCharactersOrNumbers", "The first name must not contain special characters or numeric values");
     }
 
+    /// <summary>
+    /// Contains last name errors.
+    /// </summary>
     public static class LastNameError
     {
         public static Error NullOrEmpty => new Error("LastName.NullOrEmpty", "The last name is required.");
         public static Error LongerThanAllowed => new Error("LastName.LongerThanAllowed", "The last name is longer than allowed.");
         public static Error ContainsSpecialCharactersOrNumbers => new Error("LastName.ContainsSpecialCharactersOrNumbers", "The last name must not contain special characters or numeric values");
     }
-    /*
-    public static class UPIDError
-    {
-        public static Error NullOrEmpty => new Error("UPID.NullOrEmpty", "The UPID is required.");
-        public static Error NonNumericCharacters => new Error("UPID.NonNumericCharacters", "Non numeric characters are not allowed");
-        public static Error RequiredLength => new Error("UPID.RequiredLength", "The UPID is not of the required length.");
-        public static Error OutOfAllowedRange => new Error("UPID.OutOfAllowedRange", "The UPID is not within the allowed range.");
-        public static Error InvalidUPID => new Error("UPID.InvalidUPID", "The UPID is invalid.");
-        public static Error MismatchUPID => new Error("UPID.MismatchUPID", "The UPIDs provided do not match.");
-    }
-
-    public static class YearOfBirthError
-    {
-        public static Error NullOrEmpty => new Error("YearOfBirth.NullOrEmpty", "The YearOfBirth is required.");
-        public static Error NonNumericCharacters => new Error("YearOfBirth.NonNumericCharacters", "Non numeric characters are not allowed");
-        public static Error RequiredLength => new Error("YearOfBirth.RequiredLength", "The YearOfBirth is not of the required length.");
-        public static Error OutOfRange => new Error("YearOfBirth.OutOfRange", "The YearOfBirth is out of the allowable range.");
-        public static Error MismatchYearOfBirth => new Error("YearOfBirth.MismatchYearOfBirth", "The Year of Birth provided does not match.");
-    }
-
-    public static class URLError
-    {
-        public static Error NullOrEmpty => new Error("URLError.NullOrEmpty", "The URL is required.");
-        public static Error NumericCharacters => new Error("URLError.NumericCharacters", "Numeric characters are not allowed");
-        public static Error InValid => new Error("URLError.InValid", "The URL is invalid.");
-    }
-
-    public static class SubscribeToEmailNewsletterError
-    {
-        public static Error NullOrEmpty => new Error("SubscribeToEmailNewsletterError.NullOrEmpty", "The Subscribe To EmailNewsletter option is required.");
-        public static Error InValid => new Error("SubscribeToEmailNewsletterError.InValid", "The Subscribe To Email Newsletter option is invalid.";
-    }
-
-    public static class SubscribeToTextNewsletterError
-    {
-        public static Error NullOrEmpty => new Error("SubscribeToTextNewsletterError.NullOrEmpty", "The Subscribe To Text Newsletter option is required.");
-        public static Error InValid => new Error("SubscribeToTextNewsletterError.InValid", "The Subscribe To Text Newsletter option is invalid.";
-    }
-
-    public static class SubscribeToOperationalTextsError
-    {
-        public static Error NullOrEmpty => new Error("SubscribeToOperationalTextsError.NullOrEmpty", "The Subscribe To Operational Texts option is required.");
-        public static Error InValid => new Error("SubscribeToOperationalTextsError.InValid", "The Subscribe To Operational Texts option is invalid.";
-    }
-    */
 
     /// <summary>
     /// Contains general errors.
     /// </summary>
     public static class GeneralError
     {
-        public static Error UnProcessableRequest => new Error(
-            "General.UnProcessableRequest",
-            "The server could not process the request.");
-
+        public static Error UnProcessableRequest => new Error("General.UnProcessableRequest", "The server could not process the request.");
         public static Error ServerError => new Error("General.ServerError", "The server encountered an unrecoverable error.");
+    }
+
+    /// <summary>
+    /// Contains hazard location-related errors.
+    /// </summary>
+    public static class HazardLocationError
+    {
+        public static Error NullOrEmpty => new Error("HazardLocation.NullOrEmpty", "The Hazard Location is required.");
+        public static Error CodeRequired => new Error("HazardLocation.CodeRequired", "The Hazard Location Code is required.");
+        public static Error HazardCodeRequired => new Error("HazardLocation.HazardCodeRequired", "The Hazard Code is required.");
+        public static Error InvalidCode => new Error("HazardLocation.InvalidCode", "The Hazard Location Code is invalid.");
+        public static Error InvalidLatitude => new Error("HazardLocation.InvalidLatitude", "Latitude must be between -90 and 90 degrees.");
+        public static Error InvalidLongitude => new Error("HazardLocation.InvalidLongitude", "Longitude must be between -180 and 180 degrees.");
+        public static Error InvalidSource => new Error("HazardLocation.InvalidSource", "Source must be GPS, Manual, Import, Survey, or Estimated.");
+        public static Error CoordinatesRequired => new Error("HazardLocation.CoordinatesRequired", "Coordinates are required for location validation.");
+        public static Error ValidatedByRequired => new Error("HazardLocation.ValidatedByRequired", "ValidatedBy is required when validating location.");
+        public static Error NotFound => new Error("HazardLocation.NotFound", "The Hazard Location was not found.");
+        public static Error CreateFailed => new Error("HazardLocation.CreateFailed", "Failed to create the Hazard Location.");
+        public static Error UpdateFailed => new Error("HazardLocation.UpdateFailed", "Failed to update the Hazard Location.");
+        public static Error DeleteFailed => new Error("HazardLocation.DeleteFailed", "Failed to delete the Hazard Location.");
+    }
+
+    /// <summary>
+    /// Contains hazard file-related errors.
+    /// </summary>
+    public static class HazardFileError
+    {
+        public static Error NullOrEmpty => new Error("HazardFile.NullOrEmpty", "The Hazard File is required.");
+        public static Error HazardCodeRequired => new Error("HazardFile.HazardCodeRequired", "The Hazard Code is required.");
+        public static Error FileNameRequired => new Error("HazardFile.FileNameRequired", "The File Name is required.");
+        public static Error FileTypeRequired => new Error("HazardFile.FileTypeRequired", "The File Type is required.");
+        public static Error FileDataRequired => new Error("HazardFile.FileDataRequired", "The File Data is required for database storage.");
+        public static Error UploadedByRequired => new Error("HazardFile.UploadedByRequired", "The UploadedBy field is required.");
+        public static Error InvalidFileSize => new Error("HazardFile.InvalidFileSize", "The file size must be greater than 0.");
+        public static Error InvalidFileHash => new Error("HazardFile.InvalidFileHash", "The file hash is invalid.");
+        public static Error CannotModifyInactive => new Error("HazardFile.CannotModifyInactive", "Cannot modify an inactive file.");
+        public static Error AlreadyInactive => new Error("HazardFile.AlreadyInactive", "The file is already inactive.");
+        public static Error AlreadyActive => new Error("HazardFile.AlreadyActive", "The file is already active.");
+        public static Error DeactivationReasonRequired => new Error("HazardFile.DeactivationReasonRequired", "A deactivation reason is required.");
+        public static Error DeactivatedByRequired => new Error("HazardFile.DeactivatedByRequired", "The DeactivatedBy field is required.");
+        public static Error NotFound => new Error("HazardFile.NotFound", "The Hazard File was not found.");
+        public static Error CreateFailed => new Error("HazardFile.CreateFailed", "Failed to create the Hazard File.");
+        public static Error UpdateFailed => new Error("HazardFile.UpdateFailed", "Failed to update the Hazard File.");
+        public static Error DeleteFailed => new Error("HazardFile.DeleteFailed", "Failed to delete the Hazard File.");
+        public static Error UnsupportedFileType => new Error("HazardFile.UnsupportedFileType", "The file type is not supported.");
+        public static Error FileSizeExceedsLimit => new Error("HazardFile.FileSizeExceedsLimit", "The file size exceeds the maximum allowed limit.");
+        public static Error StorageError => new Error("HazardFile.StorageError", "An error occurred while storing the file.");
     }
 }

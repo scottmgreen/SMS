@@ -29,7 +29,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
         {
             if (reportValidation is null)
             {
-                return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.NullOrEmpty);
+                return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.NullOrEmpty);
             }
 
             _logger.LogInfrastructurePostItem($"{_logheader} {StoredProcs.pr_ReportValidation_Insert} Code:{reportValidation.Code}", null);
@@ -66,7 +66,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
         catch (Exception ex)
         {
             _logger.LogInfrastructurePostItemError($"{_logheader} {ex.Message}", null);
-            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.CreateFailed);
+            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.CreateFailed);
         }
     }
 
@@ -76,7 +76,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
         {
             if (id is null)
             {
-                return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.NullOrEmpty);
+                return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.NullOrEmpty);
             }
 
             _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_ReportValidation_GetById} {id}", null);
@@ -107,7 +107,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
             }
             else
             {
-                return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.NotFound);
+                return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.NotFound);
             }
         }
         catch (Exception ex)
@@ -147,7 +147,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
         catch (Exception ex)
         {
             _logger.LogInfrastructureGetItemsError($"{_logheader} {ex.Message}", null);
-            return Result<List<ReportValidation>>.Failure<List<ReportValidation>>(DomainErrors.ReportValidationError.NullOrEmpty);
+            return Result<List<ReportValidation>>.Failure<List<ReportValidation>>(DomainErrors.ReportError.NullOrEmpty);
         }
     }
 
@@ -157,7 +157,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
         {
             if (reportValidation is null)
             {
-                return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.NullOrEmpty);
+                return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.NullOrEmpty);
             }
 
             _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_ReportValidation_Update} ID:{reportValidation.Id}", null);
@@ -186,7 +186,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
         catch (Exception ex)
         {
             _logger.LogInfrastructurePutItemError($"{_logheader} {ex.Message}", null);
-            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.UpdateFailed);
+            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.UpdateFailed);
         }
     }
 
@@ -196,7 +196,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
         {
             if (id is null)
             {
-                return Result<bool>.Failure<bool>(DomainErrors.ReportValidationError.NullOrEmpty);
+                return Result<bool>.Failure<bool>(DomainErrors.ReportError.NullOrEmpty);
             }
 
             _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_ReportValidation_Delete} ID:{id}", null);
@@ -218,7 +218,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
         catch (Exception ex)
         {
             _logger.LogInfrastructureDeleteItemError($"{_logheader} {ex.Message}", null);
-            return Result<bool>.Failure<bool>(DomainErrors.ReportValidationError.DeleteFailed);
+            return Result<bool>.Failure<bool>(DomainErrors.ReportError.DeleteFailed);
         }
     }
 }

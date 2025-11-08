@@ -10,6 +10,7 @@ using SMS_Infrastructure.Repositories;
 using SMS_Infrastructure.Interfaces;
 using SMS_Infrastructure.Configuration;
 using PDXSMS_UnitTests.Utilities;
+//using PDXSMS_UnitTests.Utilities;
 
 namespace PDXSMS_UnitTests.Application.Common;
 
@@ -40,34 +41,34 @@ public abstract class CleanApplicationTestBase : IDisposable
     private ServiceProvider BuildServiceProvider()
     {
         var services = new ServiceCollection();
-        
+
         // Load configuration from appsettings.json like the real application
         var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .Build();
-            
+
         services.AddSingleton<IConfiguration>(configuration);
-        
+
         // Add logging services
         services.AddLogging(builder =>
         {
             builder.AddConsole();
             builder.SetMinimumLevel(LogLevel.Warning);
         });
-        
+
         // Use Infrastructure DI configuration
         services.AddInfrastructureServices(configuration);
-        
+
         // Register core mediator 
         services.AddTransient<IMediator, Mediator>();
-        
+
         // Register database cleanup utility
         services.AddScoped<DatabaseCleanupUtility>();
-        
+
         // Allow derived classes to register their specific services
         RegisterServices(services);
-        
+
         return services.BuildServiceProvider();
     }
 
@@ -79,7 +80,7 @@ public abstract class CleanApplicationTestBase : IDisposable
     {
         _logger.LogInformation("Cleaning up database for test...");
         var success = await DatabaseCleanup.TruncateAllTablesAsync();
-        
+
         if (!success)
         {
             throw new InvalidOperationException("Failed to cleanup database before test execution");
@@ -103,7 +104,7 @@ public abstract class CleanApplicationTestBase : IDisposable
     {
         _logger.LogInformation("Cleaning up specific tables: {Tables}", string.Join(", ", tableNames));
         var success = await DatabaseCleanup.TruncateSpecificTablesAsync(tableNames);
-        
+
         if (!success)
         {
             throw new InvalidOperationException($"Failed to cleanup tables: {string.Join(", ", tableNames)}");
@@ -125,7 +126,7 @@ public abstract class CleanApplicationTestBase : IDisposable
     protected async Task<bool> VerifyRecordCountsAsync(Dictionary<string, int> expectedCounts)
     {
         var actualCounts = await GetTableRecordCountsAsync();
-        
+
         foreach (var expected in expectedCounts)
         {
             if (!actualCounts.ContainsKey(expected.Key))

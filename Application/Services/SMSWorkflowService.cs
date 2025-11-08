@@ -66,7 +66,7 @@ public class SMSWorkflowService : ISMSWorkflowService
             // Return the first available approver (in practice, would use more sophisticated logic)
             return Result<string>.Success(approvers.First());
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Result<string>.Failure<string>(DomainErrors.GeneralError.ServerError);
         }
@@ -99,7 +99,7 @@ public class SMSWorkflowService : ISMSWorkflowService
 
             return Result<RiskApproval>.Success(riskApproval);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Result<RiskApproval>.Failure<RiskApproval>(DomainErrors.GeneralError.ServerError);
         }
@@ -120,7 +120,7 @@ public class SMSWorkflowService : ISMSWorkflowService
 
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result.Failure(DomainErrors.GeneralError.ServerError);
         }
@@ -133,7 +133,7 @@ public class SMSWorkflowService : ISMSWorkflowService
             // Implementation would load entity and process rejection
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result.Failure(DomainErrors.GeneralError.ServerError);
         }
@@ -146,7 +146,7 @@ public class SMSWorkflowService : ISMSWorkflowService
             // Implementation would escalate to higher authority level
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result.Failure(DomainErrors.GeneralError.ServerError);
         }
@@ -156,7 +156,7 @@ public class SMSWorkflowService : ISMSWorkflowService
     {
         try
         {
-            // Route hazards to appropriate committee based on complexity/scope
+            // Route hazards to appropriate committee based on complity/scope
             var routingLogic = committeeType.Value switch
             {
                 "RAPID_REVIEW_TEAM" => "Initial triage and immediate response assessment",
@@ -167,11 +167,11 @@ public class SMSWorkflowService : ISMSWorkflowService
             };
 
             // In real implementation, would create committee assignment
-            // and schedule for next available meeting
+            // and schedule for nt available meeting
 
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result.Failure(DomainErrors.GeneralError.ServerError);
         }
@@ -196,7 +196,7 @@ public class SMSWorkflowService : ISMSWorkflowService
             
             return Result<CommitteeMeeting>.Success(meeting);
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result<CommitteeMeeting>.Failure<CommitteeMeeting>(DomainErrors.GeneralError.ServerError);
         }
@@ -217,7 +217,7 @@ public class SMSWorkflowService : ISMSWorkflowService
 
             return Result<SMSCommittee>.Success(committee);
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result<SMSCommittee>.Failure<SMSCommittee>(DomainErrors.GeneralError.ServerError);
         }
@@ -250,7 +250,7 @@ public class SMSWorkflowService : ISMSWorkflowService
 
             return Result<CommitteeMeeting>.Success(meeting);
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result<CommitteeMeeting>.Failure<CommitteeMeeting>(DomainErrors.GeneralError.ServerError);
         }
@@ -287,7 +287,7 @@ public class SMSWorkflowService : ISMSWorkflowService
             var hasAuthority = requiredAuthority.CanApprove(userRoleResult.Value);
             return Result<bool>.Success(hasAuthority);
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result<bool>.Failure<bool>(DomainErrors.GeneralError.ServerError);
         }
@@ -303,7 +303,7 @@ public class SMSWorkflowService : ISMSWorkflowService
             // For now, return a default role
             return Result<SMSRole>.Success(SMSRole.SMSManager);
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result<SMSRole>.Failure<SMSRole>(DomainErrors.GeneralError.ServerError);
         }
@@ -319,7 +319,7 @@ public class SMSWorkflowService : ISMSWorkflowService
             var userIds = new List<string> { "system-admin", "safety-manager", "operations-manager" };
             return Result<IEnumerable<string>>.Success((IEnumerable<string>)userIds);
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result<IEnumerable<string>>.Failure<IEnumerable<string>>(DomainErrors.GeneralError.ServerError);
         }
@@ -329,7 +329,7 @@ public class SMSWorkflowService : ISMSWorkflowService
     {
         return meetingType.Priority switch
         {
-            >= 10 => 1,  // Emergency: Next day
+            >= 10 => 1,  // Emergency: Nt day
             >= 7 => 3,   // Special: 3 days
             >= 5 => 7,   // Working session: 1 week
             _ => 14      // Regular: 2 weeks

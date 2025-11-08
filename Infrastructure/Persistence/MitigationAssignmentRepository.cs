@@ -5,6 +5,7 @@ using SMS_Infrastructure.Common;
 using SMS_Infrastructure.Interfaces;
 using Microsoft.Data.SqlClient;
 using System.Data;
+using static SMS_Domain.Errors.DomainErrors;
 
 namespace SMS_Infrastructure.Repositories;
 
@@ -111,7 +112,7 @@ public sealed class MitigationAssignmentRepository : BaseRepository<MitigationAs
         catch (Exception ex)
         {
             _logger.LogInfrastructureGetItemError($"{_logheader} {ex.Message}", null);
-            return Result<MitigationAssignment>.Failure<MitigationAssignment>(DomainErrors.GeneralError.UnProcessableRequest);
+            return Result<MitigationAssignment>.Failure<MitigationAssignment>(GeneralError.UnProcessableRequest);
         }
     }
 

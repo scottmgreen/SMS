@@ -49,7 +49,7 @@ public class ReportValidationCommandHandlerTests : ApplicationTestBase
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Be(DomainErrors.ReportValidationError.NullOrEmpty);
+        result.Error.Should().Be(DomainErrors.ReportError.NullOrEmpty);
     }
 
     [Fact]

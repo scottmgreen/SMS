@@ -7,8 +7,5 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public sealed class SMSApplicationUserID : BaseID<string>
 {
-    public SMSApplicationUserID(string value) : base(value) { }
-    
-    public static implicit operator string(SMSApplicationUserID id) => id.Value;
-    public static implicit operator SMSApplicationUserID(string value) => new(value);
+    public SMSApplicationUserID(string id) : base(id) { }
 }

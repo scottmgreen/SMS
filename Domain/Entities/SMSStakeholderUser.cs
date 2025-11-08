@@ -12,6 +12,7 @@ public sealed class SMSStakeholderUser : BaseUser
     public string StakeholderType { get; private set; }
     public string Organization { get; private set; }
     public string AccessLevel { get; private set; }
+    public StakeholderPermissions Permissions { get; private set; }
 
     // For Entity Framework
     private SMSStakeholderUser() : base()
@@ -20,6 +21,7 @@ public sealed class SMSStakeholderUser : BaseUser
         StakeholderType = string.Empty;
         Organization = string.Empty;
         AccessLevel = string.Empty;
+        Permissions = StakeholderPermissions.Limited;
     }
 
     private SMSStakeholderUser(
@@ -31,12 +33,14 @@ public sealed class SMSStakeholderUser : BaseUser
         string stakeholderType,
         string organization,
         string accessLevel,
+        StakeholderPermissions permissions,
         string createdBy) : base(code, firstName, lastName, userName, password, createdBy)
     {
         StakeholderUserId = new SMSStakeholderUserID(UserId.Value);
         StakeholderType = stakeholderType;
         Organization = organization;
         AccessLevel = accessLevel;
+        Permissions = permissions;
     }
 
     public static SMSStakeholderUser Create(
@@ -50,6 +54,10 @@ public sealed class SMSStakeholderUser : BaseUser
         string accessLevel,
         string createdBy)
     {
+        // Create permissions based on access level
+        var permissionsResult = StakeholderPermissions.Create(accessLevel);
+        var permissions = permissionsResult.IsSuccess ? permissionsResult.Value : StakeholderPermissions.Limited;
+
         return new SMSStakeholderUser(
             code,
             firstName,
@@ -59,6 +67,31 @@ public sealed class SMSStakeholderUser : BaseUser
             stakeholderType,
             organization,
             accessLevel,
+            permissions,
+            createdBy);
+    }
+
+    public static SMSStakeholderUser CreateWithCustomPermissions(
+        string code,
+        FirstName firstName,
+        LastName lastName,
+        UserName userName,
+        Password password,
+        string stakeholderType,
+        string organization,
+        StakeholderPermissions permissions,
+        string createdBy)
+    {
+        return new SMSStakeholderUser(
+            code,
+            firstName,
+            lastName,
+            userName,
+            password,
+            stakeholderType,
+            organization,
+            permissions.GetAccessLevel(),
+            permissions,
             createdBy);
     }
 
@@ -70,6 +103,22 @@ public sealed class SMSStakeholderUser : BaseUser
         StakeholderType = stakeholderType;
         Organization = organization;
         AccessLevel = accessLevel;
+        
+        // Update permissions based on new access level
+        var permissionsResult = StakeholderPermissions.Create(accessLevel);
+        if (permissionsResult.IsSuccess)
+        {
+            Permissions = permissionsResult.Value;
+        }
+    }
+
+    /// <summary>
+    /// Updates stakeholder permissions directly
+    /// </summary>
+    public void UpdatePermissions(StakeholderPermissions permissions)
+    {
+        Permissions = permissions;
+        AccessLevel = permissions.GetAccessLevel();
     }
 
     /// <summary>
@@ -100,6 +149,48 @@ public sealed class SMSStakeholderUser : BaseUser
         var requiredLevelIndex = Array.IndexOf(levels, requiredLevel);
         
         return userLevelIndex >= requiredLevelIndex;
+    }
+
+    /// <summary>
+    /// Checks if the user has a specific stakeholder permission
+    /// </summary>
+    public bool HasPermission(string permission)
+    {
+        return Permissions.HasPermission(permission);
+    }
+
+    /// <summary>
+    /// Checks if user can access specific data types
+    /// </summary>
+    public bool CanAccessData(string dataType)
+    {
+        return dataType.ToUpperInvariant() switch
+        {
+            "PUBLIC_REPORTS" => Permissions.CanViewPublicReports,
+            "ORGANIZATION_DATA" => Permissions.CanViewOrganizationSpecificData,
+            "AIRSIDE_DATA" => Permissions.CanViewAirsideOperationalData,
+            "HISTORICAL_DATA" => Permissions.CanViewHistoricalData,
+            "AOA_INFORMATION" => Permissions.CanAccessAOAInformation,
+            "WEATHER_DATA" => Permissions.CanViewWeatherData,
+            "NOTAMS" => Permissions.CanViewNOTAMs,
+            "OPERATIONAL_BRIEFINGS" => Permissions.CanAccessOperationalBriefings,
+            _ => false
+        };
+    }
+
+    /// <summary>
+    /// Checks if user can perform specific participation actions
+    /// </summary>
+    public bool CanParticipate(string action)
+    {
+        return action.ToUpperInvariant() switch
+        {
+            "COMMITTEES" => Permissions.CanParticipateInCommittees,
+            "SUBMIT_HAZARD_REPORTS" => Permissions.CanSubmitHazardReports,
+            "COMMENT_ON_REPORTS" => Permissions.CanCommentOnReports,
+            "RECEIVE_NOTIFICATIONS" => Permissions.CanReceiveNotifications,
+            _ => false
+        };
     }
 
     /// <summary>
@@ -152,7 +243,7 @@ public sealed class SMSStakeholderUser : BaseUser
     /// </summary>
     public bool RequiresAOAAccess()
     {
-        return IsAirlineStakeholder || IsGroundHandlerStakeholder || IsContractorStakeholder;
+        return Permissions.RequiresAOAAccess(StakeholderType);
     }
 
     /// <summary>
@@ -160,14 +251,69 @@ public sealed class SMSStakeholderUser : BaseUser
     /// </summary>
     public string GetBadgeType()
     {
-        return StakeholderType switch
+        return Permissions.GetBadgeType(StakeholderType);
+    }
+
+    /// <summary>
+    /// Checks if stakeholder has operational access needs
+    /// </summary>
+    public bool HasOperationalAccess()
+    {
+        return IsAirlineStakeholder || IsGroundHandlerStakeholder || IsContractorStakeholder;
+    }
+
+    /// <summary>
+    /// Checks if stakeholder is a regulatory authority
+    /// </summary>
+    public bool IsRegulatoryAuthority()
+    {
+        return IsRegulatoryStakeholder && AccessLevel == "Full";
+    }
+
+    /// <summary>
+    /// Gets stakeholder access summary for administrative purposes
+    /// </summary>
+    public string GetAccessSummary()
+    {
+        var accessTypes = new List<string>();
+        
+        if (Permissions.CanViewPublicReports) accessTypes.Add("Public Reports");
+        if (Permissions.CanViewOrganizationSpecificData) accessTypes.Add("Organization Data");
+        if (Permissions.CanViewAirsideOperationalData) accessTypes.Add("Airside Operations");
+        if (Permissions.CanSubmitHazardReports) accessTypes.Add("Hazard Reporting");
+        if (Permissions.CanParticipateInCommittees) accessTypes.Add("Committee Participation");
+        if (Permissions.CanAccessAOAInformation) accessTypes.Add("AOA Access");
+
+        return accessTypes.Any() ? string.Join(", ", accessTypes) : "Limited Access";
+    }
+
+    /// <summary>
+    /// Gets recommended training based on stakeholder type and access level
+    /// </summary>
+    public string[] GetRecommendedTraining()
+    {
+        var training = new List<string> { "SMS Overview", "Safety Reporting Basics" };
+
+        if (HasOperationalAccess())
         {
-            "Airline" => "Airline Operations Badge",
-            "Ground Handler" => "Ground Operations Badge",
-            "Contractor" => "Contractor Badge",
-            "Tenant" => "Tenant Access Badge",
-            "Regulatory" => "Official Visitor Badge",
-            _ => "General Visitor Badge"
-        };
+            training.AddRange(new[] { "Airside Safety", "Ground Operations Safety" });
+        }
+
+        if (Permissions.CanSubmitHazardReports)
+        {
+            training.Add("Hazard Identification and Reporting");
+        }
+
+        if (Permissions.CanParticipateInCommittees)
+        {
+            training.Add("Committee Participation and Safety Culture");
+        }
+
+        if (RequiresAOAAccess())
+        {
+            training.AddRange(new[] { "AOA Security", "Vehicle Operations" });
+        }
+
+        return training.ToArray();
     }
 }

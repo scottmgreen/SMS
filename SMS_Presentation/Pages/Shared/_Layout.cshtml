@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - PDXSMS</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- PDXSMS Site CSS with Official Branding -->
+    <link href="~/css/site.css" rel="stylesheet">
+    
+    <!-- PDXSMS-Specific Enhancements -->
+    <style>
+        /* PDXSMS Official Branding - Port of Portland Colors */
+        :root {
+            --pdx-primary: #212e61;        /* Official PDX Navy Blue */
+            --pdx-primary-rgb: 33, 46, 97;
+            --pdx-info: #006AA9;           /* Official PDX Blue */
+            --pdx-info-rgb: 0, 106, 169;
+            --pdx-success: #198754;
+            --pdx-warning: #ffc107;
+            --pdx-danger: #dc3545;
+            --pdx-light: #f8f9fa;
+            --pdx-dark: #212529;
+        }
+        
+        /* Override Bootstrap with PDX Colors */
+        .bg-primary { background-color: var(--pdx-primary) !important; }
+        .text-primary { color: var(--pdx-primary) !important; }
+        .border-primary { border-color: var(--pdx-primary) !important; }
+        
+        /* PDXSMS Navigation Enhancements */
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.6rem;
+            letter-spacing: 0.5px;
+        }
+        
+        .navbar-brand i {
+            color: #ffd700; /* Gold accent for shield icon */
+        }
+        
+        .user-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            font-weight: 600;
+        }
+        
+        /* Enhanced Card Styling for PDX */
+        .card {
+            border: 1px solid rgba(33, 46, 97, 0.125);
+            box-shadow: 0 0.125rem 0.25rem rgba(33, 46, 97, 0.075);
+        }
+        
+        .card-header {
+            background-color: rgba(33, 46, 97, 0.03);
+            border-bottom: 1px solid rgba(33, 46, 97, 0.125);
+            font-weight: 600;
+        }
+        
+        /* PDXSMS-specific Components */
+        .pdx-sidebar {
+            background: linear-gradient(135deg, var(--pdx-light) 0%, #ffffff 100%);
+            min-height: calc(100vh - 56px);
+            border-right: 2px solid rgba(33, 46, 97, 0.1);
+        }
+        
+        .pdx-main-content {
+            padding: 1.5rem;
+            background-color: #fafbfc;
+        }
+        
+        /* Alert Customizations for PDX */
+        .alert {
+            border: none;
+            border-left: 4px solid;
+            border-radius: 0.375rem;
+        }
+        
+        .alert-success { border-left-color: var(--pdx-success); }
+        .alert-danger { border-left-color: var(--pdx-danger); }
+        .alert-warning { border-left-color: var(--pdx-warning); }
+        .alert-info { border-left-color: var(--pdx-info); }
+        
+        /* Footer Styling */
+        .pdx-footer {
+            background: linear-gradient(135deg, var(--pdx-primary) 0%, #1a2555 100%);
+            color: white;
+            margin-top: auto;
+        }
+        
+        .pdx-footer small {
+            opacity: 0.9;
+        }
+        
+        /* Dropdown Menu Enhancements */
+        .dropdown-menu {
+            border: 1px solid rgba(33, 46, 97, 0.15);
+            box-shadow: 0 0.5rem 1rem rgba(33, 46, 97, 0.175);
+        }
+        
+        .dropdown-item:hover {
+            background-color: rgba(33, 46, 97, 0.05);
+            color: var(--pdx-primary);
+        }
+        
+        /* Button Enhancements */
+        .btn-outline-primary {
+            color: var(--pdx-primary);
+            border-color: var(--pdx-primary);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--pdx-primary);
+            border-color: var(--pdx-primary);
+        }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    @{
+        // SMS Backend Integration - Direct Session Access
+        var smsUserId = Context.Session.GetString("SMS_UserId");
+        var smsUserType = Context.Session.GetString("SMS_UserType");
+        var smsDisplayName = Context.Session.GetString("SMS_DisplayName");
+        var smsPermissionLevel = Context.Session.GetString("SMS_PermissionLevel");
+        var smsDepartment = Context.Session.GetString("SMS_Department");
+        var smsOrganization = Context.Session.GetString("SMS_Organization");
+        
+        var isAuthenticated = !string.IsNullOrEmpty(smsUserId);
+        
+        // SMS User Type Permissions (Direct from SMS Domain)
+        var isApplication = smsUserType == "Application";  // SuperAdmin/Admin
+        var isOrganizational = smsUserType == "Organizational";  // Safety managers, operations
+        var isStakeholder = smsUserType == "Stakeholder";  // External partners
+        
+        // Permission level checks
+        var isSuperAdmin = isApplication && smsPermissionLevel == "SuperAdmin";
+        var isAdmin = isApplication && (smsPermissionLevel == "Admin" || smsPermissionLevel == "SuperAdmin");
+        var hasWriteAccess = isOrganizational && smsPermissionLevel == "Write";
+        var hasReadAccess = smsPermissionLevel == "Read" || hasWriteAccess || isAdmin;
+        
+        // Display values
+        var displayName = smsDisplayName ?? "User";
+        var userTypeDisplay = smsUserType switch {
+            "Application" => "System Administrator",
+            "Organizational" => "Safety Manager",
+            "Stakeholder" => "Stakeholder",
+            _ => "User"
+        };
+        
+        var permissionDisplay = smsPermissionLevel switch {
+            "SuperAdmin" => "Super Administrator",
+            "Admin" => "Administrator", 
+            "Write" => "Manager",
+            "Read" => "Officer",
+            _ => "Standard"
+        };
+    }
+    
+    <header>
+        <!-- PDXSMS Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/">
+                    <i class="fas fa-shield-alt me-2"></i>PDXSMS
+                    <small class="d-none d-sm-inline ms-2 opacity-75" style="font-size: 0.8rem;">Safety Management System</small>
+                </a>
+                
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <!-- Main Navigation -->
+                    <ul class="navbar-nav me-auto">
+                        @if (isAuthenticated)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="/">
+                                    <i class="fas fa-home me-1"></i>Dashboard
+                                </a>
+                            </li>
+                            
+                            <!-- Safety Risk Management - Available to all authenticated users -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Safety Risk Management
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><h6 class="dropdown-header">Hazard Management</h6></li>
+                                    <li><a class="dropdown-item" href="/SafetyRiskManagement/HazardReporting">
+                                        <i class="fas fa-file-medical-alt me-2"></i>Hazard Reporting
+                                    </a></li>
+                                    
+                                    @if (hasWriteAccess || isAdmin)
+                                    {
+                                        <li><a class="dropdown-item" href="/SafetyRiskManagement/HazardProcessing">
+                                            <i class="fas fa-tasks me-2"></i>Hazard Processing
+                                        </a></li>
+                                    }
+                                    
+                                    <li><a class="dropdown-item" href="/SafetyRiskManagement/HazardReview">
+                                        <i class="fas fa-search me-2"></i>Hazard Review
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header">Risk Assessment</h6></li>
+                                    <li><a class="dropdown-item" href="/SafetyRiskManagement/RiskAssessment">
+                                        <i class="fas fa-balance-scale me-2"></i>Risk Assessment
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/SafetyRiskManagement/RiskAssessmentWizard">
+                                        <i class="fas fa-magic me-2"></i>Assessment Wizard
+                                    </a></li>
+                                    
+                                    @if (hasWriteAccess || isAdmin)
+                                    {
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><h6 class="dropdown-header">Mitigation</h6></li>
+                                        <li><a class="dropdown-item" href="/SafetyRiskManagement/MitigationTracking">
+                                            <i class="fas fa-chart-line me-2"></i>Mitigation Tracking
+                                        </a></li>
+                                    }
+                                </ul>
+                            </li>
+
+                            <!-- Safety Assurance - For Organizational and Admin users -->
+                            @if (isOrganizational || isAdmin)
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-shield-check me-1"></i>Safety Assurance
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="/SafetyAssurance">
+                                            <i class="fas fa-home me-2"></i>Assurance Overview
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="/SafetyAssurance/SafetyPerformanceMonitoring">
+                                            <i class="fas fa-chart-line me-2"></i>Performance Monitoring
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="/SafetyAssurance/SafetyAudits">
+                                            <i class="fas fa-clipboard-check me-2"></i>Safety Audits
+                                        </a></li>
+                                        
+                                        @if (isAdmin || hasWriteAccess)
+                                        {
+                                            <li><a class="dropdown-item" href="/SafetyAssurance/SafetyAssuranceReporting">
+                                                <i class="fas fa-chart-pie me-2"></i>Assurance Reporting
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="/SafetyAssurance/ComplianceReporting">
+                                                <i class="fas fa-file-contract me-2"></i>Compliance Reporting
+                                            </a></li>
+                                        }
+                                    </ul>
+                                </li>
+                            }
+
+                            <!-- Safety Policy - Admin and Write level users -->
+                            @if (isAdmin || hasWriteAccess)
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-book me-1"></i>Safety Policy
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="/SafetyPolicy/SafetyPolicy">
+                                            <i class="fas fa-file-alt me-2"></i>Policy Management
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="/SafetyPolicy/OrganizationalStructure">
+                                            <i class="fas fa-users me-2"></i>Organizational Structure
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="/SafetyPolicy/ResponsibilitiesAndAccountability">
+                                            <i class="fas fa-user-tie me-2"></i>Responsibilities & Accountability
+                                        </a></li>
+                                    </ul>
+                                </li>
+                            }
+
+                            <!-- Safety Promotion - Available to most users -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-bullhorn me-1"></i>Safety Promotion
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/SafetyPromotion/SafetyCommunications">
+                                        <i class="fas fa-comments me-2"></i>Communications
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/SafetyPromotion/SafetyTraining">
+                                        <i class="fas fa-graduation-cap me-2"></i>Training
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/SafetyPromotion/SafetyCulture">
+                                        <i class="fas fa-users me-2"></i>Culture
+                                    </a></li>
+                                </ul>
+                            </li>
+                            
+                            <!-- System Administration - Application users only -->
+                            @if (isApplication)
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-cog me-1"></i>System
+                                        @if (isSuperAdmin)
+                                        {
+                                            <span class="badge bg-danger ms-1">SuperAdmin</span>
+                                        }
+                                        else if (isAdmin)
+                                        {
+                                            <span class="badge bg-warning ms-1">Admin</span>
+                                        }
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="/System/UserManagement">
+                                            <i class="fas fa-users me-2"></i>User Management
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="/System/RolesAndPermissions">
+                                            <i class="fas fa-user-shield me-2"></i>Roles & Permissions
+                                        </a></li>
+                                        
+                                        @if (isSuperAdmin)
+                                        {
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><h6 class="dropdown-header">System Administration</h6></li>
+                                            <li><a class="dropdown-item" href="/System/SystemConfiguration">
+                                                <i class="fas fa-cogs me-2"></i>System Configuration
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="/System/SystemMonitoring">
+                                                <i class="fas fa-heartbeat me-2"></i>System Monitoring
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="/System/DataManagement">
+                                                <i class="fas fa-database me-2"></i>Data Management
+                                            </a></li>
+                                        }
+                                    </ul>
+                                </li>
+                            }
+                        }
+                    </ul>
+                    
+                    <!-- User Information -->
+                    <ul class="navbar-nav">
+                        @if (isAuthenticated)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-user-circle me-2"></i>
+                                        <div class="d-none d-md-block me-2">
+                                            <div class="fw-semibold">@displayName</div>
+                                        </div>
+                                        <span class="badge user-badge @(isApplication ? "bg-info" : isOrganizational ? "bg-success" : "bg-warning text-dark")">
+                                            @permissionDisplay
+                                        </span>
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><h6 class="dropdown-header">@displayName</h6></li>
+                                    <li class="dropdown-item-text">
+                                        <small class="text-muted">
+                                            <strong>Type:</strong> @userTypeDisplay<br>
+                                            <strong>Level:</strong> @permissionDisplay
+                                            @if (!string.IsNullOrEmpty(smsDepartment))
+                                            {
+                                                <br><strong>Dept:</strong> @smsDepartment
+                                            }
+                                            @if (!string.IsNullOrEmpty(smsOrganization))
+                                            {
+                                                <br><strong>Org:</strong> @smsOrganization
+                                            }
+                                        </small>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="/Account/Profile">
+                                        <i class="fas fa-user-edit me-2"></i>Profile Settings
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/Account/ChangePassword">
+                                        <i class="fas fa-lock me-2"></i>Change Password
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="/Account/Logout">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                    </a></li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link btn btn-outline-light ms-2" href="/Account/Login">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Access PDXSMS
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="flex-grow-1">
+        <!-- Alert Messages -->
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+                <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>@TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        
+        @if (TempData["WarningMessage"] != null)
+        {
+            <div class="alert alert-warning alert-dismissible fade show m-3" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>@TempData["WarningMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        
+        @if (TempData["InfoMessage"] != null)
+        {
+            <div class="alert alert-info alert-dismissible fade show m-3" role="alert">
+                <i class="fas fa-info-circle me-2"></i>@TempData["InfoMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <!-- Page Content -->
+        <div class="container-fluid pdx-main-content">
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="pdx-footer text-center py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 mx-auto">
+                    <small class="d-block mb-2">
+                        <strong>PDXSMS</strong> - Port of Portland Safety Management System
+                    </small>
+                    <small class="d-block mb-2">
+                        &copy; @DateTime.Now.Year Port of Portland. All rights reserved.
+                    </small>
+                    @if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+                    {
+                        <small>
+                            <span class="badge bg-warning text-dark">Development Environment</span>
+                        </small>
+                    }
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- PDXSMS JavaScript -->
+    <script src="~/js/site.js"></script>
+    
+    <!-- PDXSMS-specific JavaScript -->
+    <script>
+        // Enhanced alert auto-dismiss with fade effect
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-dismiss alerts after 7 seconds (slightly longer for better UX)
+            setTimeout(function() {
+                var alerts = document.querySelectorAll('.alert.alert-dismissible');
+                alerts.forEach(function(alert) {
+                    var bsAlert = new bootstrap.Alert(alert);
+                    // Add fade effect before closing
+                    alert.style.transition = 'opacity 0.5s ease-out';
+                    alert.style.opacity = '0.7';
+                    setTimeout(() => bsAlert.close(), 500);
+                });
+            }, 7000);
+            
+            // Add active state to current navigation item
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+            navLinks.forEach(function(link) {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+    
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+
+<!--
+?? SMS BACKEND INTEGRATED LAYOUT:
+
+FEATURES:
+1. ? Direct SMS Backend session integration
+2. ? SMS user type-aware navigation (Application/Organizational/Stakeholder)  
+3. ? Permission level-based access control
+4. ? Port of Portland branding and color scheme
+5. ? Responsive mobile-friendly design
+6. ? Professional safety management navigation structure
+
+NAVIGATION LOGIC:
+? Application Users (SuperAdmin/Admin) - Full system access
+? Organizational Users (Write/Read) - Safety management access
+? Stakeholder Users - Limited reporting and data access
+
+DESIGN:
+? Professional SMS color scheme with PDX branding
+? Clear visual hierarchy and user type indicators
+? Consistent iconography throughout navigation
+? Development mode indicators
+
+INTEGRATION:
+? Works with SMS Backend authentication system
+? No helper classes - direct session access
+? Clean separation of concerns
+-->

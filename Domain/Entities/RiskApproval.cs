@@ -71,7 +71,7 @@ public sealed class RiskApproval : BaseAuditableEntity
 
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Result.Failure(DomainErrors.ApprovalError.ApprovalProcessFailed);
         }
@@ -102,7 +102,7 @@ public sealed class RiskApproval : BaseAuditableEntity
 
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Result.Failure(DomainErrors.ApprovalError.RejectionProcessFailed);
         }
@@ -135,7 +135,7 @@ public sealed class RiskApproval : BaseAuditableEntity
 
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Result.Failure(DomainErrors.ApprovalError.EscalationProcessFailed);
         }
@@ -154,7 +154,7 @@ public sealed class RiskApproval : BaseAuditableEntity
 
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Result.Failure(DomainErrors.ApprovalError.ReviewStartFailed);
         }
@@ -204,7 +204,7 @@ public sealed class RiskApproval : BaseAuditableEntity
 
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Result.Failure(DomainErrors.ApprovalError.ExpirationProcessFailed);
         }

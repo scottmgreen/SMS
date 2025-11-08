@@ -5,6 +5,9 @@ using SMS_Application.Messaging.Queries;
 using SMS_Domain.Entities;
 using SMS_Domain.Errors;
 using SMS_Domain.Interfaces;
+
+using SMS_Infrastructure.Interfaces;
+
 using SMS_Shared.Common;
 
 namespace SMS_Application.Messaging.QueryHandlers;
@@ -342,7 +345,7 @@ public class CheckSMSOrganizationalUserNameExistsQueryHandler : BaseQueryBundle,
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing CheckSMSOrganizationalUserNameExistsQuery for UserName: {UserName}", request.UserName);
-            return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
+            return Result<bool>.Failure<bool>(GeneralError.UnProcessableRequest);
         }
     }
 }

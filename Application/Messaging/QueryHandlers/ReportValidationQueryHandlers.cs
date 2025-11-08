@@ -29,7 +29,7 @@ public class GetReportValidationByIdQueryHandler : BaseQueryBundle, IRequestHand
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing GetReportValidationByIdQuery for ID: {Id}", request.ReportValidationId);
-            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.NotFound);
+            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.NotFound);
         }
     }
 }
@@ -56,7 +56,7 @@ public class GetAllReportValidationsQueryHandler : BaseQueryBundle, IRequestHand
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing GetAllReportValidationsQuery");
-            return Result<List<ReportValidation>>.Failure<List<ReportValidation>>(DomainErrors.ReportValidationError.NullOrEmpty);
+            return Result<List<ReportValidation>>.Failure<List<ReportValidation>>(DomainErrors.ReportError.NullOrEmpty);
         }
     }
 }

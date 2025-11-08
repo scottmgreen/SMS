@@ -34,7 +34,7 @@ public sealed class ReportValidationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error creating report validation");
-            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.CreateFailed);
+            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.CreateFailed);
         }
     }
 
@@ -48,7 +48,7 @@ public sealed class ReportValidationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error retrieving report validation with ID: {Id}", id);
-            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.NotFound);
+            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.NotFound);
         }
     }
 
@@ -62,7 +62,7 @@ public sealed class ReportValidationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error retrieving all report validations");
-            return Result<List<ReportValidation>>.Failure<List<ReportValidation>>(DomainErrors.ReportValidationError.NullOrEmpty);
+            return Result<List<ReportValidation>>.Failure<List<ReportValidation>>(DomainErrors.ReportError.NullOrEmpty);
         }
     }
 
@@ -87,7 +87,7 @@ public sealed class ReportValidationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error updating report validation with ID: {Id}", reportValidation?.Id);
-            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.UpdateFailed);
+            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.UpdateFailed);
         }
     }
 
@@ -112,7 +112,7 @@ public sealed class ReportValidationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error deleting report validation with ID: {Id}", id);
-            return Result<bool>.Failure<bool>(DomainErrors.ReportValidationError.DeleteFailed);
+            return Result<bool>.Failure<bool>(DomainErrors.ReportError.DeleteFailed);
         }
     }
 }

@@ -21,6 +21,7 @@ internal static class ServiceCollectionExtensions
         services.AddScoped<ISMSApplicationUserRepository, SMSApplicationUserRepository>();
         services.AddScoped<ISMSOrganizationalUserRepository, SMSOrganizationalUserRepository>();
         services.AddScoped<ISMSStakeholderUserRepository, SMSStakeholderUserRepository>();
+        services.AddScoped<ISMSUserRoleRepository, SMSUserRoleRepository>();
 
         // SMS Repositories
         services.AddScoped<HazardRepository>();

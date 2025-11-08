@@ -24,7 +24,7 @@ public class CreateReportValidationCommandHandler : BaseCommandBundle, IRequestH
             if (request?.ReportValidation is null)
             {
                 _logger.LogError("CreateReportValidationCommand received with null ReportValidation");
-                return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.NullOrEmpty);
+                return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.NullOrEmpty);
             }
 
             _logger.LogInformation("Processing CreateReportValidationCommand for Code: {Code}", request.ReportValidation.Code);
@@ -52,7 +52,7 @@ public class CreateReportValidationCommandHandler : BaseCommandBundle, IRequestH
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error occurred while creating ReportValidation");
-            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.CreateFailed);
+            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.CreateFailed);
         }
     }
 }
@@ -75,7 +75,7 @@ public class UpdateReportValidationCommandHandler : BaseCommandBundle, IRequestH
             if (request?.ReportValidation is null)
             {
                 _logger.LogError("UpdateReportValidationCommand received with null ReportValidation");
-                return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.NullOrEmpty);
+                return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.NullOrEmpty);
             }
 
             _logger.LogInformation("Processing UpdateReportValidationCommand for ID: {Id}, Code: {Code}",
@@ -103,7 +103,7 @@ public class UpdateReportValidationCommandHandler : BaseCommandBundle, IRequestH
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error occurred while updating ReportValidation with ID: {Id}", request.ReportValidation?.Id);
-            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.UpdateFailed);
+            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.UpdateFailed);
         }
     }
 }
@@ -126,7 +126,7 @@ public class DeleteReportValidationCommandHandler : BaseCommandBundle, IRequestH
             if (request?.ReportValidationId is null)
             {
                 _logger.LogError("DeleteReportValidationCommand received with null ReportValidationId");
-                return Result<bool>.Failure<bool>(DomainErrors.ReportValidationError.NullOrEmpty);
+                return Result<bool>.Failure<bool>(DomainErrors.ReportError.NullOrEmpty);
             }
 
             _logger.LogInformation("Processing DeleteReportValidationCommand for ID: {Id}", request.ReportValidationId);
@@ -153,7 +153,7 @@ public class DeleteReportValidationCommandHandler : BaseCommandBundle, IRequestH
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error occurred while deleting ReportValidation with ID: {Id}", request.ReportValidationId);
-            return Result<bool>.Failure<bool>(DomainErrors.ReportValidationError.DeleteFailed);
+            return Result<bool>.Failure<bool>(DomainErrors.ReportError.DeleteFailed);
         }
     }
 }

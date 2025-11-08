@@ -117,7 +117,7 @@ public sealed class SMSStakeholderUserService
             if (!IsValidStakeholderType(stakeholderType))
             {
                 _logger.LogWarning("Invalid stakeholder type requested: {StakeholderType}", stakeholderType);
-                return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.GeneralError.UnProcessableRequest);
+                return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(GeneralError.UnProcessableRequest);
             }
 
             return await _dataService.GetSMSStakeholderUsersByTypeAsync(stakeholderType, ct).ConfigureAwait(false);
@@ -347,7 +347,7 @@ public sealed class SMSStakeholderUserService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error retrieving stakeholder type statistics");
-            return Result<Dictionary<string, int>>.Failure<Dictionary<string, int>>(DomainErrors.GeneralError.UnProcessableRequest);
+            return Result<Dictionary<string, int>>.Failure<Dictionary<string, int>>(GeneralError.UnProcessableRequest);
         }
     }
 

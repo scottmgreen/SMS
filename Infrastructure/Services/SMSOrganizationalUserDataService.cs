@@ -178,19 +178,19 @@ public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrgani
     /// <summary>
     /// Gets department supervisors
     /// </summary>
-    public async Task<Result<IEnumerable<SMSOrganizationalUser>>> GetDepartmentSupervisorsAsync(string department, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving supervisors for department: {Department}", department);
-            return await _repository.GetDepartmentSupervisorsAsync(department);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error retrieving supervisors for department: {Department}", department);
-            return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
-        }
-    }
+    //public async Task<Result<IEnumerable<SMSOrganizationalUser>>> GetDepartmentSupervisorsAsync(string department, CancellationToken ct = default)
+    //{
+    //    try
+    //    {
+    //        _logger.LogInformation("Retrieving supervisors for department: {Department}", department);
+    //        return await _repository.GetDepartmentSupervisorsAsync(department);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogError(ex, "Unexpected error retrieving supervisors for department: {Department}", department);
+    //        return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
+    //    }
+    //}
 
     /// <summary>
     /// Updates an existing SMS Organizational User
@@ -293,19 +293,19 @@ public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrgani
     /// <summary>
     /// Gets department statistics
     /// </summary>
-    public async Task<Result<Dictionary<string, int>>> GetDepartmentStatisticsAsync(CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving department statistics");
-            return await _repository.GetDepartmentStatisticsAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error retrieving department statistics");
-            return Result<Dictionary<string, int>>.Failure<Dictionary<string, int>>(DomainErrors.GeneralError.UnProcessableRequest);
-        }
-    }
+    //public async Task<Result<Dictionary<string, int>>> GetDepartmentStatisticsAsync(CancellationToken ct = default)
+    //{
+    //    try
+    //    {
+    //        _logger.LogInformation("Retrieving department statistics");
+    //        return await _repository.GetDepartmentStatisticsAsync();
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogError(ex, "Unexpected error retrieving department statistics");
+    //        return Result<Dictionary<string, int>>.Failure<Dictionary<string, int>>(DomainErrors.GeneralError.UnProcessableRequest);
+    //    }
+    //}
 
     /// <summary>
     /// Gets SMS Organizational User statistics

@@ -4,6 +4,8 @@
 // =============================================
 
 // 1. HazardDataService.cs
+using SMS_Domain.Errors;
+
 namespace SMS_Infrastructure.Services;
 
 // 6. RiskAssessmentDataService.cs
@@ -28,9 +30,28 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
         return _repo.CreateRiskAssessmentAsync(riskAssessment, ct);
     }
 
-    public Task<Result<RiskAssessment>> GetRiskAssessmentByIdAsync(RiskAssessmentID id, CancellationToken ct = default)
+    public async Task<Result<RiskAssessment>> GetRiskAssessmentByIdAsync(RiskAssessmentID riskAssessmentId, CancellationToken cancellationToken = default)
     {
-        return _repo.GetRiskAssessmentByIdAsync(id, ct);
+        try
+        {
+            _logger.LogInformation("Retrieving RiskAssessment by ID: {Id}", riskAssessmentId);
+
+            var result = await _repo.GetRiskAssessmentByIdAsync(riskAssessmentId, cancellationToken).ConfigureAwait(false);
+
+            if (result.IsFailure)
+            {
+                _logger.LogWarning("RiskAssessment not found with ID: {Id}", riskAssessmentId);
+                return result;
+            }
+
+            _logger.LogInformation("Successfully retrieved RiskAssessment: {Id}", riskAssessmentId);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve RiskAssessment by ID: {Id}", riskAssessmentId);
+            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NotFound);
+        }
     }
 
     public Task<Result<List<RiskAssessment>>> GetAllRiskAssessmentsAsync(CancellationToken ct = default)
@@ -43,8 +64,29 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
         return _repo.UpdateRiskAssessmentAsync(riskAssessment, ct);
     }
 
-    public Task<Result<bool>> DeleteRiskAssessmentAsync(RiskAssessmentID id, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteRiskAssessmentAsync(RiskAssessmentID riskAssessmentId, CancellationToken cancellationToken = default)
     {
-        return _repo.DeleteRiskAssessmentAsync(id, ct);
+        try
+        {
+            _logger.LogInformation("Deleting RiskAssessment with ID: {Id}", riskAssessmentId);
+
+            var result = await _repo.DeleteRiskAssessmentAsync(riskAssessmentId, cancellationToken).ConfigureAwait(false);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully deleted RiskAssessment with ID: {Id}", riskAssessmentId);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to delete RiskAssessment with ID: {Id}", riskAssessmentId);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting RiskAssessment with ID: {Id}", riskAssessmentId);
+            return Result<bool>.Failure<bool>(DomainErrors.RiskAssessmentError.DeletionFailed);
+        }
     }
 }

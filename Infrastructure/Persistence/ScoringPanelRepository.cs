@@ -114,7 +114,7 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
         catch (Exception ex)
         {
             _logger.LogInfrastructureGetItemError($"{_logheader} {ex.Message}", null);
-            return Result<ScoringPanel>.Failure<ScoringPanel>(DomainErrors.GeneralError.UnProcessableRequest);
+            return Result<ScoringPanel>.Failure<ScoringPanel>(GeneralError.UnProcessableRequest);
         }
     }
 

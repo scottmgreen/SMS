@@ -60,7 +60,7 @@ public sealed class CommitteeMembership : BaseAuditableEntity
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result.Failure(DomainErrors.CommitteeError.MembershipUpdateFailed);
         }
@@ -81,25 +81,25 @@ public sealed class CommitteeMembership : BaseAuditableEntity
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result.Failure(DomainErrors.CommitteeError.VotingRightsUpdateFailed);
         }
     }
 
-    public Result SetExpiration(DateTime expirationDate, string updatedBy)
+    public Result SetExpiration(DateTime pirationDate, string updatedBy)
     {
         try
         {
-            if (expirationDate <= DateTime.UtcNow)
+            if (pirationDate <= DateTime.UtcNow)
                 return Result.Failure(DomainErrors.CommitteeError.InvalidExpirationDate);
 
-            ExpirationDate = expirationDate;
+            ExpirationDate = pirationDate;
             UpdatedBy = updatedBy;
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result.Failure(DomainErrors.CommitteeError.ExpirationUpdateFailed);
         }
@@ -117,7 +117,7 @@ public sealed class CommitteeMembership : BaseAuditableEntity
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result.Failure(DomainErrors.CommitteeError.MembershipExtensionFailed);
         }
@@ -136,7 +136,7 @@ public sealed class CommitteeMembership : BaseAuditableEntity
     {
         try
         {
-            // Check if membership is expired
+            // Check if membership is pired
             if (IsExpired())
                 return Result.Failure(DomainErrors.CommitteeError.CannotReactivateExpiredMembership);
 
@@ -147,16 +147,16 @@ public sealed class CommitteeMembership : BaseAuditableEntity
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result.Failure(DomainErrors.CommitteeError.MembershipReactivationFailed);
         }
     }
 
-    public void UpdateDetails(string? notes, string? expertise, string? department, string updatedBy)
+    public void UpdateDetails(string? notes, string? pertise, string? department, string updatedBy)
     {
         Notes = notes;
-        Expertise = expertise;
+        Expertise = pertise;
         Department = department;
         UpdatedBy = updatedBy;
         UpdatedDate = DateTime.UtcNow;

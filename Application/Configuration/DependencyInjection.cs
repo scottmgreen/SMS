@@ -9,7 +9,11 @@
 using Microsoft.Extensions.DependencyInjection;
 using SMS_Application.Interfaces;
 using SMS_Application.Services;
+using SMS_Application.Messaging.QueryHandlers;
+using SMS_Application.Messaging.CommandHandlers;
+using System.Reflection;
 
+using SMS_Domain.Interfaces;
 namespace SMS_Application.Configuration
 {
     /// <summary>
@@ -28,15 +32,24 @@ namespace SMS_Application.Configuration
             services.AddScoped<IMediator, Mediator>();
             services.AddScoped<Mediator>();
             
+            // REGISTER ALL QUERY AND COMMAND HANDLERS
+            var applicationAssembly = typeof(GetSMSApplicationUserByUserNameQueryHandler).Assembly;
+            RegisterHandlers(services, applicationAssembly);
+            
             // SMS User Application Services
             services.AddScoped<SMSApplicationUserService>();
             services.AddScoped<SMSOrganizationalUserService>();
             services.AddScoped<SMSStakeholderUserService>();
             
+            // SMS Workflow Services - Mission Critical
+            services.AddScoped<ISMSRiskAssessmentWorkflowService, SMSRiskAssessmentWorkflowService>();
+            services.AddScoped<ISMSInvestigationWorkflowService, SMSInvestigationWorkflowService>();
+            
             // Existing Application Services - only add ones that exist
             services.AddScoped<SystemService>();
             services.AddScoped<MessengerService>();
             services.AddScoped<HazardService>();
+            services.AddScoped<HazardFileService>();
             services.AddScoped<AirportSharedDatasetService>(); // This was missing!
             services.AddScoped<ReportService>();
             services.AddScoped<InterviewService>();
@@ -47,12 +60,52 @@ namespace SMS_Application.Configuration
             services.AddScoped<MitigationAssignmentService>();
             services.AddScoped<ReportValidationService>();
             services.AddScoped<ScoringPanelService>();
-            
 
-            // Note: Command and Query handlers are already registered in the existing project
-            // They will be extended to include SMS User handlers as needed
+            services.AddScoped<SMSApplicationUserService>();
+            services.AddScoped<SMSOrganizationalUserService>();
+            services.AddScoped<SMSStakeholderUserService>();
+            services.AddScoped<ISMSRoleService, SMSRoleService>();
+            services.AddScoped<ISMSWorkflowService, SMSWorkflowService>();
+            services.AddScoped<ISMSAuthorizationService, SMSAuthorizationService>();
+            
+            // Repository registrations
+            services.AddScoped<IHazardRepository, HazardRepository>();
+            services.AddScoped<IHazardFileRepository, HazardFileRepository>();
+            services.AddScoped<IAirportSharedDatasetRepository, AirportSharedDatasetRepository>();
+
+            // Data Service registrations 
+            services.AddScoped<HazardDataService>();
+            services.AddScoped<HazardFileDataService>();
+            services.AddScoped<InvestigationDataService>();
+            services.AddScoped<AirportSharedDatasetDataService>();
 
             return services;
+        }
+        
+        /// <summary>
+        /// Register all command and query handlers from the specified assembly
+        /// </summary>
+        private static void RegisterHandlers(IServiceCollection services, Assembly assembly)
+        {
+            // Find all types that implement IRequestHandler<TRequest, TResponse>
+            var handlerTypes = assembly.GetTypes()
+                .Where(t => t.IsClass && !t.IsAbstract)
+                .Where(t => t.GetInterfaces()
+                    .Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRequestHandler<,>)))
+                .ToList();
+
+            foreach (var handlerType in handlerTypes)
+            {
+                // Get all IRequestHandler interfaces implemented by this type
+                var handlerInterfaces = handlerType.GetInterfaces()
+                    .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRequestHandler<,>))
+                    .ToList();
+
+                foreach (var handlerInterface in handlerInterfaces)
+                {
+                    services.AddScoped(handlerInterface, handlerType);
+                }
+            }
         }
     }
 }

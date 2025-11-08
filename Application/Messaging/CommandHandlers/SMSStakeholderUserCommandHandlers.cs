@@ -6,6 +6,9 @@ using SMS_Domain.Entities;
 using SMS_Domain.Errors;
 using SMS_Domain.Interfaces;
 using SMS_Domain.ValueObjects;
+
+using SMS_Infrastructure.Interfaces;
+
 using SMS_Shared.Common;
 
 namespace SMS_Application.Messaging.CommandHandlers;

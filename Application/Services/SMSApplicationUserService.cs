@@ -382,7 +382,7 @@ public sealed class SMSApplicationUserService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error retrieving SMS Application User statistics");
-            return Result<UserStatistics>.Failure<UserStatistics>(DomainErrors.GeneralError.UnProcessableRequest);
+            return Result<UserStatistics>.Failure<UserStatistics>(GeneralError.UnProcessableRequest);
         }
     }
 }

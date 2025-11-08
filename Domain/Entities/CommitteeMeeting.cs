@@ -65,7 +65,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result.Failure(DomainErrors.MeetingError.MeetingUpdateFailed);
         }
@@ -86,7 +86,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result.Failure(DomainErrors.MeetingError.AgendaUpdateFailed);
         }
@@ -108,7 +108,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result.Failure(DomainErrors.MeetingError.MinutesUpdateFailed);
         }
@@ -131,7 +131,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result.Failure(DomainErrors.MeetingError.MinutesApprovalFailed);
         }
@@ -150,7 +150,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result.Failure(DomainErrors.MeetingError.MeetingStartFailed);
         }
@@ -179,7 +179,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result.Failure(DomainErrors.MeetingError.MeetingEndFailed);
         }
@@ -198,7 +198,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result.Failure(DomainErrors.MeetingError.MeetingCancellationFailed);
         }
@@ -221,7 +221,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result.Failure(DomainErrors.MeetingError.MeetingPostponeFailed);
         }
@@ -234,7 +234,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             if (string.IsNullOrWhiteSpace(userId))
                 return Result<MeetingAttendee>.Failure<MeetingAttendee>(DomainErrors.MeetingError.InvalidUserId);
 
-            // Check if attendee already exists
+            // Check if attendee already ists
             if (_attendees.Any(a => a.UserId == userId))
             {
                 return Result<MeetingAttendee>.Failure<MeetingAttendee>(DomainErrors.MeetingError.AttendeeAlreadyExists);
@@ -250,7 +250,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             _attendees.Add(attendee);
             return Result<MeetingAttendee>.Success(attendee);
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result<MeetingAttendee>.Failure<MeetingAttendee>(DomainErrors.MeetingError.AttendeeAddFailed);
         }
@@ -274,7 +274,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             _agendaItems.Add(agendaItem);
             return Result<MeetingAgendaItem>.Success(agendaItem);
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result<MeetingAgendaItem>.Failure<MeetingAgendaItem>(DomainErrors.MeetingError.AgendaItemAddFailed);
         }

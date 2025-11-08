@@ -9,7 +9,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public sealed class SMSUserRole : BaseAuditableEntity
 {
-    public SMSUserRoleID Id { get; private set; }
+    public new SMSUserRoleID Id { get; private set; }
     public string UserID { get; private set; } // Links to SMS Application/Organizational/Stakeholder User
     public string UserType { get; private set; } // "ApplicationUser", "OrganizationalUser", "StakeholderUser"
     public string RoleValue { get; private set; } // SMSRole.Value
@@ -92,7 +92,8 @@ public sealed class SMSUserRole : BaseAuditableEntity
     /// </summary>
     public SMSRole GetRole()
     {
-        return SMSRole.FromValue(RoleValue) ?? throw new InvalidOperationException($"Invalid role value: {RoleValue}");
+        var role = SMSRole.GetAllValues().FirstOrDefault(r => r.Value == RoleValue);
+        return role ?? throw new InvalidOperationException($"Invalid role value: {RoleValue}");
     }
 
     /// <summary>

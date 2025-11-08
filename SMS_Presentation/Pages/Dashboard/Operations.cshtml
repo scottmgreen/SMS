@@ -1,0 +1,238 @@
+@page
+@model SMS.Presentation.Pages.Dashboard.OperationsModel
+@{
+    ViewData["Title"] = "Operations Dashboard - PDXSMS";
+    Layout = "_Layout";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2 text-success">
+                <i class="fas fa-clipboard-check"></i> Operations Dashboard
+            </h1>
+            <div class="user-info">
+                <span class="badge bg-success me-2">
+                    <i class="fas fa-building"></i> @Model.Department
+                </span>
+                <strong>@Model.DisplayName</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Operations Metrics Cards -->
+<div class="row mb-4">
+    <div class="col-lg-4 mb-3">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> Active Hazards
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h3 class="text-danger mb-1">@Model.ActiveHazards</h3>
+                        <p class="text-muted mb-0">Requiring Action</p>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-circle fa-2x text-danger opacity-50"></i>
+                    </div>
+                </div>
+                <hr>
+                <a href="/SafetyRiskManagement/HazardReporting" class="btn btn-outline-danger btn-sm w-100">
+                    <i class="fas fa-plus"></i> Report Hazard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 mb-3">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-search"></i> Investigations
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h3 class="text-warning mb-1">@Model.PendingInvestigations</h3>
+                        <p class="text-muted mb-0">In Progress</p>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-magnifying-glass fa-2x text-warning opacity-50"></i>
+                    </div>
+                </div>
+                <hr>
+                <a href="/Investigations" class="btn btn-outline-warning btn-sm w-100">
+                    <i class="fas fa-list"></i> View Investigations
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 mb-3">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-balance-scale"></i> Risk Assessments
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h3 class="text-info mb-1">@Model.OpenRiskAssessments</h3>
+                        <p class="text-muted mb-0">Open Items</p>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chart-line fa-2x text-info opacity-50"></i>
+                    </div>
+                </div>
+                <hr>
+                <a href="/SafetyRiskManagement/RiskAssessment" class="btn btn-outline-info btn-sm w-100">
+                    <i class="fas fa-plus"></i> New Assessment
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Safety Management Actions -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-shield-alt"></i> Safety Management Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="list-group">
+                            <h6 class="text-muted mb-2">Hazard Management</h6>
+                            <a href="/SafetyRiskManagement/HazardReporting" class="list-group-item list-group-item-action">
+                                <i class="fas fa-file-medical-alt text-danger me-2"></i>Hazard Reporting
+                            </a>
+                            <a href="/SafetyRiskManagement/HazardProcessing" class="list-group-item list-group-item-action">
+                                <i class="fas fa-tasks text-warning me-2"></i>Hazard Processing
+                            </a>
+                            <a href="/SafetyRiskManagement/HazardReview" class="list-group-item list-group-item-action">
+                                <i class="fas fa-search text-info me-2"></i>Hazard Review
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="list-group">
+                            <h6 class="text-muted mb-2">Risk Assessment</h6>
+                            <a href="/SafetyRiskManagement/RiskAssessment" class="list-group-item list-group-item-action">
+                                <i class="fas fa-balance-scale text-primary me-2"></i>Risk Assessment
+                            </a>
+                            <a href="/SafetyRiskManagement/RiskAssessmentWizard" class="list-group-item list-group-item-action">
+                                <i class="fas fa-magic text-success me-2"></i>Assessment Wizard
+                            </a>
+                            <a href="/SafetyRiskManagement/MitigationTracking" class="list-group-item list-group-item-action">
+                                <i class="fas fa-chart-line text-secondary me-2"></i>Mitigation Tracking
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-clock"></i> Recent Activity
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted">Last Login</small>
+                    <div class="fw-bold">Today</div>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted">Department</small>
+                    <div class="fw-bold">@Model.Department</div>
+                </div>
+                <div class="mb-0">
+                    <small class="text-muted">Role</small>
+                    <div class="fw-bold">Operations Staff</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header bg-light">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-link"></i> Quick Links
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/SafetyPolicy" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-book"></i> Safety Policy
+                    </a>
+                    <a href="/Training" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-graduation-cap"></i> Training
+                    </a>
+                    <a href="/Account/Logout" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Safety Alerts -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bell"></i> Safety Alerts & Notifications
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-info-circle"></i> Safety Management System Active
+                    </h6>
+                    <p class="mb-0">
+                        Welcome to the SMS Operations Dashboard. All safety management functions are operational 
+                        with direct integration to the SMS Backend system.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        console.log('SMS Operations Dashboard: Active');
+        console.log('User: @Model.DisplayName (Operations)');
+        
+        // Add some interactive enhancements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add hover effects to metric cards
+            const metricCards = document.querySelectorAll('.card');
+            metricCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.transition = 'transform 0.2s ease-in-out';
+                    this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = '';
+                });
+            });
+        });
+    </script>
+}

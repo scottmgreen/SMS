@@ -6,6 +6,43 @@ namespace SMS_Infrastructure.Common;
 public static class ParameterNames
 {
     /// <summary>
+    /// SMS User Role parameters (SMS role assignment related)
+    /// </summary>
+    private static readonly Lazy<string> _pmRoleValue = new Lazy<string>(() => "@pRoleValue");
+    public static string pmRoleValue => _pmRoleValue.Value;
+
+    private static readonly Lazy<string> _pmRoleName = new Lazy<string>(() => "@pRoleName");
+    public static string pmRoleName => _pmRoleName.Value;
+
+    private static readonly Lazy<string> _pmRoleCategory = new Lazy<string>(() => "@pRoleCategory");
+    public static string pmRoleCategory => _pmRoleCategory.Value;
+
+    private static readonly Lazy<string> _pmEffectiveDate = new Lazy<string>(() => "@pEffectiveDate");
+    public static string pmEffectiveDate => _pmEffectiveDate.Value;
+
+    private static readonly Lazy<string> _pmExpirationDate = new Lazy<string>(() => "@pExpirationDate");
+    public static string pmExpirationDate => _pmExpirationDate.Value;
+
+    private static readonly Lazy<string> _pmAssignedBy = new Lazy<string>(() => "@pAssignedBy");
+    public static string pmAssignedBy => _pmAssignedBy.Value;
+
+    private static readonly Lazy<string> _pmAssignmentNotes = new Lazy<string>(() => "@pAssignmentNotes");
+    public static string pmAssignmentNotes => _pmAssignmentNotes.Value;
+
+    private static readonly Lazy<string> _pmDeactivationReason = new Lazy<string>(() => "@pDeactivationReason");
+    public static string pmDeactivationReason => _pmDeactivationReason.Value;
+
+    private static readonly Lazy<string> _pmDeactivatedDate = new Lazy<string>(() => "@pDeactivatedDate");
+    public static string pmDeactivatedDate => _pmDeactivatedDate.Value;
+
+    private static readonly Lazy<string> _pmDeactivatedBy = new Lazy<string>(() => "@pDeactivatedBy");
+    public static string pmDeactivatedBy => _pmDeactivatedBy.Value;
+
+    private static readonly Lazy<string> _pmCutoffDate = new Lazy<string>(() => "@pCutoffDate");
+    public static string pmCutoffDate => _pmCutoffDate.Value;
+
+
+    /// <summary>
     /// Audit Log Entry parameters
     /// </summary>
     private static readonly Lazy<string> _pmUserID = new Lazy<string>(() => "@pUserID");
@@ -296,68 +333,247 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmHazardAverageScore = new Lazy<string>(() => "@pHazardAverageScore");
     public static string pmHazardAverageScore => _pmHazardAverageScore.Value;
 
+    // Additional Hazard parameters for comprehensive SMS support
+    private static readonly Lazy<string> _pmHazardType = new Lazy<string>(() => "@pHazardType");
+    public static string pmHazardType => _pmHazardType.Value;
+
+    private static readonly Lazy<string> _pmHazardReportedBy = new Lazy<string>(() => "@pHazardReportedBy");
+    public static string pmHazardReportedBy => _pmHazardReportedBy.Value;
+
+    private static readonly Lazy<string> _pmHazardReportedOn = new Lazy<string>(() => "@pHazardReportedOn");
+    public static string pmHazardReportedOn => _pmHazardReportedOn.Value;
+
+    private static readonly Lazy<string> _pmHazardReportingDepartment = new Lazy<string>(() => "@pHazardReportingDepartment");
+    public static string pmHazardReportingDepartment => _pmHazardReportingDepartment.Value;
+
+    private static readonly Lazy<string> _pmHazardIsConfidential = new Lazy<string>(() => "@pHazardIsConfidential");
+    public static string pmHazardIsConfidential => _pmHazardIsConfidential.Value;
+
+    private static readonly Lazy<string> _pmHazardIsAnonymous = new Lazy<string>(() => "@pHazardIsAnonymous");
+    public static string pmHazardIsAnonymous => _pmHazardIsAnonymous.Value;
+
+    private static readonly Lazy<string> _pmHazardCategory = new Lazy<string>(() => "@pHazardCategory");
+    public static string pmHazardCategory => _pmHazardCategory.Value;
+
+    private static readonly Lazy<string> _pmHazardFiveMComponent = new Lazy<string>(() => "@pFiveMComponent");
+    public static string pmHazardFiveMComponent => _pmHazardFiveMComponent.Value;
+
+    private static readonly Lazy<string> _pmHazardStatus = new Lazy<string>(() => "@pStatus");
+    public static string pmHazardStatus => _pmHazardStatus.Value;
+
+    private static readonly Lazy<string> _pmHazardPriority = new Lazy<string>(() => "@pHazardPriority");
+    public static string pmHazardPriority => _pmHazardPriority.Value;
+
+    private static readonly Lazy<string> _pmHazardRiskLevel = new Lazy<string>(() => "@pHazardRiskLevel");
+    public static string pmHazardRiskLevel => _pmHazardRiskLevel.Value;
+
+    private static readonly Lazy<string> _pmHazardWorstCredibleOutcome = new Lazy<string>(() => "@pHazardWorstCredibleOutcome");
+    public static string pmHazardWorstCredibleOutcome => _pmHazardWorstCredibleOutcome.Value;
+
+    private static readonly Lazy<string> _pmHazardRootCause = new Lazy<string>(() => "@pHazardRootCause");
+    public static string pmHazardRootCause => _pmHazardRootCause.Value;
+
+    private static readonly Lazy<string> _pmHazardCurrentMitigations = new Lazy<string>(() => "@pHazardCurrentMitigations");
+    public static string pmHazardCurrentMitigations => _pmHazardCurrentMitigations.Value;
+
+    private static readonly Lazy<string> _pmHazardProposedMitigations = new Lazy<string>(() => "@pHazardProposedMitigations");
+    public static string pmHazardProposedMitigations => _pmHazardProposedMitigations.Value;
+
+    private static readonly Lazy<string> _pmHazardMitigationTargetDate = new Lazy<string>(() => "@pHazardMitigationTargetDate");
+    public static string pmHazardMitigationTargetDate => _pmHazardMitigationTargetDate.Value;
+
+    private static readonly Lazy<string> _pmHazardMitigationOwner = new Lazy<string>(() => "@pHazardMitigationOwner");
+    public static string pmHazardMitigationOwner => _pmHazardMitigationOwner.Value;
+
+    private static readonly Lazy<string> _pmHazardRequiresInvestigation = new Lazy<string>(() => "@pHazardRequiresInvestigation");
+    public static string pmHazardRequiresInvestigation => _pmHazardRequiresInvestigation.Value;
+
+    private static readonly Lazy<string> _pmHazardInvestigationCompletedDate = new Lazy<string>(() => "@pHazardInvestigationCompletedDate");
+    public static string pmHazardInvestigationCompletedDate => _pmHazardInvestigationCompletedDate.Value;
+
+    private static readonly Lazy<string> _pmHazardInvestigationNotes = new Lazy<string>(() => "@pHazardInvestigationNotes");
+    public static string pmHazardInvestigationNotes => _pmHazardInvestigationNotes.Value;
+
+    private static readonly Lazy<string> _pmHazardAdditionalComments = new Lazy<string>(() => "@pHazardAdditionalComments");
+    public static string pmHazardAdditionalComments => _pmHazardAdditionalComments.Value;
+
+    private static readonly Lazy<string> _pmHazardLocation = new Lazy<string>(() => "@pHazardLocation");
+    public static string pmHazardLocation => _pmHazardLocation.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationArea = new Lazy<string>(() => "@pHazardLocationArea");
+    public static string pmHazardLocationArea => _pmHazardLocationArea.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationSubArea = new Lazy<string>(() => "@pHazardLocationSubArea");
+    public static string pmHazardLocationSubArea => _pmHazardLocationSubArea.Value;
+
     /// <summary>
-    /// Report parameters
+    /// Hazard Location parameters (for pr_HazardLocation_* stored procedures)
+    /// These are distinct from AirportSharedDataset location parameters
     /// </summary>
-    private static readonly Lazy<string> _pmReportId = new Lazy<string>(() => "@pReportID");
-    public static string pmReportId => _pmReportId.Value;
+    private static readonly Lazy<string> _pmHazardLocationId = new Lazy<string>(() => "@pHazardLocationID");
+    public static string pmHazardLocationId => _pmHazardLocationId.Value;
 
-    private static readonly Lazy<string> _pmReportCode = new Lazy<string>(() => "@pReportCode");
-    public static string pmReportCode => _pmReportCode.Value;
+    private static readonly Lazy<string> _pmHazardLocationCode = new Lazy<string>(() => "@pCode");
+    public static string pmHazardLocationCode => _pmHazardLocationCode.Value;
 
-    private static readonly Lazy<string> _pmReportName = new Lazy<string>(() => "@pReportName");
-    public static string pmReportName => _pmReportName.Value;
+    private static readonly Lazy<string> _pmHazardLocationHazardCode = new Lazy<string>(() => "@pHazardCode");
+    public static string pmHazardLocationHazardCode => _pmHazardLocationHazardCode.Value;
 
-    private static readonly Lazy<string> _pmReportDescription = new Lazy<string>(() => "@pReportDescription");
-    public static string pmReportDescription => _pmReportDescription.Value;
+    private static readonly Lazy<string> _pmHazardLocationLatitude = new Lazy<string>(() => "@pLatitude");
+    public static string pmHazardLocationLatitude => _pmHazardLocationLatitude.Value;
 
-    private static readonly Lazy<string> _pmReportStatus = new Lazy<string>(() => "@pReportStatus");
-    public static string pmReportStatus => _pmReportStatus.Value;
+    private static readonly Lazy<string> _pmHazardLocationLongitude = new Lazy<string>(() => "@pLongitude");
+    public static string pmHazardLocationLongitude => _pmHazardLocationLongitude.Value;
 
-    private static readonly Lazy<string> _pmReportStage = new Lazy<string>(() => "@pReportStage");
-    public static string pmReportStage => _pmReportStage.Value;
+    private static readonly Lazy<string> _pmHazardLocationDescription = new Lazy<string>(() => "@pDescription");
+    public static string pmHazardLocationDescription => _pmHazardLocationDescription.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationDateSelected = new Lazy<string>(() => "@pDateSelected");
+    public static string pmHazardLocationDateSelected => _pmHazardLocationDateSelected.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationMapSVG = new Lazy<string>(() => "@pLocationMapSVG");
+    public static string pmHazardLocationMapSVG => _pmHazardLocationMapSVG.Value;
+
+    // HazardLocation has its own location area/subarea parameters (different from AirportSharedDataset)
+    private static readonly Lazy<string> _pmHazardLocationLocationArea = new Lazy<string>(() => "@pLocationArea");
+    public static string pmHazardLocationLocationArea => _pmHazardLocationLocationArea.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationLocationSubArea = new Lazy<string>(() => "@pLocationSubArea");
+    public static string pmHazardLocationLocationSubArea => _pmHazardLocationLocationSubArea.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationName = new Lazy<string>(() => "@pLocationName");
+    public static string pmHazardLocationName => _pmHazardLocationName.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationAccuracyMeters = new Lazy<string>(() => "@pAccuracyMeters");
+    public static string pmHazardLocationAccuracyMeters => _pmHazardLocationAccuracyMeters.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationElevationFeet = new Lazy<string>(() => "@pElevationFeet");
+    public static string pmHazardLocationElevationFeet => _pmHazardLocationElevationFeet.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationSource = new Lazy<string>(() => "@pSource");
+    public static string pmHazardLocationSource => _pmHazardLocationSource.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationStatus = new Lazy<string>(() => "@pStatus");
+    public static string pmHazardLocationStatus => _pmHazardLocationStatus.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationIsValidated = new Lazy<string>(() => "@pIsValidated");
+    public static string pmHazardLocationIsValidated => _pmHazardLocationIsValidated.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationValidatedDate = new Lazy<string>(() => "@pValidatedDate");
+    public static string pmHazardLocationValidatedDate => _pmHazardLocationValidatedDate.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationValidatedBy = new Lazy<string>(() => "@pValidatedBy");
+    public static string pmHazardLocationValidatedBy => _pmHazardLocationValidatedBy.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationNotes = new Lazy<string>(() => "@pNotes");
+    public static string pmHazardLocationNotes => _pmHazardLocationNotes.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationTags = new Lazy<string>(() => "@pTags");
+    public static string pmHazardLocationTags => _pmHazardLocationTags.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationAirportGrid = new Lazy<string>(() => "@pAirportGrid");
+    public static string pmHazardLocationAirportGrid => _pmHazardLocationAirportGrid.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationRunwayReference = new Lazy<string>(() => "@pRunwayReference");
+    public static string pmHazardLocationRunwayReference => _pmHazardLocationRunwayReference.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationTaxiwayReference = new Lazy<string>(() => "@pTaxiwayReference");
+    public static string pmHazardLocationTaxiwayReference => _pmHazardLocationTaxiwayReference.Value;
+
+    // Proximity search parameters
+    private static readonly Lazy<string> _pmHazardLocationRadiusMeters = new Lazy<string>(() => "@pRadiusMeters");
+    public static string pmHazardLocationRadiusMeters => _pmHazardLocationRadiusMeters.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationMaxResults = new Lazy<string>(() => "@pMaxResults");
+    public static string pmHazardLocationMaxResults => _pmHazardLocationMaxResults.Value;
+
+    // Common parameters for HazardLocation operations
+    private static readonly Lazy<string> _pmHazardLocationIncludeInactive = new Lazy<string>(() => "@pIncludeInactive");
+    public static string pmHazardLocationIncludeInactive => _pmHazardLocationIncludeInactive.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationSoftDelete = new Lazy<string>(() => "@pSoftDelete");
+    public static string pmHazardLocationSoftDelete => _pmHazardLocationSoftDelete.Value;
+
+    private static readonly Lazy<string> _pmHazardLocationDeletedBy = new Lazy<string>(() => "@pDeletedBy");
+    public static string pmHazardLocationDeletedBy => _pmHazardLocationDeletedBy.Value;
 
     /// <summary>
-    /// Investigation parameters
+    /// SMS User Role parameters - CORRECTED to match actual database schema
     /// </summary>
-    private static readonly Lazy<string> _pmInvestigationId = new Lazy<string>(() => "@pInvestigationID");
-    public static string pmInvestigationId => _pmInvestigationId.Value;
+    private static readonly Lazy<string> _pmSMSUserRoleId = new Lazy<string>(() => "@pID");
+    public static string pmSMSUserRoleId => _pmSMSUserRoleId.Value;
 
-    private static readonly Lazy<string> _pmInvestigationCode = new Lazy<string>(() => "@pInvestigationCode");
-    public static string pmInvestigationCode => _pmInvestigationCode.Value;
+    private static readonly Lazy<string> _pmSMSUserRoleCode = new Lazy<string>(() => "@pCode");
+    public static string pmSMSUserRoleCode => _pmSMSUserRoleCode.Value;
 
-    private static readonly Lazy<string> _pmInvestigationReportCode = new Lazy<string>(() => "@pInvestigationReportCode");
-    public static string pmInvestigationReportCode => _pmInvestigationReportCode.Value;
+    private static readonly Lazy<string> _pmSMSUserRoleUserId = new Lazy<string>(() => "@pUserID");
+    public static string pmSMSUserRoleUserId => _pmSMSUserRoleUserId.Value;
 
-    private static readonly Lazy<string> _pmInvestigationNotes = new Lazy<string>(() => "@pInvestigationNotes");
-    public static string pmInvestigationNotes => _pmInvestigationNotes.Value;
+    private static readonly Lazy<string> _pmSMSUserRoleUserType = new Lazy<string>(() => "@pUserType");
+    public static string pmSMSUserRoleUserType => _pmSMSUserRoleUserType.Value;
+
+    private static readonly Lazy<string> _pmSMSUserRoleSMSRoleCode = new Lazy<string>(() => "@pSMSRoleCode");
+    public static string pmSMSUserRoleSMSRoleCode => _pmSMSUserRoleSMSRoleCode.Value;
+
+    private static readonly Lazy<string> _pmSMSUserRoleDepartment = new Lazy<string>(() => "@pDepartment");
+    public static string pmSMSUserRoleDepartment => _pmSMSUserRoleDepartment.Value;
+
+    private static readonly Lazy<string> _pmSMSUserRoleEffectiveDate = new Lazy<string>(() => "@pEffectiveDate");
+    public static string pmSMSUserRoleEffectiveDate => _pmSMSUserRoleEffectiveDate.Value;
+
+    private static readonly Lazy<string> _pmSMSUserRoleExpirationDate = new Lazy<string>(() => "@pExpirationDate");
+    public static string pmSMSUserRoleExpirationDate => _pmSMSUserRoleExpirationDate.Value;
+
+    private static readonly Lazy<string> _pmSMSUserRoleIsActive = new Lazy<string>(() => "@pIsActive");
+    public static string pmSMSUserRoleIsActive => _pmSMSUserRoleIsActive.Value;
+
+    private static readonly Lazy<string> _pmSMSUserRoleAssignedBy = new Lazy<string>(() => "@pAssignedBy");
+    public static string pmSMSUserRoleAssignedBy => _pmSMSUserRoleAssignedBy.Value;
+
+    private static readonly Lazy<string> _pmSMSUserRoleAssignedDate = new Lazy<string>(() => "@pAssignedDate");
+    public static string pmSMSUserRoleAssignedDate => _pmSMSUserRoleAssignedDate.Value;
+
+    private static readonly Lazy<string> _pmSMSUserRoleDeactivatedBy = new Lazy<string>(() => "@pDeactivatedBy");
+    public static string pmSMSUserRoleDeactivatedBy => _pmSMSUserRoleDeactivatedBy.Value;
+
+    private static readonly Lazy<string> _pmSMSUserRoleDeactivatedDate = new Lazy<string>(() => "@pDeactivatedDate");
+    public static string pmSMSUserRoleDeactivatedDate => _pmSMSUserRoleDeactivatedDate.Value;
+
+    private static readonly Lazy<string> _pmSMSUserRoleCutoffDate = new Lazy<string>(() => "@pCutoffDate");
+    public static string pmSMSUserRoleCutoffDate => _pmSMSUserRoleCutoffDate.Value;
+
+    private static readonly Lazy<string> _pmSMSUserRoleAuthorityLevel = new Lazy<string>(() => "@pAuthorityLevel");
+    public static string pmSMSUserRoleAuthorityLevel => _pmSMSUserRoleAuthorityLevel.Value;
 
     /// <summary>
-    /// Interview parameters
+    /// Risk Assessment parameters (restored from accidental removal)
     /// </summary>
-    private static readonly Lazy<string> _pmInterviewId = new Lazy<string>(() => "@pInterviewID");
-    public static string pmInterviewId => _pmInterviewId.Value;
+    private static readonly Lazy<string> _pmRiskAssessmentId = new Lazy<string>(() => "@pRiskAssessmentID");
+    public static string pmRiskAssessmentId => _pmRiskAssessmentId.Value;
 
-    private static readonly Lazy<string> _pmInterviewCode = new Lazy<string>(() => "@pInterviewCode");
-    public static string pmInterviewCode => _pmInterviewCode.Value;
+    private static readonly Lazy<string> _pmRiskAssessmentCode = new Lazy<string>(() => "@pRiskAssessmentCode");
+    public static string pmRiskAssessmentCode => _pmRiskAssessmentCode.Value;
 
-    private static readonly Lazy<string> _pmInterviewInvestigationCode = new Lazy<string>(() => "@pInterviewInvestigationCode");
-    public static string pmInterviewInvestigationCode => _pmInterviewInvestigationCode.Value;
+    private static readonly Lazy<string> _pmRiskAssessmentName = new Lazy<string>(() => "@pRiskAssessmentName");
+    public static string pmRiskAssessmentName => _pmRiskAssessmentName.Value;
 
-    private static readonly Lazy<string> _pmInterviewSMSInvestigatorCode = new Lazy<string>(() => "@pInterviewSMSInvestigatorCode");
-    public static string pmInterviewSMSInvestigatorCode => _pmInterviewSMSInvestigatorCode.Value;
+    private static readonly Lazy<string> _pmRiskAssessmentDescription = new Lazy<string>(() => "@pRiskAssessmentDescription");
+    public static string pmRiskAssessmentDescription => _pmRiskAssessmentDescription.Value;
 
-    private static readonly Lazy<string> _pmInterviewPersonInterviewed = new Lazy<string>(() => "@pInterviewPersonInterviewed");
-    public static string pmInterviewPersonInterviewed => _pmInterviewPersonInterviewed.Value;
+    private static readonly Lazy<string> _pmRiskAssessmentHazardCode = new Lazy<string>(() => "@pRiskAssessmentHazardCode");
+    public static string pmRiskAssessmentHazardCode => _pmRiskAssessmentHazardCode.Value;
 
-    private static readonly Lazy<string> _pmInterviewPersonInterviewedNotes = new Lazy<string>(() => "@pInterviewPersonInterviewedNotes");
-    public static string pmInterviewPersonInterviewedNotes => _pmInterviewPersonInterviewedNotes.Value;
+    private static readonly Lazy<string> _pmRiskAssessmentType = new Lazy<string>(() => "@pRiskAssessmentType");
+    public static string pmRiskAssessmentType => _pmRiskAssessmentType.Value;
 
-    private static readonly Lazy<string> _pmInterviewInvestigatorNotes = new Lazy<string>(() => "@pInterviewInvestigatorNotes");
-    public static string pmInterviewInvestigatorNotes => _pmInterviewInvestigatorNotes.Value;
+    private static readonly Lazy<string> _pmRiskAssessmentStatus = new Lazy<string>(() => "@pRiskAssessmentStatus");
+    public static string pmRiskAssessmentStatus => _pmRiskAssessmentStatus.Value;
+
+    private static readonly Lazy<string> _pmRiskAssessmentStage = new Lazy<string>(() => "@pRiskAssessmentStage");
+    public static string pmRiskAssessmentStage => _pmRiskAssessmentStage.Value;
 
     /// <summary>
-    /// Risk Analysis parameters
+    /// Risk Analysis parameters (restored from accidental removal) 
     /// </summary>
     private static readonly Lazy<string> _pmRiskAnalysisId = new Lazy<string>(() => "@pRiskAnalysisID");
     public static string pmRiskAnalysisId => _pmRiskAnalysisId.Value;
@@ -387,34 +603,7 @@ public static class ParameterNames
     public static string pmRiskAnalysisRootCause => _pmRiskAnalysisRootCause.Value;
 
     /// <summary>
-    /// Risk Assessment parameters
-    /// </summary>
-    private static readonly Lazy<string> _pmRiskAssessmentId = new Lazy<string>(() => "@pRiskAssessmentID");
-    public static string pmRiskAssessmentId => _pmRiskAssessmentId.Value;
-
-    private static readonly Lazy<string> _pmRiskAssessmentCode = new Lazy<string>(() => "@pRiskAssessmentCode");
-    public static string pmRiskAssessmentCode => _pmRiskAssessmentCode.Value;
-
-    private static readonly Lazy<string> _pmRiskAssessmentName = new Lazy<string>(() => "@pRiskAssessmentName");
-    public static string pmRiskAssessmentName => _pmRiskAssessmentName.Value;
-
-    private static readonly Lazy<string> _pmRiskAssessmentDescription = new Lazy<string>(() => "@pRiskAssessmentDescription");
-    public static string pmRiskAssessmentDescription => _pmRiskAssessmentDescription.Value;
-
-    private static readonly Lazy<string> _pmRiskAssessmentHazardCode = new Lazy<string>(() => "@pRiskAssessmentHazardCode");
-    public static string pmRiskAssessmentHazardCode => _pmRiskAssessmentHazardCode.Value;
-
-    private static readonly Lazy<string> _pmRiskAssessmentType = new Lazy<string>(() => "@pRiskAssessmentType");
-    public static string pmRiskAssessmentType => _pmRiskAssessmentType.Value;
-
-    private static readonly Lazy<string> _pmRiskAssessmentStatus = new Lazy<string>(() => "@pRiskAssessmentStatus");
-    public static string pmRiskAssessmentStatus => _pmRiskAssessmentStatus.Value;
-
-    private static readonly Lazy<string> _pmRiskAssessmentStage = new Lazy<string>(() => "@pRiskAssessmentStage");
-    public static string pmRiskAssessmentStage => _pmRiskAssessmentStage.Value;
-
-    /// <summary>
-    /// Mitigation parameters
+    /// Mitigation parameters (restored from accidental removal)
     /// </summary>
     private static readonly Lazy<string> _pmMitigationId = new Lazy<string>(() => "@pMitigationID");
     public static string pmMitigationId => _pmMitigationId.Value;
@@ -426,7 +615,7 @@ public static class ParameterNames
     public static string pmMitigationHazardCode => _pmMitigationHazardCode.Value;
 
     /// <summary>
-    /// Mitigation Assignment parameters
+    /// Mitigation Assignment parameters (restored from accidental removal)
     /// </summary>
     private static readonly Lazy<string> _pmMitigationAssignmentId = new Lazy<string>(() => "@pMitigationAssignmentID");
     public static string pmMitigationAssignmentId => _pmMitigationAssignmentId.Value;
@@ -441,7 +630,7 @@ public static class ParameterNames
     public static string pmMitigationAssignmentDepartmentCode => _pmMitigationAssignmentDepartmentCode.Value;
 
     /// <summary>
-    /// Report Validation parameters
+    /// Report Validation parameters (restored from accidental removal)
     /// </summary>
     private static readonly Lazy<string> _pmReportValidationId = new Lazy<string>(() => "@pReportValidationID");
     public static string pmReportValidationId => _pmReportValidationId.Value;
@@ -462,7 +651,7 @@ public static class ParameterNames
     public static string pmReportValidationStage => _pmReportValidationStage.Value;
 
     /// <summary>
-    /// Scoring Panel parameters
+    /// Scoring Panel parameters (restored from accidental removal)
     /// </summary>
     private static readonly Lazy<string> _pmScoringPanelId = new Lazy<string>(() => "@pScoringPanelID");
     public static string pmScoringPanelId => _pmScoringPanelId.Value;
@@ -484,4 +673,219 @@ public static class ParameterNames
 
     private static readonly Lazy<string> _pmScoringPanelScore = new Lazy<string>(() => "@pScoringPanelScore");
     public static string pmScoringPanelScore => _pmScoringPanelScore.Value;
+
+    /// <summary>
+    /// Report parameters (restored from accidental removal)
+    /// </summary>
+    private static readonly Lazy<string> _pmReportId = new Lazy<string>(() => "@pReportID");
+    public static string pmReportId => _pmReportId.Value;
+
+    private static readonly Lazy<string> _pmReportCode = new Lazy<string>(() => "@pReportCode");
+    public static string pmReportCode => _pmReportCode.Value;
+
+    private static readonly Lazy<string> _pmReportName = new Lazy<string>(() => "@pReportName");
+    public static string pmReportName => _pmReportName.Value;
+
+    private static readonly Lazy<string> _pmReportDescription = new Lazy<string>(() => "@pReportDescription");
+    public static string pmReportDescription => _pmReportDescription.Value;
+
+    private static readonly Lazy<string> _pmReportStatus = new Lazy<string>(() => "@pReportStatus");
+    public static string pmReportStatus => _pmReportStatus.Value;
+
+    private static readonly Lazy<string> _pmReportStage = new Lazy<string>(() => "@pReportStage");
+    public static string pmReportStage => _pmReportStage.Value;
+
+    /// <summary>
+    /// Investigation parameters (restored from accidental removal)
+    /// </summary>
+    private static readonly Lazy<string> _pmInvestigationId = new Lazy<string>(() => "@pInvestigationID");
+    public static string pmInvestigationId => _pmInvestigationId.Value;
+
+    private static readonly Lazy<string> _pmInvestigationCode = new Lazy<string>(() => "@pInvestigationCode");
+    public static string pmInvestigationCode => _pmInvestigationCode.Value;
+
+    private static readonly Lazy<string> _pmInvestigationReportCode = new Lazy<string>(() => "@pReportCode");
+    public static string pmInvestigationReportCode => _pmInvestigationReportCode.Value;
+
+    private static readonly Lazy<string> _pmInvestigationHazardCode = new Lazy<string>(() => "@pHazardCode");
+    public static string pmInvestigationHazardCode => _pmInvestigationHazardCode.Value;
+
+    private static readonly Lazy<string> _pmInvestigationNotes = new Lazy<string>(() => "@pInvestigationNotes");
+    public static string pmInvestigationNotes => _pmInvestigationNotes.Value;
+
+    private static readonly Lazy<string> _pmInvestigationAssignedInvestigatorId = new Lazy<string>(() => "@pAssignedInvestigatorId");
+    public static string pmInvestigationAssignedInvestigatorId => _pmInvestigationAssignedInvestigatorId.Value;
+
+    private static readonly Lazy<string> _pmInvestigationStatus = new Lazy<string>(() => "@pStatus");
+    public static string pmInvestigationStatus => _pmInvestigationStatus.Value;
+
+    private static readonly Lazy<string> _pmInvestigationCompletedDate = new Lazy<string>(() => "@pCompletedDate");
+    public static string pmInvestigationCompletedDate => _pmInvestigationCompletedDate.Value;
+
+    private static readonly Lazy<string> _pmInvestigationPlan = new Lazy<string>(() => "@pInvestigationPlan");
+    public static string pmInvestigationPlan => _pmInvestigationPlan.Value;
+
+    private static readonly Lazy<string> _pmInvestigationObjectives = new Lazy<string>(() => "@pInvestigationObjectives");
+    public static string pmInvestigationObjectives => _pmInvestigationObjectives.Value;
+
+    private static readonly Lazy<string> _pmInvestigationDecisionType = new Lazy<string>(() => "@pDecisionType");
+    public static string pmInvestigationDecisionType => _pmInvestigationDecisionType.Value;
+
+    private static readonly Lazy<string> _pmInvestigationDecisionRationale = new Lazy<string>(() => "@pDecisionRationale");
+    public static string pmInvestigationDecisionRationale => _pmInvestigationDecisionRationale.Value;
+
+    private static readonly Lazy<string> _pmInvestigationDecisionMaker = new Lazy<string>(() => "@pDecisionMaker");
+    public static string pmInvestigationDecisionMaker => _pmInvestigationDecisionMaker.Value;
+
+    private static readonly Lazy<string> _pmInvestigationDecisionDate = new Lazy<string>(() => "@pDecisionDate");
+    public static string pmInvestigationDecisionDate => _pmInvestigationDecisionDate.Value;
+
+    private static readonly Lazy<string> _pmInvestigationNextSteps = new Lazy<string>(() => "@pNextSteps");
+    public static string pmInvestigationNextSteps => _pmInvestigationNextSteps.Value;
+
+    private static readonly Lazy<string> _pmInvestigationReferralDetails = new Lazy<string>(() => "@pReferralDetails");
+    public static string pmInvestigationReferralDetails => _pmInvestigationReferralDetails.Value;
+
+    // Interview parameter names
+    private static readonly Lazy<string> _pmInterviewCode = new Lazy<string>(() => "@pInterviewCode");
+    public static string pmInterviewCode => _pmInterviewCode.Value;
+
+    private static readonly Lazy<string> _pmInterviewInvestigationCode = new Lazy<string>(() => "@pInvestigationCode");
+    public static string pmInterviewInvestigationCode => _pmInterviewInvestigationCode.Value;
+
+    private static readonly Lazy<string> _pmInterviewSMSInvestigatorCode = new Lazy<string>(() => "@pSMSInvestigatorCode");
+    public static string pmInterviewSMSInvestigatorCode => _pmInterviewSMSInvestigatorCode.Value;
+
+    private static readonly Lazy<string> _pmInterviewPersonInterviewed = new Lazy<string>(() => "@pPersonInterviewed");
+    public static string pmInterviewPersonInterviewed => _pmInterviewPersonInterviewed.Value;
+
+    private static readonly Lazy<string> _pmInterviewPersonRole = new Lazy<string>(() => "@pPersonInterviewedRole");
+    public static string pmInterviewPersonRole => _pmInterviewPersonRole.Value;
+
+    private static readonly Lazy<string> _pmInterviewPersonDepartment = new Lazy<string>(() => "@pPersonInterviewedDepartment");
+    public static string pmInterviewPersonDepartment => _pmInterviewPersonDepartment.Value;
+
+    private static readonly Lazy<string> _pmInterviewPersonInterviewedNotes = new Lazy<string>(() => "@pPersonInterviewedNotes");
+    public static string pmInterviewPersonInterviewedNotes => _pmInterviewPersonInterviewedNotes.Value;
+
+    private static readonly Lazy<string> _pmInterviewInvestigatorNotes = new Lazy<string>(() => "@pInvestigatorNotes");
+    public static string pmInterviewInvestigatorNotes => _pmInterviewInvestigatorNotes.Value;
+
+    private static readonly Lazy<string> _pmInterviewStatus = new Lazy<string>(() => "@pStatus");
+    public static string pmInterviewStatus => _pmInterviewStatus.Value;
+
+    private static readonly Lazy<string> _pmInterviewDate = new Lazy<string>(() => "@pInterviewDate");
+    public static string pmInterviewDate => _pmInterviewDate.Value;
+
+    private static readonly Lazy<string> _pmInterviewDurationMinutes = new Lazy<string>(() => "@pDurationMinutes");
+    public static string pmInterviewDurationMinutes => _pmInterviewDurationMinutes.Value;
+
+    private static readonly Lazy<string> _pmInterviewLocation = new Lazy<string>(() => "@pInterviewLocation");
+    public static string pmInterviewLocation => _pmInterviewLocation.Value;
+
+    private static readonly Lazy<string> _pmInterviewType = new Lazy<string>(() => "@pType");
+    public static string pmInterviewType => _pmInterviewType.Value;
+
+    private static readonly Lazy<string> _pmInterviewIsConfidential = new Lazy<string>(() => "@pIsConfidential");
+    public static string pmInterviewIsConfidential => _pmInterviewIsConfidential.Value;
+
+    private static readonly Lazy<string> _pmInterviewPreparationNotes = new Lazy<string>(() => "@pPreparationNotes");
+    public static string pmInterviewPreparationNotes => _pmInterviewPreparationNotes.Value;
+
+    private static readonly Lazy<string> _pmInterviewQuestionsToAsk = new Lazy<string>(() => "@pQuestionsToAsk");
+    public static string pmInterviewQuestionsToAsk => _pmInterviewQuestionsToAsk.Value;
+
+    private static readonly Lazy<string> _pmInterviewBackgroundInformation = new Lazy<string>(() => "@pBackgroundInformation");
+    public static string pmInterviewBackgroundInformation => _pmInterviewBackgroundInformation.Value;
+
+    private static readonly Lazy<string> _pmInterviewKeyFindings = new Lazy<string>(() => "@pKeyFindings");
+    public static string pmInterviewKeyFindings => _pmInterviewKeyFindings.Value;
+
+    private static readonly Lazy<string> _pmInterviewFollowUpRequired = new Lazy<string>(() => "@pFollowUpRequired");
+    public static string pmInterviewFollowUpRequired => _pmInterviewFollowUpRequired.Value;
+
+    private static readonly Lazy<string> _pmInterviewAdditionalWitnesses = new Lazy<string>(() => "@pAdditionalWitnesses");
+    public static string pmInterviewAdditionalWitnesses => _pmInterviewAdditionalWitnesses.Value;
+
+    private static readonly Lazy<string> _pmInterviewCompletedDate = new Lazy<string>(() => "@pCompletedDate");
+    public static string pmInterviewCompletedDate => _pmInterviewCompletedDate.Value;
+
+    /// <summary>
+    /// Hazard File parameters (for pr_HazardFile_* stored procedures)
+    /// </summary>
+    private static readonly Lazy<string> _pmHazardFileId = new Lazy<string>(() => "@pID");
+    public static string pmHazardFileId => _pmHazardFileId.Value;
+
+    private static readonly Lazy<string> _pmHazardFileCode = new Lazy<string>(() => "@pCode");
+    public static string pmHazardFileCode => _pmHazardFileCode.Value;
+
+    private static readonly Lazy<string> _pmHazardFileHazardCode = new Lazy<string>(() => "@pHazardCode");
+    public static string pmHazardFileHazardCode => _pmHazardFileHazardCode.Value;
+
+    private static readonly Lazy<string> _pmHazardFileReportCode = new Lazy<string>(() => "@pReportCode");
+    public static string pmHazardFileReportCode => _pmHazardFileReportCode.Value;
+
+    private static readonly Lazy<string> _pmHazardFileFileName = new Lazy<string>(() => "@pFileName");
+    public static string pmHazardFileFileName => _pmHazardFileFileName.Value;
+
+    private static readonly Lazy<string> _pmHazardFileFileType = new Lazy<string>(() => "@pFileType");
+    public static string pmHazardFileFileType => _pmHazardFileFileType.Value;
+
+    private static readonly Lazy<string> _pmHazardFileContentType = new Lazy<string>(() => "@pContentType");
+    public static string pmHazardFileContentType => _pmHazardFileContentType.Value;
+
+    private static readonly Lazy<string> _pmHazardFileFileSizeBytes = new Lazy<string>(() => "@pFileSizeBytes");
+    public static string pmHazardFileFileSizeBytes => _pmHazardFileFileSizeBytes.Value;
+
+    private static readonly Lazy<string> _pmHazardFileFileHash = new Lazy<string>(() => "@pFileHash");
+    public static string pmHazardFileFileHash => _pmHazardFileFileHash.Value;
+
+    private static readonly Lazy<string> _pmHazardFileStorageType = new Lazy<string>(() => "@pStorageType");
+    public static string pmHazardFileStorageType => _pmHazardFileStorageType.Value;
+
+    private static readonly Lazy<string> _pmHazardFileFilePath = new Lazy<string>(() => "@pFilePath");
+    public static string pmHazardFileFilePath => _pmHazardFileFilePath.Value;
+
+    private static readonly Lazy<string> _pmHazardFileFileData = new Lazy<string>(() => "@pFileData");
+    public static string pmHazardFileFileData => _pmHazardFileFileData.Value;
+
+    private static readonly Lazy<string> _pmHazardFileDescription = new Lazy<string>(() => "@pDescription");
+    public static string pmHazardFileDescription => _pmHazardFileDescription.Value;
+
+    private static readonly Lazy<string> _pmHazardFileCategory = new Lazy<string>(() => "@pCategory");
+    public static string pmHazardFileCategory => _pmHazardFileCategory.Value;
+
+    private static readonly Lazy<string> _pmHazardFileIsConfidential = new Lazy<string>(() => "@pIsConfidential");
+    public static string pmHazardFileIsConfidential => _pmHazardFileIsConfidential.Value;
+
+    private static readonly Lazy<string> _pmHazardFileUploadedBy = new Lazy<string>(() => "@pUploadedBy");
+    public static string pmHazardFileUploadedBy => _pmHazardFileUploadedBy.Value;
+
+    private static readonly Lazy<string> _pmHazardFileTags = new Lazy<string>(() => "@pTags");
+    public static string pmHazardFileTags => _pmHazardFileTags.Value;
+
+    private static readonly Lazy<string> _pmHazardFileInactiveReason = new Lazy<string>(() => "@pInactiveReason");
+    public static string pmHazardFileInactiveReason => _pmHazardFileInactiveReason.Value;
+
+    private static readonly Lazy<string> _pmHazardFileInactiveBy = new Lazy<string>(() => "@pInactiveBy");
+    public static string pmHazardFileInactiveBy => _pmHazardFileInactiveBy.Value;
+
+    // Search parameters
+    private static readonly Lazy<string> _pmHazardFileSearchText = new Lazy<string>(() => "@pSearchText");
+    public static string pmHazardFileSearchText => _pmHazardFileSearchText.Value;
+
+    private static readonly Lazy<string> _pmHazardFileIncludeFileData = new Lazy<string>(() => "@pIncludeFileData");
+    public static string pmHazardFileIncludeFileData => _pmHazardFileIncludeFileData.Value;
+
+    private static readonly Lazy<string> _pmHazardFileIncludeConfidential = new Lazy<string>(() => "@pIncludeConfidential");
+    public static string pmHazardFileIncludeConfidential => _pmHazardFileIncludeConfidential.Value;
+
+    private static readonly Lazy<string> _pmHazardFileDateFrom = new Lazy<string>(() => "@pDateFrom");
+    public static string pmHazardFileDateFrom => _pmHazardFileDateFrom.Value;
+
+    private static readonly Lazy<string> _pmHazardFileDateTo = new Lazy<string>(() => "@pDateTo");
+    public static string pmHazardFileDateTo => _pmHazardFileDateTo.Value;
+
+    private static readonly Lazy<string> _pmHazardFileMaxResults = new Lazy<string>(() => "@pMaxResults");
+    public static string pmHazardFileMaxResults => _pmHazardFileMaxResults.Value;
 }

@@ -61,61 +61,44 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
 
             int newIdValue = (int)newID.Value;
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
-            RiskAssessmentID riskAssessmentId = new (newCodeValue);
+            RiskAssessmentID riskAssessmentId = new RiskAssessmentID(newCodeValue);
 
             return await GetRiskAssessmentByIdAsync(riskAssessmentId, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogInfrastructurePostItemError($"{_logheader} {ex.Message}", null);
+            _logger.LogError(ex, "Failed to create RiskAssessment: {Code}", riskAssessment.Code);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.CreateFailed);
         }
     }
 
-    public async Task<Result<RiskAssessment>> GetRiskAssessmentByIdAsync(RiskAssessmentID id, CancellationToken ct = default)
+    public async Task<Result<RiskAssessment>> GetRiskAssessmentByIdAsync(RiskAssessmentID riskAssessmentId, CancellationToken cancellationToken = default)
     {
         try
         {
-            if (id is null)
+            _logger.LogInformation("Retrieving RiskAssessment by ID: {Id}", riskAssessmentId);
+
+            var parameters = new DynamicParameters();
+            parameters.Add("@RiskAssessmentID", riskAssessmentId.Value);
+
+            var riskAssessment = await _connectionFactory.GetConnection().QuerySingleOrDefaultAsync<RiskAssessment>(
+                "GetRiskAssessmentById", 
+                parameters, 
+                commandType: CommandType.StoredProcedure);
+
+            if (riskAssessment == null)
             {
-                return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
-            }
-
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_RiskAssessment_GetById} {id}", null);
-
-            using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_RiskAssessment_GetById, sql)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
-
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
-
-            RiskAssessment? response = null;
-
-            await sql.OpenAsync(ct).ConfigureAwait(false);
-            using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
-            {
-                while (await reader.ReadAsync().ConfigureAwait(false))
-                {
-                    response = Mappers.MapToRiskAssessment(reader);
-                }
-            }
-            await sql.CloseAsync().ConfigureAwait(false);
-
-            if (response is not null)
-            {
-                return Result<RiskAssessment>.Success(response);
-            }
-            else
-            {
+                _logger.LogWarning("RiskAssessment not found with ID: {Id}", riskAssessmentId);
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NotFound);
             }
+
+            _logger.LogInformation("Successfully retrieved RiskAssessment: {Id}", riskAssessmentId);
+            return Result<RiskAssessment>.Success(riskAssessment);
         }
         catch (Exception ex)
         {
-            _logger.LogInfrastructureGetItemError($"{_logheader} {ex.Message}", null);
-            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.GeneralError.UnProcessableRequest);
+            _logger.LogError(ex, "Failed to retrieve RiskAssessment by ID: {Id}", riskAssessmentId);
+            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NotFound);
         }
     }
 
@@ -185,7 +168,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetRiskAssessmentByIdAsync((RiskAssessmentID)riskAssessment.Id, ct).ConfigureAwait(false);
+            return await GetRiskAssessmentByIdAsync(new RiskAssessmentID(riskAssessment.Id.Value), ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

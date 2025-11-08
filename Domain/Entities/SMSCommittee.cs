@@ -79,7 +79,7 @@ public sealed class SMSCommittee : BaseAuditableEntity
             _memberships.Add(membership);
             return Result<CommitteeMembership>.Success(membership);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Result<CommitteeMembership>.Failure<CommitteeMembership>(DomainErrors.CommitteeError.MembershipCreationFailed);
         }
@@ -98,7 +98,7 @@ public sealed class SMSCommittee : BaseAuditableEntity
             membership.Deactivate(deactivatedBy, DateTime.UtcNow);
             return Result.Success();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Result.Failure(DomainErrors.CommitteeError.MemberRemovalFailed);
         }
@@ -127,7 +127,7 @@ public sealed class SMSCommittee : BaseAuditableEntity
             _meetings.Add(meeting);
             return Result<CommitteeMeeting>.Success(meeting);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Result<CommitteeMeeting>.Failure<CommitteeMeeting>(DomainErrors.MeetingError.MeetingCreationFailed);
         }
