@@ -1,4 +1,5 @@
-﻿
+﻿using System.Reflection;
+
 namespace SMS_Domain.Common;
 
 public abstract class BaseEnum<TEnum> : IEquatable<BaseEnum<TEnum>> where TEnum : BaseEnum<TEnum>

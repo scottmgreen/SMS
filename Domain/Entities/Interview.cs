@@ -16,6 +16,7 @@ public sealed class Interview : BaseAuditableEntity
     public Interview(InterviewID id) : base(id, "SYSTEM", DateTime.UtcNow) 
     {
         Status = InterviewStatus.Planned;
+        Type = InterviewType.Witness;
         CreatedDate = DateTime.UtcNow;
         UpdatedDate = DateTime.UtcNow;
     }
@@ -29,6 +30,7 @@ public sealed class Interview : BaseAuditableEntity
         PersonInterviewed = personInterviewed;
         SMSInvestigatorCode = investigatorCode;
         Status = InterviewStatus.Planned;
+        Type = InterviewType.Witness;
         CreatedDate = DateTime.UtcNow;
         UpdatedDate = DateTime.UtcNow;
     }
@@ -84,7 +86,7 @@ public sealed class Interview : BaseAuditableEntity
     /// <summary>
     /// Create a new interview for an investigation
     /// </summary>
-    public static Result<Interview> CreateForInvestigation(string investigationCode, string personInterviewed, string investigatorCode, InterviewType type = InterviewType.Witness)
+    public static Result<Interview> CreateForInvestigation(string investigationCode, string personInterviewed, string investigatorCode, InterviewType? type = null)
     {
         if (string.IsNullOrWhiteSpace(investigationCode))
         {
@@ -105,7 +107,7 @@ public sealed class Interview : BaseAuditableEntity
         var id = new InterviewID(code);
         var interview = new Interview(id, code, investigationCode, personInterviewed, investigatorCode)
         {
-            Type = type
+            Type = type ?? InterviewType.Witness
         };
 
         return Result<Interview>.Success(interview);
@@ -141,7 +143,7 @@ public sealed class Interview : BaseAuditableEntity
     /// </summary>
     public Result<bool> ScheduleInterview(DateTime interviewDate, string location, int? estimatedDurationMinutes = null)
     {
-        if (Status == InterviewStatus.Completed)
+        if (!Status.AllowsModifications())
         {
             return Result<bool>.Failure<bool>(DomainErrors.InterviewError.CannotModifyCompleted);
         }
@@ -153,7 +155,7 @@ public sealed class Interview : BaseAuditableEntity
 
         InterviewDate = interviewDate;
         InterviewLocation = location;
-        DurationMinutes = estimatedDurationMinutes;
+        DurationMinutes = estimatedDurationMinutes ?? Type.GetRecommendedMinimumDurationMinutes();
         Status = InterviewStatus.Scheduled;
         UpdatedDate = DateTime.UtcNow;
 
@@ -165,7 +167,7 @@ public sealed class Interview : BaseAuditableEntity
     /// </summary>
     public Result<bool> AddPreparation(string? preparationNotes, string? questionsToAsk, string? backgroundInfo = null)
     {
-        if (Status == InterviewStatus.Completed)
+        if (!Status.AllowsModifications())
         {
             return Result<bool>.Failure<bool>(DomainErrors.InterviewError.CannotModifyCompleted);
         }
@@ -183,7 +185,7 @@ public sealed class Interview : BaseAuditableEntity
     /// </summary>
     public Result<bool> StartInterview()
     {
-        if (Status != InterviewStatus.Scheduled)
+        if (!Status.CanStart())
         {
             return Result<bool>.Failure<bool>(DomainErrors.InterviewError.MustBeScheduled);
         }
@@ -200,7 +202,7 @@ public sealed class Interview : BaseAuditableEntity
     public Result<bool> CompleteInterview(string? personInterviewedNotes, string? investigatorNotes, 
         string? keyFindings = null, string? followUpRequired = null, string? additionalWitnesses = null)
     {
-        if (Status != InterviewStatus.InProgress && Status != InterviewStatus.Scheduled)
+        if (!Status.CanComplete())
         {
             return Result<bool>.Failure<bool>(DomainErrors.InterviewError.CannotComplete);
         }
@@ -223,7 +225,7 @@ public sealed class Interview : BaseAuditableEntity
     /// </summary>
     public Result<bool> CancelInterview(string reason)
     {
-        if (Status == InterviewStatus.Completed)
+        if (!Status.CanCancel())
         {
             return Result<bool>.Failure<bool>(DomainErrors.InterviewError.CannotModifyCompleted);
         }
@@ -245,7 +247,7 @@ public sealed class Interview : BaseAuditableEntity
     /// </summary>
     public Result<bool> UpdateDetails(string? personRole, string? personDepartment, string? description = null)
     {
-        if (Status == InterviewStatus.Completed)
+        if (!Status.AllowsModifications())
         {
             return Result<bool>.Failure<bool>(DomainErrors.InterviewError.CannotModifyCompleted);
         }
@@ -280,7 +282,7 @@ public sealed class Interview : BaseAuditableEntity
     /// <summary>
     /// Check if interview is completed
     /// </summary>
-    public bool IsCompleted => Status == InterviewStatus.Completed;
+    public bool IsCompleted => Status.IsComplete();
 
     /// <summary>
     /// Check if interview is scheduled
@@ -295,7 +297,7 @@ public sealed class Interview : BaseAuditableEntity
     /// <summary>
     /// Check if interview is cancelled
     /// </summary>
-    public bool IsCancelled => Status == InterviewStatus.Cancelled;
+    public bool IsCancelled => Status.IsCancelled();
 
     /// <summary>
     /// Check if interview has findings
@@ -335,7 +337,23 @@ public sealed class Interview : BaseAuditableEntity
     /// </summary>
     public string GetInterviewSummary()
     {
-        return $"{PersonInterviewed} ({Type}) - {Status} - {InterviewDate:yyyy-MM-dd}";
+        return $"{PersonInterviewed} ({Type.Name}) - {Status.Name} - {InterviewDate:yyyy-MM-dd}";
+    }
+
+    /// <summary>
+    /// Get preparation guidelines for this interview type
+    /// </summary>
+    public string GetPreparationGuidelines()
+    {
+        return Type.GetPreparationGuidelines();
+    }
+
+    /// <summary>
+    /// Get status display description
+    /// </summary>
+    public string GetStatusDescription()
+    {
+        return Status.GetDisplayDescription();
     }
 
     #endregion
@@ -351,27 +369,4 @@ public sealed class Interview : BaseAuditableEntity
     }
 
     #endregion
-}
-
-/// <summary>
-/// Interview Status Enumeration
-/// </summary>
-public enum InterviewStatus
-{
-    Planned,
-    Scheduled,
-    InProgress,
-    Completed,
-    Cancelled
-}
-
-/// <summary>
-/// Interview Type Enumeration
-/// </summary>
-public enum InterviewType
-{
-    Witness,        // Witness to the event
-    Expert,         // Subject matter expert
-    Stakeholder,    // Organizational stakeholder
-    FollowUp        // Follow-up interview
 }

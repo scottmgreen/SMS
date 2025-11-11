@@ -5,10 +5,10 @@ namespace SMS_Domain.Entities;
 /// <summary>
 /// Represents a unique identifier for SMS Organizational User entities
 /// </summary>
-public sealed class SMSOrganizationalUserID : BaseID<string>
+public sealed class SMSOrganizationalUserID : BaseUserID
 {
-    public SMSOrganizationalUserID(string value) : base(value) { }
+    public SMSOrganizationalUserID(string id) : base(id) { }
     
-    public static implicit operator string(SMSOrganizationalUserID id) => id.Value;
+    // Implicit conversion from string for convenience
     public static implicit operator SMSOrganizationalUserID(string value) => new(value);
 }

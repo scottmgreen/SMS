@@ -6,6 +6,9 @@ using SMS_Shared.Common;
 
 namespace SMS_Application.Messaging.Commands;
 
+/// <summary>
+/// Command to create a hazard from an existing Hazard entity
+/// </summary>
 public class CreateHazardCommand : BaseCommandBundle, IRequest<Result<Hazard>>
 {
     public Hazard Hazard { get; set; }
@@ -16,6 +19,9 @@ public class CreateHazardCommand : BaseCommandBundle, IRequest<Result<Hazard>>
     }
 }
 
+/// <summary>
+/// Command to update an existing hazard
+/// </summary>
 public class UpdateHazardCommand : BaseCommandBundle, IRequest<Result<Hazard>>
 {
     public Hazard Hazard { get; set; }
@@ -26,6 +32,9 @@ public class UpdateHazardCommand : BaseCommandBundle, IRequest<Result<Hazard>>
     }
 }
 
+/// <summary>
+/// Command to delete a hazard (soft delete)
+/// </summary>
 public class DeleteHazardCommand : BaseCommandBundle, IRequest<Result<bool>>
 {
     public HazardID HazardId { get; set; }

@@ -1,3 +1,5 @@
+using Application.Interfaces;
+
 using Microsoft.Extensions.Logging;
 using SMS_Domain.Entities;
 using SMS_Domain.Errors;
@@ -10,7 +12,7 @@ namespace SMS_Application.Services;
 /// High-level application service for SMS Organizational User business operations
 /// Provides business logic orchestration and cross-cutting concerns
 /// </summary>
-public sealed class SMSOrganizationalUserService
+public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
 {
     private readonly SMSOrganizationalUserDataService _dataService;
     private readonly ILogger<SMSOrganizationalUserService> _logger;
@@ -108,7 +110,7 @@ public sealed class SMSOrganizationalUserService
         try
         {
             _logger.LogInformation("Retrieving SMS Organizational Users by department: {Department}", department);
-            
+
             // Business validation - ensure department is valid
             if (!IsValidDepartment(department))
             {
@@ -128,35 +130,35 @@ public sealed class SMSOrganizationalUserService
     /// <summary>
     /// Gets department supervisors with hierarchy validation
     /// </summary>
-    public async Task<Result<IEnumerable<SMSOrganizationalUser>>> GetDepartmentSupervisorsAsync(string department, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving supervisors for department: {Department}", department);
-            
-            var result = await _dataService.GetDepartmentSupervisorsAsync(department, ct).ConfigureAwait(false);
+    //public async Task<Result<IEnumerable<SMSOrganizationalUser>>> GetDepartmentSupervisorsAsync(string department, CancellationToken ct = default)
+    //{
+    //    try
+    //    {
+    //        _logger.LogInformation("Retrieving supervisors for department: {Department}", department);
 
-            if (result.IsSuccess)
-            {
-                var supervisors = result.Value;
-                _logger.LogInformation("Found {Count} supervisors for department: {Department}", 
-                    supervisors.Count(), department);
+    //        var result = await _dataService.GetDepartmentSupervisorsAsync(department, ct).ConfigureAwait(false);
 
-                // Business analysis - warn if department has no supervisors
-                if (!supervisors.Any())
-                {
-                    _logger.LogWarning("Department {Department} has no supervisors assigned", department);
-                }
-            }
+    //        if (result.IsSuccess)
+    //        {
+    //            var supervisors = result.Value;
+    //            _logger.LogInformation("Found {Count} supervisors for department: {Department}", 
+    //                supervisors.Count(), department);
 
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error retrieving supervisors for department: {Department}", department);
-            return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
-        }
-    }
+    //            // Business analysis - warn if department has no supervisors
+    //            if (!supervisors.Any())
+    //            {
+    //                _logger.LogWarning("Department {Department} has no supervisors assigned", department);
+    //            }
+    //        }
+
+    //        return result;
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogError(ex, "Unexpected error retrieving supervisors for department: {Department}", department);
+    //        return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
+    //    }
+    //}
 
     /// <summary>
     /// Updates an existing SMS Organizational User with business validation
@@ -231,7 +233,7 @@ public sealed class SMSOrganizationalUserService
             if (result.IsSuccess)
             {
                 var user = result.Value;
-                
+
                 // Business rule - check if user is active
                 if (!user.IsActive)
                 {
@@ -239,7 +241,7 @@ public sealed class SMSOrganizationalUserService
                     return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.BaseUserError.InactiveUser);
                 }
 
-                _logger.LogInformation("Successfully authenticated SMS Organizational User: {UserName} from department: {Department}", 
+                _logger.LogInformation("Successfully authenticated SMS Organizational User: {UserName} from department: {Department}",
                     userName, user.Department);
             }
             else
@@ -256,45 +258,7 @@ public sealed class SMSOrganizationalUserService
         }
     }
 
-    /// <summary>
-    /// Gets department statistics with business insights
-    /// </summary>
-    public async Task<Result<Dictionary<string, int>>> GetDepartmentStatisticsAsync(CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving department statistics");
-            
-            var result = await _dataService.GetDepartmentStatisticsAsync(ct).ConfigureAwait(false);
 
-            if (result.IsSuccess)
-            {
-                var stats = result.Value;
-                _logger.LogInformation("Retrieved statistics for {Count} departments", stats.Count);
-
-                // Business analysis - identify departments with low staffing
-                foreach (var dept in stats.Where(s => s.Value < 3))
-                {
-                    _logger.LogWarning("Department {Department} has low staffing: {Count} users", dept.Key, dept.Value);
-                }
-
-                // Business analysis - identify largest departments
-                var largestDept = stats.OrderByDescending(s => s.Value).FirstOrDefault();
-                if (largestDept.Key != null)
-                {
-                    _logger.LogInformation("Largest department is {Department} with {Count} users", 
-                        largestDept.Key, largestDept.Value);
-                }
-            }
-
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error retrieving department statistics");
-            return Result<Dictionary<string, int>>.Failure<Dictionary<string, int>>(DomainErrors.GeneralError.UnProcessableRequest);
-        }
-    }
 
     #region Private Business Logic Helpers
 

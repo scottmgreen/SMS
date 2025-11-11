@@ -338,6 +338,43 @@ public static class DomainErrors
     }
 
     /// <summary>
+    /// Contains investigation-related errors.
+    /// </summary>
+    public static class InvestigationError
+    {
+        public static Error NullOrEmpty => new Error("Investigation.NullOrEmpty", "The Investigation is required.");
+        public static Error NotFound => new Error("Investigation.NotFound", "The Investigation was not found.");
+        public static Error CreateFailed => new Error("Investigation.CreateFailed", "Failed to create the Investigation.");
+        public static Error UpdateFailed => new Error("Investigation.UpdateFailed", "Failed to update the Investigation.");
+        public static Error DeleteFailed => new Error("Investigation.DeleteFailed", "Failed to delete the Investigation.");
+        public static Error CodeRequired => new Error("Investigation.CodeRequired", "The Investigation Code is required.");
+        public static Error ReportCodeRequired => new Error("Investigation.ReportCodeRequired", "The Report Code is required.");
+        public static Error HazardCodeRequired => new Error("Investigation.HazardCodeRequired", "The Hazard Code is required.");
+        public static Error AssignedInvestigatorRequired => new Error("Investigation.AssignedInvestigatorRequired", "An assigned investigator is required.");
+        public static Error InvalidStatus => new Error("Investigation.InvalidStatus", "The Investigation Status is invalid.");
+        public static Error CannotModifyCompleted => new Error("Investigation.CannotModifyCompleted", "Cannot modify a completed investigation.");
+        public static Error CannotComplete => new Error("Investigation.CannotComplete", "Cannot complete investigation in current status.");
+        public static Error MustBeAssigned => new Error("Investigation.MustBeAssigned", "Investigation must be assigned before starting.");
+        public static Error PlanRequired => new Error("Investigation.PlanRequired", "Investigation plan is required before starting.");
+        public static Error ObjectivesRequired => new Error("Investigation.ObjectivesRequired", "Investigation objectives are required.");
+        public static Error DecisionRequired => new Error("Investigation.DecisionRequired", "Investigation decision is required for completion.");
+        public static Error DecisionMakerRequired => new Error("Investigation.DecisionMakerRequired", "Decision maker is required.");
+        public static Error InvalidDecisionType => new Error("Investigation.InvalidDecisionType", "The decision type is invalid.");
+        public static Error CompletionFailed => new Error("Investigation.CompletionFailed", "Failed to complete the investigation.");
+        public static Error StatusUpdateFailed => new Error("Investigation.StatusUpdateFailed", "Failed to update investigation status.");
+        public static Error AssignmentFailed => new Error("Investigation.AssignmentFailed", "Failed to assign investigator.");
+        public static Error InvestigatorRequired => new Error("Investigation.InvestigatorRequired", "An investigator is required.");
+        public static Error DecisionTypeRequired => new Error("Investigation.DecisionTypeRequired", "Decision type is required.");
+        public static Error DecisionRationaleRequired => new Error("Investigation.DecisionRationaleRequired", "Decision rationale is required.");
+        public static Error AlreadyCompleted => new Error("Investigation.AlreadyCompleted", "Investigation is already completed.");
+        public static Error NotCompleted => new Error("Investigation.NotCompleted", "Investigation is not completed.");
+        public static Error ReasonRequired => new Error("Investigation.ReasonRequired", "A reason is required.");
+        public static Error InvalidCode => new Error("Investigation.InvalidCode", "The investigation code is invalid or malformed.");
+        public static Error InvalidInvestigator => new Error("Investigation.InvalidInvestigator", "The assigned investigator is invalid or not authorized.");
+        public static Error MissingRecommendations => new Error("Investigation.MissingRecommendations", "Investigation recommendations are required before completion.");
+    }
+
+    /// <summary>
     /// Contains mitigation-related errors.
     /// </summary>
     public static class MitigationError

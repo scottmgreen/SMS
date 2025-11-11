@@ -62,16 +62,16 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
         }
     }
 
-    public async Task<Result<SMSStakeholderUser>> GetByIdAsync(string id)
+    public async Task<Result<SMSStakeholderUser>> GetByIdAsync(BaseUserID id)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (id?.Value is null || string.IsNullOrWhiteSpace(id.Value))
             {
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureGetItem($"{_logHeader} {StoredProcs.pr_SMSStakeholderUser_GetById} ID:{id}", null);
+            _logger.LogInfrastructureGetItem($"{_logHeader} {StoredProcs.pr_SMSStakeholderUser_GetById} ID:{id.Value}", null);
 
             using var sql = new SqlConnection(_connectionString);
             using var cmd = new SqlCommand(StoredProcs.pr_SMSStakeholderUser_GetById, sql)
@@ -79,7 +79,7 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
 
             SMSStakeholderUser? user = null;
 
@@ -281,6 +281,24 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
             _logger.LogInfrastructurePutItemError($"{_logHeader} {ex.Message}", null);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.UpdateFailed);
         }
+    }
+
+    public async Task<Result<bool>> UpdatePasswordAsync(BaseUserID userId, string hashedPassword)
+    {
+        // Convert BaseUserID to string for compatibility
+        return await UpdatePasswordAsync(userId.Value, hashedPassword);
+    }
+
+    public async Task<Result<bool>> RecordLoginAsync(BaseUserID userId, DateTime loginDate)
+    {
+        // Convert BaseUserID to string for compatibility  
+        return await RecordLoginAsync(userId.Value, loginDate);
+    }
+
+    public async Task<Result<bool>> DeleteAsync(BaseUserID userId)
+    {
+        // Convert BaseUserID to string for compatibility
+        return await DeleteAsync(userId.Value);
     }
 
     public async Task<Result<bool>> UpdatePasswordAsync(string userId, string hashedPassword)

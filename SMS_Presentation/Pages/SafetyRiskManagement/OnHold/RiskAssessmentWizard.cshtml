@@ -1,7 +1,7 @@
 ﻿@page "/SafetyRiskManagement/RiskAssessmentWizard/{id}/step/{stepNumber:int?}"
-@model PDXSMS_Presentation.Pages.SafetyRiskManagement.RiskAssessmentWizardModel
+@model SMS.Presentation.Pages.SafetyRiskManagement.RiskAssessmentWizardModel
 @{
-    ViewData["Title"] = $"Risk Assessment Wizard - Step {Model.CurrentStep}";
+    ViewData["Title"] = $"Risk Assessment Wizard - Step {Model.StepNumber}";
 }
 
 <div class="container-fluid">
@@ -145,23 +145,23 @@
                         <input type="hidden" asp-for="Id" />
                         <input type="hidden" asp-for="StepNumber" />
                         
-                        @if (Model.CurrentStep == 1)
+                        @if (Model.StepNumber == 1)
                         {
                             @await Html.PartialAsync("_Step1_DescribeSystem", Model)
                         }
-                        else if (Model.CurrentStep == 2)
+                        else if (Model.StepNumber == 2)
                         {
                             @await Html.PartialAsync("_Step2_IdentifyHazards", Model)
                         }
-                        else if (Model.CurrentStep == 3)
+                        else if (Model.StepNumber == 3)
                         {
                             @await Html.PartialAsync("_Step3_AnalyzeRisk", Model)
                         }
-                        else if (Model.CurrentStep == 4)
+                        else if (Model.StepNumber == 4)
                         {
                             @await Html.PartialAsync("_Step4_AssessRisk", Model)
                         }
-                        else if (Model.CurrentStep == 5)
+                        else if (Model.StepNumber == 5)
                         {
                             @await Html.PartialAsync("_Step5_MitigateRisk", Model)
                         }
@@ -173,7 +173,7 @@
                                 
                                 <div class="d-flex justify-content-between">
                                     <div>
-                                        @if (Model.CurrentStep > 1)
+                                        @if (Model.StepNumber > 1)
                                         {
                                             <button type="submit" class="btn btn-outline-secondary" 
                                                     formaction="?handler=PreviousStep" formnovalidate>
@@ -190,7 +190,7 @@
                                                 onclick="manualSaveCurrentStep()">
                                             <i class="fas fa-save"></i> Save Progress
                                         </button> *@
-                                        @if (Model.CurrentStep < 5)
+                                        @if (Model.StepNumber < 5)
                                         {
                                             <button type="button" class="btn btn-primary"
                                                     onclick="saveAndNavigateNext()">
@@ -217,10 +217,10 @@
         <div class="col-lg-3">
             <div class="card">
                 <div class="card-header bg-warning text-dark">
-                    <h5><i class="fas fa-question-circle"></i> Step @Model.CurrentStep Guidance</h5>
+                    <h5><i class="fas fa-question-circle"></i> Step @Model.StepNumber Guidance</h5>
                 </div>
                 <div class="card-body">
-                    @if (Model.CurrentStep == 1)
+                    @if (Model.StepNumber == 1)
                     {
                         <h6>System Description Requirements:</h6>
                         <ul class="small">
@@ -472,7 +472,7 @@
                             </div>
                         </div>
                     }
-                    else if (Model.CurrentStep == 2)
+                    else if (Model.StepNumber == 2)
                     {
                         <h6>Hazard Identification Tips:</h6>
                         <ul class="small">
@@ -483,7 +483,7 @@
                             <li>Use hazard taxonomies</li>
                         </ul>
                     }
-                    else if (Model.CurrentStep == 3)
+                    else if (Model.StepNumber == 3)
                     {
                         <h6>Risk Analysis Methods:</h6>
                         <ul class="small">
@@ -495,7 +495,7 @@
                         </ul>
                         
                     }
-                    else if (Model.CurrentStep == 4)
+                    else if (Model.StepNumber == 4)
                     {
                         <h6>Risk Assessment Criteria:</h6>
                         <ul class="small">

@@ -180,6 +180,57 @@ public class UpdateSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
     }
 }
 
+public class UpdateSMSApplicationUserInfoCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSApplicationUserInfoCommand, Result<bool>>
+{
+    private readonly ISMSApplicationUserRepository _repository;
+    private readonly ILogger<UpdateSMSApplicationUserInfoCommandHandler> _logger;
+
+    public UpdateSMSApplicationUserInfoCommandHandler(ISMSApplicationUserRepository repository, ILogger<UpdateSMSApplicationUserInfoCommandHandler> logger)
+    {
+        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<bool>> HandleAsync(UpdateSMSApplicationUserInfoCommand request, CancellationToken ct = default)
+    {
+        try
+        {
+            if (request is null)
+            {
+                _logger.LogError("UpdateSMSApplicationUserInfoCommand received with null request");
+                return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Processing UpdateSMSApplicationUserInfoCommand for UserID: {UserId}", request.UserId);
+
+            var userId = new SMSApplicationUserID(request.UserId);
+            var result = await _repository.UpdateSMSApplicationUserInfoAsync(userId, request.ApplicationRole, request.PermissionLevel);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully updated application info for SMS Application User with ID: {UserId}", request.UserId);
+            }
+            else
+            {
+                _logger.LogError("Failed to update application info for SMS Application User with ID: {UserId}. Error: {Error}",
+                    request.UserId, result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("UpdateSMSApplicationUserInfoCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error occurred while updating application info for SMS Application User with ID: {UserId}", request.UserId);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.UpdateFailed);
+        }
+    }
+}
+
 public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSApplicationUserPasswordCommand, Result<bool>>
 {
     private readonly ISMSApplicationUserRepository _repository;

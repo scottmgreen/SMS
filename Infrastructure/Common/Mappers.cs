@@ -278,51 +278,53 @@ public static partial class Mappers
         hazard.AverageScore = reader.GetValue<string>(FieldNames.fHazardAverageScore);
 
         // Enhanced properties
-        hazard.Category = reader.GetValue<string>(FieldNames.fHazardCategory) ?? string.Empty;
-        hazard.FiveMComponent = reader.GetValue<string>(FieldNames.fHazardFiveMComponent);
-        hazard.HazardType = reader.GetValue<string>(FieldNames.fHazardType);
+        //hazard.Category = reader.GetValue<string>(FieldNames.fHazardCategory) ?? string.Empty;
+        //var fiveMComponentValue = reader.GetValue<string>(FieldNames.fHazardFiveMComponent);
+        //hazard.FiveMComponent = string.IsNullOrEmpty(fiveMComponentValue) ? FiveMComponent.Method : 
+        //    (FiveMComponent.FromValue(fiveMComponentValue) ?? FiveMComponent.Method);
+        //hazard.HazardType = reader.GetValue<string>(FieldNames.fHazardType);
         
-        // Reporting information
-        hazard.ReportedBy = reader.GetValue<string>(FieldNames.fHazardReportedBy) ?? string.Empty;
-        hazard.ReportedOn = reader.IsDBNull(FieldNames.fHazardReportedOn) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fHazardReportedOn);
-        hazard.ReportingDepartment = reader.GetValue<string>(FieldNames.fHazardReportingDepartment);
+        //// Reporting information
+        //hazard.ReportedBy = reader.GetValue<string>(FieldNames.fHazardReportedBy) ?? string.Empty;
+        //hazard.ReportedOn = reader.IsDBNull(FieldNames.fHazardReportedOn) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fHazardReportedOn);
+        //hazard.ReportingDepartment = reader.GetValue<string>(FieldNames.fHazardReportingDepartment);
 
-        // Privacy and confidentiality
-        hazard.IsConfidential = reader.IsDBNull(FieldNames.fHazardIsConfidential) ? false : reader.GetBoolean(FieldNames.fHazardIsConfidential);
-        hazard.IsAnonymous = reader.IsDBNull(FieldNames.fHazardIsAnonymous) ? false : reader.GetBoolean(FieldNames.fHazardIsAnonymous);
+        //// Privacy and confidentiality
+        //hazard.IsConfidential = reader.IsDBNull(FieldNames.fHazardIsConfidential) ? false : reader.GetBoolean(FieldNames.fHazardIsConfidential);
+        //hazard.IsAnonymous = reader.IsDBNull(FieldNames.fHazardIsAnonymous) ? false : reader.GetBoolean(FieldNames.fHazardIsAnonymous);
 
-        // Status and priority (with enum parsing)
-        var statusValue = reader.GetValue<string>(FieldNames.fHazardStatus);
-        hazard.Status = string.IsNullOrEmpty(statusValue) ? HazardStatus.Active : 
-            (HazardStatus.FromValue(statusValue) ?? HazardStatus.Active);
+        //// Status and priority (with enum parsing)
+        //var statusValue = reader.GetValue<string>(FieldNames.fHazardStatus);
+        //hazard.Status = string.IsNullOrEmpty(statusValue) ? HazardStatus.Active : 
+        //    (HazardStatus.FromValue(statusValue) ?? HazardStatus.Active);
 
-        var priorityValue = reader.GetValue<string>(FieldNames.fHazardPriority);
-        hazard.Priority = string.IsNullOrEmpty(priorityValue) ? HazardPriority.Medium :
-            (HazardPriority.FromValue(priorityValue) ?? HazardPriority.Medium);
+        //var priorityValue = reader.GetValue<string>(FieldNames.fHazardPriority);
+        //hazard.Priority = string.IsNullOrEmpty(priorityValue) ? HazardPriority.Medium :
+        //    (HazardPriority.FromValue(priorityValue) ?? HazardPriority.Medium);
 
-        // Risk assessment properties
-        hazard.RiskLevel = reader.GetValue<string>(FieldNames.fHazardRiskLevel);
-        hazard.WorstCredibleOutcome = reader.GetValue<string>(FieldNames.fHazardWorstCredibleOutcome);
-        hazard.RootCause = reader.GetValue<string>(FieldNames.fHazardRootCause);
+        //// Risk assessment properties
+        //hazard.RiskLevel = reader.GetValue<string>(FieldNames.fHazardRiskLevel);
+        //hazard.WorstCredibleOutcome = reader.GetValue<string>(FieldNames.fHazardWorstCredibleOutcome);
+        //hazard.RootCause = reader.GetValue<string>(FieldNames.fHazardRootCause);
 
-        // Mitigation properties
-        hazard.CurrentMitigations = reader.GetValue<string>(FieldNames.fHazardCurrentMitigations);
-        hazard.ProposedMitigations = reader.GetValue<string>(FieldNames.fHazardProposedMitigations);
-        hazard.MitigationTargetDate = reader.IsDBNull(FieldNames.fHazardMitigationTargetDate) ? null : reader.GetDateTime(FieldNames.fHazardMitigationTargetDate);
-        hazard.MitigationOwner = reader.GetValue<string>(FieldNames.fHazardMitigationOwner);
+        //// Mitigation properties
+        //hazard.CurrentMitigations = reader.GetValue<string>(FieldNames.fHazardCurrentMitigations);
+        //hazard.ProposedMitigations = reader.GetValue<string>(FieldNames.fHazardProposedMitigations);
+        //hazard.MitigationTargetDate = reader.IsDBNull(FieldNames.fHazardMitigationTargetDate) ? null : reader.GetDateTime(FieldNames.fHazardMitigationTargetDate);
+        //hazard.MitigationOwner = reader.GetValue<string>(FieldNames.fHazardMitigationOwner);
 
-        // Investigation properties
-        hazard.RequiresInvestigation = reader.IsDBNull(FieldNames.fHazardRequiresInvestigation) ? false : reader.GetBoolean(FieldNames.fHazardRequiresInvestigation);
-        hazard.InvestigationCompletedDate = reader.IsDBNull(FieldNames.fHazardInvestigationCompletedDate) ? null : reader.GetDateTime(FieldNames.fHazardInvestigationCompletedDate);
-        hazard.InvestigationNotes = reader.GetValue<string>(FieldNames.fHazardInvestigationNotes);
+        //// Investigation properties
+        //hazard.RequiresInvestigation = reader.IsDBNull(FieldNames.fHazardRequiresInvestigation) ? false : reader.GetBoolean(FieldNames.fHazardRequiresInvestigation);
+        //hazard.InvestigationCompletedDate = reader.IsDBNull(FieldNames.fHazardInvestigationCompletedDate) ? null : reader.GetDateTime(FieldNames.fHazardInvestigationCompletedDate);
+        //hazard.InvestigationNotes = reader.GetValue<string>(FieldNames.fHazardInvestigationNotes);
 
-        // Additional properties
-        hazard.AdditionalComments = reader.GetValue<string>(FieldNames.fHazardAdditionalComments);
+        //// Additional properties
+        //hazard.AdditionalComments = reader.GetValue<string>(FieldNames.fHazardAdditionalComments);
 
-        // Location properties (legacy)
-        hazard.Location = reader.GetValue<string>(FieldNames.fHazardLocation);
-        hazard.LocationArea = reader.GetValue<string>(FieldNames.fHazardLocationArea);
-        hazard.LocationSubArea = reader.GetValue<string>(FieldNames.fHazardLocationSubArea);
+        //// Location properties (legacy)
+        //hazard.Location = reader.GetValue<string>(FieldNames.fHazardLocation);
+        //hazard.LocationArea = reader.GetValue<string>(FieldNames.fHazardLocationArea);
+        //hazard.LocationSubArea = reader.GetValue<string>(FieldNames.fHazardLocationSubArea);
 
         return hazard;
     }
@@ -341,27 +343,7 @@ public static partial class Mappers
         hazardLocation.Latitude = reader.IsDBNull(FieldNames.fHazardLocationLatitude) ? null : reader.GetDecimal(FieldNames.fHazardLocationLatitude);
         hazardLocation.Longitude = reader.IsDBNull(FieldNames.fHazardLocationLongitude) ? null : reader.GetDecimal(FieldNames.fHazardLocationLongitude);
         hazardLocation.Description = reader.GetValue<string>(FieldNames.fHazardLocationDescription);
-        hazardLocation.DateSelected = reader.GetDateTime(FieldNames.fHazardLocationDateSelected);
-        hazardLocation.LocationMapSVG = reader.GetValue<string>(FieldNames.fHazardLocationMapSVG);
-        hazardLocation.LocationArea = reader.GetValue<string>(FieldNames.fHazardLocationArea);
-        hazardLocation.LocationSubArea = reader.GetValue<string>(FieldNames.fHazardLocationSubArea);
-        hazardLocation.LocationName = reader.GetValue<string>(FieldNames.fHazardLocationName);
-        hazardLocation.AccuracyMeters = reader.IsDBNull(FieldNames.fHazardLocationAccuracyMeters) ? null : reader.GetDecimal(FieldNames.fHazardLocationAccuracyMeters);
-        hazardLocation.ElevationFeet = reader.IsDBNull(FieldNames.fHazardLocationElevationFeet) ? null : reader.GetDecimal(FieldNames.fHazardLocationElevationFeet);
-        hazardLocation.Source = reader.GetValue<string>(FieldNames.fHazardLocationSource) ?? "Manual";
-        
-        // Map status enum
-        var statusValue = reader.GetValue<string>(FieldNames.fHazardLocationStatus);
-        hazardLocation.Status = Enum.TryParse<HazardLocationStatus>(statusValue, out var status) ? status : HazardLocationStatus.Active;
-        
-        hazardLocation.IsValidated = reader.GetBoolean(FieldNames.fHazardLocationIsValidated);
-        hazardLocation.ValidatedDate = reader.IsDBNull(FieldNames.fHazardLocationValidatedDate) ? null : reader.GetDateTime(FieldNames.fHazardLocationValidatedDate);
-        hazardLocation.ValidatedBy = reader.GetValue<string>(FieldNames.fHazardLocationValidatedBy);
-        hazardLocation.Notes = reader.GetValue<string>(FieldNames.fHazardLocationNotes);
-        hazardLocation.Tags = reader.GetValue<string>(FieldNames.fHazardLocationTags);
-        hazardLocation.AirportGrid = reader.GetValue<string>(FieldNames.fHazardLocationAirportGrid);
-        hazardLocation.RunwayReference = reader.GetValue<string>(FieldNames.fHazardLocationRunwayReference);
-        hazardLocation.TaxiwayReference = reader.GetValue<string>(FieldNames.fHazardLocationTaxiwayReference);
+        //hazardLocation.DateSelected = reader.GetDateTime(FieldNames.fHazardLocationDateSelected);
 
         return hazardLocation;
     }
@@ -452,20 +434,14 @@ public static partial class Mappers
         
         // Status and scheduling
         var statusValue = reader.GetValue<string>(FieldNames.fInterviewStatus);
-        if (Enum.TryParse<InterviewStatus>(statusValue, out var status))
-        {
-            interview.Status = status;
-        }
+        interview.Status = InterviewStatus.FromValue(statusValue) ?? InterviewStatus.Planned;
         
         interview.InterviewDate = reader.GetValue<DateTime?>(FieldNames.fInterviewDate);
         interview.DurationMinutes = reader.GetValue<int?>(FieldNames.fInterviewDurationMinutes);
         interview.InterviewLocation = reader.GetValue<string>(FieldNames.fInterviewLocation);
         
         var typeValue = reader.GetValue<string>(FieldNames.fInterviewType);
-        if (Enum.TryParse<InterviewType>(typeValue, out var interviewType))
-        {
-            interview.Type = interviewType;
-        }
+        interview.Type = InterviewType.FromValue(typeValue) ?? InterviewType.Witness;
         
         interview.IsConfidential = reader.GetValue<bool>(FieldNames.fInterviewIsConfidential);
         
@@ -575,16 +551,36 @@ public static partial class Mappers
     /// </summary>
     public static ReportValidation MapToReportValidation(SqlDataReader reader)
     {
-        ReportValidationID reportValidationID = new(reader.GetValue<string>(FieldNames.fReportValidationCode).ToString());
-        ReportValidation reportValidation = new(reportValidationID);
+        try
+        {
+            var code = reader.GetValue<string>(FieldNames.fReportValidationCode) ?? string.Empty;
+            ReportValidationID reportValidationID = new(code);
+            ReportValidation reportValidation = new(reportValidationID);
 
-        reportValidation.Code = reader.GetValue<string>(FieldNames.fReportValidationCode);
-        reportValidation.ReportCode = reader.GetValue<string>(FieldNames.fReportValidationReportCode);
-        reportValidation.ValidationDecision = reader.GetValue<string>(FieldNames.fReportValidationDecision);
-        reportValidation.Status = reader.GetValue<string>(FieldNames.fReportValidationStatus);
-        reportValidation.Stage = reader.GetValue<string>(FieldNames.fReportValidationStage);
+            reportValidation.Code = code;
+            reportValidation.ReportCode = reader.GetValue<string>(FieldNames.fReportValidationReportCode);
+            reportValidation.ValidationDecision = reader.GetValue<string>(FieldNames.fReportValidationDecision);
+            reportValidation.Status = reader.GetValue<string>(FieldNames.fReportValidationStatus);
+            reportValidation.Stage = reader.GetValue<string>(FieldNames.fReportValidationStage);
 
-        return reportValidation;
+            // Set audit properties using reflection since they have private setters
+            var baseEntityType = typeof(BaseAuditableEntity);
+            var createdBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
+            var createdDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+            var updatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
+            var updatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fUpdatedDate);
+
+            baseEntityType.GetProperty("CreatedBy")?.SetValue(reportValidation, createdBy);
+            baseEntityType.GetProperty("CreatedDate")?.SetValue(reportValidation, createdDate);
+            baseEntityType.GetProperty("UpdatedBy")?.SetValue(reportValidation, updatedBy);
+            baseEntityType.GetProperty("UpdatedDate")?.SetValue(reportValidation, updatedDate);
+
+            return reportValidation;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Error mapping SqlDataReader to ReportValidation: {ex.Message}", ex);
+        }
     }
 
     /// <summary>

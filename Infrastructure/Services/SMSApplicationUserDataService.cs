@@ -76,18 +76,27 @@ public sealed class SMSApplicationUserDataService : BaseDataService<SMSApplicati
     /// <summary>
     /// Gets SMS Application User by ID
     /// </summary>
-    public async Task<Result<SMSApplicationUser>> GetSMSApplicationUserByIdAsync(string id, CancellationToken ct = default)
+    public async Task<Result<SMSApplicationUser>> GetSMSApplicationUserByIdAsync(SMSApplicationUserID id, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Application User with ID: {Id}", id);
+            _logger.LogInformation("Retrieving SMS Application User with ID: {Id}", id.Value);
             return await _repository.GetByIdAsync(id);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Application User with ID: {Id}", id);
+            _logger.LogError(ex, "Unexpected error retrieving SMS Application User with ID: {Id}", id.Value);
             return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NotFound);
         }
+    }
+
+    /// <summary>
+    /// Gets SMS Application User by ID (string overload for convenience)
+    /// </summary>
+    public async Task<Result<SMSApplicationUser>> GetSMSApplicationUserByIdAsync(string id, CancellationToken ct = default)
+    {
+        var typedId = new SMSApplicationUserID(id);
+        return await GetSMSApplicationUserByIdAsync(typedId, ct);
     }
 
     /// <summary>
@@ -149,7 +158,7 @@ public sealed class SMSApplicationUserDataService : BaseDataService<SMSApplicati
         try
         {
             _logger.LogInformation("Retrieving SMS Application Users by role: {ApplicationRole}", applicationRole);
-            return await _repository.GetByApplicationRoleAsync(applicationRole);
+            return await _repository.GetBySMSApplicationUserRoleAsync(applicationRole);
         }
         catch (Exception ex)
         {
@@ -181,7 +190,7 @@ public sealed class SMSApplicationUserDataService : BaseDataService<SMSApplicati
             }
 
             // Return the updated user
-            return await _repository.GetByIdAsync(user.UserId.Value);
+            return await _repository.GetByIdAsync(user.UserId);
         }
         catch (Exception ex)
         {
@@ -193,16 +202,16 @@ public sealed class SMSApplicationUserDataService : BaseDataService<SMSApplicati
     /// <summary>
     /// Deletes an SMS Application User
     /// </summary>
-    public async Task<Result<bool>> DeleteSMSApplicationUserAsync(string userId, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteSMSApplicationUserAsync(SMSApplicationUserID userId, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Deleting SMS Application User with ID: {Id}", userId);
+            _logger.LogInformation("Deleting SMS Application User with ID: {Id}", userId.Value);
             var result = await _repository.DeleteAsync(userId);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted SMS Application User with ID: {Id}", userId);
+                _logger.LogInformation("Successfully deleted SMS Application User with ID: {Id}", userId.Value);
             }
             else
             {
@@ -213,7 +222,7 @@ public sealed class SMSApplicationUserDataService : BaseDataService<SMSApplicati
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting SMS Application User with ID: {Id}", userId);
+            _logger.LogError(ex, "Unexpected error deleting SMS Application User with ID: {Id}", userId.Value);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.DeleteFailed);
         }
     }
@@ -221,16 +230,16 @@ public sealed class SMSApplicationUserDataService : BaseDataService<SMSApplicati
     /// <summary>
     /// Updates SMS Application User password
     /// </summary>
-    public async Task<Result<bool>> UpdateSMSApplicationUserPasswordAsync(string userId, string hashedPassword, CancellationToken ct = default)
+    public async Task<Result<bool>> UpdateSMSApplicationUserPasswordAsync(SMSApplicationUserID userId, string hashedPassword, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Updating password for SMS Application User with ID: {Id}", userId);
+            _logger.LogInformation("Updating password for SMS Application User with ID: {Id}", userId.Value);
             var result = await _repository.UpdatePasswordAsync(userId, hashedPassword);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated password for SMS Application User with ID: {Id}", userId);
+                _logger.LogInformation("Successfully updated password for SMS Application User with ID: {Id}", userId.Value);
             }
             else
             {
@@ -241,7 +250,7 @@ public sealed class SMSApplicationUserDataService : BaseDataService<SMSApplicati
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating password for SMS Application User with ID: {Id}", userId);
+            _logger.LogError(ex, "Unexpected error updating password for SMS Application User with ID: {Id}", userId.Value);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.PasswordUpdateFailed);
         }
     }
@@ -249,16 +258,16 @@ public sealed class SMSApplicationUserDataService : BaseDataService<SMSApplicati
     /// <summary>
     /// Records login for SMS Application User
     /// </summary>
-    public async Task<Result<bool>> RecordSMSApplicationUserLoginAsync(string userId, DateTime loginDate, CancellationToken ct = default)
+    public async Task<Result<bool>> RecordSMSApplicationUserLoginAsync(SMSApplicationUserID userId, DateTime loginDate, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Recording login for SMS Application User with ID: {Id}", userId);
+            _logger.LogInformation("Recording login for SMS Application User with ID: {Id}", userId.Value);
             return await _repository.RecordLoginAsync(userId, loginDate);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error recording login for SMS Application User with ID: {Id}", userId);
+            _logger.LogError(ex, "Unexpected error recording login for SMS Application User with ID: {Id}", userId.Value);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.UpdateFailed);
         }
     }

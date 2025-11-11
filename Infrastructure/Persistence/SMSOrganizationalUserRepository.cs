@@ -62,7 +62,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
         }
     }
 
-    public async Task<Result<SMSOrganizationalUser>> GetByIdAsync(string id)
+    public async Task<Result<SMSOrganizationalUser>> GetByIdAsync(BaseUserID id)
     {
         try
         {
@@ -109,6 +109,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
         }
     }
 
+    
     public async Task<Result<SMSOrganizationalUser>> GetByUserNameAsync(string userName)
     {
         try
@@ -283,6 +284,12 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
         }
     }
 
+    public async Task<Result<bool>> UpdatePasswordAsync(BaseUserID userId, string hashedPassword)
+    {
+        // Convert BaseUserID to string for compatibility
+        return await UpdatePasswordAsync(userId.Value, hashedPassword);
+    }
+
     public async Task<Result<bool>> UpdatePasswordAsync(string userId, string hashedPassword)
     {
         try
@@ -318,6 +325,12 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
         }
     }
 
+    public async Task<Result<bool>> RecordLoginAsync(BaseUserID userId, DateTime loginDate)
+    {
+        // Convert BaseUserID to string for compatibility  
+        return await RecordLoginAsync(userId.Value, loginDate);
+    }
+
     public async Task<Result<bool>> RecordLoginAsync(string userId, DateTime loginDate)
     {
         try
@@ -351,7 +364,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
         }
     }
 
-    public async Task<Result<bool>> DeleteAsync(string userId)
+    public async Task<Result<bool>> DeleteAsync(BaseUserID userId)
     {
         try
         {
@@ -382,6 +395,12 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.DeleteFailed);
         }
     }
+
+    //public async Task<Result<bool>> DeleteAsync(BaseUserID userId)
+    //{
+    //    // Convert BaseUserID to string for compatibility
+    //    return await DeleteAsync(userId.Value);
+    //}
 
     public async Task<Result<bool>> UserNameExistsAsync(string userName)
     {
@@ -499,7 +518,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
         }
     }
 
-    public async Task<Result<IEnumerable<SMSOrganizationalUser>>> GetByOrganizationLevelAsync(string organizationLevel)
+    public async Task<Result<IEnumerable<SMSOrganizationalUser>>> GetBySMSOrganizationalUserLevelAsync(string organizationLevel)
     {
         try
         {
@@ -547,7 +566,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
         }
     }
 
-    public async Task<Result<bool>> UpdateOrganizationalInfoAsync(string userId, string department, string position, string organizationLevel)
+    public async Task<Result<bool>> UpdateSMSOrganizationalUserInfoAsync(BaseUserID userId, string department, string position, string organizationLevel)
     {
         try
         {

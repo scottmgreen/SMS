@@ -8,12 +8,15 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using SMS_Application.Interfaces;
-using SMS_Application.Services;
 using SMS_Application.Messaging.QueryHandlers;
 using SMS_Application.Messaging.CommandHandlers;
 using System.Reflection;
 
 using SMS_Domain.Interfaces;
+using SMS_Infrastructure.Interfaces;
+using SMS_Infrastructure.Repositories;
+using SMS_Infrastructure.Persistence;
+using Application.Interfaces;
 namespace SMS_Application.Configuration
 {
     /// <summary>
@@ -49,6 +52,7 @@ namespace SMS_Application.Configuration
             services.AddScoped<SystemService>();
             services.AddScoped<MessengerService>();
             services.AddScoped<HazardService>();
+            services.AddScoped<HazardLocationService>();
             services.AddScoped<HazardFileService>();
             services.AddScoped<AirportSharedDatasetService>(); // This was missing!
             services.AddScoped<ReportService>();
@@ -68,16 +72,17 @@ namespace SMS_Application.Configuration
             services.AddScoped<ISMSWorkflowService, SMSWorkflowService>();
             services.AddScoped<ISMSAuthorizationService, SMSAuthorizationService>();
             
-            // Repository registrations
-            services.AddScoped<IHazardRepository, HazardRepository>();
-            services.AddScoped<IHazardFileRepository, HazardFileRepository>();
-            services.AddScoped<IAirportSharedDatasetRepository, AirportSharedDatasetRepository>();
+            // SMS Backend Services (Application Layer Only)
+            services.AddScoped<ISMSApplicationUserService, SMSApplicationUserService>();
+            services.AddScoped<ISMSOrganizationalUserService, SMSOrganizationalUserService>();
+            services.AddScoped<ISMSStakeholderUserService, SMSStakeholderUserService>();
+            services.AddScoped<ISMSWorkflowService, SMSWorkflowService>();
+            services.AddScoped<ISMSInvestigationWorkflowService, SMSInvestigationWorkflowService>();
+            services.AddScoped<ISMSRiskAssessmentWorkflowService, SMSRiskAssessmentWorkflowService>();
+            services.AddScoped<IReportValidationService, ReportValidationService>();
 
-            // Data Service registrations 
-            services.AddScoped<HazardDataService>();
-            services.AddScoped<HazardFileDataService>();
-            services.AddScoped<InvestigationDataService>();
-            services.AddScoped<AirportSharedDatasetDataService>();
+            // File-based Services
+            services.AddScoped<IHazardFileService, HazardFileService>();
 
             return services;
         }

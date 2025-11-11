@@ -1,5 +1,5 @@
 ﻿@page
-@model PDXSMS_Presentation.Pages.SafetyRiskManagement.HazardReportingModel
+@model SMS_Presentation.Pages.SafetyRiskManagement.HazardReportingModel
 @{
     ViewData["Title"] = "Submit Hazard Report";
 }
@@ -28,7 +28,7 @@
     <div class="row">
         <div class="col-lg-8">
             <!-- Success Message Display -->
-@*             @if (TempData["SuccessMessage"] != null)
+            @*             @if (TempData["SuccessMessage"] != null)
             {
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <div class="row align-items-center">
@@ -63,7 +63,7 @@
                         <input type="hidden" asp-for="SelectedGeoLocation.Latitude" />
                         <input type="hidden" asp-for="SelectedGeoLocation.Longitude" />
                         <input type="hidden" asp-for="SelectedGeoLocation.Description" />
-                        <input type="hidden" asp-for="SelectedGeoLocation.SelectedDateTime" />
+                        <input type="hidden" asp-for="SelectedGeoLocation.SelectedDateTime" /> 
                         
                         <!-- UI State preservation -->
                         <input type="hidden" asp-for="ShowMapModal" />
@@ -98,10 +98,10 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label for="reportedOn" class="form-label">Reported On <span class="text-danger">*</span></label>
-                                    <input type="datetime-local" class="form-control" id="reportedOn" asp-for="HazardReport.ReportedOn" 
+                                    <input type="datetime-local" class="form-control" id="reportedOn" asp-for="HazardReport.CreatedDate" 
                                            required max="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" 
                                            step="60">
-                                    <span asp-validation-for="HazardReport.ReportedOn" class="text-danger"></span>
+                                    <span asp-validation-for="HazardReport.CreatedDate" class="text-danger"></span>
                                 </div>
                             </div>
                         </div>
@@ -109,11 +109,11 @@
                         <!-- Department -->
                         <div class="mb-3">
                             <label for="department" class="form-label">Reporting Department</label>
-                            <select class="form-select" id="department" asp-for="HazardReport.Department" 
+                            <select class="form-select" id="department" asp-for="HazardReport.ReportingDepartment" 
                                     asp-items="Model.DepartmentOptions">
                                 <option value="">Select your department...</option>
                             </select>
-                            <span asp-validation-for="HazardReport.Department" class="text-danger"></span>
+                            <span asp-validation-for="HazardReport.ReportingDepartment" class="text-danger"></span>
                         </div>
 
                         <!-- Location -->
@@ -189,7 +189,7 @@
                         <!-- File Attachments -->
                         <div class="mb-3">
                             <label for="attachments" class="form-label">Supporting Documents</label>
-                            <input type="file" class="form-control" id="attachments" asp-for="HazardReport.Attachments" multiple 
+                            <input type="file" class="form-control" id="attachments" asp-for="UploadedFiles" multiple 
                                    accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt">
                             <div class="form-text">
                                 <i class="fas fa-paperclip"></i> Attach photos, documents, or other supporting evidence
@@ -205,7 +205,7 @@
                                         <ul class="mb-0 mt-1">
                                             @foreach (var file in Model.SelectedFiles)
                                             {
-                                                <li>@file.Name (@file.SizeDisplay)</li>
+                                                <li>@file.FileName (@file.SizeDisplay)</li>
                                             }
                                         </ul>
                                     </div>
@@ -258,11 +258,13 @@
                                             <input type="hidden" asp-for="HazardReport.HazardType" />
                                             <input type="hidden" asp-for="HazardReport.ReportedBy" />
                                             <input type="hidden" asp-for="HazardReport.ReportedOn" />
-                                            <input type="hidden" asp-for="HazardReport.Department" />
+                                            <input type="hidden" asp-for="HazardReport.ReportingDepartment" />
                                             <input type="hidden" asp-for="HazardReport.Description" />
                                             <input type="hidden" asp-for="HazardReport.IsConfidential" />
                                             <input type="hidden" asp-for="HazardReport.Priority" />
                                             <input type="hidden" asp-for="HazardReport.Location" />
+                                            
+                                            <!-- Preserve geolocation data -->
                                             <input type="hidden" asp-for="SelectedGeoLocation.Latitude" />
                                             <input type="hidden" asp-for="SelectedGeoLocation.Longitude" />
                                             <input type="hidden" asp-for="SelectedGeoLocation.Description" />
@@ -284,13 +286,13 @@
                                     <input type="hidden" asp-for="HazardReport.HazardType" />
                                     <input type="hidden" asp-for="HazardReport.ReportedBy" />
                                     <input type="hidden" asp-for="HazardReport.ReportedOn" />
-                                    <input type="hidden" asp-for="HazardReport.Department" />
+                                    <input type="hidden" asp-for="HazardReport.ReportingDepartment" />
                                     <input type="hidden" asp-for="HazardReport.Description" />
                                     <input type="hidden" asp-for="HazardReport.IsConfidential" />
                                     <input type="hidden" asp-for="HazardReport.Priority" />
                                     <input type="hidden" asp-for="HazardReport.Location" />
                                     
-                                    <!-- Geolocation data -->
+                                    <!-- Preserve geolocation data -->
                                     <input type="hidden" asp-for="SelectedGeoLocation.Latitude" />
                                     <input type="hidden" asp-for="SelectedGeoLocation.Longitude" />
                                     <input type="hidden" asp-for="SelectedGeoLocation.Description" />
@@ -355,7 +357,7 @@
                                                             <i class="fas fa-map-marker-alt text-primary"></i> Location
                                                         </th>
                                                         <td>
-                                                            @if (!string.IsNullOrEmpty(Model.HazardReport.Location) || Model.HasGeoLocation)
+                                                            @* @if (!string.IsNullOrEmpty(Model.HazardReport.Location) || Model.HasGeoLocation)
                                                             {
                                                                 <div>
                                                                      
@@ -373,7 +375,7 @@
                                                                             <strong>No geolocation data</strong> - Location: "@Model.HazardReport.Location"
                                                                         </small>
                                                                     }
-                                                                </div>
+                                                                </div> *@
                                                             }
                                                             else
                                                             {
@@ -381,14 +383,14 @@
                                                             }
                                                         </td>
                                                         <td class="text-center">
-                                                            @if (!string.IsNullOrEmpty(Model.HazardReport.Location) || Model.HasGeoLocation)
+                                                           @*  @if (!string.IsNullOrEmpty(Model.HazardReport.Location) || Model.HasGeoLocation)
                                                             {
                                                                 <i class="fas fa-check-circle text-success"></i>
                                                             }
                                                             else
                                                             {
                                                                 <i class="fas fa-times-circle text-danger"></i>
-                                                            }
+                                                            } *@
                                                         </td>
                                                     </tr>
                                                     <tr>
@@ -444,7 +446,7 @@
                                                             <i class="fas fa-building text-info"></i> Department
                                                         </th>
                                                         <td>
-                                                            @if (!string.IsNullOrEmpty(Model.HazardReport.Department))
+                                                                            @if (!string.IsNullOrEmpty(Model.HazardReport.ReportingDepartment))
                                                             {
                                                                 <span class="fw-bold">@Model.GetSelectedDepartmentText()</span>
                                                             }
@@ -511,11 +513,11 @@
                                                             <i class="fas fa-paperclip text-secondary"></i> Attachments
                                                         </th>
                                                         <td>
-                                                            @if (Model.SelectedFiles.Any())
+                                                           @*  @if (Model.SelectedFiles.Any())
                                                             {
                                                                 <div class="attachment-preview">
                                                                     <span class="fw-bold text-success">@Model.SelectedFiles.Count file(s) attached:</span>
-                                                                    <ul class="mb-0 mt-1">
+                                                                    <ul class="mb-0 mt-1>
                                                                         @foreach (var file in Model.SelectedFiles)
                                                                         {
                                                                             <li>
@@ -530,7 +532,7 @@
                                                             else
                                                             {
                                                                 <em class="text-muted">No files attached (Optional)</em>
-                                                            }
+                                                            } *@
                                                         </td>
                                                     </tr>
                                                     <tr>
@@ -598,7 +600,7 @@
                                     var previewCompletedFields = 0;
                                     var previewTotalFields = 5; // Updated to include ReportedOn
                                     if (!string.IsNullOrEmpty(Model.HazardReport.HazardType)) previewCompletedFields++;
-                                    if (!string.IsNullOrEmpty(Model.HazardReport.Location) || Model.HasGeoLocation) previewCompletedFields++;
+                                    // if (!string.IsNullOrEmpty(Model.HazardReport.Location) || Model.HasGeoLocation) previewCompletedFields++;
                                     if (!string.IsNullOrEmpty(Model.HazardReport.Description)) previewCompletedFields++;
                                     if (!string.IsNullOrEmpty(Model.HazardReport.ReportedBy)) previewCompletedFields++; // Added ReportedBy check
                                     previewCompletedFields++; // ReportedOn always has a value due to default
@@ -619,7 +621,7 @@
                                                     {
                                                         <li><strong>Hazard Type</strong> - Please select the type of hazard being reported</li>
                                                     }
-                                                    @if (string.IsNullOrEmpty(Model.HazardReport.Location) && !Model.HasGeoLocation)
+                                                    @if (string.IsNullOrEmpty(Model.HazardReport.Location) /* && !Model.HasGeoLocation */)
                                                     {
                                                         <li><strong>Location</strong> - Please specify where the hazard occurred using the map</li>
                                                     }
@@ -670,18 +672,17 @@
                                             <input type="hidden" asp-for="HazardReport.HazardType" />
                                             <input type="hidden" asp-for="HazardReport.ReportedBy" />
                                             <input type="hidden" asp-for="HazardReport.ReportedOn" />
-                                            <input type="hidden" asp-for="HazardReport.Department" />
+                                            <input type="hidden" asp-for="HazardReport.ReportingDepartment" />
                                             <input type="hidden" asp-for="HazardReport.Description" />
                                             <input type="hidden" asp-for="HazardReport.IsConfidential" />
                                             <input type="hidden" asp-for="HazardReport.Priority" />
                                             <input type="hidden" asp-for="HazardReport.Location" />
+                                            
+                                            <!-- Preserve geolocation data -->
                                             <input type="hidden" asp-for="SelectedGeoLocation.Latitude" />
                                             <input type="hidden" asp-for="SelectedGeoLocation.Longitude" />
                                             <input type="hidden" asp-for="SelectedGeoLocation.Description" />
                                             <input type="hidden" asp-for="SelectedGeoLocation.SelectedDateTime" />
-                                            <input type="hidden" asp-for="ShowMapModal" />
-                                            <input type="hidden" asp-for="ShowCustomLocation" />
-                                            <input type="hidden" asp-for="ShowConfidentialInfo" />
                                             
                                             <button type="submit" class="btn btn-secondary me-2" formaction="?handler=HidePreview" formnovalidate>
                                                 <i class="fas fa-edit"></i> Continue Editing
@@ -825,51 +826,54 @@
                             <input type="hidden" asp-for="HazardReport.HazardType" />
                             <input type="hidden" asp-for="HazardReport.ReportedBy" />
                             <input type="hidden" asp-for="HazardReport.ReportedOn" />
-                            <input type="hidden" asp-for="HazardReport.Department" />
+                            <input type="hidden" asp-for="HazardReport.ReportingDepartment" />
                             <input type="hidden" asp-for="HazardReport.Description" />
                             <input type="hidden" asp-for="HazardReport.IsConfidential" />
                             <input type="hidden" asp-for="HazardReport.Priority" />
                             <input type="hidden" asp-for="HazardReport.Location" />
                             
+                            <!-- Anti-forgery token -->
+                            @Html.AntiForgeryToken()
+                            
                             <!-- Selected Coordinates Display -->
                             <div class="row mb-3">
                                 <div class="col-md-4">
                                     <label for="selectedLatitude" class="form-label">Selected Latitude</label>
-                                    <input type="number" class="form-control" id="selectedLatitude" name="manualLatitude"
+                                    <input type="number" class="form-control" id="selectedLatitude" name="selectedLatitude"
                                            step="0.000001" min="45.5" max="45.7" readonly
-                                           value="@(Model.HasGeoLocation ? Model.SelectedGeoLocation.Latitude.ToString("F6") : "")">
+                                           value="">
                                 </div>
                                 <div class="col-md-4">
                                     <label for="selectedLongitude" class="form-label">Selected Longitude</label>
-                                    <input type="number" class="form-control" id="selectedLongitude" name="manualLongitude"
+                                    <input type="number" class="form-control" id="selectedLongitude" name="selectedLongitude"
                                            step="0.000001" min="-122.7" max="-122.5" readonly
-                                           value="@(Model.HasGeoLocation ? Model.SelectedGeoLocation.Longitude.ToString("F6") : "")">
+                                           value="">
                                 </div>
                                 <div class="col-md-4">
                                     <label for="locationDescription" class="form-label">Location Description</label>
                                     <input type="text" class="form-control" id="locationDescription" name="locationDescription"
                                            placeholder="Optional description"
-                                           value="@(Model.SelectedGeoLocation?.Description ?? "")">
+                                           value="">
                                 </div>
                             </div>
-
+                            
                             <!-- Current Location Section -->
                             
                             <!-- Current Selection Display -->
                             @if (Model.HasGeoLocation)
                             {
-                                // <div class="alert alert-success">
-                                //     <h6 class="alert-heading"><i class="fas fa-map-pin"></i> Current Selection</h6>
-                                //     <p class="mb-1">
-                                //         <strong>Coordinates:</strong> @Model.GeoLocationDisplay
-                                //     </p>
-                                //     @if (!string.IsNullOrEmpty(Model.GeoLocationDescription))
-                                //     {
-                                //         <p class="mb-1">
-                                //             <strong>Description:</strong> @Model.GeoLocationDescription
-                                //         </p>
-                                //     }
-                                // </div>
+                                <div class="alert alert-success">
+                                    <h6 class="alert-heading"><i class="fas fa-map-pin"></i> Current Selection</h6>
+                                    <p class="mb-1">
+                                        <strong>Coordinates:</strong> @Model.GeoLocationDisplay
+                                    </p>
+                                    @if (!string.IsNullOrEmpty(Model.GeoLocationDescription))
+                                    {
+                                        <p class="mb-1">
+                                            <strong>Description:</strong> @Model.GeoLocationDescription
+                                        </p>
+                                    }
+                                </div>
                             }
                             
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -879,7 +883,7 @@
                                 <button type="button" class="btn btn-warning" onclick="clearMapSelection()">
                                     <i class="fas fa-eraser"></i> Clear Selection
                                 </button>
-                                <button type="submit" class="btn btn-success" formaction="?handler=SetManualLocation" formnovalidate>
+                                <button type="submit" class="btn btn-success" id="useLocationButton" formaction="?handler=SetManualLocation" formnovalidate disabled>
                                     <i class="fas fa-check"></i> Use Selected Location
                                 </button>
                             </div>
@@ -945,10 +949,10 @@
                                         </div>
                                         <div class="col-md-6">
                                             <p class="mb-2">
-                                                <strong>Reported On:</strong><br>
+                                                <strong>reportedOn:</strong><br>
                                                 <span class="text-muted">@Model.HazardReport.ReportedOn.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt")</span>
                                             </p>
-                                            @if (!string.IsNullOrEmpty(Model.HazardReport.Department))
+                                            @if (!string.IsNullOrEmpty(Model.HazardReport.ReportingDepartment))
                                             {
                                                 <p class="mb-2">
                                                     <strong>Department:</strong><br>
@@ -980,7 +984,7 @@
                                         <ul class="list-unstyled small">
                                             @foreach (var file in Model.SelectedFiles)
                                             {
-                                                <li><i class="fas fa-paperclip"></i> @file.Name (@file.SizeDisplay)</li>
+                                                <li><i class="fas fa-paperclip"></i> @file.FileName (@file.SizeDisplay)</li>
                                             }
                                         </ul>
                                     }
@@ -998,11 +1002,13 @@
                                         <input type="hidden" asp-for="HazardReport.HazardType" />
                                         <input type="hidden" asp-for="HazardReport.ReportedBy" />
                                         <input type="hidden" asp-for="HazardReport.ReportedOn" />
-                                        <input type="hidden" asp-for="HazardReport.Department" />
+                                        <input type="hidden" asp-for="HazardReport.ReportingDepartment" />
                                         <input type="hidden" asp-for="HazardReport.Description" />
                                         <input type="hidden" asp-for="HazardReport.IsConfidential" />
                                         <input type="hidden" asp-for="HazardReport.Priority" />
                                         <input type="hidden" asp-for="HazardReport.Location" />
+                                        
+                                        <!-- Preserve geolocation data -->
                                         <input type="hidden" asp-for="SelectedGeoLocation.Latitude" />
                                         <input type="hidden" asp-for="SelectedGeoLocation.Longitude" />
                                         <input type="hidden" asp-for="SelectedGeoLocation.Description" />
@@ -1018,11 +1024,13 @@
                                         <input type="hidden" asp-for="HazardReport.HazardType" />
                                         <input type="hidden" asp-for="HazardReport.ReportedBy" />
                                         <input type="hidden" asp-for="HazardReport.ReportedOn" />
-                                        <input type="hidden" asp-for="HazardReport.Department" />
+                                        <input type="hidden" asp-for="HazardReport.ReportingDepartment" />
                                         <input type="hidden" asp-for="HazardReport.Description" />
                                         <input type="hidden" asp-for="HazardReport.IsConfidential" />
                                         <input type="hidden" asp-for="HazardReport.Priority" />
                                         <input type="hidden" asp-for="HazardReport.Location" />
+                                        
+                                        <!-- Preserve geolocation data -->
                                         <input type="hidden" asp-for="SelectedGeoLocation.Latitude" />
                                         <input type="hidden" asp-for="SelectedGeoLocation.Longitude" />
                                         <input type="hidden" asp-for="SelectedGeoLocation.Description" />
@@ -1068,7 +1076,7 @@
                                             <strong>Your Hazard Report ID:</strong>
                                         </p>
                                         <h2 class="text-success mb-3">
-                                            <i class="fas fa-id-badge"></i> @Model.GeneratedHazardReportId
+                                            <i class="fas fa-id-badge"></i> @Model.GeneratedHazardId
                                         </h2>
                                         <p class="mb-0">
                                             <small class="text-muted">Please save this ID for your records and future reference.</small>
@@ -1092,7 +1100,7 @@
                                         </p>
                                         <ul class="mb-0 small">
                                             <li>Complete hazard report details and summary</li>
-                                            <li>Hazard Report ID: <strong>@Model.GeneratedHazardReportId</strong></li>
+                                            <li>Hazard Report ID: <strong>@Model.GeneratedHazardId</strong></li>
                                             <li>Submission timestamp and tracking information</li>
                                             <li>Next steps and contact information for follow-up</li>
                                         </ul>
@@ -1112,7 +1120,7 @@
                                         <div class="col-md-6">
                                             <p class="mb-2">
                                                 <strong>Hazard Report ID:</strong><br>
-                                                <span class="badge bg-primary fs-6">@Model.GeneratedHazardReportId</span>
+                                                <span class="badge bg-primary fs-6">@Model.GeneratedHazardId</span>
                                             </p>
                                             <p class="mb-2">
                                                 <strong>Tracking ID:</strong><br>
@@ -1171,7 +1179,7 @@
                                         <p class="mb-0">
                                             <strong>SMS Team:</strong> (503) 555-0100<br>
                                             <strong>Email:</strong> sms@flypdx.com<br>
-                                            <strong>Reference:</strong> @Model.GeneratedHazardReportId
+                                            <strong>Reference:</strong> @Model.GeneratedHazardId
                                         </p>
                                     </div>
                                 </div>
@@ -1206,12 +1214,31 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
+    <!-- Fix map cursor to show crosshair for location selection -->
+    <style>
+        #hazardLocationMap {
+            cursor: crosshair !important;
+        }
+        
+        .leaflet-container {
+            cursor: crosshair !important;
+        }
+        
+        .leaflet-grab {
+            cursor: crosshair !important;
+        }
+        
+        .leaflet-dragging .leaflet-grab {
+            cursor: move !important;
+        }
+    </style>
+
     <!-- Success Modal Fallback -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Check if success modal should be showing
             const showSuccessModal = @Model.ShowFinalSuccessConfirmation.ToString().ToLower();
-            const hazardReportId = '@Model.GeneratedHazardReportId';
+            const hazardReportId = '@Model.GeneratedHazardId';
             
             // If success modal should be showing but modal element is not found, show fallback alert
             if (showSuccessModal && hazardReportId && hazardReportId.startsWith('HZ-')) {
@@ -1259,6 +1286,9 @@
                     closePopupOnClick: true,
                     trackResize: true
                 });
+
+                // Ensure map shows crosshair cursor for location selection
+                document.getElementById('hazardLocationMap').style.cursor = 'crosshair';
 
                 // Add OpenStreetMap tiles
                 var streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1320,8 +1350,17 @@
                     var descField = document.getElementById('locationDescription');
                     
                     if (latField) latField.value = lat.toFixed(6);
-                    if (lngField) lngField.value = lng.toFixed(6); // FIXED: was incorrectly lat.toFixed(6)
+                    if (lngField) lngField.value = lng.toFixed(6);
                     if (descField) descField.value = description;
+                    
+                    // Enable the "Use Selected Location" button
+                    var useButton = document.getElementById('useLocationButton');
+                    if (useButton) {
+                        useButton.disabled = false;
+                        useButton.innerHTML = '<i class="fas fa-check"></i> Use Selected Location';
+                        useButton.classList.remove('btn-outline-secondary');
+                        useButton.classList.add('btn-success');
+                    }
                     
                     // Update hidden form fields with current main form data
                     var mainForm = document.querySelector('form[method="post"]:not(#locationForm)');
@@ -1329,7 +1368,7 @@
                         var hazardTypeField = mainForm.querySelector('[name="HazardReport.HazardType"]');
                         var reportedByField = mainForm.querySelector('[name="HazardReport.ReportedBy"]');
                         var reportedOnField = mainForm.querySelector('[name="HazardReport.ReportedOn"]');
-                        var departmentField = mainForm.querySelector('[name="HazardReport.Department"]');
+                        var departmentField = mainForm.querySelector('[name="HazardReport.ReportingDepartment"]');
                         var descriptionField = mainForm.querySelector('[name="HazardReport.Description"]');
                         var confidentialField = mainForm.querySelector('[name="HazardReport.IsConfidential"]');
                         var priorityField = mainForm.querySelector('[name="HazardReport.Priority"]');
@@ -1340,36 +1379,69 @@
                             updateHiddenField(locationForm, 'HazardReport.HazardType', hazardTypeField?.value || '');
                             updateHiddenField(locationForm, 'HazardReport.ReportedBy', reportedByField?.value || '');
                             updateHiddenField(locationForm, 'HazardReport.ReportedOn', reportedOnField?.value || '');
-                            updateHiddenField(locationForm, 'HazardReport.Department', departmentField?.value || '');
+                            updateHiddenField(locationForm, 'HazardReport.ReportingDepartment', departmentField?.value || '');
                             updateHiddenField(locationForm, 'HazardReport.Description', descriptionField?.value || '');
-                            updateHiddenField(locationForm, 'HazardReport.IsConfidential', confidentialField?.checked || false);
-                            updateHiddenField(locationForm, 'HazardReport.Priority', priorityField?.value || 'MEDIUM');
+                            updateHiddenField(locationForm, 'HazardReport.IsConfidential', confidentialField?.checked ? 'true' : 'false');
+                            updateHiddenField(locationForm, 'HazardReport.Priority', priorityField?.value || '');
                         }
                     }
-                    
-                    // Center map on selection
-                    map.setView([lat, lng], 17);
-                    
-                    // Update coordinates display
-                    var coordsDiv = document.querySelector('.leaflet-control-coordinates');
-                    if(coordsDiv) {
-                        coordsDiv.innerHTML = '<span style="color: #0066cc;">📍 Location selected: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) + '</span>';
-                    }
                 };
-                
+
+                // Map click event to set location
+                map.on('click', function(e) {
+                    // Get clicked coordinates
+                    var lat = e.latlng.lat;
+                    var lng = e.latlng.lng;
+                    
+                    // Check if coordinates are within bounds
+                    if (window.isWithinBounds(lat, lng)) {
+                        // Reverse geocode to get location description
+                        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`)
+                            .then(response => response.json())
+                            .then(data => {
+                                var description = data.display_name || 'Selected location';
+                                window.setMapLocation(lat, lng, description);
+                            })
+                            .catch(error => {
+                                console.error('Reverse geocoding error:', error);
+                                var description = 'Selected location: Latitude ' + lat.toFixed(6) + ', Longitude ' + lng.toFixed(6);
+                                window.setMapLocation(lat, lng, description);
+                            });
+                    } else {
+                        alert('Selected location is out of bounds. Please select a location within the PDX airport area.');
+                    }
+                });
+
                 // Helper function to update hidden fields
-                function updateHiddenField(form, name, value) {
-                    var field = form.querySelector('[name="' + name + '"]');
+                function updateHiddenField(form, fieldName, value) {
+                    var field = form.querySelector('input[name="' + fieldName + '"]');
                     if (field) {
                         field.value = value;
-                    } else {
-                        var hiddenField = document.createElement('input');
-                        hiddenField.type = 'hidden';
-                        hiddenField.name = name;
-                        hiddenField.value = value;
-                        form.appendChild(hiddenField);
                     }
                 }
+
+                // Function to clear map selection
+                window.clearMapSelection = function() {
+                    // Remove existing selected marker
+                    if (window.selectedMarker) {
+                        map.removeLayer(window.selectedMarker);
+                        window.selectedMarker = null;
+                    }
+                    
+                    // Clear form fields
+                    document.getElementById('selectedLatitude').value = '';
+                    document.getElementById('selectedLongitude').value = '';
+                    document.getElementById('locationDescription').value = '';
+                    
+                    // Disable the "Use Selected Location" button
+                    var useButton = document.getElementById('useLocationButton');
+                    if (useButton) {
+                        useButton.disabled = true;
+                        useButton.innerHTML = '<i class="fas fa-map-marker-alt"></i> Select Location First';
+                        useButton.classList.remove('btn-success');
+                        useButton.classList.add('btn-outline-secondary');
+                    }
+                };
 
                 // Set initial marker if coordinates exist
                 @if (Model.HasGeoLocation)
@@ -1381,230 +1453,212 @@
                     </text>
                 }
 
-                // Function to clear selection - FIXED to return to PDX center
-                window.clearMapSelection = function() {
-                    if (window.selectedMarker) {
-                        map.removeLayer(window.selectedMarker);
-                        window.selectedMarker = null;
-                    }
-                    
+                // Initialize button state based on existing coordinates
+                setTimeout(function() {
                     var latField = document.getElementById('selectedLatitude');
                     var lngField = document.getElementById('selectedLongitude');
-                    var descField = document.getElementById('locationDescription');
+                    var useButton = document.getElementById('useLocationButton');
                     
-                    if (latField) latField.value = '';
-                    if (lngField) lngField.value = '';
-                    if (descField) descField.value = '';
-                    
-                    // FIXED: Return to PDX airport center instead of random location
-                    map.setView([@Model.AirportCenterLatitude, @Model.AirportCenterLongitude], @Model.DefaultZoomLevel);
-                    
-                    var coordsDiv = document.querySelector('.leaflet-control-coordinates');
-                    if (coordsDiv) {
-                        coordsDiv.innerHTML = '<span style="color: #0066cc;">🔍 Click anywhere on the map to select location</span>';
+                    if (useButton) {
+                        if (latField && lngField && latField.value && lngField.value && 
+                            parseFloat(latField.value) !== 0 && parseFloat(lngField.value) !== 0) {
+                            useButton.disabled = false;
+                            useButton.innerHTML = '<i class="fas fa-check"></i> Use Selected Location';
+                            useButton.classList.remove('btn-outline-secondary');
+                            useButton.classList.add('btn-success');
+                        } else {
+                            useButton.disabled = true;
+                            useButton.innerHTML = '<i class="fas fa-map-marker-alt"></i> Select Location First';
+                            useButton.classList.remove('btn-success');
+                            useButton.classList.add('btn-outline-secondary');
+                        }
                     }
-                };
-                
-                // Add PDX airport boundary - ENSURE it doesn't block clicks
-                var pdxBounds = [
-                    [45.580, -122.610], [45.580, -122.580], [45.595, -122.580], 
-                    [45.595, -122.610], [45.580, -122.610]
-                ];
-                
-                var boundaryPolygon = L.polygon(pdxBounds, {
-                    color: '#0066cc',
-                    weight: 3,
-                    opacity: 0.8,
-                    fillColor: '#0066cc',
-                    fillOpacity: 0.1,
-                    dashArray: '10, 10',
-                    interactive: false,  // CRITICAL: Non-interactive
-                    bubblingMouseEvents: false,  // CRITICAL: Don't interfere with events
-                    pane: 'overlayPane' // Put it in the right pane
-                }).addTo(map);
-                
-                // Force cursor to crosshair initially
-                map.getContainer().style.cursor = 'crosshair';
-
-                // Add scale control
-                L.control.scale({
-                    position: 'bottomright',
-                    imperial: true,
-                    metric: true
-                }).addTo(map);
-
-                // Add coordinates display control
-                var coordsControl = L.control({position: 'bottomleft'});
-                coordsControl.onAdd = function(map) {
-                    var div = L.DomUtil.create('div', 'leaflet-control-coordinates');
-                    div.style.background = 'rgba(255, 255, 255, 0.95)';
-                    div.style.padding = '10px';
-                    div.style.fontSize = '13px';
-                    div.style.borderRadius = '6px';
-                    div.style.border = '2px solid #0066cc';
-                    div.style.boxShadow = '0 3px 6px rgba(0,0,0,0.3)';
-                    div.style.fontWeight = 'bold';
-                    div.innerHTML = '<span style="color: #0066cc;">🔍 Click anywhere on the map to select location</span>';
-                    return div;
-                };
-                coordsControl.addTo(map);
-                
-                // SIMPLIFIED CSS - don't override Leaflet's default behavior
-                var style = document.createElement('style');
-                style.textContent = `
-                    .leaflet-container {
-                        cursor: crosshair;
-                    }
-                    .leaflet-control button {
-                        cursor: pointer !important;
-                    }
-                `;
-                document.head.appendChild(style);
-
-                // Update coordinates display on mouse move with CORRECT cursor feedback
-                map.on('mousemove', function(e) {
-                    var coords = e.latlng.lat.toFixed(6) + ', ' + e.latlng.lng.toFixed(6);
-                    var withinBounds = window.isWithinBounds(e.latlng.lat, e.latlng.lng);
-                    var coordsDiv = document.querySelector('.leaflet-control-coordinates');
                     
-                    // CORRECT cursor behavior: crosshair inside, grab (hand) outside
-                    if (withinBounds) {
-                        map.getContainer().style.cursor = 'crosshair';
+                    // If we're showing the modal but already have coordinates, close it
+                    var hasGeoLocation = @(Model.HasGeoLocation ? "true" : "false");
+                    var showMapModal = @(Model.ShowMapModal ? "true" : "false");
+                    
+                    console.log('Modal state check:', {
+                        hasGeoLocation: hasGeoLocation,
+                        showMapModal: showMapModal,
+                        latValue: latField ? latField.value : 'no field',
+                        lngValue: lngField ? lngField.value : 'no field'
+                    });
+                    
+                    // Force close modal if we have valid coordinates
+                    if (hasGeoLocation && !showMapModal) {
+                        console.log('Closing modal because we already have location');
+                        window.handleLocationSuccess();
+                    }
+                }, 100);
+
+                // Handle form submission to prevent multiple submissions
+                var locationForm = document.getElementById('locationForm');
+                if (locationForm) {
+                    locationForm.addEventListener('submit', function(e) {
+                        var submitButton = e.submitter;
+                        if (submitButton && submitButton.id === 'useLocationButton') {
+                            // Check if coordinates are actually selected
+                            var latField = document.getElementById('selectedLatitude');
+                            var lngField = document.getElementById('selectedLongitude');
+                            
+                            if (!latField.value || !lngField.value || 
+                                parseFloat(latField.value) === 0 && parseFloat(lngField.value) === 0) {
+                                e.preventDefault();
+                                alert('Please select a location on the map first by clicking on the desired location.');
+                                return false;
+                            }
+                            
+                            // Show processing state but don't prevent submission
+                            submitButton.disabled = true;
+                            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+                            
+                            // Add a timeout to reset button if submission hangs
+                            setTimeout(function() {
+                                if (submitButton.disabled) {
+                                    submitButton.disabled = false;
+                                    submitButton.innerHTML = '<i class="fas fa-check"></i> Use Selected Location';
+                                    alert('Request timed out. Please try again.');
+                                }
+                            }, 10000); // 10 second timeout
+                            
+                            // Add debugging to see if form actually submits
+                            console.log('Form about to submit with coordinates:', latField.value, lngField.value);
+                            
+                            // Add a backup mechanism to close modal after submission
+                            setTimeout(function() {
+                                // If the modal is still visible after 3 seconds, force close it
+                                var modal = document.getElementById('locationForm').closest('.modal');
+                                if (modal && modal.style.display !== 'none') {
+                                    console.log('Force closing modal after timeout');
+                                    window.closeModal();
+                                }
+                            }, 3000);
+                            
+                            // Form will submit normally to the server
+                        }
+                    });
+                    
+                    // Add form success handling
+                    window.addEventListener('pageshow', function(event) {
+                        // This fires when the page is loaded/reloaded after form submission
+                        if (event.persisted || performance.navigation.type === 1) {
+                            // Check if we just successfully set a location
+                            var hasGeoLocation = @(Model.HasGeoLocation ? "true" : "false");
+                            if (hasGeoLocation) {
+                                console.log('Location was successfully set, ensuring modal is closed');
+                                setTimeout(function() {
+                                    window.closeModal();
+                                }, 100);
+                            }
+                        }
+                    });
+                }
+
+                // Get current location and set map view
+                window.getCurrentLocation = function() {
+                    var button = document.getElementById('getCurrentLocationBtn');
+                    var originalText = button.innerHTML;
+                    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Getting Location...';
+                    button.disabled = true;
+                    
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(function(position) {
+                            var lat = position.coords.latitude;
+                            var lng = position.coords.longitude;
+                            
+                            // Set map view and zoom
+                            map.setView([lat, lng], 15);
+                            
+
+                             // Reverse geocode to get location description
+                            fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    var description = data.display_name || 'Current location';
+                                    
+                                    // Set map location with marker
+                                    window.setMapLocation(lat, lng, description);
+                                    
+                                    // Reset button
+                                    button.innerHTML = originalText;
+                                    button.disabled = false;
+                                })
+                                .catch(error => {
+                                    console.error('Reverse geocoding error:', error);
+                                    var description = 'Current location: Latitude ' + lat.toFixed(6) + ', Longitude ' + lng.toFixed(6);
+                                    window.setMapLocation(lat, lng, description);
+                                    
+                                    // Reset button
+                                    button.innerHTML = originalText;
+                                    button.disabled = false;
+                                });
+                        }, function(error) {
+                            alert('Unable to retrieve your location. Please check your device settings.');
+                            
+                            // Reset button
+                            button.innerHTML = originalText;
+                            button.disabled = false;
+                        });
                     } else {
-                        map.getContainer().style.cursor = 'grab'; // Hand cursor outside boundary
+                        alert('Geolocation is not supported by this browser.');
+                        
+                        // Reset button
+                        button.innerHTML = originalText;
+                        button.disabled = false;
                     }
-                    
-                    if (coordsDiv && !window.selectedMarker) {
-                        if (withinBounds) {
-                            coordsDiv.innerHTML = '<span style="color: green; font-weight: bold;">👆 CLICK HERE: ' + coords + '</span>';
-                        } else {
-                            coordsDiv.innerHTML = '<span style="color: red;">❌ Outside bounds: ' + coords + '</span>';
-                        }
-                    }
-                });
-
-                // Main map click handler - ENHANCED with debugging
-                map.on('click', function(e) {
-                    console.log('=== MAP CLICK DETECTED ===');
-                    console.log('Click coordinates:', e.latlng.lat, e.latlng.lng);
-                    
-                    var lat = e.latlng.lat;
-                    var lng = e.latlng.lng;
-                    
-                    // Check if within bounds
-                    var withinBounds = window.isWithinBounds(lat, lng);
-                    console.log('Within bounds:', withinBounds);
-                    
-                    if (!withinBounds) {
-                        console.log('Click outside bounds - showing alert');
-                        alert('Please click within the PDX airport boundary (blue dashed area).\n\nYour click: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) + '');
-                        return;
-                    }
-                    
-                    console.log('Valid click - calling setMapLocation');
-                    setMapLocation(lat, lng, 'Custom map location');
-                });
+                };
             });
-
-            // Geolocation Functions
-            function tryAutoDetectLocation() {
-                if (!navigator.geolocation) return;
-
-                navigator.geolocation.getCurrentPosition(
-                    function(position) {
-                        var userLat = position.coords.latitude;
-                        var userLng = position.coords.longitude;
-                        
-                        // Check if user is within PDX airport area
-                        if (isWithinExpandedBounds(userLat, userLng)) {
-                            setMapLocation(userLat, userLng, 'Your current location (GPS)');
-                        } else {
-                            // Just center the map on airport but don't select location
-                            map.setView([userLat, userLng], 13);
-                        }
-                    },
-                    function(error) {
-                        // Silent fail - user can select manually
-                    },
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 60000
-                    }
-                );
-            }
-
-            // Manual current location button
-            window.getCurrentLocation = function() {
-                if (!navigator.geolocation) {
-                    alert('Geolocation is not supported by your browser.');
-                    return;
-                }
-
-                var btn = document.getElementById('getCurrentLocationBtn');
-                var originalHtml = btn.innerHTML;
-                
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Getting Location...';
-                btn.disabled = true;
-
-                navigator.geolocation.getCurrentPosition(
-                    function(position) {
-                        var userLat = position.coords.latitude;
-                        var userLng = position.coords.longitude;
-                        
-                        btn.innerHTML = originalHtml;
-                        btn.disabled = false;
-                        
-                        if (isWithinExpandedBounds(userLat, userLng)) {
-                            setMapLocation(userLat, userLng, 'Your current location (GPS)');
-                        } else {
-                            setMapLocation(userLat, userLng, 'Your current location (GPS) - Outside airport area');
-                            map.setView([userLat, userLng], 12);
-                        }
-                    },
-                    function(error) {
-                        btn.innerHTML = originalHtml;
-                        btn.disabled = false;
-                        
-                        var errorMsg = 'Unable to get your location. Please select manually on the map.';
-                        alert(errorMsg);
-                    },
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 15000,
-                        maximumAge: 30000
-                    }
-                );
-            };
-
-            // Helper function to check expanded bounds - CORRECTED PDX bounds
-            function isWithinExpandedBounds(lat, lng) {
-                // CORRECTED PDX Airport bounds - actual airport property boundaries
-                return lat >= 45.580 && lat <= 45.595 && lng >= -122.610 && lng <= -122.580;
-            }
-
-            // Add validation function for form submission - CORRECTED bounds
-            window.validateCoordinates = function() {
-                var lat = document.getElementById('selectedLatitude').value;
-                var lng = document.getElementById('selectedLongitude').value;
-                
-                if (!lat || !lng) {
-                    alert('Please select a location on the map first.');
-                    return false;
-                }
-                
-                var latNum = parseFloat(lat);
-                var lngNum = parseFloat(lng);
-                
-                // Use CORRECTED PDX airport bounds
-                if (latNum < 45.580 || latNum > 45.595 || lngNum < -122.610 || lngNum > -122.580) {
-                    alert('Selected coordinates are outside the valid PDX airport area.');
-                    return false;
-                }
-                
-                return true;
-            };
         </script>
     }
 }
+
+<!-- Simple modal close functionality for any remaining modals
+        window.closeModal = function() {
+            // Find any visible modals and hide them
+            var visibleModals = document.querySelectorAll('.modal.show');
+            visibleModals.forEach(function(modal) {
+                modal.style.display = 'none';
+                modal.classList.remove('show');
+                modal.classList.remove('d-block');
+            });
+            
+            // Also find modals by specific styling (in case class-based selection fails)
+            var styledModals = document.querySelectorAll('.modal[style*="display"]');
+            styledModals.forEach(function(modal) {
+                modal.style.display = 'none';
+            });
+            
+            // Remove modal backdrop if it exists
+            var backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+            
+            // Reset body classes
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+            
+            console.log('Modal closed by closeModal function');
+        };
+        
+        // Success message handler
+        window.handleLocationSuccess = function() {
+            console.log('Location successfully set, closing modal');
+            setTimeout(function() {
+                window.closeModal();
+                
+                // Show success feedback
+                var locationDisplay = document.getElementById('locationDisplay');
+                if (locationDisplay) {
+                    locationDisplay.style.backgroundColor = '#d4edda';
+                    locationDisplay.style.borderColor = '#c3e6cb';
+                    setTimeout(function() {
+                        locationDisplay.style.backgroundColor = '';
+                        locationDisplay.style.borderColor = '';
+                    }, 3000);
+                }
+            }, 500);
+        };
 

@@ -559,4 +559,184 @@ public static class FieldNames
 
     private static readonly Lazy<string> _fInterviewCompletedDate = new Lazy<string>(() => "fldd_CompletedDate");
     public static string fInterviewCompletedDate => _fInterviewCompletedDate.Value;
+
+    /// <summary>
+    /// Report Validations table (tbld_ReportValidations)
+    /// </summary>
+    private static readonly Lazy<string> _fReportValidationCode = new Lazy<string>(() => "fldv_Code");
+    public static string fReportValidationCode => _fReportValidationCode.Value;
+
+    private static readonly Lazy<string> _fReportValidationReportCode = new Lazy<string>(() => "fldv_ReportCode");
+    public static string fReportValidationReportCode => _fReportValidationReportCode.Value;
+
+    private static readonly Lazy<string> _fReportValidationDecision = new Lazy<string>(() => "fldv_ValidationDecision");
+    public static string fReportValidationDecision => _fReportValidationDecision.Value;
+
+    private static readonly Lazy<string> _fReportValidationStatus = new Lazy<string>(() => "fldv_Status");
+    public static string fReportValidationStatus => _fReportValidationStatus.Value;
+
+    private static readonly Lazy<string> _fReportValidationStage = new Lazy<string>(() => "fldv_Stage");
+    public static string fReportValidationStage => _fReportValidationStage.Value;
+
+    private static readonly Lazy<string> _fReportValidationValidatedBy = new Lazy<string>(() => "fldv_ValidatedBy");
+    public static string fReportValidationValidatedBy => _fReportValidationValidatedBy.Value;
+
+    private static readonly Lazy<string> _fReportValidationValidatedDate = new Lazy<string>(() => "fldd_ValidatedDate");
+    public static string fReportValidationValidatedDate => _fReportValidationValidatedDate.Value;
+
+    private static readonly Lazy<string> _fReportValidationComments = new Lazy<string>(() => "fldv_ValidationComments");
+    public static string fReportValidationComments => _fReportValidationComments.Value;
+
+    private static readonly Lazy<string> _fReportValidationType = new Lazy<string>(() => "fldv_ValidationType");
+    public static string fReportValidationType => _fReportValidationType.Value;
+
+    /// <summary>
+    /// Reports table (tbld_Reports)
+    /// </summary>
+    private static readonly Lazy<string> _fReportCode = new Lazy<string>(() => "fldv_Code");
+    public static string fReportCode => _fReportCode.Value;
+
+    private static readonly Lazy<string> _fReportName = new Lazy<string>(() => "fldv_Name");
+    public static string fReportName => _fReportName.Value;
+
+    private static readonly Lazy<string> _fReportDescription = new Lazy<string>(() => "fldv_Description");
+    public static string fReportDescription => _fReportDescription.Value;
+
+    private static readonly Lazy<string> _fReportStatus = new Lazy<string>(() => "fldv_Status");
+    public static string fReportStatus => _fReportStatus.Value;
+
+    private static readonly Lazy<string> _fReportStage = new Lazy<string>(() => "fldv_Stage");
+    public static string fReportStage => _fReportStage.Value;
+
+    /// <summary>
+    /// Risk Analysis table (tbld_RiskAnalysis)
+    /// </summary>
+    private static readonly Lazy<string> _fRiskAnalysisCode = new Lazy<string>(() => "fldv_Code");
+    public static string fRiskAnalysisCode => _fRiskAnalysisCode.Value;
+
+    private static readonly Lazy<string> _fRiskAnalysisName = new Lazy<string>(() => "fldv_Name");
+    public static string fRiskAnalysisName => _fRiskAnalysisName.Value;
+
+    private static readonly Lazy<string> _fRiskAnalysisDescription = new Lazy<string>(() => "fldv_Description");
+    public static string fRiskAnalysisDescription => _fRiskAnalysisDescription.Value;
+
+    private static readonly Lazy<string> _fRiskAnalysisHazardCode = new Lazy<string>(() => "fldv_HazardCode");
+    public static string fRiskAnalysisHazardCode => _fRiskAnalysisHazardCode.Value;
+
+    private static readonly Lazy<string> _fRiskAnalysisStatus = new Lazy<string>(() => "fldv_Status");
+    public static string fRiskAnalysisStatus => _fRiskAnalysisStatus.Value;
+
+    private static readonly Lazy<string> _fRiskAnalysisStage = new Lazy<string>(() => "fldv_Stage");
+    public static string fRiskAnalysisStage => _fRiskAnalysisStage.Value;
+
+    private static readonly Lazy<string> _fRiskAnalysisWorstCredibleOutcome = new Lazy<string>(() => "fldv_WorstCredibleOutcome");
+    public static string fRiskAnalysisWorstCredibleOutcome => _fRiskAnalysisWorstCredibleOutcome.Value;
+
+    private static readonly Lazy<string> _fRiskAnalysisRootCause = new Lazy<string>(() => "fldv_RootCause");
+    public static string fRiskAnalysisRootCause => _fRiskAnalysisRootCause.Value;
+
+    /// <summary>
+    /// Risk Assessment table (tbld_RiskAssessments)
+    /// </summary>
+    private static readonly Lazy<string> _fRiskAssessmentCode = new Lazy<string>(() => "fldv_Code");
+    public static string fRiskAssessmentCode => _fRiskAssessmentCode.Value;
+
+    private static readonly Lazy<string> _fRiskAssessmentName = new Lazy<string>(() => "fldv_Name");
+    public static string fRiskAssessmentName => _fRiskAssessmentName.Value;
+
+    private static readonly Lazy<string> _fRiskAssessmentDescription = new Lazy<string>(() => "fldv_Description");
+    public static string fRiskAssessmentDescription => _fRiskAssessmentDescription.Value;
+
+    private static readonly Lazy<string> _fRiskAssessmentHazardCode = new Lazy<string>(() => "fldv_HazardCode");
+    public static string fRiskAssessmentHazardCode => _fRiskAssessmentHazardCode.Value;
+
+    private static readonly Lazy<string> _fRiskAssessmentType = new Lazy<string>(() => "fldv_AssessmentType");
+    public static string fRiskAssessmentType => _fRiskAssessmentType.Value;
+
+    private static readonly Lazy<string> _fRiskAssessmentStatus = new Lazy<string>(() => "fldv_Status");
+    public static string fRiskAssessmentStatus => _fRiskAssessmentStatus.Value;
+
+    private static readonly Lazy<string> _fRiskAssessmentStage = new Lazy<string>(() => "fldv_Stage");
+    public static string fRiskAssessmentStage => _fRiskAssessmentStage.Value;
+
+    /// <summary>
+    /// Mitigation table (tbld_Mitigations)
+    /// </summary>
+    private static readonly Lazy<string> _fMitigationCode = new Lazy<string>(() => "fldv_Code");
+    public static string fMitigationCode => _fMitigationCode.Value;
+
+    private static readonly Lazy<string> _fMitigationHazardCode = new Lazy<string>(() => "fldv_HazardCode");
+    public static string fMitigationHazardCode => _fMitigationHazardCode.Value;
+
+    /// <summary>
+    /// Mitigation Assignment table (tbld_MitigationAssignments)
+    /// </summary>
+    private static readonly Lazy<string> _fMitigationAssignmentCode = new Lazy<string>(() => "fldv_Code");
+    public static string fMitigationAssignmentCode => _fMitigationAssignmentCode.Value;
+
+    private static readonly Lazy<string> _fMitigationAssignmentMitigationCode = new Lazy<string>(() => "fldv_MitigationCode");
+    public static string fMitigationAssignmentMitigationCode => _fMitigationAssignmentMitigationCode.Value;
+
+    private static readonly Lazy<string> _fMitigationAssignmentDepartmentCode = new Lazy<string>(() => "fldv_DepartmentCode");
+    public static string fMitigationAssignmentDepartmentCode => _fMitigationAssignmentDepartmentCode.Value;
+
+    /// <summary>
+    /// Scoring Panel table (tbld_ScoringPanels)
+    /// </summary>
+    private static readonly Lazy<string> _fScoringPanelCode = new Lazy<string>(() => "fldv_Code");
+    public static string fScoringPanelCode => _fScoringPanelCode.Value;
+
+    private static readonly Lazy<string> _fScoringPanelHazardCode = new Lazy<string>(() => "fldv_HazardCode");
+    public static string fScoringPanelHazardCode => _fScoringPanelHazardCode.Value;
+
+    private static readonly Lazy<string> _fScoringPanelSMSUserCode = new Lazy<string>(() => "fldv_SMSUserCode");
+    public static string fScoringPanelSMSUserCode => _fScoringPanelSMSUserCode.Value;
+
+    private static readonly Lazy<string> _fScoringPanelLikelihood = new Lazy<string>(() => "fldv_Likelyhood");
+    public static string fScoringPanelLikelihood => _fScoringPanelLikelihood.Value;
+
+    private static readonly Lazy<string> _fScoringPanelSeverity = new Lazy<string>(() => "fldv_Severity");
+    public static string fScoringPanelSeverity => _fScoringPanelSeverity.Value;
+
+    private static readonly Lazy<string> _fScoringPanelScore = new Lazy<string>(() => "fldv_Score");
+    public static string fScoringPanelScore => _fScoringPanelScore.Value;
+
+    /// <summary>
+    /// SMS User Role table (tbld_SMSUserRoles)
+    /// </summary>
+    private static readonly Lazy<string> _fSMSUserRoleCode = new Lazy<string>(() => "fldv_Code");
+    public static string fSMSUserRoleCode => _fSMSUserRoleCode.Value;
+
+    private static readonly Lazy<string> _fSMSUserRoleUserId = new Lazy<string>(() => "fldv_UserId");
+    public static string fSMSUserRoleUserId => _fSMSUserRoleUserId.Value;
+
+    private static readonly Lazy<string> _fSMSUserRoleUserType = new Lazy<string>(() => "fldv_UserType");
+    public static string fSMSUserRoleUserType => _fSMSUserRoleUserType.Value;
+
+    private static readonly Lazy<string> _fSMSUserRoleSMSRoleCode = new Lazy<string>(() => "fldv_SMSRoleCode");
+    public static string fSMSUserRoleSMSRoleCode => _fSMSUserRoleSMSRoleCode.Value;
+
+    private static readonly Lazy<string> _fSMSUserRoleDepartment = new Lazy<string>(() => "fldv_Department");
+    public static string fSMSUserRoleDepartment => _fSMSUserRoleDepartment.Value;
+
+    private static readonly Lazy<string> _fSMSUserRoleEffectiveDate = new Lazy<string>(() => "fldd_EffectiveDate");
+    public static string fSMSUserRoleEffectiveDate => _fSMSUserRoleEffectiveDate.Value;
+
+    private static readonly Lazy<string> _fSMSUserRoleExpirationDate = new Lazy<string>(() => "fldd_ExpirationDate");
+    public static string fSMSUserRoleExpirationDate => _fSMSUserRoleExpirationDate.Value;
+
+    private static readonly Lazy<string> _fSMSUserRoleIsActive = new Lazy<string>(() => "fldb_IsActive");
+    public static string fSMSUserRoleIsActive => _fSMSUserRoleIsActive.Value;
+
+    private static readonly Lazy<string> _fSMSUserRoleAssignedBy = new Lazy<string>(() => "fldv_AssignedBy");
+    public static string fSMSUserRoleAssignedBy => _fSMSUserRoleAssignedBy.Value;
+
+    private static readonly Lazy<string> _fSMSUserRoleAssignedDate = new Lazy<string>(() => "fldd_AssignedDate");
+    public static string fSMSUserRoleAssignedDate => _fSMSUserRoleAssignedDate.Value;
+
+    private static readonly Lazy<string> _fSMSUserRoleDeactivatedBy = new Lazy<string>(() => "fldv_DeactivatedBy");
+    public static string fSMSUserRoleDeactivatedBy => _fSMSUserRoleDeactivatedBy.Value;
+
+    private static readonly Lazy<string> _fSMSUserRoleDeactivatedDate = new Lazy<string>(() => "fldd_DeactivatedDate");
+    public static string fSMSUserRoleDeactivatedDate => _fSMSUserRoleDeactivatedDate.Value;
 }

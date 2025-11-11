@@ -14,9 +14,9 @@ public interface IBaseUserRepository<T> where T : BaseUser
     Task<Result<IEnumerable<T>>> GetAllAsync();
 
     /// <summary>
-    /// Gets a user by their unique ID
+    /// Gets a user by their unique ID (accepts any BaseUserID-derived type)
     /// </summary>
-    Task<Result<T>> GetByIdAsync(string id);
+    Task<Result<T>> GetByIdAsync(BaseUserID id);
 
     /// <summary>
     /// Gets a user by their username
@@ -39,19 +39,19 @@ public interface IBaseUserRepository<T> where T : BaseUser
     Task<Result<bool>> UpdateAsync(T user);
 
     /// <summary>
-    /// Updates a user's password
+    /// Updates a user's password (accepts any BaseUserID-derived type)
     /// </summary>
-    Task<Result<bool>> UpdatePasswordAsync(string userId, string hashedPassword);
+    Task<Result<bool>> UpdatePasswordAsync(BaseUserID userId, string hashedPassword);
 
     /// <summary>
-    /// Records a user login
+    /// Records a user login (accepts any BaseUserID-derived type)
     /// </summary>
-    Task<Result<bool>> RecordLoginAsync(string userId, DateTime loginDate);
+    Task<Result<bool>> RecordLoginAsync(BaseUserID userId, DateTime loginDate);
 
     /// <summary>
-    /// Soft deletes a user (sets IsActive = false)
+    /// Soft deletes a user (accepts any BaseUserID-derived type)
     /// </summary>
-    Task<Result<bool>> DeleteAsync(string userId);
+    Task<Result<bool>> DeleteAsync(BaseUserID userId);
 
     /// <summary>
     /// Checks if a username already exists

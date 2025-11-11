@@ -1,8 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Application.Interfaces;
+
+using Microsoft.Extensions.Logging;
 
 namespace SMS_Application.Services;
 
-public sealed class ReportValidationService
+public sealed class ReportValidationService : IReportValidationService
 {
     private readonly ReportValidationDataService _dataService;
     private readonly ILogger<ReportValidationService> _logger;

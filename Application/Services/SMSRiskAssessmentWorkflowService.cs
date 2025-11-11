@@ -85,22 +85,19 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
     private readonly IRiskAssessmentRepository _riskAssessmentRepository;
     private readonly ISMSApplicationUserRepository _userRepository;
     private readonly IHazardRepository _hazardRepository;
-    private readonly IMitigationStrategyRepository _mitigationStrategyRepository;
 
     public SMSRiskAssessmentWorkflowService(
         IMediator mediator,
         ILogger<SMSRiskAssessmentWorkflowService> logger,
         IRiskAssessmentRepository riskAssessmentRepository,
         ISMSApplicationUserRepository userRepository,
-        IHazardRepository hazardRepository,
-        IMitigationStrategyRepository mitigationStrategyRepository)
+        IHazardRepository hazardRepository)
     {
         _mediator = mediator;
         _logger = logger;
         _riskAssessmentRepository = riskAssessmentRepository;
         _userRepository = userRepository;
         _hazardRepository = hazardRepository;
-        _mitigationStrategyRepository = mitigationStrategyRepository;
     }
 
     public async Task<Result<RiskAssessment>> CreateRiskAssessmentAsync(string assessmentName, string leadAssessorId, RiskAssessmentCategory category = RiskAssessmentCategory.FiveStep, string hazardId = null)
@@ -110,8 +107,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
             _logger.LogInformation("Creating new risk assessment: {AssessmentName} for assessor: {AssessorId}", assessmentName, leadAssessorId);
 
             // Validate lead assessor exists
-            var assessorId = new SMSApplicationUserID(leadAssessorId);
-            var assessorResult = await _userRepository.GetByIdAsync(assessorId);
+            var assessorResult = await _userRepository.GetByIdAsync(leadAssessorId);
             if (assessorResult.IsFailure)
             {
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.SMSApplicationUserError.NotFound);
@@ -140,7 +136,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
                 return Result<RiskAssessment>.Failure<RiskAssessment>(saveResult.Error);
             }
 
-            _logger.LogInformation("Risk assessment created successfully: {AssessmentId}", assessmentId.Value.Value);
+            _logger.LogInformation("Risk assessment created successfully: {AssessmentId}", assessmentId.Value);
             return Result<RiskAssessment>.Success(riskAssessment.Value);
         }
         catch (Exception ex)
@@ -187,7 +183,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
                 return Result<RiskAssessment>.Failure<RiskAssessment>(saveResult.Error);
             }
 
-            _logger.LogInformation("Residual risk assessment created successfully: {AssessmentId}", assessmentId.Value.Value);
+            _logger.LogInformation("Residual risk assessment created successfully: {AssessmentId}", assessmentId.Value);
             return Result<RiskAssessment>.Success(residualAssessment.Value);
         }
         catch (Exception ex)
@@ -310,7 +306,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
 
                 // Create or update hazard in the system using CQRS
                 var createHazardCommand = new CreateHazardCommand(hazard);
-                var hazardResult = await _mediator.SendAsync(createHazardCommand);
+                var hazardResult = await _mediator.SendAsync(createHazardCommand, CancellationToken.None);
                 
                 if (hazardResult.IsFailure)
                 {
@@ -333,7 +329,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
 
             // Save the updated assessment using CQRS
             var updateCommand = new UpdateRiskAssessmentCommand(assessment);
-            var updateResult = await _mediator.SendAsync(updateCommand);
+            var updateResult = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (updateResult.IsFailure)
             {
@@ -559,7 +555,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
         try
         {
             // Get all active SMS application users who can be assessors
-            var usersResult = await _userRepository.GetAllActiveAsync();
+            var usersResult = await _userRepository.GetActiveUsersAsync();
             if (usersResult.IsFailure)
             {
                 return Result<List<SMSApplicationUser>>.Failure<List<SMSApplicationUser>>(usersResult.Error);

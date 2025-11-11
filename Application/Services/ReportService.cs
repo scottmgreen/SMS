@@ -1,8 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Application.Interfaces;
+
+using Microsoft.Extensions.Logging;
 
 namespace SMS_Application.Services;
 
-public sealed class ReportService
+public sealed class ReportService : IReportService
 {
     private readonly ReportDataService _dataService;
     private readonly ILogger<ReportService> _logger;

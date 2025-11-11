@@ -8,10 +8,18 @@
     <AssemblyName>SMS</AssemblyName>
   </PropertyGroup>
 
+  <!-- Exclude OnHold directory files from compilation -->
+  <ItemGroup>
+    <Compile Remove="Pages\SafetyRiskManagement\OnHold\**" />
+    <Content Remove="Pages\SafetyRiskManagement\OnHold\**" />
+    <EmbeddedResource Remove="Pages\SafetyRiskManagement\OnHold\**" />
+    <None Remove="Pages\SafetyRiskManagement\OnHold\**" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0" />
+    <!--<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0" />-->
   </ItemGroup>
 
   <ItemGroup>

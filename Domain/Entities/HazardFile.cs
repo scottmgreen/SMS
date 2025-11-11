@@ -10,7 +10,7 @@ namespace SMS_Domain.Entities;
 public sealed class HazardFile : BaseAuditableEntity
 {
     // Private constructor for Entity Framework
-    private HazardFile() : base(new HazardFileID(Guid.NewGuid().ToString()), "SYSTEM", DateTime.UtcNow) { }
+    private HazardFile() : base(new HazardFileID("HF-0000"), "SYSTEM", DateTime.UtcNow) { }
 
     // Public constructor for domain usage
     public HazardFile(HazardFileID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
@@ -351,7 +351,7 @@ public sealed class HazardFile : BaseAuditableEntity
     /// </summary>
     public string GetDisplayCategory()
     {
-        if (Category.HasValue)
+        if (Category != null)
             return Category.Value.ToString();
 
         if (IsImage()) return "Photo";

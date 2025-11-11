@@ -25,13 +25,21 @@ internal static class ServiceCollectionExtensions
 
         // SMS Repositories
         services.AddScoped<HazardRepository>();
+        services.AddScoped<IHazardRepository, HazardRepository>();
+        services.AddScoped<HazardLocationRepository>();
+        services.AddScoped<IHazardLocationRepository, HazardLocationRepository>();
+        services.AddScoped<HazardFileRepository>();
+        services.AddScoped<IHazardFileRepository, HazardFileRepository>();
         services.AddScoped<AirportSharedDatasetRepository>();
         services.AddScoped<ReportRepository>();
         services.AddScoped<InterviewRepository>();
         services.AddScoped<InvestigationRepository>();
         services.AddScoped<RiskAnalysisRepository>();
         services.AddScoped<RiskAssessmentRepository>();
+        services.AddScoped<IRiskAssessmentRepository, RiskAssessmentRepository>();
         services.AddScoped<MitigationRepository>();
+        // TODO: Create MitigationStrategyRepository that implements IMitigationStrategyRepository
+        // services.AddScoped<IMitigationStrategyRepository, MitigationStrategyRepository>();
         services.AddScoped<MitigationAssignmentRepository>();
         services.AddScoped<ReportValidationRepository>();
         services.AddScoped<ScoringPanelRepository>();
@@ -43,6 +51,8 @@ internal static class ServiceCollectionExtensions
 
         // SMS Data Services - All Available Services
         services.AddScoped<HazardDataService>();
+        services.AddScoped<HazardLocationDataService>();
+        services.AddScoped<HazardFileDataService>(); // MISSING - Added this
         services.AddScoped<AirportSharedDatasetDataService>();
         services.AddScoped<ReportDataService>();
         services.AddScoped<InterviewDataService>();

@@ -1,34 +1,32 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using PDXSMS.Services;
+using SMS_Application.Interfaces;
+using SMS_Application.Services;
+using SMS_Shared.Common;
 using System.Text.Json;
 using System.ComponentModel.DataAnnotations;
-using static PDXSMS.Services.UniversalUserRepository;
 using System.IO;
 
-namespace PDXSMS_Presentation.Pages.SafetyRiskManagement;
+namespace SMS.Presentation.Pages.SafetyRiskManagement;
 
 public class SimplifiedRiskAssessmentModel : PageModel
 {
     private readonly ILogger<SimplifiedRiskAssessmentModel> _logger;
-    private readonly UniversalJsonDataService _dataService;
-    private readonly RiskAssessmentRepository _riskAssessmentRepository;
-    private readonly UniversalUserRepository _universalUserRepository;
-    private readonly SMSIdGenerationService _idGenerationService;
+    private readonly IMediator _mediator;
+    private readonly ISMSRiskAssessmentWorkflowService _workflowService;
+    private readonly IHazardFileService _hazardService;
 
     public SimplifiedRiskAssessmentModel(
-        ILogger<SimplifiedRiskAssessmentModel> logger, 
-        UniversalJsonDataService dataService,
-        RiskAssessmentRepository riskAssessmentRepository,
-        UniversalUserRepository universalUserRepository,
-        SMSIdGenerationService idGenerationService)
+        ILogger<SimplifiedRiskAssessmentModel> logger,
+        IMediator mediator,
+        ISMSRiskAssessmentWorkflowService workflowService,
+        IHazardFileService hazardService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
-        _riskAssessmentRepository = riskAssessmentRepository ?? throw new ArgumentNullException(nameof(riskAssessmentRepository));
-        _universalUserRepository = universalUserRepository ?? throw new ArgumentNullException(nameof(universalUserRepository));
-        _idGenerationService = idGenerationService ?? throw new ArgumentNullException(nameof(idGenerationService));
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _workflowService = workflowService ?? throw new ArgumentNullException(nameof(workflowService));
+        _hazardService = hazardService ?? throw new ArgumentNullException(nameof(hazardService));
     }
 
     // Route parameters
@@ -400,8 +398,8 @@ public class SimplifiedRiskAssessmentModel : PageModel
                 {
                     ["leadAssessor"] = riskAssessment.AssessedBy,
                     ["systemDescription"] = "Simplified Assessment - Limited System Analysis",
-                    ["systemBoundaries"] = "As per simplified assessment scope",
-                    ["systemPurpose"] = "Simplified risk assessment conducted",
+                    ["systemBoundaries"] => "As per simplified assessment scope",
+                    ["systemPurpose"] => "Simplified risk assessment conducted",
                     ["completedDate"] = DateTime.UtcNow,
                     ["lastModifiedDate"] = DateTime.UtcNow
                 };
@@ -417,7 +415,7 @@ public class SimplifiedRiskAssessmentModel : PageModel
                         {
                             ["id"] = HazardId,
                             ["description"] = "Hazard assessed via simplified method",
-                            ["category"] = "Simplified Assessment",
+                            ["category"] => "Simplified Assessment",
                             ["createdDate"] = DateTime.UtcNow
                         }
                     },

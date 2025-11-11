@@ -22,7 +22,7 @@ public interface ISMSOrganizationalUserRepository : IBaseUserRepository<SMSOrgan
     /// <summary>
     /// Gets users by organization level
     /// </summary>
-    Task<Result<IEnumerable<SMSOrganizationalUser>>> GetByOrganizationLevelAsync(string organizationLevel);
+    Task<Result<IEnumerable<SMSOrganizationalUser>>> GetBySMSOrganizationalUserLevelAsync(string organizationLevel);
 
     /// <summary>
     /// Gets users in a department with specific roles
@@ -32,5 +32,5 @@ public interface ISMSOrganizationalUserRepository : IBaseUserRepository<SMSOrgan
     /// <summary>
     /// Updates organizational information
     /// </summary>
-    Task<Result<bool>> UpdateOrganizationalInfoAsync(string userId, string department, string position, string organizationLevel);
+    Task<Result<bool>> UpdateSMSOrganizationalUserInfoAsync(BaseUserID userId, string department, string position, string organizationLevel);
 }

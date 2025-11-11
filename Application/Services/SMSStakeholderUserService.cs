@@ -1,3 +1,5 @@
+using Application.Interfaces;
+
 using Microsoft.Extensions.Logging;
 using SMS_Domain.Entities;
 using SMS_Domain.Errors;
@@ -11,7 +13,7 @@ namespace SMS_Application.Services;
 /// High-level application service for SMS Stakeholder User business operations
 /// Provides business logic orchestration and cross-cutting concerns
 /// </summary>
-public sealed class SMSStakeholderUserService
+public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
 {
     private readonly SMSStakeholderUserDataService _dataService;
     private readonly ILogger<SMSStakeholderUserService> _logger;
@@ -112,7 +114,7 @@ public sealed class SMSStakeholderUserService
         try
         {
             _logger.LogInformation("Retrieving SMS Stakeholder Users by type: {StakeholderType}", stakeholderType);
-            
+
             // Business validation - ensure stakeholder type is valid
             if (!IsValidStakeholderType(stakeholderType))
             {
@@ -137,7 +139,7 @@ public sealed class SMSStakeholderUserService
         try
         {
             _logger.LogInformation("Retrieving airline stakeholders");
-            
+
             var result = await _dataService.GetAirlineStakeholdersAsync(ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
@@ -149,7 +151,7 @@ public sealed class SMSStakeholderUserService
                 var airlineGroups = airlines.GroupBy(a => a.Organization).ToList();
                 foreach (var group in airlineGroups)
                 {
-                    _logger.LogInformation("Airline {Organization} has {Count} stakeholder users", 
+                    _logger.LogInformation("Airline {Organization} has {Count} stakeholder users",
                         group.Key, group.Count());
                 }
             }
@@ -171,7 +173,7 @@ public sealed class SMSStakeholderUserService
         try
         {
             _logger.LogInformation("Retrieving users requiring AOA access");
-            
+
             var result = await _dataService.GetUsersRequiringAOAAccessAsync(ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
@@ -182,7 +184,7 @@ public sealed class SMSStakeholderUserService
                 // Business analysis - security monitoring
                 foreach (var user in aoaUsers.Where(u => u.AccessLevel == "Full"))
                 {
-                    _logger.LogInformation("Full access AOA user: {UserName} from {Organization}", 
+                    _logger.LogInformation("Full access AOA user: {UserName} from {Organization}",
                         user.UserName.Value, user.Organization);
                 }
 
@@ -230,7 +232,7 @@ public sealed class SMSStakeholderUserService
             // Business rule - log access level changes for security
             if (existingUser.AccessLevel != user.AccessLevel)
             {
-                _logger.LogWarning("Access level change for user {UserName}: {OldLevel} -> {NewLevel}", 
+                _logger.LogWarning("Access level change for user {UserName}: {OldLevel} -> {NewLevel}",
                     user.UserName.Value, existingUser.AccessLevel, user.AccessLevel);
             }
 
@@ -284,7 +286,7 @@ public sealed class SMSStakeholderUserService
             if (result.IsSuccess)
             {
                 var user = result.Value;
-                
+
                 // Business rule - check if user is active
                 if (!user.IsActive)
                 {
@@ -293,7 +295,7 @@ public sealed class SMSStakeholderUserService
                 }
 
                 // Business rule - security logging for external users
-                _logger.LogInformation("External stakeholder authenticated: {UserName} from {Organization} ({StakeholderType})", 
+                _logger.LogInformation("External stakeholder authenticated: {UserName} from {Organization} ({StakeholderType})",
                     userName, user.Organization, user.StakeholderType);
 
                 // Business rule - additional validation for high-access users
@@ -324,7 +326,7 @@ public sealed class SMSStakeholderUserService
         try
         {
             _logger.LogInformation("Retrieving stakeholder type statistics");
-            
+
             var result = await _dataService.GetStakeholderTypeStatisticsAsync(ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
@@ -337,7 +339,7 @@ public sealed class SMSStakeholderUserService
                 foreach (var stat in stats.OrderByDescending(s => s.Value))
                 {
                     var percentage = (double)stat.Value / totalStakeholders * 100;
-                    _logger.LogInformation("Stakeholder type {Type}: {Count} users ({Percentage:F1}%)", 
+                    _logger.LogInformation("Stakeholder type {Type}: {Count} users ({Percentage:F1}%)",
                         stat.Key, stat.Value, percentage);
                 }
             }
@@ -383,7 +385,7 @@ public sealed class SMSStakeholderUserService
         {
             if (!stakeholderType.Equals("Airline", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogWarning("Organization {Organization} appears to be an airline but stakeholder type is {Type}", 
+                _logger.LogWarning("Organization {Organization} appears to be an airline but stakeholder type is {Type}",
                     organization, stakeholderType);
             }
         }
@@ -392,7 +394,7 @@ public sealed class SMSStakeholderUserService
         {
             if (!stakeholderType.Equals("Ground Handler", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogWarning("Organization {Organization} appears to be a ground handler but stakeholder type is {Type}", 
+                _logger.LogWarning("Organization {Organization} appears to be a ground handler but stakeholder type is {Type}",
                     organization, stakeholderType);
             }
         }

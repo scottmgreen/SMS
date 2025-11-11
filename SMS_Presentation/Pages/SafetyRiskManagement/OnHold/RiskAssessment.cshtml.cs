@@ -9,7 +9,7 @@ using SMS_Domain.ValueObjects;
 using System.Text.Json;
 using System.IO;
 
-namespace PDXSMS_Presentation.Pages.SafetyRiskManagement;
+namespace SMS.Presentation.Pages.SafetyRiskManagement;
 
 /// <summary>
 /// FR-1.2.1 through FR-1.2.5: Five-Step Risk Assessment Process

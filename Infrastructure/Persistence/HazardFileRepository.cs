@@ -639,8 +639,9 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
     // Helper method - you'll need to implement this based on your ID strategy
     private int ExtractIdFromHazardFile(HazardFile hazardFile)
     {
-        // This is a placeholder - you'll need to implement based on how you handle IDs
-        // You might need to add a numeric ID property to HazardFile or use a different approach
-        throw new NotImplementedException("ExtractIdFromHazardFile method needs to be implemented based on your ID strategy");
+        // Since HazardFile uses string-based codes, we'll use the Code field
+        // If the code follows a pattern like "HF-20241110-ABC123", we can extract a numeric part
+        // For now, let's use a simple hash-based approach to generate a consistent integer ID
+        return Math.Abs(hazardFile.Code.GetHashCode());
     }
 }

@@ -4,8 +4,9 @@ namespace SMS_Domain.Entities;
 
 /// <summary>
 /// Represents a unique identifier for BaseUser entities
+/// Base class for all user ID types in the SMS system
 /// </summary>
-public sealed class BaseUserID : BaseID<string>
+public class BaseUserID : BaseID<string>
 {
     public BaseUserID(string value) : base(value) { }
     

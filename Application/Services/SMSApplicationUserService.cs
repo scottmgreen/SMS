@@ -1,3 +1,5 @@
+using Application.Interfaces;
+
 using Microsoft.Extensions.Logging;
 using SMS_Domain.Entities;
 using SMS_Domain.Errors;
@@ -11,7 +13,7 @@ namespace SMS_Application.Services;
 /// High-level application service for SMS Application User business operations
 /// Provides business logic orchestration and cross-cutting concerns
 /// </summary>
-public sealed class SMSApplicationUserService
+public sealed class SMSApplicationUserService : ISMSApplicationUserService
 {
     private readonly SMSApplicationUserDataService _dataService;
     private readonly ILogger<SMSApplicationUserService> _logger;
@@ -213,7 +215,7 @@ public sealed class SMSApplicationUserService
             // Business rule - deactivate instead of hard delete for audit purposes
             var user = existingUserResult.Value;
             user.Deactivate();
-            
+
             var updateResult = await _dataService.UpdateSMSApplicationUserAsync(user, ct).ConfigureAwait(false);
             if (updateResult.IsFailure)
             {
@@ -258,7 +260,7 @@ public sealed class SMSApplicationUserService
             if (result.IsSuccess)
             {
                 var user = result.Value;
-                
+
                 // Business rule - check if user is active
                 if (!user.IsActive)
                 {
@@ -355,19 +357,19 @@ public sealed class SMSApplicationUserService
         try
         {
             _logger.LogInformation("Retrieving SMS Application User statistics");
-            
+
             var result = await _dataService.GetSMSApplicationUserStatisticsAsync(ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
                 var stats = result.Value;
-                _logger.LogInformation("Retrieved statistics: {TotalUsers} total, {ActiveUsers} active, {InactiveUsers} inactive", 
+                _logger.LogInformation("Retrieved statistics: {TotalUsers} total, {ActiveUsers} active, {InactiveUsers} inactive",
                     stats.TotalUsers, stats.ActiveUsers, stats.InactiveUsers);
 
                 // Business analysis - log warnings for concerning statistics
                 if (stats.InactiveUsers > stats.ActiveUsers)
                 {
-                    _logger.LogWarning("More inactive users ({InactiveUsers}) than active users ({ActiveUsers})", 
+                    _logger.LogWarning("More inactive users ({InactiveUsers}) than active users ({ActiveUsers})",
                         stats.InactiveUsers, stats.ActiveUsers);
                 }
 

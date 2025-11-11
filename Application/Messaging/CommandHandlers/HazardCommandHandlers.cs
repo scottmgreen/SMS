@@ -1,17 +1,33 @@
+using SMS_Application.Interfaces;
+using SMS_Application.Messaging.Commands;
+using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
+using SMS_Domain.Enums;
+using SMS_Infrastructure.Interfaces;
+using SMS_Infrastructure.Services;
+using SMS_Shared.Common;
 using Microsoft.Extensions.Logging;
+using SMS_Domain.Errors;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 
 // =============================================
-// HAZARD COMMAND HANDLERS
+// HAZARD COMMAND HANDLERS - SMS Backend Integration
 // =============================================
 
+/// <summary>
+/// Command handler for creating hazards using individual properties
+/// Used by HazardReporting page for direct SMS Backend integration
+/// </summary>
 public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<CreateHazardCommand, Result<Hazard>>
 {
     private readonly HazardDataService _dataService;
     private readonly ILogger<CreateHazardCommandHandler> _logger;
 
-    public CreateHazardCommandHandler(HazardDataService dataService, ILogger<CreateHazardCommandHandler> logger)
+    public CreateHazardCommandHandler(
+        IHazardRepository hazardRepository, 
+        HazardDataService dataService, 
+        ILogger<CreateHazardCommandHandler> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -21,41 +37,48 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
     {
         try
         {
-            if (request?.Hazard is null)
+            _logger.LogInformation("??? SMS Backend: Creating new hazard - {Name}", request.Hazard.Name);
+
+            
+            var hazardResult = Hazard.CreateFromHazardReport(
+                request.Hazard.Description,
+                request.Hazard.HazardType,
+                request.Hazard.ReportedBy,
+                request.Hazard.ReportingDepartment,
+                request.Hazard.HazardType,
+                request.Hazard.HazardLocation,
+                request.Hazard.IsConfidential,
+                request.Hazard.IsAnonymous
+            );
+
+            if (hazardResult.IsFailure)
             {
-                _logger.LogError("CreateHazardCommand received with null Hazard");
-                return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NullOrEmpty);
+                _logger.LogWarning("?? SMS Backend: Failed to create hazard entity - {Error}", hazardResult.Error.Message);
+                return Result<Hazard>.Failure<Hazard>(hazardResult.Error);
             }
 
-            _logger.LogInformation("Processing CreateHazardCommand for Code: {Code}", request.Hazard.Code);
+            var hazard = hazardResult.Value;
+            hazard.ReportCode = request.Hazard.ReportCode;
 
-            var result = await _dataService.CreateHazardAsync(request.Hazard, ct).ConfigureAwait(false);
-
-            if (result.IsSuccess)
+            var dataResult = await _dataService.CreateHazardAsync(hazard, ct);
+            if (dataResult.IsFailure)
             {
-                _logger.LogInformation("Successfully created Hazard with ID: {Id}, Code: {Code}",
-                    result.Value?.Id, result.Value?.Code);
+                _logger.LogError("? SMS Backend: Failed to save hazard via both data service");
+                return Result<Hazard>.Failure<Hazard>(dataResult.Error);
             }
-            else
-            {
-                _logger.LogError("Failed to create Hazard with Code: {Code}. Error: {Error}",
-                    request.Hazard.Code, result.Error?.Message);
-            }
-
-            return result;
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogWarning("CreateHazardCommand operation was cancelled");
-            throw;
+                
+            _logger.LogInformation("? SMS Backend: Hazard saved via data service - {Code}", hazard.Code);
+            return Result<Hazard>.Success(dataResult.Value);
+        
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating Hazard");
-            return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.CreateFailed);
+            _logger.LogError(ex, "? SMS Backend: Exception creating hazard - {Name}", request.Hazard.Name);
+            return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.CreateFailed); // Use the correct error constant
         }
     }
 }
+
 
 public class UpdateHazardCommandHandler : BaseCommandBundle, IRequestHandler<UpdateHazardCommand, Result<Hazard>>
 {

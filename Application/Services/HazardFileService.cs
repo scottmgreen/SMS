@@ -1,5 +1,10 @@
 using Microsoft.Extensions.Logging;
 using SMS_Infrastructure.Services;
+using SMS_Domain.Entities;
+using SMS_Domain.Models;
+using SMS_Domain.Errors;
+using SMS_Shared.Common;
+using Application.Interfaces;
 
 namespace SMS_Application.Services;
 
@@ -7,7 +12,7 @@ namespace SMS_Application.Services;
 /// HazardFile Service - follows the exact same pattern as HazardService
 /// Provides high-level business operations for hazard file management
 /// </summary>
-public sealed class HazardFileService
+public sealed class HazardFileService : IHazardFileService
 {
     private readonly HazardFileDataService _dataService;
     private readonly ILogger<HazardFileService> _logger;

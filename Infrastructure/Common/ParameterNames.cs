@@ -650,6 +650,18 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmReportValidationStage = new Lazy<string>(() => "@pReportValidationStage");
     public static string pmReportValidationStage => _pmReportValidationStage.Value;
 
+    private static readonly Lazy<string> _pmReportValidationValidatedBy = new Lazy<string>(() => "@pValidatedBy");
+    public static string pmReportValidationValidatedBy => _pmReportValidationValidatedBy.Value;
+
+    private static readonly Lazy<string> _pmReportValidationValidatedDate = new Lazy<string>(() => "@pValidatedDate");
+    public static string pmReportValidationValidatedDate => _pmReportValidationValidatedDate.Value;
+
+    private static readonly Lazy<string> _pmReportValidationComments = new Lazy<string>(() => "@pValidationComments");
+    public static string pmReportValidationComments => _pmReportValidationComments.Value;
+
+    private static readonly Lazy<string> _pmReportValidationType = new Lazy<string>(() => "@pValidationType");
+    public static string pmReportValidationType => _pmReportValidationType.Value;
+
     /// <summary>
     /// Scoring Panel parameters (restored from accidental removal)
     /// </summary>

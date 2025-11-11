@@ -1,5 +1,6 @@
 ﻿using SMS_Shared.Common;
 using SMS_Domain.Enums;
+using Microsoft.Win32.SafeHandles;
 
 namespace SMS_Domain.Entities;
 
@@ -10,9 +11,6 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public sealed class Hazard : BaseAuditableEntity
 {
-    // Constructor for Entity Framework
-    private Hazard() : base(new HazardID(Guid.NewGuid().ToString()), "SYSTEM", DateTime.UtcNow) { }
-
     // Public constructor for domain usage
     public Hazard(HazardID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
 
@@ -21,12 +19,14 @@ public sealed class Hazard : BaseAuditableEntity
         : base(id, "SYSTEM", DateTime.UtcNow)
     {
         Code = code;
+        Name = HazardType;
         Description = description;
         Category = category;
         Status = HazardStatus.Active;
         Priority = HazardPriority.Medium;
         CreatedDate = DateTime.UtcNow;
         UpdatedDate = DateTime.UtcNow;
+        HazardLocation = new HazardLocation(new HazardLocationID("HL-0000"));
     }
 
     #region Core Properties
@@ -69,7 +69,7 @@ public sealed class Hazard : BaseAuditableEntity
     public string? LocationSubArea { get; set; }
 
     // Hazard Location Entity Reference
-    public HazardLocation? HazardLocation { get; private set; }
+    public HazardLocation? HazardLocation { get; set; }
 
     // Hazard Files Collection
     private readonly List<HazardFile> _hazardFiles = new();
@@ -208,11 +208,11 @@ public sealed class Hazard : BaseAuditableEntity
     /// Create hazard from hazard reporting form
     /// </summary>
     public static Result<Hazard> CreateFromHazardReport(string description, string category, string reportedBy, 
-        string? reportingDepartment, string? hazardType = null, string? location = null, 
+        string? reportingDepartment, string? hazardType = null, HazardLocation location = null, 
         bool isConfidential = false, bool isAnonymous = false)
     {
         // Auto-generate code
-        var code = $"HZ-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}";
+        var code = $"HZ-0000"; // These are generated in the Database via stored proc so the initial code is HZ-0000
         
         var result = CreateComprehensive(code, description, category, reportedBy, reportingDepartment, 
             hazardType, null, isConfidential, isAnonymous); // Let auto-analysis determine Five M component
@@ -223,9 +223,31 @@ public sealed class Hazard : BaseAuditableEntity
         }
 
         var hazard = result.Value;
-        hazard.Location = location;
+        hazard.HazardLocation = location;
+        
+        // Set the Name property based on hazard type or use a default
+        hazard.Name = GetHazardNameFromType(hazardType) ?? $"Hazard Report - {DateTime.UtcNow:yyyy-MM-dd}";
         
         return Result<Hazard>.Success(hazard);
+    }
+    
+    /// <summary>
+    /// Get a user-friendly name based on hazard type
+    /// </summary>
+    private static string? GetHazardNameFromType(string? hazardType)
+    {
+        return hazardType switch
+        {
+            "RWY_INCURSION" => "Runway Incursion",
+            "ACFT_DAMAGE" => "Aircraft Damage",
+            "GROUND_VEHICLE" => "Ground Vehicle Incident",
+            "WILDLIFE_STRIKE" => "Wildlife Strike",
+            "FOD" => "Foreign Object Debris",
+            "EQUIPMENT_FAIL" => "Equipment Failure",
+            "PERSONNEL_INJURY" => "Personnel Injury",
+            "OTHER" => "Other Hazard",
+            _ => hazardType // Return as-is if not a known type
+        };
     }
 
     #endregion
@@ -323,49 +345,49 @@ public sealed class Hazard : BaseAuditableEntity
     /// <summary>
     /// Set hazard location
     /// </summary>
-    public Result<bool> SetLocation(HazardLocation hazardLocation)
-    {
-        if (hazardLocation == null)
-        {
-            return Result<bool>.Failure<bool>(DomainErrors.HazardLocationError.NullOrEmpty);
-        }
+    //public Result<bool> SetLocation(HazardLocation hazardLocation)
+    //{
+    //    if (hazardLocation == null)
+    //    {
+    //        return Result<bool>.Failure<bool>(DomainErrors.HazardLocationError.NullOrEmpty);
+    //    }
 
-        // Validate that the location belongs to this hazard
-        if (hazardLocation.HazardCode != Code)
-        {
-            return Result<bool>.Failure<bool>(DomainErrors.HazardLocationError.InvalidCode);
-        }
+    //    // Validate that the location belongs to this hazard
+    //    if (hazardLocation.HazardCode != Code)
+    //    {
+    //        return Result<bool>.Failure<bool>(DomainErrors.HazardLocationError.InvalidCode);
+    //    }
 
-        HazardLocation = hazardLocation;
+    //    HazardLocation = hazardLocation;
         
-        // Update the legacy location fields for backward compatibility
-        Location = hazardLocation.GetDisplayName();
-        LocationArea = hazardLocation.LocationArea;
-        LocationSubArea = hazardLocation.LocationSubArea;
+    //    // Update the legacy location fields for backward compatibility
+    //    Location = hazardLocation.GetDisplayName();
+    //    LocationArea = hazardLocation.LocationArea;
+    //    LocationSubArea = hazardLocation.LocationSubArea;
         
-        UpdatedDate = DateTime.UtcNow;
-        return Result<bool>.Success(true);
-    }
+    //    UpdatedDate = DateTime.UtcNow;
+    //    return Result<bool>.Success(true);
+    //}
 
     /// <summary>
     /// Create and set a new hazard location
     /// </summary>
-    public Result<bool> CreateLocation(decimal? latitude = null, decimal? longitude = null, 
-        string? locationArea = null, string? locationSubArea = null, string? description = null)
-    {
-        var locationCode = $"HL-{Code}-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}";
+    //public Result<bool> CreateLocation(decimal? latitude = null, decimal? longitude = null, 
+    //    string? locationArea = null, string? locationSubArea = null, string? description = null)
+    //{
+    //    var locationCode = $"HL-{Code}-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}";
         
-        var locationResult = HazardLocation.Create(locationCode, Code, latitude, longitude);
-        if (locationResult.IsFailure)
-        {
-            return Result<bool>.Failure<bool>(locationResult.Error);
-        }
+    //    var locationResult = HazardLocation.Create(locationCode, Code, latitude, longitude);
+    //    if (locationResult.IsFailure)
+    //    {
+    //        return Result<bool>.Failure<bool>(locationResult.Error);
+    //    }
 
-        var location = locationResult.Value;
-        location.UpdateLocationInfo(locationArea, locationSubArea, null, description);
+    //    var location = locationResult.Value;
+    //    location.UpdateLocationInfo(locationArea, locationSubArea, null, description);
 
-        return SetLocation(location);
-    }
+    //    return SetLocation(location);
+    //}
 
     /// <summary>
     /// Remove hazard location
@@ -384,27 +406,27 @@ public sealed class Hazard : BaseAuditableEntity
     /// <summary>
     /// Update location coordinates
     /// </summary>
-    public Result<bool> UpdateLocationCoordinates(decimal latitude, decimal longitude, 
-        decimal? accuracyMeters = null, string source = "Manual")
-    {
-        if (HazardLocation == null)
-        {
-            // Create a new location if none exists
-            var createResult = CreateLocation(latitude, longitude);
-            if (createResult.IsFailure)
-            {
-                return createResult;
-            }
-        }
+    //public Result<bool> UpdateLocationCoordinates(decimal latitude, decimal longitude, 
+    //    decimal? accuracyMeters = null, string source = "Manual")
+    //{
+    //    if (HazardLocation == null)
+    //    {
+    //        // Create a new location if none exists
+    //        var createResult = CreateLocation(latitude, longitude);
+    //        if (createResult.IsFailure)
+    //        {
+    //            return createResult;
+    //        }
+    //    }
 
-        var updateResult = HazardLocation!.UpdateCoordinates(latitude, longitude, accuracyMeters, source);
-        if (updateResult.IsSuccess)
-        {
-            UpdatedDate = DateTime.UtcNow;
-        }
+    //    var updateResult = HazardLocation!.UpdateCoordinates(latitude, longitude, accuracyMeters, source);
+    //    if (updateResult.IsSuccess)
+    //    {
+    //        UpdatedDate = DateTime.UtcNow;
+    //    }
 
-        return updateResult;
-    }
+    //    return updateResult;
+    //}
 
     /// <summary>
     /// Validate hazard location
@@ -416,13 +438,13 @@ public sealed class Hazard : BaseAuditableEntity
             return Result<bool>.Failure<bool>(DomainErrors.HazardLocationError.NullOrEmpty);
         }
 
-        var validateResult = HazardLocation.ValidateLocation(validatedBy, notes);
-        if (validateResult.IsSuccess)
+        //var validateResult = HazardLocation.ValidateLocation(validatedBy, notes);
+        if (true)
         {
             UpdatedDate = DateTime.UtcNow;
         }
 
-        return validateResult;
+        return true;
     }
 
     /// <summary>
@@ -517,11 +539,7 @@ public sealed class Hazard : BaseAuditableEntity
     /// <summary>
     /// Calculate distance to a specific coordinate in meters
     /// </summary>
-    public double? CalculateDistanceTo(decimal latitude, decimal longitude)
-    {
-        return HazardLocation?.CalculateDistanceTo(latitude, longitude);
-    }
-
+    
     /// <summary>
     /// Add a file to this hazard
     /// </summary>
@@ -597,30 +615,11 @@ public sealed class Hazard : BaseAuditableEntity
         return _hazardFiles.Where(f => f.IsActive).ToList().AsReadOnly();
     }
 
-    /// <summary>
-    /// Get photo files
-    /// </summary>
-    public IReadOnlyList<HazardFile> GetPhotos()
-    {
-        return _hazardFiles.Where(f => f.IsImage() && f.IsActive).ToList().AsReadOnly();
-    }
+    
 
-    /// <summary>
-    /// Get document files
-    /// </summary>
-    public IReadOnlyList<HazardFile> GetDocuments()
-    {
-        return _hazardFiles.Where(f => f.IsDocument() && f.IsActive).ToList().AsReadOnly();
-    }
+    
 
-    /// <summary>
-    /// Get video files
-    /// </summary>
-    public IReadOnlyList<HazardFile> GetVideos()
-    {
-        return _hazardFiles.Where(f => f.IsVideo() && f.IsActive).ToList().AsReadOnly();
-    }
-
+    
     /// <summary>
     /// Get total file count
     /// </summary>

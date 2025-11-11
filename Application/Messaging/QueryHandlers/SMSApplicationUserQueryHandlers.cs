@@ -180,7 +180,7 @@ public class GetSMSApplicationUsersByRoleQueryHandler : BaseQueryBundle, IReques
         try
         {
             _logger.LogInformation("Processing GetSMSApplicationUsersByRoleQuery for Role: {ApplicationRole}", request.ApplicationRole);
-            var result = await _repository.GetByApplicationRoleAsync(request.ApplicationRole);
+            var result = await _repository.GetBySMSApplicationUserRoleAsync(request.ApplicationRole);
             
             if (result.IsSuccess)
             {
@@ -219,7 +219,7 @@ public class GetSMSApplicationUsersByPermissionLevelQueryHandler : BaseQueryBund
         try
         {
             _logger.LogInformation("Processing GetSMSApplicationUsersByPermissionLevelQuery for Permission Level: {PermissionLevel}", request.PermissionLevel);
-            var result = await _repository.GetByPermissionLevelAsync(request.PermissionLevel);
+            var result = await _repository.GetSMSApplicationUserByPermissionLevelAsync(request.PermissionLevel);
             
             if (result.IsSuccess)
             {

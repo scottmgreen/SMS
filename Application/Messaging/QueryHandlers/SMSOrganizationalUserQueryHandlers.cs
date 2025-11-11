@@ -258,7 +258,7 @@ public class GetSMSOrganizationalUsersByLevelQueryHandler : BaseQueryBundle, IRe
         try
         {
             _logger.LogInformation("Processing GetSMSOrganizationalUsersByLevelQuery for Level: {OrganizationLevel}", request.OrganizationLevel);
-            var result = await _repository.GetByOrganizationLevelAsync(request.OrganizationLevel);
+            var result = await _repository.GetBySMSOrganizationalUserLevelAsync(request.OrganizationLevel);
             
             if (result.IsSuccess)
             {
@@ -281,44 +281,44 @@ public class GetSMSOrganizationalUsersByLevelQueryHandler : BaseQueryBundle, IRe
     }
 }
 
-public class GetDepartmentSupervisorsQueryHandler : BaseQueryBundle, IRequestHandler<GetDepartmentSupervisorsQuery, Result<IEnumerable<SMSOrganizationalUser>>>
-{
-    private readonly ISMSOrganizationalUserRepository _repository;
-    private readonly ILogger<GetDepartmentSupervisorsQueryHandler> _logger;
+//public class GetDepartmentSupervisorsQueryHandler : BaseQueryBundle, IRequestHandler<GetDepartmentSupervisorsQuery, Result<IEnumerable<SMSOrganizationalUser>>>
+//{
+//    private readonly ISMSOrganizationalUserRepository _repository;
+//    private readonly ILogger<GetDepartmentSupervisorsQueryHandler> _logger;
 
-    public GetDepartmentSupervisorsQueryHandler(ISMSOrganizationalUserRepository repository, ILogger<GetDepartmentSupervisorsQueryHandler> logger)
-    {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
+//    public GetDepartmentSupervisorsQueryHandler(ISMSOrganizationalUserRepository repository, ILogger<GetDepartmentSupervisorsQueryHandler> logger)
+//    {
+//        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+//        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+//    }
 
-    public async Task<Result<IEnumerable<SMSOrganizationalUser>>> HandleAsync(GetDepartmentSupervisorsQuery request, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Processing GetDepartmentSupervisorsQuery for Department: {Department}", request.Department);
-            var result = await _repository.GetDepartmentSupervisorsAsync(request.Department);
+//    public async Task<Result<IEnumerable<SMSOrganizationalUser>>> HandleAsync(GetDepartmentSupervisorsQuery request, CancellationToken ct = default)
+//    {
+//        try
+//        {
+//            _logger.LogInformation("Processing GetDepartmentSupervisorsQuery for Department: {Department}", request.Department);
+//            var result = await _repository.GetDepartmentSupervisorsAsync(request.Department);
             
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Successfully retrieved {Count} supervisors for Department: {Department}", 
-                    result.Value?.Count() ?? 0, request.Department);
-            }
-            else
-            {
-                _logger.LogWarning("Failed to retrieve supervisors for Department: {Department}: {Error}", 
-                    request.Department, result.Error?.Message);
-            }
+//            if (result.IsSuccess)
+//            {
+//                _logger.LogInformation("Successfully retrieved {Count} supervisors for Department: {Department}", 
+//                    result.Value?.Count() ?? 0, request.Department);
+//            }
+//            else
+//            {
+//                _logger.LogWarning("Failed to retrieve supervisors for Department: {Department}: {Error}", 
+//                    request.Department, result.Error?.Message);
+//            }
             
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing GetDepartmentSupervisorsQuery for Department: {Department}", request.Department);
-            return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
-        }
-    }
-}
+//            return result;
+//        }
+//        catch (Exception ex)
+//        {
+//            _logger.LogError(ex, "Error processing GetDepartmentSupervisorsQuery for Department: {Department}", request.Department);
+//            return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
+//        }
+//    }
+//}
 
 public class CheckSMSOrganizationalUserNameExistsQueryHandler : BaseQueryBundle, IRequestHandler<CheckSMSOrganizationalUserNameExistsQuery, Result<bool>>
 {
@@ -345,47 +345,47 @@ public class CheckSMSOrganizationalUserNameExistsQueryHandler : BaseQueryBundle,
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing CheckSMSOrganizationalUserNameExistsQuery for UserName: {UserName}", request.UserName);
-            return Result<bool>.Failure<bool>(GeneralError.UnProcessableRequest);
+            return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 }
 
-public class GetDepartmentStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<GetDepartmentStatisticsQuery, Result<Dictionary<string, int>>>
-{
-    private readonly ISMSOrganizationalUserRepository _repository;
-    private readonly ILogger<GetDepartmentStatisticsQueryHandler> _logger;
+//public class GetDepartmentStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<GetDepartmentStatisticsQuery, Result<Dictionary<string, int>>>
+//{
+//    private readonly ISMSOrganizationalUserRepository _repository;
+//    private readonly ILogger<GetDepartmentStatisticsQueryHandler> _logger;
 
-    public GetDepartmentStatisticsQueryHandler(ISMSOrganizationalUserRepository repository, ILogger<GetDepartmentStatisticsQueryHandler> logger)
-    {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
+//    public GetDepartmentStatisticsQueryHandler(ISMSOrganizationalUserRepository repository, ILogger<GetDepartmentStatisticsQueryHandler> logger)
+//    {
+//        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+//        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+//    }
 
-    public async Task<Result<Dictionary<string, int>>> HandleAsync(GetDepartmentStatisticsQuery request, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Processing GetDepartmentStatisticsQuery");
-            var result = await _repository.GetDepartmentStatisticsAsync();
+//    public async Task<Result<Dictionary<string, int>>> HandleAsync(GetDepartmentStatisticsQuery request, CancellationToken ct = default)
+//    {
+//        try
+//        {
+//            _logger.LogInformation("Processing GetDepartmentStatisticsQuery");
+//            var result = await _repository.GetDepartmentStatisticsAsync();
             
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Successfully retrieved department statistics for {Count} departments", result.Value?.Count ?? 0);
-            }
-            else
-            {
-                _logger.LogWarning("Failed to retrieve department statistics: {Error}", result.Error?.Message);
-            }
+//            if (result.IsSuccess)
+//            {
+//                _logger.LogInformation("Successfully retrieved department statistics for {Count} departments", result.Value?.Count ?? 0);
+//            }
+//            else
+//            {
+//                _logger.LogWarning("Failed to retrieve department statistics: {Error}", result.Error?.Message);
+//            }
             
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing GetDepartmentStatisticsQuery");
-            return Result<Dictionary<string, int>>.Failure<Dictionary<string, int>>(DomainErrors.GeneralError.UnProcessableRequest);
-        }
-    }
-}
+//            return result;
+//        }
+//        catch (Exception ex)
+//        {
+//            _logger.LogError(ex, "Error processing GetDepartmentStatisticsQuery");
+//            return Result<Dictionary<string, int>>.Failure<Dictionary<string, int>>(DomainErrors.GeneralError.UnProcessableRequest);
+//        }
+//    }
+//}
 
 public class GetSMSOrganizationalUserStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalUserStatisticsQuery, Result<UserStatistics>>
 {
