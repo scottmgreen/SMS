@@ -6,7 +6,7 @@ using SMS_Infrastructure.Interfaces;
 using Microsoft.Data.SqlClient;
 using System.Data;
 
-namespace SMS_Infrastructure.Repositories;
+namespace SMS_Infrastructure.Persistence;
 
 public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>, IHazardRepository
 {

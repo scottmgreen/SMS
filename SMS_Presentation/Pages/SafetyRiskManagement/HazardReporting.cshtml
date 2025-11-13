@@ -189,7 +189,7 @@
                         <!-- File Attachments -->
                         <div class="mb-3">
                             <label for="attachments" class="form-label">Supporting Documents</label>
-                            <input type="file" class="form-control" id="attachments" asp-for="UploadedFiles" multiple 
+                            <input type="file" class="form-control" id="attachments" asp-for="HazardReport.HazardFiles" multiple 
                                    accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt">
                             <div class="form-text">
                                 <i class="fas fa-paperclip"></i> Attach photos, documents, or other supporting evidence
@@ -273,6 +273,12 @@
                                             <input type="hidden" asp-for="ShowCustomLocation" />
                                             <input type="hidden" asp-for="ShowConfidentialInfo" />
                                             
+                                            <!-- 🔥 CRITICAL: Preserve temp file IDs -->
+                                            @for (int i = 0; i < Model.TempFileIds.Count; i++)
+                                            {
+                                                <input type="hidden" asp-for="TempFileIds[i]" />
+                                            }
+                                            
                                             <button type="submit" class="btn-close btn-close-white" formaction="?handler=HidePreview" formnovalidate></button>
                                         </form>
                                     </div>
@@ -303,6 +309,12 @@
                                     <input type="hidden" asp-for="ShowMapModal" />
                                     <input type="hidden" asp-for="ShowCustomLocation" />
                                     <input type="hidden" asp-for="ShowConfidentialInfo" />
+                                    
+                                    <!-- 🔥 CRITICAL: Preserve temp file IDs -->
+                                    @for (int i = 0; i < Model.TempFileIds.Count; i++)
+                                    {
+                                        <input type="hidden" asp-for="TempFileIds[i]" />
+                                    }
                                 </form>
                                 
                                 <!-- Preview Header Summary -->
@@ -684,6 +696,12 @@
                                             <input type="hidden" asp-for="SelectedGeoLocation.Description" />
                                             <input type="hidden" asp-for="SelectedGeoLocation.SelectedDateTime" />
                                             
+                                            <!-- 🔥 CRITICAL: Preserve temp file IDs -->
+                                            @for (int i = 0; i < Model.TempFileIds.Count; i++)
+                                            {
+                                                <input type="hidden" asp-for="TempFileIds[i]" />
+                                            }
+                                            
                                             <button type="submit" class="btn btn-secondary me-2" formaction="?handler=HidePreview" formnovalidate>
                                                 <i class="fas fa-edit"></i> Continue Editing
                                             </button>
@@ -1013,6 +1031,12 @@
                                         <input type="hidden" asp-for="SelectedGeoLocation.Longitude" />
                                         <input type="hidden" asp-for="SelectedGeoLocation.Description" />
                                         <input type="hidden" asp-for="SelectedGeoLocation.SelectedDateTime" />
+                                        
+                                        <!-- 🔥 CRITICAL: Preserve temp file IDs -->
+                                        @for (int i = 0; i < Model.TempFileIds.Count; i++)
+                                        {
+                                            <input type="hidden" asp-for="TempFileIds[i]" />
+                                        }
                                         
                                         <button type="submit" class="btn btn-success btn-lg me-md-2" formaction="?handler=SubmitConfirmed">
                                             <i class="fas fa-check"></i> Yes, Submit Report
@@ -1395,7 +1419,7 @@
                     
                     // Check if coordinates are within bounds
                     if (window.isWithinBounds(lat, lng)) {
-                        // Reverse geocode to get location description
+                        // Reverse geocoding to get location description
                         fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`)
                             .then(response => response.json())
                             .then(data => {
@@ -1571,7 +1595,7 @@
                             map.setView([lat, lng], 15);
                             
 
-                             // Reverse geocode to get location description
+                             // Reverse geocoding to get location description
                             fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`)
                                 .then(response => response.json())
                                 .then(data => {

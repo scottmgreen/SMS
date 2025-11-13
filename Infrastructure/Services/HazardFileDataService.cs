@@ -31,7 +31,7 @@ public class HazardFileDataService : BaseDataService<HazardFileDataService>, IHa
         return _repo.AddAsync(hazardFile, ct);
     }
 
-    public Task<Result<HazardFile>> GetHazardFileByIdAsync(int id, CancellationToken ct = default)
+    public Task<Result<HazardFile>> GetHazardFileByIdAsync(HazardFileID id, CancellationToken ct = default)
     {
         return _repo.GetByIdAsync(id, ct);
     }
@@ -92,10 +92,7 @@ public class HazardFileDataService : BaseDataService<HazardFileDataService>, IHa
         return _repo.SearchAsync(hazardCode, reportCode, fileType, category, searchText, uploadedBy, dateFrom, dateTo, includeConfidential, maxResults, ct);
     }
 
-    public Task<Result<HazardFileStatistics>> GetHazardFileStatisticsAsync(string hazardCode, CancellationToken ct = default)
-    {
-        return _repo.GetStatisticsAsync(hazardCode, ct);
-    }
+   
 
     public Task<Result<IEnumerable<HazardFile>>> GetHazardPhotosAsync(string hazardCode, CancellationToken ct = default)
     {

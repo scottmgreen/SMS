@@ -8,12 +8,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container
 builder.Services.AddRazorPages();
 
-// ? DIRECT SMS BACKEND INTEGRATION - NO HELPER SERVICES
+// ?? DIRECT SMS BACKEND INTEGRATION - NO HELPER SERVICES
 builder.Services.AddSharedServices(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddApplicationServices(); // This includes IMediator registration
 
-// ? SMS Session Management (no helper services)
+// ?? SMS Session Management (no helper services)
 builder.Services.ConfigureSMSSession();
 
 var app = builder.Build();
@@ -30,7 +30,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// ? SMS Session and Authentication (direct session management)
+// ?? SMS Session and Authentication (direct session management)
 app.UseSession();
 app.UseSMSAuthentication();
 app.UseAuthorization();
@@ -40,18 +40,18 @@ app.MapRazorPages();
 app.Run();
 
 /*
-? DIRECT SMS BACKEND INTEGRATION:
+?? DIRECT SMS BACKEND INTEGRATION:
 
 REMOVED:
-? SMSAuthorizationService helper class
-? LoginModel/IndexModel helper classes
-? Any wrapper services
+?? SMSAuthorizationService helper class
+?? LoginModel/IndexModel helper classes
+?? Any wrapper services
 
 USES ONLY:
-? SMS Backend via IMediator/CQRS
-? SMS Domain Entities directly
-? SMS Repository layer through queries
-? Direct session management with Domain Entity data
+?? SMS Backend via IMediator/CQRS
+?? SMS Domain Entities directly
+?? SMS Repository layer through queries
+?? Direct session management with Domain Entity data
 
 AUTHENTICATION FLOW:
 1. Login page uses IMediator directly

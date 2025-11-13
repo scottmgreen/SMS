@@ -71,9 +71,17 @@ public sealed class Hazard : BaseAuditableEntity
     // Hazard Location Entity Reference
     public HazardLocation? HazardLocation { get; set; }
 
-    // Hazard Files Collection
-    private readonly List<HazardFile> _hazardFiles = new();
-    public IReadOnlyList<HazardFile> HazardFiles => _hazardFiles.AsReadOnly();
+    #endregion
+
+    #region Related Entity References (IDs Only)
+
+    // Related HazardFiles (IDs only - load separately when needed)
+    private readonly List<HazardFileID> _hazardFileIds = new();
+    public IReadOnlyList<HazardFileID> HazardFileIds => _hazardFileIds.AsReadOnly();
+
+    // Related Mitigations (IDs only - load separately when needed) 
+    private readonly List<MitigationID> _mitigationIds = new();
+    public IReadOnlyList<MitigationID> MitigationIds => _mitigationIds.AsReadOnly();
 
     #endregion
 
@@ -85,15 +93,6 @@ public sealed class Hazard : BaseAuditableEntity
     public string? RiskLevel { get; set; } // Very Low, Low, Medium, High, Very High
     public string? WorstCredibleOutcome { get; set; }
     public string? RootCause { get; set; }
-
-    #endregion
-
-    #region Mitigation Properties
-
-    public string? CurrentMitigations { get; set; }
-    public string? ProposedMitigations { get; set; }
-    public DateTime? MitigationTargetDate { get; set; }
-    public string? MitigationOwner { get; set; }
 
     #endregion
 
@@ -295,21 +294,6 @@ public sealed class Hazard : BaseAuditableEntity
         WorstCredibleOutcome = worstCredibleOutcome;
         RootCause = rootCause;
         RiskLevel = riskLevel;
-        UpdatedDate = DateTime.UtcNow;
-
-        return Result<bool>.Success(true);
-    }
-
-    /// <summary>
-    /// Update mitigation information
-    /// </summary>
-    public Result<bool> UpdateMitigations(string? currentMitigations, string? proposedMitigations,
-        DateTime? targetDate, string? mitigationOwner)
-    {
-        CurrentMitigations = currentMitigations;
-        ProposedMitigations = proposedMitigations;
-        MitigationTargetDate = targetDate;
-        MitigationOwner = mitigationOwner;
         UpdatedDate = DateTime.UtcNow;
 
         return Result<bool>.Success(true);
@@ -536,128 +520,96 @@ public sealed class Hazard : BaseAuditableEntity
         return (DateTime.UtcNow - ReportedOn).Days;
     }
 
+    #region Related Entity Management
+
     /// <summary>
-    /// Calculate distance to a specific coordinate in meters
+    /// Add a HazardFile reference to this hazard
     /// </summary>
-    
-    /// <summary>
-    /// Add a file to this hazard
-    /// </summary>
-    public Result<bool> AddFile(HazardFile hazardFile)
+    public void AddHazardFile(HazardFileID hazardFileId)
     {
-        if (hazardFile == null)
+        if (hazardFileId != null && !_hazardFileIds.Contains(hazardFileId))
         {
-            return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.NullOrEmpty);
+            _hazardFileIds.Add(hazardFileId);
+            UpdatedDate = DateTime.UtcNow;
         }
-
-        // Validate that the file belongs to this hazard
-        if (hazardFile.HazardCode != Code)
-        {
-            return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.HazardCodeRequired);
-        }
-
-        // Check if file with same code already exists
-        if (_hazardFiles.Any(f => f.Code == hazardFile.Code))
-        {
-            return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.CreateFailed);
-        }
-
-        _hazardFiles.Add(hazardFile);
-        UpdatedDate = DateTime.UtcNow;
-
-        return Result<bool>.Success(true);
     }
 
     /// <summary>
-    /// Remove a file from this hazard
+    /// Remove a HazardFile reference from this hazard
     /// </summary>
-    public Result<bool> RemoveFile(string fileCode)
+    public void RemoveHazardFile(HazardFileID hazardFileId)
     {
-        if (string.IsNullOrWhiteSpace(fileCode))
+        if (_hazardFileIds.Remove(hazardFileId))
         {
-            return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.NullOrEmpty);
+            UpdatedDate = DateTime.UtcNow;
         }
+    }
 
-        var file = _hazardFiles.FirstOrDefault(f => f.Code == fileCode);
-        if (file == null)
+    /// <summary>
+    /// Add a Mitigation reference to this hazard
+    /// </summary>
+    public void AddMitigation(MitigationID mitigationId)
+    {
+        if (mitigationId != null && !_mitigationIds.Contains(mitigationId))
         {
-            return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.NotFound);
+            _mitigationIds.Add(mitigationId);
+            UpdatedDate = DateTime.UtcNow;
         }
-
-        _hazardFiles.Remove(file);
-        UpdatedDate = DateTime.UtcNow;
-
-        return Result<bool>.Success(true);
     }
 
     /// <summary>
-    /// Get files by category
+    /// Remove a Mitigation reference from this hazard
     /// </summary>
-    public IReadOnlyList<HazardFile> GetFilesByCategory(HazardFileCategory category)
+    public void RemoveMitigation(MitigationID mitigationId)
     {
-        return _hazardFiles.Where(f => f.Category == category && f.IsActive).ToList().AsReadOnly();
+        if (_mitigationIds.Remove(mitigationId))
+        {
+            UpdatedDate = DateTime.UtcNow;
+        }
     }
 
     /// <summary>
-    /// Get files by type
+    /// Check if hazard has any files attached
     /// </summary>
-    public IReadOnlyList<HazardFile> GetFilesByType(string fileType)
+    public bool HasFiles()
     {
-        return _hazardFiles.Where(f => f.FileType.Equals(fileType, StringComparison.OrdinalIgnoreCase) && f.IsActive)
-                          .ToList().AsReadOnly();
+        return _hazardFileIds.Count > 0;
     }
 
     /// <summary>
-    /// Get active files only
+    /// Check if hazard has any mitigations assigned
     /// </summary>
-    public IReadOnlyList<HazardFile> GetActiveFiles()
+    public bool HasMitigations()
     {
-        return _hazardFiles.Where(f => f.IsActive).ToList().AsReadOnly();
+        return _mitigationIds.Count > 0;
     }
 
-    
-
-    
-
-    
     /// <summary>
     /// Get total file count
     /// </summary>
     public int GetFileCount()
     {
-        return _hazardFiles.Count(f => f.IsActive);
+        return _hazardFileIds.Count;
     }
 
     /// <summary>
-    /// Get total file size in bytes
+    /// Get total mitigation count
     /// </summary>
-    public long GetTotalFileSizeBytes()
+    public int GetMitigationCount()
     {
-        return _hazardFiles.Where(f => f.IsActive).Sum(f => f.FileSizeBytes);
+        return _mitigationIds.Count;
     }
 
-    /// <summary>
-    /// Check if hazard has files
-    /// </summary>
-    public bool HasFiles()
-    {
-        return _hazardFiles.Any(f => f.IsActive);
-    }
+    #endregion
 
     /// <summary>
-    /// Check if hazard has photos
+    /// Check if hazard has confidential files - requires loading HazardFile entities
     /// </summary>
-    public bool HasDocuments()
-    {
-        return _hazardFiles.Any(f => f.IsDocument() && f.IsActive);
-    }
-
-    /// <summary>
-    /// Check if hazard has confidential files
-    /// </summary>
+    [Obsolete("Use HazardFileService to check file details when needed")]
     public bool HasConfidentialFiles()
     {
-        return _hazardFiles.Any(f => f.IsConfidential && f.IsActive);
+        // This requires loading actual HazardFile entities - should be done at service layer
+        return false; // Placeholder - implement in service layer when needed
     }
 
     /// <summary>
@@ -740,4 +692,16 @@ public sealed class Hazard : BaseAuditableEntity
     }
 
     #endregion
+
+    /// <summary>
+    /// Update mitigation information - DEPRECATED: Use Mitigation entities directly
+    /// </summary>
+    [Obsolete("Use Mitigation entities and AddMitigation/RemoveMitigation methods instead")]
+    public Result<bool> UpdateMitigations(string? currentMitigations, string? proposedMitigations,
+        DateTime? targetDate, string? mitigationOwner)
+    {
+        // This method is deprecated - mitigation details should be handled by Mitigation entities
+        UpdatedDate = DateTime.UtcNow;
+        return Result<bool>.Success(true);
+    }
 }

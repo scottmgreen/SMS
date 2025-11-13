@@ -5,6 +5,7 @@
 
 // 2. ReportDataService.cs
 using SMS_Infrastructure.Interfaces;
+using SMS_Infrastructure.Persistence;
 
 namespace SMS_Infrastructure.Services;
 

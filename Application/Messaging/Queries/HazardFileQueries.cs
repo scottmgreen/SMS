@@ -13,11 +13,11 @@ namespace SMS_Application.Messaging.Queries;
 
 public class GetHazardFileByIdQuery : BaseQueryBundle, IRequest<Result<HazardFile>>
 {
-    public int FileId { get; set; }
+    public HazardFileID HazardFileId { get; set; }
 
-    public GetHazardFileByIdQuery(int fileId)
+    public GetHazardFileByIdQuery(HazardFileID fileId)
     {
-        FileId = fileId;
+        HazardFileId = fileId;
     }
 }
 

@@ -11,7 +11,7 @@ namespace SMS_Infrastructure.Interfaces;
 public interface IHazardFileRepository
 {
     // Core CRUD operations
-    Task<Result<HazardFile>> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<Result<HazardFile>> GetByIdAsync(HazardFileID id, CancellationToken cancellationToken = default);
     Task<Result<HazardFile>> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
     Task<Result<HazardFile>> AddAsync(HazardFile hazardFile, CancellationToken cancellationToken = default);
     Task<Result<HazardFile>> UpdateAsync(HazardFile hazardFile, CancellationToken cancellationToken = default);
@@ -40,8 +40,7 @@ public interface IHazardFileRepository
         int maxResults = 100,
         CancellationToken cancellationToken = default);
 
-    // Statistics
-    Task<Result<HazardFileStatistics>> GetStatisticsAsync(string hazardCode, CancellationToken cancellationToken = default);
+    
 
     // File type queries
     Task<Result<IEnumerable<HazardFile>>> GetImageFilesAsync(string hazardCode, CancellationToken cancellationToken = default);

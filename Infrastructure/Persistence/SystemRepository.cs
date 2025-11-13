@@ -5,7 +5,7 @@ using SMS_Infrastructure.Interfaces;
 
 using Microsoft.FeatureManagement;
 
-namespace SMS_Infrastructure.Repositories;
+namespace SMS_Infrastructure.Persistence;
 
 public sealed class SystemRepository : BaseRepository<SystemRepository, AuditLogEntry>
 {

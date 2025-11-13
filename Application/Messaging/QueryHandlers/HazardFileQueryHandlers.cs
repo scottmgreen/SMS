@@ -24,13 +24,13 @@ public class GetHazardFileByIdQueryHandler : BaseQueryBundle, IRequestHandler<Ge
     {
         try
         {
-            _logger.LogInformation("Processing GetHazardFileByIdQuery for FileId: {FileId}", request.FileId);
-            var result = await _hazardFileDataService.GetHazardFileByIdAsync(request.FileId, ct).ConfigureAwait(false);
+            _logger.LogInformation("Processing GetHazardFileByIdQuery for FileId: {FileId}", request.HazardFileId);
+            var result = await _hazardFileDataService.GetHazardFileByIdAsync(request.HazardFileId, ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetHazardFileByIdQuery for FileId: {FileId}", request.FileId);
+            _logger.LogError(ex, "Error processing GetHazardFileByIdQuery for FileId: {FileId}", request.HazardFileId);
             return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.NotFound);
         }
     }
@@ -201,32 +201,7 @@ public class SearchHazardFilesQueryHandler : BaseQueryBundle, IRequestHandler<Se
     }
 }
 
-public class GetHazardFileStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardFileStatisticsQuery, Result<HazardFileStatistics>>
-{
-    private readonly HazardFileDataService _hazardFileDataService;
-    private readonly ILogger<GetHazardFileStatisticsQueryHandler> _logger;
 
-    public GetHazardFileStatisticsQueryHandler(HazardFileDataService hazardFileDataService, ILogger<GetHazardFileStatisticsQueryHandler> logger)
-    {
-        _hazardFileDataService = hazardFileDataService ?? throw new ArgumentNullException(nameof(hazardFileDataService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<HazardFileStatistics>> HandleAsync(GetHazardFileStatisticsQuery request, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Processing GetHazardFileStatisticsQuery for HazardCode: {HazardCode}", request.HazardCode);
-            var result = await _hazardFileDataService.GetHazardFileStatisticsAsync(request.HazardCode, ct).ConfigureAwait(false);
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing GetHazardFileStatisticsQuery for HazardCode: {HazardCode}", request.HazardCode);
-            return Result<HazardFileStatistics>.Failure<HazardFileStatistics>(DomainErrors.HazardFileError.NotFound);
-        }
-    }
-}
 
 public class GetHazardPhotosQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardPhotosQuery, Result<IEnumerable<HazardFile>>>
 {

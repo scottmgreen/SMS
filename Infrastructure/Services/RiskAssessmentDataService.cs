@@ -6,6 +6,8 @@
 // 1. HazardDataService.cs
 using SMS_Domain.Errors;
 
+using SMS_Infrastructure.Persistence;
+
 namespace SMS_Infrastructure.Services;
 
 // 6. RiskAssessmentDataService.cs

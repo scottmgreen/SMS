@@ -8,7 +8,7 @@ using SMS_Domain.Entities;
 using SMS_Domain.Interfaces;
 using SMS_Domain.ValueObjects;
 using SMS_Domain.Common;
-using SMS_Infrastructure.Repositories;
+using SMS_Infrastructure.Persistence;
 
 namespace SMS_Infrastructure.Services;
 

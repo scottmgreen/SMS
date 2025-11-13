@@ -4,7 +4,7 @@ using SMS_Domain.Entities;
 using SMS_Domain.Models;
 using SMS_Domain.Errors;
 using SMS_Shared.Common;
-using Application.Interfaces;
+using SMS_Application.Interfaces;
 
 namespace SMS_Application.Services;
 
@@ -48,7 +48,7 @@ public sealed class HazardFileService : IHazardFileService
         }
     }
 
-    public async Task<Result<HazardFile>> GetHazardFileByIdAsync(int id, CancellationToken ct = default)
+    public async Task<Result<HazardFile>> GetHazardFileByIdAsync(HazardFileID id, CancellationToken ct = default)
     {
         try
         {
@@ -179,17 +179,5 @@ public sealed class HazardFileService : IHazardFileService
         }
     }
 
-    public async Task<Result<HazardFileStatistics>> GetHazardFileStatisticsAsync(string hazardCode, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving hazard file statistics for hazard code: {HazardCode}", hazardCode);
-            return await _dataService.GetHazardFileStatisticsAsync(hazardCode, ct).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error retrieving hazard file statistics for hazard code: {HazardCode}", hazardCode);
-            return Result<HazardFileStatistics>.Failure<HazardFileStatistics>(DomainErrors.HazardFileError.NotFound);
-        }
-    }
+    
 }

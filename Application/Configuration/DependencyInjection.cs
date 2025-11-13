@@ -14,7 +14,6 @@ using System.Reflection;
 
 using SMS_Domain.Interfaces;
 using SMS_Infrastructure.Interfaces;
-using SMS_Infrastructure.Repositories;
 using SMS_Infrastructure.Persistence;
 using Application.Interfaces;
 namespace SMS_Application.Configuration
@@ -31,30 +30,35 @@ namespace SMS_Application.Configuration
         /// <returns>The updated service collection.</returns>
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
-            // Core Application Services
+            // Core Application Services - SINGLE REGISTRATION ONLY
             services.AddScoped<IMediator, Mediator>();
-            services.AddScoped<Mediator>();
             
             // REGISTER ALL QUERY AND COMMAND HANDLERS
             var applicationAssembly = typeof(GetSMSApplicationUserByUserNameQueryHandler).Assembly;
             RegisterHandlers(services, applicationAssembly);
             
-            // SMS User Application Services
-            services.AddScoped<SMSApplicationUserService>();
-            services.AddScoped<SMSOrganizationalUserService>();
-            services.AddScoped<SMSStakeholderUserService>();
+            // SMS User Application Services - INTERFACE BINDINGS ONLY
+            services.AddScoped<ISMSApplicationUserService, SMSApplicationUserService>();
+            services.AddScoped<ISMSOrganizationalUserService, SMSOrganizationalUserService>();
+            services.AddScoped<ISMSStakeholderUserService, SMSStakeholderUserService>();
             
-            // SMS Workflow Services - Mission Critical
+            // SMS Workflow Services - SINGLE REGISTRATION ONLY
             services.AddScoped<ISMSRiskAssessmentWorkflowService, SMSRiskAssessmentWorkflowService>();
             services.AddScoped<ISMSInvestigationWorkflowService, SMSInvestigationWorkflowService>();
+            services.AddScoped<ISMSWorkflowService, SMSWorkflowService>();
+            services.AddScoped<ISMSAuthorizationService, SMSAuthorizationService>();
+            services.AddScoped<ISMSRoleService, SMSRoleService>();
             
-            // Existing Application Services - only add ones that exist
+            // Application Services - INTERFACE BINDINGS ONLY
+            services.AddScoped<IHazardFileService, HazardFileService>();
+            services.AddScoped<IReportValidationService, ReportValidationService>();
+            
+            // Concrete Application Services (where no interface exists)
             services.AddScoped<SystemService>();
             services.AddScoped<MessengerService>();
             services.AddScoped<HazardService>();
             services.AddScoped<HazardLocationService>();
-            services.AddScoped<HazardFileService>();
-            services.AddScoped<AirportSharedDatasetService>(); // This was missing!
+            services.AddScoped<AirportSharedDatasetService>();
             services.AddScoped<ReportService>();
             services.AddScoped<InterviewService>();
             services.AddScoped<InvestigationService>();
@@ -62,27 +66,7 @@ namespace SMS_Application.Configuration
             services.AddScoped<RiskAssessmentService>();
             services.AddScoped<MitigationService>();
             services.AddScoped<MitigationAssignmentService>();
-            services.AddScoped<ReportValidationService>();
             services.AddScoped<ScoringPanelService>();
-
-            services.AddScoped<SMSApplicationUserService>();
-            services.AddScoped<SMSOrganizationalUserService>();
-            services.AddScoped<SMSStakeholderUserService>();
-            services.AddScoped<ISMSRoleService, SMSRoleService>();
-            services.AddScoped<ISMSWorkflowService, SMSWorkflowService>();
-            services.AddScoped<ISMSAuthorizationService, SMSAuthorizationService>();
-            
-            // SMS Backend Services (Application Layer Only)
-            services.AddScoped<ISMSApplicationUserService, SMSApplicationUserService>();
-            services.AddScoped<ISMSOrganizationalUserService, SMSOrganizationalUserService>();
-            services.AddScoped<ISMSStakeholderUserService, SMSStakeholderUserService>();
-            services.AddScoped<ISMSWorkflowService, SMSWorkflowService>();
-            services.AddScoped<ISMSInvestigationWorkflowService, SMSInvestigationWorkflowService>();
-            services.AddScoped<ISMSRiskAssessmentWorkflowService, SMSRiskAssessmentWorkflowService>();
-            services.AddScoped<IReportValidationService, ReportValidationService>();
-
-            // File-based Services
-            services.AddScoped<IHazardFileService, HazardFileService>();
 
             return services;
         }

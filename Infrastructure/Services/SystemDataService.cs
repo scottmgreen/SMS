@@ -1,7 +1,7 @@
 ﻿
 using SMS_Domain.Interfaces;
 
-using SMS_Infrastructure.Repositories;
+using SMS_Infrastructure.Persistence;
 
 namespace SMS_Infrastructure.Services
 {

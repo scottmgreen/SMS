@@ -7,6 +7,7 @@
 namespace SMS_Infrastructure.Services;
 
 using SMS_Infrastructure.Interfaces;
+using SMS_Infrastructure.Persistence;
 
 /// <summary>
 /// Enhanced Investigation Data Service - follows the exact same pattern as HazardDataService

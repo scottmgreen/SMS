@@ -7,7 +7,7 @@ using Microsoft.Data.SqlClient;
 using System.Data;
 using static SMS_Domain.Errors.DomainErrors;
 
-namespace SMS_Infrastructure.Repositories;
+namespace SMS_Infrastructure.Persistence;
 
 public sealed class MitigationAssignmentRepository : BaseRepository<MitigationAssignmentRepository, MitigationAssignment>
 {

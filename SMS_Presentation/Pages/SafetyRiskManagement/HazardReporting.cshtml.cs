@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -69,8 +69,11 @@ public class HazardReportingModel : PageModel
     [BindProperty]
     public DateTime? SubmissionDateTime { get; set; }
 
+    // Replace StoredFileKeys with TempFileIds for disk-based temp storage
     [BindProperty]
-    public List<IFormFile> UploadedFiles { get; set; } = new();
+    public List<string> TempFileIds { get; set; } = new();
+
+    private bool _isProcessingFiles = false;
 
     #endregion
 
@@ -129,13 +132,19 @@ public class HazardReportingModel : PageModel
         return await OnPostSubmitConfirmed();
     }
 
+    /// <summary>
+    /// Handles the final submission of the hazard report after user confirmation.
+    /// Creates the complete hazard workflow: Report → Hazard → ScoringPanel → HazardLocation → HazardFiles ORIGINAL
+    /// </summary>
     public async Task<IActionResult> OnPostSubmitConfirmed()
     {
         InitializeDropdowns();
         
         try
         {
-            // Basic validation
+            // ═══════════════════════════════════════════════════════════════════
+            // STEP 1: VALIDATION
+            // ═══════════════════════════════════════════════════════════════════
             if (!ModelState.IsValid)
             {
                 ShowSubmissionConfirmation = true;
@@ -143,104 +152,207 @@ public class HazardReportingModel : PageModel
                 return Page();
             }
 
-            _logger.LogInformation("Creating hazard report for user {User}", HazardReport.ReportedBy);
+            _logger.LogInformation("Starting hazard report submission for user: {User}", HazardReport.ReportedBy);
 
-            
-            // Create hazard from form data
-            var hazardResult = Hazard.CreateFromHazardReport(
-                HazardReport.Description,
-                HazardReport.HazardType,  // This should be category (the first HazardType parameter)
-                HazardReport.ReportedBy,
-                HazardReport.ReportingDepartment,
-                HazardReport.HazardType,  // This is the actual hazardType parameter
-                null, ///location 
-                HazardReport.IsConfidential,
-                false
-            );
-
-            if (hazardResult.IsFailure)
+            // ═══════════════════════════════════════════════════════════════════
+            // STEP 2: CREATE INITIAL HAZARD OBJECT FROM FORM DATA
+            // ═══════════════════════════════════════════════════════════════════
+            var hazardCode = $"HZ-0000";
+            var hazard = new Hazard(new HazardID(hazardCode))
             {
-                ModelState.AddModelError("", $"Failed to create hazard: {hazardResult.Error.Message}");
-                ShowSubmissionConfirmation = true;
-                InitializeUIState();
-                return Page();
-            }
+                Code = hazardCode,
+                Name = HazardReport.HazardType,
+                Description = HazardReport.Description,
+                Category = HazardReport.HazardType,
+                HazardType = HazardReport.HazardType,
+                ReportedBy = HazardReport.ReportedBy,
+                ReportedOn = HazardReport.ReportedOn,
+                ReportingDepartment = HazardReport.ReportingDepartment,
+                IsConfidential = HazardReport.IsConfidential,
+                IsAnonymous = false,
+            };
 
-            var hazard = hazardResult.Value;
-            hazard.ReportedOn = HazardReport.ReportedOn;
-
-            _logger.LogInformation("Hazard created: Name = '{name}', HazardType = '{type}', Category = '{category}'", 
-                hazard.Name, hazard.HazardType, hazard.Category);
-
-            // Set location from form if no geo location
+            // Set text-based location if no geographic coordinates provided
             if (!HasGeoLocation && !string.IsNullOrEmpty(HazardReport.Location))
             {
                 hazard.Location = HazardReport.Location;
             }
 
-            // Process file uploads
-            await ProcessFileUploads(hazard);
+            _logger.LogInformation("Initial hazard object created - Name: '{Name}', Type: '{Type}', Category: '{Category}'",
+                hazard.Name, hazard.HazardType, hazard.Category);
 
-            // Phase 1: Create Report
-            Report report = new Report(new ReportID("RP-0000"));
-            report.Code = "RP-0000";
-            report.CreatedBy = HazardReport.CreatedBy;
-            report.Name = HazardReport.HazardType;
-            report.Description = hazard.Description;
-            report.Stage = "Initial";
-            report.Status = "Initial";
+            // ═══════════════════════════════════════════════════════════════════
+            // PHASE 1: CREATE PARENT REPORT
+            // ═══════════════════════════════════════════════════════════════════
+            var report = new Report(new ReportID("RP-0000"))
+            {
+                Code = "RP-0000",
+                CreatedBy = HazardReport.CreatedBy ?? "SYSTEM",
+                Name = HazardReport.HazardType,
+                Description = hazard.Description,
+                Stage = "Initial",
+                Status = "Initial"
+            };
 
+            var reportResult = await _mediator.SendAsync(new CreateReportCommand(report), CancellationToken.None);
+            var actualReportCode = reportResult.Value.Code;
             
+            _logger.LogInformation("Report created with Code: {ReportCode}", actualReportCode);
 
-            var reportResult = await _mediator.SendAsync(new CreateReportCommand(report),new CancellationToken());
-            var reportCode = reportResult.Value.Code;
-
-            hazard.ReportCode = reportCode;
-
+            // ═══════════════════════════════════════════════════════════════════
+            // PHASE 2: CREATE HAZARD WITH REPORT LINKAGE
+            // ═══════════════════════════════════════════════════════════════════
+            hazard.ReportCode = actualReportCode;
             hazard.ScoringPanelCode = null;
 
-            // Save hazard
             var createHazardCommand = new CreateHazardCommand(hazard);
             var createdHazardResult = await _mediator.SendAsync(createHazardCommand, CancellationToken.None);
+            var createdHazard = createdHazardResult.Value;
+            
+            _logger.LogInformation("Hazard created with Code: {HazardCode}, linked to Report: {ReportCode}", 
+                createdHazard.Code, actualReportCode);
 
-            Hazard createdHazard = createdHazardResult.Value;
+            // ═══════════════════════════════════════════════════════════════════
+            // PHASE 3: CREATE SCORING PANEL FOR RISK ASSESSMENT
+            // ═══════════════════════════════════════════════════════════════════
+            var scoringPanel = new ScoringPanel(new ScoringPanelID("SP-0000"))
+            {
+                HazardCode = createdHazard.Code
+            };
+            
+            var createdPanelResult = await _mediator.SendAsync(new CreateScoringPanelCommand(scoringPanel), CancellationToken.None);
+            var actualScoringPanelCode = createdPanelResult.Value.Code;
+            
+            createdHazard.ScoringPanelCode = actualScoringPanelCode;
 
-            var scoringPanel = new ScoringPanel(new ScoringPanelID("SP-0000"));
-            scoringPanel.HazardCode = createdHazard.Code;
-            var createdPanel = await _mediator.SendAsync(new CreateScoringPanelCommand(scoringPanel),new CancellationToken());
+            _logger.LogInformation("ScoringPanel created with Code: {ScoringPanelCode}, linked to Hazard: {HazardCode}",
+                actualScoringPanelCode, createdHazard.Code);
 
-            createdHazard.ScoringPanelCode = createdPanel.Value.Code;
-
-
-           var hazardLocation = new HazardLocation(new HazardLocationID("HL-0000"));
-
-            // Create hazard location if coordinates are available
-            //HazardLocation? hazardLocation = null;
+            // ═══════════════════════════════════════════════════════════════════
+            // PHASE 4: CREATE GEOGRAPHIC LOCATION (IF PROVIDED)
+            // ═══════════════════════════════════════════════════════════════════
             if (HasGeoLocation)
             {
-                hazardLocation.Latitude = SelectedGeoLocation.Latitude;
-                hazardLocation.Longitude = SelectedGeoLocation.Longitude;
-                hazardLocation.Description = SelectedGeoLocation.Description;
+                var hazardLocation = new HazardLocation(new HazardLocationID("HL-0000"))
+                {
+                    HazardCode = createdHazard.Code,
+                    Latitude = SelectedGeoLocation.Latitude,
+                    Longitude = SelectedGeoLocation.Longitude,
+                    Description = SelectedGeoLocation.Description ?? "Map selected location"
+                };
 
+                var createdLocationResult = await _mediator.SendAsync(new CreateHazardLocationCommand(hazardLocation), CancellationToken.None);
+                createdHazard.HazardLocation = createdLocationResult.Value;
 
-              
-
-                //if (locationResult.IsSuccess)
-                //{
-                //    hazardLocation = locationResult.Value;
-                //    hazardLocation.UpdateLocationInfo(null, null, SelectedGeoLocation.Description, SelectedGeoLocation.Description);
-                //}
-                //var createHazardLocationCommand = new CreateHazardLocationCommand(hazardLocation);
-                
+                _logger.LogInformation("HazardLocation created with Code: {LocationCode}, Coordinates: ({Lat}, {Lng})",
+                    createdLocationResult.Value.Code, SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
             }
-            var createdHazardLocation = await _mediator.SendAsync(new CreateHazardLocationCommand(hazardLocation), new CancellationToken());
 
-            createdHazard.HazardLocation = createdHazardLocation.Value;
+            // ═══════════════════════════════════════════════════════════════════
+            // PHASE 5: PROCESS FILES - RESTORE FROM TEMP STORAGE & CREATE HAZARDFILES
+            // ═══════════════════════════════════════════════════════════════════
+            try
+            {
+                // 🔥 STEP 1: Restore files from temp storage if we have temp file IDs
+                if (TempFileIds?.Any() == true)
+                {
+                    _logger.LogInformation("📤 Restoring {Count} files from temp disk storage", TempFileIds.Count);
+                    
+                    var tempFileInfos = await LoadTempFiles(TempFileIds);
+                    HazardReport.HazardFiles = tempFileInfos.Select(CreateIFormFileFromTempFile).ToList();
+                    
+                    _logger.LogInformation("✅ Restored {Count} files for processing", HazardReport.HazardFiles.Count);
+                }
 
-            var updatedHazardResult = await _mediator.SendAsync(new UpdateHazardCommand(createdHazard),new CancellationToken());
+                // 🔥 STEP 2: Process each file and create HazardFile entities
+                if (HazardReport.HazardFiles?.Any() == true)
+                {
+                    _logger.LogInformation("📎 Processing {Count} files for Hazard: {HazardCode}", 
+                        HazardReport.HazardFiles.Count, createdHazard.Code);
 
+                    var createdFileIds = new List<string>();
 
+                    foreach (var formFile in HazardReport.HazardFiles.Where(f => f?.Length > 0))
+                    {
+                        try
+                        {
+                            // Read file data
+                            byte[] fileData;
+                            using (var memoryStream = new MemoryStream())
+                            {
+                                await formFile.CopyToAsync(memoryStream);
+                                fileData = memoryStream.ToArray();
+                            }
 
+                            // Generate unique file code
+                            var fileCode = $"HF-0000";
+
+                            // Create HazardFile entity
+                            var hazardFile = new HazardFile(new HazardFileID(fileCode))
+                            {
+                                Code = fileCode,
+                                HazardCode = createdHazard.Code,
+                                ReportCode = createdHazard.ReportCode ?? string.Empty,
+                                FileName = formFile.FileName,
+                                FileType = Path.GetExtension(formFile.FileName)?.TrimStart('.') ?? "unknown",
+                                ContentType = formFile.ContentType ?? "application/octet-stream",
+                                FileSizeBytes = formFile.Length,
+                                StorageType = "Database",
+                                FileData = fileData,
+                                UploadedBy = HazardReport.ReportedBy ?? "SYSTEM",
+                                UploadedDate = DateTime.UtcNow,
+                                IsActive = true,
+                                IsConfidential = HazardReport.IsConfidential
+                            };
+
+                            // 🔥 Send CreateHazardFileCommand for each file
+                            _logger.LogInformation("Creating HazardFile: {FileName} with Code: {FileCode}", 
+                                formFile.FileName, fileCode);
+
+                            var createHazardFileCommand = new CreateHazardFileCommand(hazardFile);
+                            var hazardFileResult = await _mediator.SendAsync(createHazardFileCommand, CancellationToken.None);
+
+                            if (hazardFileResult.IsSuccess)
+                            {
+                                var createdFileId = hazardFileResult.Value.Code;
+                                createdFileIds.Add(createdFileId);
+
+                                // Add HazardFile ID to Hazard's collection
+                                createdHazard.AddHazardFile(new HazardFileID(createdFileId));
+
+                                _logger.LogInformation("✅ Created HazardFile: {FileName} with ID: {FileId} for Hazard: {HazardCode}", 
+                                    formFile.FileName, createdFileId, createdHazard.Code);
+                            }
+                            else
+                            {
+                                _logger.LogError("❌ Failed to create HazardFile: {FileName} for Hazard: {HazardCode}. Error: {Error}", 
+                                    formFile.FileName, createdHazard.Code, hazardFileResult.Error?.Message);
+                            }
+                        }
+                        catch (Exception fileEx)
+                        {
+                            _logger.LogError(fileEx, "❌ Exception creating HazardFile: {FileName} for Hazard: {HazardCode}", 
+                                formFile.FileName, createdHazard.Code);
+                        }
+                    }
+
+                    _logger.LogInformation("✅ File processing completed: {CreatedCount} HazardFiles created for Hazard: {HazardCode}", 
+                        createdFileIds.Count, createdHazard.Code);
+                }
+
+                // Clean up temp files
+                await CleanupTempFiles(TempFileIds);
+            }
+            catch (Exception fileEx)
+            {
+                _logger.LogError(fileEx, "❌ Error processing files, but continuing with hazard creation");
+                await CleanupTempFiles(TempFileIds);
+            }
+
+            // ═══════════════════════════════════════════════════════════════════
+            // PHASE 6: FINAL UPDATE
+            // ═══════════════════════════════════════════════════════════════════
+            var updatedHazardResult = await _mediator.SendAsync(new UpdateHazardCommand(createdHazard), CancellationToken.None);
 
             if (updatedHazardResult.IsFailure)
             {
@@ -250,25 +362,31 @@ public class HazardReportingModel : PageModel
                 return Page();
             }
 
-            createdHazard = updatedHazardResult.Value;
-            GeneratedHazardId = createdHazard.Code;
-            GeneratedReportId = createdHazard.ReportCode;
-            //GeneratedHazardReportId = createdHazard.Code;
-
-            _logger.LogInformation("Hazard created successfully - {HazardCode}", createdHazard.Code);
-
+            // ═══════════════════════════════════════════════════════════════════
+            // SUCCESS
+            // ═══════════════════════════════════════════════════════════════════
+            var finalHazard = updatedHazardResult.Value;
+            GeneratedHazardId = finalHazard.Code;
+            GeneratedReportId = finalHazard.ReportCode;
             SubmissionDateTime = DateTime.Now;
             ShowSubmissionConfirmation = false;
             ShowFinalSuccessConfirmation = true;
+            
+            TempFileIds.Clear();
+            
             InitializeUIState();
             
-            TempData["SuccessMessage"] = $"Hazard report submitted successfully! Hazard ID: {GeneratedHazardId}";
+            _logger.LogInformation("✅ Hazard report submission completed successfully - HazardCode: {HazardCode}, ReportCode: {ReportCode}", 
+                finalHazard.Code, finalHazard.ReportCode);
             
             return Page();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during hazard report submission");
+            _logger.LogError(ex, "❌ Error during hazard report submission");
+            
+            await CleanupTempFiles(TempFileIds);
+            
             ModelState.AddModelError("", "An error occurred while saving your report.");
             ShowSubmissionConfirmation = false;
             InitializeUIState();
@@ -276,7 +394,6 @@ public class HazardReportingModel : PageModel
         }
     }
 
-    // Simple action handlers
     public IActionResult OnPostOpenMapSelector()
     {
         InitializeDropdowns();
@@ -399,6 +516,30 @@ public class HazardReportingModel : PageModel
     public IActionResult OnPostShowPreview()
     {
         InitializeDropdowns();
+        
+        // 🔥 CRITICAL: Save files to temp storage BEFORE showing preview
+        if (HazardReport.HazardFiles?.Any() == true)
+        {
+            _logger.LogInformation("💾 Saving {Count} files to temp storage before preview", HazardReport.HazardFiles.Count);
+            
+            try
+            {
+                var tempFileInfos = SaveFilesTemporarily().GetAwaiter().GetResult();
+                TempFileIds = tempFileInfos.Select(f => f.TempFileId).ToList();
+                
+                _logger.LogInformation("✅ Saved {Count} files to temp storage with IDs: {TempIds}", 
+                    TempFileIds.Count, string.Join(", ", TempFileIds));
+                
+                // Update SelectedFiles for display in preview
+                UpdateSelectedFilesFromTempFileInfo(tempFileInfos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Failed to save files temporarily during preview");
+                // Continue with preview even if file saving fails
+            }
+        }
+        
         ShowPreview = true;
         InitializeUIState();
         return Page();
@@ -407,41 +548,68 @@ public class HazardReportingModel : PageModel
     public IActionResult OnPostHidePreview()
     {
         InitializeDropdowns();
+        
+        // Restore files from temp storage when hiding preview
+        if (TempFileIds?.Any() == true)
+        {
+            try
+            {
+                var tempFileInfos = LoadTempFiles(TempFileIds).GetAwaiter().GetResult();
+                HazardReport.HazardFiles = tempFileInfos.Select(CreateIFormFileFromTempFile).ToList();
+                
+                _logger.LogInformation("✅ Restored {Count} files from temp storage", HazardReport.HazardFiles.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Failed to restore files from temp storage");
+                HazardReport.HazardFiles = new List<IFormFile>();
+            }
+        }
+        
         ShowPreview = false;
         InitializeUIState();
         return Page();
     }
 
-    public IActionResult OnPostShowSubmissionConfirmation()
+    // 🔥 UPDATE: Use temp file approach for confirmation too
+    public async Task<IActionResult> OnPostShowSubmissionConfirmation()
     {
         InitializeDropdowns();
         
         _logger.LogInformation("OnPostShowSubmissionConfirmation: HasGeoLocation = {hasGeo}, Location = {location}", 
             HasGeoLocation, HazardReport.Location);
         
-        if (HasGeoLocation)
+        // 🔥 CRITICAL FIX: Save files to disk immediately when user clicks "Submit"
+        if (HazardReport.HazardFiles?.Any() == true)
         {
-            _logger.LogInformation("GeoLocation Data: Lat = {lat}, Lng = {lng}, Desc = {desc}", 
-                SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude, SelectedGeoLocation.Description);
+            _logger.LogInformation("💾 Saving {Count} files to temp disk storage before confirmation", HazardReport.HazardFiles.Count);
+            
+            try
+            {
+                var tempFileInfos = await SaveFilesTemporarily();
+                TempFileIds = tempFileInfos.Select(f => f.TempFileId).ToList();
+                
+                _logger.LogInformation("✅ Saved {Count} files to temp storage with IDs: {TempIds}", 
+                    TempFileIds.Count, string.Join(", ", TempFileIds));
+                
+                // Update SelectedFiles for display in confirmation modal
+                UpdateSelectedFilesFromTempFileInfo(tempFileInfos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Failed to save files temporarily");
+                ModelState.AddModelError("", "Failed to process file uploads. Please try again.");
+                InitializeUIState();
+                return Page();
+            }
         }
-        
-        // Preserve all form data when showing confirmation
-        var currentLocation = HazardReport.Location;
-        var currentGeoLocation = SelectedGeoLocation;
-        var currentUploadedFiles = UploadedFiles;
         
         ShowSubmissionConfirmation = true;
         ShowPreview = false;
         
-        // Restore preserved data
-        HazardReport.Location = currentLocation;
-        SelectedGeoLocation = currentGeoLocation;
-        UploadedFiles = currentUploadedFiles;
+        InitializeUIState();
         
-        InitializeUIState(); // This will process the file attachments
-        
-        _logger.LogInformation("After preservation: HasGeoLocation = {hasGeo}, Location = {location}", 
-            HasGeoLocation, HazardReport.Location);
+        _logger.LogInformation("After confirmation setup: TempFiles = {fileCount}", TempFileIds?.Count ?? 0);
         
         return Page();
     }
@@ -458,6 +626,9 @@ public class HazardReportingModel : PageModel
             _logger.LogInformation("Cancel: GeoLocation Data: Lat = {lat}, Lng = {lng}, Desc = {desc}", 
                 SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude, SelectedGeoLocation.Description);
         }
+        // Clean up session files when cancelling
+        
+        TempFileIds.Clear();
         
         ShowSubmissionConfirmation = false;
         InitializeUIState();
@@ -484,6 +655,176 @@ public class HazardReportingModel : PageModel
 
     #endregion
 
+    #region Temp File Management Methods
+
+    private async Task<List<TempFileInfo>> SaveFilesTemporarily()
+    {
+        var tempFiles = new List<TempFileInfo>();
+        
+        if (HazardReport.HazardFiles?.Any() != true)
+            return tempFiles;
+        
+        var tempPath = Path.Combine(Path.GetTempPath(), "HazardReports", HttpContext.Session.Id ?? Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempPath);
+        
+        foreach (var file in HazardReport.HazardFiles.Where(f => f?.Length > 0))
+        {
+            try
+            {
+                var tempFileId = Guid.NewGuid().ToString("N");
+                var tempFileName = $"{tempFileId}_{file.FileName}";
+                var tempFilePath = Path.Combine(tempPath, tempFileName);
+                
+                using (var fileStream = new FileStream(tempFilePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
+                
+                tempFiles.Add(new TempFileInfo
+                {
+                    TempFileId = tempFileId,
+                    OriginalFileName = file.FileName,
+                    TempFilePath = tempFilePath,
+                    ContentType = file.ContentType,
+                    FileSize = file.Length
+                });
+                
+                _logger.LogInformation("✅ Saved temp file: {FileName} as {TempPath}", file.FileName, tempFilePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Failed to save temp file: {FileName}", file.FileName);
+            }
+        }
+        
+        return tempFiles;
+    }
+
+    private async Task<List<TempFileInfo>> LoadTempFiles(List<string> tempFileIds)
+    {
+        var tempFiles = new List<TempFileInfo>();
+        
+        var tempPath = Path.Combine(Path.GetTempPath(), "HazardReports", HttpContext.Session.Id ?? "unknown");
+        
+        if (!Directory.Exists(tempPath))
+            return tempFiles;
+        
+        foreach (var tempFileId in tempFileIds)
+        {
+            try
+            {
+                var matchingFiles = Directory.GetFiles(tempPath, $"{tempFileId}_*");
+                
+                if (matchingFiles.Any())
+                {
+                    var tempFilePath = matchingFiles.First();
+                    var originalFileName = Path.GetFileName(tempFilePath).Substring(tempFileId.Length + 1);
+                    
+                    var fileInfo = new FileInfo(tempFilePath);
+                    
+                    tempFiles.Add(new TempFileInfo
+                    {
+                        TempFileId = tempFileId,
+                        OriginalFileName = originalFileName,
+                        TempFilePath = tempFilePath,
+                        ContentType = GetContentType(originalFileName),
+                        FileSize = fileInfo.Length
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Failed to load temp file: {TempFileId}", tempFileId);
+            }
+        }
+        
+        return tempFiles;
+    }
+
+    private IFormFile CreateIFormFileFromTempFile(TempFileInfo tempFile)
+    {
+        var fileData = System.IO.File.ReadAllBytes(tempFile.TempFilePath);
+        return new TempFormFile(tempFile.OriginalFileName, tempFile.ContentType, fileData);
+    }
+
+    private async Task CleanupTempFiles(List<string> tempFileIds)
+    {
+        if (!tempFileIds?.Any() == true) return;
+        
+        var tempPath = Path.Combine(Path.GetTempPath(), "HazardReports", HttpContext.Session.Id ?? "unknown");
+        
+        if (!Directory.Exists(tempPath)) return;
+        
+        foreach (var tempFileId in tempFileIds)
+        {
+            try
+            {
+                var matchingFiles = Directory.GetFiles(tempPath, $"{tempFileId}_*");
+                
+                foreach (var file in matchingFiles)
+                {
+                    System.IO.File.Delete(file);
+                    _logger.LogDebug("🗑️ Cleaned up temp file: {TempFile}", file);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "⚠️ Failed to cleanup temp file: {TempFileId}", tempFileId);
+            }
+        }
+        
+        try
+        {
+            if (Directory.Exists(tempPath) && !Directory.GetFiles(tempPath).Any())
+            {
+                Directory.Delete(tempPath);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Could not remove temp directory: {TempPath}", tempPath);
+        }
+    }
+
+    private void UpdateSelectedFilesFromTempFileInfo(List<TempFileInfo> tempFiles)
+    {
+        SelectedFiles.Clear();
+        
+        foreach (var tempFile in tempFiles)
+        {
+            SelectedFiles.Add(new SelectedFile
+            {
+                FileName = tempFile.OriginalFileName,
+                FileSizeBytes = tempFile.FileSize,
+                SizeDisplay = GetFileSizeDisplay(tempFile.FileSize)
+            });
+        }
+    }
+
+    private static string GetFileSizeDisplay(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} bytes";
+        if (bytes < 1048576) return $"{bytes / 1024} KB";
+        return $"{bytes / 1048576:F1} MB";
+    }
+
+    private static string GetContentType(string fileName)
+    {
+        var extension = Path.GetExtension(fileName).ToLowerInvariant();
+        return extension switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".pdf" => "application/pdf",
+            ".doc" => "application/msword",
+            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".txt" => "text/plain",
+            _ => "application/octet-stream"
+        };
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private void InitializeUIState()
@@ -494,29 +835,23 @@ public class HazardReportingModel : PageModel
 
     private void ProcessFileAttachments()
     {
-        SelectedFiles.Clear();
-        
-        // Process files from UploadedFiles (IFormFile)
-        if (UploadedFiles?.Any() == true)
+        if (_isProcessingFiles)
         {
-            foreach (var file in UploadedFiles.Where(f => f?.Length > 0))
-            {
-                SelectedFiles.Add(new SelectedFile 
-                { 
-                    FileName = file.FileName, 
-                    FileSizeBytes = file.Length,
-                    SizeDisplay = GetFileSizeDisplay(file.Length)
-                });
-            }
+            _logger.LogDebug("ProcessFileAttachments: Already processing, skipping duplicate call");
+            return;
         }
-        
-        // Also process files from HazardReport.HazardFiles if they exist
-        if (HazardReport.HazardFiles?.Any() == true)
+
+        try
         {
-            foreach (var file in HazardReport.HazardFiles.Where(f => f?.Length > 0))
+            _isProcessingFiles = true;
+            SelectedFiles.Clear();
+            
+            // Process current uploaded files for display using existing HazardFiles property
+            if (HazardReport.HazardFiles?.Any() == true)
             {
-                // Avoid duplicates
-                if (!SelectedFiles.Any(sf => sf.FileName == file.FileName))
+                _logger.LogInformation("ProcessFileAttachments: Found {Count} hazard files", HazardReport.HazardFiles.Count);
+                
+                foreach (var file in HazardReport.HazardFiles.Where(f => f?.Length > 0))
                 {
                     SelectedFiles.Add(new SelectedFile 
                     { 
@@ -526,53 +861,25 @@ public class HazardReportingModel : PageModel
                     });
                 }
             }
+            else
+            {
+                _logger.LogDebug("ProcessFileAttachments: No hazard files found");
+            }
+
+            _logger.LogDebug("ProcessFileAttachments completed: {SelectedFileCount} files ready for display", SelectedFiles.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in ProcessFileAttachments");
+        }
+        finally
+        {
+            _isProcessingFiles = false;
         }
     }
     
-    private static string GetFileSizeDisplay(long bytes)
-    {
-        if (bytes < 1024) return $"{bytes} bytes";
-        if (bytes < 1048576) return $"{bytes / 1024} KB";
-        return $"{bytes / 1048576:F1} MB";
-    }
-
-    private async Task ProcessFileUploads(Hazard hazard)
-    {
-        if (UploadedFiles?.Any() == true)
-        {
-            foreach (var file in UploadedFiles.Where(f => f?.Length > 0))
-            {
-                try
-                {
-                    using var memoryStream = new MemoryStream();
-                    await file.CopyToAsync(memoryStream);
-                    var fileData = memoryStream.ToArray();
-
-                    var hazardFileResult = HazardFile.CreateForDatabase(
-                        hazard.Code,
-                        file.FileName,
-                        Path.GetExtension(file.FileName).TrimStart('.'),
-                        fileData,
-                        "SYSTEM",
-                        hazard.ReportCode
-                    );
-
-                    if (hazardFileResult.IsSuccess)
-                    {
-                        hazard.AddFile(hazardFileResult.Value);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to process file {FileName}", file.FileName);
-                }
-            }
-        }
-    }
-
     private void InitializeDropdowns()
     {
-        // Simple hazard types
         HazardTypeOptions = new SelectList(new[]
         {
             new { Value = "RWY_INCURSION", Text = "Runway Incursion" },
@@ -585,7 +892,6 @@ public class HazardReportingModel : PageModel
             new { Value = "OTHER", Text = "Other" }
         }, "Value", "Text");
 
-        // Simple departments
         DepartmentOptions = new SelectList(new[]
         {
             new { Value = "OPERATIONS", Text = "Airport Operations" },
@@ -607,7 +913,6 @@ public class HazardReportingModel : PageModel
         ShowSubmissionConfirmation = false;
         ShowFinalSuccessConfirmation = false;
         SelectedGeoLocation = new GeoLocationData();
-        UploadedFiles = new();
         
         var tenMinutesAgo = DateTime.Now.AddMinutes(-10);
         HazardReport.ReportedOn = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day,
@@ -690,8 +995,6 @@ public class HazardReportingModel : PageModel
     #endregion
 }
 
-#region Helper Classes
-
 /// <summary>
 /// Simple form DTO for hazard reporting - has parameterless constructor for model binding
 /// </summary>
@@ -726,4 +1029,50 @@ public class SelectedFile
     public string SizeDisplay { get; set; } = string.Empty;
 }
 
-#endregion
+public class SavedFileInfo
+{
+    public string OriginalFileName { get; set; } = string.Empty;
+    public string SavedFileName { get; set; } = string.Empty;
+    public string SavedFilePath { get; set; } = string.Empty;
+    public string ContentType { get; set; } = string.Empty;
+    public long FileSizeBytes { get; set; }
+}
+
+// 🔥 NEW: Temp file classes for reliable file handling
+public class TempFileInfo
+{
+    public string TempFileId { get; set; } = string.Empty;
+    public string OriginalFileName { get; set; } = string.Empty;
+    public string TempFilePath { get; set; } = string.Empty;
+    public string ContentType { get; set; } = string.Empty;
+    public long FileSize { get; set; }
+}
+
+public class TempFormFile : IFormFile
+{
+    private readonly byte[] _fileData;
+    
+    public TempFormFile(string fileName, string contentType, byte[] fileData)
+    {
+        FileName = fileName;
+        ContentType = contentType;
+        _fileData = fileData;
+        Length = fileData.Length;
+    }
+    
+    public string ContentType { get; }
+    public string ContentDisposition => $"form-data; name=\"file\"; filename=\"{FileName}\"";
+    public IHeaderDictionary Headers => new HeaderDictionary();
+    public long Length { get; }
+    public string Name => "file";
+    public string FileName { get; }
+
+    public Stream OpenReadStream() => new MemoryStream(_fileData);
+
+    public void CopyTo(Stream target) => target.Write(_fileData, 0, _fileData.Length);
+
+    public Task CopyToAsync(Stream target, CancellationToken cancellationToken = default)
+    {
+        return target.WriteAsync(_fileData, 0, _fileData.Length, cancellationToken);
+    }
+}

@@ -34,8 +34,8 @@
     <Using Include="SMS_Domain.Enums" />
     <Using Include="SMS_Domain.ValueObjects" />
     <Using Include="SMS_Infrastructure.Common" />
+    <Using Include="SMS_Infrastructure.Persistence" />
     <Using Include="SMS_Infrastructure.Services" />
-	<Using Include="SMS_Infrastructure.Repositories" />
     <Using Include="SMS_Shared" />
     <Using Include="SMS_Shared.Common" />
     <Using Include="Microsoft.Extensions.Configuration" />

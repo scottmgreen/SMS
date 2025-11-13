@@ -679,142 +679,33 @@ public static partial class Mappers
     /// </summary>
     public static HazardFile MapToHazardFile(SqlDataReader reader)
     {
-        try
-        {
-            var code = reader.GetValue<string>(FieldNames.fHazardFileCode) ?? string.Empty;
-            var hazardCode = reader.GetValue<string>(FieldNames.fHazardFileHazardCode) ?? string.Empty;
-            var fileName = reader.GetValue<string>(FieldNames.fHazardFileFileName) ?? string.Empty;
-            var fileType = reader.GetValue<string>(FieldNames.fHazardFileFileType) ?? string.Empty;
-            var fileSizeBytes = reader.GetValue<long>(FieldNames.fHazardFileFileSizeBytes);
-            var uploadedBy = reader.GetValue<string>(FieldNames.fHazardFileUploadedBy) ?? string.Empty;
+        var code = reader.GetValue<string>(FieldNames.fHazardFileCode);
+        HazardFileID hazardFileID = new(code);
+        HazardFile hazardFile = new(hazardFileID);
 
-            // Determine storage type and create appropriate HazardFile
-            var storageTypeValue = reader.GetValue<string>(FieldNames.fHazardFileStorageType) ?? "FileSystem";
-            var storageType = HazardFileStorageType.FromValue(storageTypeValue) ?? HazardFileStorageType.FileSystem;
+        hazardFile.Code = code ?? string.Empty;
+        hazardFile.HazardCode = reader.GetValue<string>(FieldNames.fHazardFileHazardCode) ?? string.Empty;
+        hazardFile.ReportCode = reader.GetValue<string>(FieldNames.fHazardFileReportCode);
+        hazardFile.FileName = reader.GetValue<string>(FieldNames.fHazardFileFileName) ?? string.Empty;
+        hazardFile.FileType = reader.GetValue<string>(FieldNames.fHazardFileFileType) ?? string.Empty;
+        hazardFile.ContentType = reader.GetValue<string>(FieldNames.fHazardFileContentType) ?? string.Empty;
+        hazardFile.FileSizeBytes = reader.GetValue<long>(FieldNames.fHazardFileFileSizeBytes);
+        hazardFile.FileHash = reader.GetValue<string>(FieldNames.fHazardFileFileHash);
+        hazardFile.StorageType = reader.GetValue<string>(FieldNames.fHazardFileStorageType) ?? "FileSystem";
+        hazardFile.FilePath = reader.GetValue<string>(FieldNames.fHazardFileFilePath);
+        hazardFile.FileData = reader.GetValue<byte[]>(FieldNames.fHazardFileFileData);
+        hazardFile.Description = reader.GetValue<string>(FieldNames.fHazardFileDescription);
+        hazardFile.Category = reader.GetValue<string>(FieldNames.fHazardFileCategory);
+        hazardFile.IsConfidential = reader.IsDBNull(FieldNames.fHazardFileIsConfidential) ? false : reader.GetBoolean(FieldNames.fHazardFileIsConfidential);
+        hazardFile.UploadedBy = reader.GetValue<string>(FieldNames.fHazardFileUploadedBy) ?? string.Empty;
+        hazardFile.UploadedDate = reader.IsDBNull(FieldNames.fHazardFileUploadedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fHazardFileUploadedDate);
+        hazardFile.Tags = reader.GetValue<string>(FieldNames.fHazardFileTags);
+        hazardFile.IsActive = reader.IsDBNull(FieldNames.fHazardFileIsActive) ? true : reader.GetBoolean(FieldNames.fHazardFileIsActive);
+        hazardFile.InactiveReason = reader.GetValue<string>(FieldNames.fHazardFileInactiveReason);
+        hazardFile.InactiveDate = reader.IsDBNull(FieldNames.fHazardFileInactiveDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fHazardFileInactiveDate);
+        hazardFile.InactiveBy = reader.GetValue<string>(FieldNames.fHazardFileInactiveBy);
 
-            Result<HazardFile> hazardFileResult;
-
-            switch (storageType.Value) // Use .Value to get the string value for comparison
-            {
-                case "DATABASE":
-                    var fileData = reader.GetValue<byte[]>(FieldNames.fHazardFileFileData);
-                    hazardFileResult = HazardFile.CreateForDatabase(hazardCode, fileName, fileType, fileData ?? Array.Empty<byte>(), uploadedBy);
-                    break;
-
-                case "CLOUD":
-                    var cloudPath = reader.GetValue<string>(FieldNames.fHazardFileFilePath) ?? string.Empty;
-                    hazardFileResult = HazardFile.CreateForCloud(hazardCode, fileName, fileType, fileSizeBytes, cloudPath, uploadedBy);
-                    break;
-
-                default: // FileSystem
-                    var filePath = reader.GetValue<string>(FieldNames.fHazardFileFilePath) ?? string.Empty;
-                    hazardFileResult = HazardFile.CreateForFileSystem(hazardCode, fileName, fileType, fileSizeBytes, filePath, uploadedBy);
-                    break;
-            }
-
-            if (hazardFileResult.IsFailure)
-            {
-                throw new InvalidOperationException($"Failed to create HazardFile: {hazardFileResult.Error?.Message}");
-            }
-
-            var hazardFile = hazardFileResult.Value;
-
-            // Map additional properties using reflection since they have private setters
-            var hazardFileType = typeof(HazardFile);
-
-            // Set Code using reflection if needed (it should already be set by factory)
-            SetPrivateProperty(hazardFileType, hazardFile, "Code", code);
-
-            // Set other properties
-            var reportCode = reader.GetValue<string>(FieldNames.fHazardFileReportCode);
-            SetPrivateProperty(hazardFileType, hazardFile, "ReportCode", reportCode);
-
-            var contentType = reader.GetValue<string>(FieldNames.fHazardFileContentType) ?? string.Empty;
-            SetPrivateProperty(hazardFileType, hazardFile, "ContentType", contentType);
-
-            var fileHash = reader.GetValue<string>(FieldNames.fHazardFileFileHash);
-            SetPrivateProperty(hazardFileType, hazardFile, "FileHash", fileHash);
-
-            var description = reader.GetValue<string>(FieldNames.fHazardFileDescription);
-            SetPrivateProperty(hazardFileType, hazardFile, "Description", description);
-
-            var categoryValue = reader.GetValue<string>(FieldNames.fHazardFileCategory);
-            if (!string.IsNullOrEmpty(categoryValue))
-            {
-                var category = HazardFileCategory.FromValue(categoryValue);
-                SetPrivateProperty(hazardFileType, hazardFile, "Category", category);
-            }
-
-            var isConfidential = reader.IsDBNull(FieldNames.fHazardFileIsConfidential) ? false : reader.GetBoolean(FieldNames.fHazardFileIsConfidential);
-            SetPrivateProperty(hazardFileType, hazardFile, "IsConfidential", isConfidential);
-
-            var uploadedDate = reader.IsDBNull(FieldNames.fHazardFileUploadedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fHazardFileUploadedDate);
-            SetPrivateProperty(hazardFileType, hazardFile, "UploadedDate", uploadedDate);
-
-            var tags = reader.GetValue<string>(FieldNames.fHazardFileTags);
-            SetPrivateProperty(hazardFileType, hazardFile, "Tags", tags);
-
-            var isActive = reader.IsDBNull(FieldNames.fHazardFileIsActive) ? true : reader.GetBoolean(FieldNames.fHazardFileIsActive);
-            SetPrivateProperty(hazardFileType, hazardFile, "IsActive", isActive);
-
-            var inactiveReason = reader.GetValue<string>(FieldNames.fHazardFileInactiveReason);
-            SetPrivateProperty(hazardFileType, hazardFile, "InactiveReason", inactiveReason);
-
-            var inactiveDate = reader.IsDBNull(FieldNames.fHazardFileInactiveDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fHazardFileInactiveDate);
-            SetPrivateProperty(hazardFileType, hazardFile, "InactiveDate", inactiveDate);
-
-            var inactiveBy = reader.GetValue<string>(FieldNames.fHazardFileInactiveBy);
-            SetPrivateProperty(hazardFileType, hazardFile, "InactiveBy", inactiveBy);
-
-            // Set audit fields
-            var createdBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
-            var createdDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
-            var updatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
-            var updatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fUpdatedDate);
-
-            var baseEntityType = typeof(BaseAuditableEntity);
-            baseEntityType.GetProperty("CreatedBy")?.SetValue(hazardFile, createdBy);
-            baseEntityType.GetProperty("CreatedDate")?.SetValue(hazardFile, createdDate);
-            baseEntityType.GetProperty("UpdatedBy")?.SetValue(hazardFile, updatedBy);
-            baseEntityType.GetProperty("UpdatedDate")?.SetValue(hazardFile, updatedDate);
-
-            return hazardFile;
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException($"Error mapping SqlDataReader to HazardFile: {ex.Message}", ex);
-        }
-    }
-
-    /// <summary>
-    /// Maps SqlDataReader to HazardFileStatistics
-    /// </summary>
-    public static HazardFileStatistics MapToHazardFileStatistics(SqlDataReader reader)
-    {
-        return new HazardFileStatistics
-        {
-            HazardCode = reader.GetValue<string>("HazardCode") ?? string.Empty,
-            TotalFiles = reader.GetValue<int>("TotalFiles"),
-            TotalSizeBytes = reader.GetValue<long>("TotalSizeBytes"),
-            PhotoCount = reader.GetValue<int>("PhotoCount"),
-            DocumentCount = reader.GetValue<int>("DocumentCount"),
-            VideoCount = reader.GetValue<int>("VideoCount"),
-            ConfidentialCount = reader.GetValue<int>("ConfidentialCount"),
-            FirstUploadDate = reader.IsDBNull("FirstUploadDate") ? null : reader.GetDateTime("FirstUploadDate"),
-            LastUploadDate = reader.IsDBNull("LastUploadDate") ? null : reader.GetDateTime("LastUploadDate")
-        };
-    }
-
-    /// <summary>
-    /// Helper method to set private properties using reflection
-    /// </summary>
-    private static void SetPrivateProperty(Type type, object instance, string propertyName, object? value)
-    {
-        var property = type.GetProperty(propertyName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
-        if (property != null && property.CanWrite)
-        {
-            property.SetValue(instance, value);
-        }
+        return hazardFile;
     }
 
     #endregion
