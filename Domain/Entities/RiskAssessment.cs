@@ -44,27 +44,27 @@ public sealed class RiskAssessment : BaseAuditableEntity
     }
 
     // Public Properties (immutable from outside)
-    public string Name { get; private set; } = string.Empty;
-    public string? Code { get; private set; }
-    public string? Description { get; private set; }
-    public string? HazardCode { get; private set; } // Primary hazard code for this risk assessment
-    public string LeadAssessorId { get; private set; } = string.Empty;
-    public string? PrimaryHazardId { get; private set; }
-    public RiskAssessmentStatus Status { get; private set; }
-    public RiskAssessmentType AssessmentType { get; private set; } // Initial or Residual
-    public RiskAssessmentCategory RiskAssessmentCategory { get; private set; } // FiveStep, Simplified, Technical, Residual
-    public int CurrentStep { get; private set; } = 1;
-    public string? Stage { get; private set; } // Simple string property for workflow stage
-    public DateTime? CompletedDate { get; private set; }
-    public string? CompletedBy { get; private set; }
-    public string? ParentAssessmentId { get; private set; } // For Residual assessments - links back to Initial
+    public string Name { get; set; } = string.Empty;
+    public string? Code { get; set; }
+    public string? Description { get; set; }
+    public string? HazardCode { get; set; } // Primary hazard code for this risk assessment
+    public string LeadAssessorId { get; set; } = string.Empty;
+    public string? PrimaryHazardId { get; set; }
+    public RiskAssessmentStatus Status { get; set; }
+    public RiskAssessmentType AssessmentType { get; set; } // Initial or Residual
+    public RiskAssessmentCategory RiskAssessmentCategory { get; set; } // FiveStep, Simplified, Technical, Residual
+    public int CurrentStep { get; set; } = 1;
+    public string? Stage { get; set; } // Simple string property for workflow stage
+    public DateTime? CompletedDate { get; set; }
+    public string? CompletedBy { get; set; }
+    public string? ParentAssessmentId { get; set; } // For Residual assessments - links back to Initial
 
     // Risk Scoring Properties (shared by Initial and Residual)
-    public int? FinalSeverityScore { get; private set; }
-    public int? FinalLikelihoodScore { get; private set; }
-    public string? FinalRiskLevel { get; private set; }
-    public string? RiskTolerability { get; private set; } = "ALARP";
-    public string? AssessmentRationale { get; private set; }
+    public int? FinalSeverityScore { get; set; }
+    public int? FinalLikelihoodScore { get; set; }
+    public string? FinalRiskLevel { get; set; }
+    public string? RiskTolerability { get; set; } = "ALARP";
+    public string? AssessmentRationale { get; set; }
 
     // Step 1 - System Description Properties
     public string SystemDescription { get; private set; } = string.Empty;
@@ -114,7 +114,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
         assessment.Stage = "Created"; // Initialize stage
         
         // Generate code if not provided
-        assessment.Code = $"RA-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
+        assessment.Code = $"RA-0000";
         
         return Result<RiskAssessment>.Success(assessment);
     }

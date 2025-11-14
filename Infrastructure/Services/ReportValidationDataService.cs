@@ -35,6 +35,11 @@ public class ReportValidationDataService : BaseDataService<ReportValidationDataS
         return _repo.GetReportValidationByIdAsync(id, ct);
     }
 
+    public Task<Result<ReportValidation>> GetReportValidationByReportIdAsync(ReportID id, CancellationToken ct = default)
+    {
+        return _repo.GetReportValidationByReportIdAsync(id, ct);
+    }
+
     public Task<Result<List<ReportValidation>>> GetAllReportValidationsAsync(CancellationToken ct = default)
     {
         return _repo.GetAllReportValidationsAsync(ct);

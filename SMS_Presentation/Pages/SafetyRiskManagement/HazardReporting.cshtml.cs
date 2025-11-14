@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Commands;
+using SMS_Application.Services;
 
 using SMS_Domain.Entities;
 using SMS_Domain.Interfaces;
@@ -24,7 +25,7 @@ public class HazardReportingModel : PageModel
 {
     private readonly IMediator _mediator;
     private readonly ILogger<HazardReportingModel> _logger;
-
+    
     public HazardReportingModel(IMediator mediator, ILogger<HazardReportingModel> logger)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
@@ -110,19 +111,19 @@ public class HazardReportingModel : PageModel
     public void OnGet()
     {
         ViewData["Title"] = "Submit Hazard Report";
-        
+
         var tenMinutesAgo = DateTime.Now.AddMinutes(-10);
-        HazardReport.ReportedOn = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day, 
+        HazardReport.ReportedOn = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day,
             tenMinutesAgo.Hour, tenMinutesAgo.Minute, 0);
-        
+
         // Set default ReportedBy from session or provide a placeholder
         if (string.IsNullOrEmpty(HazardReport.ReportedBy))
         {
-            HazardReport.ReportedBy = HttpContext.Session.GetString("SMS_UserDisplayName") ?? 
-                                    HttpContext.Session.GetString("SMS_Email") ?? 
+            HazardReport.ReportedBy = HttpContext.Session.GetString("SMS_UserDisplayName") ??
+                                    HttpContext.Session.GetString("SMS_Email") ??
                                     ""; // Leave empty to force user to enter it
         }
-        
+
         InitializeDropdowns();
         InitializeUIState();
     }

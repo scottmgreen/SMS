@@ -96,7 +96,7 @@ public class ReportValidation : BaseAuditableEntity, IReportValidation
     /// </summary>
     public static ReportValidation Create(string reportCode, string validatedBy)
     {
-        var id = new ReportValidationID($"RV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}");
+        var id = new ReportValidationID($"RV-0000");
         var validation = new ReportValidation(id)
         {
             Code = id.Value,

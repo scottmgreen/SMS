@@ -1,0 +1,951 @@
+@model SMS.Presentation.Pages.SafetyRiskManagement.RiskAssessmentWizardModel
+@* @using ApplicationDto = PDXSMS.UseCases.Queries.RiskAssessmentQueries.IdentifiedHazardDto *@
+
+@* <div class="row">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Step 2 Objective:</strong> Systematically identify potential hazards within the system boundaries defined in Step 1.
+            Use the 5M framework analysis to ensure comprehensive hazard discovery.
+        </div>
+    </div>
+</div> *@
+
+<!-- System Context from Step 1 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fas fa-sitemap"></i> System Context (From Step 1)</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        @* <p class="mb-2"><strong>System:</strong> @Model.AssessmentData.SystemDescription</p>
+                        <p class="mb-0"><strong>Boundaries:</strong> @Model.AssessmentData.SystemBoundaries</p> *@
+                    </div>
+                    <div class="col-md-6">
+                        @* <p class="mb-2"><strong>Purpose:</strong> @Model.AssessmentData.SystemPurpose</p> *@
+                        <p class="mb-0"><strong>Stakeholders:</strong> 
+                            @{
+                                var stakeholderDisplay = new List<string>();
+                                
+                                // Add stakeholder groups
+                                // if (!string.IsNullOrWhiteSpace(Model.StakeholderGroups))
+                                // {
+                                //     var groups = Model.StakeholderGroups.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                                //     foreach (var group in groups)
+                                //     {
+                                //         stakeholderDisplay.Add($"<span class=\"badge bg-primary me-1\">{group.Trim()}</span>");
+                                //     }
+                                // }
+                                
+                                // Add individual stakeholders - simplified approach
+                                // if (!string.IsNullOrWhiteSpace(Model.SelectedIndividualStakeholders))
+                                // {
+                                //     // Count how many individual stakeholders (simple check for JSON array)
+                                //     var individualCount = Model.SelectedIndividualStakeholders.Count(c => c == '{');
+                                //     if (individualCount > 0)
+                                //     {
+                                //         stakeholderDisplay.Add($"<span class=\"badge bg-info me-1\">{individualCount} Individual(s)</span>");
+                                //     }
+                                //     else
+                                //     {
+                                //         // Plain text fallback
+                                //         stakeholderDisplay.Add($"<span class=\"badge bg-secondary me-1\">Individual: {Model.SelectedIndividualStakeholders}</span>");
+                                //     }
+                                // }
+                            }
+                            
+                            @if (stakeholderDisplay.Any())
+                            {
+                                @Html.Raw(string.Join("", stakeholderDisplay))
+                            }
+                            else
+                            {
+                                <span class="text-muted">No stakeholders selected</span>
+                            }
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add New Hazard Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h6 class="mb-0"><i class="fas fa-plus-circle"></i> Add New Hazard</h6>
+                    </div>
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-light btn-sm" id="toggleAddHazardBtn" onclick="toggleAddHazardForm()">
+                            <i class="fas fa-chevron-down" id="toggleAddHazardIcon"></i>
+                            <span id="toggleAddHazardText">Show Form</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body collapse" id="addHazardForm">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label class="form-label">Hazard Description <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="newHazardDescription" rows="3" 
+                                      placeholder="Describe the hazard clearly and specifically using Who, What, When, Where, Why format..."></textarea>
+                            <div class="form-text">Be specific about the hazardous condition, not just the potential outcome</div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Hazard Category</label>
+                                    <select class="form-select" id="newHazardCategory">
+                                        <option value="">Select category...</option>
+                                        <option value="Aircraft Operations">Aircraft Operations</option>
+                                        <option value="Ground Operations">Ground Operations</option>
+                                        <option value="Security Operations">Security Operations</option>
+                                        <option value="Weather Related">Weather Related</option>
+                                        <option value="Equipment Failure">Equipment Failure</option>
+                                        <option value="Human Factors">Human Factors</option>
+                                        <option value="Environmental">Environmental</option>
+                                        <option value="Procedural">Procedural</option>
+                                        <option value="Communication">Communication</option>
+                                        <option value="Infrastructure">Infrastructure</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">5M Component <span class="text-info">(Optional)</span></label>
+                                    <select class="form-select" id="newHazardFiveM">
+                                        <option value="">Select related 5M component...</option>
+                                        <option value="Man">Man (Personnel/Human Factors)</option>
+                                        <option value="Machine">Machine (Equipment/Technology)</option>
+                                        <option value="Method">Method (Procedures/Processes)</option>
+                                        <option value="Material">Material (Resources/Supplies)</option>
+                                        <option value="Milieu">Milieu (Environment/Context)</option>
+                                    </select>
+                                    <div class="form-text">Link hazard to 5M analysis component</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-lightbulb text-warning"></i> Hazard Identification Tips</h6>
+                                <div class="small">
+                                    <strong>Good hazard descriptions:</strong>
+                                    <ul class="mb-2">
+                                        <li>"Wet floors in terminal during rain"</li>
+                                        <li>"Aircraft engine intake exposed during gate operations"</li>
+                                        <li>"Inadequate lighting on taxiway Charlie"</li>
+                                    </ul>
+                                    <strong>Use 5M analysis to find hazards in:</strong>
+                                    <ul class="mb-2">
+                                        <li><strong>Man:</strong> Training gaps, fatigue, workload</li>
+                                        <li><strong>Machine:</strong> Equipment failures, design flaws</li>
+                                        <li><strong>Method:</strong> Procedure gaps, unclear steps</li>
+                                        <li><strong>Material:</strong> Missing resources, quality issues</li>
+                                        <li><strong>Milieu:</strong> Weather, noise, distractions</li>
+                                    </ul>
+                                    @* <div class="alert alert-warning small mt-2">
+                                        <i class="fas fa-info-circle"></i>
+                                        <strong>Focus on hazard identification only.</strong> Risk analysis and mitigation planning will be covered in Steps 3-5.
+                                    </div> *@
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <button type="button" class="btn btn-success" onclick="addHazardToList()">
+                                <i class="fas fa-plus"></i> Add to Hazard List
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary ms-2" onclick="clearHazardForm()">
+                                <i class="fas fa-broom"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Identified Hazards Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h6 class="mb-0">
+                            <i class="fas fa-list"></i> Identified Hazards
+                            <span class="badge bg-light text-dark ms-2" id="hazardCount">0</span>
+                        </h6>
+                    </div>
+                    <div class="col-auto">
+                        <small><i class="fas fa-info-circle"></i> At least 1 hazard required to continue (initial hazard cannot be deleted)</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Progress indicator -->
+                <div id="hazardProgress" class="mb-3" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small text-muted">Hazards identified:</span>
+                        <span class="badge bg-primary" id="hazardProgressText">0 hazards</span>
+                    </div>
+                    <div class="progress mt-1" style="height: 4px;">
+                        <div class="progress-bar bg-success" role="progressbar" id="hazardProgressBar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Hazards Table -->
+                <div id="hazardsTableContainer">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="hazardsTable" style="display: none;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="12%">Hazard ID</th>
+                                    <th width="50%">Description</th>
+                                    <th width="18%">Category</th>
+                                    <th width="15%">5M Component</th>
+                                    <th width="10%">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="hazardsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- No hazards message -->
+                <div class="text-center text-muted py-5" id="noHazardsMessage">
+                    <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i>
+                    <h5>No hazards identified yet</h5>
+                    <p>Use the "Add New Hazard" form above to identify potential hazards in your system.</p>
+                    <p class="small text-info">
+                        <i class="fas fa-lightbulb"></i> 
+                        Tip: Review your 5M analysis from Step 1 to systematically identify hazards in each component.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden fields to store hazards data for form submission -->
+<div id="hazardDataContainer"></div>
+
+<!-- Edit Hazard Modal -->
+<div class="modal fade" id="editHazardModal" tabindex="-1" aria-labelledby="editHazardModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="editHazardModalLabel">
+                    <i class="fas fa-edit"></i> Edit Hazard
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Hazard ID</label>
+                    <input type="text" class="form-control" id="editHazardId" readonly>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Hazard Description <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="editHazardDescription" rows="3"></textarea>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" id="editHazardCategory">
+                                <option value="">Select category...</option>
+                                <option value="Aircraft Operations">Aircraft Operations</option>
+                                <option value="Ground Operations">Ground Operations</option>
+                                <option value="Security Operations">Security Operations</option>
+                                <option value="Weather Related">Weather Related</option>
+                                <option value="Equipment Failure">Equipment Failure</option>
+                                <option value="Human Factors">Human Factors</option>
+                                <option value="Environmental">Environmental</option>
+                                <option value="Procedural">Procedural</option>
+                                <option value="Communication">Communication</option>
+                                <option value="Infrastructure">Infrastructure</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">5M Component</label>
+                            <select class="form-select" id="editHazardFiveM">
+                                <option value="">Select 5M component...</option>
+                                <option value="Man">Man (Personnel/Human Factors)</option>
+                                <option value="Machine">Machine (Equipment/Technology)</option>
+                                <option value="Method">Method (Procedures/Processes)</option>
+                                <option value="Material">Material (Resources/Supplies)</option>
+                                <option value="Milieu">Milieu (Environment/Context)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                @* <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Note:</strong> Risk analysis, worst credible outcomes, and current mitigations will be established in Steps 3-5 of the assessment process.
+                </div> *@
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveHazardEdit()">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Global variables for hazard management
+let hazardCounter = @(Model.AssessmentData.IdentifiedHazards?.Count ?? 0);
+let hazardsList = [];
+let editingHazardIndex = -1;
+
+// Initialize hazards from existing data
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('?? Step 2 Hazard Management Starting...');
+    
+    // Load existing hazards if any
+    @if (Model.AssessmentData.IdentifiedHazards?.Any() == true)
+    {
+        <text>
+        @for (int i = 0; i < Model.AssessmentData.IdentifiedHazards.Count; i++)
+        {
+            var hazard = Model.AssessmentData.IdentifiedHazards[i];
+            <text>
+            hazardsList.push({
+                id: '@hazard.Id',
+                description: '@Html.Raw(hazard.Description?.Replace("'", "\\'").Replace("\n", "\\n").Replace("\r", ""))',
+                category: '@hazard.Category',
+                fiveM: '@(hazard.Category ?? "")'  // Load 5M component if available
+            });
+            </text>
+        }
+        hazardCounter = @Model.AssessmentData.IdentifiedHazards.Count;
+        console.log('? Loaded existing hazards with 5M components:', hazardsList.length);
+        </text>
+    }
+    
+    updateHazardsDisplay();
+    updateFormFields();
+    
+    // Auto-expand if no hazards exist
+    if (hazardsList.length === 0) {
+        toggleAddHazardForm();
+    }
+    
+    console.log('? Step 2 initialization complete');
+});
+
+function toggleAddHazardForm() {
+    const form = document.getElementById('addHazardForm');
+    const icon = document.getElementById('toggleAddHazardIcon');
+    const text = document.getElementById('toggleAddHazardText');
+    
+    const isCollapsed = form.classList.contains('collapse');
+    
+    if (isCollapsed) {
+        form.classList.remove('collapse');
+        form.classList.add('show');
+        icon.className = 'fas fa-chevron-up';
+        text.textContent = 'Hide Form';
+    } else {
+        form.classList.remove('show');
+        form.classList.add('collapse');
+        icon.className = 'fas fa-chevron-down';
+        text.textContent = 'Show Form';
+    }
+}
+
+function addHazardToList() {
+    const description = document.getElementById('newHazardDescription').value.trim();
+    const category = document.getElementById('newHazardCategory').value;
+    const fiveM = document.getElementById('newHazardFiveM').value;
+    
+    // Validation
+    if (!description) {
+        alert('Please enter a hazard description');
+        document.getElementById('newHazardDescription').focus();
+        return;
+    }
+    
+    if (description.length < 10) {
+        alert('Please provide a more detailed hazard description (at least 10 characters)');
+        document.getElementById('newHazardDescription').focus();
+        return;
+    }
+    
+    // FIXED: Create new hazard with standard HZ-XXXX format (consistent with existing hazards)
+    hazardCounter++;
+    const newHazard = {
+        id: `HZ-${hazardCounter.toString().padStart(4, '0')}`, // FIXED: Standard format like HZ-0001, HZ-0002, etc.
+        description: description,
+        category: category,
+        fiveM: fiveM
+    };
+    
+    hazardsList.push(newHazard);
+    
+    // Update display
+    updateHazardsDisplay();
+    updateFormFields();
+    
+    // Clear form
+    clearHazardForm();
+    
+    // Show success message
+    showMessage(`Hazard ${newHazard.id} added successfully!`, 'success');
+    
+    console.log('? Added hazard:', newHazard);
+    
+    // CRITICAL: Trigger auto-save to ensure hazard is saved immediately
+    triggerAutoSave();
+}
+
+function clearHazardForm() {
+    document.getElementById('newHazardDescription').value = '';
+    document.getElementById('newHazardCategory').value = '';
+    document.getElementById('newHazardFiveM').value = '';
+}
+
+function editHazard(index) {
+    if (index < 0 || index >= hazardsList.length) return;
+    
+    const hazard = hazardsList[index];
+    editingHazardIndex = index;
+    
+    // Populate modal fields
+    document.getElementById('editHazardId').value = hazard.id;
+    document.getElementById('editHazardDescription').value = hazard.description;
+    document.getElementById('editHazardCategory').value = hazard.category;
+    document.getElementById('editHazardFiveM').value = hazard.fiveM;
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('editHazardModal'));
+    modal.show();
+}
+
+function saveHazardEdit() {
+    if (editingHazardIndex < 0) return;
+    
+    const description = document.getElementById('editHazardDescription').value.trim();
+    
+    // Validation
+    if (!description) {
+        alert('Please enter a hazard description');
+        return;
+    }
+    
+    if (description.length < 10) {
+        alert('Please provide a more detailed hazard description (at least 10 characters)');
+        return;
+    }
+    
+    // Update hazard (simplified structure)
+    const hazard = hazardsList[editingHazardIndex];
+    hazard.description = description;
+    hazard.category = document.getElementById('editHazardCategory').value;
+    hazard.fiveM = document.getElementById('editHazardFiveM').value;
+    
+    // Update display
+    updateHazardsDisplay();
+    updateFormFields();
+    
+    // Hide modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('editHazardModal'));
+    modal.hide();
+    
+    // Reset editing index
+    editingHazardIndex = -1;
+    
+    showMessage(`Hazard ${hazard.id} updated successfully!`, 'success');
+    
+    console.log('? Updated hazard:', hazard);
+    
+    // CRITICAL: Trigger auto-save to ensure changes are saved immediately
+    triggerAutoSave();
+}
+
+function deleteHazard(index) {
+    if (index < 0 || index >= hazardsList.length) return;
+    
+    // Prevent deletion of the initial hazard (index 0)
+    if (index === 0) {
+        showMessage('The initial hazard cannot be deleted. You can edit it if needed.', 'warning');
+        return;
+    }
+    
+    const hazard = hazardsList[index];
+    
+    if (confirm(`Are you sure you want to delete hazard ${hazard.id}?\n\n"${hazard.description}"`)) {
+        hazardsList.splice(index, 1);
+        
+        // Update display
+        updateHazardsDisplay();
+        updateFormFields();
+        
+        showMessage(`Hazard ${hazard.id} deleted successfully!`, 'success');
+        
+        console.log('??? Deleted hazard:', hazard);
+        
+        // CRITICAL: Trigger auto-save to ensure deletion is saved immediately
+        triggerAutoSave();
+    }
+}
+
+function updateHazardsDisplay() {
+    const count = hazardsList.length;
+    const hazardCount = document.getElementById('hazardCount');
+    const noHazardsMessage = document.getElementById('noHazardsMessage');
+    const hazardsTable = document.getElementById('hazardsTable');
+    const hazardProgress = document.getElementById('hazardProgress');
+    const hazardProgressText = document.getElementById('hazardProgressText');
+    const hazardProgressBar = document.getElementById('hazardProgressBar');
+    
+    // Update count
+    hazardCount.textContent = count;
+    
+    // Update progress
+    if (count > 0) {
+        hazardProgress.style.display = 'block';
+        hazardProgressText.textContent = `${count} hazard${count !== 1 ? 's' : ''}`;
+        
+        // Progress calculation (minimum 1 hazard, good if 3+, excellent if 5+)
+        let progressPercent = Math.min(100, (count / 5) * 100);
+        hazardProgressBar.style.width = progressPercent + '%';
+        
+        if (count >= 5) {
+            hazardProgressBar.className = 'progress-bar bg-success';
+        } else if (count >= 3) {
+            hazardProgressBar.className = 'progress-bar bg-info';
+        } else {
+            hazardProgressBar.className = 'progress-bar bg-warning';
+        }
+    } else {
+        hazardProgress.style.display = 'none';
+    }
+    
+    if (count === 0) {
+        noHazardsMessage.style.display = 'block';
+        hazardsTable.style.display = 'none';
+    } else {
+        noHazardsMessage.style.display = 'none';
+        hazardsTable.style.display = 'table';
+        
+        // Update table body
+        const tbody = document.getElementById('hazardsTableBody');
+        tbody.innerHTML = '';
+        
+        hazardsList.forEach((hazard, index) => {
+            const row = document.createElement('tr');
+            
+            // Truncate long descriptions for table display
+            const shortDescription = hazard.description.length > 120 ? 
+                hazard.description.substring(0, 117) + '...' : hazard.description;
+            
+            // Determine if this is the initial hazard (first hazard - index 0)
+            const isInitialHazard = index === 0;
+            
+            // Create delete button with conditional disabled state and styling
+            const deleteButtonHtml = isInitialHazard ? 
+                `<button type="button" class="btn btn-outline-secondary" disabled title="Initial hazard cannot be deleted">
+                    <i class="fas fa-lock"></i>
+                </button>` :
+                `<button type="button" class="btn btn-outline-danger" onclick="deleteHazard(${index})" title="Delete hazard">
+                    <i class="fas fa-trash"></i>
+                </button>`;
+            
+            row.innerHTML = `
+                <td>
+                    <span class="badge bg-primary">${hazard.id}</span>
+                    ${isInitialHazard ? '<br><small class="text-muted"><i class="fas fa-lock"></i> Initial Hazard</small>' : ''}
+                </td>
+                <td>
+                    <div class="small" title="${escapeHtml(hazard.description)}">
+                        ${escapeHtml(shortDescription)}
+                    </div>
+                </td>
+                <td>
+                    <span class="badge bg-secondary">${hazard.category || 'Not specified'}</span>
+                </td>
+                <td>
+                    <span class="badge bg-info">${hazard.fiveM || 'Not linked'}</span>
+                </td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-outline-primary" onclick="editHazard(${index})" title="Edit hazard">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        ${deleteButtonHtml}
+                    </div>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+        });
+    }
+}
+
+// CRITICAL FUNCTION: Update form fields for server-side processing
+function updateFormFields() {
+    const container = document.getElementById('hazardDataContainer');
+    container.innerHTML = '';
+    
+    hazardsList.forEach((hazard, index) => {
+        // Create hidden fields for form submission - INCLUDING 5M component
+        const fields = [
+            { name: `AssessmentData.IdentifiedHazards[${index}].Id`, value: hazard.id },
+            { name: `AssessmentData.IdentifiedHazards[${index}].Description`, value: hazard.description },
+            { name: `AssessmentData.IdentifiedHazards[${index}].Category`, value: hazard.category },
+            { name: `AssessmentData.IdentifiedHazards[${index}].FiveMComponent`, value: hazard.fiveM || '' }
+        ];
+        
+        fields.forEach(field => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = field.name;
+            input.value = field.value;
+            container.appendChild(input);
+        });
+    });
+    
+    console.log('? Updated form fields for', hazardsList.length, 'hazards with 5M components');
+}
+
+function showMessage(message, type = 'success') {
+    // Create temporary alert
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
+    alert.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alert);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 3000);
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Validation before step progression
+function validateHazardStep() {
+    if (hazardsList.length === 0) {
+        alert('At least one hazard must be identified before proceeding to Step 3.\n\nPlease use the "Add New Hazard" form to identify potential hazards in your system.');
+        return false;
+    }
+    
+    // Ensure the initial hazard has adequate description
+    if (hazardsList.length > 0 && hazardsList[0].description.length < 20) {
+        const proceed = confirm('The initial hazard has a brief description that may not provide enough detail for risk analysis.\n\nWould you like to continue anyway, or go back and add more detail?');
+        if (!proceed) return false;
+    }
+    
+    // Check for adequate descriptions in other hazards
+    const inadequateHazards = hazardsList.slice(1).filter(h => h.description.length < 20); // Skip first hazard, already checked above
+    if (inadequateHazards.length > 0) {
+        const proceed = confirm(`${inadequateHazards.length} additional hazard(s) have brief descriptions that may not provide enough detail for risk analysis.\n\nWould you like to continue anyway, or go back and add more detail?`);
+        return proceed;
+    }
+    
+    return true;
+}
+
+// CRITICAL: Auto-save functionality
+let autoSaveTimeout;
+function autoSave() {
+    clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = setTimeout(() => {
+        // Always update form fields before auto-save
+        updateFormFields();
+        
+        // Save to session storage as backup
+        const assessmentId = '@Model.Id';
+        const sessionKey = `Assessment_${assessmentId}_Step2Hazards`;
+        
+        try {
+            sessionStorage.setItem(sessionKey, JSON.stringify({
+                hazards: hazardsList,
+                savedAt: new Date().toISOString()
+            }));
+            console.log('?? Auto-saved hazards to session storage');
+        } catch (error) {
+            console.error('? Error auto-saving hazards:', error);
+        }
+    }, 2000);
+}
+
+// Load from session storage on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const assessmentId = '@Model.Id';
+    const sessionKey = `Assessment_${assessmentId}_Step2Hazards`;
+    
+    try {
+        const savedData = sessionStorage.getItem(sessionKey);
+        if (savedData && hazardsList.length === 0) {
+            const data = JSON.parse(savedData);
+            if (data.hazards && Array.isArray(data.hazards)) {
+                hazardsList = data.hazards;
+                hazardCounter = Math.max(...hazardsList.map(h => {
+                    const match = h.id.match(/HZ-(\d+)/);
+                    return match ? parseInt(match[1]) : 0;
+                }), 0);
+                
+                updateHazardsDisplay();
+                updateFormFields();
+                console.log('?? Loaded hazards from session storage:', hazardsList.length);
+            }
+        }
+    } catch (error) {
+        console.error('? Error loading hazards from session storage:', error);
+    }
+});
+
+// Trigger auto-save when hazards change
+function triggerAutoSave() {
+    console.log('?? Triggering auto-save for hazards...');
+    autoSave();
+}
+
+// Hook into form submission for validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const submitButton = document.activeElement;
+            
+            // Always update form fields before submission
+            updateFormFields();
+            
+            // Only validate for Next Step button, not Save Draft
+            if (submitButton && (submitButton.textContent.includes('Next Step') || submitButton.textContent.includes('Navigate'))) {
+                if (!validateHazardStep()) {
+                    e.preventDefault();
+                    return false;
+                }
+            }
+        });
+    }
+});
+
+// GLOBAL FUNCTION FOR NAVIGATION SCRIPT TO CALL
+window.ensureStep2HazardsSaved = function() {
+    console.log('?? Ensuring Step 2 hazards are saved before navigation...');
+    
+    // Update form fields to ensure they're ready for submission
+    updateFormFields();
+    
+    // Validate we have hazards
+    if (hazardsList.length === 0) {
+        console.error('? No hazards identified in Step 2');
+        return false;
+    }
+    
+    console.log(`? Step 2 ready with ${hazardsList.length} hazards for SaveStep2 handler`);
+    return true;
+};
+
+// ENHANCED: Integrate with step-aware save system
+document.addEventListener('DOMContentLoaded', function() {
+    // Ensure Step 2 hazards are updated whenever navigation occurs
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            console.log('?? Step 2 form submission detected - updating hazard fields');
+            
+            // Always update form fields before any submission (Next Step, Save Draft, etc.)
+            updateFormFields();
+            
+            // Ensure we have adequate hazards for next step navigation
+            const submitButton = document.activeElement;
+            if (submitButton && (submitButton.textContent.includes('Next Step') || submitButton.textContent.includes('Navigate'))) {
+                if (!validateHazardStep()) {
+                    e.preventDefault();
+                    return false;
+                }
+                
+                console.log('? Step 2 validation passed - proceeding with navigation');
+            }
+        });
+    }
+    
+    // Enhanced auto-save integration
+    const originalTriggerAutoSave = window.triggerAutoSave || function() {};
+    window.triggerAutoSave = function() {
+        console.log('?? Step 2 Enhanced auto-save triggered');
+        updateFormFields(); // Ensure form fields are current
+        originalTriggerAutoSave(); // Call original if it exists
+    };
+});
+
+// Validation before step progression
+function validateStep2() {
+    const hazardDescriptions = document.querySelectorAll('textarea[name*="Description"]:not([name*="AdditionalComments"])');
+    
+    let incompleteHazards = [];
+    let validationErrors = [];
+
+    hazardDescriptions.forEach((textarea, index) => {
+        const description = textarea.value.trim();
+        const hazardNumber = index + 1;
+        
+        // Check if field is empty
+        if (!description) {
+            incompleteHazards.push(`Hazard ${hazardNumber}`);
+        }
+        // Check minimum length requirements (10 characters)
+        else if (description.length < 10) {
+            validationErrors.push(`Hazard ${hazardNumber} description must be at least 10 characters (currently ${description.length})`);
+        }
+    });
+    
+    // Show validation errors
+    if (incompleteHazards.length > 0) {
+        alert(`Please provide descriptions for the following hazards:\n\n• ${incompleteHazards.join('\n• ')}\n\nAll hazard descriptions are required.`);
+        return false;
+    }
+    
+    if (validationErrors.length > 0) {
+        alert(`Please provide more detailed hazard descriptions:\n\n• ${validationErrors.join('\n• ')}\n\nEach description requires at least 10 characters for meaningful analysis.`);
+        return false;
+    }
+    
+    return true;
+}
+
+// Real-time validation feedback for Step 2
+function addStep2RealTimeValidation() {
+    const hazardDescriptions = document.querySelectorAll('textarea[name*="Description"]:not([name*="AdditionalComments"])');
+    
+    hazardDescriptions.forEach(textarea => {
+        // Add character counter
+        const formText = textarea.closest('.form-group, .mb-3')?.querySelector('.form-text');
+        if (formText) {
+            const counter = document.createElement('small');
+            counter.className = 'text-muted ms-2';
+            counter.style.fontSize = '0.75em';
+            formText.parentNode.insertBefore(counter, formText.nextSibling);
+            
+            function updateValidation() {
+                const length = textarea.value.trim().length;
+                const minLength = 10;
+                
+                // Update counter
+                counter.textContent = `${length}/${minLength} characters`;
+                
+                // Update styling based on validation
+                if (length === 0) {
+                    textarea.classList.remove('is-valid', 'is-invalid');
+                    counter.className = 'text-muted ms-2';
+                } else if (length < minLength) {
+                    textarea.classList.remove('is-valid');
+                    textarea.classList.add('is-invalid');
+                    counter.className = 'text-danger ms-2';
+                    counter.textContent = `${length}/${minLength} characters (minimum ${minLength} required)`;
+                } else {
+                    textarea.classList.remove('is-invalid');
+                    textarea.classList.add('is-valid');
+                    counter.className = 'text-success ms-2';
+                    counter.textContent = `${length} characters ?`;
+                }
+            }
+            
+            // Initial validation
+            updateValidation();
+            
+            // Add event listeners
+            textarea.addEventListener('input', updateValidation);
+            textarea.addEventListener('blur', updateValidation);
+        }
+    });
+}
+
+// Initialize Step 2 validation when hazards are added/loaded
+function initializeStep2Validation() {
+    // Add real-time validation with character counters
+    setTimeout(() => {
+        addStep2RealTimeValidation();
+    }, 500); // Small delay to ensure DOM is ready
+    
+    // Hook into form submission for validation
+    const form = document.querySelector('form');
+    if (form && !form.hasAttribute('data-validation-attached')) {
+        form.setAttribute('data-validation-attached', 'true');
+        form.addEventListener('submit', function(e) {
+            const submitButton = document.activeElement;
+            
+            // Only validate for Next Step button, not Save Draft
+            if (submitButton && (submitButton.textContent.includes('Next Step') || submitButton.textContent.includes('Continue'))) {
+                if (!validateStep2()) {
+                    e.preventDefault();
+                    return false;
+                }
+            }
+        });
+    }
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeStep2Validation();
+    
+    // Re-initialize validation when hazards are dynamically added
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                // Check if hazard cards were added
+                const addedHazards = Array.from(mutation.addedNodes).some(node => 
+                    node.nodeType === Node.ELEMENT_NODE && 
+                    (node.classList?.contains('hazard-card') || node.querySelector?.('.hazard-card'))
+                );
+                
+                if (addedHazards) {
+                    setTimeout(() => {
+                        addStep2RealTimeValidation();
+                    }, 100);
+                }
+            }
+        });
+    });
+    
+    // Start observing
+    const hazardContainer = document.getElementById('hazard-list') || document.querySelector('.hazard-container') || document.body;
+    observer.observe(hazardContainer, {
+        childList: true,
+        subtree: true
+    });
+});
+</script>

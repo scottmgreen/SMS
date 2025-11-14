@@ -142,12 +142,17 @@ public class Login : PageModel
     /// </summary>
     private void CreateSMSSession(BaseUser user, SMSUserType userType)
     {
+        _logger.LogInformation("Creating SMS Session: UserId={UserId}, UserType.Value={UserTypeValue}, UserType.Name={UserTypeName}", 
+            user.UserId.Value, userType.Value, userType.Name);
+
         HttpContext.Session.SetString("SMS_UserId", user.UserId.Value);
-        HttpContext.Session.SetString("SMS_UserType", userType.Value);
+        HttpContext.Session.SetString("SMS_UserType", userType.Value); // Use .Value, not .Name
         HttpContext.Session.SetString("SMS_Email", user.UserName.Value);
         HttpContext.Session.SetString("SMS_DisplayName", user.DisplayName);
         HttpContext.Session.SetString("SMS_FirstName", user.FirstName.Value);
         HttpContext.Session.SetString("SMS_LastName", user.LastName.Value);
+
+        _logger.LogInformation("Session base data stored successfully");
 
         // Store user type-specific data from Domain Entities
         switch (userType)
@@ -155,18 +160,29 @@ public class Login : PageModel
             case var type when type == SMSUserType.Application && user is SMSApplicationUser appUser:
                 HttpContext.Session.SetString("SMS_ApplicationRole", appUser.ApplicationRole);
                 HttpContext.Session.SetString("SMS_PermissionLevel", appUser.PermissionLevel);
+                _logger.LogInformation("Application user session data: Role={Role}, PermissionLevel={Level}", 
+                    appUser.ApplicationRole, appUser.PermissionLevel);
                 break;
 
             case var type when type == SMSUserType.Organizational && user is SMSOrganizationalUser orgUser:
                 HttpContext.Session.SetString("SMS_Department", orgUser.Department);
                 HttpContext.Session.SetString("SMS_Position", orgUser.Position);
                 HttpContext.Session.SetString("SMS_OrganizationLevel", orgUser.OrganizationLevel);
+                _logger.LogInformation("Organizational user session data: Dept={Dept}, Position={Position}, Level={Level}", 
+                    orgUser.Department, orgUser.Position, orgUser.OrganizationLevel);
                 break;
 
             case var type when type == SMSUserType.Stakeholder && user is SMSStakeholderUser stakeholderUser:
                 HttpContext.Session.SetString("SMS_Organization", stakeholderUser.Organization);
                 HttpContext.Session.SetString("SMS_StakeholderType", stakeholderUser.StakeholderType);
                 HttpContext.Session.SetString("SMS_AccessLevel", stakeholderUser.AccessLevel);
+                _logger.LogInformation("Stakeholder user session data: Org={Org}, Type={Type}, Access={Access}", 
+                    stakeholderUser.Organization, stakeholderUser.StakeholderType, stakeholderUser.AccessLevel);
+                break;
+
+            default:
+                _logger.LogWarning("Unknown user type or casting failed: UserType={UserType}, UserClass={UserClass}", 
+                    userType.Value, user.GetType().Name);
                 break;
         }
     }

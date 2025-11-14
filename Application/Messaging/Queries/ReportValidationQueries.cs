@@ -20,3 +20,13 @@ public class GetAllReportValidationsQuery : BaseQueryBundle, IRequest<Result<Lis
     {
     }
 }
+
+public class GetReportValidationByReportIdQuery : BaseQueryBundle, IRequest<Result<ReportValidation>>
+{
+    public ReportID ReportId { get; set; }
+
+    public GetReportValidationByReportIdQuery(ReportID reportId)
+    {
+        ReportId = reportId ?? throw new ArgumentNullException(nameof(reportId));
+    }
+}

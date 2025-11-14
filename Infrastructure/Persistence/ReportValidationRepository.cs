@@ -45,6 +45,13 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationDecision, reportValidation.ValidationDecision));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationStatus, reportValidation.Status));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationStage, reportValidation.Stage));
+            
+            // Add the missing validation-specific parameters for Create as well
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationValidatedBy, reportValidation.ValidatedBy ?? "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationValidatedDate, reportValidation.ValidatedDate ?? DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationComments, reportValidation.ValidationComments ?? string.Empty));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationType, reportValidation.ValidationType ?? "Standard"));
+            
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
@@ -117,6 +124,57 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
         }
     }
 
+    public async Task<Result<ReportValidation>> GetReportValidationByReportIdAsync(ReportID id, CancellationToken ct = default)
+    {
+        try
+        {
+            if (id is null)
+            {
+                return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.NullOrEmpty);
+            }
+
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_ReportValidation_GetById} {id}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_ReportValidation_GetByReportId, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+
+            ReportValidation? response = null;
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    response = Mappers.MapToReportValidation(reader);
+                }
+            }
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            if (response is not null)
+            {
+                return Result<ReportValidation>.Success(response);
+            }
+            else
+            {
+                return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.NotFound);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemError($"{_logheader} {ex.Message}", null);
+            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+
+
+
+
+
     public async Task<Result<List<ReportValidation>>> GetAllReportValidationsAsync(CancellationToken ct = default)
     {
         try
@@ -168,12 +226,21 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
                 CommandType = CommandType.StoredProcedure
             };
 
+            // Add ALL required parameters to match the stored procedure
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, reportValidation.Id.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationCode, reportValidation.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationReportCode, reportValidation.ReportCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationDecision, reportValidation.ValidationDecision));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationStatus, reportValidation.Status));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationStage, reportValidation.Stage));
+            
+            // FIX: Add the missing critical parameters using the correct parameter names
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationValidatedBy, reportValidation.ValidatedBy ?? "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationValidatedDate, reportValidation.ValidatedDate ?? DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationComments, reportValidation.ValidationComments ?? string.Empty));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationType, reportValidation.ValidationType ?? "Standard"));
+            
+            // System audit fields
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 

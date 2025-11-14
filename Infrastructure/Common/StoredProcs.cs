@@ -494,6 +494,12 @@
         private static readonly Lazy<string> _pr_ReportValidation_GetById = new Lazy<string>(() => "pr_ReportValidation_GetById");
         public static string pr_ReportValidation_GetById => _pr_ReportValidation_GetById.Value;
 
+        private static readonly Lazy<string> _pr_ReportValidation_GetByReportId = new Lazy<string>(() => "pr_ReportValidation_GetByReportId");
+        public static string pr_ReportValidation_GetByReportId => _pr_ReportValidation_GetByReportId.Value;
+
+
+
+
         private static readonly Lazy<string> _pr_ReportValidation_GetAll = new Lazy<string>(() => "pr_ReportValidation_GetAll");
         public static string pr_ReportValidation_GetAll => _pr_ReportValidation_GetAll.Value;
 

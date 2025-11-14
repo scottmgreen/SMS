@@ -1,0 +1,1361 @@
+﻿@page "/SafetyRiskManagement/RiskAssessmentWizard/{id}/step/{stepNumber:int?}"
+@model SMS.Presentation.Pages.SafetyRiskManagement.RiskAssessmentWizardModel
+@{
+    ViewData["Title"] = $"Risk Assessment Wizard - Step {Model.StepNumber}";
+}
+
+<div class="container-fluid">
+    <!-- Header with Progress -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/SafetyRiskManagement">Safety Risk Management</a></li>
+                    <li class="breadcrumb-item"><a href="/SafetyRiskManagement/RiskAssessment">Risk Assessment</a></li>
+                    <li class="breadcrumb-item active">Assessment Wizard</li>
+                </ol>
+            </nav>
+            
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="card-title">
+                                <i class="fas fa-clipboard-check"></i> 
+                                @Model.AssessmentName
+                            </h4>
+                            <p class="card-text mb-0">
+                                Assessment ID: @Model.AssessmentId | 
+                                Lead Assessor: @Model.LeadAssessor
+                            </p>
+                        </div>
+                        @* <div class="col-md-4 text-end">
+                            <h3 class="mb-1">Step @Model.CurrentStep of 5</h3>
+                            <div class="progress bg-light">
+                                <div class="progress-bar bg-warning" style="width: @Model.ProgressPercentage%">
+                                    @Model.ProgressPercentage%
+                                </div>
+                            </div>
+                            <small class="text-light">@Model.CurrentStepName</small>
+                        </div> *@
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step Navigation -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row text-center">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            var stepClass = i == Model.CurrentStep ? "btn-primary" : 
+                                           i < Model.CurrentStep ? "btn-success" : "btn-outline-secondary";
+                            var iconClass = i < Model.CurrentStep ? "fa-check-circle" : 
+                                           i == Model.CurrentStep ? "fa-edit" : "fa-circle";
+                            var isDisabled = i > Model.CurrentStep && !Model.CanSkipToStep(i);
+                            
+                            <div class="col">
+                                <form method="post" style="display: inline;">
+                                    <input type="hidden" asp-for="Id" />
+                                    <input type="hidden" asp-for="StepNumber" />
+                                    @if (isDisabled)
+                                    {
+                                        <button type="button" class="btn @stepClass btn-sm w-100" disabled>
+                                            <i class="fas @iconClass"></i><br>
+                                            <small>Step @i</small><br>
+                                            <small>@Model.GetStepName(i)</small>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="submit" class="btn @stepClass btn-sm w-100" 
+                                                formaction="?handler=NavigateToStep" 
+                                                name="targetStep" value="@i" 
+                                                formnovalidate>
+                                            <i class="fas @iconClass"></i><br>
+                                            <small>Step @i</small><br>
+                                            <small>@Model.GetStepName(i)</small>
+                                        </button>
+                                    }
+                                </form>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resume Information (if applicable) -->
+    @if (Model.GetLastCompletedStep() > 0)
+    {
+        @* <div class="row mb-3">
+            <div class="col-12">
+                <div class="alert alert-primary border-primary">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="mb-1">
+                                <i class="fas fa-history"></i> Assessment Progress Restored
+                            </h6>
+                            <p class="mb-0">
+                                <strong>Last completed:</strong> Step @Model.GetLastCompletedStep() of 5 |
+                                <strong>Recommended next:</strong> Step @Model.GetRecommendedStep() |
+                                <strong>Hazards identified:</strong> @Model.IdentifiedHazardsCount
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="btn-group">
+                                <a href="/SafetyRiskManagement/RiskAssessmentWizard/@Model.Id/step/@Model.GetRecommendedStep()" 
+                                   class="btn btn-primary btn-sm">
+                                    <i class="fas fa-fast-forward"></i> Go to Next Step
+                                </a>
+                                <a href="/SafetyRiskManagement/RiskAssessmentWizard/@Model.Id/step/1" 
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-step-backward"></i> Review from Start
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> *@
+    }
+
+    <!-- Step Content -->
+    <div class="row">
+        <div class="col-lg-9">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="fas @Model.GetStepIcon(Model.CurrentStep)"></i> 
+                        Step @Model.CurrentStep: @Model.CurrentStepName
+                    </h4>
+                    @* <p class="mb-0 mt-1">@Model.GetStepDescription()</p> *@
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        
+                        <!-- Hidden fields to preserve route parameters -->
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="StepNumber" />
+                        
+                        @if (Model.StepNumber == 1)
+                        {
+                            @await Html.PartialAsync("_Step1_DescribeSystem", Model)
+                        }
+                        else if (Model.StepNumber == 2)
+                        {
+                            @await Html.PartialAsync("_Step2_IdentifyHazards", Model)
+                        }
+                        else if (Model.StepNumber == 3)
+                        {
+                            @await Html.PartialAsync("_Step3_AnalyzeRisk", Model)
+                        }
+                        else if (Model.StepNumber == 4)
+                        {
+                            @await Html.PartialAsync("_Step4_AssessRisk", Model)
+                        }
+                        else if (Model.StepNumber == 5)
+                        {
+                            @await Html.PartialAsync("_Step5_MitigateRisk", Model)
+                        }
+
+                        <!-- Navigation Buttons -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <hr>
+                                
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        @if (Model.StepNumber > 1)
+                                        {
+                                            <button type="submit" class="btn btn-outline-secondary" 
+                                                    formaction="?handler=PreviousStep" formnovalidate>
+                                                <i class="fas fa-arrow-left"></i> Previous Step
+                                            </button>
+                                        }
+                                        <a href="/SafetyRiskManagement/RiskAssessment" 
+                                           class="btn btn-outline-primary">
+                                            <i class="fas fa-list"></i> Back to Assessment List
+                                        </a>
+                                    </div>
+                                    <div>
+                                        @* <button type="button" class="btn btn-outline-info" 
+                                                onclick="manualSaveCurrentStep()">
+                                            <i class="fas fa-save"></i> Save Progress
+                                        </button> *@
+                                        @if (Model.StepNumber < 5)
+                                        {
+                                            <button type="button" class="btn btn-primary"
+                                                    onclick="saveAndNavigateNext()">
+                                                <i class="fas fa-arrow-right"></i> Next Step
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="submit" class="btn btn-success" 
+                                                    formaction="?handler=CompleteAssessment">
+                                                <i class="fas fa-check-circle"></i> Complete Assessment
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Panel -->
+        <div class="col-lg-3">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5><i class="fas fa-question-circle"></i> Step @Model.StepNumber Guidance</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.StepNumber == 1)
+                    {
+                        <h6>System Description Requirements:</h6>
+                        <ul class="small">
+                            <li>Define system boundaries clearly</li>
+                            <li>Document system purpose and objectives</li>
+                            <li>Complete 5M framework analysis</li>
+                            <li>Identify key stakeholder groups</li>
+                            <li>Consider operational context</li>
+                        </ul>
+                        
+                        <button type="button" class="btn btn-primary btn-md" data-bs-toggle="modal" data-bs-target="#fiveMGuidanceModal">
+                            <i class="fas fa-question-circle"></i>&nbsp; 5M Framework Guidance
+                        </button>
+                        
+                        <!-- 5M Framework Guidance Modal -->
+                        <div class="modal fade" id="fiveMGuidanceModal" tabindex="-1" aria-labelledby="fiveMGuidanceModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-xl">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-primary text-white">
+                                        <h5 class="modal-title" id="fiveMGuidanceModalLabel">
+                                            <i class="fas fa-project-diagram"></i> 5M Framework Guide &nbsp;
+                                        </h5>
+                                        <br />
+                                        <small>Use this systematic approach to analyze all critical elements of your system.<br /> </small>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row mb-4">
+                                            <div class="col-12">
+                                                <div class="alert alert-primary">
+                                                    <i class="fas fa-info-circle"></i>
+                                                    <strong>5M Framework Purpose:</strong> Use this systematic approach to analyze all critical elements of your system. The 5M methodology ensures comprehensive hazard identification by examining Man (people), Machine (equipment), Method (procedures), Material (resources), and Milieu (environment).
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- 5M Framework Table -->
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered">
+                                                <thead class="table-primary">
+                                                    <tr>
+                                                        <th width="20%" class="text-center text-primary">
+                                                            <i class="fas fa-users fa-lg"></i><br>
+                                                            <strong>Man</strong><br>
+                                                            <small>(People)</small>
+                                                        </th>
+                                                        <th width="20%" class="text-center text-success">
+                                                            <i class="fas fa-cogs fa-lg"></i><br>
+                                                            <strong>Machine</strong><br>
+                                                            <small>(Equipment)</small>
+                                                        </th>
+                                                        <th width="20%" class="text-center text-info">
+                                                            <i class="fas fa-clipboard-list fa-lg"></i><br>
+                                                            <strong>Method</strong><br>
+                                                            <small>(Procedures)</small>
+                                                        </th>
+                                                        <th width="20%" class="text-center text-warning">
+                                                            <i class="fas fa-boxes fa-lg"></i><br>
+                                                            <strong>Material</strong><br>
+                                                            <small>(Resources)</small>
+                                                        </th>
+                                                        <th width="20%" class="text-center text-danger">
+                                                            <i class="fas fa-globe fa-lg"></i><br>
+                                                            <strong>Milieu</strong><br>
+                                                            <small>(Environment)</small>
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr class="table-light">
+                                                        <td>
+                                                            <strong class="text-primary">Key Elements:</strong>
+                                                            <ul class="mb-2 small">
+                                                                <li>Roles and responsibilities</li>
+                                                                <li>Training and competency</li>
+                                                                <li>Workload and fatigue factors</li>
+                                                                <li>Communication requirements</li>
+                                                                <li>Human error potential</li>
+                                                                <li>Crew coordination</li>
+                                                            </ul>
+                                                        </td>
+                                                        <td>
+                                                            <strong class="text-success">Key Elements:</strong>
+                                                            <ul class="mb-2 small">
+                                                                <li>Critical equipment and systems</li>
+                                                                <li>Backup and redundancy</li>
+                                                                <li>Maintenance requirements</li>
+                                                                <li>Technology dependencies</li>
+                                                                <li>Equipment failure modes</li>
+                                                                <li>Performance specifications</li>
+                                                            </ul>
+                                                        </td>
+                                                        <td>
+                                                            <strong class="text-info">Key Elements:</strong>
+                                                            <ul class="mb-2 small">
+                                                                <li>Standard operating procedures</li>
+                                                                <li>Emergency procedures</li>
+                                                                <li>Regulatory compliance</li>
+                                                                <li>Process interfaces</li>
+                                                                <li>Procedure adequacy</li>
+                                                                <li>Change management</li>
+                                                            </ul>
+                                                        </td>
+                                                        <td>
+                                                            <strong class="text-warning">Key Elements:</strong>
+                                                            <ul class="mb-2 small">
+                                                                <li>Critical materials and supplies</li>
+                                                                <li>Resource availability</li>
+                                                                <li>Quality specifications</li>
+                                                                <li>Supply chain dependencies</li>
+                                                                <li>Material handling</li>
+                                                                <li>Storage requirements</li>
+                                                            </ul>
+                                                        </td>
+                                                        <td>
+                                                            <strong class="text-danger">Key Elements:</strong>
+                                                            <ul class="mb-2 small">
+                                                                <li>Weather and environmental conditions</li>
+                                                                <li>Operational pressures and constraints</li>
+                                                                <li>Regulatory and policy environment</li>
+                                                                <li>Organizational culture and climate</li>
+                                                                <li>External influences and dependencies</li>
+                                                                <li>Time pressures and schedules</li>
+                                                            </ul>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="bg-light">
+                                                            <strong class="text-primary">Analysis Questions:</strong>
+                                                            <div class="small">
+                                                                <div class="alert alert-primary p-2 mb-2">
+                                                                    <strong>Who</strong> operates the system? What are their qualifications? How do they coordinate and communicate?
+                                                                </div>
+                                                                <strong>Consider:</strong>
+                                                                <ul class="small mb-0">
+                                                                    <li>Staffing levels and shifts</li>
+                                                                    <li>Experience and training gaps</li>
+                                                                    <li>Decision-making authority</li>
+                                                                    <li>Stress and workload factors</li>
+                                                                </ul>
+                                                            </div>
+                                                        </td>
+                                                        <td class="bg-light">
+                                                            <strong class="text-success">Analysis Questions:</strong>
+                                                            <div class="small">
+                                                                <div class="alert alert-success p-2 mb-2">
+                                                                    <strong>What</strong> could break? What happens if it fails? How is it maintained and monitored?
+                                                                </div>
+                                                                <strong>Consider:</strong>
+                                                                <ul class="small mb-0">
+                                                                    <li>Single points of failure</li>
+                                                                    <li>Age and condition</li>
+                                                                    <li>Maintenance schedules</li>
+                                                                    <li>Performance monitoring</li>
+                                                                </ul>
+                                                            </div>
+                                                        </td>
+                                                        <td class="bg-light">
+                                                            <strong class="text-info">Analysis Questions:</strong>
+                                                            <div class="small">
+                                                                <div class="alert alert-info p-2 mb-2">
+                                                                    <strong>How</strong> are procedures followed? Are they clear? What happens in emergencies or unusual situations?
+                                                                </div>
+                                                                <strong>Consider:</strong>
+                                                                <ul class="small mb-0">
+                                                                    <li>Procedure clarity and currency</li>
+                                                                    <li>Training on procedures</li>
+                                                                    <li>Deviation handling</li>
+                                                                    <li>Interface between procedures</li>
+                                                                </ul>
+                                                            </div>
+                                                        </td>
+                                                        <td class="bg-light">
+                                                            <strong class="text-warning">Analysis Questions:</strong>
+                                                            <div class="small">
+                                                                <div class="alert alert-warning p-2 mb-2">
+                                                                    <strong>What</strong> materials are critical? What if supplies run out? Any quality or contamination issues?
+                                                                </div>
+                                                                <strong>Consider:</strong>
+                                                                <ul class="small mb-0">
+                                                                    <li>Critical material availability</li>
+                                                                    <li>Supplier reliability</li>
+                                                                    <li>Quality control processes</li>
+                                                                    <li>Storage and handling</li>
+                                                                </ul>
+                                                            </div>
+                                                        </td>
+                                                        <td class="bg-light">
+                                                            <strong class="text-danger">Analysis Questions:</strong>
+                                                            <div class="small">
+                                                                <div class="alert alert-danger p-2 mb-2">
+                                                                    <strong>How</strong> do conditions affect operations? What external pressures and constraints exist?
+                                                                </div>
+                                                                <strong>Consider:</strong>
+                                                                <ul class="small mb-0">
+                                                                    <li>Weather impact on operations</li>
+                                                                    <li>Regulatory changes</li>
+                                                                    <li>Organizational pressures</li>
+                                                                    <li>Economic constraints</li>
+                                                                </ul>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        
+                                        <div class="row mt-4">
+                                            <div class="col-12">
+                                                <div class="card border-success">
+                                                    <div class="card-header bg-success text-white">
+                                                        <h6 class="mb-0"><i class="fas fa-lightbulb"></i> Analysis Best Practices</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <strong>Analysis Tips:</strong>
+                                                                <ul class="small mb-0">
+                                                                    <li>Be specific and detailed in your analysis</li>
+                                                                    <li>Consider both normal and abnormal conditions</li>
+                                                                    <li>Think about interactions between the 5M elements</li>
+                                                                    <li>Include both current and planned system elements</li>
+                                                                </ul>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <strong>Quality Indicators:</strong>
+                                                                <ul class="small mb-0">
+                                                                    <li>Each section should be at least 10 characters</li>
+                                                                    <li>Include specific examples and scenarios</li>
+                                                                    <li>Address both routine and exceptional conditions</li>
+                                                                    <li>Consider system interfaces and dependencies</li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                            <i class="fas fa-times"></i> Close Guide
+                                        </button>
+                                        @* <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="focusOnSystemDescription()">
+                                            <i class="fas fa-play"></i> Start System Analysis
+                                        </button> *@
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else if (Model.StepNumber == 2)
+                    {
+                        <h6>Hazard Identification Tips:</h6>
+                        <ul class="small">
+                            <li>Review historical incidents</li>
+                            <li>Analyze operational data</li>
+                            <li>Conduct stakeholder interviews</li>
+                            <li>Perform system walkthroughs</li>
+                            <li>Use hazard taxonomies</li>
+                        </ul>
+                    }
+                    else if (Model.StepNumber == 3)
+                    {
+                        <h6>Risk Analysis Methods:</h6>
+                        <ul class="small">
+                            <li>Risk Analysis Notes & Assumptions: Record key assumptions and criteria used in this risk analysis</li>
+                            <li>Severity determination</li>
+                            <li>Existing controls review</li>
+                            <li>Risk matrix positioning</li>
+                            <li>What-if scenarios</li>
+                        </ul>
+                        
+                    }
+                    else if (Model.StepNumber == 4)
+                    {
+                        <h6>Risk Assessment Criteria:</h6>
+                        <ul class="small">
+                            <li>Tolerability thresholds</li>
+                            <li>ALARP principles</li>
+                            <li>Regulatory requirements</li>
+                            <li>Industry standards</li>
+                            <li>Organizational policies</li>
+                        </ul>
+                        <button type="button" class="btn btn-primary btn-md" data-bs-toggle="modal" data-bs-target="#riskMatrixGuidanceModal">
+                            <i class="fas fa-question-circle"></i>&nbsp; 5x5 Risk Matrix Guidance
+                        </button>
+                        <!-- SMS Risk Matrix Reference Modal -->
+                        <div class="modal fade" id="riskMatrixGuidanceModal" tabindex="-1" aria-labelledby="riskMatrixGuidanceModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-xl">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-info text-white">
+                                        <h5 class="modal-title" id="riskMatrixGuidanceModalLabel">
+                                            <i class="fas fa-table"></i> SMS Risk Matrix (5x5) Reference Guide
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row mb-4">
+                                            <div class="col-12">
+                                                <div class="alert alert-info">
+                                                    <i class="fas fa-info-circle"></i>
+                                                    <strong>Risk Matrix Usage:</strong> Use this 5x5 matrix to assess each identified hazard by combining severity (impact) and likelihood (probability) to determine the overall risk level. The resulting risk level helps determine tolerability using ALARP principles.
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered text-center risk-matrix">
+                                                <thead>
+                                                    <tr>
+                                                        <th rowspan="2" class="align-middle">Severity ?<br>? Likelihood</th>
+                                                        <th class="bg-light">1<br>Minor</th>
+                                                        <th class="bg-light">2<br>Moderate</th>
+                                                        <th class="bg-light">3<br>Serious</th>
+                                                        <th class="bg-light">4<br>Major</th>
+                                                        <th class="bg-light">5<br>Catastrophic</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <th class="bg-light">A - Rare</th>
+                                                        <td class="bg-success text-white">1A<br>Very Low</td>
+                                                        <td class="bg-success text-white">2A<br>Very Low</td>
+                                                        <td class="bg-success text-white">3A<br>Very Low</td>
+                                                        <td class="bg-success text-white">4A<br>Very Low</td>
+                                                        <td class="bg-warning text-dark">5A<br>Low</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="bg-light">B - Unlikely</th>
+                                                        <td class="bg-success text-white">1B<br>Very Low</td>
+                                                        <td class="bg-success text-white">2B<br>Very Low</td>
+                                                        <td class="bg-warning text-dark">3B<br>Low</td>
+                                                        <td class="bg-warning text-dark">4B<br>Low</td>
+                                                        <td class="bg-info text-white">5B<br>Medium</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="bg-light">B - Possible</th>
+                                                        <td class="bg-success text-white">1C<br>Very Low</td>
+                                                        <td class="bg-warning text-dark">2C<br>Low</td>
+                                                        <td class="bg-warning text-dark">3C<br>Low</td>
+                                                        <td class="bg-info text-white">4C<br>Medium</td>
+                                                        <td class="bg-danger text-white">5C<br>High</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="bg-light">D - Likely</th>
+                                                        <td class="bg-success text-white">1D<br>Very Low</td>
+                                                        <td class="bg-warning text-dark">2D<br>Low</td>
+                                                        <td class="bg-info text-white">3D<br>Medium</td>
+                                                        <td class="bg-danger text-white">4D<br>High</td>
+                                                        <td class="bg-danger text-white">5D<br>High</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="bg-light">E - Frequent</th>
+                                                        <td class="bg-warning text-dark">1E<br>Low</td>
+                                                        <td class="bg-info text-white">2E<br>Medium</td>
+                                                        <td class="bg-danger text-white">3E<br>High</td>
+                                                        <td class="bg-danger text-white">4E<br>High</td>
+                                                        <td class="bg-dark text-white">5E<br>Very High</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <div class="row mt-4">
+                                            <div class="col-md-7">
+                                                <div class="card border-primary">
+                                                    <div class="card-header bg-primary text-white">
+                                                        <h6 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Severity Levels</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <ul class="mb-0">
+                                                            <li><strong>1 - Minor:</strong> First aid only, minor delays, minimal impact</li>
+                                                            <li><strong>2 - Moderate:</strong> Medical treatment required, localized disruption</li>
+                                                            <li><strong>3 - Serious:</strong> Hospitalization required, temporary closures</li>
+                                                            <li><strong>4 - Major:</strong> Permanent injury, extended closures, significant damage</li>
+                                                            <li><strong>5 - Catastrophic:</strong> Fatalities, major infrastructure damage, long-term impact</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-5">
+                                                <div class="card border-success">
+                                                    <div class="card-header bg-success text-white">
+                                                        <h6 class="mb-0"><i class="fas fa-clock"></i> Likelihood Levels</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <ul class="mb-0">
+                                                            <li><strong>A - Rare:</strong> Less than once per decade</li>
+                                                            <li><strong>B - Unlikely:</strong> Once every 5-10 years</li>
+                                                            <li><strong>C - Possible:</strong> Once per year or few times every 2-5 years</li>
+                                                            <li><strong>D - Likely:</strong> Once per month or several times per year</li>
+                                                            <li><strong>E - Frequent:</strong> At least once per week</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        @*  <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card border-warning">
+                            <div class="card-header bg-warning text-dark">
+                                <h6 class="mb-0"><i class="fas fa-balance-scale"></i> ALARP Tolerability Principles</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="text-center">
+                                            <span class="badge bg-success fs-6 mb-2">Acceptable</span>
+                                            <p class="small"><strong>Very Low to Low Risk:</strong> Generally acceptable with routine monitoring and review.</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-center">
+                                            <span class="badge bg-warning fs-6 mb-2">ALARP</span>
+                                            <p class="small"><strong>Medium Risk:</strong> Tolerable if risk reduction is impracticable or cost is grossly disproportionate to improvement gained.</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-center">
+                                            <span class="badge bg-danger fs-6 mb-2">Unacceptable</span>
+                                            <p class="small"><strong>High to Very High Risk:</strong> Generally unacceptable regardless of benefits. Must be reduced.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div> *@
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                            <i class="fas fa-times"></i> Close Guide
+                                        </button>
+                                        @*  <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="focusOnFirstHazard()">
+                    <i class="fas fa-play"></i> Start Assessment
+                </button> *@
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else if (Model.CurrentStep == 5)
+                    {
+                        <h6>Mitigation Strategies:</h6>
+                        <ul class="small">
+                            <li>Engineering controls</li>
+                            <li>Administrative controls</li>
+                            <li>Training and competency</li>
+                            <li>Emergency procedures</li>
+                            <li>Monitoring systems</li>
+                        </ul>
+                        <!-- Mitigation Guidance Panel -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0"><i class="fas fa-info-circle"></i> Mitigation Strategy Guidance</h6>
+                                            <button class="btn btn-light btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#mitigationGuidance">
+                                                <i class="fas fa-question-circle"></i> Show/Hide Guide
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body collapse" id="mitigationGuidance">
+                                        <div class="row">
+                                            <!-- Risk Control Hierarchy (Simplified) -->
+                                            <div class="col-md-12">
+                                                <h6><i class="fas fa-layer-group text-primary"></i> Hierarchy of Risk Controls (Most to Least Effective)</h6>
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-borderless">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="text-center" style="width: 15%;">
+                                                                    <div class="bg-success text-white rounded p-2">
+                                                                        <i class="fas fa-ban fa-lg"></i>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <strong class="text-success">1. Eliminate</strong><br>
+                                                                    <small class="text-muted">Remove the hazard completely from the system</small>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-center">
+                                                                    <div class="bg-primary text-white rounded p-2">
+                                                                        <i class="fas fa-exchange-alt fa-lg"></i>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <strong class="text-primary">2. Substitute</strong><br>
+                                                                    <small class="text-muted">Replace with something safer or less hazardous</small>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-center">
+                                                                    <div class="bg-info text-white rounded p-2">
+                                                                        <i class="fas fa-cogs fa-lg"></i>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <strong class="text-info">3. Engineering Controls</strong><br>
+                                                                    <small class="text-muted">Physical barriers, guards, ventilation, automation</small>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-center">
+                                                                    <div class="bg-warning text-dark rounded p-2">
+                                                                        <i class="fas fa-exclamation-triangle fa-lg"></i>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <strong class="text-warning">4. Warnings/Alerts</strong><br>
+                                                                    <small class="text-muted">Signs, alarms, lights, markings, notifications</small>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-center">
+                                                                    <div class="bg-secondary text-white rounded p-2">
+                                                                        <i class="fas fa-book fa-lg"></i>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <strong class="text-secondary">5. Administrative Controls</strong><br>
+                                                                    <small class="text-muted">Procedures, training, policies, job rotation</small>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-center">
+                                                                    <div class="bg-dark text-white rounded p-2">
+                                                                        <i class="fas fa-hard-hat fa-lg"></i>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <strong class="text-dark">6. Personal Protective Equipment</strong><br>
+                                                                    <small class="text-muted">Protective clothing, equipment worn by individuals</small>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+
+                                            <!-- Quick Tips -->
+                                            @* <div class="col-md-4"> *@
+                                                <h6><i class="fas fa-lightbulb text-warning"></i> Strategy Development Tips</h6>
+                                                <div class="small">
+                                                    <div class="p-2 mb-2">
+                                                        <strong>Effectiveness:</strong><br>
+                                                        Controls higher in the hierarchy are more effective and reliable than those lower down.
+                                                    </div>
+
+                                                    <div class="p-2 mb-2">
+                                                        <strong>Combination Approach:</strong><br>
+                                                        Use multiple control types for high-risk hazards (defense in depth).
+                                                    </div>
+
+                                                    <div class="p-2 mb-2">
+                                                        <strong>Implementation:</strong><br>
+                                                        Consider cost, feasibility, and organizational capacity when selecting controls.
+                                                    </div>
+
+                                                    <div class="p-2">
+                                                        <strong>Assignment:</strong><br>
+                                                        Assign clear roles: Lead (manages), Execute (implements), Support (assists), Review (approves), Monitor (oversees).
+                                                    </div>
+                                                </div>
+                                           @*  </div> *@
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @* <div class="mt-3">
+                        <h6>Progress Overview:</h6>
+                        <div class="small">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                var status = i < Model.CurrentStep ? "? Complete" : 
+                                           i == Model.CurrentStep ? "?? In Progress" : "? Pending";
+                                <div class="mb-1">
+                                    <strong>Step @i:</strong> @status
+                                    <br><small class="text-muted">@Model.GetStepName(i)</small>
+                                </div>
+                            }
+                        </div>
+                    </div> *@
+                </div>
+            </div>
+
+            <!-- Assessment Summary -->
+            @* <div class="card mt-3">
+                <div class="card-header">
+                    <h6><i class="fas fa-chart-bar"></i> Assessment Summary</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="h4 text-primary">@Model.CompletedSteps</div>
+                            <small>Steps Complete</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h4 text-warning">@Model.IdentifiedHazardsCount</div>
+                            <small>Hazards Found</small>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <div class="progress">
+                            <div class="progress-bar bg-success" style="width: @Model.ProgressPercentage%">
+                                @Model.ProgressPercentage%
+                            </div>
+                        </div>
+                        <small class="text-muted">Overall Progress</small>
+                    </div>
+                </div>
+            </div> *@
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        /**
+         * Get the form with the most fields (the actual content form)
+         */
+        function getContentForm() {
+            const allForms = document.querySelectorAll('form');
+            let contentForm = null;
+            let maxFields = 0;
+            
+            allForms.forEach(form => {
+                const fieldCount = form.querySelectorAll('input[name], textarea[name], select[name]').length;
+                if (fieldCount > maxFields) {
+                    maxFields = fieldCount;
+                    contentForm = form;
+                }
+            });
+            
+            console.log(`✅ Using form with ${maxFields} fields`);
+            return contentForm;
+        }
+
+        /**
+         * Step-aware save function - handles different steps dynamically
+         */
+        async function saveCurrentStep() {
+            try {
+                const form = getContentForm();
+                if (!form) {
+                    throw new Error('No content form found');
+                }
+
+                // Get the current step number
+                const stepNumber = parseInt(document.querySelector('input[name="StepNumber"]')?.value || '1');
+                console.log(`💾 Saving Step ${stepNumber}...`);
+
+                const formData = new FormData(form);
+                console.log(`📊 FormData contains ${Array.from(formData.entries()).length} entries`);
+                
+                // Validate form data based on current step
+                const isValidData = validateStepData(stepNumber, formData);
+                
+                if (!isValidData) {
+                    console.error(`❌ Insufficient form data for Step ${stepNumber}`);
+                    return { success: false, message: `Insufficient form data for Step ${stepNumber}` };
+                }
+                
+                console.log(`✅ Step ${stepNumber} form data validated`);
+
+                // Use the appropriate save handler for the current step
+                const handlerName = `SaveStep${stepNumber}`;
+                console.log(`💾 Calling ${handlerName} handler...`);
+                
+                const response = await fetch(`?handler=${handlerName}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    console.log(`✅ ${handlerName} handler completed successfully`);
+                    return { success: true, message: `Step ${stepNumber} saved successfully` };
+                } else {
+                    const statusText = response.statusText || 'Unknown error';
+                    console.error(`❌ ${handlerName} handler failed:`, response.status, statusText);
+                    
+                    // Try to get error details
+                    try {
+                        const errorText = await response.text();
+                        console.error('❌ Error response:', errorText.substring(0, 200));
+                    } catch (e) {
+                        console.error('❌ Could not read error response');
+                    }
+                    
+                    return { success: false, message: `Save failed: ${response.status} ${statusText}` };
+                }
+                
+            } catch (error) {
+                console.error('❌ Save error:', error);
+                return { success: false, message: error.message };
+            }
+        }
+
+        /**
+         * Save and navigate to next step - FIXED: Clear separation of save vs navigate
+         */
+        async function saveAndNavigateNext() {
+            const button = event.target;
+            const originalContent = button.innerHTML;
+            
+            try {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving & Next...';
+                
+                console.log('🚀 Save and Navigate: Starting save process...');
+                
+                // STEP 1: Save the current step data
+                const saveResult = await saveCurrentStep();
+                
+                if (saveResult.success) {
+                    console.log('✅ Save complete, now navigating...');
+                    button.innerHTML = '<i class="fas fa-arrow-right"></i> Navigating...';
+                    
+                    // STEP 2: Navigate to next step using the correct handler name
+                    const form = document.createElement('form');
+                    form.method = 'post';
+                    form.action = '?handler=NextStep';  // This matches OnPostNextStepAsync
+                    
+                    // Add minimal navigation data only
+                    const idField = document.createElement('input');
+                    idField.type = 'hidden';
+                    idField.name = 'Id';
+                    idField.value = document.querySelector('input[name="Id"]')?.value || '';
+                    form.appendChild(idField);
+                    
+                    const stepField = document.createElement('input');
+                    stepField.type = 'hidden';
+                    stepField.name = 'StepNumber';
+                    stepField.value = document.querySelector('input[name="StepNumber"]')?.value || '';
+                    form.appendChild(stepField);
+                    
+                    // Add anti-forgery token
+                    const tokenField = document.createElement('input');
+                    tokenField.type = 'hidden';
+                    tokenField.name = '__RequestVerificationToken';
+                    tokenField.value = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+                    form.appendChild(tokenField);
+                    
+                    console.log('🚀 Navigating from Step ' + (stepField.value || 'Unknown') + ' to next step');
+                    
+                    // Submit the minimal navigation form
+                    document.body.appendChild(form);
+                    form.submit();
+                    
+                } else {
+                    console.error('❌ Save failed:', saveResult.message);
+                    button.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Save Failed';
+                    
+                    setTimeout(() => {
+                        button.innerHTML = originalContent;
+                        button.disabled = false;
+                    }, 2000);
+                }
+                
+            } catch (error) {
+                console.error('❌ Save and Navigate error:', error);
+                button.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
+                
+                setTimeout(() => {
+                    button.innerHTML = originalContent;
+                    button.disabled = false;
+                }, 2000);
+            }
+        }
+
+        /**
+         * Manual save (Save Progress button)
+         */
+        async function manualSaveCurrentStep() {
+            const button = event.target;
+            const originalContent = button.innerHTML;
+            
+            try {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                
+                const result = await saveCurrentStep();
+                
+                if (result.success) {
+                    button.innerHTML = '<i class="fas fa-check"></i> Saved!';
+                } else {
+                    button.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Failed';
+                }
+                
+            } catch (error) {
+                console.error('❌ Manual save error:', error);
+                button.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
+            }
+            
+            setTimeout(() => {
+                button.innerHTML = originalContent;
+                button.disabled = false;
+            }, 2000);
+        }
+
+        /**
+         * Validate form data based on the current step
+         */
+        function validateStepData(stepNumber, formData) {
+            switch (stepNumber) {
+                case 1:
+                    return validateStep1Data(formData);
+                case 2:
+                    return validateStep2Data(formData);
+                case 3:
+                    return validateStep3Data(formData);
+                case 4:
+                    return validateStep4Data(formData);
+                case 5:
+                    return validateStep5Data(formData);
+                default:
+                    console.warn(`⚠️ Unknown step number: ${stepNumber}, skipping validation`);
+                    return true; // Allow unknown steps to proceed
+            }
+        }
+
+        /**
+         * Validate Step 1 data (System Description)
+         */
+        function validateStep1Data(formData) {
+            const step1Fields = [
+                "LeadAssessor", "SystemDescription", "SystemBoundaries", "SystemPurpose",
+                "FiveMPersonnel", "FiveMEquipment", "FiveMProcedures", 
+                "FiveMResources", "FiveMPhysicalEnvironment", "FiveMOperationalEnvironment"
+            ];
+            
+            let fieldsWithData = 0;
+            for (const field of step1Fields) {
+                const value = formData.get(field);
+                if (value && value.toString().trim()) {
+                    fieldsWithData++;
+                    console.log(`✅ ${field}: ${value.toString().length} chars`);
+                } else {
+                    console.log(`⚠️ ${field}: empty or missing`);
+                }
+            }
+            
+            // Also check stakeholder data
+            const stakeholderGroups = formData.get('StakeholderGroups');
+            const individualStakeholders = formData.get('SelectedIndividualStakeholders');
+            
+            if (stakeholderGroups && stakeholderGroups.toString().trim()) {
+                fieldsWithData++;
+                console.log(`✅ StakeholderGroups: ${stakeholderGroups.toString().length} chars`);
+            } else {
+                console.log(`⚠️ StakeholderGroups: empty or missing`);
+            }
+            
+            if (individualStakeholders && individualStakeholders.toString().trim()) {
+                fieldsWithData++;
+                console.log(`✅ SelectedIndividualStakeholders: ${individualStakeholders.toString().length} chars`);
+            } else {
+                console.log(`⚠️ SelectedIndividualStakeholders: empty or missing`);
+            }
+            
+            console.log(`📊 Step 1 validation: Found ${fieldsWithData} fields with data`);
+            return fieldsWithData >= 4; // Require at least 4 Step 1 fields (including LeadAssessor)
+        }
+
+        /**
+         * Validate Step 2 data (Hazard Identification)
+         */
+        function validateStep2Data(formData) {
+            // Check for hazard data in the form
+            let hazardCount = 0;
+            
+            // Look for AssessmentData.IdentifiedHazards array fields
+            for (const [key, value] of formData.entries()) {
+                if (key.includes('IdentifiedHazards[') && key.includes('.Description')) {
+                    const description = value.toString().trim();
+                    if (description) {
+                        hazardCount++;
+                        console.log(`✅ Found hazard ${hazardCount}: ${description.substring(0, 50)}...`);
+                    }
+                }
+            }
+            
+            console.log(`📊 Step 2 validation: Found ${hazardCount} hazards`);
+            return hazardCount >= 1; // Require at least 1 hazard
+        }
+
+        /**
+         * Validate Step 3 data (Risk Analysis)
+         */
+        function validateStep3Data(formData) {
+            // Check for the actual field names used in Step 3 template
+            const riskMethod = formData.get('AssessmentData.RiskAnalysisMethod') || formData.get('RiskAnalysisMethod');
+            const riskCriteria = formData.get('AssessmentData.RiskCriteria') || formData.get('RiskCriteria');
+            
+            // Check for worst credible outcomes and root causes with the EXACT field names from Step 3
+            let hazardAnalysisCount = 0;
+            let rootCauseCount = 0;
+            
+            for (const [key, value] of formData.entries()) {
+                // Check for AssessmentData.IdentifiedHazards[X].WorstCredibleOutcome fields
+                if (key.includes('AssessmentData.IdentifiedHazards[') && key.includes('].WorstCredibleOutcome')) {
+                    const outcome = value.toString().trim();
+                    if (outcome && outcome.length > 10) {
+                        hazardAnalysisCount++;
+                        console.log(`✅ Found worst outcome for ${key}: ${outcome.length} chars`);
+                    } else {
+                        console.log(`⚠️ Insufficient worst outcome for ${key}: ${outcome.length} chars`);
+                    }
+                }
+                
+                // Check for RootCauses[X] fields (NOT AssessmentData.RootCauses)
+                if (key.startsWith('RootCauses[') && key.endsWith(']')) {
+                    const rootCause = value.toString().trim();
+                    if (rootCause && rootCause.length > 5) {
+                        rootCauseCount++;
+                        console.log(`✅ Found root cause for ${key}: ${rootCause.length} chars`);
+                    } else {
+                        console.log(`⚠️ Insufficient root cause for ${key}: ${rootCause.length} chars`);
+                    }
+                }
+            }
+            
+            console.log(`📊 Step 3 validation: Method=${riskMethod ? 'set' : 'empty'}, Criteria=${riskCriteria ? 'set' : 'empty'}, AnalyzedHazards=${hazardAnalysisCount}, RootCauses=${rootCauseCount}`);
+            
+            // Accept if we have analyzed hazards (worst outcomes) AND root causes
+            return hazardAnalysisCount > 0 && rootCauseCount > 0;
+        }
+
+        /**
+         * Validate Step 4 data (Risk Assessment)
+         */
+        function validateStep4Data(formData) {
+            console.log('🔍 Validating Step 4 data...');
+            
+            // Check for any panel assignments or scoring data
+            let hasPanelData = false;
+            let hasScoreData = false;
+            
+            for (const [key, value] of formData.entries()) {
+                // Look for panel assignment data
+                if (key.includes('hazardPanelAssignments') || key.includes('panelMembers')) {
+                    const fieldValue = value.toString().trim();
+                    if (fieldValue) {
+                        hasPanelData = true;
+                        console.log('✅ Found panel assignment data:', key);
+                    }
+                }
+                
+                // Look for scoring data
+                if (key.includes('panelScores') || key.includes('Score')) {
+                    const fieldValue = value.toString().trim();
+                    if (fieldValue) {
+                        hasScoreData = true;
+                        console.log('✅ Found scoring data:', key);
+                    }
+                }
+            }
+            
+            // Check if we have hazard panel assignments in the page state
+            const hazardCards = document.querySelectorAll('[id^="hazard-badge-"]');
+            let panelsConfigured = 0;
+            
+            hazardCards.forEach(badge => {
+                const badgeText = badge.textContent.toLowerCase();
+                if (badgeText.includes('panel') || badgeText.includes('scored') || badgeText.includes('average')) {
+                    panelsConfigured++;
+                }
+            });
+            
+            console.log('📊 Step 4 validation results:', {
+                hasPanelData: hasPanelData,
+                hasScoreData: hasScoreData,
+                panelsConfigured: panelsConfigured,
+                hazardCards: hazardCards.length
+            });
+            
+            // Step 4 is valid if we have any indication of panel work being done
+            // This allows progression even if scoring is not 100% complete
+            const isValid = hasPanelData || hasScoreData || panelsConfigured > 0;
+            
+            if (!isValid) {
+                console.log('⚠️ Step 4 validation: No panel or scoring data found');
+            } else {
+                console.log('✅ Step 4 validation passed');
+            }
+            
+            return isValid;
+        }
+
+        /**
+         * Validate Step 5 data (Risk Mitigation)
+         */
+        function validateStep5Data(formData) {
+            const implementation = formData.get('ImplementationPlan');
+            
+            // Check for mitigation strategy data
+            let mitigationCount = 0;
+            for (const [key, value] of formData.entries()) {
+                if (key.includes('MitigationStrategies[') && key.includes('.Description')) {
+                    const description = value.toString().trim();
+                    if (description) {
+                        mitigationCount++;
+                    }
+                }
+            }
+            
+            console.log(`📊 Step 5 validation: Implementation=${implementation ? 'set' : 'empty'}, Mitigations=${mitigationCount}`);
+            return !!(implementation || mitigationCount > 0); // Implementation plan or mitigations
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ Simple save system initialized');
+            
+            const assessmentId = document.querySelector('input[name="Id"]')?.value;
+            const stepNumber = document.querySelector('input[name="StepNumber"]')?.value;
+            console.log(`📋 Assessment: ${assessmentId}, Step: ${stepNumber}`);
+        });
+    </script>
+}
+
+<style>
+/* 5M Framework Modal Styling */
+#fiveMGuidanceModal .modal-dialog {
+    max-width: 1400px;
+}
+
+#fiveMGuidanceModal .modal-content {
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+#fiveMGuidanceModal .modal-header {
+    border-radius: 10px 10px 0 0;
+}
+
+/* 5M Table Styling */
+#fiveMGuidanceModal .table th {
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 15px 10px;
+    vertical-align: middle;
+}
+
+#fiveMGuidanceModal .table td {
+    padding: 15px 10px;
+    vertical-align: top;
+    font-size: 0.85rem;
+}
+
+#fiveMGuidanceModal .table ul {
+    margin-bottom: 0.5rem;
+    padding-left: 1.2rem;
+}
+
+#fiveMGuidanceModal .table ul li {
+    margin-bottom: 0.25rem;
+    line-height: 1.3;
+}
+
+/* Alert boxes within table cells */
+#fiveMGuidanceModal .alert {
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+/* Guidance button styling consistency */
+.btn-outline-light:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Icon styling in table headers */
+#fiveMGuidanceModal .table-dark th i.fa-lg {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+/* Card styling within modal */
+#fiveMGuidanceModal .card {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Focus indicator for accessibility */
+.btn:focus,
+.form-select:focus,
+.form-control:focus {
+    outline: 2px solid #0d6efd;
+    outline-offset: 2px;
+}
+
+/* Risk Matrix Modal Styling (for Step 4) */
+#riskMatrixGuidanceModal .modal-dialog {
+    max-width: 1200px;
+}
+
+#riskMatrixGuidanceModal .risk-matrix {
+    font-size: 0.9rem;
+}
+
+#riskMatrixGuidanceModal .risk-matrix td,
+#riskMatrixGuidanceModal .risk-matrix th {
+    padding: 12px 8px;
+    text-align: center;
+    vertical-align: middle;
+    font-weight: 600;
+    border: 2px solid #ffffff;
+}
+
+#riskMatrixGuidanceModal .risk-matrix th {
+    background-color: #f8f9fa;
+    font-weight: 700;
+}
+
+#riskMatrixGuidanceModal .modal-content {
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+#riskMatrixGuidanceModal .modal-header {
+    border-radius: 10px 10px 0 0;
+}
+
+#riskMatrixGuidanceModal .card {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+</style>
+

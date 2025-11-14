@@ -15,6 +15,14 @@
     <EmbeddedResource Remove="Pages\SafetyRiskManagement\OnHold\**" />
     <None Remove="Pages\SafetyRiskManagement\OnHold\**" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Pages\SafetyRiskManagement\RiskAssessment.cshtml.cs" />
+    <Compile Remove="Pages\SafetyRiskManagement\SimplifiedRiskAssessment.cshtml.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Remove="Pages\SafetyRiskManagement\RiskAssessment.cshtml" />
+    <Content Remove="Pages\SafetyRiskManagement\SimplifiedRiskAssessment.cshtml" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.0" />

@@ -34,6 +34,47 @@ public class GetReportValidationByIdQueryHandler : BaseQueryBundle, IRequestHand
     }
 }
 
+
+public class GetReportValidationByReportIdQueryHandler : BaseQueryBundle, IRequestHandler<GetReportValidationByReportIdQuery, Result<ReportValidation>>
+{
+    private readonly ReportValidationDataService _reportValidationDataService;
+    private readonly ILogger<GetReportValidationByReportIdQueryHandler> _logger;
+
+    public GetReportValidationByReportIdQueryHandler(ReportValidationDataService reportValidationDataService, ILogger<GetReportValidationByReportIdQueryHandler> logger)
+    {
+        _reportValidationDataService = reportValidationDataService ?? throw new ArgumentNullException(nameof(reportValidationDataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<ReportValidation>> HandleAsync(GetReportValidationByReportIdQuery request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing GetReportValidationByIdQuery for ID: {Id}", request.ReportId);
+            var result = await _reportValidationDataService.GetReportValidationByReportIdAsync(request.ReportId, ct).ConfigureAwait(false);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing GetReportValidationByIdQuery for ID: {Id}", request.ReportId);
+            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.NotFound);
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 public class GetAllReportValidationsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllReportValidationsQuery, Result<List<ReportValidation>>>
 {
     private readonly ReportValidationDataService _reportValidationDataService;
