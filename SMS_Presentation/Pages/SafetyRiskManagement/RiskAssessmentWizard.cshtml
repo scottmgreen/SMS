@@ -1,4 +1,4 @@
-﻿@page "/SafetyRiskManagement/RiskAssessmentWizard/{id}/step/{stepNumber:int?}"
+﻿@page "/SafetyRiskManagement/RiskAssessmentWizard/{id}/step/{stepNumber:int?}/{hazardId}"
 @model SMS.Presentation.Pages.SafetyRiskManagement.RiskAssessmentWizardModel
 @{
     ViewData["Title"] = $"Risk Assessment Wizard - Step {Model.StepNumber}";
@@ -27,7 +27,7 @@
                             </h4>
                             <p class="card-text mb-0">
                                 Assessment ID: @Model.AssessmentId | 
-                                Lead Assessor: @Model.LeadAssessor
+                                Lead Assessor: @Model.Step1.LeadAssessor
                             </p>
                         </div>
                         @* <div class="col-md-4 text-end">
@@ -144,6 +144,7 @@
                         <!-- Hidden fields to preserve route parameters -->
                         <input type="hidden" asp-for="Id" />
                         <input type="hidden" asp-for="StepNumber" />
+                        <input type="hidden" asp-for="HazardId" />
                         
                         @if (Model.StepNumber == 1)
                         {
@@ -186,14 +187,14 @@
                                         </a>
                                     </div>
                                     <div>
-                                        @* <button type="button" class="btn btn-outline-info" 
-                                                onclick="manualSaveCurrentStep()">
+                                        <button type="submit" class="btn btn-outline-info" 
+                                                formaction="?handler=ManualSaveCurrentStep" formnovalidate>
                                             <i class="fas fa-save"></i> Save Progress
-                                        </button> *@
+                                        </button>
                                         @if (Model.StepNumber < 5)
                                         {
-                                            <button type="button" class="btn btn-primary"
-                                                    onclick="saveAndNavigateNext()">
+                                            <button type="submit" class="btn btn-primary"
+                                                    formaction="?handler=SaveAndNavigateNext">
                                                 <i class="fas fa-arrow-right"></i> Next Step
                                             </button>
                                         }
@@ -846,406 +847,35 @@
 
 @section Scripts {
     <script>
-        /**
-         * Get the form with the most fields (the actual content form)
-         */
-        function getContentForm() {
-            const allForms = document.querySelectorAll('form');
-            let contentForm = null;
-            let maxFields = 0;
-            
-            allForms.forEach(form => {
-                const fieldCount = form.querySelectorAll('input[name], textarea[name], select[name]').length;
-                if (fieldCount > maxFields) {
-                    maxFields = fieldCount;
-                    contentForm = form;
-                }
-            });
-            
-            console.log(`✅ Using form with ${maxFields} fields`);
-            return contentForm;
-        }
-
-        /**
-         * Step-aware save function - handles different steps dynamically
-         */
-        async function saveCurrentStep() {
-            try {
-                const form = getContentForm();
-                if (!form) {
-                    throw new Error('No content form found');
-                }
-
-                // Get the current step number
-                const stepNumber = parseInt(document.querySelector('input[name="StepNumber"]')?.value || '1');
-                console.log(`💾 Saving Step ${stepNumber}...`);
-
-                const formData = new FormData(form);
-                console.log(`📊 FormData contains ${Array.from(formData.entries()).length} entries`);
-                
-                // Validate form data based on current step
-                const isValidData = validateStepData(stepNumber, formData);
-                
-                if (!isValidData) {
-                    console.error(`❌ Insufficient form data for Step ${stepNumber}`);
-                    return { success: false, message: `Insufficient form data for Step ${stepNumber}` };
-                }
-                
-                console.log(`✅ Step ${stepNumber} form data validated`);
-
-                // Use the appropriate save handler for the current step
-                const handlerName = `SaveStep${stepNumber}`;
-                console.log(`💾 Calling ${handlerName} handler...`);
-                
-                const response = await fetch(`?handler=${handlerName}`, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (response.ok) {
-                    console.log(`✅ ${handlerName} handler completed successfully`);
-                    return { success: true, message: `Step ${stepNumber} saved successfully` };
-                } else {
-                    const statusText = response.statusText || 'Unknown error';
-                    console.error(`❌ ${handlerName} handler failed:`, response.status, statusText);
-                    
-                    // Try to get error details
-                    try {
-                        const errorText = await response.text();
-                        console.error('❌ Error response:', errorText.substring(0, 200));
-                    } catch (e) {
-                        console.error('❌ Could not read error response');
-                    }
-                    
-                    return { success: false, message: `Save failed: ${response.status} ${statusText}` };
-                }
-                
-            } catch (error) {
-                console.error('❌ Save error:', error);
-                return { success: false, message: error.message };
-            }
-        }
-
-        /**
-         * Save and navigate to next step - FIXED: Clear separation of save vs navigate
-         */
-        async function saveAndNavigateNext() {
-            const button = event.target;
-            const originalContent = button.innerHTML;
-            
-            try {
-                button.disabled = true;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving & Next...';
-                
-                console.log('🚀 Save and Navigate: Starting save process...');
-                
-                // STEP 1: Save the current step data
-                const saveResult = await saveCurrentStep();
-                
-                if (saveResult.success) {
-                    console.log('✅ Save complete, now navigating...');
-                    button.innerHTML = '<i class="fas fa-arrow-right"></i> Navigating...';
-                    
-                    // STEP 2: Navigate to next step using the correct handler name
-                    const form = document.createElement('form');
-                    form.method = 'post';
-                    form.action = '?handler=NextStep';  // This matches OnPostNextStepAsync
-                    
-                    // Add minimal navigation data only
-                    const idField = document.createElement('input');
-                    idField.type = 'hidden';
-                    idField.name = 'Id';
-                    idField.value = document.querySelector('input[name="Id"]')?.value || '';
-                    form.appendChild(idField);
-                    
-                    const stepField = document.createElement('input');
-                    stepField.type = 'hidden';
-                    stepField.name = 'StepNumber';
-                    stepField.value = document.querySelector('input[name="StepNumber"]')?.value || '';
-                    form.appendChild(stepField);
-                    
-                    // Add anti-forgery token
-                    const tokenField = document.createElement('input');
-                    tokenField.type = 'hidden';
-                    tokenField.name = '__RequestVerificationToken';
-                    tokenField.value = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
-                    form.appendChild(tokenField);
-                    
-                    console.log('🚀 Navigating from Step ' + (stepField.value || 'Unknown') + ' to next step');
-                    
-                    // Submit the minimal navigation form
-                    document.body.appendChild(form);
-                    form.submit();
-                    
-                } else {
-                    console.error('❌ Save failed:', saveResult.message);
-                    button.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Save Failed';
-                    
-                    setTimeout(() => {
-                        button.innerHTML = originalContent;
-                        button.disabled = false;
-                    }, 2000);
-                }
-                
-            } catch (error) {
-                console.error('❌ Save and Navigate error:', error);
-                button.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
-                
-                setTimeout(() => {
-                    button.innerHTML = originalContent;
-                    button.disabled = false;
-                }, 2000);
-            }
-        }
-
-        /**
-         * Manual save (Save Progress button)
-         */
-        async function manualSaveCurrentStep() {
-            const button = event.target;
-            const originalContent = button.innerHTML;
-            
-            try {
-                button.disabled = true;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-                
-                const result = await saveCurrentStep();
-                
-                if (result.success) {
-                    button.innerHTML = '<i class="fas fa-check"></i> Saved!';
-                } else {
-                    button.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Failed';
-                }
-                
-            } catch (error) {
-                console.error('❌ Manual save error:', error);
-                button.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
-            }
-            
-            setTimeout(() => {
-                button.innerHTML = originalContent;
-                button.disabled = false;
-            }, 2000);
-        }
-
-        /**
-         * Validate form data based on the current step
-         */
-        function validateStepData(stepNumber, formData) {
-            switch (stepNumber) {
-                case 1:
-                    return validateStep1Data(formData);
-                case 2:
-                    return validateStep2Data(formData);
-                case 3:
-                    return validateStep3Data(formData);
-                case 4:
-                    return validateStep4Data(formData);
-                case 5:
-                    return validateStep5Data(formData);
-                default:
-                    console.warn(`⚠️ Unknown step number: ${stepNumber}, skipping validation`);
-                    return true; // Allow unknown steps to proceed
-            }
-        }
-
-        /**
-         * Validate Step 1 data (System Description)
-         */
-        function validateStep1Data(formData) {
-            const step1Fields = [
-                "LeadAssessor", "SystemDescription", "SystemBoundaries", "SystemPurpose",
-                "FiveMPersonnel", "FiveMEquipment", "FiveMProcedures", 
-                "FiveMResources", "FiveMPhysicalEnvironment", "FiveMOperationalEnvironment"
-            ];
-            
-            let fieldsWithData = 0;
-            for (const field of step1Fields) {
-                const value = formData.get(field);
-                if (value && value.toString().trim()) {
-                    fieldsWithData++;
-                    console.log(`✅ ${field}: ${value.toString().length} chars`);
-                } else {
-                    console.log(`⚠️ ${field}: empty or missing`);
-                }
-            }
-            
-            // Also check stakeholder data
-            const stakeholderGroups = formData.get('StakeholderGroups');
-            const individualStakeholders = formData.get('SelectedIndividualStakeholders');
-            
-            if (stakeholderGroups && stakeholderGroups.toString().trim()) {
-                fieldsWithData++;
-                console.log(`✅ StakeholderGroups: ${stakeholderGroups.toString().length} chars`);
-            } else {
-                console.log(`⚠️ StakeholderGroups: empty or missing`);
-            }
-            
-            if (individualStakeholders && individualStakeholders.toString().trim()) {
-                fieldsWithData++;
-                console.log(`✅ SelectedIndividualStakeholders: ${individualStakeholders.toString().length} chars`);
-            } else {
-                console.log(`⚠️ SelectedIndividualStakeholders: empty or missing`);
-            }
-            
-            console.log(`📊 Step 1 validation: Found ${fieldsWithData} fields with data`);
-            return fieldsWithData >= 4; // Require at least 4 Step 1 fields (including LeadAssessor)
-        }
-
-        /**
-         * Validate Step 2 data (Hazard Identification)
-         */
-        function validateStep2Data(formData) {
-            // Check for hazard data in the form
-            let hazardCount = 0;
-            
-            // Look for AssessmentData.IdentifiedHazards array fields
-            for (const [key, value] of formData.entries()) {
-                if (key.includes('IdentifiedHazards[') && key.includes('.Description')) {
-                    const description = value.toString().trim();
-                    if (description) {
-                        hazardCount++;
-                        console.log(`✅ Found hazard ${hazardCount}: ${description.substring(0, 50)}...`);
-                    }
-                }
-            }
-            
-            console.log(`📊 Step 2 validation: Found ${hazardCount} hazards`);
-            return hazardCount >= 1; // Require at least 1 hazard
-        }
-
-        /**
-         * Validate Step 3 data (Risk Analysis)
-         */
-        function validateStep3Data(formData) {
-            // Check for the actual field names used in Step 3 template
-            const riskMethod = formData.get('AssessmentData.RiskAnalysisMethod') || formData.get('RiskAnalysisMethod');
-            const riskCriteria = formData.get('AssessmentData.RiskCriteria') || formData.get('RiskCriteria');
-            
-            // Check for worst credible outcomes and root causes with the EXACT field names from Step 3
-            let hazardAnalysisCount = 0;
-            let rootCauseCount = 0;
-            
-            for (const [key, value] of formData.entries()) {
-                // Check for AssessmentData.IdentifiedHazards[X].WorstCredibleOutcome fields
-                if (key.includes('AssessmentData.IdentifiedHazards[') && key.includes('].WorstCredibleOutcome')) {
-                    const outcome = value.toString().trim();
-                    if (outcome && outcome.length > 10) {
-                        hazardAnalysisCount++;
-                        console.log(`✅ Found worst outcome for ${key}: ${outcome.length} chars`);
-                    } else {
-                        console.log(`⚠️ Insufficient worst outcome for ${key}: ${outcome.length} chars`);
-                    }
-                }
-                
-                // Check for RootCauses[X] fields (NOT AssessmentData.RootCauses)
-                if (key.startsWith('RootCauses[') && key.endsWith(']')) {
-                    const rootCause = value.toString().trim();
-                    if (rootCause && rootCause.length > 5) {
-                        rootCauseCount++;
-                        console.log(`✅ Found root cause for ${key}: ${rootCause.length} chars`);
-                    } else {
-                        console.log(`⚠️ Insufficient root cause for ${key}: ${rootCause.length} chars`);
-                    }
-                }
-            }
-            
-            console.log(`📊 Step 3 validation: Method=${riskMethod ? 'set' : 'empty'}, Criteria=${riskCriteria ? 'set' : 'empty'}, AnalyzedHazards=${hazardAnalysisCount}, RootCauses=${rootCauseCount}`);
-            
-            // Accept if we have analyzed hazards (worst outcomes) AND root causes
-            return hazardAnalysisCount > 0 && rootCauseCount > 0;
-        }
-
-        /**
-         * Validate Step 4 data (Risk Assessment)
-         */
-        function validateStep4Data(formData) {
-            console.log('🔍 Validating Step 4 data...');
-            
-            // Check for any panel assignments or scoring data
-            let hasPanelData = false;
-            let hasScoreData = false;
-            
-            for (const [key, value] of formData.entries()) {
-                // Look for panel assignment data
-                if (key.includes('hazardPanelAssignments') || key.includes('panelMembers')) {
-                    const fieldValue = value.toString().trim();
-                    if (fieldValue) {
-                        hasPanelData = true;
-                        console.log('✅ Found panel assignment data:', key);
-                    }
-                }
-                
-                // Look for scoring data
-                if (key.includes('panelScores') || key.includes('Score')) {
-                    const fieldValue = value.toString().trim();
-                    if (fieldValue) {
-                        hasScoreData = true;
-                        console.log('✅ Found scoring data:', key);
-                    }
-                }
-            }
-            
-            // Check if we have hazard panel assignments in the page state
-            const hazardCards = document.querySelectorAll('[id^="hazard-badge-"]');
-            let panelsConfigured = 0;
-            
-            hazardCards.forEach(badge => {
-                const badgeText = badge.textContent.toLowerCase();
-                if (badgeText.includes('panel') || badgeText.includes('scored') || badgeText.includes('average')) {
-                    panelsConfigured++;
-                }
-            });
-            
-            console.log('📊 Step 4 validation results:', {
-                hasPanelData: hasPanelData,
-                hasScoreData: hasScoreData,
-                panelsConfigured: panelsConfigured,
-                hazardCards: hazardCards.length
-            });
-            
-            // Step 4 is valid if we have any indication of panel work being done
-            // This allows progression even if scoring is not 100% complete
-            const isValid = hasPanelData || hasScoreData || panelsConfigured > 0;
-            
-            if (!isValid) {
-                console.log('⚠️ Step 4 validation: No panel or scoring data found');
-            } else {
-                console.log('✅ Step 4 validation passed');
-            }
-            
-            return isValid;
-        }
-
-        /**
-         * Validate Step 5 data (Risk Mitigation)
-         */
-        function validateStep5Data(formData) {
-            const implementation = formData.get('ImplementationPlan');
-            
-            // Check for mitigation strategy data
-            let mitigationCount = 0;
-            for (const [key, value] of formData.entries()) {
-                if (key.includes('MitigationStrategies[') && key.includes('.Description')) {
-                    const description = value.toString().trim();
-                    if (description) {
-                        mitigationCount++;
-                    }
-                }
-            }
-            
-            console.log(`📊 Step 5 validation: Implementation=${implementation ? 'set' : 'empty'}, Mitigations=${mitigationCount}`);
-            return !!(implementation || mitigationCount > 0); // Implementation plan or mitigations
-        }
-
-        // Initialize
+        // MINIMIZED JavaScript - All navigation logic now handled by C# server-side
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('✅ Simple save system initialized');
+            console.log('✅ C# handler system initialized - minimal JavaScript');
             
-            const assessmentId = document.querySelector('input[name="Id"]')?.value;
-            const stepNumber = document.querySelector('input[name="StepNumber"]')?.value;
+            const assessmentId = '@Model.Id';
+            const stepNumber = @Model.StepNumber;
             console.log(`📋 Assessment: ${assessmentId}, Step: ${stepNumber}`);
         });
+
+        // Simplified legacy support for any remaining onclick handlers
+        function saveAndNavigateNext() {
+            // Find the Save & Next button and trigger form submission to C# handler
+            const form = document.querySelector('form[method="post"]');
+            if (form) {
+                form.action = '?handler=SaveAndNavigateNext';
+                form.submit();
+            }
+        }
+
+        function manualSaveCurrentStep() {
+            // Find the Save Progress button and trigger form submission to C# handler
+            const form = document.querySelector('form[method="post"]');
+            if (form) {
+                form.action = '?handler=ManualSaveCurrentStep';
+                form.submit();
+            }
+        }
+
+        console.log('✅ Simplified client-side system - server-side C# handlers manage all logic');
     </script>
 }
 

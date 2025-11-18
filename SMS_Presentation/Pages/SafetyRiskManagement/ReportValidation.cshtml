@@ -53,7 +53,6 @@
                         <input type="hidden" asp-for="ReportId" />
                         <input type="hidden" asp-for="IsExistingValidation" />
                         <input type="hidden" asp-for="ExistingValidationId" />
-                        <input type="hidden" asp-for="ValidationDecision" id="hiddenValidationDecision" />
                         <input type="hidden" asp-for="HazardId" />
                         
                         <!-- Display any validation errors -->
@@ -78,10 +77,10 @@
                             <h6><i class="fas fa-gavel"></i> Validation Decision <span class="text-danger">*</span></h6>
                             <div class="row">
                                 <div class="col-md-4">
-                                    <div class="card h-100 @(Model.ValidationDecision == "SMS_RISK" ? "border-success bg-light" : "border-light")">
+                                    <div class="@Model.GetValidationCardClass("SMS_RISK")" data-validation-value="SMS_RISK">
                                         <div class="card-body text-center">
                                             <div class="form-check">
-                                                <input class="form-check-input radio-trigger" type="radio" asp-for="ValidationDecision" 
+                                                <input class="form-check-input" type="radio" asp-for="ValidationDecision" 
                                                        value="SMS_RISK" id="smsRisk" required>
                                                 <label class="form-check-label" for="smsRisk">
                                                     <i class="fas fa-check-circle text-success fa-2x d-block mb-2"></i>
@@ -93,10 +92,10 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="card h-100 @(Model.ValidationDecision == "NOT_SMS_RISK" ? "border-danger bg-light" : "border-light")">
+                                    <div class="@Model.GetValidationCardClass("NOT_SMS_RISK")" data-validation-value="NOT_SMS_RISK">
                                         <div class="card-body text-center">
                                             <div class="form-check">
-                                                <input class="form-check-input radio-trigger" type="radio" asp-for="ValidationDecision" 
+                                                <input class="form-check-input" type="radio" asp-for="ValidationDecision" 
                                                        value="NOT_SMS_RISK" id="notSmsRisk" required>
                                                 <label class="form-check-label" for="notSmsRisk">
                                                     <i class="fas fa-times-circle text-danger fa-2x d-block mb-2"></i>
@@ -108,10 +107,10 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="card h-100 @(Model.ValidationDecision == "NEEDS_INVESTIGATION" ? "border-warning bg-light" : "border-light")">
+                                    <div class="@Model.GetValidationCardClass("NEEDS_INVESTIGATION")" data-validation-value="NEEDS_INVESTIGATION">
                                         <div class="card-body text-center">
                                             <div class="form-check">
-                                                <input class="form-check-input radio-trigger" type="radio" asp-for="ValidationDecision" 
+                                                <input class="form-check-input" type="radio" asp-for="ValidationDecision" 
                                                        value="NEEDS_INVESTIGATION" id="needsInvestigation" required>
                                                 <label class="form-check-label" for="needsInvestigation">
                                                     <i class="fas fa-search text-warning fa-2x d-block mb-2"></i>
@@ -134,33 +133,22 @@
                         </div>
 
                         <!-- Conditional Fields for Assessment Assignment (SMS Risk only) -->
-                        <div id="smsRiskFields" class="mb-4" style="display: @(Model.ValidationDecision == "SMS_RISK" ? "block" : "none");">
+                        <div id="smsRiskFields" class="mb-4" style="display: @Model.SmsRiskFieldsDisplayStyle;">
                             <div class="card border-success">
                                 <div class="card-header bg-light">
                                     <h6 class="mb-0"><i class="fas fa-user-check"></i> Assessment Assignment</h6>
                                 </div>
                                 <div class="card-body">
                                     <div class="mb-3">
-                                        <label class="form-label">Validation Type</label>
-                                        <select class="form-select" asp-for="ValidationType">
-                                            <option value="Standard">Standard Validation</option>
-                                            <option value="Expedited">Expedited Validation</option>
-                                            <option value="Complex">Complex Case Validation</option>
-                                        </select>
+                                        <label class="form-label" for="ValidationType">Risk Assesment Type</label>
+                                        <select class="form-select" asp-for="ValidationType" asp-items="Model.ValidationTypeOptions" id="ValidationType"></select>
+                                        <span asp-validation-for="ValidationType" class="text-danger"></span>
                                     </div>
                                     
                                     <div class="mb-3">
-                                        <label class="form-label">Assigned Assessor</label>
-                                        <select class="form-select" asp-for="ValidatedBy">
-                                            <option value="">Auto-assign based on workload</option>
-                                            @if (Model.AvailableAssessors?.Any() == true)
-                                            {
-                                                @foreach (var assessor in Model.AvailableAssessors)
-                                                {
-                                                    <option value="@assessor.Id.Value">@assessor.UserName.Value - @assessor.ApplicationRole</option>
-                                                }
-                                            }
-                                        </select>
+                                        <label class="form-label" for="ValidatedBy">Assigned Assessor</label>
+                                        <select class="form-select" asp-for="ValidatedBy" asp-items="Model.ValidatedByOptions" id="ValidatedBy"></select>
+                                        <span asp-validation-for="ValidatedBy" class="text-danger"></span>
                                     </div>
                                 </div>
                             </div>
@@ -177,23 +165,17 @@
                                         </a>
                                     </div>
                                     <div>
-                                        <!-- Save Draft button -->
-                                        <button type="submit" class="btn btn-outline-info me-2" formaction="?handler=SaveDraft" formnovalidate>
-                                            <i class="fas fa-save"></i> Save Draft
-                                        </button>
-                                                
-                                        <!-- Proceed to Risk Assessment button - HIDDEN BY DEFAULT -->
-                                        <button type="submit" class="btn btn-success btn-lg me-2" 
-                                                id="proceedToAssessmentBtn" 
-                                                formaction="?handler=ProceedToAssessmentAsync"
-                                                style="display: none;">
-                                            <i class="fas fa-arrow-right"></i> Proceed to Risk Assessment
+                                        <!-- Submit Validation button - Shows for NOT_SMS_RISK and NEEDS_INVESTIGATION -->
+                                        <button type="submit" class="btn btn-primary btn-lg me-2" 
+                                                style="display: @Model.SubmitButtonDisplayStyle;">
+                                            <i class="fas fa-check-circle"></i> Submit Validation
                                         </button>
                                         
-                                        <!-- Submit Validation button - VISIBLE BY DEFAULT -->
-                                        <button type="submit" class="btn btn-primary btn-lg" 
-                                                id="submitValidationBtn">
-                                            <i class="fas fa-check-circle"></i> Submit Validation
+                                        <!-- Proceed to Risk Assessment button - Shows ONLY for SMS_RISK -->
+                                        <button type="submit" class="btn btn-success btn-lg" 
+                                                formaction="?handler=ProceedToAssessment"
+                                                style="display: @Model.ProceedButtonDisplayStyle;">
+                                            <i class="fas fa-arrow-right"></i> Proceed to Risk Assessment
                                         </button>
                                     </div>
                                 </div>
@@ -270,143 +252,76 @@
 
 @section Scripts {
     <script>
+        // Minimal JavaScript for immediate UI feedback when radio buttons change
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔧 ReportValidation script loading...');
-            
-            // Get all radio buttons
-            const radioButtons = document.querySelectorAll('.radio-trigger');
+            const radioButtons = document.querySelectorAll('input[name="ValidationDecision"]');
             const smsRiskFields = document.getElementById('smsRiskFields');
-            const proceedToAssessmentBtn = document.getElementById('proceedToAssessmentBtn');
-            const submitValidationBtn = document.getElementById('submitValidationBtn');
+            const submitBtn = document.querySelector('button[type="submit"]:not([formaction])');
+            const proceedBtn = document.querySelector('button[formaction*="ProceedToAssessment"]');
 
-            console.log('📊 Found elements:', {
-                radioButtons: radioButtons.length,
-                smsRiskFields: smsRiskFields ? 'found' : 'missing',
-                proceedToAssessmentBtn: proceedToAssessmentBtn ? 'found' : 'missing',
-                submitValidationBtn: submitValidationBtn ? 'found' : 'missing'
-            });
-
-            // Function to update UI based on selection
-            function updateUIForSelection(selectedValue) {
-                console.log('🎯 Updating UI for selection:', selectedValue);
-                
-                // Update the hidden field to preserve the selection
-                const hiddenField = document.getElementById('hiddenValidationDecision');
-                if (hiddenField) {
-                    hiddenField.value = selectedValue;
-                    console.log('💾 Updated hidden field to:', selectedValue);
-                }
-                
-                // Reset all cards
-                document.querySelectorAll('.card.h-100').forEach(card => {
-                    card.classList.remove('border-success', 'border-danger', 'border-warning', 'bg-light');
-                    card.classList.add('border-light');
-                });
-
-                // Apply styling to selected card
-                const selectedRadio = document.querySelector(`input[value="${selectedValue}"]`);
-                if (selectedRadio) {
-                    const card = selectedRadio.closest('.card');
-                    if (card) {
-                        card.classList.remove('border-light');
-                        card.classList.add('bg-light');
-                        
-                        switch(selectedValue) {
-                            case 'SMS_RISK':
-                                card.classList.add('border-success');
-                                break;
-                            case 'NOT_SMS_RISK':
-                                card.classList.add('border-danger');
-                                break;
-                            case 'NEEDS_INVESTIGATION':
-                                card.classList.add('border-warning');
-                                break;
-                        }
-                    }
-                }
-
+            function updateUI(selectedValue) {
                 // Show/hide SMS Risk fields
                 if (smsRiskFields) {
                     smsRiskFields.style.display = selectedValue === 'SMS_RISK' ? 'block' : 'none';
-                    console.log('📝 SMS Risk fields:', selectedValue === 'SMS_RISK' ? 'shown' : 'hidden');
                 }
-
-                // Show/hide appropriate action buttons based on selection
-                if (proceedToAssessmentBtn && submitValidationBtn) {
-                    if (selectedValue === 'SMS_RISK') {
-                        // Show "Proceed to Assessment" button, hide "Submit Validation" button
-                        proceedToAssessmentBtn.style.display = 'inline-block';
-                        submitValidationBtn.style.display = 'none';
-                        console.log('🎯 Buttons: Proceed=shown, Submit=hidden');
-                    } else {
-                        // Show "Submit Validation" button, hide "Proceed to Assessment" button
-                        proceedToAssessmentBtn.style.display = 'none';
-                        submitValidationBtn.style.display = 'inline-block';
-                        console.log('🎯 Buttons: Proceed=hidden, Submit=shown');
-                    }
+                
+                // Show/hide buttons based on selection
+                if (submitBtn) {
+                    submitBtn.style.display = selectedValue === 'SMS_RISK' ? 'none' : 'inline-block';
+                }
+                if (proceedBtn) {
+                    proceedBtn.style.display = selectedValue === 'SMS_RISK' ? 'inline-block' : 'none';
                 }
             }
 
-            // Add event listeners WITH PREVENTION OF DEFAULT BEHAVIOR
+            // Add change listeners
             radioButtons.forEach(radio => {
-                radio.addEventListener('change', function(event) {
-                    console.log('📻 Radio button changed to:', this.value);
-                    
-                    // Prevent any default form submission
-                    event.preventDefault();
-                    event.stopPropagation();
-                    
+                radio.addEventListener('change', function() {
                     if (this.checked) {
-                        updateUIForSelection(this.value);
-                    }
-                    
-                    // Return false to prevent any further event handling
-                    return false;
-                });
-            });
-
-            // Also prevent click events on labels from causing issues
-            const labels = document.querySelectorAll('.form-check-label');
-            labels.forEach(label => {
-                label.addEventListener('click', function(event) {
-                    console.log('🏷️ Label clicked:', this.getAttribute('for'));
-                    // Let the label click through to the radio button naturally
-                    // but prevent any extra behavior
-                });
-            });
-
-            // Prevent accidental form submission on radio button changes
-            const form = document.getElementById('validationForm');
-            if (form) {
-                form.addEventListener('submit', function(event) {
-                    console.log('🚨 FORM SUBMISSION DETECTED!');
-                    console.log('📝 Form action:', this.action);
-                    console.log('📝 Submit trigger:', event.submitter?.outerHTML || 'unknown');
-                    
-                    // Only allow submission if it's from a button click, not radio change
-                    if (!event.submitter) {
-                        console.log('❌ BLOCKING: No submitter detected (likely radio change)');
-                        event.preventDefault();
-                        return false;
+                        updateUI(this.value);
                     }
                 });
-            }
+            });
 
             // Initialize on page load
-            const checkedRadio = document.querySelector('.radio-trigger:checked');
+            const checkedRadio = document.querySelector('input[name="ValidationDecision"]:checked');
             if (checkedRadio) {
-                console.log('🔄 Initializing with checked radio:', checkedRadio.value);
-                updateUIForSelection(checkedRadio.value);
-            } else {
-                console.log('🔄 No radio checked, showing default state');
-                // Default state - show Submit Validation button, hide Proceed to Assessment
-                if (submitValidationBtn) submitValidationBtn.style.display = 'inline-block';
-                if (proceedToAssessmentBtn) proceedToAssessmentBtn.style.display = 'none';
+                updateUI(checkedRadio.value);
             }
-            
-            console.log('✅ ReportValidation script loaded successfully');
         });
     </script>
+    
+    <style>
+        .validation-card {
+            transition: all 0.2s ease;
+            border: 2px solid #dee2e6;
+            cursor: pointer;
+        }
+
+        .validation-card:hover {
+            border-color: #0d6efd;
+        }
+
+        .validation-card.selected-sms-risk {
+            border-color: #198754;
+            background-color: #f8f9fa;
+        }
+
+        .validation-card.selected-not-sms-risk {
+            border-color: #dc3545;
+            background-color: #f8f9fa;
+        }
+
+        .validation-card.selected-investigation {
+            border-color: #ffc107;
+            background-color: #f8f9fa;
+        }
+        
+        .form-check-input {
+            width: 1.5em;
+            height: 1.5em;
+        }
+    </style>
 }
 
 

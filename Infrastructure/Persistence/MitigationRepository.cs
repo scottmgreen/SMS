@@ -215,4 +215,48 @@ public sealed class MitigationRepository : BaseRepository<MitigationRepository, 
             return Result<bool>.Failure<bool>(DomainErrors.MitigationError.DeleteFailed);
         }
     }
+
+    /// <summary>
+    /// Gets all mitigations for a specific hazard code - Required for populating Hazard.Mitigations list
+    /// </summary>
+    public async Task<Result<List<Mitigation>>> GetMitigationsByHazardCodeAsync(string hazardCode, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(hazardCode))
+            {
+                return Result<List<Mitigation>>.Failure<List<Mitigation>>(DomainErrors.MitigationError.NullOrEmpty);
+            }
+
+            _logger.LogInfrastructureGetItems($"{_logheader} {StoredProcs.pr_Mitigation_GetByHazardCode} HazardCode:{hazardCode}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_Mitigation_GetByHazardCode, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardCode, hazardCode));
+
+            List<Mitigation> response = new();
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var mitigation = Mappers.MapToMitigation(reader);
+                    response.Add(mitigation);
+                }
+            }
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<List<Mitigation>>.Success(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemsError($"{_logheader} {ex.Message}", null);
+            return Result<List<Mitigation>>.Failure<List<Mitigation>>(DomainErrors.MitigationError.NullOrEmpty);
+        }
+    }
 }

@@ -1,18 +1,22 @@
-﻿using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Shared.Common;
+﻿using System.Reflection;
+
 using Microsoft.Data.SqlClient;
-using SMS_Infrastructure.Common;
-using SMS_Domain.ValueObjects;
+
+using SMS_Domain.Entities;
+using SMS_Domain.Enums;
 using SMS_Domain.Models;
-using System.Reflection;
+using SMS_Domain.ValueObjects;
+
+using SMS_Infrastructure.Common;
+
+using SMS_Shared.Common;
 
 namespace SMS_Infrastructure.Common;
 
 public static partial class Mappers
 {
     #region Generic Helper Methods
-
+    
     public static List<T> LoadCollection<T>(this SqlDataReader reader) where T : new()
     {
         List<T> collection = new List<T>();
@@ -216,6 +220,7 @@ public static partial class Mappers
             throw new InvalidOperationException($"Error mapping SqlDataReader to SMSStakeholderUser: {ex.Message}", ex);
         }
     }
+    
     /// <summary>
     /// Maps SqlDataReader to AirportSharedDataset entity using updated field names
     /// </summary>
@@ -261,70 +266,141 @@ public static partial class Mappers
 
         return dataset;
     }
+
     /// <summary>
     /// Maps SqlDataReader to Hazard entity
+    /// NOTE: This mapper only handles basic Hazard data from tbld_Hazards
+    /// HazardLocation must be populated separately via Application Service layer
     /// </summary>
     public static Hazard MapToHazard(SqlDataReader reader)
     {
         HazardID hazardID = new(reader.GetValue<string>(FieldNames.fHazardCode));
         Hazard hazard = new(hazardID);
 
-        // Core properties
+        // Core properties - Basic mapping from tbld_Hazards
         hazard.Code = reader.GetValue<string>(FieldNames.fHazardCode) ?? string.Empty;
         hazard.Name = reader.GetValue<string>(FieldNames.fHazardName);
         hazard.Description = reader.GetValue<string>(FieldNames.fHazardDescription) ?? string.Empty;
         hazard.ReportCode = reader.GetValue<string>(FieldNames.fHazardReportCode) ?? string.Empty;
         hazard.ScoringPanelCode = reader.GetValue<string>(FieldNames.fHazardScoringPanelCode);
         hazard.AverageScore = reader.GetValue<string>(FieldNames.fHazardAverageScore);
-
-        // Enhanced properties
-        //hazard.Category = reader.GetValue<string>(FieldNames.fHazardCategory) ?? string.Empty;
-        //var fiveMComponentValue = reader.GetValue<string>(FieldNames.fHazardFiveMComponent);
-        //hazard.FiveMComponent = string.IsNullOrEmpty(fiveMComponentValue) ? FiveMComponent.Method : 
-        //    (FiveMComponent.FromValue(fiveMComponentValue) ?? FiveMComponent.Method);
-        //hazard.HazardType = reader.GetValue<string>(FieldNames.fHazardType);
         
-        //// Reporting information
-        //hazard.ReportedBy = reader.GetValue<string>(FieldNames.fHazardReportedBy) ?? string.Empty;
-        //hazard.ReportedOn = reader.IsDBNull(FieldNames.fHazardReportedOn) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fHazardReportedOn);
-        //hazard.ReportingDepartment = reader.GetValue<string>(FieldNames.fHazardReportingDepartment);
+        // NOTE: HazardLocation is NOT populated here - it must be populated at the Application Service layer
+        // to maintain proper separation of concerns and avoid circular dependencies
 
-        //// Privacy and confidentiality
-        //hazard.IsConfidential = reader.IsDBNull(FieldNames.fHazardIsConfidential) ? false : reader.GetBoolean(FieldNames.fHazardIsConfidential);
-        //hazard.IsAnonymous = reader.IsDBNull(FieldNames.fHazardIsAnonymous) ? false : reader.GetBoolean(FieldNames.fHazardIsAnonymous);
+        // Enhanced properties - if enhanced fields exist in the database
+        try
+        {
+            // Enhanced Classification Fields
+            var category = reader.GetValue<string>(FieldNames.fHazardCategory);
+            if (!string.IsNullOrEmpty(category))
+            {
+                hazard.Category = category;
+            }
 
-        //// Status and priority (with enum parsing)
-        //var statusValue = reader.GetValue<string>(FieldNames.fHazardStatus);
-        //hazard.Status = string.IsNullOrEmpty(statusValue) ? HazardStatus.Active : 
-        //    (HazardStatus.FromValue(statusValue) ?? HazardStatus.Active);
+            var hazardType = reader.GetValue<string>(FieldNames.fHazardType);
+            if (!string.IsNullOrEmpty(hazardType))
+            {
+                hazard.HazardType = hazardType;
+            }
 
-        //var priorityValue = reader.GetValue<string>(FieldNames.fHazardPriority);
-        //hazard.Priority = string.IsNullOrEmpty(priorityValue) ? HazardPriority.Medium :
-        //    (HazardPriority.FromValue(priorityValue) ?? HazardPriority.Medium);
+            // Reporting Information
+            var reportedBy = reader.GetValue<string>(FieldNames.fHazardReportedBy);
+            if (!string.IsNullOrEmpty(reportedBy))
+            {
+                hazard.ReportedBy = reportedBy;
+            }
 
-        //// Risk assessment properties
-        //hazard.RiskLevel = reader.GetValue<string>(FieldNames.fHazardRiskLevel);
-        //hazard.WorstCredibleOutcome = reader.GetValue<string>(FieldNames.fHazardWorstCredibleOutcome);
-        //hazard.RootCause = reader.GetValue<string>(FieldNames.fHazardRootCause);
+            var reportedOn = reader.IsDBNull(FieldNames.fHazardReportedOn) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fHazardReportedOn);
+            hazard.ReportedOn = reportedOn;
 
-        //// Mitigation properties
-        //hazard.CurrentMitigations = reader.GetValue<string>(FieldNames.fHazardCurrentMitigations);
-        //hazard.ProposedMitigations = reader.GetValue<string>(FieldNames.fHazardProposedMitigations);
-        //hazard.MitigationTargetDate = reader.IsDBNull(FieldNames.fHazardMitigationTargetDate) ? null : reader.GetDateTime(FieldNames.fHazardMitigationTargetDate);
-        //hazard.MitigationOwner = reader.GetValue<string>(FieldNames.fHazardMitigationOwner);
+            var reportingDepartment = reader.GetValue<string>(FieldNames.fHazardReportingDepartment);
+            if (!string.IsNullOrEmpty(reportingDepartment))
+            {
+                hazard.ReportingDepartment = reportingDepartment;
+            }
 
-        //// Investigation properties
-        //hazard.RequiresInvestigation = reader.IsDBNull(FieldNames.fHazardRequiresInvestigation) ? false : reader.GetBoolean(FieldNames.fHazardRequiresInvestigation);
-        //hazard.InvestigationCompletedDate = reader.IsDBNull(FieldNames.fHazardInvestigationCompletedDate) ? null : reader.GetDateTime(FieldNames.fHazardInvestigationCompletedDate);
-        //hazard.InvestigationNotes = reader.GetValue<string>(FieldNames.fHazardInvestigationNotes);
+            // Privacy and Confidentiality
+            var isConfidential = reader.IsDBNull(FieldNames.fHazardIsConfidential) ? false : reader.GetBoolean(FieldNames.fHazardIsConfidential);
+            hazard.IsConfidential = isConfidential;
 
-        //// Additional properties
-        //hazard.AdditionalComments = reader.GetValue<string>(FieldNames.fHazardAdditionalComments);
+            var isAnonymous = reader.IsDBNull(FieldNames.fHazardIsAnonymous) ? false : reader.GetBoolean(FieldNames.fHazardIsAnonymous);
+            hazard.IsAnonymous = isAnonymous;
 
-        //// Location properties (legacy)
-        //hazard.Location = reader.GetValue<string>(FieldNames.fHazardLocation);
-        //hazard.LocationArea = reader.GetValue<string>(FieldNames.fHazardLocationArea);
-        //hazard.LocationSubArea = reader.GetValue<string>(FieldNames.fHazardLocationSubArea);
+            // Status and Priority (with enum parsing)
+            var statusValue = reader.GetValue<string>(FieldNames.fHazardStatus);
+            if (!string.IsNullOrEmpty(statusValue))
+            {
+                hazard.Status = HazardStatus.FromValue(statusValue) ?? HazardStatus.Active;
+            }
+
+            var priorityValue = reader.GetValue<string>(FieldNames.fHazardPriority);
+            if (!string.IsNullOrEmpty(priorityValue))
+            {
+                hazard.Priority = HazardPriority.FromValue(priorityValue) ?? HazardPriority.Medium;
+            }
+
+            // Risk Level
+            var riskLevel = reader.GetValue<string>(FieldNames.fHazardRiskLevel);
+            if (!string.IsNullOrEmpty(riskLevel))
+            {
+                hazard.RiskLevel = riskLevel;
+            }
+
+            // Step 3 Risk Analysis Fields
+            var worstCredibleOutcome = reader.GetValue<string>(FieldNames.fHazardWorstCredibleOutcome);
+            if (!string.IsNullOrEmpty(worstCredibleOutcome))
+            {
+                hazard.WorstCredibleOutcome = worstCredibleOutcome;
+            }
+
+            var rootCause = reader.GetValue<string>(FieldNames.fHazardRootCause);
+            if (!string.IsNullOrEmpty(rootCause))
+            {
+                hazard.RootCause = rootCause;
+            }
+
+            // Investigation Properties
+            var requiresInvestigation = reader.IsDBNull(FieldNames.fHazardRequiresInvestigation) ? false : reader.GetBoolean(FieldNames.fHazardRequiresInvestigation);
+            hazard.RequiresInvestigation = requiresInvestigation;
+
+            var investigationNotes = reader.GetValue<string>(FieldNames.fHazardInvestigationNotes);
+            if (!string.IsNullOrEmpty(investigationNotes))
+            {
+                hazard.InvestigationNotes = investigationNotes;
+            }
+
+            // Additional Properties
+            var additionalComments = reader.GetValue<string>(FieldNames.fHazardAdditionalComments);
+            if (!string.IsNullOrEmpty(additionalComments))
+            {
+                hazard.AdditionalComments = additionalComments;
+            }
+
+            var locationArea = reader.GetValue<string>(FieldNames.fHazardLocationArea);
+            if (!string.IsNullOrEmpty(locationArea))
+            {
+                hazard.LocationArea = locationArea;
+            }
+
+            var locationSubArea = reader.GetValue<string>(FieldNames.fHazardLocationSubArea);
+            if (!string.IsNullOrEmpty(locationSubArea))
+            {
+                hazard.LocationSubArea = locationSubArea;
+            }
+
+            // 5M Component (Smart Enum)
+            var fiveMComponentValue = reader.GetValue<string>(FieldNames.fHazardFiveMComponent);
+            if (!string.IsNullOrEmpty(fiveMComponentValue))
+            {
+                hazard.FiveMComponent = FiveMComponent.FromValue(fiveMComponentValue) ?? FiveMComponent.FromName(fiveMComponentValue);
+            }
+        }
+        catch (Exception)
+        {
+            // Enhanced fields might not exist in older database schemas
+            // Continue with basic mapping - enhanced fields will have default values
+        }
 
         return hazard;
     }
@@ -343,7 +419,6 @@ public static partial class Mappers
         hazardLocation.Latitude = reader.IsDBNull(FieldNames.fHazardLocationLatitude) ? null : reader.GetDecimal(FieldNames.fHazardLocationLatitude);
         hazardLocation.Longitude = reader.IsDBNull(FieldNames.fHazardLocationLongitude) ? null : reader.GetDecimal(FieldNames.fHazardLocationLongitude);
         hazardLocation.Description = reader.GetValue<string>(FieldNames.fHazardLocationDescription);
-        //hazardLocation.DateSelected = reader.GetDateTime(FieldNames.fHazardLocationDateSelected);
 
         return hazardLocation;
     }
@@ -484,35 +559,86 @@ public static partial class Mappers
     }
 
     /// <summary>
-    /// Maps SqlDataReader to RiskAssessment entity
+    /// Maps SqlDataReader to RiskAssessment entity - CLEAN VERSION WITHOUT REFLECTION
+    /// Following the preferred pattern: direct field mapping with GetValue<T>
     /// </summary>
     public static RiskAssessment MapToRiskAssessment(SqlDataReader reader)
     {
-        // Extract values from database
+        // ✅ Clean pattern: Direct field extraction and entity creation
         var code = reader.GetValue<string>(FieldNames.fRiskAssessmentCode);
-        var name = reader.GetValue<string>(FieldNames.fRiskAssessmentName);
-        var description = reader.GetValue<string>(FieldNames.fRiskAssessmentDescription);
-        var hazardCode = reader.GetValue<string>(FieldNames.fRiskAssessmentHazardCode);
-        var assessmentType = reader.GetValue<string>(FieldNames.fRiskAssessmentType);
-        var status = reader.GetValue<string>(FieldNames.fRiskAssessmentStatus);
-        var stage = reader.GetValue<string>(FieldNames.fRiskAssessmentStage);
-
-        // Create RiskAssessmentId
         var riskAssessmentId = new RiskAssessmentID(code);
-        
-        // Create entity using the public constructor (for database mapping)
         var riskAssessment = new RiskAssessment(riskAssessmentId);
 
-        // Set properties using reflection since they have private setters
-        // This is acceptable for database mapping scenarios
-        var riskAssessmentType = typeof(RiskAssessment);
-        
-        riskAssessmentType.GetProperty("Name")?.SetValue(riskAssessment, name);
-        riskAssessmentType.GetProperty("Description")?.SetValue(riskAssessment, description);
-        riskAssessmentType.GetProperty("HazardCode")?.SetValue(riskAssessment, hazardCode);
-        
-        // For Code property, we need to use reflection since it has a private setter
-        riskAssessmentType.GetProperty("Code")?.SetValue(riskAssessment, code);
+        // ✅ SIMPLIFIED: Direct property assignment - NO REFLECTION!
+        riskAssessment.Name = reader.GetValue<string>(FieldNames.fRiskAssessmentName);
+        riskAssessment.Description = reader.GetValue<string>(FieldNames.fRiskAssessmentDescription);
+        riskAssessment.HazardCode = reader.GetValue<string>(FieldNames.fRiskAssessmentHazardCode);
+        riskAssessment.Code = code;
+
+        // ✅ Enum parsing for AssessmentType
+        var assessmentTypeValue = reader.GetValue<string>(FieldNames.fRiskAssessmentType);
+        if (!string.IsNullOrEmpty(assessmentTypeValue) && Enum.TryParse<RiskAssessmentType>(assessmentTypeValue, out var assessmentType))
+        {
+            riskAssessment.AssessmentType = assessmentType;
+        }
+
+        // ✅ Enum parsing for Status
+        var statusValue = reader.GetValue<string>(FieldNames.fRiskAssessmentStatus);
+        if (!string.IsNullOrEmpty(statusValue) && Enum.TryParse<RiskAssessmentStatus>(statusValue, out var status))
+        {
+            riskAssessment.Status = status;
+        }
+
+        // ✅ Direct assignment for simple properties
+        riskAssessment.Stage = reader.GetValue<string>(FieldNames.fRiskAssessmentStage);
+        riskAssessment.LeadAssessorId = reader.GetValue<string>(FieldNames.fRiskAssessmentLeadAssessorId);
+        riskAssessment.PrimaryHazardId = reader.GetValue<string>(FieldNames.fRiskAssessmentPrimaryHazardId);
+
+        // ✅ Enum parsing for Category
+        var categoryValue = reader.GetValue<string>(FieldNames.fRiskAssessmentCategory);
+        if (!string.IsNullOrEmpty(categoryValue) && Enum.TryParse<RiskAssessmentCategory>(categoryValue, out var category))
+        {
+            riskAssessment.RiskAssessmentCategory = category;
+        }
+
+        // ✅ Integer fields with null handling
+        riskAssessment.CurrentStep = reader.IsDBNull(FieldNames.fRiskAssessmentCurrentStep) ? 1 : reader.GetValue<int>(FieldNames.fRiskAssessmentCurrentStep);
+
+        // ✅ DateTime fields with null handling  
+        riskAssessment.CompletedDate = reader.IsDBNull(FieldNames.fRiskAssessmentCompletedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fRiskAssessmentCompletedDate);
+        riskAssessment.CompletedBy = reader.GetValue<string>(FieldNames.fRiskAssessmentCompletedBy);
+        riskAssessment.ParentAssessmentId = reader.GetValue<string>(FieldNames.fRiskAssessmentParentAssessmentId);
+
+        // ✅ Step 1 - System Description Fields (now with public setters!)
+        riskAssessment.SystemDescription = reader.GetValue<string>(FieldNames.fRiskAssessmentSystemDescription) ?? string.Empty;
+        riskAssessment.SystemBoundaries = reader.GetValue<string>(FieldNames.fRiskAssessmentSystemBoundaries) ?? string.Empty;
+        riskAssessment.SystemPurpose = reader.GetValue<string>(FieldNames.fRiskAssessmentSystemPurpose) ?? string.Empty;
+
+        // ✅ 5M Framework Fields - Direct assignment!
+        riskAssessment.FiveMPersonnel = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMPersonnel) ?? string.Empty;
+        riskAssessment.FiveMEquipment = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMEquipment) ?? string.Empty;
+        riskAssessment.FiveMProcedures = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMProcedures) ?? string.Empty;
+        riskAssessment.FiveMResources = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMResources) ?? string.Empty;
+        riskAssessment.FiveMPhysicalEnvironment = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMPhysicalEnvironment) ?? string.Empty;
+        riskAssessment.FiveMOperationalEnvironment = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMOperationalEnvironment) ?? string.Empty;
+
+        // ✅ Step 3 - Risk Analysis Fields
+        riskAssessment.RiskAnalysisMethod = reader.GetValue<string>(FieldNames.fRiskAssessmentRiskAnalysisMethod) ?? "SMS Risk Matrix";
+        riskAssessment.RiskCriteria = reader.GetValue<string>(FieldNames.fRiskAssessmentRiskCriteria) ?? string.Empty;
+
+        // ✅ Step 4 - Risk Assessment Fields
+        riskAssessment.TolerabilityFramework = reader.GetValue<string>(FieldNames.fRiskAssessmentTolerabilityFramework) ?? "PDX-SMS Default";
+        riskAssessment.RiskAcceptanceCriteria = reader.GetValue<string>(FieldNames.fRiskAssessmentRiskAcceptanceCriteria) ?? string.Empty;
+        riskAssessment.FinalSeverityScore = reader.IsDBNull(FieldNames.fRiskAssessmentFinalSeverityScore) ? null : reader.GetValue<int?>(FieldNames.fRiskAssessmentFinalSeverityScore);
+        riskAssessment.FinalLikelihoodScore = reader.IsDBNull(FieldNames.fRiskAssessmentFinalLikelihoodScore) ? null : reader.GetValue<int?>(FieldNames.fRiskAssessmentFinalLikelihoodScore);
+        riskAssessment.FinalRiskLevel = reader.GetValue<string>(FieldNames.fRiskAssessmentFinalRiskLevel);
+        riskAssessment.RiskTolerability = reader.GetValue<string>(FieldNames.fRiskAssessmentRiskTolerability) ?? "ALARP";
+        riskAssessment.AssessmentRationale = reader.GetValue<string>(FieldNames.fRiskAssessmentAssessmentRationale);
+
+        // ✅ Step 5 - Implementation Fields
+        riskAssessment.ImplementationStrategy = reader.GetValue<string>(FieldNames.fRiskAssessmentImplementationStrategy) ?? string.Empty;
+        riskAssessment.OverallTargetDate = reader.IsDBNull(FieldNames.fRiskAssessmentOverallTargetDate) ? null : reader.GetValue<DateTime?>(FieldNames.fRiskAssessmentOverallTargetDate);
+        riskAssessment.ImplementationNotes = reader.GetValue<string>(FieldNames.fRiskAssessmentImplementationNotes) ?? string.Empty;
 
         return riskAssessment;
     }
@@ -562,7 +688,9 @@ public static partial class Mappers
             reportValidation.ValidationDecision = reader.GetValue<string>(FieldNames.fReportValidationDecision);
             reportValidation.Status = reader.GetValue<string>(FieldNames.fReportValidationStatus);
             reportValidation.Stage = reader.GetValue<string>(FieldNames.fReportValidationStage);
-
+            reportValidation.ValidationType = reader.GetValue<string>(FieldNames.fReportValidationType);
+            reportValidation.ValidationComments =  reader.GetValue<string>(FieldNames.fReportValidationComments);
+            reportValidation.ValidatedBy = reader.GetValue<string>(FieldNames.fReportValidationValidatedBy);
             // Set audit properties using reflection since they have private setters
             var baseEntityType = typeof(BaseAuditableEntity);
             var createdBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";

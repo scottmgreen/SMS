@@ -40,18 +40,36 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCode, riskAssessment.Code));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentName, riskAssessment.Name));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentDescription, riskAssessment.Description));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentHazardCode, riskAssessment.HazardCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentType, riskAssessment.AssessmentType));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentStatus, riskAssessment.Status));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentStage, riskAssessment.Stage));
+            // ✅ CORRECTED: Updated parameters to match the fixed stored procedure exactly
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCode, riskAssessment.Code ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentName, riskAssessment.Name ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentDescription, riskAssessment.Description ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentHazardCode, riskAssessment.HazardCode ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentType, riskAssessment.AssessmentType.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentStatus, riskAssessment.Status.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentStage, riskAssessment.Stage ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSystemDescription, riskAssessment.SystemDescription ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSystemBoundaries, riskAssessment.SystemBoundaries ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSystemPurpose, riskAssessment.SystemPurpose ?? (object)DBNull.Value));
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmPersonnelFactors, riskAssessment.FiveMPersonnel ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmProcedureFactors, riskAssessment.FiveMProcedures ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEquipmentFactors, riskAssessment.FiveMEquipment ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmResourceFactors, riskAssessment.FiveMResources ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEnvironmentFactors, riskAssessment.FiveMPhysicalEnvironment ?? (object)DBNull.Value));
+
+            // Core fields with proper null handling
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmLeadAssessorId, riskAssessment.LeadAssessorId ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCurrentStep, riskAssessment.CurrentStep));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCategory, riskAssessment.RiskAssessmentCategory.ToString()));
+            
+            // Audit fields
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
+            // Output parameters
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
-            var newCode = new SqlParameter("@pNewRiskAssessmentCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
+            var newCode = new SqlParameter("@pNewRiskAssessmentCode", SqlDbType.NVarChar, 60) { Direction = ParameterDirection.Output };
             cmd.Parameters.Add(newID);
             cmd.Parameters.Add(newCode);
 
@@ -67,7 +85,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to create RiskAssessment: {Code}", riskAssessment.Code);
+            _logger.LogError(ex, "Failed to create RiskAssessment: {Code}", riskAssessment?.Code ?? "NULL");
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.CreateFailed);
         }
     }
@@ -165,14 +183,61 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, riskAssessment.Id.Value));
+            // Core parameters (required)
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentId, riskAssessment.Id.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCode, riskAssessment.Code));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentName, riskAssessment.Name));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentDescription, riskAssessment.Description));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentHazardCode, riskAssessment.HazardCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentType, riskAssessment.AssessmentType));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentStatus, riskAssessment.Status));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentStage, riskAssessment.Stage));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentName, riskAssessment.Name ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentDescription, riskAssessment.Description ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentHazardCode, riskAssessment.HazardCode ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentType, riskAssessment.AssessmentType.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentStatus, riskAssessment.Status.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentStage, riskAssessment.Stage ?? (object)DBNull.Value));
+            
+            // Enhanced core fields
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmLeadAssessorId, riskAssessment.LeadAssessorId ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmPrimaryHazardId, riskAssessment.PrimaryHazardId ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCategory, riskAssessment.RiskAssessmentCategory.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCurrentStep, riskAssessment.CurrentStep));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletedDate, riskAssessment.CompletedDate ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletedBy, riskAssessment.CompletedBy ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmParentAssessmentId, riskAssessment.ParentAssessmentId ?? (object)DBNull.Value));
+            
+            // Step 1 - System Description Fields
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSystemDescription, riskAssessment.SystemDescription ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSystemBoundaries, riskAssessment.SystemBoundaries ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSystemPurpose, riskAssessment.SystemPurpose ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmPersonnelFactors, riskAssessment.FiveMPersonnel ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEquipmentFactors, riskAssessment.FiveMEquipment ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmProcedureFactors, riskAssessment.FiveMProcedures ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmResourceFactors, riskAssessment.FiveMResources ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEnvironmentFactors, riskAssessment.FiveMPhysicalEnvironment ?? (object)DBNull.Value));
+            
+            // Step 3 - Risk Analysis Fields
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisMethod, riskAssessment.RiskAnalysisMethod ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskCriteria, riskAssessment.RiskCriteria ?? (object)DBNull.Value));
+            
+            // Step 4 - Risk Assessment Fields
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmTolerabilityFramework, riskAssessment.TolerabilityFramework ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAcceptanceCriteria, riskAssessment.RiskAcceptanceCriteria ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalSeverityScore, riskAssessment.FinalSeverityScore ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalLikelihoodScore, riskAssessment.FinalLikelihoodScore ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalRiskLevel, riskAssessment.FinalRiskLevel ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskTolerability, riskAssessment.RiskTolerability ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssessmentRationale, riskAssessment.AssessmentRationale ?? (object)DBNull.Value));
+            
+            // Step 5 - Implementation Fields
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmImplementationStrategy, riskAssessment.ImplementationStrategy ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmOverallTargetDate, riskAssessment.OverallTargetDate ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmImplementationNotes, riskAssessment.ImplementationNotes ?? (object)DBNull.Value));
+            
+            // Progress Tracking Fields
+            var completedStepsString = string.Join(",", riskAssessment.CompletedSteps);
+            var completionPercentage = riskAssessment.CompletedSteps.Count * 20; // 5 steps = 100%
+            
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletedSteps, completedStepsString));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletionPercentage, completionPercentage));
+            
+            // Audit fields
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
@@ -185,6 +250,229 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
         catch (Exception ex)
         {
             _logger.LogInfrastructurePutItemError($"{_logheader} {ex.Message}", null);
+            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Updates Step 1 - System Description data specifically
+    /// </summary>
+    public async Task<Result<RiskAssessment>> UpdateStep1Async(
+        string riskAssessmentId,
+        string leadAssessorId,
+        string systemDescription,
+        string systemBoundaries,
+        string systemPurpose,
+        string fiveMPersonnel,
+        string fiveMEquipment,
+        string fiveMProcedures,
+        string fiveMResources,
+        string fiveMPhysicalEnvironment,
+        string fiveMOperationalEnvironment,
+        string updatedBy = "SYSTEM",
+        CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_RiskAssessment_UpdateStep1} ID:{riskAssessmentId}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_RiskAssessment_UpdateStep1, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentId, riskAssessmentId));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmLeadAssessorId, leadAssessorId));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSystemDescription, systemDescription));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSystemBoundaries, systemBoundaries));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSystemPurpose, systemPurpose));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmPersonnelFactors, fiveMPersonnel));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEquipmentFactors, fiveMEquipment));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmProcedureFactors, fiveMProcedures));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmResourceFactors, fiveMResources));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEnvironmentFactors, fiveMPhysicalEnvironment ?? fiveMOperationalEnvironment));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, updatedBy));
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return await GetRiskAssessmentByIdAsync(new RiskAssessmentID(riskAssessmentId), ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update Step 1 for RiskAssessment: {Id}", riskAssessmentId);
+            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Updates Step 3 - Risk Analysis data specifically
+    /// </summary>
+    public async Task<Result<RiskAssessment>> UpdateStep3Async(
+        string riskAssessmentId,
+        string riskAnalysisMethod,
+        string riskCriteria,
+        string updatedBy = "SYSTEM",
+        CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_RiskAssessment_UpdateStep3} ID:{riskAssessmentId}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_RiskAssessment_UpdateStep3, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentId, riskAssessmentId));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisMethod, riskAnalysisMethod));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskCriteria, riskCriteria));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, updatedBy));
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return await GetRiskAssessmentByIdAsync(new RiskAssessmentID(riskAssessmentId), ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update Step 3 for RiskAssessment: {Id}", riskAssessmentId);
+            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Updates Step 4 - Risk Assessment data specifically
+    /// </summary>
+    public async Task<Result<RiskAssessment>> UpdateStep4Async(
+        string riskAssessmentId,
+        string tolerabilityFramework,
+        string riskAcceptanceCriteria,
+        int? finalSeverityScore,
+        int? finalLikelihoodScore,
+        string finalRiskLevel,
+        string riskTolerability,
+        string assessmentRationale,
+        string updatedBy = "SYSTEM",
+        CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_RiskAssessment_UpdateStep4} ID:{riskAssessmentId}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_RiskAssessment_UpdateStep4, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentId, riskAssessmentId));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmTolerabilityFramework, tolerabilityFramework));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAcceptanceCriteria, riskAcceptanceCriteria));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalSeverityScore, finalSeverityScore ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalLikelihoodScore, finalLikelihoodScore ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalRiskLevel, finalRiskLevel));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskTolerability, riskTolerability));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssessmentRationale, assessmentRationale));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, updatedBy));
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return await GetRiskAssessmentByIdAsync(new RiskAssessmentID(riskAssessmentId), ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update Step 4 for RiskAssessment: {Id}", riskAssessmentId);
+            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Updates Step 5 - Implementation data specifically
+    /// </summary>
+    public async Task<Result<RiskAssessment>> UpdateStep5Async(
+        string riskAssessmentId,
+        string implementationStrategy,
+        DateTime? overallTargetDate,
+        string implementationNotes,
+        string updatedBy = "SYSTEM",
+        CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_RiskAssessment_UpdateStep5} ID:{riskAssessmentId}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_RiskAssessment_UpdateStep5, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentId, riskAssessmentId));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmImplementationStrategy, implementationStrategy));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmOverallTargetDate, overallTargetDate ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmImplementationNotes, implementationNotes));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, updatedBy));
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return await GetRiskAssessmentByIdAsync(new RiskAssessmentID(riskAssessmentId), ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update Step 5 for RiskAssessment: {Id}", riskAssessmentId);
+            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Updates progress tracking data specifically
+    /// </summary>
+    public async Task<Result<RiskAssessment>> UpdateProgressAsync(
+        string riskAssessmentId,
+        int currentStep,
+        string completedSteps,
+        int completionPercentage,
+        string status = null,
+        string stage = null,
+        string updatedBy = "SYSTEM",
+        CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_RiskAssessment_UpdateProgress} ID:{riskAssessmentId}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_RiskAssessment_UpdateProgress, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentId, riskAssessmentId));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCurrentStep, currentStep));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletedSteps, completedSteps));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletionPercentage, completionPercentage));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentStatus, status ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentStage, stage ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, updatedBy));
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return await GetRiskAssessmentByIdAsync(new RiskAssessmentID(riskAssessmentId), ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update progress for RiskAssessment: {Id}", riskAssessmentId);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }

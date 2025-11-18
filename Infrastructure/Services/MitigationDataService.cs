@@ -49,4 +49,12 @@ public class MitigationDataService : BaseDataService<MitigationDataService>
     {
         return _repo.DeleteMitigationAsync(id, ct);
     }
+
+    /// <summary>
+    /// Gets all mitigations for a specific hazard code - Used for populating Hazard.Mitigations list
+    /// </summary>
+    public Task<Result<List<Mitigation>>> GetMitigationsByHazardCodeAsync(string hazardCode, CancellationToken ct = default)
+    {
+        return _repo.GetMitigationsByHazardCodeAsync(hazardCode, ct);
+    }
 }

@@ -26,3 +26,13 @@ public class GetAllHazardsQuery : BaseQueryBundle, IRequest<Result<List<Hazard>>
     {
     }
 }
+
+public class GetHazardsByReportIdQuery : BaseQueryBundle, IRequest<Result<List<Hazard>>>
+{
+    public ReportID ReportId { get; set; }
+
+    public GetHazardsByReportIdQuery(ReportID reportId)
+    {
+        ReportId = reportId ?? throw new ArgumentNullException(nameof(reportId));
+    }
+}

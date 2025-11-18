@@ -21,6 +21,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Remove="Pages\SafetyRiskManagement\RiskAssessment.cshtml" />
+    <Content Remove="Pages\SafetyRiskManagement\RiskAssessmentWizardRoute.cshtml" />
     <Content Remove="Pages\SafetyRiskManagement\SimplifiedRiskAssessment.cshtml" />
   </ItemGroup>
 

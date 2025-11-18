@@ -1,5 +1,9 @@
 using Microsoft.Extensions.Logging;
+
 using SMS_Application.Messaging.Queries;
+
+using SMS_Domain.Entities;
+using SMS_Domain.Interfaces;
 
 namespace SMS_Application.Messaging.QueryHandlers;
 
@@ -10,11 +14,13 @@ namespace SMS_Application.Messaging.QueryHandlers;
 public class GetHazardByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardByIdQuery, Result<Hazard>>
 {
     private readonly HazardDataService _hazardDataService;
+    private readonly HazardLocationDataService _locationDataService;
     private readonly ILogger<GetHazardByIdQueryHandler> _logger;
 
-    public GetHazardByIdQueryHandler(HazardDataService hazardDataService, ILogger<GetHazardByIdQueryHandler> logger)
+    public GetHazardByIdQueryHandler(HazardDataService hazardDataService, HazardLocationDataService hazardLocationDataService, ILogger<GetHazardByIdQueryHandler> logger)
     {
         _hazardDataService = hazardDataService ?? throw new ArgumentNullException(nameof(hazardDataService));
+        _locationDataService = hazardLocationDataService ?? throw new ArgumentNullException(nameof(hazardLocationDataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -24,6 +30,9 @@ public class GetHazardByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetHaz
         {
             _logger.LogInformation("Processing GetHazardByIdQuery for ID: {Id}", request.HazardId);
             var result = await _hazardDataService.GetHazardByIdAsync(request.HazardId, ct).ConfigureAwait(false);
+            var location = await _locationDataService.GetHazardLocationsByHazardCodeAsync(request.HazardId.Value, ct);
+            result.Value.HazardLocation = location.Value.FirstOrDefault();
+
             return result;
         }
         catch (Exception ex)
@@ -37,11 +46,13 @@ public class GetHazardByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetHaz
 public class GetAllHazardsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllHazardsQuery, Result<List<Hazard>>>
 {
     private readonly HazardDataService _hazardDataService;
+    private readonly HazardLocationDataService _hazardLocationDataService;
     private readonly ILogger<GetAllHazardsQueryHandler> _logger;
 
-    public GetAllHazardsQueryHandler(HazardDataService hazardDataService, ILogger<GetAllHazardsQueryHandler> logger)
+    public GetAllHazardsQueryHandler(HazardDataService hazardDataService, HazardLocationDataService hazardLocationDataService, ILogger<GetAllHazardsQueryHandler> logger)
     {
         _hazardDataService = hazardDataService ?? throw new ArgumentNullException(nameof(hazardDataService));
+        _hazardLocationDataService = hazardLocationDataService ?? throw new ArgumentNullException(nameof(hazardLocationDataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -49,9 +60,59 @@ public class GetAllHazardsQueryHandler : BaseQueryBundle, IRequestHandler<GetAll
     {
         try
         {
+            
             _logger.LogInformation("Processing GetAllHazardsQuery");
             var result = await _hazardDataService.GetAllHazardsAsync(ct).ConfigureAwait(false);
-            return result;
+            List<Hazard> hazards = new();
+            foreach (Hazard hz in result.Value)
+            {
+                string code = hz.Code;
+                hz.HazardLocation = _hazardLocationDataService.GetHazardLocationsByHazardCodeAsync(code).Result.Value.FirstOrDefault();
+                hazards.Add(hz);
+            }
+
+            return hazards;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing GetAllHazardsQuery");
+            return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
+        }
+    }
+}
+
+public class GetHazardsByReportIdQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardsByReportIdQuery, Result<List<Hazard>>>
+{
+    private readonly HazardDataService _hazardDataService;
+    private readonly HazardLocationDataService _hazardLocationDataService;
+    private readonly ILogger<GetHazardsByReportIdQueryHandler> _logger;
+
+    public GetHazardsByReportIdQueryHandler(HazardDataService hazardDataService, HazardLocationDataService hazardLocationDataService, ILogger<GetHazardsByReportIdQueryHandler> logger)
+    {
+        _hazardDataService = hazardDataService ?? throw new ArgumentNullException(nameof(hazardDataService));
+        _hazardLocationDataService= hazardLocationDataService ?? throw new ArgumentNullException(nameof(hazardLocationDataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    
+    public async Task<Result<List<Hazard>>> HandleAsync(GetHazardsByReportIdQuery request, CancellationToken ct = default)
+    {
+        try
+        {
+            ReportID reportid = request.ReportId;
+
+            _logger.LogInformation("Processing GetAllHazardsByReportIdQuery");
+            var result = await _hazardDataService.GetHazardsByReportIdAsync(reportid,ct).ConfigureAwait(false);
+            List<Hazard> hazards = new();
+            foreach (Hazard hz in result.Value)
+            {
+                string code = hz.Code;
+                hz.HazardLocation = _hazardLocationDataService.GetHazardLocationsByHazardCodeAsync(code).Result.Value.FirstOrDefault();
+                hazards.Add(hz);
+            }
+
+
+            return hazards;
         }
         catch (Exception ex)
         {

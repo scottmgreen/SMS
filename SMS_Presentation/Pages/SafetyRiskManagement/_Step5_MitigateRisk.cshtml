@@ -1,7 +1,6 @@
 ﻿@model SMS.Presentation.Pages.SafetyRiskManagement.RiskAssessmentWizardModel
-
 @{
-    // Calculate all hazard states once at the top
+    ViewData["Title"] = "Step 5 - Risk Mitigation";
     var allHazards = Model.AssessmentData?.IdentifiedHazards ?? new List<RiskAssessmentWizardModel.IdentifiedHazardDto>();
     var assessedHazards = allHazards.Where(h => !string.IsNullOrEmpty(h.Tolerability) || 
                                                !string.IsNullOrEmpty(h.RiskLevel) || 
@@ -901,4 +900,4 @@ function editResidualScore(memberId, residualHazardId, currentSeverity, currentL
     cells[3].innerHTML = `<div class="score-display badge bg-info fs-6 p-2">${(currentSeverity * currentLikelihood).toFixed(1)}</div>`;
     cells[4].innerHTML = `<button class="btn btn-success btn-sm submit-btn" onclick="submitResidualScore('${memberId}', '${residualHazardId}')"><i class="fas fa-save"></i> Submit</button>`;
 }
-</script>
+</script></script>

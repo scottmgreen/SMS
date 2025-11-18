@@ -115,4 +115,28 @@ public sealed class MitigationService
             return Result<bool>.Failure<bool>(DomainErrors.MitigationError.DeleteFailed);
         }
     }
+
+    /// <summary>
+    /// Gets all mitigations for a specific hazard code - Used for populating Hazard.Mitigations list
+    /// This maintains proper architectural separation between hazards and mitigations
+    /// </summary>
+    public async Task<Result<List<Mitigation>>> GetMitigationsByHazardCodeAsync(string hazardCode, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(hazardCode))
+            {
+                _logger.LogWarning("GetMitigationsByHazardCodeAsync called with null or empty hazard code");
+                return Result<List<Mitigation>>.Failure<List<Mitigation>>(DomainErrors.MitigationError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Retrieving mitigations for hazard code: {HazardCode}", hazardCode);
+            return await _dataService.GetMitigationsByHazardCodeAsync(hazardCode, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving mitigations for hazard code: {HazardCode}", hazardCode);
+            return Result<List<Mitigation>>.Failure<List<Mitigation>>(DomainErrors.MitigationError.NullOrEmpty);
+        }
+    }
 }

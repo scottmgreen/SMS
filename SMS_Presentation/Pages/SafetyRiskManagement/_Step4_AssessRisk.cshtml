@@ -1,7 +1,55 @@
 @model SMS.Presentation.Pages.SafetyRiskManagement.RiskAssessmentWizardModel
 @{
-    ViewData["Title"] = "Step 4 - Assess Risk & Tolerability";
+    ViewData["Title"] = "Step 4 - Risk Assessment";
 }
+
+<!-- Progress Summary -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-info">
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="h4 text-info mb-1">
+                            <i class="fas fa-clipboard-check"></i>
+                            @(Model.AssessmentData?.IdentifiedHazards?.Count ?? 0) Hazards
+                        </div>
+                        <div class="small text-muted">
+                            Total hazards identified for assessment
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="h4 text-info mb-1">
+                            <i class="fas fa-users"></i>
+                            @(Model.SelectedPanelMembers?.Count ?? 0) Panel Members
+                        </div>
+                        <div class="small text-muted">
+                            Panel members assigned for scoring
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="h4 text-info mb-1">
+                            <i class="fas fa-check-circle"></i>
+                            @(Model.CompletedScores?.Count ?? 0) Completed Scores
+                        </div>
+                        <div class="small text-muted">
+                            Scores submitted by panel members
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="h4 text-info mb-1">
+                            <i class="fas fa-sync-alt"></i>
+                            @(Model.PendingScores?.Count ?? 0) Pending Scores
+                        </div>
+                        <div class="small text-muted">
+                            Scores Awaiting Submission
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="row">
     <div class="col-12">
@@ -160,6 +208,7 @@
                                                     <tr id="@rowId" class="scoring-row @(isCompleted ? "table-success" : "table-light")" 
                                                         data-member-id="@panelistId" data-hazard-id="@hazard.Id">
                                                         
+
                                                         <!-- SMS User Info -->
                                                         <td>
                                                             <div class="d-flex align-items-center">

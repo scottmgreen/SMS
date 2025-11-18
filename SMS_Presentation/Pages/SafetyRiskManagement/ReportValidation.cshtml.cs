@@ -2,6 +2,7 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Logging;
 
 using SMS_Application.Interfaces;
@@ -17,9 +18,7 @@ using SMS_Shared.Common;
 namespace SMS.Presentation.Pages.SafetyRiskManagement;
 
 /// <summary>
-/// SMS Report Validation Page - Proper PageModel Implementation
-/// Uses PageModel properties for binding, not direct entity binding
-/// Follows proper Razor Pages patterns - NO direct entity binding
+/// SMS Report Validation Page - Fixed ValidationDecision binding
 /// </summary>
 public class ReportValidationModel : PageModel
 {
@@ -32,7 +31,7 @@ public class ReportValidationModel : PageModel
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    #region PageModel Properties for Form Binding - NO ENTITY BINDING!
+    #region PageModel Properties for Form Binding
     
     [BindProperty(SupportsGet = true)]
     public string ReportId { get; set; } = string.Empty;
@@ -49,31 +48,97 @@ public class ReportValidationModel : PageModel
     [BindProperty]
     public string ValidatedBy { get; set; } = string.Empty;
 
-    // Add HazardId to preserve across POST
     [BindProperty]
     public string HazardId { get; set; } = string.Empty;
 
+    [BindProperty]
+    public bool IsExistingValidation { get; set; }
+
+    // Remove any Required attribute and make it nullable for new validations
+    [BindProperty]
+    public string? ExistingValidationId { get; set; }
+
     #endregion
 
-    #region Display Properties - Loaded from Domain Entities
+    #region SelectLists for Dropdowns
     
-    // Display data loaded from SMS Backend - NOT bound
+    public SelectList ValidationTypeOptions => new SelectList(
+        new List<object>
+        {
+            new { Value = "Preliminary", Text = "Preliminary Accessment" },
+            new { Value = "Technical", Text = "Technical Assessment" } //,
+            //new { Value = "Complex", Text = "Complex Case Validation" }
+        },
+        "Value",
+        "Text",
+        ValidationType
+    );
+
+    public SelectList ValidatedByOptions
+    {
+        get
+        {
+            var options = new List<object>
+            {
+                new { Value = "", Text = "Auto-assign based on workload" }
+            };
+
+            if (AvailableAssessors?.Any() == true)
+            {
+                foreach (var assessor in AvailableAssessors)
+                {
+                    var assessorUserName = assessor.UserName.Value;
+                    var assessorText = $"{assessor.DisplayName} ({assessorUserName}) - {assessor.ApplicationRole}";
+                    options.Add(new { Value = assessorUserName, Text = assessorText });
+                }
+            }
+
+            return new SelectList(options, "Value", "Text", ValidatedBy);
+        }
+    }
+
+    #endregion
+
+    #region Display Properties
+    
     public Report? ReportDetails { get; set; }
     public Hazard? ReportHazard { get; set; }
     public ReportValidation? ReportValidation { get; set; }
     public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
 
-    // UI State properties
-    public bool IsUpdate => ReportValidation != null;
-    public string ValidationCode => ReportValidation?.Code ?? string.Empty;
+    public bool IsUpdate => IsExistingValidation && ReportValidation != null;
+    public string ValidationCode => ReportValidation?.Code ?? "New";
     public string CurrentStatus => ReportValidation?.Status ?? "New";
 
-    // Hidden property to track if this is an update (persisted through POST)
-    [BindProperty]
-    public bool IsExistingValidation { get; set; }
+    #endregion
 
-    [BindProperty]
-    public string ExistingValidationId { get; set; } = string.Empty;
+    #region UI State Properties
+    
+    public bool ShouldShowSmsRiskFields => ValidationDecision == "SMS_RISK";
+    
+    // Show Submit button for NOT_SMS_RISK and NEEDS_INVESTIGATION (and also when nothing is selected initially)
+    public bool ShouldShowSubmitButton => string.IsNullOrEmpty(ValidationDecision) || ValidationDecision != "SMS_RISK";
+    
+    // Only show Proceed button when SMS_RISK is specifically selected
+    public bool ShouldShowProceedButton => ValidationDecision == "SMS_RISK";
+
+    public string GetValidationCardClass(string decisionValue)
+    {
+        if (ValidationDecision != decisionValue) 
+            return "validation-card";
+
+        return decisionValue switch
+        {
+            "SMS_RISK" => "validation-card selected-sms-risk",
+            "NOT_SMS_RISK" => "validation-card selected-not-sms-risk", 
+            "NEEDS_INVESTIGATION" => "validation-card selected-investigation",
+            _ => "validation-card"
+        };
+    }
+
+    public string SmsRiskFieldsDisplayStyle => ShouldShowSmsRiskFields ? "block" : "none";
+    public string ProceedButtonDisplayStyle => ShouldShowProceedButton ? "inline-block" : "none";
+    public string SubmitButtonDisplayStyle => ShouldShowSubmitButton ? "inline-block" : "none";
 
     #endregion
 
@@ -99,23 +164,19 @@ public class ReportValidationModel : PageModel
                 ReportDetails = reportResult.Value;
             }
 
-            // Load associated hazard with better comparison
+            // Load associated hazard
             var hazardResult = await _mediator.SendAsync(new GetAllHazardsQuery(), CancellationToken.None);
             if (hazardResult.IsSuccess)
             {
-                //List<Hazard> test = hazardResult.Value;
-
-
                 ReportHazard = hazardResult.Value.ToList().FirstOrDefault(h => h.ReportCode.Trim() == reportCode.Value.Trim());
                 
-                // Preserve HazardId for POST operations
                 if (ReportHazard != null)
                 {
                     HazardId = ReportHazard.Code;
                 }
             }
 
-            // Check if validation already exists
+            // Check for existing validation
             var existingValidationQuery = new GetReportValidationByReportIdQuery(reportCode);
             var validationResult = await _mediator.SendAsync(existingValidationQuery, CancellationToken.None);
             
@@ -127,41 +188,27 @@ public class ReportValidationModel : PageModel
                 ValidationDecision = ReportValidation.ValidationDecision ?? string.Empty;
                 ValidationComments = ReportValidation.ValidationComments ?? string.Empty;
                 ValidationType = ReportValidation.ValidationType ?? "Standard";
-                ValidatedBy = ReportValidation.ValidatedBy ?? "SYSTEM"; // Use existing value, not hardcoded
+                ValidatedBy = ReportValidation.ValidatedBy ?? string.Empty;
 
                 // Track that this is an existing validation
                 IsExistingValidation = true;
                 ExistingValidationId = ReportValidation.Id.Value;
                 
-                _logger.LogInformation("Loaded existing validation for report: {ReportId}", reportId);
+                _logger.LogInformation("Found existing ReportValidation {ValidationId} for report {ReportId} - Decision: {Decision}", 
+                    ExistingValidationId, reportId, ValidationDecision);
             }
             else
             {
-                // Set defaults for new validation
-                ValidatedBy = "SYSTEM";
+                _logger.LogInformation("No existing ReportValidation found for report: {ReportId}", reportId);
+                
+                // Set defaults for new validation - EXPLICITLY set to null for new validations
+                ValidatedBy = string.Empty;
                 ValidationType = "Standard";
-
-                //Create new validation
-                //var validation = ReportValidation.Create(ReportId, ValidatedBy);
-                ReportValidationID id = new ReportValidationID("RV-0000");
-                ReportValidation newReportValidation = new ReportValidation(id);
-                newReportValidation.Code = id.Value;
-                newReportValidation.ReportCode = reportCode.Value;
-                newReportValidation.ValidatedBy = "SYSTEM";
-                newReportValidation.Status = "InProgress";
-                newReportValidation.Stage = "Initial";
-                newReportValidation.ValidationType = "Standard";
-
-                var createCommand = new CreateReportValidationCommand(newReportValidation);
-                var result =  await _mediator.SendAsync(createCommand, CancellationToken.None);
-
-                ReportValidation = result.Value;
-
-                // Track that this is a new validation that now exists
-                IsExistingValidation = true;
-                ExistingValidationId = ReportValidation.Id.Value;
-
-                _logger.LogInformation("Creating new validation for report: {ReportId}", reportId);
+                ValidationDecision = string.Empty;
+                ValidationComments = string.Empty;
+                
+                IsExistingValidation = false;
+                ExistingValidationId = null; // Explicitly set to null for new validations
             }
 
             // Load available assessors
@@ -179,6 +226,9 @@ public class ReportValidationModel : PageModel
                 _logger.LogWarning(ex, "Could not load available assessors");
                 AvailableAssessors = new List<SMSApplicationUser>();
             }
+
+            _logger.LogInformation("Completed loading ReportValidation page. ValidationDecision: '{Decision}', ValidationType: '{Type}', ValidatedBy: '{ValidatedBy}'", 
+                ValidationDecision, ValidationType, ValidatedBy);
             
             return Page();
         }
@@ -190,16 +240,12 @@ public class ReportValidationModel : PageModel
         }
     }
 
-    /// <summary>
-    /// Save current validation state as draft using SMS Backend
-    /// </summary>
     public async Task<IActionResult> OnPostSaveDraftAsync()
     {
         try
         {
-            _logger.LogInformation("Saving validation draft for report: {ReportId}", ReportId);
+            _logger.LogInformation("Saving validation draft for report: {ReportId}, Decision: '{Decision}'", ReportId, ValidationDecision);
 
-            // FIX: Use the helper method, not the null property
             var validationEntity = CreateOrUpdateValidationEntity();
             validationEntity.SaveAsDraft(ValidationComments);
 
@@ -226,86 +272,33 @@ public class ReportValidationModel : PageModel
         }
     }
 
-    /// <summary>
-    /// Complete validation and proceed to assessment
-    /// </summary>
     public async Task<IActionResult> OnPostProceedToAssessmentAsync()
     {
-        _logger.LogWarning("🚀 OnPostProceedToAssessmentAsync called! ReportId: {ReportId}, HazardId: {HazardId}, ValidatedBy: {ValidatedBy}", 
-            ReportId, HazardId, ValidatedBy);
+        _logger.LogInformation("🚀 OnPostProceedToAssessmentAsync - ReportId: {ReportId}, ValidationDecision: '{Decision}', ValidatedBy: '{ValidatedBy}'", 
+            ReportId, ValidationDecision, ValidatedBy);
         
         try
         {
-            _logger.LogInformation("Proceeding to risk assessment for report: {ReportId}", ReportId);
-
-            // Simple approach: create entity with form data
-            var validationEntity = CreateOrUpdateValidationEntity();
-            validationEntity.CompleteValidation("SMS_RISK", ValidationComments ?? "Validated as SMS Risk", ValidationType);
-
-            var result = await SaveValidationEntity(validationEntity);
-
-            if (result.IsSuccess)
+            // Force ValidationDecision to SMS_RISK for assessment flow
+            if (ValidationDecision != "SMS_RISK")
             {
-                _logger.LogInformation("Report validation completed as SMS_RISK for report: {ReportId}", ReportId);
-
-                // Navigate to RiskAssessmentWizard using "new" as ID to trigger creation
-                return RedirectToPage("/SafetyRiskManagement/RiskAssessmentWizard", 
-                    new { id = "new", stepNumber = 1, hazardId = HazardId });
+                _logger.LogInformation("Forcing ValidationDecision to SMS_RISK for assessment flow (was: '{Previous}')", ValidationDecision);
+                ValidationDecision = "SMS_RISK";
             }
-            else
-            {
-                ModelState.AddModelError("", result.Error?.Message ?? "Error processing validation.");
-                await LoadDisplayDataAsync(); // Only reload display data, not form data
-                return Page();
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error proceeding to assessment for report: {ReportId}", ReportId);
-            ModelState.AddModelError(string.Empty, "An error occurred while processing the validation. Please try again.");
-            await LoadDisplayDataAsync(); // Only reload display data, not form data
-            return Page();
-        }
-    }
-
-    /// <summary>
-    /// Complete SMS report validation with specific decision
-    /// </summary>
-    public async Task<IActionResult> OnPostAsync()
-    {
-        try
-        {
-            _logger.LogInformation("Processing SMS report validation for report: {ReportId}", ReportId);
 
             // Validate required fields
-            if (string.IsNullOrWhiteSpace(ValidationDecision))
+            var validationErrors = ValidateRequiredFields();
+            if (validationErrors.Any())
             {
-                ModelState.AddModelError(nameof(ValidationDecision), "Please select a validation decision");
-            }
+                foreach (var error in validationErrors)
+                {
+                    ModelState.AddModelError(error.Key, error.Value);
+                }
 
-            if (string.IsNullOrWhiteSpace(ValidationComments) || ValidationComments.Length < 5)
-            {
-                ModelState.AddModelError(nameof(ValidationComments), "Validation comments are required (minimum 5 characters)");
-            }
-
-            if (string.IsNullOrWhiteSpace(ValidatedBy))
-            {
-                ModelState.AddModelError(nameof(ValidatedBy), "ValidatedBy field is required");
-            }
-
-            if (string.IsNullOrWhiteSpace(HazardId))
-            {
-                ModelState.AddModelError(nameof(HazardId), "HazardId field is required");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                // Reload display data but preserve form inputs
                 await LoadDisplayDataAsync();
                 return Page();
             }
 
-            // Simple approach: create entity with form data
             var validationEntity = CreateOrUpdateValidationEntity();
             validationEntity.CompleteValidation(ValidationDecision, ValidationComments, ValidationType);
 
@@ -313,50 +306,75 @@ public class ReportValidationModel : PageModel
 
             if (result.IsSuccess)
             {
-                var successMessage = ValidationDecision?.ToUpperInvariant() switch
-                {
-                    "SMS_RISK" => "SMS Report validation completed. Assessment will be scheduled.",
-                    "NOT_SMS_RISK" => "Report closed as non-SMS risk.",
-                    "NEEDS_INVESTIGATION" => "Investigation scheduled for additional information gathering.",
-                    _ => "Validation completed successfully."
-                };
+                _logger.LogInformation("Report validation completed as {Decision} for report: {ReportId} by {ValidatedBy}", 
+                    ValidationDecision, ReportId, ValidatedBy);
 
-                TempData["SuccessMessage"] = successMessage;
-
-                // Route based on validation decision - use "new" ID for SMS_RISK creation
-                return ValidationDecision?.ToUpperInvariant() switch
-                {
-                    "SMS_RISK" => RedirectToPage("/SafetyRiskManagement/RiskAssessmentWizard", 
-                        new { id = "new", stepNumber = 1, hazardId = HazardId }),
-                    "NOT_SMS_RISK" => RedirectToPage("/SafetyRiskManagement/ReportProcessing"),
-                    "NEEDS_INVESTIGATION" => RedirectToPage("/SafetyRiskManagement/ReportProcessing"),
-                    _ => RedirectToPage("/SafetyRiskManagement/ReportProcessing")
-                };
+                
+                return RedirectToPage("/SafetyRiskManagement/RiskAssessmentWizard", new { id = "new", stepNumber = 1, hazardId = HazardId });
             }
             else
             {
-                ModelState.AddModelError("", result.Error?.Message ?? "Error saving validation.");
-                await LoadDisplayDataAsync(); // Only reload display data, not form data
+                ModelState.AddModelError("", result.Error?.Message ?? "Error processing validation.");
+                await LoadDisplayDataAsync();
                 return Page();
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in SMS report validation: {ReportId}", ReportId);
-            ModelState.AddModelError(string.Empty, "An unexpected error occurred during validation. Please try again.");
-            await LoadDisplayDataAsync(); // Only reload display data, not form data
+            _logger.LogError(ex, "Error proceeding to assessment for report: {ReportId}", ReportId);
+            ModelState.AddModelError(string.Empty, "An error occurred while processing the validation. Please try again.");
+            await LoadDisplayDataAsync();
             return Page();
         }
     }
 
     #region Private Helper Methods
 
+    private Dictionary<string, string> ValidateRequiredFields()
+    {
+        var errors = new Dictionary<string, string>();
+
+        if (string.IsNullOrWhiteSpace(ValidationDecision))
+        {
+            errors.Add(nameof(ValidationDecision), "Please select a validation decision");
+        }
+        else if (!IsValidDecision(ValidationDecision))
+        {
+            errors.Add(nameof(ValidationDecision), "Invalid validation decision selected");
+        }
+
+        if (string.IsNullOrWhiteSpace(ValidationComments) || ValidationComments.Length < 5)
+        {
+            errors.Add(nameof(ValidationComments), "Validation comments are required (minimum 5 characters)");
+        }
+
+        // Only validate ValidatedBy if SMS_RISK is selected (assessment assignment required)
+        if (ValidationDecision == "SMS_RISK" && string.IsNullOrWhiteSpace(ValidatedBy))
+        {
+            errors.Add(nameof(ValidatedBy), "Assigned Assessor is required for SMS Risk validations");
+        }
+
+        if (string.IsNullOrWhiteSpace(HazardId))
+        {
+            errors.Add(nameof(HazardId), "HazardId field is required");
+        }
+
+        _logger.LogInformation("Validation check - Decision: '{Decision}', Comments length: {Length}, ValidatedBy: '{ValidatedBy}', HazardId: '{HazardId}', Errors: {ErrorCount}", 
+            ValidationDecision, ValidationComments?.Length ?? 0, ValidatedBy, HazardId, errors.Count);
+
+        return errors;
+    }
+
+    private bool IsValidDecision(string decision)
+    {
+        var validDecisions = new[] { "SMS_RISK", "NOT_SMS_RISK", "NEEDS_INVESTIGATION" };
+        return validDecisions.Contains(decision);
+    }
+
     private ReportValidation CreateOrUpdateValidationEntity()
     {
-        // Simple approach: Create entity with form data, use the ID we stored in GET
         if (IsExistingValidation && !string.IsNullOrEmpty(ExistingValidationId))
         {
-            // Update existing - create entity with existing ID and current form data
             var existingId = new ReportValidationID(ExistingValidationId);
             var validation = new ReportValidation(existingId)
             {
@@ -365,23 +383,25 @@ public class ReportValidationModel : PageModel
                 ValidationDecision = ValidationDecision,
                 ValidationComments = ValidationComments,
                 ValidationType = ValidationType,
-                ValidatedBy = ValidatedBy,
-                Status = "InProgress", // Business logic will update this
+                ValidatedBy = string.IsNullOrEmpty(ValidatedBy) ? "SYSTEM" : ValidatedBy,
+                Status = "InProgress",
                 Stage = "Initial"
             };
             
-            _logger.LogInformation("Created entity for updating existing validation: {ValidationId}", ExistingValidationId);
+            _logger.LogInformation("Updated existing validation entity: {ValidationId} with Decision: '{Decision}'", ExistingValidationId, ValidationDecision);
             return validation;
         }
         else
         {
-            // Create new validation
-            var validation = ReportValidation.Create(ReportId, ValidatedBy);
+            var validatedByValue = string.IsNullOrEmpty(ValidatedBy) ? "SYSTEM" : ValidatedBy;
+            var validation = ReportValidation.Create(ReportId, validatedByValue);
             validation.ValidationDecision = ValidationDecision;
             validation.ValidationComments = ValidationComments;
             validation.ValidationType = ValidationType;
+            validation.Status = "InProgress";
+            validation.Stage = "Initial";
             
-            _logger.LogInformation("Created new validation entity for report: {ReportId}", ReportId);
+            _logger.LogInformation("Created new validation entity for report: {ReportId} with Decision: '{Decision}'", ReportId, ValidationDecision);
             return validation;
         }
     }
@@ -392,13 +412,11 @@ public class ReportValidationModel : PageModel
         {
             if (IsExistingValidation && !string.IsNullOrEmpty(ExistingValidationId))
             {
-                // Update existing validation
                 var updateCommand = new UpdateReportValidationCommand(validationEntity);
                 return await _mediator.SendAsync(updateCommand, CancellationToken.None);
             }
             else
             {
-                // Create new validation
                 var createCommand = new CreateReportValidationCommand(validationEntity);
                 return await _mediator.SendAsync(createCommand, CancellationToken.None);
             }
@@ -414,7 +432,6 @@ public class ReportValidationModel : PageModel
     {
         try
         {
-            // Reload display data for validation errors - DO NOT reload form data
             var reportCode = new ReportID(ReportId);
 
             var reportResult = await _mediator.SendAsync(new GetReportByIdQuery(reportCode), CancellationToken.None);
@@ -423,12 +440,11 @@ public class ReportValidationModel : PageModel
                 ReportDetails = reportResult.Value;
             }
 
-            var hazardResult = await _mediator.SendAsync(new GetAllHazardsQuery(), CancellationToken.None);
+            var hazardResult = await _mediator.SendAsync(new GetHazardsByReportIdQuery(reportCode), CancellationToken.None);
             if (hazardResult.IsSuccess)
             {
-                ReportHazard = hazardResult.Value.FirstOrDefault(h => h.ReportCode == ReportId);
+                ReportHazard = hazardResult.Value.FirstOrDefault();
                 
-                // Preserve HazardId if it's not already set (this happens on validation errors)
                 if (string.IsNullOrEmpty(HazardId) && ReportHazard != null)
                 {
                     HazardId = ReportHazard.Code;
@@ -441,17 +457,12 @@ public class ReportValidationModel : PageModel
             {
                 AvailableAssessors = usersResult.Value.ToList();
             }
-
-            // DO NOT reload ReportValidation here - it would overwrite form inputs
-            // await LoadReportValidationAsync(); // REMOVED!
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading display data");
         }
     }
-
-
 
     #endregion
 }

@@ -2,23 +2,36 @@
 
 namespace SMS_Application.Services;
 
+/// <summary>
+/// Enhanced RiskAssessmentService with Steps 1-5 support
+/// Provides application-level orchestration for risk assessment operations
+/// </summary>
 public sealed class RiskAssessmentService
 {
     private readonly RiskAssessmentDataService _dataService;
+    private readonly IMediator _mediator;
     private readonly ILogger<RiskAssessmentService> _logger;
 
-    public RiskAssessmentService(RiskAssessmentDataService dataService, ILogger<RiskAssessmentService> logger)
+    public RiskAssessmentService(
+        RiskAssessmentDataService dataService, 
+        IMediator mediator,
+        ILogger<RiskAssessmentService> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
+
+    #region Basic CRUD Operations
 
     public async Task<Result<RiskAssessment>> CreateRiskAssessmentAsync(RiskAssessment riskAssessment, CancellationToken ct = default)
     {
         try
         {
             _logger.LogInformation("Creating risk assessment with code: {Code}", riskAssessment?.Code);
-            var result = await _dataService.CreateRiskAssessmentAsync(riskAssessment, ct).ConfigureAwait(false);
+            
+            var command = new CreateRiskAssessmentCommand(riskAssessment);
+            var result = await _mediator.SendAsync(command, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
@@ -71,7 +84,9 @@ public sealed class RiskAssessmentService
         try
         {
             _logger.LogInformation("Updating risk assessment with ID: {Id}", riskAssessment?.Id);
-            var result = await _dataService.UpdateRiskAssessmentAsync(riskAssessment, ct).ConfigureAwait(false);
+            
+            var command = new UpdateRiskAssessmentCommand(riskAssessment);
+            var result = await _mediator.SendAsync(command, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
@@ -96,7 +111,9 @@ public sealed class RiskAssessmentService
         try
         {
             _logger.LogInformation("Deleting risk assessment with ID: {Id}", id);
-            var result = await _dataService.DeleteRiskAssessmentAsync(id, ct).ConfigureAwait(false);
+            
+            var command = new DeleteRiskAssessmentCommand(id);
+            var result = await _mediator.SendAsync(command, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
@@ -115,4 +132,293 @@ public sealed class RiskAssessmentService
             return Result<bool>.Failure<bool>(DomainErrors.RiskAssessmentError.DeleteFailed);
         }
     }
+
+    #endregion
+
+    #region Step-Specific Operations - NEW for Steps 1-5 Support
+
+    /// <summary>
+    /// Saves Step 1 - System Description data using command pattern
+    /// </summary>
+    public async Task<Result<RiskAssessment>> SaveStep1Async(
+        string riskAssessmentId,
+        string leadAssessorId,
+        string systemDescription,
+        string systemBoundaries,
+        string systemPurpose,
+        string fiveMPersonnel,
+        string fiveMEquipment,
+        string fiveMProcedures,
+        string fiveMResources,
+        string fiveMPhysicalEnvironment,
+        string fiveMOperationalEnvironment,
+        string updatedBy = "SYSTEM",
+        CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Saving Step 1 for RiskAssessment: {Id}", riskAssessmentId);
+
+            var command = new SaveStep1Command(
+                riskAssessmentId,
+                leadAssessorId,
+                systemDescription,
+                systemBoundaries,
+                systemPurpose,
+                fiveMPersonnel,
+                fiveMEquipment,
+                fiveMProcedures,
+                fiveMResources,
+                fiveMPhysicalEnvironment,
+                fiveMOperationalEnvironment,
+                updatedBy);
+
+            var result = await _mediator.SendAsync(command, ct).ConfigureAwait(false);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully saved Step 1 for RiskAssessment: {Id}", riskAssessmentId);
+            }
+            else
+            {
+                _logger.LogError("Failed to save Step 1 for RiskAssessment: {Id}. Error: {Error}", 
+                    riskAssessmentId, result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error saving Step 1 for RiskAssessment: {Id}", riskAssessmentId);
+            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Saves Step 3 - Risk Analysis data using command pattern
+    /// </summary>
+    public async Task<Result<RiskAssessment>> SaveStep3Async(
+        string riskAssessmentId,
+        string riskAnalysisMethod,
+        string riskCriteria,
+        string updatedBy = "SYSTEM",
+        CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Saving Step 3 for RiskAssessment: {Id}", riskAssessmentId);
+
+            var command = new SaveStep3Command(
+                riskAssessmentId,
+                riskAnalysisMethod,
+                riskCriteria,
+                updatedBy);
+
+            var result = await _mediator.SendAsync(command, ct).ConfigureAwait(false);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully saved Step 3 for RiskAssessment: {Id}", riskAssessmentId);
+            }
+            else
+            {
+                _logger.LogError("Failed to save Step 3 for RiskAssessment: {Id}. Error: {Error}", 
+                    riskAssessmentId, result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error saving Step 3 for RiskAssessment: {Id}", riskAssessmentId);
+            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Saves Step 4 - Risk Assessment data using command pattern
+    /// </summary>
+    public async Task<Result<RiskAssessment>> SaveStep4Async(
+        string riskAssessmentId,
+        string tolerabilityFramework,
+        string riskAcceptanceCriteria,
+        int? finalSeverityScore,
+        int? finalLikelihoodScore,
+        string finalRiskLevel,
+        string riskTolerability,
+        string assessmentRationale,
+        string updatedBy = "SYSTEM",
+        CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Saving Step 4 for RiskAssessment: {Id}", riskAssessmentId);
+
+            var command = new SaveStep4Command(
+                riskAssessmentId,
+                tolerabilityFramework,
+                riskAcceptanceCriteria,
+                finalSeverityScore,
+                finalLikelihoodScore,
+                finalRiskLevel,
+                riskTolerability,
+                assessmentRationale,
+                updatedBy);
+
+            var result = await _mediator.SendAsync(command, ct).ConfigureAwait(false);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully saved Step 4 for RiskAssessment: {Id}", riskAssessmentId);
+            }
+            else
+            {
+                _logger.LogError("Failed to save Step 4 for RiskAssessment: {Id}. Error: {Error}", 
+                    riskAssessmentId, result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error saving Step 4 for RiskAssessment: {Id}", riskAssessmentId);
+            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Saves Step 5 - Implementation data using command pattern
+    /// </summary>
+    public async Task<Result<RiskAssessment>> SaveStep5Async(
+        string riskAssessmentId,
+        string implementationStrategy,
+        DateTime? overallTargetDate,
+        string implementationNotes,
+        string updatedBy = "SYSTEM",
+        CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Saving Step 5 for RiskAssessment: {Id}", riskAssessmentId);
+
+            var command = new SaveStep5Command(
+                riskAssessmentId,
+                implementationStrategy,
+                overallTargetDate,
+                implementationNotes,
+                updatedBy);
+
+            var result = await _mediator.SendAsync(command, ct).ConfigureAwait(false);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully saved Step 5 for RiskAssessment: {Id}", riskAssessmentId);
+            }
+            else
+            {
+                _logger.LogError("Failed to save Step 5 for RiskAssessment: {Id}. Error: {Error}", 
+                    riskAssessmentId, result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error saving Step 5 for RiskAssessment: {Id}", riskAssessmentId);
+            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Updates progress tracking data using command pattern
+    /// </summary>
+    public async Task<Result<RiskAssessment>> UpdateProgressAsync(
+        string riskAssessmentId,
+        int currentStep,
+        string completedSteps,
+        int completionPercentage,
+        string status = null,
+        string stage = null,
+        string updatedBy = "SYSTEM",
+        CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Updating progress for RiskAssessment: {Id}, Step: {Step}, Completion: {Percentage}%", 
+                riskAssessmentId, currentStep, completionPercentage);
+
+            var command = new UpdateProgressCommand(
+                riskAssessmentId,
+                currentStep,
+                completedSteps,
+                completionPercentage,
+                status,
+                stage,
+                updatedBy);
+
+            var result = await _mediator.SendAsync(command, ct).ConfigureAwait(false);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully updated progress for RiskAssessment: {Id}", riskAssessmentId);
+            }
+            else
+            {
+                _logger.LogError("Failed to update progress for RiskAssessment: {Id}. Error: {Error}", 
+                    riskAssessmentId, result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error updating progress for RiskAssessment: {Id}", riskAssessmentId);
+            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
+        }
+    }
+
+    #endregion
+
+    #region Validation and Business Logic - NEW for Steps 1-5 Support
+
+    /// <summary>
+    /// Validates if a step can be saved
+    /// </summary>
+    public async Task<Result<bool>> ValidateStepCanBeSavedAsync(
+        string riskAssessmentId, 
+        int stepNumber, 
+        CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Validating step save for RiskAssessment: {Id}, Step: {Step}", riskAssessmentId, stepNumber);
+            return await _dataService.ValidateStepCanBeSavedAsync(riskAssessmentId, stepNumber, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error validating step save for RiskAssessment: {Id}, Step: {Step}", riskAssessmentId, stepNumber);
+            return Result<bool>.Failure<bool>(DomainErrors.RiskAssessmentError.UpdateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Gets step completion status for an assessment
+    /// </summary>
+    public async Task<Result<Dictionary<int, bool>>> GetStepCompletionStatusAsync(
+        string riskAssessmentId, 
+        CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Getting step completion status for RiskAssessment: {Id}", riskAssessmentId);
+            return await _dataService.GetStepCompletionStatusAsync(riskAssessmentId, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error getting step completion status for RiskAssessment: {Id}", riskAssessmentId);
+            return Result<Dictionary<int, bool>>.Failure<Dictionary<int, bool>>(DomainErrors.RiskAssessmentError.NotFound);
+        }
+    }
+
+    #endregion
 }

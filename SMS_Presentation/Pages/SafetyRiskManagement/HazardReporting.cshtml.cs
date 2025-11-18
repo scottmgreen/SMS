@@ -173,10 +173,11 @@ public class HazardReportingModel : PageModel
                 IsAnonymous = false,
             };
 
-            // Set text-based location if no geographic coordinates provided
+            // Set location information - simplified since Location is now an entity
             if (!HasGeoLocation && !string.IsNullOrEmpty(HazardReport.Location))
             {
-                hazard.Location = HazardReport.Location;
+                // For text-based location, we'll set it in the LocationArea field instead
+                hazard.LocationArea = HazardReport.Location;
             }
 
             _logger.LogInformation("Initial hazard object created - Name: '{Name}', Type: '{Type}', Category: '{Category}'",

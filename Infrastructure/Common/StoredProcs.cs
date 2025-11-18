@@ -285,6 +285,9 @@
         private static readonly Lazy<string> _pr_Hazard_GetById = new Lazy<string>(() => "pr_Hazard_GetById");
         public static string pr_Hazard_GetById => _pr_Hazard_GetById.Value;
 
+        private static readonly Lazy<string> _pr_Hazard_GetByReportId = new Lazy<string>(() => "pr_Hazard_GetByReportId");
+        public static string pr_Hazard_GetByReportId => _pr_Hazard_GetByReportId.Value;
+
         private static readonly Lazy<string> _pr_Hazard_GetAll = new Lazy<string>(() => "pr_Hazard_GetAll");
         public static string pr_Hazard_GetAll => _pr_Hazard_GetAll.Value;
 
@@ -426,7 +429,7 @@
 
         #region SMS Risk Assessment CRUD Operations
         /// <summary>
-        /// SMS Risk Assessment CRUD Operations
+        /// SMS Risk Assessment CRUD Operations - UPDATED FOR STEPS 1-5
         /// </summary>
         private static readonly Lazy<string> _pr_RiskAssessment_Insert = new Lazy<string>(() => "pr_RiskAssessment_Insert");
         public static string pr_RiskAssessment_Insert => _pr_RiskAssessment_Insert.Value;
@@ -442,6 +445,24 @@
 
         private static readonly Lazy<string> _pr_RiskAssessment_Delete = new Lazy<string>(() => "pr_RiskAssessment_Delete");
         public static string pr_RiskAssessment_Delete => _pr_RiskAssessment_Delete.Value;
+
+        /// <summary>
+        /// Risk Assessment Step-Specific Update Procedures (NEW)
+        /// </summary>
+        private static readonly Lazy<string> _pr_RiskAssessment_UpdateStep1 = new Lazy<string>(() => "pr_RiskAssessment_UpdateStep1");
+        public static string pr_RiskAssessment_UpdateStep1 => _pr_RiskAssessment_UpdateStep1.Value;
+
+        private static readonly Lazy<string> _pr_RiskAssessment_UpdateStep3 = new Lazy<string>(() => "pr_RiskAssessment_UpdateStep3");
+        public static string pr_RiskAssessment_UpdateStep3 => _pr_RiskAssessment_UpdateStep3.Value;
+
+        private static readonly Lazy<string> _pr_RiskAssessment_UpdateStep4 = new Lazy<string>(() => "pr_RiskAssessment_UpdateStep4");
+        public static string pr_RiskAssessment_UpdateStep4 => _pr_RiskAssessment_UpdateStep4.Value;
+
+        private static readonly Lazy<string> _pr_RiskAssessment_UpdateStep5 = new Lazy<string>(() => "pr_RiskAssessment_UpdateStep5");
+        public static string pr_RiskAssessment_UpdateStep5 => _pr_RiskAssessment_UpdateStep5.Value;
+
+        private static readonly Lazy<string> _pr_RiskAssessment_UpdateProgress = new Lazy<string>(() => "pr_RiskAssessment_UpdateProgress");
+        public static string pr_RiskAssessment_UpdateProgress => _pr_RiskAssessment_UpdateProgress.Value;
         #endregion
 
         #region SMS Mitigation CRUD Operations
@@ -462,6 +483,12 @@
 
         private static readonly Lazy<string> _pr_Mitigation_Delete = new Lazy<string>(() => "pr_Mitigation_Delete");
         public static string pr_Mitigation_Delete => _pr_Mitigation_Delete.Value;
+
+        /// <summary>
+        /// SMS Mitigation Query Operations - Enhanced for Steps 1-5
+        /// </summary>
+        private static readonly Lazy<string> _pr_Mitigation_GetByHazardCode = new Lazy<string>(() => "pr_Mitigation_GetByHazardCode");
+        public static string pr_Mitigation_GetByHazardCode => _pr_Mitigation_GetByHazardCode.Value;
         #endregion
 
         #region SMS Mitigation Assignment CRUD Operations
@@ -496,7 +523,6 @@
 
         private static readonly Lazy<string> _pr_ReportValidation_GetByReportId = new Lazy<string>(() => "pr_ReportValidation_GetByReportId");
         public static string pr_ReportValidation_GetByReportId => _pr_ReportValidation_GetByReportId.Value;
-
 
 
 

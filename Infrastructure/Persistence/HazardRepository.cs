@@ -174,6 +174,51 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
         }
     }
 
+    public async Task<Result<List<Hazard>>> GetHazardsByReportIdAsync(ReportID id, CancellationToken ct = default)
+    {
+        try
+        {
+            if (id is null)
+            {
+                return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
+            }
+
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_Hazard_GetByReportId} {id}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_Hazard_GetByReportId, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+
+            List<Hazard>? response = new(); ;
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var hazard = Mappers.MapToHazard(reader);
+                    response.Add(hazard);
+                }
+            }
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<List<Hazard>>.Success(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemError($"{_logheader} {ex.Message}", null);
+            return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
+        }
+    }
+
+
+
+
+
     public async Task<Result<List<Hazard>>> GetAllHazardsAsync(CancellationToken ct = default)
     {
         try

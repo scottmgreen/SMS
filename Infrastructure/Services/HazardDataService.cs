@@ -34,7 +34,10 @@ public class HazardDataService : BaseDataService<HazardDataService>, IHazardData
     {
         return _repo.GetHazardByIdAsync(id, ct);
     }
-
+    public Task<Result<List<Hazard>>> GetHazardsByReportIdAsync(ReportID id, CancellationToken ct = default)
+    {
+        return _repo.GetHazardsByReportIdAsync(id, ct);
+    }
     public Task<Result<List<Hazard>>> GetAllHazardsAsync(CancellationToken ct = default)
     {
         return _repo.GetAllHazardsAsync(ct);

@@ -150,7 +150,7 @@ public class ReportProcessingModel : PageModel
                     HazardId = hazard?.Code,
                     HazardType = hazard?.HazardType ?? "Unknown",
                     HazardDescription = hazard?.Description ?? report.Description,
-                    Location = hazard?.Location ?? "Not specified",
+                    Location = hazard?.HazardLocation?.Description ?? hazard?.LocationArea ?? "Not specified",
                     Priority = GetPriorityString(hazard?.Priority),
                     ReportedBy = hazard?.ReportedBy ?? report.CreatedBy,
                     ReportedDate = hazard?.ReportedOn ?? report.CreatedDate ?? DateTime.UtcNow,
