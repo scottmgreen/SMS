@@ -85,6 +85,49 @@ public static class DomainErrors
         public static Error PasswordUpdateFailed => new Error("SMSApplicationUser.PasswordUpdateFailed", "Failed to update SMS Application User password.");
     }
 
+    public static class SMSApplicationGroupError
+    {
+        public static Error NullOrEmpty => new Error("SMSApplicationGroup.NullOrEmpty", "The SMS Application Group is required.");
+        public static Error CodeRequired => new Error("SMSApplicationGroup.CodeRequired", "The SMS Application Group Code is required.");
+        public static Error GroupNameRequired => new Error("SMSApplicationGroup.GroupNameRequired", "The Group Name is required.");
+        public static Error CreatedByRequired => new Error("SMSApplicationGroup.CreatedByRequired", "The Created By field is required.");
+        public static Error InvalidCode => new Error("SMSApplicationGroup.InvalidCode", "The SMS Application Group Code is invalid.");
+        public static Error InvalidGroupName => new Error("SMSApplicationGroup.InvalidGroupName", "The Group Name is invalid or too short.");
+        public static Error InvalidDescription => new Error("SMSApplicationGroup.InvalidDescription", "The Description exceeds maximum length.");
+        public static Error GroupNameTooLong => new Error("SMSApplicationGroup.GroupNameTooLong", "The Group Name cannot exceed 255 characters.");
+        public static Error DescriptionTooLong => new Error("SMSApplicationGroup.DescriptionTooLong", "The Description cannot exceed 1000 characters.");
+        public static Error NotFound => new Error("SMSApplicationGroup.NotFound", "The SMS Application Group was not found.");
+        public static Error CreateFailed => new Error("SMSApplicationGroup.CreateFailed", "Failed to create the SMS Application Group.");
+        public static Error UpdateFailed => new Error("SMSApplicationGroup.UpdateFailed", "Failed to update the SMS Application Group.");
+        public static Error DeleteFailed => new Error("SMSApplicationGroup.DeleteFailed", "Failed to delete the SMS Application Group.");
+        public static Error ActivationFailed => new Error("SMSApplicationGroup.ActivationFailed", "Failed to activate the SMS Application Group.");
+        public static Error DeactivationFailed => new Error("SMSApplicationGroup.DeactivationFailed", "Failed to deactivate the SMS Application Group.");
+        public static Error AlreadyActive => new Error("SMSApplicationGroup.AlreadyActive", "The SMS Application Group is already active.");
+        public static Error AlreadyInactive => new Error("SMSApplicationGroup.AlreadyInactive", "The SMS Application Group is already inactive.");
+        public static Error CannotDeleteActiveGroup => new Error("SMSApplicationGroup.CannotDeleteActiveGroup", "Cannot delete an active stakeholder group. Deactivate it first.");
+        public static Error GroupHasMembers => new Error("SMSApplicationGroup.GroupHasMembers", "Cannot delete a group that has assigned members.");
+        public static Error DuplicateGroupName => new Error("SMSApplicationGroup.DuplicateGroupName", "A stakeholder group with this name already exists.");
+        public static Error DuplicateCode => new Error("SMSApplicationGroup.DuplicateCode", "A stakeholder group with this code already exists.");
+
+        // User-Group Assignment Errors
+        public static Error UserCodeRequired => new Error("SMSApplicationGroup.UserCodeRequired", "The User Code is required for group assignment.");
+        public static Error AssignedByRequired => new Error("SMSApplicationGroup.AssignedByRequired", "The Assigned By field is required.");
+        public static Error UserNotFound => new Error("SMSApplicationGroup.UserNotFound", "The specified user was not found.");
+        public static Error UserAlreadyInGroup => new Error("SMSApplicationGroup.UserAlreadyInGroup", "The user is already assigned to this group.");
+        public static Error UserNotInGroup => new Error("SMSApplicationGroup.UserNotInGroup", "The user is not assigned to this group.");
+        public static Error AssignmentFailed => new Error("SMSApplicationGroup.AssignmentFailed", "Failed to assign user to the stakeholder group.");
+        public static Error RemovalFailed => new Error("SMSApplicationGroup.RemovalFailed", "Failed to remove user from the stakeholder group.");
+        public static Error ClearGroupsFailed => new Error("SMSApplicationGroup.ClearGroupsFailed", "Failed to clear all group memberships for the user.");
+        public static Error CannotAssignToInactiveGroup => new Error("SMSApplicationGroup.CannotAssignToInactiveGroup", "Cannot assign users to an inactive stakeholder group.");
+        public static Error InvalidUserType => new Error("SMSApplicationGroup.InvalidUserType", "Only stakeholder users can be assigned to stakeholder groups.");
+        public static Error MaxMembersExceeded => new Error("SMSApplicationGroup.MaxMembersExceeded", "The stakeholder group has reached its maximum member limit.");
+        public static Error MinMembersRequired => new Error("SMSApplicationGroup.MinMembersRequired", "The stakeholder group must have at least one member.");
+    }
+
+
+
+
+
     /// <summary>
     /// Contains SMS organizational user errors.
     /// </summary>
@@ -131,6 +174,48 @@ public static class DomainErrors
         public static Error DeleteFailed => new Error("SMSStakeholderUser.DeleteFailed", "Failed to delete the SMS Stakeholder User.");
         public static Error LoginFailed => new Error("SMSStakeholderUser.LoginFailed", "Login failed for SMS Stakeholder User.");
         public static Error PasswordUpdateFailed => new Error("SMSStakeholderUser.PasswordUpdateFailed", "Failed to update SMS Stakeholder User password.");
+    }
+
+    /// <summary>
+    /// Contains SMS stakeholder group errors.
+    /// </summary>
+    public static class SMSStakeholderGroupError
+    {
+        public static Error NullOrEmpty => new Error("SMSStakeholderGroup.NullOrEmpty", "The SMS Stakeholder Group is required.");
+        public static Error CodeRequired => new Error("SMSStakeholderGroup.CodeRequired", "The SMS Stakeholder Group Code is required.");
+        public static Error GroupNameRequired => new Error("SMSStakeholderGroup.GroupNameRequired", "The Group Name is required.");
+        public static Error CreatedByRequired => new Error("SMSStakeholderGroup.CreatedByRequired", "The Created By field is required.");
+        public static Error InvalidCode => new Error("SMSStakeholderGroup.InvalidCode", "The SMS Stakeholder Group Code is invalid.");
+        public static Error InvalidGroupName => new Error("SMSStakeholderGroup.InvalidGroupName", "The Group Name is invalid or too short.");
+        public static Error InvalidDescription => new Error("SMSStakeholderGroup.InvalidDescription", "The Description exceeds maximum length.");
+        public static Error GroupNameTooLong => new Error("SMSStakeholderGroup.GroupNameTooLong", "The Group Name cannot exceed 255 characters.");
+        public static Error DescriptionTooLong => new Error("SMSStakeholderGroup.DescriptionTooLong", "The Description cannot exceed 1000 characters.");
+        public static Error NotFound => new Error("SMSStakeholderGroup.NotFound", "The SMS Stakeholder Group was not found.");
+        public static Error CreateFailed => new Error("SMSStakeholderGroup.CreateFailed", "Failed to create the SMS Stakeholder Group.");
+        public static Error UpdateFailed => new Error("SMSStakeholderGroup.UpdateFailed", "Failed to update the SMS Stakeholder Group.");
+        public static Error DeleteFailed => new Error("SMSStakeholderGroup.DeleteFailed", "Failed to delete the SMS Stakeholder Group.");
+        public static Error ActivationFailed => new Error("SMSStakeholderGroup.ActivationFailed", "Failed to activate the SMS Stakeholder Group.");
+        public static Error DeactivationFailed => new Error("SMSStakeholderGroup.DeactivationFailed", "Failed to deactivate the SMS Stakeholder Group.");
+        public static Error AlreadyActive => new Error("SMSStakeholderGroup.AlreadyActive", "The SMS Stakeholder Group is already active.");
+        public static Error AlreadyInactive => new Error("SMSStakeholderGroup.AlreadyInactive", "The SMS Stakeholder Group is already inactive.");
+        public static Error CannotDeleteActiveGroup => new Error("SMSStakeholderGroup.CannotDeleteActiveGroup", "Cannot delete an active stakeholder group. Deactivate it first.");
+        public static Error GroupHasMembers => new Error("SMSStakeholderGroup.GroupHasMembers", "Cannot delete a group that has assigned members.");
+        public static Error DuplicateGroupName => new Error("SMSStakeholderGroup.DuplicateGroupName", "A stakeholder group with this name already exists.");
+        public static Error DuplicateCode => new Error("SMSStakeholderGroup.DuplicateCode", "A stakeholder group with this code already exists.");
+        
+        // User-Group Assignment Errors
+        public static Error UserCodeRequired => new Error("SMSStakeholderGroup.UserCodeRequired", "The User Code is required for group assignment.");
+        public static Error AssignedByRequired => new Error("SMSStakeholderGroup.AssignedByRequired", "The Assigned By field is required.");
+        public static Error UserNotFound => new Error("SMSStakeholderGroup.UserNotFound", "The specified user was not found.");
+        public static Error UserAlreadyInGroup => new Error("SMSStakeholderGroup.UserAlreadyInGroup", "The user is already assigned to this group.");
+        public static Error UserNotInGroup => new Error("SMSStakeholderGroup.UserNotInGroup", "The user is not assigned to this group.");
+        public static Error AssignmentFailed => new Error("SMSStakeholderGroup.AssignmentFailed", "Failed to assign user to the stakeholder group.");
+        public static Error RemovalFailed => new Error("SMSStakeholderGroup.RemovalFailed", "Failed to remove user from the stakeholder group.");
+        public static Error ClearGroupsFailed => new Error("SMSStakeholderGroup.ClearGroupsFailed", "Failed to clear all group memberships for the user.");
+        public static Error CannotAssignToInactiveGroup => new Error("SMSStakeholderGroup.CannotAssignToInactiveGroup", "Cannot assign users to an inactive stakeholder group.");
+        public static Error InvalidUserType => new Error("SMSStakeholderGroup.InvalidUserType", "Only stakeholder users can be assigned to stakeholder groups.");
+        public static Error MaxMembersExceeded => new Error("SMSStakeholderGroup.MaxMembersExceeded", "The stakeholder group has reached its maximum member limit.");
+        public static Error MinMembersRequired => new Error("SMSStakeholderGroup.MinMembersRequired", "The stakeholder group must have at least one member.");
     }
 
     /// <summary>

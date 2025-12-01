@@ -1,13 +1,18 @@
+using Microsoft.Extensions.Logging;
+
 using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Commands;
+using SMS_Application.Services;
+
 using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
 using SMS_Domain.Enums;
+using SMS_Domain.Errors;
+using SMS_Domain.ValueObjects;
+
 using SMS_Infrastructure.Interfaces;
 using SMS_Infrastructure.Services;
+
 using SMS_Shared.Common;
-using Microsoft.Extensions.Logging;
-using SMS_Domain.Errors;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 
@@ -21,15 +26,24 @@ namespace SMS_Application.Messaging.CommandHandlers;
 /// </summary>
 public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<CreateHazardCommand, Result<Hazard>>
 {
-    private readonly HazardDataService _dataService;
+    private readonly HazardDataService _hazardDataService;
+    private readonly ScoringPanelDataService _scoringPanelDataService;
+    private readonly HazardLocationDataService _locationDataService;
+    private readonly RiskAssessmentDataService _riskAssessmentDataService;
+    private readonly RiskAnalysisDataService _riskAnalysisDataService;  
     private readonly ILogger<CreateHazardCommandHandler> _logger;
 
     public CreateHazardCommandHandler(
-        IHazardRepository hazardRepository, 
-        HazardDataService dataService, 
-        ILogger<CreateHazardCommandHandler> logger)
+        HazardDataService hazardDataService, ScoringPanelDataService scoringPanelDataService,
+        HazardLocationDataService locationDataService,
+        RiskAssessmentDataService riskAssessmentDataService, RiskAnalysisDataService riskAnalysisDataService,
+    ILogger<CreateHazardCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _hazardDataService = hazardDataService ?? throw new ArgumentNullException(nameof(hazardDataService));
+        _scoringPanelDataService = scoringPanelDataService ?? throw new ArgumentNullException(nameof(scoringPanelDataService));
+        _locationDataService = locationDataService ?? throw new ArgumentNullException(nameof(locationDataService));
+        _riskAssessmentDataService = riskAssessmentDataService ?? throw new ArgumentNullException(nameof(riskAssessmentDataService));
+        _riskAnalysisDataService = riskAnalysisDataService ?? throw new ArgumentNullException(nameof(riskAnalysisDataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -38,37 +52,60 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
         try
         {
             _logger.LogInformation("??? SMS Backend: Creating new hazard - {Name}", request.Hazard.Name);
-
-            
-            var hazardResult = Hazard.CreateFromHazardReport(
-                request.Hazard.Description,
-                request.Hazard.HazardType,
-                request.Hazard.ReportedBy,
-                request.Hazard.ReportingDepartment,
-                request.Hazard.HazardType,
-                request.Hazard.HazardLocation,
-                request.Hazard.IsConfidential,
-                request.Hazard.IsAnonymous
-            );
-
-            if (hazardResult.IsFailure)
-            {
-                _logger.LogWarning("?? SMS Backend: Failed to create hazard entity - {Error}", hazardResult.Error.Message);
-                return Result<Hazard>.Failure<Hazard>(hazardResult.Error);
-            }
-
-            var hazard = hazardResult.Value;
+           
+            Hazard hazard = request.Hazard;
             hazard.ReportCode = request.Hazard.ReportCode;
 
-            var dataResult = await _dataService.CreateHazardAsync(hazard, ct);
-            if (dataResult.IsFailure)
+            var hazardResult = await _hazardDataService.CreateHazardAsync(hazard, ct);
+            if (hazardResult.IsFailure)
             {
                 _logger.LogError("? SMS Backend: Failed to save hazard via both data service");
-                return Result<Hazard>.Failure<Hazard>(dataResult.Error);
+                return Result<Hazard>.Failure<Hazard>(hazardResult.Error);
             }
-                
+            else
+            {
+                hazard = hazardResult.Value;
+                var scoringPanel = new ScoringPanel(new ScoringPanelID("SP-0000"))
+                {
+                    HazardCode = hazard.Code
+                    
+                };
+                var scoringpanel = await _scoringPanelDataService.CreateScoringPanelAsync(scoringPanel, ct);
+
+                var hazardLocation = new HazardLocation(new HazardLocationID("HL-0000"))
+                {
+                    HazardCode = hazard.Code,
+                    Latitude = 0,
+                    Longitude = 0,
+                    Description = "Map selected location"
+                };
+
+                var createdLocationResult = await _locationDataService.CreateHazardLocationAsync(hazardLocation,ct);
+                hazard.HazardLocation = createdLocationResult.Value;
+
+                RiskAssessment initialRiskAssessment = new RiskAssessment(new RiskAssessmentID("RS-0000"));
+                initialRiskAssessment.HazardCode = hazard.Code;
+                initialRiskAssessment.AssessmentType = RiskAssessmentType.Initial;
+                var riskAssessmentResult = _riskAssessmentDataService.CreateRiskAssessmentAsync(initialRiskAssessment, ct);
+                RiskAssessment residualRiskAssessment = new RiskAssessment(new RiskAssessmentID("RS-0000"));
+                residualRiskAssessment.HazardCode = hazard.Code;
+                residualRiskAssessment.AssessmentType = RiskAssessmentType.Residual;
+                riskAssessmentResult = _riskAssessmentDataService.CreateRiskAssessmentAsync(residualRiskAssessment, ct);
+
+                RiskAnalysis riskanalysis = new RiskAnalysis(new RiskAnalysisID("RA-0000"));
+                riskanalysis.HazardCode= hazard.Code;   
+                riskanalysis.Name = $"Risk Analysis - {hazard.Name}";
+                var riskanalysisresult  = _riskAnalysisDataService.CreateRiskAnalysisAsync(riskanalysis, ct); 
+
+            }
+             
+            
+            
+            
+            
+            
             _logger.LogInformation("? SMS Backend: Hazard saved via data service - {Code}", hazard.Code);
-            return Result<Hazard>.Success(dataResult.Value);
+            return Result<Hazard>.Success(hazardResult.Value);
         
         }
         catch (Exception ex)
@@ -108,6 +145,11 @@ public class UpdateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Upd
 
             if (result.IsSuccess)
             {
+                
+
+
+
+
                 _logger.LogInformation("Successfully updated Hazard with ID: {Id}", request.Hazard.Id);
             }
             else

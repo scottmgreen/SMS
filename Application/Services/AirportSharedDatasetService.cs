@@ -37,7 +37,7 @@ public sealed class AirportSharedDatasetService
             }
 
             // Business validation - ensure ReportID is provided (critical SMS requirement)
-            if (string.IsNullOrWhiteSpace(airportSharedDataset.ReportID))
+            if (string.IsNullOrWhiteSpace(airportSharedDataset.ReportCode))
             {
                 _logger.LogError("CreateAirportSharedDatasetAsync received dataset without ReportID");
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.ReportIDRequired);
@@ -129,9 +129,9 @@ public sealed class AirportSharedDatasetService
             }
 
             // Business validation - ensure critical fields are not being cleared
-            if (string.IsNullOrWhiteSpace(airportSharedDataset.ReportID))
+            if (string.IsNullOrWhiteSpace(airportSharedDataset.ReportCode))
             {
-                _logger.LogError("UpdateAirportSharedDatasetAsync attempt to clear ReportID - not allowed");
+                _logger.LogError("UpdateAirportSharedDatasetAsync attempt to clear ReportCode - not allowed");
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.ReportIDRequired);
             }
 
@@ -221,7 +221,7 @@ public sealed class AirportSharedDatasetService
             }
 
             var filteredDatasets = allDatasetsResult.Value
-                .Where(d => d.ReportID.Equals(reportId, StringComparison.OrdinalIgnoreCase))
+                .Where(d => d.ReportCode.Equals(reportId, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
             _logger.LogInformation("Found {Count} Airport Shared Datasets for Report ID: {ReportId}", 
@@ -291,8 +291,8 @@ public sealed class AirportSharedDatasetService
             var validationErrors = new List<string>();
 
             // Critical compliance checks
-            if (string.IsNullOrWhiteSpace(dataset.ReportID))
-                validationErrors.Add("ReportID is required for SMS compliance");
+            if (string.IsNullOrWhiteSpace(dataset.ReportCode))
+                validationErrors.Add("ReportCode is required for SMS compliance");
 
             if (string.IsNullOrWhiteSpace(dataset.HazardCode))
                 validationErrors.Add("HazardCode is required for SMS compliance");

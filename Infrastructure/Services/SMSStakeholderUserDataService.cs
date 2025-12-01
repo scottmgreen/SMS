@@ -16,14 +16,14 @@ namespace SMS_Infrastructure.Services;
 /// </summary>
 public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserDataService>
 {
-    private readonly ISMSStakeholderUserRepository _repository;
+    private readonly SMSStakeholderUserRepository _repository;
     private readonly ILogger<SMSStakeholderUserDataService> _logger;
 
     public SMSStakeholderUserDataService(
         ILogger<SMSStakeholderUserDataService> logger,
         IServiceScopeFactory serviceScopeFactory,
         IConfiguration configuration,
-        ISMSStakeholderUserRepository repository)
+        SMSStakeholderUserRepository repository)
         : base(logger, serviceScopeFactory, configuration)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -33,7 +33,7 @@ public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakehold
     /// <summary>
     /// Creates a new SMS Stakeholder User
     /// </summary>
-    public async Task<Result<SMSStakeholderUser>> CreateSMSStakeholderUserAsync(SMSStakeholderUser user, CancellationToken ct = default)
+    public async Task<Result<SMSStakeholderUser>> AddAsync(SMSStakeholderUser user, CancellationToken ct = default)
     {
         try
         {
@@ -76,7 +76,7 @@ public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakehold
     /// <summary>
     /// Gets SMS Stakeholder User by ID
     /// </summary>
-    public async Task<Result<SMSStakeholderUser>> GetSMSStakeholderUserByIdAsync(string id, CancellationToken ct = default)
+    public async Task<Result<SMSStakeholderUser>> GetByIdAsync(string id, CancellationToken ct = default)
     {
         try
         {
@@ -93,7 +93,7 @@ public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakehold
     /// <summary>
     /// Gets SMS Stakeholder User by username
     /// </summary>
-    public async Task<Result<SMSStakeholderUser>> GetSMSStakeholderUserByUserNameAsync(string userName, CancellationToken ct = default)
+    public async Task<Result<SMSStakeholderUser>> GetByUserNameAsync(string userName, CancellationToken ct = default)
     {
         try
         {
@@ -110,7 +110,7 @@ public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakehold
     /// <summary>
     /// Gets all SMS Stakeholder Users
     /// </summary>
-    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetAllSMSStakeholderUsersAsync(CancellationToken ct = default)
+    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetAllAsync(CancellationToken ct = default)
     {
         try
         {
@@ -127,7 +127,7 @@ public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakehold
     /// <summary>
     /// Gets all active SMS Stakeholder Users
     /// </summary>
-    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetActiveSMSStakeholderUsersAsync(CancellationToken ct = default)
+    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetActiveAsync(CancellationToken ct = default)
     {
         try
         {
@@ -144,7 +144,7 @@ public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakehold
     /// <summary>
     /// Gets SMS Stakeholder Users by stakeholder type
     /// </summary>
-    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetSMSStakeholderUsersByTypeAsync(string stakeholderType, CancellationToken ct = default)
+    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetByStakeholderTypeAsync(string stakeholderType, CancellationToken ct = default)
     {
         try
         {
@@ -161,7 +161,7 @@ public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakehold
     /// <summary>
     /// Gets SMS Stakeholder Users by organization
     /// </summary>
-    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetSMSStakeholderUsersByOrganizationAsync(string organization, CancellationToken ct = default)
+    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetByOrganizationAsync(string organization, CancellationToken ct = default)
     {
         try
         {
@@ -229,24 +229,12 @@ public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakehold
     /// <summary>
     /// Gets users requiring AOA access
     /// </summary>
-    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetUsersRequiringAOAAccessAsync(CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving users requiring AOA access");
-            return await _repository.GetUsersRequiringAOAAccessAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error retrieving users requiring AOA access");
-            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
-        }
-    }
+    
 
     /// <summary>
     /// Updates an existing SMS Stakeholder User
     /// </summary>
-    public async Task<Result<SMSStakeholderUser>> UpdateSMSStakeholderUserAsync(SMSStakeholderUser user, CancellationToken ct = default)
+    public async Task<Result<SMSStakeholderUser>> UpdateAsync(SMSStakeholderUser user, CancellationToken ct = default)
     {
         try
         {
@@ -266,7 +254,7 @@ public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakehold
             }
 
             // Return the updated user
-            return await _repository.GetByIdAsync(user.UserId.Value);
+            return await _repository.GetByIdAsync(user.Code);
         }
         catch (Exception ex)
         {
@@ -278,7 +266,7 @@ public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakehold
     /// <summary>
     /// Deletes an SMS Stakeholder User
     /// </summary>
-    public async Task<Result<bool>> DeleteSMSStakeholderUserAsync(string userId, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteUserAsync(string userId, CancellationToken ct = default)
     {
         try
         {
@@ -306,7 +294,7 @@ public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakehold
     /// <summary>
     /// Authenticates SMS Stakeholder User
     /// </summary>
-    public async Task<Result<SMSStakeholderUser>> AuthenticateSMSStakeholderUserAsync(string userName, string plainTextPassword, CancellationToken ct = default)
+    public async Task<Result<bool>> AuthenticateUserAsync(string userName, string plainTextPassword, CancellationToken ct = default)
     {
         try
         {
@@ -316,7 +304,7 @@ public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakehold
             if (userResult.IsFailure)
             {
                 _logger.LogWarning("Authentication failed - user not found: {UserName}", userName);
-                return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.LoginFailed);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.LoginFailed);
             }
 
             var user = userResult.Value;
@@ -324,7 +312,7 @@ public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakehold
             if (!user.Authenticate(plainTextPassword))
             {
                 _logger.LogWarning("Authentication failed - invalid password for user: {UserName}", userName);
-                return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.LoginFailed);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.LoginFailed);
             }
 
             // Record the login
@@ -332,12 +320,12 @@ public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakehold
             await _repository.UpdateAsync(user);
 
             _logger.LogInformation("Successfully authenticated SMS Stakeholder User: {UserName}", userName);
-            return Result<SMSStakeholderUser>.Success(user);
+            return Result<bool>.Success(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error during authentication for user: {UserName}", userName);
-            return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.LoginFailed);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.LoginFailed);
         }
     }
 
@@ -389,6 +377,29 @@ public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakehold
         {
             _logger.LogError(ex, "Unexpected error retrieving SMS Stakeholder User statistics");
             return Result<UserStatistics>.Failure<UserStatistics>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+
+    /// <summary>
+    /// Gets SMS Stakeholder Users by group code
+    /// </summary>
+    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetSMSStakeholderUsersByGroupCodeAsync(string groupCode, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(groupCode))
+            {
+                _logger.LogError("GetSMSStakeholderUsersByGroupCodeAsync received null or empty group code");
+                return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Retrieving SMS Stakeholder Users by group code: {GroupCode}", groupCode);
+            return await _repository.GetUsersByGroupCodeAsync(groupCode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving SMS Stakeholder Users by group code: {GroupCode}", groupCode);
+            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
         }
     }
 }

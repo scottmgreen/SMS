@@ -1,8 +1,12 @@
-﻿namespace Application.Interfaces;
+﻿using SMS_Domain.Entities;
+using SMS_Domain.Interfaces;
+using SMS_Shared.Common;
+
+namespace SMS_Application.Interfaces;
 
 public interface ISMSApplicationUserService
 {
-    Task<Result<SMSApplicationUser>> AuthenticateSMSApplicationUserAsync(string userName, string plainTextPassword, CancellationToken ct = default);
+    Task<Result<bool>> AuthenticateSMSApplicationUserAsync(string userName, string plainTextPassword, CancellationToken ct = default);
     Task<Result<bool>> ChangePasswordAsync(string userId, string currentPassword, string newPassword, CancellationToken ct = default);
     Task<Result<SMSApplicationUser>> CreateSMSApplicationUserAsync(SMSApplicationUser user, CancellationToken ct = default);
     Task<Result<bool>> DeleteSMSApplicationUserAsync(string userId, CancellationToken ct = default);
@@ -13,4 +17,7 @@ public interface ISMSApplicationUserService
     Task<Result<IEnumerable<SMSApplicationUser>>> GetSMSApplicationUsersByRoleAsync(string applicationRole, CancellationToken ct = default);
     Task<Result<UserStatistics>> GetSMSApplicationUserStatisticsAsync(CancellationToken ct = default);
     Task<Result<SMSApplicationUser>> UpdateSMSApplicationUserAsync(SMSApplicationUser user, CancellationToken ct = default);
+    Task<Result<bool>> UserNameExistsAsync(string userName, CancellationToken ct = default);
+    Task<Result<SMSApplicationUser>> GetByUserNameAsync(string userName, CancellationToken ct = default);
+    Task<Result<UserStatistics>> GetUserStatisticsAsync(CancellationToken ct = default);
 }

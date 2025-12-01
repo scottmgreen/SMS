@@ -6,9 +6,7 @@ using SMS_Domain.Entities;
 using SMS_Domain.Errors;
 using SMS_Domain.Interfaces;
 using SMS_Domain.ValueObjects;
-
-using SMS_Infrastructure.Interfaces;
-
+using SMS_Infrastructure.Services;
 using SMS_Shared.Common;
 
 namespace SMS_Application.Messaging.CommandHandlers;
@@ -19,69 +17,28 @@ namespace SMS_Application.Messaging.CommandHandlers;
 
 public class CreateSMSApplicationUserCommandHandler : BaseCommandBundle, IRequestHandler<CreateSMSApplicationUserCommand, Result<SMSApplicationUser>>
 {
-    private readonly ISMSApplicationUserRepository _repository;
+    private readonly SMSApplicationUserDataService _dataService;
     private readonly ILogger<CreateSMSApplicationUserCommandHandler> _logger;
 
-    public CreateSMSApplicationUserCommandHandler(ISMSApplicationUserRepository repository, ILogger<CreateSMSApplicationUserCommandHandler> logger)
+    public CreateSMSApplicationUserCommandHandler(SMSApplicationUserDataService dataService, ILogger<CreateSMSApplicationUserCommandHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<SMSApplicationUser>> HandleAsync(CreateSMSApplicationUserCommand request, CancellationToken ct = default)
+    public async Task<Result<SMSApplicationUser>> HandleAsync(CreateSMSApplicationUserCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            if (request is null)
+            if (request?.SMSApplicationUser is null)
             {
-                _logger.LogError("CreateSMSApplicationUserCommand received with null request");
+                _logger.LogError("CreateSMSApplicationUserCommand received with null request or user");
                 return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing CreateSMSApplicationUserCommand for UserName: {UserName}", request.UserName);
+            _logger.LogInformation("Processing CreateSMSApplicationUserCommand for UserName: {UserName}", request.SMSApplicationUser.UserName);
 
-            // Check if username already exists
-            var existsResult = await _repository.UserNameExistsAsync(request.UserName);
-            if (existsResult.IsFailure)
-            {
-                return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(existsResult.Error);
-            }
-
-            if (existsResult.Value)
-            {
-                _logger.LogWarning("Username {UserName} already exists", request.UserName);
-                return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.UserNameError.AlreadyExists);
-            }
-
-            // Create value objects
-            var firstNameResult = FirstName.Create(request.FirstName);
-            if (firstNameResult.IsFailure)
-                return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(firstNameResult.Error);
-
-            var lastNameResult = LastName.Create(request.LastName);
-            if (lastNameResult.IsFailure)
-                return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(lastNameResult.Error);
-
-            var userNameResult = UserName.Create(request.UserName);
-            if (userNameResult.IsFailure)
-                return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(userNameResult.Error);
-
-            var passwordResult = Password.Create(request.Password);
-            if (passwordResult.IsFailure)
-                return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(passwordResult.Error);
-
-            // Create the user
-            var user = SMSApplicationUser.Create(
-                request.Code,
-                firstNameResult.Value,
-                lastNameResult.Value,
-                userNameResult.Value,
-                passwordResult.Value,
-                request.ApplicationRole,
-                request.PermissionLevel,
-                request.CreatedBy);
-
-            var result = await _repository.AddAsync(user);
+            var result = await _dataService.CreateSMSApplicationUserAsync(request.SMSApplicationUser, cancellationToken);
 
             if (result.IsSuccess)
             {
@@ -91,7 +48,7 @@ public class CreateSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
             else
             {
                 _logger.LogError("Failed to create SMS Application User with UserName: {UserName}. Error: {Error}",
-                    request.UserName, result.Error?.Message);
+                    request.SMSApplicationUser.UserName, result.Error?.Message);
             }
 
             return result;
@@ -109,60 +66,39 @@ public class CreateSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
     }
 }
 
-public class UpdateSMSApplicationUserCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSApplicationUserCommand, Result<bool>>
+public class UpdateSMSApplicationUserCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSApplicationUserCommand, Result<SMSApplicationUser>>
 {
-    private readonly ISMSApplicationUserRepository _repository;
+    private readonly SMSApplicationUserDataService _dataService;
     private readonly ILogger<UpdateSMSApplicationUserCommandHandler> _logger;
 
-    public UpdateSMSApplicationUserCommandHandler(ISMSApplicationUserRepository repository, ILogger<UpdateSMSApplicationUserCommandHandler> logger)
+    public UpdateSMSApplicationUserCommandHandler(SMSApplicationUserDataService dataService, ILogger<UpdateSMSApplicationUserCommandHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<bool>> HandleAsync(UpdateSMSApplicationUserCommand request, CancellationToken ct = default)
+    public async Task<Result<SMSApplicationUser>> HandleAsync(UpdateSMSApplicationUserCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            if (request is null)
+            if (request?.SMSApplicationUser is null)
             {
-                _logger.LogError("UpdateSMSApplicationUserCommand received with null request");
-                return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
+                _logger.LogError("UpdateSMSApplicationUserCommand received with null request or user");
+                return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateSMSApplicationUserCommand for UserID: {UserId}", request.UserId);
+            _logger.LogInformation("Processing UpdateSMSApplicationUserCommand for UserID: {UserId}", request.SMSApplicationUser.UserId);
 
-            // Get the existing user
-            var userResult = await _repository.GetByIdAsync(request.UserId);
-            if (userResult.IsFailure)
-            {
-                return Result<bool>.Failure<bool>(userResult.Error);
-            }
-
-            var user = userResult.Value;
-
-            // Create value objects
-            var firstNameResult = FirstName.Create(request.FirstName);
-            if (firstNameResult.IsFailure)
-                return Result<bool>.Failure<bool>(firstNameResult.Error);
-
-            var lastNameResult = LastName.Create(request.LastName);
-            if (lastNameResult.IsFailure)
-                return Result<bool>.Failure<bool>(lastNameResult.Error);
-
-            // Update user information
-            user.UpdateBasicInfo(firstNameResult.Value, lastNameResult.Value);
-
-            var result = await _repository.UpdateAsync(user);
+            var result = await _dataService.UpdateSMSApplicationUserAsync(request.SMSApplicationUser, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated SMS Application User with ID: {UserId}", request.UserId);
+                _logger.LogInformation("Successfully updated SMS Application User with ID: {UserId}", request.SMSApplicationUser.UserId);
             }
             else
             {
                 _logger.LogError("Failed to update SMS Application User with ID: {UserId}. Error: {Error}",
-                    request.UserId, result.Error?.Message);
+                    request.SMSApplicationUser.UserId, result.Error?.Message);
             }
 
             return result;
@@ -174,75 +110,24 @@ public class UpdateSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating SMS Application User with ID: {UserId}", request.UserId);
-            return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.UpdateFailed);
-        }
-    }
-}
-
-public class UpdateSMSApplicationUserInfoCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSApplicationUserInfoCommand, Result<bool>>
-{
-    private readonly ISMSApplicationUserRepository _repository;
-    private readonly ILogger<UpdateSMSApplicationUserInfoCommandHandler> _logger;
-
-    public UpdateSMSApplicationUserInfoCommandHandler(ISMSApplicationUserRepository repository, ILogger<UpdateSMSApplicationUserInfoCommandHandler> logger)
-    {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<bool>> HandleAsync(UpdateSMSApplicationUserInfoCommand request, CancellationToken ct = default)
-    {
-        try
-        {
-            if (request is null)
-            {
-                _logger.LogError("UpdateSMSApplicationUserInfoCommand received with null request");
-                return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
-            }
-
-            _logger.LogInformation("Processing UpdateSMSApplicationUserInfoCommand for UserID: {UserId}", request.UserId);
-
-            var userId = new SMSApplicationUserID(request.UserId);
-            var result = await _repository.UpdateSMSApplicationUserInfoAsync(userId, request.ApplicationRole, request.PermissionLevel);
-
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Successfully updated application info for SMS Application User with ID: {UserId}", request.UserId);
-            }
-            else
-            {
-                _logger.LogError("Failed to update application info for SMS Application User with ID: {UserId}. Error: {Error}",
-                    request.UserId, result.Error?.Message);
-            }
-
-            return result;
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogWarning("UpdateSMSApplicationUserInfoCommand operation was cancelled");
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error occurred while updating application info for SMS Application User with ID: {UserId}", request.UserId);
-            return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.UpdateFailed);
+            _logger.LogError(ex, "Unexpected error occurred while updating SMS Application User with ID: {UserId}", request?.SMSApplicationUser?.UserId);
+            return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.UpdateFailed);
         }
     }
 }
 
 public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSApplicationUserPasswordCommand, Result<bool>>
 {
-    private readonly ISMSApplicationUserRepository _repository;
+    private readonly SMSApplicationUserDataService _dataService;
     private readonly ILogger<UpdateSMSApplicationUserPasswordCommandHandler> _logger;
 
-    public UpdateSMSApplicationUserPasswordCommandHandler(ISMSApplicationUserRepository repository, ILogger<UpdateSMSApplicationUserPasswordCommandHandler> logger)
+    public UpdateSMSApplicationUserPasswordCommandHandler(SMSApplicationUserDataService dataService, ILogger<UpdateSMSApplicationUserPasswordCommandHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<bool>> HandleAsync(UpdateSMSApplicationUserPasswordCommand request, CancellationToken ct = default)
+    public async Task<Result<bool>> HandleAsync(UpdateSMSApplicationUserPasswordCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -255,7 +140,7 @@ public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle,
             _logger.LogInformation("Processing UpdateSMSApplicationUserPasswordCommand for UserID: {UserId}", request.UserId);
 
             // Get the existing user
-            var userResult = await _repository.GetByIdAsync(request.UserId);
+            var userResult = await _dataService.GetSMSApplicationUserByIdAsync(request.UserId, cancellationToken);
             if (userResult.IsFailure)
             {
                 return Result<bool>.Failure<bool>(userResult.Error);
@@ -264,9 +149,7 @@ public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle,
             var user = userResult.Value;
 
             // Create new password
-            var passwordResult = request.RequiresChange 
-                ? Password.CreateTemporary(request.NewPassword)
-                : Password.Create(request.NewPassword);
+            var passwordResult = Password.Create(request.NewPassword);
 
             if (passwordResult.IsFailure)
                 return Result<bool>.Failure<bool>(passwordResult.Error);
@@ -274,19 +157,19 @@ public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle,
             // Update user password
             user.UpdatePassword(passwordResult.Value);
 
-            var result = await _repository.UpdateAsync(user);
+            var updateResult = await _dataService.UpdateSMSApplicationUserAsync(user, cancellationToken);
 
-            if (result.IsSuccess)
+            if (updateResult.IsSuccess)
             {
                 _logger.LogInformation("Successfully updated password for SMS Application User with ID: {UserId}", request.UserId);
+                return Result<bool>.Success(true);
             }
             else
             {
                 _logger.LogError("Failed to update password for SMS Application User with ID: {UserId}. Error: {Error}",
-                    request.UserId, result.Error?.Message);
+                    request.UserId, updateResult.Error?.Message);
+                return Result<bool>.Failure<bool>(updateResult.Error);
             }
-
-            return result;
         }
         catch (OperationCanceledException)
         {
@@ -301,60 +184,41 @@ public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle,
     }
 }
 
-public class AuthenticateSMSApplicationUserCommandHandler : BaseCommandBundle, IRequestHandler<AuthenticateSMSApplicationUserCommand, Result<SMSApplicationUser>>
+public class AuthenticateSMSApplicationUserCommandHandler : BaseCommandBundle, IRequestHandler<AuthenticateSMSApplicationUserCommand, Result<bool>>
 {
-    private readonly ISMSApplicationUserRepository _repository;
+    private readonly SMSApplicationUserDataService _dataService;
     private readonly ILogger<AuthenticateSMSApplicationUserCommandHandler> _logger;
 
-    public AuthenticateSMSApplicationUserCommandHandler(ISMSApplicationUserRepository repository, ILogger<AuthenticateSMSApplicationUserCommandHandler> logger)
+    public AuthenticateSMSApplicationUserCommandHandler(SMSApplicationUserDataService dataService, ILogger<AuthenticateSMSApplicationUserCommandHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<SMSApplicationUser>> HandleAsync(AuthenticateSMSApplicationUserCommand request, CancellationToken ct = default)
+    public async Task<Result<bool>> HandleAsync(AuthenticateSMSApplicationUserCommand request, CancellationToken cancellationToken)
     {
         try
         {
             if (request is null)
             {
                 _logger.LogError("AuthenticateSMSApplicationUserCommand received with null request");
-                return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
             _logger.LogInformation("Processing authentication request for UserName: {UserName}", request.UserName);
 
-            // Get user by username
-            var userResult = await _repository.GetByUserNameAsync(request.UserName);
-            if (userResult.IsFailure)
+            var result = await _dataService.AuthenticateSMSApplicationUserAsync(request.UserName, request.Password, cancellationToken);
+
+            if (result.IsSuccess)
             {
-                _logger.LogWarning("Authentication failed - user not found: {UserName}", request.UserName);
-                return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.LoginFailed);
+                _logger.LogInformation("Successfully authenticated SMS Application User: {UserName}", request.UserName);
             }
-
-            var user = userResult.Value;
-
-            // Check if user is active
-            if (!user.IsActive)
+            else
             {
-                _logger.LogWarning("Authentication failed - user inactive: {UserName}", request.UserName);
-                return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.BaseUserError.InactiveUser);
+                _logger.LogWarning("Authentication failed for user: {UserName}", request.UserName);
             }
-
-            // Verify password
-            if (!user.Authenticate(request.Password))
-            {
-                _logger.LogWarning("Authentication failed - invalid password for user: {UserName}", request.UserName);
-                return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.LoginFailed);
-            }
-
-            // Record the login
-            user.RecordLogin();
-            await _repository.UpdateAsync(user);
-
-            _logger.LogInformation("Successfully authenticated SMS Application User: {UserName}", request.UserName);
             
-            return Result<SMSApplicationUser>.Success(user);
+            return result.Value;
         }
         catch (OperationCanceledException)
         {
@@ -364,23 +228,74 @@ public class AuthenticateSMSApplicationUserCommandHandler : BaseCommandBundle, I
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error occurred during authentication for user: {UserName}", request.UserName);
-            return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.LoginFailed);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.LoginFailed);
+        }
+    }
+}
+
+public class RecordSMSApplicationUserLoginCommandHandler : BaseCommandBundle, IRequestHandler<RecordSMSApplicationUserLoginCommand, Result<bool>>
+{
+    private readonly SMSApplicationUserDataService _dataService;
+    private readonly ILogger<RecordSMSApplicationUserLoginCommandHandler> _logger;
+
+    public RecordSMSApplicationUserLoginCommandHandler(SMSApplicationUserDataService dataService, ILogger<RecordSMSApplicationUserLoginCommandHandler> logger)
+    {
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<bool>> HandleAsync(RecordSMSApplicationUserLoginCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request is null)
+            {
+                _logger.LogError("RecordSMSApplicationUserLoginCommand received with null request");
+                return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Processing RecordSMSApplicationUserLoginCommand for UserID: {UserId}", request.UserId);
+
+            var applicationUserId = new SMSApplicationUserID(request.UserId);
+            var result = await _dataService.RecordSMSApplicationUserLoginAsync(applicationUserId, request.LoginDate, cancellationToken);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully recorded login for SMS Application User with ID: {UserId}", request.UserId);
+            }
+            else
+            {
+                _logger.LogError("Failed to record login for SMS Application User with ID: {UserId}. Error: {Error}",
+                    request.UserId, result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("RecordSMSApplicationUserLoginCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error occurred while recording login for SMS Application User with ID: {UserId}", request.UserId);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.UpdateFailed);
         }
     }
 }
 
 public class DeleteSMSApplicationUserCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSApplicationUserCommand, Result<bool>>
 {
-    private readonly ISMSApplicationUserRepository _repository;
+    private readonly SMSApplicationUserDataService _dataService;
     private readonly ILogger<DeleteSMSApplicationUserCommandHandler> _logger;
 
-    public DeleteSMSApplicationUserCommandHandler(ISMSApplicationUserRepository repository, ILogger<DeleteSMSApplicationUserCommandHandler> logger)
+    public DeleteSMSApplicationUserCommandHandler(SMSApplicationUserDataService dataService, ILogger<DeleteSMSApplicationUserCommandHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<bool>> HandleAsync(DeleteSMSApplicationUserCommand request, CancellationToken ct = default)
+    public async Task<Result<bool>> HandleAsync(DeleteSMSApplicationUserCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -390,18 +305,18 @@ public class DeleteSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing DeleteSMSApplicationUserCommand for UserID: {UserId}", request.UserId);
+            _logger.LogInformation("Processing DeleteSMSApplicationUserCommand for UserID: {UserId}", request.SMSApplicationUserId);
 
-            var result = await _repository.DeleteAsync(request.UserId);
+            var result = await _dataService.DeleteSMSApplicationUserAsync(request.SMSApplicationUserId, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted SMS Application User with ID: {UserId}", request.UserId);
+                _logger.LogInformation("Successfully deleted SMS Application User with ID: {UserId}", request.SMSApplicationUserId);
             }
             else
             {
                 _logger.LogError("Failed to delete SMS Application User with ID: {UserId}. Error: {Error}",
-                    request.UserId, result.Error?.Message);
+                    request.SMSApplicationUserId, result.Error?.Message);
             }
 
             return result;
@@ -413,7 +328,7 @@ public class DeleteSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deleting SMS Application User with ID: {UserId}", request.UserId);
+            _logger.LogError(ex, "Unexpected error occurred while deleting SMS Application User with ID: {UserId}", request?.SMSApplicationUserId);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.DeleteFailed);
         }
     }

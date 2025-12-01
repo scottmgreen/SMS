@@ -293,7 +293,7 @@ public class SMSWorkflowService : ISMSWorkflowService
         }
     }
 
-    public async Task<Result<SMSRole>> GetUserHighestRoleAsync(string userId)
+    public async Task<Result<SMSUserRole>> GetUserHighestRoleAsync(string userId)
     {
         try
         {
@@ -301,11 +301,11 @@ public class SMSWorkflowService : ISMSWorkflowService
             // and return the role with highest authority level
             
             // For now, return a default role
-            return Result<SMSRole>.Success(SMSRole.SMSManager);
+            return Result<SMSUserRole>.Success(SMSUserRole.SMSManager);
         }
         catch (Exception )
         {
-            return Result<SMSRole>.Failure<SMSRole>(DomainErrors.GeneralError.ServerError);
+            return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.GeneralError.ServerError);
         }
     }
 

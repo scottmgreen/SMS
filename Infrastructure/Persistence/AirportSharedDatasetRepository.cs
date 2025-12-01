@@ -32,12 +32,12 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
             }
 
             // Validate REQUIRED ReportID
-            if (string.IsNullOrWhiteSpace(airportSharedDataset.ReportID))
+            if (string.IsNullOrWhiteSpace(airportSharedDataset.ReportCode))
             {
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.ReportIDRequired);
             }
 
-            _logger.LogInfrastructurePostItem($"{_logheader} {StoredProcs.pr_AirportSharedDataset_Insert} Code:{airportSharedDataset.Code}, ReportID:{airportSharedDataset.ReportID}", null);
+            _logger.LogInfrastructurePostItem($"{_logheader} {StoredProcs.pr_AirportSharedDataset_Insert} Code:{airportSharedDataset.Code}, ReportID:{airportSharedDataset.ReportCode}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_AirportSharedDataset_Insert, sql)
@@ -47,7 +47,7 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
 
             // Add all parameters - REQUIRED ReportID first
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetCode, airportSharedDataset.Code));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetReportCode, airportSharedDataset.ReportID));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetReportCode, airportSharedDataset.ReportCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetHazardCode, airportSharedDataset.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmPrivateNarrative, airportSharedDataset.PrivateNarrative));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSharedNarrative, airportSharedDataset.SharedNarrative));
@@ -195,13 +195,13 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.NullOrEmpty);
             }
 
-            // Validate REQUIRED ReportID
-            if (string.IsNullOrWhiteSpace(airportSharedDataset.ReportID))
+            // Validate REQUIRED ReportCode
+            if (string.IsNullOrWhiteSpace(airportSharedDataset.ReportCode))
             {
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.ReportIDRequired);
             }
 
-            _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_AirportSharedDataset_Update} ID:{airportSharedDataset.Id}, ReportID:{airportSharedDataset.ReportID}", null);
+            _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_AirportSharedDataset_Update} ID:{airportSharedDataset.Id}, ReportID:{airportSharedDataset.ReportCode}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_AirportSharedDataset_Update, sql)
@@ -212,7 +212,7 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
             // Add all parameters for update
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, airportSharedDataset.Id.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetCode, airportSharedDataset.Code));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetReportCode, airportSharedDataset.ReportID));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetReportCode, airportSharedDataset.ReportCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetHazardCode, airportSharedDataset.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmPrivateNarrative, airportSharedDataset.PrivateNarrative));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSharedNarrative, airportSharedDataset.SharedNarrative));

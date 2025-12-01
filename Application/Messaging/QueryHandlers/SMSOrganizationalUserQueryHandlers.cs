@@ -4,10 +4,7 @@ using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Queries;
 using SMS_Domain.Entities;
 using SMS_Domain.Errors;
-using SMS_Domain.Interfaces;
-
-using SMS_Infrastructure.Interfaces;
-
+using SMS_Infrastructure.Services;
 using SMS_Shared.Common;
 
 namespace SMS_Application.Messaging.QueryHandlers;
@@ -18,12 +15,12 @@ namespace SMS_Application.Messaging.QueryHandlers;
 
 public class GetAllSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSOrganizationalUsersQuery, Result<IEnumerable<SMSOrganizationalUser>>>
 {
-    private readonly ISMSOrganizationalUserRepository _repository;
+    private readonly SMSOrganizationalUserDataService _dataService;
     private readonly ILogger<GetAllSMSOrganizationalUsersQueryHandler> _logger;
 
-    public GetAllSMSOrganizationalUsersQueryHandler(ISMSOrganizationalUserRepository repository, ILogger<GetAllSMSOrganizationalUsersQueryHandler> logger)
+    public GetAllSMSOrganizationalUsersQueryHandler(SMSOrganizationalUserDataService dataService, ILogger<GetAllSMSOrganizationalUsersQueryHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -32,7 +29,7 @@ public class GetAllSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IReques
         try
         {
             _logger.LogInformation("Processing GetAllSMSOrganizationalUsersQuery");
-            var result = await _repository.GetAllAsync();
+            var result = await _dataService.GetAllSMSOrganizationalUsersAsync(ct);
             
             if (result.IsSuccess)
             {
@@ -40,7 +37,7 @@ public class GetAllSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IReques
             }
             else
             {
-                _logger.LogWarning("Failed to retrieve SMS Organizational Users: {Error}", result.Error?.Message);
+                _logger.LogWarning("Failed to retrieve SMS Organizational Users");
             }
             
             return result;
@@ -55,12 +52,12 @@ public class GetAllSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IReques
 
 public class GetSMSOrganizationalUserByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalUserByIdQuery, Result<SMSOrganizationalUser>>
 {
-    private readonly ISMSOrganizationalUserRepository _repository;
+    private readonly SMSOrganizationalUserDataService _dataService;
     private readonly ILogger<GetSMSOrganizationalUserByIdQueryHandler> _logger;
 
-    public GetSMSOrganizationalUserByIdQueryHandler(ISMSOrganizationalUserRepository repository, ILogger<GetSMSOrganizationalUserByIdQueryHandler> logger)
+    public GetSMSOrganizationalUserByIdQueryHandler(SMSOrganizationalUserDataService dataService, ILogger<GetSMSOrganizationalUserByIdQueryHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -69,7 +66,7 @@ public class GetSMSOrganizationalUserByIdQueryHandler : BaseQueryBundle, IReques
         try
         {
             _logger.LogInformation("Processing GetSMSOrganizationalUserByIdQuery for ID: {UserId}", request.UserId);
-            var result = await _repository.GetByIdAsync(request.UserId);
+            var result = await _dataService.GetSMSOrganizationalUserByIdAsync(request.UserId, ct);
             
             if (result.IsSuccess)
             {
@@ -90,14 +87,51 @@ public class GetSMSOrganizationalUserByIdQueryHandler : BaseQueryBundle, IReques
     }
 }
 
+public class GetSMSOrganizationalUserByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalUserByCodeQuery, Result<SMSOrganizationalUser>>
+{
+    private readonly SMSOrganizationalUserDataService _dataService;
+    private readonly ILogger<GetSMSOrganizationalUserByCodeQueryHandler> _logger;
+
+    public GetSMSOrganizationalUserByCodeQueryHandler(SMSOrganizationalUserDataService dataService, ILogger<GetSMSOrganizationalUserByCodeQueryHandler> logger)
+    {
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SMSOrganizationalUser>> HandleAsync(GetSMSOrganizationalUserByCodeQuery request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing GetSMSOrganizationalUserByCodeQuery for Code: {UserCode}", request.UserCode);
+            var result = await _dataService.GetSMSOrganizationalUserByIdAsync(request.UserCode, ct);
+            
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully retrieved SMS Organizational User with Code: {UserCode}", request.UserCode);
+            }
+            else
+            {
+                _logger.LogWarning("SMS Organizational User not found with Code: {UserCode}", request.UserCode);
+            }
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing GetSMSOrganizationalUserByCodeQuery for Code: {UserCode}", request.UserCode);
+            return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NotFound);
+        }
+    }
+}
+
 public class GetSMSOrganizationalUserByUserNameQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalUserByUserNameQuery, Result<SMSOrganizationalUser>>
 {
-    private readonly ISMSOrganizationalUserRepository _repository;
+    private readonly SMSOrganizationalUserDataService _dataService;
     private readonly ILogger<GetSMSOrganizationalUserByUserNameQueryHandler> _logger;
 
-    public GetSMSOrganizationalUserByUserNameQueryHandler(ISMSOrganizationalUserRepository repository, ILogger<GetSMSOrganizationalUserByUserNameQueryHandler> logger)
+    public GetSMSOrganizationalUserByUserNameQueryHandler(SMSOrganizationalUserDataService dataService, ILogger<GetSMSOrganizationalUserByUserNameQueryHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -106,18 +140,26 @@ public class GetSMSOrganizationalUserByUserNameQueryHandler : BaseQueryBundle, I
         try
         {
             _logger.LogInformation("Processing GetSMSOrganizationalUserByUserNameQuery for UserName: {UserName}", request.UserName);
-            var result = await _repository.GetByUserNameAsync(request.UserName);
             
-            if (result.IsSuccess)
+            // Get all users and filter by username
+            var allUsersResult = await _dataService.GetAllSMSOrganizationalUsersAsync(ct);
+            if (allUsersResult.IsFailure)
+            {
+                return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(allUsersResult.Error);
+            }
+
+            var user = allUsersResult.Value?.FirstOrDefault(u => u.UserName.Value.Equals(request.UserName, StringComparison.OrdinalIgnoreCase));
+            
+            if (user != null)
             {
                 _logger.LogInformation("Successfully retrieved SMS Organizational User with UserName: {UserName}", request.UserName);
+                return Result<SMSOrganizationalUser>.Success(user);
             }
             else
             {
                 _logger.LogWarning("SMS Organizational User not found with UserName: {UserName}", request.UserName);
+                return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NotFound);
             }
-            
-            return result;
         }
         catch (Exception ex)
         {
@@ -129,12 +171,12 @@ public class GetSMSOrganizationalUserByUserNameQueryHandler : BaseQueryBundle, I
 
 public class GetActiveSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IRequestHandler<GetActiveSMSOrganizationalUsersQuery, Result<IEnumerable<SMSOrganizationalUser>>>
 {
-    private readonly ISMSOrganizationalUserRepository _repository;
+    private readonly SMSOrganizationalUserDataService _dataService;
     private readonly ILogger<GetActiveSMSOrganizationalUsersQueryHandler> _logger;
 
-    public GetActiveSMSOrganizationalUsersQueryHandler(ISMSOrganizationalUserRepository repository, ILogger<GetActiveSMSOrganizationalUsersQueryHandler> logger)
+    public GetActiveSMSOrganizationalUsersQueryHandler(SMSOrganizationalUserDataService dataService, ILogger<GetActiveSMSOrganizationalUsersQueryHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -143,7 +185,7 @@ public class GetActiveSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IReq
         try
         {
             _logger.LogInformation("Processing GetActiveSMSOrganizationalUsersQuery");
-            var result = await _repository.GetActiveUsersAsync();
+            var result = await _dataService.GetActiveSMSOrganizationalUsersAsync(ct);
             
             if (result.IsSuccess)
             {
@@ -151,7 +193,7 @@ public class GetActiveSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IReq
             }
             else
             {
-                _logger.LogWarning("Failed to retrieve active SMS Organizational Users: {Error}", result.Error?.Message);
+                _logger.LogWarning("Failed to retrieve active SMS Organizational Users");
             }
             
             return result;
@@ -166,12 +208,12 @@ public class GetActiveSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IReq
 
 public class GetSMSOrganizationalUsersByDepartmentQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalUsersByDepartmentQuery, Result<IEnumerable<SMSOrganizationalUser>>>
 {
-    private readonly ISMSOrganizationalUserRepository _repository;
+    private readonly SMSOrganizationalUserDataService _dataService;
     private readonly ILogger<GetSMSOrganizationalUsersByDepartmentQueryHandler> _logger;
 
-    public GetSMSOrganizationalUsersByDepartmentQueryHandler(ISMSOrganizationalUserRepository repository, ILogger<GetSMSOrganizationalUsersByDepartmentQueryHandler> logger)
+    public GetSMSOrganizationalUsersByDepartmentQueryHandler(SMSOrganizationalUserDataService dataService, ILogger<GetSMSOrganizationalUsersByDepartmentQueryHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -180,17 +222,11 @@ public class GetSMSOrganizationalUsersByDepartmentQueryHandler : BaseQueryBundle
         try
         {
             _logger.LogInformation("Processing GetSMSOrganizationalUsersByDepartmentQuery for Department: {Department}", request.Department);
-            var result = await _repository.GetByDepartmentAsync(request.Department);
+            var result = await _dataService.GetSMSOrganizationalUsersByDepartmentAsync(request.Department, ct);
             
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS Organizational Users for Department: {Department}", 
-                    result.Value?.Count() ?? 0, request.Department);
-            }
-            else
-            {
-                _logger.LogWarning("Failed to retrieve SMS Organizational Users for Department: {Department}: {Error}", 
-                    request.Department, result.Error?.Message);
+                _logger.LogInformation("Successfully retrieved {Count} SMS Organizational Users for Department: {Department}", result.Value?.Count() ?? 0, request.Department);
             }
             
             return result;
@@ -205,12 +241,12 @@ public class GetSMSOrganizationalUsersByDepartmentQueryHandler : BaseQueryBundle
 
 public class GetSMSOrganizationalUsersByPositionQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalUsersByPositionQuery, Result<IEnumerable<SMSOrganizationalUser>>>
 {
-    private readonly ISMSOrganizationalUserRepository _repository;
+    private readonly SMSOrganizationalUserDataService _dataService;
     private readonly ILogger<GetSMSOrganizationalUsersByPositionQueryHandler> _logger;
 
-    public GetSMSOrganizationalUsersByPositionQueryHandler(ISMSOrganizationalUserRepository repository, ILogger<GetSMSOrganizationalUsersByPositionQueryHandler> logger)
+    public GetSMSOrganizationalUsersByPositionQueryHandler(SMSOrganizationalUserDataService dataService, ILogger<GetSMSOrganizationalUsersByPositionQueryHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -219,17 +255,11 @@ public class GetSMSOrganizationalUsersByPositionQueryHandler : BaseQueryBundle, 
         try
         {
             _logger.LogInformation("Processing GetSMSOrganizationalUsersByPositionQuery for Position: {Position}", request.Position);
-            var result = await _repository.GetByPositionAsync(request.Position);
+            var result = await _dataService.GetSMSOrganizationalUsersByPositionAsync(request.Position, ct);
             
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS Organizational Users for Position: {Position}", 
-                    result.Value?.Count() ?? 0, request.Position);
-            }
-            else
-            {
-                _logger.LogWarning("Failed to retrieve SMS Organizational Users for Position: {Position}: {Error}", 
-                    request.Position, result.Error?.Message);
+                _logger.LogInformation("Successfully retrieved {Count} SMS Organizational Users for Position: {Position}", result.Value?.Count() ?? 0, request.Position);
             }
             
             return result;
@@ -242,92 +272,51 @@ public class GetSMSOrganizationalUsersByPositionQueryHandler : BaseQueryBundle, 
     }
 }
 
-public class GetSMSOrganizationalUsersByLevelQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalUsersByLevelQuery, Result<IEnumerable<SMSOrganizationalUser>>>
+public class GetSMSOrganizationalUsersByOrganizationLevelQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalUsersByOrganizationLevelQuery, Result<IEnumerable<SMSOrganizationalUser>>>
 {
-    private readonly ISMSOrganizationalUserRepository _repository;
-    private readonly ILogger<GetSMSOrganizationalUsersByLevelQueryHandler> _logger;
+    private readonly SMSOrganizationalUserDataService _dataService;
+    private readonly ILogger<GetSMSOrganizationalUsersByOrganizationLevelQueryHandler> _logger;
 
-    public GetSMSOrganizationalUsersByLevelQueryHandler(ISMSOrganizationalUserRepository repository, ILogger<GetSMSOrganizationalUsersByLevelQueryHandler> logger)
+    public GetSMSOrganizationalUsersByOrganizationLevelQueryHandler(SMSOrganizationalUserDataService dataService, ILogger<GetSMSOrganizationalUsersByOrganizationLevelQueryHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<IEnumerable<SMSOrganizationalUser>>> HandleAsync(GetSMSOrganizationalUsersByLevelQuery request, CancellationToken ct = default)
+    public async Task<Result<IEnumerable<SMSOrganizationalUser>>> HandleAsync(GetSMSOrganizationalUsersByOrganizationLevelQuery request, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSOrganizationalUsersByLevelQuery for Level: {OrganizationLevel}", request.OrganizationLevel);
-            var result = await _repository.GetBySMSOrganizationalUserLevelAsync(request.OrganizationLevel);
+            _logger.LogInformation("Processing GetSMSOrganizationalUsersByOrganizationLevelQuery for OrganizationLevel: {OrganizationLevel}", request.OrganizationLevel);
             
-            if (result.IsSuccess)
+            // Filter users by organization level through service
+            var allUsersResult = await _dataService.GetAllSMSOrganizationalUsersAsync(ct);
+            if (allUsersResult.IsFailure)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS Organizational Users for Level: {OrganizationLevel}", 
-                    result.Value?.Count() ?? 0, request.OrganizationLevel);
+                return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(allUsersResult.Error);
             }
-            else
-            {
-                _logger.LogWarning("Failed to retrieve SMS Organizational Users for Level: {OrganizationLevel}: {Error}", 
-                    request.OrganizationLevel, result.Error?.Message);
-            }
+
+            var filteredUsers = allUsersResult.Value?.Where(u => u.OrganizationLevel.Equals(request.OrganizationLevel, StringComparison.OrdinalIgnoreCase)) ?? Enumerable.Empty<SMSOrganizationalUser>();
             
-            return result;
+            _logger.LogInformation("Successfully retrieved {Count} SMS Organizational Users for OrganizationLevel: {OrganizationLevel}", filteredUsers.Count(), request.OrganizationLevel);
+            return Result<IEnumerable<SMSOrganizationalUser>>.Success(filteredUsers);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSOrganizationalUsersByLevelQuery for Level: {OrganizationLevel}", request.OrganizationLevel);
+            _logger.LogError(ex, "Error processing GetSMSOrganizationalUsersByOrganizationLevelQuery for OrganizationLevel: {OrganizationLevel}", request.OrganizationLevel);
             return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
         }
     }
 }
 
-//public class GetDepartmentSupervisorsQueryHandler : BaseQueryBundle, IRequestHandler<GetDepartmentSupervisorsQuery, Result<IEnumerable<SMSOrganizationalUser>>>
-//{
-//    private readonly ISMSOrganizationalUserRepository _repository;
-//    private readonly ILogger<GetDepartmentSupervisorsQueryHandler> _logger;
-
-//    public GetDepartmentSupervisorsQueryHandler(ISMSOrganizationalUserRepository repository, ILogger<GetDepartmentSupervisorsQueryHandler> logger)
-//    {
-//        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-//        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-//    }
-
-//    public async Task<Result<IEnumerable<SMSOrganizationalUser>>> HandleAsync(GetDepartmentSupervisorsQuery request, CancellationToken ct = default)
-//    {
-//        try
-//        {
-//            _logger.LogInformation("Processing GetDepartmentSupervisorsQuery for Department: {Department}", request.Department);
-//            var result = await _repository.GetDepartmentSupervisorsAsync(request.Department);
-            
-//            if (result.IsSuccess)
-//            {
-//                _logger.LogInformation("Successfully retrieved {Count} supervisors for Department: {Department}", 
-//                    result.Value?.Count() ?? 0, request.Department);
-//            }
-//            else
-//            {
-//                _logger.LogWarning("Failed to retrieve supervisors for Department: {Department}: {Error}", 
-//                    request.Department, result.Error?.Message);
-//            }
-            
-//            return result;
-//        }
-//        catch (Exception ex)
-//        {
-//            _logger.LogError(ex, "Error processing GetDepartmentSupervisorsQuery for Department: {Department}", request.Department);
-//            return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
-//        }
-//    }
-//}
-
 public class CheckSMSOrganizationalUserNameExistsQueryHandler : BaseQueryBundle, IRequestHandler<CheckSMSOrganizationalUserNameExistsQuery, Result<bool>>
 {
-    private readonly ISMSOrganizationalUserRepository _repository;
+    private readonly SMSOrganizationalUserDataService _dataService;
     private readonly ILogger<CheckSMSOrganizationalUserNameExistsQueryHandler> _logger;
 
-    public CheckSMSOrganizationalUserNameExistsQueryHandler(ISMSOrganizationalUserRepository repository, ILogger<CheckSMSOrganizationalUserNameExistsQueryHandler> logger)
+    public CheckSMSOrganizationalUserNameExistsQueryHandler(SMSOrganizationalUserDataService dataService, ILogger<CheckSMSOrganizationalUserNameExistsQueryHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -336,11 +325,12 @@ public class CheckSMSOrganizationalUserNameExistsQueryHandler : BaseQueryBundle,
         try
         {
             _logger.LogInformation("Processing CheckSMSOrganizationalUserNameExistsQuery for UserName: {UserName}", request.UserName);
-            var result = await _repository.UserNameExistsAsync(request.UserName);
+            var result = await _dataService.GetAllSMSOrganizationalUsersAsync();//(request.UserName);
+            var checkresult = result.Value.Any(x=> x.UserName.Value == request.UserName);    
             
             _logger.LogInformation("Username {UserName} exists: {Exists}", request.UserName, result.Value);
             
-            return result;
+            return checkresult;
         }
         catch (Exception ex)
         {
@@ -350,76 +340,50 @@ public class CheckSMSOrganizationalUserNameExistsQueryHandler : BaseQueryBundle,
     }
 }
 
-//public class GetDepartmentStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<GetDepartmentStatisticsQuery, Result<Dictionary<string, int>>>
-//{
-//    private readonly ISMSOrganizationalUserRepository _repository;
-//    private readonly ILogger<GetDepartmentStatisticsQueryHandler> _logger;
-
-//    public GetDepartmentStatisticsQueryHandler(ISMSOrganizationalUserRepository repository, ILogger<GetDepartmentStatisticsQueryHandler> logger)
-//    {
-//        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-//        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-//    }
-
-//    public async Task<Result<Dictionary<string, int>>> HandleAsync(GetDepartmentStatisticsQuery request, CancellationToken ct = default)
-//    {
-//        try
-//        {
-//            _logger.LogInformation("Processing GetDepartmentStatisticsQuery");
-//            var result = await _repository.GetDepartmentStatisticsAsync();
-            
-//            if (result.IsSuccess)
-//            {
-//                _logger.LogInformation("Successfully retrieved department statistics for {Count} departments", result.Value?.Count ?? 0);
-//            }
-//            else
-//            {
-//                _logger.LogWarning("Failed to retrieve department statistics: {Error}", result.Error?.Message);
-//            }
-            
-//            return result;
-//        }
-//        catch (Exception ex)
-//        {
-//            _logger.LogError(ex, "Error processing GetDepartmentStatisticsQuery");
-//            return Result<Dictionary<string, int>>.Failure<Dictionary<string, int>>(DomainErrors.GeneralError.UnProcessableRequest);
-//        }
-//    }
-//}
-
-public class GetSMSOrganizationalUserStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalUserStatisticsQuery, Result<UserStatistics>>
+public class GetSMSOrganizationalUserStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalUserStatisticsQuery, Result<Dictionary<string, object>>>
 {
-    private readonly ISMSOrganizationalUserRepository _repository;
+    private readonly SMSOrganizationalUserDataService _dataService;
     private readonly ILogger<GetSMSOrganizationalUserStatisticsQueryHandler> _logger;
 
-    public GetSMSOrganizationalUserStatisticsQueryHandler(ISMSOrganizationalUserRepository repository, ILogger<GetSMSOrganizationalUserStatisticsQueryHandler> logger)
+    public GetSMSOrganizationalUserStatisticsQueryHandler(SMSOrganizationalUserDataService dataService, ILogger<GetSMSOrganizationalUserStatisticsQueryHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<UserStatistics>> HandleAsync(GetSMSOrganizationalUserStatisticsQuery request, CancellationToken ct = default)
+    public async Task<Result<Dictionary<string, object>>> HandleAsync(GetSMSOrganizationalUserStatisticsQuery request, CancellationToken ct = default)
     {
         try
         {
             _logger.LogInformation("Processing GetSMSOrganizationalUserStatisticsQuery");
-            var result = await _repository.GetUserStatisticsAsync();
             
-            if (result.IsSuccess)
+            var statsResult = await _dataService.GetSMSOrganizationalUserStatisticsAsync();
+            if (statsResult.IsSuccess)
             {
+                var userStats = statsResult.Value;
+                var stats = new Dictionary<string, object>
+                {
+                    ["TotalUsers"] = userStats.TotalUsers,
+                    ["ActiveUsers"] = userStats.ActiveUsers,
+                    ["InactiveUsers"] = userStats.InactiveUsers,
+                    ["UsersRequiringPasswordChange"] = userStats.UsersRequiringPasswordChange,
+                    ["StaleUsers"] = userStats.StaleUsers,
+                    ["LastLoginDate"] = userStats.LastLoginDate
+                };
+                
                 _logger.LogInformation("Successfully retrieved SMS Organizational User statistics");
+                return Result<Dictionary<string, object>>.Success<Dictionary<string, object>>(stats);
             }
             else
             {
-                _logger.LogWarning("Failed to retrieve SMS Organizational User statistics: {Error}", result.Error?.Message);
+                _logger.LogWarning("Failed to retrieve SMS Organizational User statistics: {Error}", statsResult.Error?.Message);
+                return Result<Dictionary<string, object>>.Failure<Dictionary<string, object>>(statsResult.Error);
             }
-            
-            return result;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing GetSMSOrganizationalUserStatisticsQuery");
-            return Result<UserStatistics>.Failure<UserStatistics>(DomainErrors.GeneralError.UnProcessableRequest);
+            return Result<Dictionary<string, object>>.Failure<Dictionary<string, object>>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 }

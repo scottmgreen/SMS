@@ -1,0 +1,202 @@
+@page
+@model PDXSMS_Presentation.Pages.System.SystemMonitoringModel
+@{
+    ViewData["Title"] = "System Monitoring - System Administration";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/System">System Administration</a></li>
+                    <li class="breadcrumb-item active">System Monitoring</li>
+                </ol>
+            </nav>
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="card-title"><i class="fas fa-heartbeat"></i> System Monitoring</h1>
+                            <p class="card-text">Monitor system performance, health, and operational metrics</p>
+                        </div>
+                        <div class="text-end">
+                            <h3 class="mb-0">@Model.Metrics.SystemHealth%</h3>
+                            <small>Overall Health</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Health Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h3 class="text-success">@Model.Metrics.SystemHealth%</h3>
+                    <p class="mb-0">System Health</p>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-success" style="width: @Model.Metrics.SystemHealth%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <h3 class="text-info">@Model.Metrics.SystemUptime.Days</h3>
+                    <p class="mb-0">Days Uptime</p>
+                    <small class="text-muted">@Model.Metrics.SystemUptime.ToString(@"d\d\ h\h")</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <h3 class="text-warning">@Model.Metrics.ActiveSessions</h3>
+                    <p class="mb-0">Active Sessions</p>
+                    <small class="text-muted">Current users</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h3 class="text-primary">@Model.Metrics.DatabaseConnections</h3>
+                    <p class="mb-0">DB Connections</p>
+                    <small class="text-muted">Active connections</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-area"></i> System Performance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>CPU Usage</h6>
+                            <div class="progress mb-3">
+                                <div class="progress-bar bg-@(Model.Metrics.CpuUsage > 80 ? "danger" : Model.Metrics.CpuUsage > 60 ? "warning" : "success")" 
+                                     style="width: @Model.Metrics.CpuUsage%">@Model.Metrics.CpuUsage%</div>
+                            </div>
+                            
+                            <h6>Memory Usage</h6>
+                            <div class="progress mb-3">
+                                <div class="progress-bar bg-@(Model.Metrics.MemoryUsage > 80 ? "danger" : Model.Metrics.MemoryUsage > 60 ? "warning" : "success")" 
+                                     style="width: @Model.Metrics.MemoryUsage%">@Model.Metrics.MemoryUsage%</div>
+                            </div>
+
+                            <h6>Disk Usage</h6>
+                            <div class="progress mb-3">
+                                <div class="progress-bar bg-@(Model.Metrics.DiskUsage > 80 ? "danger" : Model.Metrics.DiskUsage > 60 ? "warning" : "success")" 
+                                     style="width: @Model.Metrics.DiskUsage%">@Model.Metrics.DiskUsage%</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-center py-4">
+                                <i class="fas fa-chart-line fa-3x text-muted"></i>
+                                <p class="mt-3 text-muted">Real-time performance charts would be displayed here</p>
+                                <button class="btn btn-outline-primary">
+                                    <i class="fas fa-expand"></i> Full Performance Dashboard
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5><i class="fas fa-exclamation-triangle"></i> System Alerts</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Errors (24h)</span>
+                            <span class="badge bg-danger">@Model.Metrics.ErrorCount24h</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Warnings (24h)</span>
+                            <span class="badge bg-warning">@Model.Metrics.WarningCount24h</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Network Latency</span>
+                            <span class="badge bg-success">@Model.Metrics.NetworkLatency ms</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Last Backup</span>
+                            <span class="badge bg-info">@Model.Metrics.LastBackup.ToString("HH:mm")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Status Details -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-list"></i> System Status Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> <strong>System Status: Operational</strong>
+                        <p class="mb-0">All systems are functioning normally. No critical issues detected.</p>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Service Status</h6>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Web Application
+                                    <span class="badge bg-success">Online</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Database Service
+                                    <span class="badge bg-success">Online</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Email Service
+                                    <span class="badge bg-success">Online</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Backup Service
+                                    <span class="badge bg-success">Online</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Recent Activity</h6>
+                            <ul class="list-unstyled small">
+                                <li><i class="fas fa-check text-success"></i> Daily backup completed successfully - @Model.Metrics.LastBackup.ToString("HH:mm")</li>
+                                <li><i class="fas fa-info text-info"></i> System maintenance scheduled for Sunday 2:00 AM</li>
+                                <li><i class="fas fa-user text-primary"></i> 8 users currently active in the system</li>
+                                <li><i class="fas fa-database text-secondary"></i> Database optimization completed</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Commands;
+using SMS_Application.Messaging.Queries;
 using SMS_Application.Services;
 
 using SMS_Domain.Entities;
@@ -215,39 +216,39 @@ public class HazardReportingModel : PageModel
                 createdHazard.Code, actualReportCode);
 
             // ═══════════════════════════════════════════════════════════════════
-            // PHASE 3: CREATE SCORING PANEL FOR RISK ASSESSMENT
+            // PHASE 3: CREATE SCORING PANEL FOR RISK ASSESSMENT -- NOW DONE WHEN HAZARD IS CREATED
             // ═══════════════════════════════════════════════════════════════════
-            var scoringPanel = new ScoringPanel(new ScoringPanelID("SP-0000"))
-            {
-                HazardCode = createdHazard.Code
-            };
+            ////////////var scoringPanel = new ScoringPanel(new ScoringPanelID("SP-0000"))
+            ////////////{
+            ////////////    HazardCode = createdHazard.Code
+            ////////////};
             
-            var createdPanelResult = await _mediator.SendAsync(new CreateScoringPanelCommand(scoringPanel), CancellationToken.None);
-            var actualScoringPanelCode = createdPanelResult.Value.Code;
+            ////////////var createdPanelResult = await _mediator.SendAsync(new CreateScoringPanelCommand(scoringPanel), CancellationToken.None);
+            ////////////var actualScoringPanelCode = createdPanelResult.Value.Code;
             
-            createdHazard.ScoringPanelCode = actualScoringPanelCode;
+            ////////////createdHazard.ScoringPanelCode = actualScoringPanelCode;
 
-            _logger.LogInformation("ScoringPanel created with Code: {ScoringPanelCode}, linked to Hazard: {HazardCode}",
-                actualScoringPanelCode, createdHazard.Code);
+            ////////////_logger.LogInformation("ScoringPanel created with Code: {ScoringPanelCode}, linked to Hazard: {HazardCode}",
+            ////////////    actualScoringPanelCode, createdHazard.Code);
 
             // ═══════════════════════════════════════════════════════════════════
             // PHASE 4: CREATE GEOGRAPHIC LOCATION (IF PROVIDED)
             // ═══════════════════════════════════════════════════════════════════
             if (HasGeoLocation)
             {
-                var hazardLocation = new HazardLocation(new HazardLocationID("HL-0000"))
-                {
-                    HazardCode = createdHazard.Code,
-                    Latitude = SelectedGeoLocation.Latitude,
-                    Longitude = SelectedGeoLocation.Longitude,
-                    Description = SelectedGeoLocation.Description ?? "Map selected location"
-                };
+                var hazardLocationResult = await _mediator.SendAsync(new GetHazardLocationsByHazardCodeQuery(createdHazard.Code), CancellationToken.None);
 
-                var createdLocationResult = await _mediator.SendAsync(new CreateHazardLocationCommand(hazardLocation), CancellationToken.None);
-                createdHazard.HazardLocation = createdLocationResult.Value;
+                HazardLocation hazardlocation = hazardLocationResult.Value.FirstOrDefault();
+                hazardlocation.HazardCode = createdHazard.Code;
+                hazardlocation.Latitude = SelectedGeoLocation.Latitude;
+                hazardlocation.Longitude = SelectedGeoLocation.Longitude;
+                hazardlocation.Description = SelectedGeoLocation.Description ?? "Map selected location";
+                createdHazard.HazardLocation = hazardlocation;
+
+                var locationUpdateResult = await _mediator.SendAsync(new UpdateHazardLocationCommand(hazardlocation), CancellationToken.None);
 
                 _logger.LogInformation("HazardLocation created with Code: {LocationCode}, Coordinates: ({Lat}, {Lng})",
-                    createdLocationResult.Value.Code, SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
+                    hazardlocation.Code, SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
             }
 
             // ═══════════════════════════════════════════════════════════════════
@@ -745,7 +746,7 @@ public class HazardReportingModel : PageModel
 
     private IFormFile CreateIFormFileFromTempFile(TempFileInfo tempFile)
     {
-        var fileData = System.IO.File.ReadAllBytes(tempFile.TempFilePath);
+        var fileData = global::System.IO.File.ReadAllBytes(tempFile.TempFilePath);
         return new TempFormFile(tempFile.OriginalFileName, tempFile.ContentType, fileData);
     }
 
@@ -765,7 +766,7 @@ public class HazardReportingModel : PageModel
                 
                 foreach (var file in matchingFiles)
                 {
-                    System.IO.File.Delete(file);
+                    global::System.IO.File.Delete(file);
                     _logger.LogDebug("🗑️ Cleaned up temp file: {TempFile}", file);
                 }
             }

@@ -11,15 +11,7 @@ public interface ISMSRoleService
     /// <summary>
     /// Assigns a role to a user with full audit trail
     /// </summary>
-    Task<SMSUserRole> AssignRoleToUserAsync(
-        string userID, 
-        string userType, 
-        SMSRole role, 
-        string department, 
-        string assignedBy,
-        DateTime? effectiveDate = null,
-        DateTime? expirationDate = null,
-        string? notes = null);
+    
 
     /// <summary>
     /// Removes a role assignment from a user
@@ -34,12 +26,12 @@ public interface ISMSRoleService
     /// <summary>
     /// Gets all users assigned to a specific role
     /// </summary>
-    Task<IEnumerable<SMSUserRole>> GetUsersWithRoleAsync(SMSRole role);
+    Task<IEnumerable<SMSUserRole>> GetUsersWithRoleAsync(SMSApplicationUserRoleID role);
 
     /// <summary>
     /// Checks if a user has a specific role
     /// </summary>
-    Task<bool> UserHasRoleAsync(string userID, SMSRole role);
+    Task<bool> UserHasRoleAsync(string userID, SMSApplicationUserRoleID role);
 
     /// <summary>
     /// Checks if a user has any role in a specific category
@@ -69,7 +61,7 @@ public interface ISMSRoleService
     /// <summary>
     /// Validates that a user has the required role for an operation
     /// </summary>
-    Task<bool> ValidateUserAuthorizationAsync(string userID, SMSRole requiredRole);
+    Task<bool> ValidateUserAuthorizationAsync(string userID, SMSApplicationUserRoleID requiredRole);
 
     /// <summary>
     /// Gets all role assignments for audit purposes
@@ -79,12 +71,12 @@ public interface ISMSRoleService
     /// <summary>
     /// Bulk assigns roles to multiple users
     /// </summary>
-    Task<IEnumerable<SMSUserRole>> BulkAssignRoleAsync(
-        IEnumerable<string> userIDs,
-        string userType,
-        SMSRole role,
-        string department,
-        string assignedBy);
+    //Task<IEnumerable<SMSApplicationUserRole>> BulkAssignRoleAsync(
+    //    IEnumerable<string> userIDs,
+    //    string userType,
+    //    SMSRole role,
+    //    string department,
+    //    string assignedBy);
 
     /// <summary>
     /// Gets role assignment statistics for reporting

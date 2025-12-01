@@ -1,5 +1,8 @@
+using System.Threading.Tasks;
+
 using SMS_Domain.Entities;
 using SMS_Domain.Models;
+
 using SMS_Shared.Common;
 
 namespace SMS_Infrastructure.Interfaces;
@@ -27,12 +30,13 @@ public interface ISMSUserRoleRepository
     /// <summary>
     /// Gets all role assignments for a specific user
     /// </summary>
-    Task<Result<IEnumerable<SMSUserRole>>> GetByUserIdAsync(string userId);
+    Task<Result<IEnumerable<SMSUserRole>>> GetByApplicationUserIdAsync(string userId);
+    Task<Result<IEnumerable<SMSUserRole>>> GetByStakeholderUserIdAsync(string userId);
 
     /// <summary>
     /// Gets active role assignments for a specific user
     /// </summary>
-    Task<Result<IEnumerable<SMSUserRole>>> GetActiveRolesByUserIdAsync(string userId);
+    //Task<Result<IEnumerable<SMSUserRole>>> GetActiveRolesByUserIdAsync(string userId);
 
     /// <summary>
     /// Gets all users assigned to a specific role
@@ -72,5 +76,5 @@ public interface ISMSUserRoleRepository
     /// <summary>
     /// Checks if a user has a specific role assignment
     /// </summary>
-    Task<Result<bool>> UserHasRoleAsync(string userId, string roleValue);
+    //Task<Result<bool>> UserHasRoleAsync(string userId, string roleValue);
 }

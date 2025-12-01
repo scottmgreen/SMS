@@ -1,0 +1,465 @@
+@page "/System/UserRoles/"
+@model SMS_Presentation.Pages.System.UserRolesModel
+@{
+    ViewData["Title"] = "User Role Management";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/System">System Administration</a></li>
+                    <li class="breadcrumb-item"><a href="/System/UserManagement">User Management</a></li>
+                    <li class="breadcrumb-item active">User Roles</li>
+                </ol>
+            </nav>
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="card-title"><i class="fas fa-user-shield"></i> User Role Management</h1>
+                            <p class="card-text">Manage SMS User Roles and Module-Level CRUD Permissions</p>
+                        </div>
+                        <div>
+                            <a href="/System/UserManagement" class="btn btn-light me-2">
+                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                            </a>
+                            @if (!Model.IsEditMode)
+                            {
+                                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#createRoleModal">
+                                    <i class="fas fa-plus"></i> Add Role
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle"></i> @Model.ErrorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Edit Role Form -->
+    @if (Model.IsEditMode && Model.CurrentRole != null)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0"><i class="fas fa-edit"></i> Edit Role: @Model.CurrentRole.Name</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" asp-page-handler="Update">
+                            <input type="hidden" name="roleCode" value="@Model.CurrentRole.Code" />
+                            
+                            <div class="mb-4">
+                                <label for="editRoleName" class="form-label">Role Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editRoleName" name="roleName" value="@Model.CurrentRole.Name" required>
+                            </div>
+
+                            <!-- Permission Matrix -->
+                            <div class="mb-4">
+                                <h6><i class="fas fa-shield-alt"></i> Module Permissions</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-sm">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th width="25%">Module</th>
+                                                <th width="15%" class="text-center">Create</th>
+                                                <th width="15%" class="text-center">Read</th>
+                                                <th width="15%" class="text-center">Update</th>
+                                                <th width="15%" class="text-center">Delete</th>
+                                                <th width="15%" class="text-center">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var module in SMS_Presentation.Pages.System.UserRolesModel.SMSModules)
+                                            {
+                                                <tr>
+                                                    <td><strong>@module</strong></td>
+                                                    <td class="text-center">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" 
+                                                                   name="createPermissions[@module]" 
+                                                                   value="true" 
+                                                                   checked="@Model.GetPermissionValue(module, "create")"
+                                                                   id="edit_create_@module.Replace(" ", "")">
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" 
+                                                                   name="readPermissions[@module]" 
+                                                                   value="true" 
+                                                                   checked="@Model.GetPermissionValue(module, "read")"
+                                                                   id="edit_read_@module.Replace(" ", "")">
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" 
+                                                                   name="updatePermissions[@module]" 
+                                                                   value="true" 
+                                                                   checked="@Model.GetPermissionValue(module, "update")"
+                                                                   id="edit_update_@module.Replace(" ", "")">
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" 
+                                                                   name="deletePermissions[@module]" 
+                                                                   value="true" 
+                                                                   checked="@Model.GetPermissionValue(module, "delete")"
+                                                                   id="edit_delete_@module.Replace(" ", "")">
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-outline-primary btn-sm" 
+                                                                onclick="toggleModulePermissions('@module.Replace(" ", "")', true)">
+                                                            All
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-secondary btn-sm" 
+                                                                onclick="toggleModulePermissions('@module.Replace(" ", "")', false)">
+                                                            None
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="fas fa-save"></i> Update Role
+                                </button>
+                                <a href="/System/UserRoles" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                                <button type="button" class="btn btn-primary" onclick="selectAllPermissions(true)">
+                                    <i class="fas fa-check-double"></i> Select All
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="selectAllPermissions(false)">
+                                    <i class="fas fa-times"></i> Clear All
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Roles Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-list"></i> User Roles (@Model.UserRoles.Count())</h5>
+                        <div>
+                            <button type="button" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-download"></i> Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (Model.UserRoles.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Role</th>
+                                        <th>Permissions Summary</th>
+                                        <th>Created</th>
+                                        <th width="150">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var role in Model.UserRoles)
+                                    {
+                                        var totalPermissions = role.Permissions?.Sum(p => (p.Create ? 1 : 0) + (p.Read ? 1 : 0) + (p.Update ? 1 : 0) + (p.Delete ? 1 : 0)) ?? 0;
+                                        var maxPermissions = SMS_Presentation.Pages.System.UserRolesModel.SMSModules.Length * 4;
+
+                                        <tr class="@(role.Code == Model.CurrentRole?.Code ? "table-warning" : "")">
+                                            <td>
+                                                <div>
+                                                    <strong>@role.Name</strong>
+                                                    <br><small class="text-muted">@role.Code</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="progress me-2" style="width: 100px;">
+                                                        <div class="progress-bar bg-@(totalPermissions > maxPermissions * 0.7 ? "success" : totalPermissions > maxPermissions * 0.3 ? "warning" : "danger")" 
+                                                             style="width: @((double)totalPermissions / maxPermissions * 100)%"></div>
+                                                    </div>
+                                                    <span class="text-muted">@totalPermissions / @maxPermissions permissions</span>
+                                                </div>
+                                                @if (role.Permissions?.Any() == true)
+                                                {
+                                                    <div class="mt-1">
+                                                        @{
+                                                            var moduleGroups = role.Permissions
+                                                                .Where(p => p.Create || p.Read || p.Update || p.Delete)
+                                                                .GroupBy(p => p.SMSModule)
+                                                                .Take(3);
+                                                        }
+                                                        @foreach (var group in moduleGroups)
+                                                        {
+                                                            <span class="badge bg-info me-1">@group.Key</span>
+                                                        }
+                                                        @if (role.Permissions.GroupBy(p => p.SMSModule).Count() > 3)
+                                                        {
+                                                            <span class="badge bg-secondary">+@(role.Permissions.GroupBy(p => p.SMSModule).Count() - 3) more</span>
+                                                        }
+                                                    </div>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span>@(role.CreatedDate?.ToString("MM/dd/yyyy") ?? "N/A")</span>
+                                                <br><small class="text-muted">by @role.CreatedBy</small>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="/System/UserRoles/Edit/@role.Code" class="btn btn-outline-primary" title="Edit Role">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-outline-info" title="View Permissions"
+                                                            onclick="viewPermissions('@role.Code', '@role.Name')">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-danger" title="Delete Role"
+                                                            onclick="confirmDelete('@role.Code', '@role.Name')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-user-shield fa-3x text-muted"></i>
+                            <h5 class="mt-3 text-muted">No User Roles Found</h5>
+                            <p class="text-muted">Click "Add Role" to create your first user role.</p>
+                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createRoleModal">
+                                <i class="fas fa-plus"></i> Add First Role
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Role Modal -->
+<div class="modal fade" id="createRoleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus"></i> Create User Role</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Create">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="roleName" class="form-label">Role Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="roleName" name="roleName" required 
+                               placeholder="Enter role name (e.g., Safety Manager, Report Viewer)">
+                    </div>
+
+                    <!-- Permission Matrix -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6><i class="fas fa-shield-alt"></i> Module Permissions</h6>
+                            <div>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="selectAllPermissions(true)">
+                                    <i class="fas fa-check-double"></i> Select All
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="selectAllPermissions(false)">
+                                    <i class="fas fa-times"></i> Clear All
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="25%">Module</th>
+                                        <th width="15%" class="text-center">Create</th>
+                                        <th width="15%" class="text-center">Read</th>
+                                        <th width="15%" class="text-center">Update</th>
+                                        <th width="15%" class="text-center">Delete</th>
+                                        <th width="15%" class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var module in SMS_Presentation.Pages.System.UserRolesModel.SMSModules)
+                                    {
+                                        <tr>
+                                            <td><strong>@module</strong></td>
+                                            <td class="text-center">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" 
+                                                           name="createPermissions[@module]" 
+                                                           value="true" 
+                                                           id="create_@module.Replace(" ", "")">
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" 
+                                                           name="readPermissions[@module]" 
+                                                           value="true" 
+                                                           id="read_@module.Replace(" ", "")">
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" 
+                                                           name="updatePermissions[@module]" 
+                                                           value="true" 
+                                                           id="update_@module.Replace(" ", "")">
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" 
+                                                           name="deletePermissions[@module]" 
+                                                           value="true" 
+                                                           id="delete_@module.Replace(" ", "")">
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-outline-primary btn-sm" 
+                                                        onclick="toggleModulePermissions('@module.Replace(" ", "")', true)">
+                                                    All
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary btn-sm" 
+                                                        onclick="toggleModulePermissions('@module.Replace(" ", "")', false)">
+                                                    None
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Create Role
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-trash"></i> Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the role <strong id="deleteRoleName"></strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> This action cannot be undone and may affect users assigned to this role.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" asp-page-handler="Delete" style="display: inline;">
+                    <input type="hidden" id="deleteRoleCode" name="roleCode" />
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete Role
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleModulePermissions(module, enable) {
+    const prefixes = @Model.IsEditMode ? ['edit_create_', 'edit_read_', 'edit_update_', 'edit_delete_'] : ['create_', 'read_', 'update_', 'delete_'];
+    prefixes.forEach(prefix => {
+        const checkbox = document.getElementById(prefix + module);
+        if (checkbox) checkbox.checked = enable;
+    });
+}
+
+function selectAllPermissions(enable) {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => checkbox.checked = enable);
+}
+
+function confirmDelete(roleCode, roleName) {
+    document.getElementById('deleteRoleCode').value = roleCode;
+    document.getElementById('deleteRoleName').textContent = roleName;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+function viewPermissions(roleCode, roleName) {
+    // You can implement a detailed permissions view modal here
+    alert('Viewing permissions for: ' + roleName + '\nCode: ' + roleCode);
+}
+</script>
+
+<style>
+.table td {
+    vertical-align: middle;
+}
+
+.form-check {
+    margin-bottom: 0;
+}
+
+.progress {
+    height: 8px;
+}
+
+.badge {
+    font-size: 0.7em;
+}
+</style>

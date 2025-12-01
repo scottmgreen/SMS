@@ -4,10 +4,7 @@ using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Queries;
 using SMS_Domain.Entities;
 using SMS_Domain.Errors;
-using SMS_Domain.Interfaces;
-
-using SMS_Infrastructure.Interfaces;
-
+using SMS_Infrastructure.Services;
 using SMS_Shared.Common;
 
 namespace SMS_Application.Messaging.QueryHandlers;
@@ -18,12 +15,12 @@ namespace SMS_Application.Messaging.QueryHandlers;
 
 public class GetAllSMSStakeholderUsersQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSStakeholderUsersQuery, Result<IEnumerable<SMSStakeholderUser>>>
 {
-    private readonly ISMSStakeholderUserRepository _repository;
+    private readonly SMSStakeholderUserDataService _dataService;
     private readonly ILogger<GetAllSMSStakeholderUsersQueryHandler> _logger;
 
-    public GetAllSMSStakeholderUsersQueryHandler(ISMSStakeholderUserRepository repository, ILogger<GetAllSMSStakeholderUsersQueryHandler> logger)
+    public GetAllSMSStakeholderUsersQueryHandler(SMSStakeholderUserDataService dataService, ILogger<GetAllSMSStakeholderUsersQueryHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -32,7 +29,7 @@ public class GetAllSMSStakeholderUsersQueryHandler : BaseQueryBundle, IRequestHa
         try
         {
             _logger.LogInformation("Processing GetAllSMSStakeholderUsersQuery");
-            var result = await _repository.GetAllAsync();
+            var result = await _dataService.GetAllAsync(ct);
             
             if (result.IsSuccess)
             {
@@ -40,7 +37,7 @@ public class GetAllSMSStakeholderUsersQueryHandler : BaseQueryBundle, IRequestHa
             }
             else
             {
-                _logger.LogWarning("Failed to retrieve SMS Stakeholder Users: {Error}", result.Error?.Message);
+                _logger.LogWarning("Failed to retrieve SMS Stakeholder Users");
             }
             
             return result;
@@ -55,12 +52,12 @@ public class GetAllSMSStakeholderUsersQueryHandler : BaseQueryBundle, IRequestHa
 
 public class GetSMSStakeholderUserByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSStakeholderUserByIdQuery, Result<SMSStakeholderUser>>
 {
-    private readonly ISMSStakeholderUserRepository _repository;
+    private readonly SMSStakeholderUserDataService _dataService;
     private readonly ILogger<GetSMSStakeholderUserByIdQueryHandler> _logger;
 
-    public GetSMSStakeholderUserByIdQueryHandler(ISMSStakeholderUserRepository repository, ILogger<GetSMSStakeholderUserByIdQueryHandler> logger)
+    public GetSMSStakeholderUserByIdQueryHandler(SMSStakeholderUserDataService dataService, ILogger<GetSMSStakeholderUserByIdQueryHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -69,7 +66,7 @@ public class GetSMSStakeholderUserByIdQueryHandler : BaseQueryBundle, IRequestHa
         try
         {
             _logger.LogInformation("Processing GetSMSStakeholderUserByIdQuery for ID: {UserId}", request.UserId);
-            var result = await _repository.GetByIdAsync(request.UserId);
+            var result = await _dataService.GetByIdAsync(request.UserId, ct);
             
             if (result.IsSuccess)
             {
@@ -90,14 +87,51 @@ public class GetSMSStakeholderUserByIdQueryHandler : BaseQueryBundle, IRequestHa
     }
 }
 
+public class GetSMSStakeholderUserByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSStakeholderUserByCodeQuery, Result<SMSStakeholderUser>>
+{
+    private readonly SMSStakeholderUserDataService _dataService;
+    private readonly ILogger<GetSMSStakeholderUserByCodeQueryHandler> _logger;
+
+    public GetSMSStakeholderUserByCodeQueryHandler(SMSStakeholderUserDataService dataService, ILogger<GetSMSStakeholderUserByCodeQueryHandler> logger)
+    {
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SMSStakeholderUser>> HandleAsync(GetSMSStakeholderUserByCodeQuery request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing GetSMSStakeholderUserByCodeQuery for Code: {UserCode}", request.UserCode);
+            var result = await _dataService.GetByIdAsync(request.UserCode, ct);
+            
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully retrieved SMS Stakeholder User with Code: {UserCode}", request.UserCode);
+            }
+            else
+            {
+                _logger.LogWarning("SMS Stakeholder User not found with Code: {UserCode}", request.UserCode);
+            }
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing GetSMSStakeholderUserByCodeQuery for Code: {UserCode}", request.UserCode);
+            return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NotFound);
+        }
+    }
+}
+
 public class GetSMSStakeholderUserByUserNameQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSStakeholderUserByUserNameQuery, Result<SMSStakeholderUser>>
 {
-    private readonly ISMSStakeholderUserRepository _repository;
+    private readonly SMSStakeholderUserDataService _dataService;
     private readonly ILogger<GetSMSStakeholderUserByUserNameQueryHandler> _logger;
 
-    public GetSMSStakeholderUserByUserNameQueryHandler(ISMSStakeholderUserRepository repository, ILogger<GetSMSStakeholderUserByUserNameQueryHandler> logger)
+    public GetSMSStakeholderUserByUserNameQueryHandler(SMSStakeholderUserDataService dataService, ILogger<GetSMSStakeholderUserByUserNameQueryHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -106,18 +140,26 @@ public class GetSMSStakeholderUserByUserNameQueryHandler : BaseQueryBundle, IReq
         try
         {
             _logger.LogInformation("Processing GetSMSStakeholderUserByUserNameQuery for UserName: {UserName}", request.UserName);
-            var result = await _repository.GetByUserNameAsync(request.UserName);
             
-            if (result.IsSuccess)
+            // Get all users and filter by username
+            var allUsersResult = await _dataService.GetAllAsync(ct);
+            if (allUsersResult.IsFailure)
+            {
+                return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(allUsersResult.Error);
+            }
+
+            var user = allUsersResult.Value?.FirstOrDefault(u => u.UserName.Value.Equals(request.UserName, StringComparison.OrdinalIgnoreCase));
+            
+            if (user != null)
             {
                 _logger.LogInformation("Successfully retrieved SMS Stakeholder User with UserName: {UserName}", request.UserName);
+                return Result<SMSStakeholderUser>.Success(user);
             }
             else
             {
                 _logger.LogWarning("SMS Stakeholder User not found with UserName: {UserName}", request.UserName);
+                return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NotFound);
             }
-            
-            return result;
         }
         catch (Exception ex)
         {
@@ -129,12 +171,12 @@ public class GetSMSStakeholderUserByUserNameQueryHandler : BaseQueryBundle, IReq
 
 public class GetActiveSMSStakeholderUsersQueryHandler : BaseQueryBundle, IRequestHandler<GetActiveSMSStakeholderUsersQuery, Result<IEnumerable<SMSStakeholderUser>>>
 {
-    private readonly ISMSStakeholderUserRepository _repository;
+    private readonly SMSStakeholderUserDataService _dataService;
     private readonly ILogger<GetActiveSMSStakeholderUsersQueryHandler> _logger;
 
-    public GetActiveSMSStakeholderUsersQueryHandler(ISMSStakeholderUserRepository repository, ILogger<GetActiveSMSStakeholderUsersQueryHandler> logger)
+    public GetActiveSMSStakeholderUsersQueryHandler(SMSStakeholderUserDataService dataService, ILogger<GetActiveSMSStakeholderUsersQueryHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -143,7 +185,7 @@ public class GetActiveSMSStakeholderUsersQueryHandler : BaseQueryBundle, IReques
         try
         {
             _logger.LogInformation("Processing GetActiveSMSStakeholderUsersQuery");
-            var result = await _repository.GetActiveUsersAsync();
+            var result = await _dataService.GetActiveAsync(ct);
             
             if (result.IsSuccess)
             {
@@ -151,7 +193,7 @@ public class GetActiveSMSStakeholderUsersQueryHandler : BaseQueryBundle, IReques
             }
             else
             {
-                _logger.LogWarning("Failed to retrieve active SMS Stakeholder Users: {Error}", result.Error?.Message);
+                _logger.LogWarning("Failed to retrieve active SMS Stakeholder Users");
             }
             
             return result;
@@ -166,12 +208,12 @@ public class GetActiveSMSStakeholderUsersQueryHandler : BaseQueryBundle, IReques
 
 public class GetSMSStakeholderUsersByTypeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSStakeholderUsersByTypeQuery, Result<IEnumerable<SMSStakeholderUser>>>
 {
-    private readonly ISMSStakeholderUserRepository _repository;
+    private readonly SMSStakeholderUserDataService _dataService;
     private readonly ILogger<GetSMSStakeholderUsersByTypeQueryHandler> _logger;
 
-    public GetSMSStakeholderUsersByTypeQueryHandler(ISMSStakeholderUserRepository repository, ILogger<GetSMSStakeholderUsersByTypeQueryHandler> logger)
+    public GetSMSStakeholderUsersByTypeQueryHandler(SMSStakeholderUserDataService dataService, ILogger<GetSMSStakeholderUsersByTypeQueryHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -180,20 +222,18 @@ public class GetSMSStakeholderUsersByTypeQueryHandler : BaseQueryBundle, IReques
         try
         {
             _logger.LogInformation("Processing GetSMSStakeholderUsersByTypeQuery for Type: {StakeholderType}", request.StakeholderType);
-            var result = await _repository.GetByStakeholderTypeAsync(request.StakeholderType);
             
-            if (result.IsSuccess)
+            // Filter users by stakeholder type through service
+            var allUsersResult = await _dataService.GetAllAsync(ct);
+            if (allUsersResult.IsFailure)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS Stakeholder Users for Type: {StakeholderType}", 
-                    result.Value?.Count() ?? 0, request.StakeholderType);
+                return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(allUsersResult.Error);
             }
-            else
-            {
-                _logger.LogWarning("Failed to retrieve SMS Stakeholder Users for Type: {StakeholderType}: {Error}", 
-                    request.StakeholderType, result.Error?.Message);
-            }
+
+            var filteredUsers = allUsersResult.Value?.Where(u => u.StakeholderType.Equals(request.StakeholderType, StringComparison.OrdinalIgnoreCase)) ?? Enumerable.Empty<SMSStakeholderUser>();
             
-            return result;
+            _logger.LogInformation("Successfully retrieved {Count} SMS Stakeholder Users for Type: {StakeholderType}", filteredUsers.Count(), request.StakeholderType);
+            return Result<IEnumerable<SMSStakeholderUser>>.Success(filteredUsers);
         }
         catch (Exception ex)
         {
@@ -205,12 +245,12 @@ public class GetSMSStakeholderUsersByTypeQueryHandler : BaseQueryBundle, IReques
 
 public class GetSMSStakeholderUsersByOrganizationQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSStakeholderUsersByOrganizationQuery, Result<IEnumerable<SMSStakeholderUser>>>
 {
-    private readonly ISMSStakeholderUserRepository _repository;
+    private readonly SMSStakeholderUserDataService _dataService;
     private readonly ILogger<GetSMSStakeholderUsersByOrganizationQueryHandler> _logger;
 
-    public GetSMSStakeholderUsersByOrganizationQueryHandler(ISMSStakeholderUserRepository repository, ILogger<GetSMSStakeholderUsersByOrganizationQueryHandler> logger)
+    public GetSMSStakeholderUsersByOrganizationQueryHandler(SMSStakeholderUserDataService dataService, ILogger<GetSMSStakeholderUsersByOrganizationQueryHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -219,20 +259,18 @@ public class GetSMSStakeholderUsersByOrganizationQueryHandler : BaseQueryBundle,
         try
         {
             _logger.LogInformation("Processing GetSMSStakeholderUsersByOrganizationQuery for Organization: {Organization}", request.Organization);
-            var result = await _repository.GetByOrganizationAsync(request.Organization);
             
-            if (result.IsSuccess)
+            // Filter users by organization through service
+            var allUsersResult = await _dataService.GetAllAsync(ct);
+            if (allUsersResult.IsFailure)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS Stakeholder Users for Organization: {Organization}", 
-                    result.Value?.Count() ?? 0, request.Organization);
+                return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(allUsersResult.Error);
             }
-            else
-            {
-                _logger.LogWarning("Failed to retrieve SMS Stakeholder Users for Organization: {Organization}: {Error}", 
-                    request.Organization, result.Error?.Message);
-            }
+
+            var filteredUsers = allUsersResult.Value?.Where(u => u.Organization.Equals(request.Organization, StringComparison.OrdinalIgnoreCase)) ?? Enumerable.Empty<SMSStakeholderUser>();
             
-            return result;
+            _logger.LogInformation("Successfully retrieved {Count} SMS Stakeholder Users for Organization: {Organization}", filteredUsers.Count(), request.Organization);
+            return Result<IEnumerable<SMSStakeholderUser>>.Success(filteredUsers);
         }
         catch (Exception ex)
         {
@@ -242,291 +280,46 @@ public class GetSMSStakeholderUsersByOrganizationQueryHandler : BaseQueryBundle,
     }
 }
 
-public class GetAirlineStakeholdersQueryHandler : BaseQueryBundle, IRequestHandler<GetAirlineStakeholdersQuery, Result<IEnumerable<SMSStakeholderUser>>>
+/// <summary>
+/// Query handler for getting SMS stakeholder users by group code
+/// </summary>
+public class GetSMSStakeholderUsersByGroupCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSStakeholderUsersByGroupCodeQuery, Result<IEnumerable<SMSStakeholderUser>>>
 {
-    private readonly ISMSStakeholderUserRepository _repository;
-    private readonly ILogger<GetAirlineStakeholdersQueryHandler> _logger;
+    private readonly SMSStakeholderUserDataService _dataService;
+    private readonly ILogger<GetSMSStakeholderUsersByGroupCodeQueryHandler> _logger;
 
-    public GetAirlineStakeholdersQueryHandler(ISMSStakeholderUserRepository repository, ILogger<GetAirlineStakeholdersQueryHandler> logger)
+    public GetSMSStakeholderUsersByGroupCodeQueryHandler(SMSStakeholderUserDataService dataService, ILogger<GetSMSStakeholderUsersByGroupCodeQueryHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<IEnumerable<SMSStakeholderUser>>> HandleAsync(GetAirlineStakeholdersQuery request, CancellationToken ct = default)
+    public async Task<Result<IEnumerable<SMSStakeholderUser>>> HandleAsync(GetSMSStakeholderUsersByGroupCodeQuery request, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Processing GetAirlineStakeholdersQuery");
-            var result = await _repository.GetAirlineStakeholdersAsync();
-            
+            _logger.LogInformation("Processing GetSMSStakeholderUsersByGroupCodeQuery for GroupCode: {GroupCode}", request.GroupCode);
+
+            // Call the proper data service method to get users by group code
+            var result = await _dataService.GetSMSStakeholderUsersByGroupCodeAsync(request.GroupCode, ct);
+
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} airline stakeholders", result.Value?.Count() ?? 0);
+                _logger.LogInformation("Successfully retrieved {Count} SMS Stakeholder Users for GroupCode: {GroupCode}", 
+                    result.Value?.Count() ?? 0, request.GroupCode);
             }
             else
             {
-                _logger.LogWarning("Failed to retrieve airline stakeholders: {Error}", result.Error?.Message);
+                _logger.LogError("Failed to retrieve SMS Stakeholder Users for GroupCode {GroupCode}: {Error}", 
+                    request.GroupCode, result.Error?.Message);
             }
-            
+
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAirlineStakeholdersQuery");
+            _logger.LogError(ex, "Error processing GetSMSStakeholderUsersByGroupCodeQuery for GroupCode: {GroupCode}", request.GroupCode);
             return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
-        }
-    }
-}
-
-public class GetGroundHandlerStakeholdersQueryHandler : BaseQueryBundle, IRequestHandler<GetGroundHandlerStakeholdersQuery, Result<IEnumerable<SMSStakeholderUser>>>
-{
-    private readonly ISMSStakeholderUserRepository _repository;
-    private readonly ILogger<GetGroundHandlerStakeholdersQueryHandler> _logger;
-
-    public GetGroundHandlerStakeholdersQueryHandler(ISMSStakeholderUserRepository repository, ILogger<GetGroundHandlerStakeholdersQueryHandler> logger)
-    {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<IEnumerable<SMSStakeholderUser>>> HandleAsync(GetGroundHandlerStakeholdersQuery request, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Processing GetGroundHandlerStakeholdersQuery");
-            var result = await _repository.GetGroundHandlerStakeholdersAsync();
-            
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Successfully retrieved {Count} ground handler stakeholders", result.Value?.Count() ?? 0);
-            }
-            else
-            {
-                _logger.LogWarning("Failed to retrieve ground handler stakeholders: {Error}", result.Error?.Message);
-            }
-            
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing GetGroundHandlerStakeholdersQuery");
-            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
-        }
-    }
-}
-
-public class GetContractorStakeholdersQueryHandler : BaseQueryBundle, IRequestHandler<GetContractorStakeholdersQuery, Result<IEnumerable<SMSStakeholderUser>>>
-{
-    private readonly ISMSStakeholderUserRepository _repository;
-    private readonly ILogger<GetContractorStakeholdersQueryHandler> _logger;
-
-    public GetContractorStakeholdersQueryHandler(ISMSStakeholderUserRepository repository, ILogger<GetContractorStakeholdersQueryHandler> logger)
-    {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<IEnumerable<SMSStakeholderUser>>> HandleAsync(GetContractorStakeholdersQuery request, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Processing GetContractorStakeholdersQuery");
-            var result = await _repository.GetContractorStakeholdersAsync();
-            
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Successfully retrieved {Count} contractor stakeholders", result.Value?.Count() ?? 0);
-            }
-            else
-            {
-                _logger.LogWarning("Failed to retrieve contractor stakeholders: {Error}", result.Error?.Message);
-            }
-            
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing GetContractorStakeholdersQuery");
-            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
-        }
-    }
-}
-
-public class GetStakeholdersRequiringAOAAccessQueryHandler : BaseQueryBundle, IRequestHandler<GetStakeholdersRequiringAOAAccessQuery, Result<IEnumerable<SMSStakeholderUser>>>
-{
-    private readonly ISMSStakeholderUserRepository _repository;
-    private readonly ILogger<GetStakeholdersRequiringAOAAccessQueryHandler> _logger;
-
-    public GetStakeholdersRequiringAOAAccessQueryHandler(ISMSStakeholderUserRepository repository, ILogger<GetStakeholdersRequiringAOAAccessQueryHandler> logger)
-    {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<IEnumerable<SMSStakeholderUser>>> HandleAsync(GetStakeholdersRequiringAOAAccessQuery request, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Processing GetStakeholdersRequiringAOAAccessQuery");
-            var result = await _repository.GetUsersRequiringAOAAccessAsync();
-            
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Successfully retrieved {Count} stakeholders requiring AOA access", result.Value?.Count() ?? 0);
-            }
-            else
-            {
-                _logger.LogWarning("Failed to retrieve stakeholders requiring AOA access: {Error}", result.Error?.Message);
-            }
-            
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing GetStakeholdersRequiringAOAAccessQuery");
-            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
-        }
-    }
-}
-
-public class CheckSMSStakeholderUserNameExistsQueryHandler : BaseQueryBundle, IRequestHandler<CheckSMSStakeholderUserNameExistsQuery, Result<bool>>
-{
-    private readonly ISMSStakeholderUserRepository _repository;
-    private readonly ILogger<CheckSMSStakeholderUserNameExistsQueryHandler> _logger;
-
-    public CheckSMSStakeholderUserNameExistsQueryHandler(ISMSStakeholderUserRepository repository, ILogger<CheckSMSStakeholderUserNameExistsQueryHandler> logger)
-    {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<bool>> HandleAsync(CheckSMSStakeholderUserNameExistsQuery request, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Processing CheckSMSStakeholderUserNameExistsQuery for UserName: {UserName}", request.UserName);
-            var result = await _repository.UserNameExistsAsync(request.UserName);
-            
-            _logger.LogInformation("Username {UserName} exists: {Exists}", request.UserName, result.Value);
-            
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing CheckSMSStakeholderUserNameExistsQuery for UserName: {UserName}", request.UserName);
-            return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
-        }
-    }
-}
-
-public class GetStakeholderTypeStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<GetStakeholderTypeStatisticsQuery, Result<Dictionary<string, int>>>
-{
-    private readonly ISMSStakeholderUserRepository _repository;
-    private readonly ILogger<GetStakeholderTypeStatisticsQueryHandler> _logger;
-
-    public GetStakeholderTypeStatisticsQueryHandler(ISMSStakeholderUserRepository repository, ILogger<GetStakeholderTypeStatisticsQueryHandler> logger)
-    {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<Dictionary<string, int>>> HandleAsync(GetStakeholderTypeStatisticsQuery request, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Processing GetStakeholderTypeStatisticsQuery");
-            var result = await _repository.GetStakeholderTypeStatisticsAsync();
-            
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Successfully retrieved stakeholder type statistics for {Count} types", result.Value?.Count ?? 0);
-            }
-            else
-            {
-                _logger.LogWarning("Failed to retrieve stakeholder type statistics: {Error}", result.Error?.Message);
-            }
-            
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing GetStakeholderTypeStatisticsQuery");
-            return Result<Dictionary<string, int>>.Failure<Dictionary<string, int>>(DomainErrors.GeneralError.UnProcessableRequest);
-        }
-    }
-}
-
-public class GetStakeholderOrganizationStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<GetStakeholderOrganizationStatisticsQuery, Result<Dictionary<string, int>>>
-{
-    private readonly ISMSStakeholderUserRepository _repository;
-    private readonly ILogger<GetStakeholderOrganizationStatisticsQueryHandler> _logger;
-
-    public GetStakeholderOrganizationStatisticsQueryHandler(ISMSStakeholderUserRepository repository, ILogger<GetStakeholderOrganizationStatisticsQueryHandler> logger)
-    {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<Dictionary<string, int>>> HandleAsync(GetStakeholderOrganizationStatisticsQuery request, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Processing GetStakeholderOrganizationStatisticsQuery");
-            var result = await _repository.GetOrganizationStatisticsAsync();
-            
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Successfully retrieved organization statistics for {Count} organizations", result.Value?.Count ?? 0);
-            }
-            else
-            {
-                _logger.LogWarning("Failed to retrieve organization statistics: {Error}", result.Error?.Message);
-            }
-            
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing GetStakeholderOrganizationStatisticsQuery");
-            return Result<Dictionary<string, int>>.Failure<Dictionary<string, int>>(DomainErrors.GeneralError.UnProcessableRequest);
-        }
-    }
-}
-
-public class GetSMSStakeholderUserStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSStakeholderUserStatisticsQuery, Result<UserStatistics>>
-{
-    private readonly ISMSStakeholderUserRepository _repository;
-    private readonly ILogger<GetSMSStakeholderUserStatisticsQueryHandler> _logger;
-
-    public GetSMSStakeholderUserStatisticsQueryHandler(ISMSStakeholderUserRepository repository, ILogger<GetSMSStakeholderUserStatisticsQueryHandler> logger)
-    {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<UserStatistics>> HandleAsync(GetSMSStakeholderUserStatisticsQuery request, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Processing GetSMSStakeholderUserStatisticsQuery");
-            var result = await _repository.GetUserStatisticsAsync();
-            
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Successfully retrieved SMS Stakeholder User statistics");
-            }
-            else
-            {
-                _logger.LogWarning("Failed to retrieve SMS Stakeholder User statistics: {Error}", result.Error?.Message);
-            }
-            
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing GetSMSStakeholderUserStatisticsQuery");
-            return Result<UserStatistics>.Failure<UserStatistics>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 }

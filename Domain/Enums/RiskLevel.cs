@@ -79,11 +79,11 @@ public abstract class RiskLevel : BaseEnum<RiskLevel>
     /// <summary>
     /// Checks if the given role can approve decisions at this risk level
     /// </summary>
-    public bool CanApprove(SMSRole role)
-    {
-        return role.AuthorityLevel >= RequiredAuthorityLevel || 
-               ApproverRoles.Contains(role.Value);
-    }
+    //public bool CanApprove(SMSOrganizationalUserRole role)
+    //{
+    //    return role.AuthorityLevel >= RequiredAuthorityLevel || 
+    //           ApproverRoles.Contains(role.Value);
+    //}
 
     /// <summary>
     /// Gets all available risk levels

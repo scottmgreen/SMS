@@ -21,7 +21,7 @@ public sealed class AirportSharedDataset : BaseAuditableEntity
     /// REQUIRED: Associated Report ID - cannot create dataset without this
     /// Links this dataset to its parent report for SMS compliance tracking
     /// </summary>
-    public string ReportID { get; set; } = string.Empty;
+    public string ReportCode { get; set; } = string.Empty;
 
     /// <summary>
     /// Code identifier for this dataset

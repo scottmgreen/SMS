@@ -92,13 +92,13 @@ public abstract class DecisionAuthority : BaseEnum<DecisionAuthority>
     /// <summary>
     /// Checks if the given role can approve decisions at this authority level
     /// </summary>
-    public bool CanApprove(SMSRole role)
-    {
-        if (role == null) return false;
+    //public bool CanApprove(SMSRole role)
+    //{
+    //    if (role == null) return false;
         
-        return role.AuthorityLevel >= RequiredAuthorityLevel || 
-               ApproverRoles.Contains(role.Value);
-    }
+    //    return role.AuthorityLevel >= RequiredAuthorityLevel || 
+    //           ApproverRoles.Contains(role.Value);
+    //}
 
     /// <summary>
     /// Checks if a user with the given authority level can approve decisions at this level
@@ -111,21 +111,21 @@ public abstract class DecisionAuthority : BaseEnum<DecisionAuthority>
     /// <summary>
     /// Gets all roles that can approve at this authority level
     /// </summary>
-    public IEnumerable<SMSRole> GetApproverRoles()
-    {
-        return SMSRole.GetAllValues().Where(role => CanApprove(role));
-    }
+    //public IEnumerable<SMSRole> GetApproverRoles()
+    //{
+    //    return SMSRole.GetAllValues().Where(role => CanApprove(role));
+    //}
 
     /// <summary>
     /// Gets the minimum role required for approval at this level
     /// </summary>
-    public SMSRole GetMinimumRequiredRole()
-    {
-        return SMSRole.GetAllValues()
-            .Where(role => role.AuthorityLevel >= RequiredAuthorityLevel)
-            .OrderBy(role => role.AuthorityLevel)
-            .First();
-    }
+    //public SMSApplicationUserRole GetMinimumRequiredRole()
+    //{
+    //    return SMSApplicationUserRoleID..GetAllValues()
+    //        .Where(role => role.AuthorityLevel >= RequiredAuthorityLevel)
+    //        .OrderBy(role => role.AuthorityLevel)
+    //        .First();
+    //}
 
     /// <summary>
     /// Gets escalation authority level (next higher level)

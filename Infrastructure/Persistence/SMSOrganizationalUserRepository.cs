@@ -7,6 +7,7 @@ using SMS_Shared.Common;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using System.Data;
+using Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Persistence;
 
@@ -44,13 +45,13 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
 
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            
+
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 var user = Mappers.MapToSMSOrganizationalUser(reader);
                 users.Add(user);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result<IEnumerable<SMSOrganizationalUser>>.Success(users.AsEnumerable());
@@ -85,12 +86,12 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
 
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            
+
             if (await reader.ReadAsync().ConfigureAwait(false))
             {
                 user = Mappers.MapToSMSOrganizationalUser(reader);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             if (user is not null)
@@ -109,7 +110,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
         }
     }
 
-    
+
     public async Task<Result<SMSOrganizationalUser>> GetByUserNameAsync(string userName)
     {
         try
@@ -133,12 +134,12 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
 
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            
+
             if (await reader.ReadAsync().ConfigureAwait(false))
             {
                 user = Mappers.MapToSMSOrganizationalUser(reader);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             if (user is not null)
@@ -173,13 +174,13 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
 
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            
+
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 var user = Mappers.MapToSMSOrganizationalUser(reader);
                 users.Add(user);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result<IEnumerable<SMSOrganizationalUser>>.Success(users.AsEnumerable());
@@ -464,13 +465,13 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
 
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            
+
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 var user = Mappers.MapToSMSOrganizationalUser(reader);
                 users.Add(user);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result<IEnumerable<SMSOrganizationalUser>>.Success(users.AsEnumerable());
@@ -500,13 +501,13 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
 
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            
+
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 var user = Mappers.MapToSMSOrganizationalUser(reader);
                 users.Add(user);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result<IEnumerable<SMSOrganizationalUser>>.Success(users.AsEnumerable());
@@ -551,7 +552,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             var levels = new[] { "Staff", "Senior", "Supervisor", "Manager", "Director", "Executive" };
             var requiredLevelIndex = Array.IndexOf(levels, minimumLevel);
 
-            var filteredUsers = allUsersResult.Value.Where(u => 
+            var filteredUsers = allUsersResult.Value.Where(u =>
             {
                 var userLevelIndex = Array.IndexOf(levels, u.OrganizationLevel);
                 return userLevelIndex >= requiredLevelIndex;
@@ -566,27 +567,27 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
         }
     }
 
-    public async Task<Result<bool>> UpdateSMSOrganizationalUserInfoAsync(BaseUserID userId, string department, string position, string organizationLevel)
-    {
-        try
-        {
-            var userResult = await GetByIdAsync(userId);
-            if (userResult.IsFailure)
-            {
-                return Result<bool>.Failure<bool>(userResult.Error);
-            }
+    //public async Task<Result<bool>> UpdateSMSOrganizationalUserInfoAsync(BaseUserID userId, string department, string position, string organizationLevel)
+    //{
+    //    try
+    //    {
+    //        var userResult = await GetByIdAsync(userId);
+    //        if (userResult.IsFailure)
+    //        {
+    //            return Result<bool>.Failure<bool>(userResult.Error);
+    //        }
 
-            var user = userResult.Value;
-            user.UpdateOrganizationalInfo(department, position, organizationLevel);
+    //        var user = userResult.Value;
+    //        user.UpdateOrganizationalInfo(department, position, organizationLevel);
 
-            return await UpdateAsync(user);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructurePutItemError($"{_logHeader} {ex.Message}", null);
-            return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.UpdateFailed);
-        }
-    }
+    //        return await UpdateAsync(user);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogInfrastructurePutItemError($"{_logHeader} {ex.Message}", null);
+    //        return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.UpdateFailed);
+    //    }
+    //}
 
     public async Task<Result<IEnumerable<SMSOrganizationalUser>>> GetDepartmentSupervisorsAsync(string department)
     {
@@ -598,7 +599,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
                 return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(departmentUsersResult.Error);
             }
 
-            var supervisors = departmentUsersResult.Value.Where(u => 
+            var supervisors = departmentUsersResult.Value.Where(u =>
                 u.OrganizationLevel.Contains("Supervisor", StringComparison.OrdinalIgnoreCase) ||
                 u.OrganizationLevel.Contains("Manager", StringComparison.OrdinalIgnoreCase) ||
                 u.OrganizationLevel.Contains("Director", StringComparison.OrdinalIgnoreCase));

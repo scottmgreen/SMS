@@ -62,6 +62,32 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
         }
     }
 
+    public async Task<Result<List<RiskAssessment>>> GetRiskAssessmentsByHazardIdAsync(HazardID hazardId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving RiskAssessment by ID: {Id}", hazardId);
+
+            var result = await _repo.GetRiskAssessmentsByHazardIdAsync(hazardId, cancellationToken).ConfigureAwait(false);
+
+            if (result.IsFailure)
+            {
+                _logger.LogWarning("RiskAssessment not found with ID: {Id}", hazardId);
+                return result;
+            }
+
+            _logger.LogInformation("Successfully retrieved RiskAssessment: {Id}", hazardId);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve RiskAssessment by ID: {Id}", hazardId);
+            return Result<List<RiskAssessment>>.Failure<List<RiskAssessment>>(DomainErrors.RiskAssessmentError.NotFound);
+        }
+    }
+
+
+
     public Task<Result<List<RiskAssessment>>> GetAllRiskAssessmentsAsync(CancellationToken ct = default)
     {
         return _repo.GetAllRiskAssessmentsAsync(ct);

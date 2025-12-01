@@ -35,26 +35,26 @@ public class CreateAirportSharedDatasetCommandHandler : BaseCommandBundle, IRequ
             }
 
             // Validate REQUIRED ReportID 
-            if (string.IsNullOrWhiteSpace(request.AirportSharedDataset.ReportID))
+            if (string.IsNullOrWhiteSpace(request.AirportSharedDataset.ReportCode))
             {
-                _logger.LogError("CreateAirportSharedDatasetCommand received with null or empty ReportID");
+                _logger.LogError("CreateAirportSharedDatasetCommand received with null or empty ReportCode");
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.ReportIDRequired);
             }
 
-            _logger.LogInformation("Processing CreateAirportSharedDatasetCommand for Code: {Code}, ReportID: {ReportID}",
-                request.AirportSharedDataset.Code, request.AirportSharedDataset.ReportID);
+            _logger.LogInformation("Processing CreateAirportSharedDatasetCommand for Code: {Code}, ReportID: {ReportCode}",
+                request.AirportSharedDataset.Code, request.AirportSharedDataset.ReportCode);
 
             var result = await _dataService.CreateAirportSharedDatasetAsync(request.AirportSharedDataset, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created AirportSharedDataset with ID: {Id}, Code: {Code}, ReportID: {ReportID}",
-                    result.Value?.Id, result.Value?.Code, result.Value?.ReportID);
+                _logger.LogInformation("Successfully created AirportSharedDataset with ID: {Id}, Code: {Code}, ReportID: {ReportCode}",
+                    result.Value?.Id, result.Value?.Code, result.Value?.ReportCode);
             }
             else
             {
-                _logger.LogError("Failed to create AirportSharedDataset with Code: {Code}, ReportID: {ReportID}. Error: {Error}",
-                    request.AirportSharedDataset.Code, request.AirportSharedDataset.ReportID, result.Error?.Message);
+                _logger.LogError("Failed to create AirportSharedDataset with Code: {Code}, ReportID: {ReportCode}. Error: {Error}",
+                    request.AirportSharedDataset.Code, request.AirportSharedDataset.ReportCode, result.Error?.Message);
             }
 
             return result;
@@ -66,8 +66,8 @@ public class CreateAirportSharedDatasetCommandHandler : BaseCommandBundle, IRequ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating AirportSharedDataset with Code: {Code}, ReportID: {ReportID}",
-                request.AirportSharedDataset?.Code, request.AirportSharedDataset?.ReportID);
+            _logger.LogError(ex, "Unexpected error occurred while creating AirportSharedDataset with Code: {Code}, ReportID: {ReportCode}",
+                request.AirportSharedDataset?.Code, request.AirportSharedDataset?.ReportCode);
             return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.CreateFailed);
         }
     }
@@ -102,14 +102,14 @@ public class UpdateAirportSharedDatasetCommandHandler : BaseCommandBundle, IRequ
             }
 
             // Validate REQUIRED ReportID 
-            if (string.IsNullOrWhiteSpace(request.AirportSharedDataset.ReportID))
+            if (string.IsNullOrWhiteSpace(request.AirportSharedDataset.ReportCode))
             {
-                _logger.LogError("UpdateAirportSharedDatasetCommand received with null or empty ReportID");
+                _logger.LogError("UpdateAirportSharedDatasetCommand received with null or empty ReportCode");
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.ReportIDRequired);
             }
 
-            _logger.LogInformation("Processing UpdateAirportSharedDatasetCommand for ID: {Id}, Code: {Code}, ReportID: {ReportID}",
-                request.AirportSharedDataset.Id, request.AirportSharedDataset.Code, request.AirportSharedDataset.ReportID);
+            _logger.LogInformation("Processing UpdateAirportSharedDatasetCommand for ID: {Id}, Code: {Code}, ReportID: {ReportCode}",
+                request.AirportSharedDataset.Id, request.AirportSharedDataset.Code, request.AirportSharedDataset.ReportCode);
 
             var result = await _dataService.UpdateAirportSharedDatasetAsync(request.AirportSharedDataset, ct).ConfigureAwait(false);
 
@@ -119,8 +119,8 @@ public class UpdateAirportSharedDatasetCommandHandler : BaseCommandBundle, IRequ
             }
             else
             {
-                _logger.LogError("Failed to update AirportSharedDataset with ID: {Id}, Code: {Code}, ReportID: {ReportID}. Error: {Error}",
-                    request.AirportSharedDataset.Id, request.AirportSharedDataset.Code, request.AirportSharedDataset.ReportID, result.Error?.Message);
+                _logger.LogError("Failed to update AirportSharedDataset with ID: {Id}, Code: {Code}, ReportID: {ReportCode}. Error: {Error}",
+                    request.AirportSharedDataset.Id, request.AirportSharedDataset.Code, request.AirportSharedDataset.ReportCode, result.Error?.Message);
             }
 
             return result;
@@ -132,8 +132,8 @@ public class UpdateAirportSharedDatasetCommandHandler : BaseCommandBundle, IRequ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating AirportSharedDataset with ID: {Id}, Code: {Code}, ReportID: {ReportID}",
-                request.AirportSharedDataset?.Id, request.AirportSharedDataset?.Code, request.AirportSharedDataset?.ReportID);
+            _logger.LogError(ex, "Unexpected error occurred while updating AirportSharedDataset with ID: {Id}, Code: {Code}, ReportID: {ReportCode}",
+                request.AirportSharedDataset?.Id, request.AirportSharedDataset?.Code, request.AirportSharedDataset?.ReportCode);
             return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.UpdateFailed);
         }
     }

@@ -21,40 +21,40 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
-                        @* <p class="mb-2"><strong>System:</strong> @Model.AssessmentData.SystemDescription</p>
-                        <p class="mb-0"><strong>Boundaries:</strong> @Model.AssessmentData.SystemBoundaries</p> *@
+                        <p class="mb-2"><strong>System:</strong> @Model.Step1.SystemDescription</p>
+                        <p class="mb-0"><strong>Boundaries:</strong> @Model.Step1.SystemBoundaries</p>
                     </div>
                     <div class="col-md-6">
-                        @* <p class="mb-2"><strong>Purpose:</strong> @Model.AssessmentData.SystemPurpose</p> *@
+                        <p class="mb-2"><strong>Purpose:</strong> @Model.Step1.SystemPurpose</p>
                         <p class="mb-0"><strong>Stakeholders:</strong> 
                             @{
                                 var stakeholderDisplay = new List<string>();
                                 
-                                // Add stakeholder groups
-                                // if (!string.IsNullOrWhiteSpace(Model.StakeholderGroups))
-                                // {
-                                //     var groups = Model.StakeholderGroups.Split(',', StringSplitOptions.RemoveEmptyEntries);
-                                //     foreach (var group in groups)
-                                //     {
-                                //         stakeholderDisplay.Add($"<span class=\"badge bg-primary me-1\">{group.Trim()}</span>");
-                                //     }
-                                // }
+                                //Add stakeholder groups - FIXED: Use correct property path
+                                if (!string.IsNullOrWhiteSpace(Model.Step1.StakeholderGroups))
+                                {
+                                    var groups = Model.Step1.StakeholderGroups.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                                    foreach (var group in groups)
+                                    {
+                                        stakeholderDisplay.Add($"<span class=\"badge bg-primary me-1\">{group.Trim()}</span>");
+                                    }
+                                }
                                 
-                                // Add individual stakeholders - simplified approach
-                                // if (!string.IsNullOrWhiteSpace(Model.SelectedIndividualStakeholders))
-                                // {
-                                //     // Count how many individual stakeholders (simple check for JSON array)
-                                //     var individualCount = Model.SelectedIndividualStakeholders.Count(c => c == '{');
-                                //     if (individualCount > 0)
-                                //     {
-                                //         stakeholderDisplay.Add($"<span class=\"badge bg-info me-1\">{individualCount} Individual(s)</span>");
-                                //     }
-                                //     else
-                                //     {
-                                //         // Plain text fallback
-                                //         stakeholderDisplay.Add($"<span class=\"badge bg-secondary me-1\">Individual: {Model.SelectedIndividualStakeholders}</span>");
-                                //     }
-                                // }
+                                //Add individual stakeholders - FIXED: Use correct property path
+                                if (!string.IsNullOrWhiteSpace(Model.Step1.SelectedIndividualStakeholders))
+                                {
+                                    // Count how many individual stakeholders (simple check for JSON array)
+                                    var individualCount = Model.Step1.SelectedIndividualStakeholders.Count(c => c == '{');
+                                    if (individualCount > 0)
+                                    {
+                                        stakeholderDisplay.Add($"<span class=\"badge bg-info me-1\">{individualCount} Individual(s)</span>");
+                                    }
+                                    else
+                                    {
+                                        // Plain text fallback
+                                        stakeholderDisplay.Add($"<span class=\"badge bg-secondary me-1\">Individual: {Model.Step1.SelectedIndividualStakeholders}</span>");
+                                    }
+                                }
                             }
                             
                             @if (stakeholderDisplay.Any())
@@ -165,7 +165,9 @@
                         </div>
                         
                         <div class="text-center mt-3">
-                            <button type="button" class="btn btn-success" onclick="addHazardToList()">
+                            <button type="submit" class="btn btn-success" 
+                                    asp-page-handler="CreateHazard" 
+                                    onclick="return validateHazardForm()">
                                 <i class="fas fa-plus"></i> Add to Hazard List
                             </button>
                             <button type="button" class="btn btn-outline-secondary ms-2" onclick="clearHazardForm()">
@@ -318,7 +320,7 @@
 
 <script>
 // Global variables for hazard management
-let hazardCounter = @(Model.AssessmentData.IdentifiedHazards?.Count ?? 0);
+let hazardCounter = @(Model.Step2?.HazardIds?.Count ?? 0);
 let hazardsList = [];
 let editingHazardIndex = -1;
 
@@ -326,24 +328,50 @@ let editingHazardIndex = -1;
 document.addEventListener('DOMContentLoaded', function() {
     console.log('?? Step 2 Hazard Management Starting...');
     
-    // Load existing hazards if any
-    @if (Model.AssessmentData.IdentifiedHazards?.Any() == true)
+    // Load existing hazards from Step2 model - FIXED: Use correct model structure
+    @if (Model.Step2?.HazardIds?.Any() == true)
     {
         <text>
-        @for (int i = 0; i < Model.AssessmentData.IdentifiedHazards.Count; i++)
+        @for (int i = 0; i < Model.Step2.HazardIds.Count; i++)
         {
-            var hazard = Model.AssessmentData.IdentifiedHazards[i];
+            var hazardId = Model.Step2.HazardIds[i];
+            var hazardDesc = i < Model.Step2.HazardDescriptions.Count ? Model.Step2.HazardDescriptions[i] : "";
+            var hazardCat = i < Model.Step2.HazardCategories.Count ? Model.Step2.HazardCategories[i] : "";
             <text>
             hazardsList.push({
-                id: '@hazard.Id',
-                description: '@Html.Raw(hazard.Description?.Replace("'", "\\'").Replace("\n", "\\n").Replace("\r", ""))',
-                category: '@hazard.Category',
-                fiveM: '@(hazard.Category ?? "")'  // Load 5M component if available
+                id: '@hazardId',
+                description: '@Html.Raw(hazardDesc?.Replace("'", "\\'").Replace("\n", "\\n").Replace("\r", ""))',
+                category: '@hazardCat',
+                fiveM: ''  // Not stored in Step2 model currently
             });
             </text>
         }
-        hazardCounter = @Model.AssessmentData.IdentifiedHazards.Count;
-        console.log('? Loaded existing hazards with 5M components:', hazardsList.length);
+        hazardCounter = @Model.Step2.HazardIds.Count;
+        console.log('? Loaded existing hazards from Step2 model:', hazardsList.length);
+        </text>
+    }
+    else
+    {
+        <text>
+        console.log('?? No existing hazards found in Step2 model');
+        
+        // Check if we have a primary hazard from the URL parameter
+        @if (!string.IsNullOrEmpty(Model.HazardId))
+        {
+            <text>
+            // Add the primary hazard from URL parameter as the initial hazard
+            const primaryHazard = {
+                id: '@Model.HazardId',
+                description: '@(Model.PrimaryHazard?.Description ?? "Primary hazard from report")',
+                category: '@(Model.PrimaryHazard?.HazardType ?? "")',
+                fiveM: ''
+            };
+            
+            hazardsList.push(primaryHazard);
+            hazardCounter = 1;
+            console.log('? Added primary hazard from URL:', primaryHazard);
+            </text>
+        }
         </text>
     }
     
@@ -378,7 +406,8 @@ function toggleAddHazardForm() {
     }
 }
 
-function addHazardToList() {
+// Enhanced addHazardToList function that persists to database via AJAX
+async function addHazardToList() {
     const description = document.getElementById('newHazardDescription').value.trim();
     const category = document.getElementById('newHazardCategory').value;
     const fiveM = document.getElementById('newHazardFiveM').value;
@@ -395,34 +424,67 @@ function addHazardToList() {
         document.getElementById('newHazardDescription').focus();
         return;
     }
-    
-    // FIXED: Create new hazard with standard HZ-XXXX format (consistent with existing hazards)
-    hazardCounter++;
-    const newHazard = {
-        id: `HZ-${hazardCounter.toString().padStart(4, '0')}`, // FIXED: Standard format like HZ-0001, HZ-0002, etc.
-        description: description,
-        category: category,
-        fiveM: fiveM
-    };
-    
-    hazardsList.push(newHazard);
-    
-    // Update display
-    updateHazardsDisplay();
-    updateFormFields();
-    
-    // Clear form
-    clearHazardForm();
-    
-    // Show success message
-    showMessage(`Hazard ${newHazard.id} added successfully!`, 'success');
-    
-    console.log('? Added hazard:', newHazard);
-    
-    // CRITICAL: Trigger auto-save to ensure hazard is saved immediately
-    triggerAutoSave();
+
+    // Disable form during submission
+    const submitButton = document.querySelector('[onclick="addHazardToList()"]');
+    const originalText = submitButton.innerHTML;
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+
+    try {
+        // Create FormData for POST request
+        const formData = new FormData();
+        formData.append('hazardDescription', description);
+        formData.append('hazardCategory', category);
+        formData.append('fiveMComponent', fiveM);
+        formData.append('Id', '@Model.Id');
+        formData.append('StepNumber', '@Model.StepNumber');
+        formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+        // Send AJAX request to create hazard
+        const response = await fetch(`${window.location.pathname}?handler=CreateHazard`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Add to local hazardsList for immediate UI update
+            const newHazard = result.hazard;
+            hazardsList.push(newHazard);
+            hazardCounter++;
+
+            // Update display and form fields
+            updateHazardsDisplay();
+            updateFormFields();
+
+            // Clear form
+            clearHazardForm();
+
+            // Show success message
+            showMessage(result.message, 'success');
+
+            console.log('? Hazard persisted to database:', newHazard);
+
+            // Trigger auto-save for backup
+            triggerStep2AutoSave();
+        } else {
+            // Show error message
+            showMessage(result.message || 'Failed to create hazard', 'danger');
+            console.error('? Failed to create hazard:', result.message);
+        }
+    } catch (error) {
+        console.error('? Error creating hazard:', error);
+        showMessage('Network error occurred while creating hazard. Please try again.', 'danger');
+    } finally {
+        // Re-enable form
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalText;
+    }
 }
 
+// Clear form fields
 function clearHazardForm() {
     document.getElementById('newHazardDescription').value = '';
     document.getElementById('newHazardCategory').value = '';
@@ -446,10 +508,14 @@ function editHazard(index) {
     modal.show();
 }
 
-function saveHazardEdit() {
+// Enhanced saveHazardEdit function that persists updates to database via AJAX
+async function saveHazardEdit() {
     if (editingHazardIndex < 0) return;
     
+    const hazardId = document.getElementById('editHazardId').value;
     const description = document.getElementById('editHazardDescription').value.trim();
+    const category = document.getElementById('editHazardCategory').value;
+    const fiveM = document.getElementById('editHazardFiveM').value;
     
     // Validation
     if (!description) {
@@ -461,33 +527,74 @@ function saveHazardEdit() {
         alert('Please provide a more detailed hazard description (at least 10 characters)');
         return;
     }
-    
-    // Update hazard (simplified structure)
-    const hazard = hazardsList[editingHazardIndex];
-    hazard.description = description;
-    hazard.category = document.getElementById('editHazardCategory').value;
-    hazard.fiveM = document.getElementById('editHazardFiveM').value;
-    
-    // Update display
-    updateHazardsDisplay();
-    updateFormFields();
-    
-    // Hide modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('editHazardModal'));
-    modal.hide();
-    
-    // Reset editing index
-    editingHazardIndex = -1;
-    
-    showMessage(`Hazard ${hazard.id} updated successfully!`, 'success');
-    
-    console.log('? Updated hazard:', hazard);
-    
-    // CRITICAL: Trigger auto-save to ensure changes are saved immediately
-    triggerAutoSave();
+
+    // Disable save button during submission
+    const saveButton = document.querySelector('[onclick="saveHazardEdit()"]');
+    const originalText = saveButton.innerHTML;
+    saveButton.disabled = true;
+    saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    try {
+        // Create FormData for POST request
+        const formData = new FormData();
+        formData.append('hazardId', hazardId);
+        formData.append('hazardDescription', description);
+        formData.append('hazardCategory', category);
+        formData.append('fiveMComponent', fiveM);
+        formData.append('Id', '@Model.Id');
+        formData.append('StepNumber', '@Model.StepNumber');
+        formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+        // Send AJAX request to update hazard
+        const response = await fetch(`${window.location.pathname}?handler=UpdateHazard`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Update local hazardsList for immediate UI update
+            const hazard = hazardsList[editingHazardIndex];
+            hazard.description = description;
+            hazard.category = category;
+            hazard.fiveM = fiveM;
+
+            // Update display and form fields
+            updateHazardsDisplay();
+            updateFormFields();
+
+            // Hide modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editHazardModal'));
+            modal.hide();
+
+            // Reset editing index
+            editingHazardIndex = -1;
+
+            // Show success message
+            showMessage(result.message, 'success');
+
+            console.log('? Hazard updated in database:', result.hazard);
+
+            // Trigger auto-save for backup
+            triggerStep2AutoSave();
+        } else {
+            // Show error message
+            showMessage(result.message || 'Failed to update hazard', 'danger');
+            console.error('? Failed to update hazard:', result.message);
+        }
+    } catch (error) {
+        console.error('? Error updating hazard:', error);
+        showMessage('Network error occurred while updating hazard. Please try again.', 'danger');
+    } finally {
+        // Re-enable save button
+        saveButton.disabled = false;
+        saveButton.innerHTML = originalText;
+    }
 }
 
-function deleteHazard(index) {
+// Enhanced deleteHazard function that persists deletion to database via AJAX
+async function deleteHazard(index) {
     if (index < 0 || index >= hazardsList.length) return;
     
     // Prevent deletion of the initial hazard (index 0)
@@ -498,19 +605,49 @@ function deleteHazard(index) {
     
     const hazard = hazardsList[index];
     
-    if (confirm(`Are you sure you want to delete hazard ${hazard.id}?\n\n"${hazard.description}"`)) {
-        hazardsList.splice(index, 1);
-        
-        // Update display
-        updateHazardsDisplay();
-        updateFormFields();
-        
-        showMessage(`Hazard ${hazard.id} deleted successfully!`, 'success');
-        
-        console.log('??? Deleted hazard:', hazard);
-        
-        // CRITICAL: Trigger auto-save to ensure deletion is saved immediately
-        triggerAutoSave();
+    if (!confirm(`Are you sure you want to delete hazard ${hazard.id}?\n\n"${hazard.description}"\n\nThis action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        // Create FormData for POST request
+        const formData = new FormData();
+        formData.append('hazardId', hazard.id);
+        formData.append('Id', '@Model.Id');
+        formData.append('StepNumber', '@Model.StepNumber');
+        formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+        // Send AJAX request to delete hazard
+        const response = await fetch(`${window.location.pathname}?handler=DeleteHazard`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Remove from local hazardsList for immediate UI update
+            hazardsList.splice(index, 1);
+
+            // Update display and form fields
+            updateHazardsDisplay();
+            updateFormFields();
+
+            // Show success message
+            showMessage(result.message, 'success');
+
+            console.log('??? Hazard deleted from database:', result.deletedHazardId);
+
+            // Trigger auto-save for backup
+            triggerStep2AutoSave();
+        } else {
+            // Show error message
+            showMessage(result.message || 'Failed to delete hazard', 'danger');
+            console.error('? Failed to delete hazard:', result.message);
+        }
+    } catch (error) {
+        console.error('? Error deleting hazard:', error);
+        showMessage('Network error occurred while deleting hazard. Please try again.', 'danger');
     }
 }
 
@@ -613,12 +750,11 @@ function updateFormFields() {
     container.innerHTML = '';
     
     hazardsList.forEach((hazard, index) => {
-        // Create hidden fields for form submission - INCLUDING 5M component
+        // Create hidden fields for Step2 model binding - FIXED: Use correct naming convention
         const fields = [
-            { name: `AssessmentData.IdentifiedHazards[${index}].Id`, value: hazard.id },
-            { name: `AssessmentData.IdentifiedHazards[${index}].Description`, value: hazard.description },
-            { name: `AssessmentData.IdentifiedHazards[${index}].Category`, value: hazard.category },
-            { name: `AssessmentData.IdentifiedHazards[${index}].FiveMComponent`, value: hazard.fiveM || '' }
+            { name: `Step2.HazardIds[${index}]`, value: hazard.id },
+            { name: `Step2.HazardDescriptions[${index}]`, value: hazard.description },
+            { name: `Step2.HazardCategories[${index}]`, value: hazard.category || '' }
         ];
         
         fields.forEach(field => {
@@ -630,7 +766,7 @@ function updateFormFields() {
         });
     });
     
-    console.log('? Updated form fields for', hazardsList.length, 'hazards with 5M components');
+    console.log('? Updated Step2 form fields for', hazardsList.length, 'hazards');
 }
 
 function showMessage(message, type = 'success') {
@@ -661,51 +797,102 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Validation before step progression
-function validateHazardStep() {
+// SINGLE COMPREHENSIVE VALIDATION FUNCTION FOR STEP 2
+// Enhanced Step 2 validation and navigation with database persistence
+async function validateStep2Hazards() {
     if (hazardsList.length === 0) {
         alert('At least one hazard must be identified before proceeding to Step 3.\n\nPlease use the "Add New Hazard" form to identify potential hazards in your system.');
         return false;
     }
     
-    // Ensure the initial hazard has adequate description
-    if (hazardsList.length > 0 && hazardsList[0].description.length < 20) {
-        const proceed = confirm('The initial hazard has a brief description that may not provide enough detail for risk analysis.\n\nWould you like to continue anyway, or go back and add more detail?');
+    // Check for adequate descriptions
+    const inadequateHazards = hazardsList.filter((h, index) => {
+        const description = h.description?.trim() || '';
+        return description.length < 10;
+    });
+    
+    if (inadequateHazards.length > 0) {
+        const hazardNumbers = inadequateHazards.map(h => h.id).join(', ');
+        const proceed = confirm(`The following hazards have brief descriptions that may not provide enough detail for risk analysis:\n\n${hazardNumbers}\n\nWould you like to continue anyway, or go back and add more detail?`);
         if (!proceed) return false;
     }
+
+    // Ensure all hazards are saved to database before proceeding
+    console.log('?? Ensuring all hazards are saved to database before navigation...');
+    const bulkSaveSuccess = await ensureHazardsPersisted();
     
-    // Check for adequate descriptions in other hazards
-    const inadequateHazards = hazardsList.slice(1).filter(h => h.description.length < 20); // Skip first hazard, already checked above
-    if (inadequateHazards.length > 0) {
-        const proceed = confirm(`${inadequateHazards.length} additional hazard(s) have brief descriptions that may not provide enough detail for risk analysis.\n\nWould you like to continue anyway, or go back and add more detail?`);
-        return proceed;
+    if (!bulkSaveSuccess) {
+        alert('Some hazards could not be saved to the database. Please try again or check your connection.');
+        return false;
     }
     
+    console.log('? Step 2 validation passed:', hazardsList.length, 'hazards');
     return true;
 }
 
-// CRITICAL: Auto-save functionality
-let autoSaveTimeout;
-function autoSave() {
-    clearTimeout(autoSaveTimeout);
-    autoSaveTimeout = setTimeout(() => {
-        // Always update form fields before auto-save
+// Function to ensure all hazards are persisted to database
+async function ensureHazardsPersisted() {
+    try {
+        // First update form fields with current hazardsList data
         updateFormFields();
         
-        // Save to session storage as backup
-        const assessmentId = '@Model.Id';
-        const sessionKey = `Assessment_${assessmentId}_Step2Hazards`;
+        console.log('?? Performing bulk save to ensure database persistence...');
         
-        try {
-            sessionStorage.setItem(sessionKey, JSON.stringify({
-                hazards: hazardsList,
-                savedAt: new Date().toISOString()
-            }));
-            console.log('?? Auto-saved hazards to session storage');
-        } catch (error) {
-            console.error('? Error auto-saving hazards:', error);
+        // Create FormData for bulk save request
+        const formData = new FormData();
+        formData.append('Id', '@Model.Id');
+        formData.append('StepNumber', '@Model.StepNumber');
+        formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+        // Send AJAX request for bulk save
+        const response = await fetch(`${window.location.pathname}?handler=BulkSaveHazards`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            console.log('? Bulk save successful:', result.message);
+            showMessage(result.message, 'success');
+            return true;
+        } else {
+            console.error('? Bulk save failed:', result.message);
+            if (result.errors && result.errors.length > 0) {
+                console.error('? Bulk save errors:', result.errors);
+                showMessage(`${result.message}\n\nErrors:\n${result.errors.join('\n')}`, 'danger');
+            } else {
+                showMessage(result.message, 'danger');
+            }
+            return false;
         }
-    }, 2000);
+    } catch (error) {
+        console.error('? Error during bulk save:', error);
+        showMessage('Network error occurred during save. Please check your connection and try again.', 'danger');
+        return false;
+    }
+}
+
+// ENHANCED AUTO-SAVE WITH STEP2 MODEL INTEGRATION
+function triggerStep2AutoSave() {
+    console.log('?? Triggering Step 2 auto-save...');
+    
+    // Always update form fields first
+    updateFormFields();
+    
+    // Save to session storage as backup
+    const assessmentId = '@Model.Id';
+    const sessionKey = `Assessment_${assessmentId}_Step2Hazards`;
+    
+    try {
+        sessionStorage.setItem(sessionKey, JSON.stringify({
+            hazards: hazardsList,
+            savedAt: new Date().toISOString()
+        }));
+        console.log('?? Auto-saved Step 2 hazards to session storage');
+    } catch (error) {
+        console.error('? Error auto-saving Step 2 hazards:', error);
+    }
 }
 
 // Load from session storage on page load
@@ -734,218 +921,34 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Trigger auto-save when hazards change
+// Legacy compatibility functions (kept for backward compatibility)
 function triggerAutoSave() {
-    console.log('?? Triggering auto-save for hazards...');
-    autoSave();
+    triggerStep2AutoSave();
 }
 
-// Hook into form submission for validation
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('form');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            const submitButton = document.activeElement;
-            
-            // Always update form fields before submission
-            updateFormFields();
-            
-            // Only validate for Next Step button, not Save Draft
-            if (submitButton && (submitButton.textContent.includes('Next Step') || submitButton.textContent.includes('Navigate'))) {
-                if (!validateHazardStep()) {
-                    e.preventDefault();
-                    return false;
-                }
-            }
-        });
-    }
-});
-
-// GLOBAL FUNCTION FOR NAVIGATION SCRIPT TO CALL
 window.ensureStep2HazardsSaved = function() {
-    console.log('?? Ensuring Step 2 hazards are saved before navigation...');
-    
-    // Update form fields to ensure they're ready for submission
-    updateFormFields();
-    
-    // Validate we have hazards
-    if (hazardsList.length === 0) {
-        console.error('? No hazards identified in Step 2');
-        return false;
-    }
-    
-    console.log(`? Step 2 ready with ${hazardsList.length} hazards for SaveStep2 handler`);
-    return true;
+    return window.ensureStep2Ready();
 };
 
-// ENHANCED: Integrate with step-aware save system
-document.addEventListener('DOMContentLoaded', function() {
-    // Ensure Step 2 hazards are updated whenever navigation occurs
-    const form = document.querySelector('form');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            console.log('?? Step 2 form submission detected - updating hazard fields');
-            
-            // Always update form fields before any submission (Next Step, Save Draft, etc.)
-            updateFormFields();
-            
-            // Ensure we have adequate hazards for next step navigation
-            const submitButton = document.activeElement;
-            if (submitButton && (submitButton.textContent.includes('Next Step') || submitButton.textContent.includes('Navigate'))) {
-                if (!validateHazardStep()) {
-                    e.preventDefault();
-                    return false;
-                }
-                
-                console.log('? Step 2 validation passed - proceeding with navigation');
-            }
-        });
-    }
+function validateHazardForm() {
+    const description = document.getElementById('newHazardDescription').value.trim();
     
-    // Enhanced auto-save integration
-    const originalTriggerAutoSave = window.triggerAutoSave || function() {};
-    window.triggerAutoSave = function() {
-        console.log('?? Step 2 Enhanced auto-save triggered');
-        updateFormFields(); // Ensure form fields are current
-        originalTriggerAutoSave(); // Call original if it exists
-    };
-});
-
-// Validation before step progression
-function validateStep2() {
-    const hazardDescriptions = document.querySelectorAll('textarea[name*="Description"]:not([name*="AdditionalComments"])');
-    
-    let incompleteHazards = [];
-    let validationErrors = [];
-
-    hazardDescriptions.forEach((textarea, index) => {
-        const description = textarea.value.trim();
-        const hazardNumber = index + 1;
-        
-        // Check if field is empty
-        if (!description) {
-            incompleteHazards.push(`Hazard ${hazardNumber}`);
-        }
-        // Check minimum length requirements (10 characters)
-        else if (description.length < 10) {
-            validationErrors.push(`Hazard ${hazardNumber} description must be at least 10 characters (currently ${description.length})`);
-        }
-    });
-    
-    // Show validation errors
-    if (incompleteHazards.length > 0) {
-        alert(`Please provide descriptions for the following hazards:\n\n• ${incompleteHazards.join('\n• ')}\n\nAll hazard descriptions are required.`);
+    if (!description) {
+        alert('Please enter a hazard description');
+        document.getElementById('newHazardDescription').focus();
         return false;
     }
     
-    if (validationErrors.length > 0) {
-        alert(`Please provide more detailed hazard descriptions:\n\n• ${validationErrors.join('\n• ')}\n\nEach description requires at least 10 characters for meaningful analysis.`);
+    if (description.length < 10) {
+        alert('Please provide a more detailed hazard description (at least 10 characters)');
+        document.getElementById('newHazardDescription').focus();
         return false;
     }
+    
+    // Set form values for submission
+    document.getElementById('newHazardDescription').name = 'hazardDescription';
+    document.getElementById('newHazardCategory').name = 'hazardCategory';
     
     return true;
 }
-
-// Real-time validation feedback for Step 2
-function addStep2RealTimeValidation() {
-    const hazardDescriptions = document.querySelectorAll('textarea[name*="Description"]:not([name*="AdditionalComments"])');
-    
-    hazardDescriptions.forEach(textarea => {
-        // Add character counter
-        const formText = textarea.closest('.form-group, .mb-3')?.querySelector('.form-text');
-        if (formText) {
-            const counter = document.createElement('small');
-            counter.className = 'text-muted ms-2';
-            counter.style.fontSize = '0.75em';
-            formText.parentNode.insertBefore(counter, formText.nextSibling);
-            
-            function updateValidation() {
-                const length = textarea.value.trim().length;
-                const minLength = 10;
-                
-                // Update counter
-                counter.textContent = `${length}/${minLength} characters`;
-                
-                // Update styling based on validation
-                if (length === 0) {
-                    textarea.classList.remove('is-valid', 'is-invalid');
-                    counter.className = 'text-muted ms-2';
-                } else if (length < minLength) {
-                    textarea.classList.remove('is-valid');
-                    textarea.classList.add('is-invalid');
-                    counter.className = 'text-danger ms-2';
-                    counter.textContent = `${length}/${minLength} characters (minimum ${minLength} required)`;
-                } else {
-                    textarea.classList.remove('is-invalid');
-                    textarea.classList.add('is-valid');
-                    counter.className = 'text-success ms-2';
-                    counter.textContent = `${length} characters ?`;
-                }
-            }
-            
-            // Initial validation
-            updateValidation();
-            
-            // Add event listeners
-            textarea.addEventListener('input', updateValidation);
-            textarea.addEventListener('blur', updateValidation);
-        }
-    });
-}
-
-// Initialize Step 2 validation when hazards are added/loaded
-function initializeStep2Validation() {
-    // Add real-time validation with character counters
-    setTimeout(() => {
-        addStep2RealTimeValidation();
-    }, 500); // Small delay to ensure DOM is ready
-    
-    // Hook into form submission for validation
-    const form = document.querySelector('form');
-    if (form && !form.hasAttribute('data-validation-attached')) {
-        form.setAttribute('data-validation-attached', 'true');
-        form.addEventListener('submit', function(e) {
-            const submitButton = document.activeElement;
-            
-            // Only validate for Next Step button, not Save Draft
-            if (submitButton && (submitButton.textContent.includes('Next Step') || submitButton.textContent.includes('Continue'))) {
-                if (!validateStep2()) {
-                    e.preventDefault();
-                    return false;
-                }
-            }
-        });
-    }
-}
-
-// Initialize when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    initializeStep2Validation();
-    
-    // Re-initialize validation when hazards are dynamically added
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                // Check if hazard cards were added
-                const addedHazards = Array.from(mutation.addedNodes).some(node => 
-                    node.nodeType === Node.ELEMENT_NODE && 
-                    (node.classList?.contains('hazard-card') || node.querySelector?.('.hazard-card'))
-                );
-                
-                if (addedHazards) {
-                    setTimeout(() => {
-                        addStep2RealTimeValidation();
-                    }, 100);
-                }
-            }
-        });
-    });
-    
-    // Start observing
-    const hazardContainer = document.getElementById('hazard-list') || document.querySelector('.hazard-container') || document.body;
-    observer.observe(hazardContainer, {
-        childList: true,
-        subtree: true
-    });
-});
 </script>

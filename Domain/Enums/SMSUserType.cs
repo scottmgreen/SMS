@@ -35,7 +35,7 @@ public abstract class SMSUserType : BaseEnum<SMSUserType>
     private sealed class ApplicationType : SMSUserType
     {
         public ApplicationType() : base("APPLICATION", "Application User",
-            "Application administrator with full system access and management capabilities", 10)
+            "Application administrator with role-based access to SMS functions", 10)
         {
         }
     }
@@ -51,7 +51,7 @@ public abstract class SMSUserType : BaseEnum<SMSUserType>
     private sealed class StakeholderType : SMSUserType
     {
         public StakeholderType() : base("STAKEHOLDER", "Stakeholder User",
-            "External stakeholder with limited access based on access level and organization type", 3)
+            "External stakeholder with role-based access to SMS functions", 3)
         {
         }
     }
@@ -70,38 +70,5 @@ public abstract class SMSUserType : BaseEnum<SMSUserType>
             .Where(ut => ut != null);
     }
 
-    /// <summary>
-    /// Gets user types with minimum authorization level
-    /// </summary>
-    /// <param name="minimumLevel">Minimum authorization level required</param>
-    /// <returns>User types meeting the minimum authorization level</returns>
-    public static IEnumerable<SMSUserType> GetUserTypesWithMinimumLevel(int minimumLevel)
-    {
-        return GetAllValues().Where(ut => ut.AuthorizationLevel >= minimumLevel);
-    }
-
-    /// <summary>
-    /// Determines if this user type can access the specified authorization level
-    /// </summary>
-    /// <param name="requiredLevel">Required authorization level</param>
-    /// <returns>True if user type has sufficient authorization level</returns>
-    public bool CanAccessLevel(int requiredLevel)
-    {
-        return AuthorizationLevel >= requiredLevel;
-    }
-
-    /// <summary>
-    /// Determines if this user type is internal to the organization
-    /// </summary>
-    public bool IsInternal => this == Application || this == Organizational;
-
-    /// <summary>
-    /// Determines if this user type is external to the organization
-    /// </summary>
-    public bool IsExternal => this == Stakeholder;
-
-    /// <summary>
-    /// Determines if this user type has administrative privileges
-    /// </summary>
-    public bool HasAdministrativePrivileges => this == Application;
+ 
 }

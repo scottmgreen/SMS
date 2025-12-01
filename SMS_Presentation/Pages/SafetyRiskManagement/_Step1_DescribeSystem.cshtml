@@ -178,70 +178,109 @@
     </div>
 </div>
 
-<!-- Stakeholder Analysis - SIMPLIFIED for easier form binding -->
+<!-- Stakeholder Analysis - SIMPLE MOVE BETWEEN LISTS -->
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0"><i class="fas fa-user-friends"></i> Stakeholder Management</h6>
-                    <small class="text-muted">✅ Simplified form binding</small>
-                </div>
+                <h6 class="mb-0"><i class="fas fa-user-friends"></i> Stakeholder Selection</h6>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="mb-3">
-                            <label class="form-label">Stakeholder Groups</label>
-                            <textarea class="form-control" name="Step1.StakeholderGroups" asp-for="Step1.StakeholderGroups" rows="3" 
-                                      placeholder="List relevant stakeholder groups (e.g., ATC, Operations, Maintenance, Airlines)"></textarea>
-                            <div class="form-text">Comma-separated list of stakeholder groups</div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Individual Stakeholders</label>
-                            <textarea class="form-control" name="Step1.SelectedIndividualStakeholders" asp-for="Step1.SelectedIndividualStakeholders" rows="3"
-                                      placeholder="List specific individuals involved in this assessment"></textarea>
-                            <div class="form-text">Names and roles of specific stakeholders</div>
-                        </div>
+                <!-- Stakeholder Groups -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3"><i class="fas fa-users"></i> Stakeholder Groups</h6>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card border-info">
-                            <div class="card-header bg-info text-white">
-                                <h6 class="mb-0"><i class="fas fa-info-circle"></i> Stakeholder Tips</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="small">
-                                    <p><strong>Groups to consider:</strong></p>
-                                    <ul class="small">
-                                        <li>Air Traffic Control</li>
-                                        <li>Airport Operations</li>
-                                        <li>Maintenance Teams</li>
-                                        <li>Airlines</li>
-                                        <li>Emergency Services</li>
-                                        <li>Regulatory Bodies</li>
-                                    </ul>
-                                    <p class="mt-2"><strong>Include stakeholders who:</strong></p>
-                                    <ul class="small">
-                                        <li>Are affected by the system</li>
-                                        <li>Have expertise in the area</li>
-                                        <li>Make decisions about the system</li>
-                                        <li>Implement safety measures</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Available Groups</label>
+                        @if (Model.StakeholderGroups?.Any() == true)
+                        {
+                            <select class="form-select" id="availableGroups" multiple size="6">
+                                @foreach (var group in Model.StakeholderGroups)
+                                {
+                                    <option value="@group.Name">@group.Name</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            <div class="border rounded p-3 text-muted text-center">No groups available</div>
+                        }
+                    </div>
+                    <div class="col-md-2 text-center align-self-center">
+                        <button type="button" class="btn btn-primary btn-sm d-block mb-2" onclick="moveGroups('right')">
+                            Add →
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm d-block" onclick="moveGroups('left')">
+                            ← Remove
+                        </button>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Selected Groups</label>
+                        <select class="form-select" id="selectedGroups" multiple size="6"></select>
                     </div>
                 </div>
+
+                <!-- Individual Stakeholders -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="text-info mb-3"><i class="fas fa-user"></i> Individual Stakeholders</h6>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Available Stakeholders</label>
+                        @if (Model.AvailableStakeholders?.Any() == true)
+                        {
+                            <select class="form-select" id="availableStakeholders" multiple size="6">
+                                @foreach (var stakeholder in Model.AvailableStakeholders)
+                                {
+                                    <option value="@stakeholder.Code" data-name="@stakeholder.DisplayName" data-org="@stakeholder.Organization">
+                                        @stakeholder.DisplayName (@stakeholder.Organization)
+                                    </option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            <div class="border rounded p-3 text-muted text-center">No stakeholders available</div>
+                        }
+                    </div>
+                    <div class="col-md-2 text-center align-self-center">
+                        <button type="button" class="btn btn-primary btn-sm d-block mb-2" onclick="moveStakeholders('right')">
+                            Add →
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm d-block" onclick="moveStakeholders('left')">
+                            ← Remove
+                        </button>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Selected Stakeholders</label>
+                        <select class="form-select" id="selectedStakeholders" multiple size="6"></select>
+                    </div>
+                </div>
+
+                <!-- Hidden Fields for Form Binding -->
+                <input type="hidden" name="Step1.StakeholderGroups" asp-for="Step1.StakeholderGroups" id="hiddenGroups" />
+                <input type="hidden" name="Step1.SelectedIndividualStakeholders" asp-for="Step1.SelectedIndividualStakeholders" id="hiddenStakeholders" />
             </div>
         </div>
     </div>
 </div>
 
+<!-- Step 1 Complete Button -->
+@* <div class="row mt-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-success btn-lg">
+                <i class="fas fa-check-circle"></i> Complete Step 1
+            </button>
+        </div>
+    </div>
+</div>
+ *@
 <script>
-// Simplified Step 1 JavaScript
+// Simplified Step 1 JavaScript - just validation and simple list movement
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ Step 1 Simplified - using bound properties for validation');
+    console.log('✅ Step 1 Simple - validation + list movement');
     
     // Initialize popovers
     if (typeof bootstrap !== 'undefined' && bootstrap.Popover) {
@@ -253,8 +292,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 container: 'body'
             });
         });
-        console.log(`✅ Initialized ${popoverList.length} popovers`);
     }
+    
+    // Load existing selections into selected lists
+    loadExistingSelections();
     
     // Add real-time validation  
     const requiredTextareas = document.querySelectorAll('textarea[name^="Step1.FiveM"], textarea[name*="Step1.System"], input[name="Step1.LeadAssessor"]');
@@ -293,7 +334,96 @@ document.addEventListener('DOMContentLoaded', function() {
             field.addEventListener('blur', updateValidation);
         }
     });
-    
-    console.log('✅ Real-time validation initialized');
 });
+
+// Simple functions to move items between lists
+function moveGroups(direction) {
+    const available = document.getElementById('availableGroups');
+    const selected = document.getElementById('selectedGroups');
+    
+    if (direction === 'right') {
+        moveSelectedOptions(available, selected);
+    } else {
+        moveSelectedOptions(selected, available);
+    }
+    
+    updateHiddenGroups();
+}
+
+function moveStakeholders(direction) {
+    const available = document.getElementById('availableStakeholders');
+    const selected = document.getElementById('selectedStakeholders');
+    
+    if (direction === 'right') {
+        moveSelectedOptions(available, selected);
+    } else {
+        moveSelectedOptions(selected, available);
+    }
+    
+    updateHiddenStakeholders();
+}
+
+function moveSelectedOptions(fromSelect, toSelect) {
+    const selectedOptions = Array.from(fromSelect.selectedOptions);
+    selectedOptions.forEach(option => {
+        toSelect.appendChild(option.cloneNode(true));
+        option.remove();
+    });
+}
+
+function updateHiddenGroups() {
+    const selected = document.getElementById('selectedGroups');
+    const hiddenField = document.getElementById('hiddenGroups');
+    const values = Array.from(selected.options).map(option => option.value);
+    hiddenField.value = values.join(', ');
+}
+
+function updateHiddenStakeholders() {
+    const selected = document.getElementById('selectedStakeholders');
+    const hiddenField = document.getElementById('hiddenStakeholders');
+    const stakeholders = Array.from(selected.options).map(option => ({
+        code: option.value,
+        name: option.dataset.name,
+        organization: option.dataset.org
+    }));
+    hiddenField.value = JSON.stringify(stakeholders);
+}
+
+function loadExistingSelections() {
+    // Load existing groups
+    const hiddenGroups = document.getElementById('hiddenGroups');
+    if (hiddenGroups && hiddenGroups.value) {
+        const groupNames = hiddenGroups.value.split(',').map(g => g.trim()).filter(g => g);
+        const available = document.getElementById('availableGroups');
+        const selected = document.getElementById('selectedGroups');
+        
+        groupNames.forEach(groupName => {
+            const option = Array.from(available.options).find(opt => opt.value === groupName);
+            if (option) {
+                selected.appendChild(option.cloneNode(true));
+                option.remove();
+            }
+        });
+    }
+    
+    // Load existing stakeholders
+    const hiddenStakeholders = document.getElementById('hiddenStakeholders');
+    if (hiddenStakeholders && hiddenStakeholders.value) {
+        try {
+            const stakeholders = JSON.parse(hiddenStakeholders.value);
+            const available = document.getElementById('availableStakeholders');
+            const selected = document.getElementById('selectedStakeholders');
+            
+            stakeholders.forEach(stakeholder => {
+                const option = Array.from(available.options).find(opt => opt.value === stakeholder.code);
+                if (option) {
+                    selected.appendChild(option.cloneNode(true));
+                    option.remove();
+                }
+            });
+        } catch (e) {
+            console.log('Could not parse existing stakeholders');
+        }
+    }
+}
 </script>

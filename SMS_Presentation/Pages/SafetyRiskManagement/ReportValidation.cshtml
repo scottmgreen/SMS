@@ -1,5 +1,5 @@
 ﻿@page "/SafetyRiskManagement/ReportValidation/{reportId}"
-@model SMS.Presentation.Pages.SafetyRiskManagement.ReportValidationModel
+@model SMS_Presentation.Pages.SafetyRiskManagement.ReportValidationModel
 @{
     ViewData["Title"] = "SMS Report Validation";
 }
@@ -255,9 +255,21 @@
         // Minimal JavaScript for immediate UI feedback when radio buttons change
         document.addEventListener('DOMContentLoaded', function() {
             const radioButtons = document.querySelectorAll('input[name="ValidationDecision"]');
+            const validationTypeSelect = document.getElementById('ValidationType');
             const smsRiskFields = document.getElementById('smsRiskFields');
             const submitBtn = document.querySelector('button[type="submit"]:not([formaction])');
             const proceedBtn = document.querySelector('button[formaction*="ProceedToAssessment"]');
+
+            function updateProceedButtonText() {
+                if (proceedBtn && validationTypeSelect) {
+                    const selectedType = validationTypeSelect.value;
+                    if (selectedType === 'Preliminary') {
+                        proceedBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Proceed to Preliminary Assessment';
+                    } else {
+                        proceedBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Proceed to Technical Assessment';
+                    }
+                }
+            }
 
             function updateUI(selectedValue) {
                 // Show/hide SMS Risk fields
@@ -272,6 +284,11 @@
                 if (proceedBtn) {
                     proceedBtn.style.display = selectedValue === 'SMS_RISK' ? 'inline-block' : 'none';
                 }
+
+                // Update button text when SMS_RISK is selected
+                if (selectedValue === 'SMS_RISK') {
+                    updateProceedButtonText();
+                }
             }
 
             // Add change listeners
@@ -282,6 +299,11 @@
                     }
                 });
             });
+
+            // Add change listener to validation type dropdown
+            if (validationTypeSelect) {
+                validationTypeSelect.addEventListener('change', updateProceedButtonText);
+            }
 
             // Initialize on page load
             const checkedRadio = document.querySelector('input[name="ValidationDecision"]:checked');

@@ -64,7 +64,19 @@ public sealed class RiskAssessmentService
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NotFound);
         }
     }
-
+    public async Task<Result<List<RiskAssessment>>> GetRiskAssessmentsByHazardIdAsync(HazardID id, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving risk assessment with ID: {Id}", id);
+            return await _dataService.GetRiskAssessmentsByHazardIdAsync(id, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving risk assessment with Hazard ID: {Id}", id);
+            return Result<List<RiskAssessment>>.Failure<List<RiskAssessment>>(DomainErrors.RiskAssessmentError.NotFound);
+        }
+    }
     public async Task<Result<List<RiskAssessment>>> GetAllRiskAssessmentsAsync(CancellationToken ct = default)
     {
         try

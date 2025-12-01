@@ -301,38 +301,38 @@ public class SMSInvestigationWorkflowService : ISMSInvestigationWorkflowService
     /// <summary>
     /// Get available investigators (SMS Application Users with investigation permissions)
     /// </summary>
-    public async Task<Result<List<SMSApplicationUser>>> GetAvailableInvestigatorsAsync(CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving available investigators");
+    //public async Task<Result<List<SMSApplicationUser>>> GetAvailableInvestigatorsAsync(CancellationToken cancellationToken = default)
+    //{
+    //    try
+    //    {
+    //        _logger.LogInformation("Retrieving available investigators");
 
-            // Get all SMS Application Users who can perform investigations
-            var query = new GetAllSMSApplicationUsersQuery();
-            var result = await _mediator.SendAsync(query, cancellationToken);
+    //        // Get all SMS Application Users who can perform investigations
+    //        var query = new GetAllSMSApplicationUsersQuery();
+    //        var result = await _mediator.SendAsync(query, cancellationToken);
 
-            if (result.IsFailure)
-            {
-                return Result<List<SMSApplicationUser>>.Failure<List<SMSApplicationUser>>(result.Error);
-            }
+    //        if (result.IsFailure)
+    //        {
+    //            return Result<List<SMSApplicationUser>>.Failure<List<SMSApplicationUser>>(result.Error);
+    //        }
 
-            // Filter for investigators (could be based on permission level or specific role)
-            var investigators = result.Value
-                .Where(u => u.PermissionLevel == "Investigator" || 
-                           u.PermissionLevel == "Manager" || 
-                           u.PermissionLevel == "Administrator")
-                .ToList();
+    //        // Filter for investigators (could be based on permission level or specific role)
+    //        var investigators = result.Value
+    //            .Where(u => u.PermissionLevel == "Investigator" || 
+    //                       u.PermissionLevel == "Manager" || 
+    //                       u.PermissionLevel == "Administrator")
+    //            .ToList();
 
-            _logger.LogInformation("Found {Count} available investigators", investigators.Count);
+    //        _logger.LogInformation("Found {Count} available investigators", investigators.Count);
 
-            return Result<List<SMSApplicationUser>>.Success(investigators);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving available investigators");
-            return Result<List<SMSApplicationUser>>.Failure<List<SMSApplicationUser>>(DomainErrors.SMSApplicationUserError.NotFound);
-        }
-    }
+    //        return Result<List<SMSApplicationUser>>.Success(investigators);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogError(ex, "Error retrieving available investigators");
+    //        return Result<List<SMSApplicationUser>>.Failure<List<SMSApplicationUser>>(DomainErrors.SMSApplicationUserError.NotFound);
+    //    }
+    //}
 
     #endregion
 }

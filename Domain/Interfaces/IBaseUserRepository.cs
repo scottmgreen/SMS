@@ -19,6 +19,16 @@ public interface IBaseUserRepository<T> where T : BaseUser
     Task<Result<T>> GetByIdAsync(BaseUserID id);
 
     /// <summary>
+    /// Gets a user by their unique ID (string overload for convenience)
+    /// </summary>
+    Task<Result<T>> GetByIdAsync(string id);
+
+    /// <summary>
+    /// Gets a user by their code
+    /// </summary>
+    Task<Result<T>> GetByCodeAsync(string code);
+
+    /// <summary>
     /// Gets a user by their username
     /// </summary>
     Task<Result<T>> GetByUserNameAsync(string userName);

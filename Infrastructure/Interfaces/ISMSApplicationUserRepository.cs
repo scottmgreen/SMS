@@ -1,36 +1,21 @@
-using SMS_Domain.Entities;
-using SMS_Domain.Interfaces;
-using SMS_Shared.Common;
+﻿using SMS_Domain.Interfaces;
 
-namespace SMS_Infrastructure.Interfaces;
-
-/// <summary>
-/// Defines the contract for SMS Application User repository operations
-/// </summary>
-public interface ISMSApplicationUserRepository : IBaseUserRepository<SMSApplicationUser>
+namespace Infrastructure.Interfaces;
+public interface ISMSApplicationUserRepository
 {
-    /// <summary>
-    /// Gets a user by their unique SMS Application User ID (type-safe overload)
-    /// </summary>
+    Task<Result<SMSApplicationUser>> AddAsync(SMSApplicationUser user);
+    Task<Result<bool>> DeleteAsync(BaseUserID userId);
+    Task<Result<IEnumerable<SMSApplicationUser>>> GetActiveUsersAsync();
+    Task<Result<IEnumerable<SMSApplicationUser>>> GetAllAsync();
+    Task<Result<IEnumerable<SMSApplicationUser>>> GetByApplicationRoleAsync(string applicationRole);
+    Task<Result<SMSApplicationUser>> GetByCodeAsync(string code);
     Task<Result<SMSApplicationUser>> GetByIdAsync(SMSApplicationUserID id);
-
-    /// <summary>
-    /// Gets users by application role
-    /// </summary>
+    Task<Result<SMSApplicationUser>> GetByIdAsync(string id);
     Task<Result<IEnumerable<SMSApplicationUser>>> GetBySMSApplicationUserRoleAsync(string applicationRole);
-
-    /// <summary>
-    /// Gets users by permission level
-    /// </summary>
-    Task<Result<IEnumerable<SMSApplicationUser>>> GetSMSApplicationUserByPermissionLevelAsync(string permissionLevel);
-
-    /// <summary>
-    /// Gets users with permission level at or above the specified level
-    /// </summary>
-    Task<Result<IEnumerable<SMSApplicationUser>>> GetSMSApplicationUsersWithMinimumPermissionAsync(string minimumPermissionLevel);
-
-    /// <summary>
-    /// Updates application-specific information
-    /// </summary>
-    Task<Result<bool>> UpdateSMSApplicationUserInfoAsync(SMSApplicationUserID userId, string applicationRole, string permissionLevel);
+    Task<Result<SMSApplicationUser>> GetByUserNameAsync(string userName);
+    Task<Result<UserStatistics>> GetUserStatisticsAsync();
+    Task<Result<bool>> RecordLoginAsync(BaseUserID userId, DateTime loginDate);
+    Task<Result<bool>> UpdateAsync(SMSApplicationUser user);
+    Task<Result<bool>> UpdatePasswordAsync(BaseUserID userId, string hashedPassword);
+    Task<Result<bool>> UserNameExistsAsync(string userName);
 }

@@ -5,8 +5,8 @@ using SMS_Domain.Interfaces;
 using SMS_Domain.Errors;
 using SMS_Infrastructure.Common;
 using SMS_Infrastructure.Interfaces;
-using SMS_Infrastructure.Persistence;
 using SMS_Shared.Common;
+using Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Services;
 
@@ -255,7 +255,7 @@ public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrgani
     /// <summary>
     /// Authenticates SMS Organizational User
     /// </summary>
-    public async Task<Result<SMSOrganizationalUser>> AuthenticateSMSOrganizationalUserAsync(string userName, string plainTextPassword, CancellationToken ct = default)
+    public async Task<Result<bool>> AuthenticateSMSOrganizationalUserAsync(string userName, string plainTextPassword, CancellationToken ct = default)
     {
         try
         {
@@ -265,7 +265,7 @@ public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrgani
             if (userResult.IsFailure)
             {
                 _logger.LogWarning("Authentication failed - user not found: {UserName}", userName);
-                return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.LoginFailed);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.LoginFailed);
             }
 
             var user = userResult.Value;
@@ -273,7 +273,7 @@ public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrgani
             if (!user.Authenticate(plainTextPassword))
             {
                 _logger.LogWarning("Authentication failed - invalid password for user: {UserName}", userName);
-                return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.LoginFailed);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.LoginFailed);
             }
 
             // Record the login
@@ -281,12 +281,12 @@ public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrgani
             await _repository.UpdateAsync(user);
 
             _logger.LogInformation("Successfully authenticated SMS Organizational User: {UserName}", userName);
-            return Result<SMSOrganizationalUser>.Success(user);
+            return Result<bool>.Success(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error during authentication for user: {UserName}", userName);
-            return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.LoginFailed);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.LoginFailed);
         }
     }
 

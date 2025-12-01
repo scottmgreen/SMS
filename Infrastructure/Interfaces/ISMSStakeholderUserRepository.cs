@@ -1,67 +1,30 @@
-using SMS_Domain.Entities;
-using SMS_Domain.Interfaces;
+﻿using SMS_Domain.Interfaces;
 
-using SMS_Shared.Common;
-
-namespace SMS_Infrastructure.Interfaces;
-
-/// <summary>
-/// Defines the contract for SMS Stakeholder User repository operations
-/// </summary>
-public interface ISMSStakeholderUserRepository : IBaseUserRepository<SMSStakeholderUser>
+namespace SMS_Infrastructure.Persistence;
+public interface ISMSStakeholderUserRepository
 {
-    /// <summary>
-    /// Gets users by stakeholder type
-    /// </summary>
-    Task<Result<IEnumerable<SMSStakeholderUser>>> GetByStakeholderTypeAsync(string stakeholderType);
-
-    /// <summary>
-    /// Gets users by organization
-    /// </summary>
-    Task<Result<IEnumerable<SMSStakeholderUser>>> GetByOrganizationAsync(string organization);
-
-    /// <summary>
-    /// Gets users by access level
-    /// </summary>
-    Task<Result<IEnumerable<SMSStakeholderUser>>> GetByAccessLevelAsync(string accessLevel);
-
-    /// <summary>
-    /// Gets users with access level at or above the specified level
-    /// </summary>
-    Task<Result<IEnumerable<SMSStakeholderUser>>> GetUsersWithMinimumAccessAsync(string minimumAccessLevel);
-
-    /// <summary>
-    /// Updates stakeholder-specific information
-    /// </summary>
-    Task<Result<bool>> UpdateStakeholderInfoAsync(string userId, string stakeholderType, string organization, string accessLevel);
-
-    /// <summary>
-    /// Gets airline stakeholders
-    /// </summary>
+    Task<Result<SMSStakeholderUser>> AddAsync(SMSStakeholderUser user);
+    Task<Result<bool>> DeleteAsync(BaseUserID userId);
+    Task<Result<bool>> DeleteAsync(string userId);
+    Task<Result<IEnumerable<SMSStakeholderUser>>> GetActiveUsersAsync();
     Task<Result<IEnumerable<SMSStakeholderUser>>> GetAirlineStakeholdersAsync();
-
-    /// <summary>
-    /// Gets ground handler stakeholders
-    /// </summary>
-    Task<Result<IEnumerable<SMSStakeholderUser>>> GetGroundHandlerStakeholdersAsync();
-
-    /// <summary>
-    /// Gets contractor stakeholders
-    /// </summary>
+    Task<Result<IEnumerable<SMSStakeholderUser>>> GetAllAsync();
+    //Task<Result<IEnumerable<SMSStakeholderUser>>> GetByAccessLevelAsync(string accessLevel);
+    Task<Result<SMSStakeholderUser>> GetByIdAsync(BaseUserID id);
+    Task<Result<IEnumerable<SMSStakeholderUser>>> GetByOrganizationAsync(string organization);
+    Task<Result<IEnumerable<SMSStakeholderUser>>> GetByStakeholderTypeAsync(string stakeholderType);
+    Task<Result<SMSStakeholderUser>> GetByUserNameAsync(string userName);
     Task<Result<IEnumerable<SMSStakeholderUser>>> GetContractorStakeholdersAsync();
-
-    /// <summary>
-    /// Gets users requiring AOA access
-    /// </summary>
-    Task<Result<IEnumerable<SMSStakeholderUser>>> GetUsersRequiringAOAAccessAsync();
-
-    /// <summary>
-    /// Gets stakeholder statistics by type
-    /// </summary>
-    Task<Result<Dictionary<string, int>>> GetStakeholderTypeStatisticsAsync();
-
-    /// <summary>
-    /// Gets stakeholder statistics by organization
-    /// </summary>
+    Task<Result<IEnumerable<SMSStakeholderUser>>> GetGroundHandlerStakeholdersAsync();
     Task<Result<Dictionary<string, int>>> GetOrganizationStatisticsAsync();
+    Task<Result<Dictionary<string, int>>> GetStakeholderTypeStatisticsAsync();
+    Task<Result<IEnumerable<SMSStakeholderUser>>> GetUsersByGroupCodeAsync(string groupCode);
+    Task<Result<UserStatistics>> GetUserStatisticsAsync();
+    Task<Result<IEnumerable<SMSStakeholderUser>>> GetUsersWithMinimumAccessAsync(string minimumAccessLevel);
+    Task<Result<bool>> RecordLoginAsync(BaseUserID userId, DateTime loginDate);
+    Task<Result<bool>> RecordLoginAsync(string userId, DateTime loginDate);
+    Task<Result<bool>> UpdateAsync(SMSStakeholderUser user);
+    Task<Result<bool>> UpdatePasswordAsync(BaseUserID userId, string hashedPassword);
+    Task<Result<bool>> UpdatePasswordAsync(string userId, string hashedPassword);
+    Task<Result<bool>> UserNameExistsAsync(string userName);
 }

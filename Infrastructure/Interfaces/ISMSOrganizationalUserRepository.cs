@@ -1,36 +1,25 @@
-using SMS_Domain.Entities;
-using SMS_Domain.Interfaces;
-using SMS_Shared.Common;
+﻿using SMS_Domain.Interfaces;
 
-namespace SMS_Infrastructure.Interfaces;
-
-/// <summary>
-/// Defines the contract for SMS Organizational User repository operations
-/// </summary>
-public interface ISMSOrganizationalUserRepository : IBaseUserRepository<SMSOrganizationalUser>
+namespace Infrastructure.Interfaces;
+public interface ISMSOrganizationalUserRepository
 {
-    /// <summary>
-    /// Gets users by department
-    /// </summary>
+    Task<Result<SMSOrganizationalUser>> AddAsync(SMSOrganizationalUser user);
+    Task<Result<bool>> DeleteAsync(BaseUserID userId);
+    Task<Result<IEnumerable<SMSOrganizationalUser>>> GetActiveUsersAsync();
+    Task<Result<IEnumerable<SMSOrganizationalUser>>> GetAllAsync();
     Task<Result<IEnumerable<SMSOrganizationalUser>>> GetByDepartmentAsync(string department);
-
-    /// <summary>
-    /// Gets users by position
-    /// </summary>
+    Task<Result<SMSOrganizationalUser>> GetByIdAsync(BaseUserID id);
     Task<Result<IEnumerable<SMSOrganizationalUser>>> GetByPositionAsync(string position);
-
-    /// <summary>
-    /// Gets users by organization level
-    /// </summary>
     Task<Result<IEnumerable<SMSOrganizationalUser>>> GetBySMSOrganizationalUserLevelAsync(string organizationLevel);
-
-    /// <summary>
-    /// Gets users in a department with specific roles
-    /// </summary>
-    //Task<Result<IEnumerable<SMSOrganizationalUser>>> GetDepartmentUsersWithRoleAsync(string department, string role);
-
-    /// <summary>
-    /// Updates organizational information
-    /// </summary>
-    Task<Result<bool>> UpdateSMSOrganizationalUserInfoAsync(BaseUserID userId, string department, string position, string organizationLevel);
+    Task<Result<SMSOrganizationalUser>> GetByUserNameAsync(string userName);
+    Task<Result<Dictionary<string, int>>> GetDepartmentStatisticsAsync();
+    Task<Result<IEnumerable<SMSOrganizationalUser>>> GetDepartmentSupervisorsAsync(string department);
+    Task<Result<IEnumerable<SMSOrganizationalUser>>> GetUsersAtOrAboveLevelAsync(string minimumLevel);
+    Task<Result<UserStatistics>> GetUserStatisticsAsync();
+    Task<Result<bool>> RecordLoginAsync(BaseUserID userId, DateTime loginDate);
+    Task<Result<bool>> RecordLoginAsync(string userId, DateTime loginDate);
+    Task<Result<bool>> UpdateAsync(SMSOrganizationalUser user);
+    Task<Result<bool>> UpdatePasswordAsync(BaseUserID userId, string hashedPassword);
+    Task<Result<bool>> UpdatePasswordAsync(string userId, string hashedPassword);
+    Task<Result<bool>> UserNameExistsAsync(string userName);
 }

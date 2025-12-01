@@ -1,0 +1,85 @@
+@using Microsoft.AspNetCore.Components
+
+@*
+BLAZOR STEP NAVIGATION COMPONENT
+Replaces JavaScript navigation with server-side form handling
+*@
+
+<div class="row text-center">
+    @for (int i = 1; i <= 5; i++)
+    {
+        var step = i;
+        var stepClass = GetStepClass(step);
+        var iconClass = GetStepIconClass(step);
+        var isDisabled = IsStepDisabled(step);
+        
+        <div class="col">
+            @if (isDisabled)
+            {
+                <button type="button" class="btn @stepClass btn-sm w-100" disabled>
+                    <i class="fas @iconClass"></i><br>
+                    <small>Step @step</small><br>
+                    <small>@GetStepName(step)</small>
+                </button>
+            }
+            else
+            {
+                <form method="post" style="display: inline;">
+                    <input type="hidden" name="Id" value="@AssessmentId" />
+                    <input type="hidden" name="StepNumber" value="@CurrentStep" />
+                    <input type="hidden" name="HazardId" value="@HazardId" />
+                    <button type="submit" class="btn @stepClass btn-sm w-100" 
+                            formaction="?handler=NavigateToStep" 
+                            name="targetStep" value="@step" 
+                            formnovalidate>
+                        <i class="fas @iconClass"></i><br>
+                        <small>Step @step</small><br>
+                        <small>@GetStepName(step)</small>
+                    </button>
+                </form>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int CurrentStep { get; set; } = 1;
+    [Parameter] public string AssessmentId { get; set; } = "";
+    [Parameter] public string HazardId { get; set; } = "";
+    
+    private string GetStepClass(int step)
+    {
+        return step == CurrentStep ? "btn-primary" : 
+               step < CurrentStep ? "btn-success" : "btn-outline-secondary";
+    }
+    
+    private string GetStepIconClass(int step)
+    {
+        return step < CurrentStep ? "fa-check-circle" : 
+               step == CurrentStep ? "fa-edit" : "fa-circle";
+    }
+    
+    private bool IsStepDisabled(int step)
+    {
+        return step > CurrentStep && !CanSkipToStep(step);
+    }
+    
+    private bool CanSkipToStep(int step)
+    {
+        // Sequential navigation only for now
+        return false;
+    }
+    
+    private string GetStepName(int step)
+    {
+        return step switch
+        {
+            1 => "System Description",
+            2 => "Hazard Identification", 
+            3 => "Risk Analysis",
+            4 => "Risk Assessment",
+            5 => "Risk Mitigation",
+            _ => "Unknown Step"
+        };
+    }
+}

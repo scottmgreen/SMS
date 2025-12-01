@@ -209,7 +209,7 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
     /// <summary>
     /// Authenticates an SMS Organizational User with comprehensive business logic
     /// </summary>
-    public async Task<Result<SMSOrganizationalUser>> AuthenticateSMSOrganizationalUserAsync(string userName, string plainTextPassword, CancellationToken ct = default)
+    public async Task<Result<bool>> AuthenticateSMSOrganizationalUserAsync(string userName, string plainTextPassword, CancellationToken ct = default)
     {
         try
         {
@@ -219,13 +219,13 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
             if (string.IsNullOrWhiteSpace(userName))
             {
                 _logger.LogWarning("Authentication failed - empty username");
-                return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.UserNameError.NullOrEmpty);
+                return Result<bool>.Failure<bool>(DomainErrors.UserNameError.NullOrEmpty);
             }
 
             if (string.IsNullOrWhiteSpace(plainTextPassword))
             {
                 _logger.LogWarning("Authentication failed - empty password for user: {UserName}", userName);
-                return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.PasswordError.NullOrEmpty);
+                return Result<bool>.Failure<bool>(DomainErrors.PasswordError.NullOrEmpty);
             }
 
             var result = await _dataService.AuthenticateSMSOrganizationalUserAsync(userName, plainTextPassword, ct).ConfigureAwait(false);
@@ -235,14 +235,14 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
                 var user = result.Value;
 
                 // Business rule - check if user is active
-                if (!user.IsActive)
-                {
-                    _logger.LogWarning("Authentication failed - user is inactive: {UserName}", userName);
-                    return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.BaseUserError.InactiveUser);
-                }
+                //if (!user.IsActive)
+                //{
+                //    _logger.LogWarning("Authentication failed - user is inactive: {UserName}", userName);
+                //    return Result<bool>.Failure<bool>(DomainErrors.BaseUserError.InactiveUser);
+                //}
 
-                _logger.LogInformation("Successfully authenticated SMS Organizational User: {UserName} from department: {Department}",
-                    userName, user.Department);
+                //_logger.LogInformation("Successfully authenticated SMS Organizational User: {UserName} from department: {Department}",
+                //    userName, user.Department);
             }
             else
             {
@@ -254,7 +254,7 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error during authentication for user: {UserName}", userName);
-            return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.LoginFailed);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.LoginFailed);
         }
     }
 

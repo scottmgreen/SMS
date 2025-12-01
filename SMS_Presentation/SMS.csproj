@@ -17,12 +17,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Pages\SafetyRiskManagement\RiskAssessment.cshtml.cs" />
-    <Compile Remove="Pages\SafetyRiskManagement\SimplifiedRiskAssessment.cshtml.cs" />
+    <Compile Remove="Pages\System\RolesAndPermissions.cshtml.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Remove="Pages\SafetyRiskManagement\RiskAssessment.cshtml" />
     <Content Remove="Pages\SafetyRiskManagement\RiskAssessmentWizardRoute.cshtml" />
-    <Content Remove="Pages\SafetyRiskManagement\SimplifiedRiskAssessment.cshtml" />
+    <Content Remove="Pages\System\RolesAndPermissions.cshtml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -40,12 +40,11 @@
 
   <ItemGroup>
     <Folder Include="Areas\" />
+    <Folder Include="Components\RiskAssessmentWizard\" />
     <Folder Include="Views\" />
     <Folder Include="wwwroot\css\" />
-    <Folder Include="wwwroot\js\" />
     <Folder Include="wwwroot\lib\" />
     <Folder Include="Pages\SafetyPolicy\" />
-    <Folder Include="Pages\System\" />
   </ItemGroup>
 
   <ItemGroup>

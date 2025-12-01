@@ -4,6 +4,7 @@ using SMS_Domain.ValueObjects;
 using SMS_Shared.Common;
 using Microsoft.Extensions.Logging;
 using SMS_Infrastructure.Interfaces;
+using SMS_Infrastructure.Persistence;
 
 namespace SMS_Application.Services;
 
@@ -83,14 +84,14 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
     private readonly IMediator _mediator;
     private readonly ILogger<SMSRiskAssessmentWorkflowService> _logger;
     private readonly IRiskAssessmentRepository _riskAssessmentRepository;
-    private readonly ISMSApplicationUserRepository _userRepository;
+    private readonly SMSApplicationUserRepository _userRepository;
     private readonly IHazardRepository _hazardRepository;
 
     public SMSRiskAssessmentWorkflowService(
         IMediator mediator,
         ILogger<SMSRiskAssessmentWorkflowService> logger,
         IRiskAssessmentRepository riskAssessmentRepository,
-        ISMSApplicationUserRepository userRepository,
+        SMSApplicationUserRepository userRepository,
         IHazardRepository hazardRepository)
     {
         _mediator = mediator;
@@ -563,10 +564,8 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
 
             // Filter for users with appropriate permission levels - using string comparison for now
             var assessors = usersResult.Value
-                .Where(user => user.PermissionLevel == "Write" || 
-                              user.PermissionLevel == "Admin" || 
-                              user.PermissionLevel == "SuperAdmin")
-                .ToList();
+            .Where(user => user.UserRole?.Permissions?.Any(x => x.Create) == true)
+            .ToList();
 
             return Result<List<SMSApplicationUser>>.Success(assessors);
         }

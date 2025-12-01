@@ -8,43 +8,23 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public abstract class BaseUser : BaseAuditableEntity
 {
-    public BaseUserID UserId { get; protected set; }
-    public string Code { get; protected set; }
-    public FirstName FirstName { get; protected set; }
-    public LastName LastName { get; protected set; }
-    public UserName UserName { get; protected set; }
-    public Password Password { get; protected set; }
-    public bool IsActive { get; protected set; }
-    public DateTime? LastLoginDate { get; protected set; }
-    
-    protected BaseUser() : base(new BaseUserID(Guid.NewGuid().ToString()), "System", DateTime.UtcNow)
+    protected BaseUser(BaseID<string> id, string createdBy, DateTime createdDate) : base(id, createdBy, createdDate)
     {
-        UserId = new BaseUserID(Guid.NewGuid().ToString());
-        Code = string.Empty;
-        FirstName = FirstName.Create("System").Value;
-        LastName = LastName.Create("User").Value;
-        UserName = UserName.Create("system").Value;
-        Password = Password.Create("TempPassword123!").Value;
-        IsActive = true;
     }
 
-    protected BaseUser(
-        string code,
-        FirstName firstName,
-        LastName lastName,
-        UserName userName,
-        Password password,
-        string createdBy) : base(new BaseUserID(Guid.NewGuid().ToString()), createdBy, DateTime.UtcNow)
-    {
-        UserId = new BaseUserID(Guid.NewGuid().ToString());
-        Code = code;
-        FirstName = firstName;
-        LastName = lastName;
-        UserName = userName;
-        Password = password;
-        IsActive = true;
-        LastLoginDate = null;
-    }
+    public BaseUserID UserId { get;  set; }
+    public string Code { get;  set; }
+    public FirstName FirstName { get;  set; }
+    public LastName LastName { get;  set; }
+    public UserName UserName { get;  set; }
+    public Password Password { get;  set; }
+    public bool IsActive { get;  set; }
+    public DateTime? LastLoginDate { get;  set; }
+    public string SMSUserType { get; set; }
+
+    public SMSUserRole UserRole { get; set; }
+
+
 
     /// <summary>
     /// Gets the user's full display name
@@ -144,13 +124,8 @@ public abstract class BaseUser : BaseAuditableEntity
         return DaysSinceLastLogin > staleDays;
     }
 
-    /// <summary>
-    /// Abstract method to get the user type - implemented by derived classes
-    /// </summary>
-    public abstract string GetUserType();
-
-    /// <summary>
-    /// Abstract method to get user-specific department/organization info
-    /// </summary>
-    public abstract string GetDepartmentInfo();
 }
+
+
+
+

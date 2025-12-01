@@ -132,6 +132,45 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
         }
     }
 
+    public async Task<Result<List<RiskAssessment>>> GetRiskAssessmentsByHazardIdAsync(HazardID hazardId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving RiskAssessment by Hazard ID: {Id}", hazardId);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_RiskAssessment_GetByHazardId, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, hazardId.Value));
+
+            List<RiskAssessment> response = new();
+
+            await sql.OpenAsync(cancellationToken).ConfigureAwait(false);
+            using (SqlDataReader reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+            {
+                if (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var riskAssessment = Mappers.MapToRiskAssessment(reader);
+                    response.Add(riskAssessment);
+                }
+            }
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<List<RiskAssessment>>.Success(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve RiskAssessments by ID: {Id}", hazardId);
+            return Result<List<RiskAssessment>>.Failure<List<RiskAssessment>>(DomainErrors.RiskAssessmentError.NotFound);
+        }
+    }
+
+
+
+
     public async Task<Result<List<RiskAssessment>>> GetAllRiskAssessmentsAsync(CancellationToken ct = default)
     {
         try

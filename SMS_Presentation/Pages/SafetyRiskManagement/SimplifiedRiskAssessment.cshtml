@@ -1,5 +1,5 @@
 @page "/SafetyRiskManagement/SimplifiedRiskAssessment/{hazardId}/{assessmentId}"
-@model PDXSMS_Presentation.Pages.SafetyRiskManagement.SimplifiedRiskAssessmentModel
+@model SMS_Presentation.Pages.SafetyRiskManagement.SimplifiedRiskAssessmentModel
 @{
     ViewData["Title"] = "Simplified Risk Assessment";
 }
@@ -12,7 +12,7 @@
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
                     <li class="breadcrumb-item"><a href="/SafetyRiskManagement">Safety Risk Management</a></li>
-                    <li class="breadcrumb-item"><a href="/SafetyRiskManagement/HazardProcessing">Hazard Processing</a></li>
+                    <li class="breadcrumb-item"><a href="/SafetyRiskManagement/ReportProcessing">Report Processing</a></li>
                     <li class="breadcrumb-item active">Preliminary Risk Assessment</li>
                 </ol>
             </nav>
@@ -52,14 +52,17 @@
                         <input type="hidden" asp-for="AssessmentId" />
 
                         <!-- Hazard Summary -->
-                        <div class="card mb-4 bg-light">
-                            <div class="card-body">
-                                <h6><i class="fas fa-exclamation-triangle"></i> Hazard Summary</h6>
-                                <p class="mb-1"><strong>Type:</strong> @Model.HazardSummary.Type</p>
-                                <p class="mb-1"><strong>Location:</strong> @Model.HazardSummary.Location</p>
-                                <p class="mb-0"><strong>Description:</strong> @Model.HazardSummary.Description</p>
+                        @if (Model.Hazard != null)
+                        {
+                            <div class="card mb-4 bg-light">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-exclamation-triangle"></i> Hazard Summary</h6>
+                                    <p class="mb-1"><strong>Type:</strong> @Model.Hazard.HazardType</p>
+                                    <p class="mb-1"><strong>Location:</strong> @Model.Hazard.Location</p>
+                                    <p class="mb-0"><strong>Description:</strong> @Model.Hazard.Description</p>
+                                </div>
                             </div>
-                        </div>
+                        }
 
                         <!-- Section 1: Immediate Risk Level -->
                         <div class="mb-4">
@@ -67,7 +70,7 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <label class="form-label">Likelihood of Occurrence</label>
-                                    <select asp-for="RiskAssessment.Likelihood" class="form-select" required>
+                                    <select asp-for="Likelihood" class="form-select" required>
                                         <option value="">Select likelihood...</option>
                                         <option value="Very Low">Very Low (< 1% chance)</option>
                                         <option value="Low">Low (1-10% chance)</option>
@@ -75,10 +78,11 @@
                                         <option value="High">High (50-90% chance)</option>
                                         <option value="Very High">Very High (> 90% chance)</option>
                                     </select>
+                                    <span asp-validation-for="Likelihood" class="text-danger"></span>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Severity of Consequences</label>
-                                    <select asp-for="RiskAssessment.Severity" class="form-select" required>
+                                    <select asp-for="Severity" class="form-select" required>
                                         <option value="">Select severity...</option>
                                         <option value="Negligible">Negligible (Minor inconvenience)</option>
                                         <option value="Minor">Minor (Temporary disruption)</option>
@@ -86,6 +90,7 @@
                                         <option value="Major">Major (Serious consequences)</option>
                                         <option value="Catastrophic">Catastrophic (Severe/fatal consequences)</option>
                                     </select>
+                                    <span asp-validation-for="Severity" class="text-danger"></span>
                                 </div>
                             </div>
                         </div>
@@ -95,13 +100,13 @@
                             <h6><i class="fas fa-shield-alt"></i> 2. Current Risk Controls</h6>
                             <div class="mb-3">
                                 <label class="form-label">Existing Safety Measures</label>
-                                <textarea asp-for="RiskAssessment.ExistingControls" class="form-control" rows="3" 
+                                <textarea asp-for="ExistingControls" class="form-control" rows="3" 
                                           placeholder="List current safety controls, procedures, or barriers in place..."></textarea>
                             </div>
                             <div class="row">
                                 <div class="col-md-6">
                                     <label class="form-label">Control Effectiveness</label>
-                                    <select asp-for="RiskAssessment.ControlEffectiveness" class="form-select">
+                                    <select asp-for="ControlEffectiveness" class="form-select">
                                         <option value="">Select effectiveness...</option>
                                         <option value="Highly Effective">Highly Effective (90%+ risk reduction)</option>
                                         <option value="Effective">Effective (70-90% risk reduction)</option>
@@ -112,14 +117,14 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Residual Risk Level <span class="text-danger">*</span></label>
-                                    <select asp-for="RiskAssessment.ResidualRisk" class="form-select" required>
+                                    <select asp-for="ResidualRisk" class="form-select" required>
                                         <option value="">Select residual risk...</option>
                                         <option value="Low">Low (Acceptable with monitoring)</option>
                                         <option value="Medium">Medium (Requires additional controls)</option>
                                         <option value="High">High (Requires immediate action)</option>
                                         <option value="Critical">Critical (Stop operations until mitigated)</option>
                                     </select>
-                                    <span asp-validation-for="RiskAssessment.ResidualRisk" class="text-danger"></span>
+                                    <span asp-validation-for="ResidualRisk" class="text-danger"></span>
                                 </div>
                             </div>
                         </div>
@@ -129,13 +134,14 @@
                             <h6><i class="fas fa-tools"></i> 3. Recommended Risk Mitigation</h6>
                             <div class="mb-3">
                                 <label class="form-label">Recommended Actions</label>
-                                <textarea asp-for="RiskAssessment.RecommendedActions" class="form-control" rows="4" 
+                                <textarea asp-for="RecommendedActions" class="form-control" rows="4" 
                                           placeholder="Describe specific actions to reduce or eliminate the risk..." required></textarea>
+                                <span asp-validation-for="RecommendedActions" class="text-danger"></span>
                             </div>
                             <div class="row">
                                 <div class="col-md-6">
                                     <label class="form-label">Implementation Priority</label>
-                                    <select asp-for="RiskAssessment.Priority" class="form-select" required>
+                                    <select asp-for="Priority" class="form-select" required>
                                         <option value="">Select priority...</option>
                                         <option value="Immediate">Immediate (Within 24 hours)</option>
                                         <option value="Urgent">Urgent (Within 1 week)</option>
@@ -143,10 +149,11 @@
                                         <option value="Medium">Medium (Within 3 months)</option>
                                         <option value="Low">Low (Within 6 months)</option>
                                     </select>
+                                    <span asp-validation-for="Priority" class="text-danger"></span>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Estimated Cost</label>
-                                    <select asp-for="RiskAssessment.EstimatedCost" class="form-select">
+                                    <select asp-for="EstimatedCost" class="form-select">
                                         <option value="">Select cost range...</option>
                                         <option value="Minimal">Minimal (< $1,000)</option>
                                         <option value="Low">Low ($1,000 - $10,000)</option>
@@ -163,13 +170,13 @@
                             <h6><i class="fas fa-clipboard"></i> 4. Assessment Summary</h6>
                             <div class="mb-3">
                                 <label class="form-label">Assessor Comments</label>
-                                <textarea asp-for="RiskAssessment.AssessorComments" class="form-control" rows="3" 
+                                <textarea asp-for="AssessorComments" class="form-control" rows="3" 
                                           placeholder="Additional observations, concerns, or recommendations..."></textarea>
                             </div>
                             <div class="row">
                                 <div class="col-md-6">
                                     <label class="form-label">Assessment Confidence</label>
-                                    <select asp-for="RiskAssessment.AssessmentConfidence" class="form-select">
+                                    <select asp-for="AssessmentConfidence" class="form-select">
                                         <option value="">Select confidence level...</option>
                                         <option value="High">High (Sufficient data, clear analysis)</option>
                                         <option value="Medium">Medium (Some uncertainty, additional data helpful)</option>
@@ -178,7 +185,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Follow-up Required</label>
-                                    <select asp-for="RiskAssessment.RequiresFollowUp" class="form-select">
+                                    <select asp-for="RequiresFollowUp" class="form-select">
                                         <option value="No">No - Assessment complete</option>
                                         <option value="Monitoring">Monitoring - Track implementation</option>
                                         <option value="Review">Review - Reassess after actions</option>
@@ -188,53 +195,13 @@
                             </div>
                         </div>
 
-                        <!-- Assessment Assignee Selection -->
-                        <div class="card mb-3 border-info">
-                            <div class="card-header bg-info text-white">
-                                <h6 class="mb-0"><i class="fas fa-user-check"></i> Assessment Assignment</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <label class="form-label">Lead Assessor</label>
-                                    <select asp-for="RiskAssessment.AssessedBy" class="form-select">
-                                        <option value="">Select Lead Assessor...</option>
-                                        @foreach (var assessor in Model.AvailableAssessors.Where(a => a.IsActive))
-                                        {
-                                            <option value="@assessor.Email">
-                                                @assessor.DisplayName (@assessor.Department)
-                                            </option>
-                                        }
-                                    </select>
-                                    <div class="form-text">
-                                        <i class="fas fa-info-circle"></i>
-                                        Select the SMS team member responsible for this assessment (optional - system will assign if not selected)
-                                    </div>
-                                </div>
-                                
-                                @if (!Model.AvailableAssessors.Any())
-                                {
-                                    <div class="alert alert-warning">
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                        <strong>No SMS Users Available:</strong> System will assign default assessor.
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="alert alert-info">
-                                        <i class="fas fa-users"></i>
-                                        <strong>@Model.AvailableAssessors.Count SMS Users Available</strong> for assessment assignment.
-                                    </div>
-                                }
-                            </div>
-                        </div>
-
                         <!-- Action Buttons -->
                         <div class="row">
                             <div class="col-12">
                                 <hr>
                                 <div class="d-flex justify-content-between">
                                     <div>
-                                        <a href="/SafetyRiskManagement/HazardProcessing" class="btn btn-outline-secondary">
+                                        <a href="/SafetyRiskManagement/ReportProcessing" class="btn btn-outline-secondary">
                                             <i class="fas fa-arrow-left"></i> Back to Processing Queue
                                         </a>
                                     </div>
@@ -246,13 +213,6 @@
                                             <i class="fas fa-check-circle"></i> Complete Assessment
                                         </button>
                                     </div>
-                                </div>
-                                
-                                <!-- DEBUG: Quick save bypass for testing -->
-                                <div class="mt-2 text-center">
-                                    <small class="text-muted">
-                                        <strong>Debug Mode:</strong> Assessment will auto-populate missing fields and force save
-                                    </small>
                                 </div>
                             </div>
                         </div>

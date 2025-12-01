@@ -46,10 +46,29 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
             
+            // Dataset 1: SMSUserRole data
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 var userRole = Mappers.MapToSMSUserRole(reader);
                 userRoles.Add(userRole);
+            }
+
+            // Dataset 2: SMSUserRolePermissions data for each user role
+            if (await reader.NextResultAsync().ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var userRoleCode = reader.GetString(FieldNames.fSMSUserRolePermissionSMSUserRoleCode);
+                    var userRole = userRoles.FirstOrDefault(ur => ur.Code == userRoleCode.Trim());
+                    if (userRole != null)
+                    {
+                        if (userRole.Permissions == null)
+                            userRole.Permissions = new List<SMSUserRolePermission>();
+
+                        var permission = Mappers.MapToSMSUserRolePermission(reader);
+                        userRole.Permissions.Add(permission);
+                    }
+                }
             }
             
             await sql.CloseAsync().ConfigureAwait(false);
@@ -82,12 +101,28 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
             
+            // Dataset 1: SMSUserRole data
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 var userRole = Mappers.MapToSMSUserRole(reader);
-                if (userRole.IsCurrentlyActive()) // Additional domain-level filtering
+                userRoles.Add(userRole);
+            }
+
+            // Dataset 2: SMSUserRolePermissions data for each user role
+            if (await reader.NextResultAsync().ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync().ConfigureAwait(false))
                 {
-                    userRoles.Add(userRole);
+                    var userRoleCode = reader.GetString(FieldNames.fSMSUserRolePermissionSMSUserRoleCode);
+                    var userRole = userRoles.FirstOrDefault(ur => ur.Code == userRoleCode);
+                    if (userRole != null)
+                    {
+                        if (userRole.Permissions == null)
+                            userRole.Permissions = new List<SMSUserRolePermission>();
+
+                        var permission = Mappers.MapToSMSUserRolePermission(reader);
+                        userRole.Permissions.Add(permission);
+                    }
                 }
             }
             
@@ -126,9 +161,22 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
             
+            // Dataset 1: SMSUserRole data
             if (await reader.ReadAsync().ConfigureAwait(false))
             {
                 userRole = Mappers.MapToSMSUserRole(reader);
+            }
+
+            // Dataset 2: SMSUserRolePermissions data (multiple rows)
+            if (userRole != null && await reader.NextResultAsync().ConfigureAwait(false))
+            {
+                var permissions = new List<SMSUserRolePermission>();
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var permission = Mappers.MapToSMSUserRolePermission(reader);
+                    permissions.Add(permission);
+                }
+                userRole.Permissions = permissions;
             }
             
             await sql.CloseAsync().ConfigureAwait(false);
@@ -146,6 +194,126 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
         {
             _logger.LogInfrastructureGetItemError($"{_logHeader} {ex.Message}", null);
             return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+
+    public async Task<Result<IEnumerable<SMSUserRole>>> GetByApplicationUserIdAsync(string userId)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
+            }
+
+            _logger.LogInfrastructureGetItems($"{_logHeader} {StoredProcs.pr_SMSUserRole_GetByApplicationUserId} UserId:{userId}", null);
+
+            using var sql = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(StoredProcs.pr_SMSUserRole_GetByApplicationUserId, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleUserId, userId));
+
+            var userRoles = new List<SMSUserRole>();
+
+            await sql.OpenAsync().ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+            
+            // Dataset 1: SMSUserRole data
+            while (await reader.ReadAsync().ConfigureAwait(false))
+            {
+                var userRole = Mappers.MapToSMSUserRole(reader);
+                userRoles.Add(userRole);
+            }
+
+            // Dataset 2: SMSUserRolePermissions data for each user role
+            if (await reader.NextResultAsync().ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var userRoleCode = reader.GetString(FieldNames.fSMSUserRolePermissionSMSUserRoleCode);
+                    var userRole = userRoles.FirstOrDefault(ur => ur.Code == userRoleCode);
+                    if (userRole != null)
+                    {
+                        if (userRole.Permissions == null)
+                            userRole.Permissions = new List<SMSUserRolePermission>();
+
+                        var permission = Mappers.MapToSMSUserRolePermission(reader);
+                        userRole.Permissions.Add(permission);
+                    }
+                }
+            }
+            
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<IEnumerable<SMSUserRole>>.Success(userRoles.AsEnumerable());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemsError($"{_logHeader} {ex.Message}", null);
+            return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
+        }
+    }
+
+    public async Task<Result<IEnumerable<SMSUserRole>>> GetByStakeholderUserIdAsync(string userId)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
+            }
+
+            _logger.LogInfrastructureGetItems($"{_logHeader} {StoredProcs.pr_SMSUserRole_GetByStakeholderUserId} UserId:{userId}", null);
+
+            using var sql = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(StoredProcs.pr_SMSUserRole_GetByStakeholderUserId, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleUserId, userId));
+
+            var userRoles = new List<SMSUserRole>();
+
+            await sql.OpenAsync().ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+            // Dataset 1: SMSUserRole data
+            while (await reader.ReadAsync().ConfigureAwait(false))
+            {
+                var userRole = Mappers.MapToSMSUserRole(reader);
+                userRoles.Add(userRole);
+            }
+
+            // Dataset 2: SMSUserRolePermissions data for each user role
+            if (await reader.NextResultAsync().ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var userRoleCode = reader.GetString(FieldNames.fSMSUserRolePermissionSMSUserRoleCode);
+                    var userRole = userRoles.FirstOrDefault(ur => ur.Code == userRoleCode);
+                    if (userRole != null)
+                    {
+                        if (userRole.Permissions == null)
+                            userRole.Permissions = new List<SMSUserRolePermission>();
+
+                        var permission = Mappers.MapToSMSUserRolePermission(reader);
+                        userRole.Permissions.Add(permission);
+                    }
+                }
+            }
+
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<IEnumerable<SMSUserRole>>.Success(userRoles.AsEnumerable());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemsError($"{_logHeader} {ex.Message}", null);
+            return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
 
@@ -173,10 +341,29 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
             
+            // Dataset 1: SMSUserRole data
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 var userRole = Mappers.MapToSMSUserRole(reader);
                 userRoles.Add(userRole);
+            }
+
+            // Dataset 2: SMSUserRolePermissions data for each user role
+            if (await reader.NextResultAsync().ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var userRoleCode = reader.GetString(FieldNames.fSMSUserRolePermissionSMSUserRoleCode);
+                    var userRole = userRoles.FirstOrDefault(ur => ur.Code == userRoleCode);
+                    if (userRole != null)
+                    {
+                        if (userRole.Permissions == null)
+                            userRole.Permissions = new List<SMSUserRolePermission>();
+
+                        var permission = Mappers.MapToSMSUserRolePermission(reader);
+                        userRole.Permissions.Add(permission);
+                    }
+                }
             }
             
             await sql.CloseAsync().ConfigureAwait(false);
@@ -214,87 +401,29 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
             
+            // Dataset 1: SMSUserRole data
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 var userRole = Mappers.MapToSMSUserRole(reader);
                 userRoles.Add(userRole);
             }
-            
-            await sql.CloseAsync().ConfigureAwait(false);
 
-            return Result<IEnumerable<SMSUserRole>>.Success(userRoles.AsEnumerable());
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureGetItemsError($"{_logHeader} {ex.Message}", null);
-            return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
-        }
-    }
-
-    public async Task<Result<IEnumerable<SMSUserRole>>> GetByRoleValueAsync(string roleValue)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(roleValue))
+            // Dataset 2: SMSUserRolePermissions data for each user role
+            if (await reader.NextResultAsync().ConfigureAwait(false))
             {
-                return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
-            }
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var userRoleCode = reader.GetString(FieldNames.fSMSUserRolePermissionSMSUserRoleCode);
+                    var userRole = userRoles.FirstOrDefault(ur => ur.Code == userRoleCode);
+                    if (userRole != null)
+                    {
+                        if (userRole.Permissions == null)
+                            userRole.Permissions = new List<SMSUserRolePermission>();
 
-            _logger.LogInfrastructureGetItems($"{_logHeader} {StoredProcs.pr_SMSUserRole_GetByRole} RoleValue:{roleValue}", null);
-
-            using var sql = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(StoredProcs.pr_SMSUserRole_GetByRole, sql)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
-
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleSMSRoleCode, roleValue)); // ? CORRECTED: Use correct stored proc and parameter
-
-            var userRoles = new List<SMSUserRole>();
-
-            await sql.OpenAsync().ConfigureAwait(false);
-            using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            
-            while (await reader.ReadAsync().ConfigureAwait(false))
-            {
-                var userRole = Mappers.MapToSMSUserRole(reader);
-                userRoles.Add(userRole);
-            }
-            
-            await sql.CloseAsync().ConfigureAwait(false);
-
-            return Result<IEnumerable<SMSUserRole>>.Success(userRoles.AsEnumerable());
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureGetItemsError($"{_logHeader} {ex.Message}", null);
-            return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
-        }
-    }
-
-    public async Task<Result<IEnumerable<SMSUserRole>>> GetExpiringRolesAsync(DateTime cutoffDate)
-    {
-        try
-        {
-            _logger.LogInfrastructureGetItems($"{_logHeader} {StoredProcs.pr_SMSUserRole_GetExpiringRoles} CutoffDate:{cutoffDate}", null);
-
-            using var sql = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(StoredProcs.pr_SMSUserRole_GetExpiringRoles, sql)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
-
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleCutoffDate, cutoffDate));
-
-            var userRoles = new List<SMSUserRole>();
-
-            await sql.OpenAsync().ConfigureAwait(false);
-            using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            
-            while (await reader.ReadAsync().ConfigureAwait(false))
-            {
-                var userRole = Mappers.MapToSMSUserRole(reader);
-                userRoles.Add(userRole);
+                        var permission = Mappers.MapToSMSUserRolePermission(reader);
+                        userRole.Permissions.Add(permission);
+                    }
+                }
             }
             
             await sql.CloseAsync().ConfigureAwait(false);
@@ -332,10 +461,144 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
             
+            // Dataset 1: SMSUserRole data
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 var userRole = Mappers.MapToSMSUserRole(reader);
                 userRoles.Add(userRole);
+            }
+
+            // Dataset 2: SMSUserRolePermissions data for each user role
+            if (await reader.NextResultAsync().ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var userRoleCode = reader.GetString(FieldNames.fSMSUserRolePermissionSMSUserRoleCode);
+                    var userRole = userRoles.FirstOrDefault(ur => ur.Code == userRoleCode);
+                    if (userRole != null)
+                    {
+                        if (userRole.Permissions == null)
+                            userRole.Permissions = new List<SMSUserRolePermission>();
+
+                        var permission = Mappers.MapToSMSUserRolePermission(reader);
+                        userRole.Permissions.Add(permission);
+                    }
+                }
+            }
+            
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<IEnumerable<SMSUserRole>>.Success(userRoles.AsEnumerable());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemsError($"{_logHeader} {ex.Message}", null);
+            return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
+        }
+    }
+
+    public async Task<Result<IEnumerable<SMSUserRole>>> GetByRoleValueAsync(string roleValue)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(roleValue))
+            {
+                return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
+            }
+
+            _logger.LogInfrastructureGetItems($"{_logHeader} {StoredProcs.pr_SMSUserRole_GetByRole} RoleValue:{roleValue}", null);
+
+            using var sql = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(StoredProcs.pr_SMSUserRole_GetByRole, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleSMSRoleCode, roleValue));
+
+            var userRoles = new List<SMSUserRole>();
+
+            await sql.OpenAsync().ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+            
+            // Dataset 1: SMSUserRole data
+            while (await reader.ReadAsync().ConfigureAwait(false))
+            {
+                var userRole = Mappers.MapToSMSUserRole(reader);
+                userRoles.Add(userRole);
+            }
+
+            // Dataset 2: SMSUserRolePermissions data for each user role
+            if (await reader.NextResultAsync().ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var userRoleCode = reader.GetString(FieldNames.fSMSUserRolePermissionSMSUserRoleCode);
+                    var userRole = userRoles.FirstOrDefault(ur => ur.Code == userRoleCode);
+                    if (userRole != null)
+                    {
+                        if (userRole.Permissions == null)
+                            userRole.Permissions = new List<SMSUserRolePermission>();
+
+                        var permission = Mappers.MapToSMSUserRolePermission(reader);
+                        userRole.Permissions.Add(permission);
+                    }
+                }
+            }
+            
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<IEnumerable<SMSUserRole>>.Success(userRoles.AsEnumerable());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemsError($"{_logHeader} {ex.Message}", null);
+            return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
+        }
+    }
+
+    public async Task<Result<IEnumerable<SMSUserRole>>> GetExpiringRolesAsync(DateTime cutoffDate)
+    {
+        try
+        {
+            _logger.LogInfrastructureGetItems($"{_logHeader} {StoredProcs.pr_SMSUserRole_GetExpiringRoles} CutoffDate:{cutoffDate}", null);
+
+            using var sql = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(StoredProcs.pr_SMSUserRole_GetExpiringRoles, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleCutoffDate, cutoffDate));
+
+            var userRoles = new List<SMSUserRole>();
+
+            await sql.OpenAsync().ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+            
+            // Dataset 1: SMSUserRole data
+            while (await reader.ReadAsync().ConfigureAwait(false))
+            {
+                var userRole = Mappers.MapToSMSUserRole(reader);
+                userRoles.Add(userRole);
+            }
+
+            // Dataset 2: SMSUserRolePermissions data for each user role
+            if (await reader.NextResultAsync().ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var userRoleCode = reader.GetString(FieldNames.fSMSUserRolePermissionSMSUserRoleCode);
+                    var userRole = userRoles.FirstOrDefault(ur => ur.Code == userRoleCode);
+                    if (userRole != null)
+                    {
+                        if (userRole.Permissions == null)
+                            userRole.Permissions = new List<SMSUserRolePermission>();
+
+                        var permission = Mappers.MapToSMSUserRolePermission(reader);
+                        userRole.Permissions.Add(permission);
+                    }
+                }
             }
             
             await sql.CloseAsync().ConfigureAwait(false);
@@ -373,10 +636,29 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
             
+            // Dataset 1: SMSUserRole data
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 var userRole = Mappers.MapToSMSUserRole(reader);
                 userRoles.Add(userRole);
+            }
+
+            // Dataset 2: SMSUserRolePermissions data for each user role
+            if (await reader.NextResultAsync().ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var userRoleCode = reader.GetString(FieldNames.fSMSUserRolePermissionSMSUserRoleCode);
+                    var userRole = userRoles.FirstOrDefault(ur => ur.Code == userRoleCode);
+                    if (userRole != null)
+                    {
+                        if (userRole.Permissions == null)
+                            userRole.Permissions = new List<SMSUserRolePermission>();
+
+                        var permission = Mappers.MapToSMSUserRolePermission(reader);
+                        userRole.Permissions.Add(permission);
+                    }
+                }
             }
             
             await sql.CloseAsync().ConfigureAwait(false);
@@ -399,7 +681,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructurePostItem($"{_logHeader} {StoredProcs.pr_SMSUserRole_Insert} UserId:{userRole.UserID}", null);
+            _logger.LogInfrastructurePostItem($"{_logHeader} {StoredProcs.pr_SMSUserRole_Insert} Code:{userRole.Code}", null);
 
             using var sql = new SqlConnection(_connectionString);
             using var cmd = new SqlCommand(StoredProcs.pr_SMSUserRole_Insert, sql)
@@ -407,31 +689,16 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleCode, userRole.Id.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleUserId, userRole.UserID));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleUserType, userRole.UserType));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleSMSRoleCode, userRole.RoleValue)); // ? CORRECTED: Use SMSRoleCode FK
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleDepartment, userRole.Department));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleEffectiveDate, userRole.EffectiveDate));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleExpirationDate, userRole.ExpirationDate ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleIsActive, userRole.IsActive));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleAssignedBy, userRole.AssignedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleAssignedDate, DateTime.UtcNow)); // ? CORRECTED: Added AssignedDate
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleCode, userRole.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRoleName, userRole.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, userRole.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, userRole.CreatedDate));
-
-            var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
-            var newCode = new SqlParameter("@pNewCode", SqlDbType.VarChar, 60) { Direction = ParameterDirection.Output };
-            cmd.Parameters.Add(newID);
-            cmd.Parameters.Add(newCode);
 
             await sql.OpenAsync().ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
-
-            return await GetByIdAsync(newCodeValue).ConfigureAwait(false);
+            return await GetByIdAsync(userRole.Code).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -449,24 +716,45 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                 return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructurePutItem($"{_logHeader} {StoredProcs.pr_SMSUserRole_Update} ID:{userRole.Id.Value}", null);
+            _logger.LogInfrastructurePutItem($"{_logHeader} {StoredProcs.pr_SMSUserRole_Update} Code:{userRole.Code}", null);
 
             using var sql = new SqlConnection(_connectionString);
+            await sql.OpenAsync().ConfigureAwait(false);
+
+            // Update the main user role
             using var cmd = new SqlCommand(StoredProcs.pr_SMSUserRole_Update, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, userRole.Id.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleExpirationDate, userRole.ExpirationDate ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleIsActive, userRole.IsActive));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleDeactivatedBy, userRole.DeactivatedBy ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleDeactivatedDate, userRole.DeactivatedDate ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, userRole.UpdatedBy ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, userRole.UpdatedDate ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleCode, userRole.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRoleName, userRole.Name));
+            
 
-            await sql.OpenAsync().ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+            // Update each permission
+            if (userRole.Permissions != null)
+            {
+                foreach (var permission in userRole.Permissions)
+                {
+                    using var permCmd = new SqlCommand(StoredProcs.pr_SMSUserRolePermission_Update, sql)
+                    {
+                        CommandType = CommandType.StoredProcedure
+                    };
+
+                    permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionCode, permission.Code));
+                    permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionSMSUserRoleCode, permission.SMSUserRoleCode));
+                    permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionModule, permission.SMSModule));
+                    permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionCreate, permission.Create));
+                    permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionRead, permission.Read));
+                    permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionUpdate, permission.Update));
+                    permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionDelete, permission.Delete));
+
+                    await permCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                }
+            }
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result<bool>.Success(true);
@@ -509,26 +797,6 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
         {
             _logger.LogInfrastructureDeleteItemError($"{_logHeader} {ex.Message}", null);
             return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.DeleteFailed);
-        }
-    }
-
-    public async Task<Result<bool>> UserHasRoleAsync(string userId, string roleValue)
-    {
-        try
-        {
-            var activeRolesResult = await GetActiveRolesByUserIdAsync(userId);
-            if (activeRolesResult.IsFailure)
-            {
-                return Result<bool>.Failure<bool>(activeRolesResult.Error);
-            }
-
-            var hasRole = activeRolesResult.Value.Any(ur => ur.RoleValue.Equals(roleValue, StringComparison.OrdinalIgnoreCase));
-            return Result<bool>.Success(hasRole);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureGetItemError($"{_logHeader} {ex.Message}", null);
-            return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 

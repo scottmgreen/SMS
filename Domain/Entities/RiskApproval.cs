@@ -260,10 +260,10 @@ public sealed class RiskApproval : BaseAuditableEntity
         return !string.IsNullOrWhiteSpace(MeetingId);
     }
 
-    public bool CanApprover(SMSRole approverRole)
-    {
-        return RiskLevel.CanApprove(approverRole);
-    }
+    //public bool CanApprover(SMSOrganizationalUserRole approverRole)
+    //{
+    //    return RiskLevel.CanApprove(approverRole);
+    //}
 
     public TimeSpan? GetTimeToExpiration()
     {

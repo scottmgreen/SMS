@@ -18,7 +18,7 @@ public class SMSRoleService : ISMSRoleService
         _userRoleRepository = userRoleRepository ?? throw new ArgumentNullException(nameof(userRoleRepository));
     }
 
-    public async Task<SMSUserRole> AssignRoleToUserAsync(
+    public async Task<SMSApplicationUserRole> AssignRoleToUserAsync(
         string userID,
         string userType,
         SMSRole role,
@@ -28,7 +28,7 @@ public class SMSRoleService : ISMSRoleService
         DateTime? expirationDate = null,
         string? notes = null)
     {
-        var userRole = SMSUserRole.Create(
+        var userRole = SMSApplicationUserRole.Create(
             userID,
             userType,
             role,
@@ -59,16 +59,16 @@ public class SMSRoleService : ISMSRoleService
         }
     }
 
-    public async Task<IEnumerable<SMSUserRole>> GetActiveUserRolesAsync(string userID)
+    public async Task<IEnumerable<SMSApplicationUserRole>> GetActiveUserRolesAsync(string userID)
     {
         var result = await _userRoleRepository.GetActiveRolesByUserIdAsync(userID);
-        return result.IsSuccess ? result.Value : Enumerable.Empty<SMSUserRole>();
+        return result.IsSuccess ? result.Value : Enumerable.Empty<SMSApplicationUserRole>();
     }
 
-    public async Task<IEnumerable<SMSUserRole>> GetUsersWithRoleAsync(SMSRole role)
+    public async Task<IEnumerable<SMSApplicationUserRole>> GetUsersWithRoleAsync(SMSRole role)
     {
         var result = await _userRoleRepository.GetByRoleValueAsync(role.Value);
-        return result.IsSuccess ? result.Value.Where(ur => ur.IsActive) : Enumerable.Empty<SMSUserRole>();
+        return result.IsSuccess ? result.Value.Where(ur => ur.IsActive) : Enumerable.Empty<SMSApplicationUserRole>();
     }
 
     public async Task<bool> UserHasRoleAsync(string userID, SMSRole role)
@@ -110,13 +110,13 @@ public class SMSRoleService : ISMSRoleService
         return maxAuthority >= requiredAuthorityLevel;
     }
 
-    public async Task<IEnumerable<SMSUserRole>> GetUsersWhoCanApproveAsync(int requiredAuthorityLevel)
+    public async Task<IEnumerable<SMSApplicationUserRole>> GetUsersWhoCanApproveAsync(int requiredAuthorityLevel)
     {
         var allUserRoles = await _userRoleRepository.GetAllActiveAsync();
         if (allUserRoles.IsFailure)
-            return Enumerable.Empty<SMSUserRole>();
+            return Enumerable.Empty<SMSApplicationUserRole>();
 
-        var eligibleRoles = new List<SMSUserRole>();
+        var eligibleRoles = new List<SMSApplicationUserRole>();
         foreach (var userRole in allUserRoles.Value)
         {
             var role = SMSRole.GetAllValues().FirstOrDefault(r => r.Value == userRole.RoleValue);
@@ -129,11 +129,11 @@ public class SMSRoleService : ISMSRoleService
         return eligibleRoles;
     }
 
-    public async Task<IEnumerable<SMSUserRole>> GetExpiringRoleAssignmentsAsync(int daysFromNow)
+    public async Task<IEnumerable<SMSApplicationUserRole>> GetExpiringRoleAssignmentsAsync(int daysFromNow)
     {
         var cutoffDate = DateTime.UtcNow.AddDays(daysFromNow);
         var result = await _userRoleRepository.GetExpiringRolesAsync(cutoffDate);
-        return result.IsSuccess ? result.Value : Enumerable.Empty<SMSUserRole>();
+        return result.IsSuccess ? result.Value : Enumerable.Empty<SMSApplicationUserRole>();
     }
 
     public async Task<bool> ValidateUserAuthorizationAsync(string userID, SMSRole requiredRole)
@@ -141,32 +141,32 @@ public class SMSRoleService : ISMSRoleService
         return await UserHasRoleAsync(userID, requiredRole);
     }
 
-    public async Task<IEnumerable<SMSUserRole>> GetRoleAssignmentHistoryAsync(string? userID = null, string? roleValue = null)
+    public async Task<IEnumerable<SMSApplicationUserRole>> GetRoleAssignmentHistoryAsync(string? userID = null, string? roleValue = null)
     {
         if (!string.IsNullOrEmpty(userID))
         {
             var result = await _userRoleRepository.GetByUserIdAsync(userID);
-            return result.IsSuccess ? result.Value : Enumerable.Empty<SMSUserRole>();
+            return result.IsSuccess ? result.Value : Enumerable.Empty<SMSApplicationUserRole>();
         }
 
         if (!string.IsNullOrEmpty(roleValue))
         {
             var result = await _userRoleRepository.GetByRoleValueAsync(roleValue);
-            return result.IsSuccess ? result.Value : Enumerable.Empty<SMSUserRole>();
+            return result.IsSuccess ? result.Value : Enumerable.Empty<SMSApplicationUserRole>();
         }
 
         var allResult = await _userRoleRepository.GetAllAsync();
-        return allResult.IsSuccess ? allResult.Value : Enumerable.Empty<SMSUserRole>();
+        return allResult.IsSuccess ? allResult.Value : Enumerable.Empty<SMSApplicationUserRole>();
     }
 
-    public async Task<IEnumerable<SMSUserRole>> BulkAssignRoleAsync(
+    public async Task<IEnumerable<SMSApplicationUserRole>> BulkAssignRoleAsync(
         IEnumerable<string> userIDs,
         string userType,
         SMSRole role,
         string department,
         string assignedBy)
     {
-        var assignments = new List<SMSUserRole>();
+        var assignments = new List<SMSApplicationUserRole>();
         
         foreach (var userID in userIDs)
         {

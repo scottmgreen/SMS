@@ -15,9 +15,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
     private readonly List<string> _stakeholderIds = new();
     private readonly List<int> _completedSteps = new();
 
-    // Constructor for Entity Framework
-    private RiskAssessment() : base(new RiskAssessmentID(Guid.NewGuid().ToString()), "SYSTEM", DateTime.UtcNow) { }
-
+        
     // Public constructor following the pattern
     public RiskAssessment(RiskAssessmentID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
 

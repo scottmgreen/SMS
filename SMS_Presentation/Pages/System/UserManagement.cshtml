@@ -1,0 +1,211 @@
+@page
+@model SMS_Presentation.Pages.System.UserManagementModel
+@{
+    ViewData["Title"] = "User Management Dashboard - System Administration";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/System">System Administration</a></li>
+                    <li class="breadcrumb-item active">User Management</li>
+                </ol>
+            </nav>
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h1 class="card-title"><i class="fas fa-users"></i> User Management Dashboard</h1>
+                    <p class="card-text">Comprehensive management system for SMS Application Users, Stakeholder Users, User Roles, and Groups</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card border-primary text-center">
+                <div class="card-body">
+                    <h3 class="text-primary">@Model.ApplicationUserCount</h3>
+                    <p class="mb-0"><i class="fas fa-cog"></i> Application Users</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-info text-center">
+                <div class="card-body">
+                    <h3 class="text-info">@Model.StakeholderUserCount</h3>
+                    <p class="mb-0"><i class="fas fa-handshake"></i> Stakeholder Users</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-success text-center">
+                <div class="card-body">
+                    <h3 class="text-success">@Model.UserRoleCount</h3>
+                    <p class="mb-0"><i class="fas fa-user-shield"></i> User Roles</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning text-center">
+                <div class="card-body">
+                    <h3 class="text-warning">@Model.ApplicationGroupCount</h3>
+                    <p class="mb-0"><i class="fas fa-users-cog"></i> Application Groups</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-secondary text-center">
+                <div class="card-body">
+                    <h3 class="text-secondary">@Model.StakeholderGroupCount</h3>
+                    <p class="mb-0"><i class="fas fa-users"></i> Stakeholder Groups</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Management Navigation Cards -->
+    <div class="row">
+        <!-- User Management Section -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-users"></i> User Management</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Manage SMS Application Users and Stakeholder Users with full CRUD operations.</p>
+                    <div class="d-grid gap-2">
+                        <a href="/System/ApplicationUsers" class="btn btn-primary">
+                            <i class="fas fa-cog"></i> Manage Application Users
+                        </a>
+                        <a href="/System/StakeholderUsers" class="btn btn-info">
+                            <i class="fas fa-handshake"></i> Manage Stakeholder Users
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role Management Section -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-user-shield"></i> Role & Permissions Management</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Configure user roles, permissions, and manage role assignments for the SMS system.</p>
+                    <div class="d-grid gap-2">
+                        <a href="/System/UserRoleManagement" class="btn btn-success">
+                            <i class="fas fa-cog"></i> Manage Role Definitions & Permissions
+                        </a>
+                        <a href="/System/UserRoles" class="btn btn-outline-success">
+                            <i class="fas fa-user-shield"></i> Manage Role Assignments
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Group Management Section -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0"><i class="fas fa-users-cog"></i> Group Management</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Create and manage user groups for organized access control and user categorization.</p>
+                    <div class="d-grid gap-2">
+                        <a href="/System/ApplicationGroups" class="btn btn-warning">
+                            <i class="fas fa-users-cog"></i> Manage Application Groups
+                        </a>
+                        <a href="/System/StakeholderGroups" class="btn btn-secondary">
+                            <i class="fas fa-users"></i> Manage Stakeholder Groups
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Section -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Common administrative tasks and system utilities.</p>
+                    <div class="d-grid gap-2">
+                        <a href="/System/ApplicationUsers?action=create" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-plus"></i> Create New Application User
+                        </a>
+                        <a href="/System/StakeholderUsers?action=create" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-plus"></i> Create New Stakeholder User
+                        </a>
+                        <a href="/System/UserRoleManagement" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-plus"></i> Create New Role Definition
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Information -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> System Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-0">
+                        <strong>User Management System:</strong> This centralized dashboard provides access to all user management functions.
+                        Each section offers complete CRUD (Create, Read, Update, Delete) operations for their respective entities.
+                        Use the navigation cards above to access specific management areas.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.card-header h5 {
+    margin-bottom: 0;
+}
+
+.btn {
+    transition: all 0.2s ease-in-out;
+}
+</style>
+

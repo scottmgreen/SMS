@@ -63,12 +63,48 @@ public class Login : PageModel
             // Create session with SMS Domain Entity data directly
             CreateSMSSession(user, userType);
 
+            // **CRITICAL FIX**: Ensure session is saved before redirect
+            await HttpContext.Session.CommitAsync();
+
             _logger.LogInformation("SMS Backend authentication successful: {UserId} ({UserType})",
-                user.UserId.Value, userType.Name);
+                user.Code, userType.Name);
 
             // Redirect based on SMS User Type
             var redirectUrl = GetDashboardUrl(userType);
-            return Redirect(!string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl) ? ReturnUrl : redirectUrl);
+            
+            // **ENHANCED REDIRECT LOGIC WITH MULTIPLE FALLBACKS**
+            try
+            {
+                if (!string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
+                {
+                    _logger.LogInformation("Redirecting to return URL: {ReturnUrl}", ReturnUrl);
+                    return LocalRedirect(ReturnUrl);
+                }
+                else
+                {
+                    _logger.LogInformation("Redirecting to dashboard: {DashboardUrl}", redirectUrl);
+                    
+                    // Try multiple redirect approaches
+                    if (redirectUrl == "/Index")
+                    {
+                        return RedirectToPage("/Index");
+                    }
+                    else if (redirectUrl.StartsWith("/Dashboard/"))
+                    {
+                        var pageName = redirectUrl.Replace("/Dashboard/", "");
+                        return RedirectToPage("/Dashboard/" + pageName);
+                    }
+                    else
+                    {
+                        return LocalRedirect(redirectUrl);
+                    }
+                }
+            }
+            catch (Exception redirectEx)
+            {
+                _logger.LogError(redirectEx, "Redirect failed, trying fallback to Index");
+                return RedirectToPage("/Index");
+            }
         }
         catch (Exception ex)
         {
@@ -142,15 +178,65 @@ public class Login : PageModel
     /// </summary>
     private void CreateSMSSession(BaseUser user, SMSUserType userType)
     {
-        _logger.LogInformation("Creating SMS Session: UserId={UserId}, UserType.Value={UserTypeValue}, UserType.Name={UserTypeName}", 
-            user.UserId.Value, userType.Value, userType.Name);
-
-        HttpContext.Session.SetString("SMS_UserId", user.UserId.Value);
+        // **FIX**: Store consistent session keys - use SMS_UserId instead of SMS_UserCode
+        HttpContext.Session.SetString("SMS_UserId", user.Code); // This is what middleware expects
+        HttpContext.Session.SetString("SMS_UserCode", user.Code);
         HttpContext.Session.SetString("SMS_UserType", userType.Value); // Use .Value, not .Name
         HttpContext.Session.SetString("SMS_Email", user.UserName.Value);
         HttpContext.Session.SetString("SMS_DisplayName", user.DisplayName);
         HttpContext.Session.SetString("SMS_FirstName", user.FirstName.Value);
         HttpContext.Session.SetString("SMS_LastName", user.LastName.Value);
+
+        _logger.LogInformation("Creating SMS Session: UserId={UserId}, UserType={UserType}, DisplayName={DisplayName}",
+            user.Code, userType.Value, user.DisplayName);
+
+        // Store user role information (common for all user types)
+        if (user.UserRole != null)
+        {
+            HttpContext.Session.SetString("SMS_UserRoleCode", user.UserRole.Code ?? string.Empty);
+            HttpContext.Session.SetString("SMS_UserRoleName", user.UserRole.Name ?? string.Empty);
+
+            // Store serialized permissions with proper null checking and debugging
+            try
+            {
+                if (user.UserRole.Permissions != null && user.UserRole.Permissions.Any())
+                {
+                    var permissionsData = user.UserRole.Permissions.Select(p => new {
+                        Module = p.SMSModule ?? string.Empty,
+                        Create = p.Create,
+                        Read = p.Read,
+                        Update = p.Update,
+                        Delete = p.Delete
+                    }).ToList();
+
+                    var permissionsJson = global::System.Text.Json.JsonSerializer.Serialize(permissionsData);
+                    HttpContext.Session.SetString("SMS_UserPermissions", permissionsJson);
+
+                    _logger.LogInformation("Stored {Count} permissions for user {UserId}",
+                        user.UserRole.Permissions.Count, user.Code);
+                }
+                else
+                {
+                    // No permissions found - store empty array
+                    HttpContext.Session.SetString("SMS_UserPermissions", "[]");
+                    _logger.LogWarning("No permissions found for user {UserId} with role {RoleCode}",
+                        user.Code, user.UserRole.Code);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to serialize permissions for user {UserId}", user.UserId.Value);
+                HttpContext.Session.SetString("SMS_UserPermissions", "[]");
+            }
+        }
+        else
+        {
+            // No user role assigned
+            _logger.LogWarning("No UserRole assigned to user {UserCode}", user.Code);
+            HttpContext.Session.SetString("SMS_UserRoleCode", string.Empty);
+            HttpContext.Session.SetString("SMS_UserRoleName", string.Empty);
+            HttpContext.Session.SetString("SMS_UserPermissions", "[]");
+        }
 
         _logger.LogInformation("Session base data stored successfully");
 
@@ -158,46 +244,54 @@ public class Login : PageModel
         switch (userType)
         {
             case var type when type == SMSUserType.Application && user is SMSApplicationUser appUser:
-                HttpContext.Session.SetString("SMS_ApplicationRole", appUser.ApplicationRole);
-                HttpContext.Session.SetString("SMS_PermissionLevel", appUser.PermissionLevel);
-                _logger.LogInformation("Application user session data: Role={Role}, PermissionLevel={Level}", 
-                    appUser.ApplicationRole, appUser.PermissionLevel);
+                // Application users now only have basic properties + UserRole
+                HttpContext.Session.SetString("SMS_ApplicationUserCode", appUser.Code ?? string.Empty);
+                _logger.LogInformation("Application user session data: UserId={UserId}, Role={RoleName}",
+                    appUser.ApplicationUserId?.Value, user.UserRole?.Name);
                 break;
 
             case var type when type == SMSUserType.Organizational && user is SMSOrganizationalUser orgUser:
-                HttpContext.Session.SetString("SMS_Department", orgUser.Department);
-                HttpContext.Session.SetString("SMS_Position", orgUser.Position);
-                HttpContext.Session.SetString("SMS_OrganizationLevel", orgUser.OrganizationLevel);
-                _logger.LogInformation("Organizational user session data: Dept={Dept}, Position={Position}, Level={Level}", 
+                HttpContext.Session.SetString("SMS_Department", orgUser.Department ?? string.Empty);
+                HttpContext.Session.SetString("SMS_Position", orgUser.Position ?? string.Empty);
+                HttpContext.Session.SetString("SMS_OrganizationLevel", orgUser.OrganizationLevel ?? string.Empty);
+                HttpContext.Session.SetString("SMS_OrganizationalUserId", orgUser.OrganizationalUserId?.Value ?? string.Empty);
+                _logger.LogInformation("Organizational user session data: Dept={Dept}, Position={Position}, Level={Level}",
                     orgUser.Department, orgUser.Position, orgUser.OrganizationLevel);
                 break;
 
             case var type when type == SMSUserType.Stakeholder && user is SMSStakeholderUser stakeholderUser:
-                HttpContext.Session.SetString("SMS_Organization", stakeholderUser.Organization);
-                HttpContext.Session.SetString("SMS_StakeholderType", stakeholderUser.StakeholderType);
-                HttpContext.Session.SetString("SMS_AccessLevel", stakeholderUser.AccessLevel);
-                _logger.LogInformation("Stakeholder user session data: Org={Org}, Type={Type}, Access={Access}", 
-                    stakeholderUser.Organization, stakeholderUser.StakeholderType, stakeholderUser.AccessLevel);
+                HttpContext.Session.SetString("SMS_Organization", stakeholderUser.Organization ?? string.Empty);
+                HttpContext.Session.SetString("SMS_StakeholderType", stakeholderUser.StakeholderType ?? string.Empty);
+                HttpContext.Session.SetString("SMS_StakeholderUserId", stakeholderUser.StakeholderUserId?.Value ?? string.Empty);
+                // Note: AccessLevel removed - now handled through UserRole permissions
+                _logger.LogInformation("Stakeholder user session data: Org={Org}, Type={Type}, Role={RoleName}",
+                    stakeholderUser.Organization, stakeholderUser.StakeholderType, user.UserRole?.Name);
                 break;
 
             default:
-                _logger.LogWarning("Unknown user type or casting failed: UserType={UserType}, UserClass={UserClass}", 
+                _logger.LogWarning("Unknown user type or casting failed: UserType={UserType}, UserClass={UserClass}",
                     userType.Value, user.GetType().Name);
                 break;
         }
+
+        // **IMPORTANT**: Mark session as authenticated
+        HttpContext.Session.SetString("IsAuthenticated", "true");
     }
 
     /// <summary>
     /// Get dashboard URL based on SMS Domain User Type
     /// </summary>
-    private static string GetDashboardUrl(SMSUserType userType)
+    private string GetDashboardUrl(SMSUserType userType)
     {
-        return userType.Value switch
+        var url = userType.Value switch
         {
             "APPLICATION" => "/Dashboard/System",
-            "ORGANIZATIONAL" => "/Dashboard/Operations",
+            "ORGANIZATIONAL" => "/Dashboard/Operations", 
             "STAKEHOLDER" => "/Dashboard/Stakeholder",
             _ => "/Index"
         };
+
+        _logger.LogInformation("Dashboard URL for user type {UserType}: {Url}", userType.Value, url);
+        return url;
     }
 }

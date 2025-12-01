@@ -236,7 +236,7 @@ public sealed class SMSApplicationUserService : ISMSApplicationUserService
     /// <summary>
     /// Authenticates an SMS Application User with comprehensive business logic
     /// </summary>
-    public async Task<Result<SMSApplicationUser>> AuthenticateSMSApplicationUserAsync(string userName, string plainTextPassword, CancellationToken ct = default)
+    public async Task<Result<bool>> AuthenticateSMSApplicationUserAsync(string userName, string plainTextPassword, CancellationToken ct = default)
     {
         try
         {
@@ -246,13 +246,13 @@ public sealed class SMSApplicationUserService : ISMSApplicationUserService
             if (string.IsNullOrWhiteSpace(userName))
             {
                 _logger.LogWarning("Authentication failed - empty username");
-                return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.UserNameError.NullOrEmpty);
+                return Result<bool>.Failure<bool>(DomainErrors.UserNameError.NullOrEmpty);
             }
 
             if (string.IsNullOrWhiteSpace(plainTextPassword))
             {
                 _logger.LogWarning("Authentication failed - empty password for user: {UserName}", userName);
-                return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.PasswordError.NullOrEmpty);
+                return Result<bool>.Failure<bool>(DomainErrors.PasswordError.NullOrEmpty);
             }
 
             var result = await _dataService.AuthenticateSMSApplicationUserAsync(userName, plainTextPassword, ct).ConfigureAwait(false);
@@ -262,18 +262,18 @@ public sealed class SMSApplicationUserService : ISMSApplicationUserService
                 var user = result.Value;
 
                 // Business rule - check if user is active
-                if (!user.IsActive)
-                {
-                    _logger.LogWarning("Authentication failed - user is inactive: {UserName}", userName);
-                    return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.BaseUserError.InactiveUser);
-                }
+                //if (!user.IsActive)
+                //{
+                //    _logger.LogWarning("Authentication failed - user is inactive: {UserName}", userName);
+                //    return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.BaseUserError.InactiveUser);
+                //}
 
-                // Business rule - check if password needs to be changed
-                if (user.RequiresPasswordChange)
-                {
-                    _logger.LogInformation("User {UserName} requires password change", userName);
-                    // Could return specific result indicating password change required
-                }
+                //// Business rule - check if password needs to be changed
+                //if (user.RequiresPasswordChange)
+                //{
+                //    _logger.LogInformation("User {UserName} requires password change", userName);
+                //    // Could return specific result indicating password change required
+                //}
 
                 _logger.LogInformation("Successfully authenticated SMS Application User: {UserName}", userName);
             }
@@ -287,7 +287,7 @@ public sealed class SMSApplicationUserService : ISMSApplicationUserService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error during authentication for user: {UserName}", userName);
-            return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.LoginFailed);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.LoginFailed);
         }
     }
 
@@ -386,5 +386,20 @@ public sealed class SMSApplicationUserService : ISMSApplicationUserService
             _logger.LogError(ex, "Unexpected error retrieving SMS Application User statistics");
             return Result<UserStatistics>.Failure<UserStatistics>(GeneralError.UnProcessableRequest);
         }
+    }
+
+    public Task<Result<bool>> UserNameExistsAsync(string userName, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<SMSApplicationUser>> GetByUserNameAsync(string userName, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<UserStatistics>> GetUserStatisticsAsync(CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
     }
 }

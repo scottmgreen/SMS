@@ -2,7 +2,7 @@
 
 public interface ISMSStakeholderUserService
 {
-    Task<Result<SMSStakeholderUser>> AuthenticateSMSStakeholderUserAsync(string userName, string plainTextPassword, CancellationToken ct = default);
+    Task<Result<bool>> AuthenticateSMSStakeholderUserAsync(string userName, string plainTextPassword, CancellationToken ct = default);
     Task<Result<SMSStakeholderUser>> CreateSMSStakeholderUserAsync(SMSStakeholderUser user, CancellationToken ct = default);
     Task<Result<IEnumerable<SMSStakeholderUser>>> GetAirlineStakeholdersAsync(CancellationToken ct = default);
     Task<Result<IEnumerable<SMSStakeholderUser>>> GetAllSMSStakeholderUsersAsync(CancellationToken ct = default);

@@ -5,15 +5,6 @@
     var analyzedCount = Model.Step3.HazardAnalyses?.Count(ha => ha.Value.IsComplete) ?? 0;
     var analysisProgress = hazardCount > 0 ? (analyzedCount * 100) / hazardCount : 0;
 }
-@* <div class="row">
-    <div class="col-12">
-        <div class="alert alert-info">
-            <i class="fas fa-chart-line"></i>
-            <strong>Step 3 Objective:</strong> Analyze each identified hazard by documenting the worst credible outcome and root causes. 
-            The SMS Risk Matrix (5x5) scoring will be completed in Step 4.
-        </div>
-    </div>
-</div> *@
 
 <!-- Risk Analysis Method Display (Fixed to SMS Risk Matrix) -->
 <div class="row mb-4">
@@ -29,63 +20,40 @@
             </div>
             <div class="card-body">
                 <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <div class="d-flex align-items-center">
-                            @* <div class="me-3">
-                                <i class="fas fa-table fa-2x text-primary"></i>
-                            </div> *@
-                            <div>
-                                @* <h5 class="mb-1">SMS Risk Matrix (5x5)</h5>
-                                <p class="mb-0 text-muted">The standard SMS 5x5 risk matrix method for systematic risk analysis</p> *@
-                                
-                                <!-- Hidden field to maintain the method -->
-                                <input type="hidden" asp-for="@Model.Step3.RiskAnalysisMethod" value="SMS Risk Matrix" />
+                    <div class="col-md-12">
+                        <!-- Hidden field to maintain the method -->
+                        <input type="hidden" asp-for="@Model.Step3.RiskAnalysisMethod" value="SMS Risk Matrix" />
 
-                                <div class="alert alert-info mb-3">
-                                    <div class="row">
-                                        <div class="col-md-8">
-                                            <h6 class="mb-2"><i class="fas fa-info-circle"></i> Risk Analysis - SMS Risk Matrix</h6>
-                                            <p class="mb-1 small">
-                                                For each identified hazard, we need to determine the <strong>worst credible outcome</strong> 
-                                                and analyze the <strong>root causes</strong> that could lead to that outcome.
-                                            </p>
-                                        </div>
-                                        <div class="col-md-4 text-end">
-                                            <div class="small text-muted">
-                                                Method: SMS Risk Matrix<br>
-                                                Hazards: @hazardCount<br>
-                                                Analyzed: @analyzedCount
-                                            </div>
-                                        </div>
+                        <div class="alert alert-info mb-3">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h6 class="mb-2"><i class="fas fa-info-circle"></i> Risk Analysis - SMS Risk Matrix</h6>
+                                    <p class="mb-1 small">
+                                        For each identified hazard, we need to determine the <strong>worst credible outcome</strong> 
+                                        and analyze the <strong>root causes</strong> that could lead to that outcome.
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <div class="small text-muted">
+                                        Method: SMS Risk Matrix<br>
+                                        Hazards: @hazardCount<br>
+                                        Analyzed: @analyzedCount
                                     </div>
                                 </div>
+                            </div>
+                        </div>
 
-                                <div class="mb-3">
-                                    <label class="form-label">Risk Analysis Criteria</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-clipboard-check"></i></span>
-                                        <textarea class="form-control" asp-for="@Model.Step3.RiskCriteria" rows="2"></textarea>
-                                    </div>
-                                    <div class="form-text">
-                                        Specify any specific criteria or assumptions for this risk analysis
-                                    </div>
-                                </div>
+                        <div class="mb-3">
+                            <label class="form-label">Risk Analysis Criteria</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-clipboard-check"></i></span>
+                                <textarea class="form-control" asp-for="@Model.Step3.RiskCriteria" rows="2"></textarea>
+                            </div>
+                            <div class="form-text">
+                                Specify any specific criteria or assumptions for this risk analysis
                             </div>
                         </div>
                     </div>
-                    @* <div class="col-md-4">
-                        <div class="card border-info">
-                            <div class="card-body text-center p-2">
-                                <div class="h6 text-info mb-1">Analysis Progress</div>
-                                
-                                <div class="h4 text-primary">@analyzedCount / @hazardCount</div>
-                                <small>Hazards Analyzed</small>
-                                <div class="progress mt-2" style="height: 6px;">
-                                    <div class="progress-bar bg-primary" style="width: @analysisProgress%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div> *@
                 </div>
                 
                 <div class="row mt-3">
@@ -184,50 +152,9 @@
                                         <div class="form-text">Document any additional context, assumptions, or observations relevant to this hazard</div>
                                     </div>
                                 </div>
-                                
-                                <!-- Analysis Tips -->
-                                @* <div class="alert alert-light">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <h6><i class="fas fa-lightbulb text-warning"></i> Worst Credible Outcome Tips:</h6>
-                                            <ul class="small mb-0">
-                                                <li>Focus on realistic, not theoretical outcomes</li>
-                                                <li>Consider direct and indirect consequences</li>
-                                                <li>Include operational, safety, and financial impacts</li>
-                                                <li>Think about cascading effects</li>
-                                            </ul>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <h6><i class="fas fa-search text-info"></i> Root Cause Analysis Tips:</h6>
-                                            <ul class="small mb-0">
-                                                <li>Use the "5 Whys" technique</li>
-                                                <li>Consider human, technical, and organizational factors</li>
-                                                <li>Look beyond immediate causes to system-level issues</li>
-                                                <li>Reference your 5M analysis from Step 1</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div> *@
                             </div>
                         </div>
                     }
-                    
-                    <!-- Progress Summary -->
-                    <div class="row mt-4">
-                        <div class="col-12">
-                           @*  <div class="alert alert-info">
-                                <div class="row align-items-center">
-                                    <div class="col">
-                                        <strong><i class="fas fa-info-circle"></i> Step 3 Focus:</strong> 
-                                        Complete the analysis for each hazard above. Risk matrix scoring (Severity × Likelihood) will be performed in Step 4.
-                                    </div>
-                                    <div class="col-auto">
-                                        <div class="badge bg-primary">@analyzedCount of @hazardCount hazards analyzed</div>
-                                    </div>
-                                </div>
-                            </div> *@
-                        </div>
-                    </div>
                 }
                 else
                 {
@@ -244,9 +171,6 @@
         </div>
     </div>
 </div>
-
-<!-- SMS Risk Matrix Reference (Informational Only) -->
-
 
 <script>
 // SIMPLIFIED Step 3 JavaScript - Server-Side Logic Focused
@@ -357,4 +281,42 @@ function addRealTimeValidation() {
                 textarea.classList.add('is-invalid');
                 counter.className = 'text-danger ms-2 character-counter';
                 counter.textContent = `${length}/${minLength} characters (minimum ${minLength} required)`;
-}}}
+            } else {
+                textarea.classList.add('is-valid');
+                counter.className = 'text-success ms-2 character-counter';
+                counter.textContent = `${length} characters ?`;
+            }
+        }
+        
+        updateValidation();
+        textarea.addEventListener('input', () => {
+            updateValidation();
+            autoSaveStep3();
+        });
+        textarea.addEventListener('blur', updateValidation);
+    });
+}
+
+// ===================================================
+// INITIALIZATION
+// ===================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('? Step 3 Simple - validation + auto-save');
+    
+    // Initialize popovers
+    if (typeof bootstrap !== 'undefined' && bootstrap.Popover) {
+        const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
+        const popoverList = [...popoverTriggerList].map(popoverTriggerEl => {
+            return new bootstrap.Popover(popoverTriggerEl, {
+                html: true,
+                trigger: 'click',
+                container: 'body'
+            });
+        });
+    }
+    
+    // Add real-time validation
+    addRealTimeValidation();
+});
+</script>

@@ -1,7 +1,7 @@
 ﻿using SMS_Infrastructure.Interfaces;
 using SMS_Infrastructure.Services;
-using SMS_Infrastructure.Persistence;
 using SMS_Domain.Interfaces;
+using Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Configuration;
 
@@ -43,11 +43,19 @@ internal static class ServiceCollectionExtensions
         services.AddScoped<MitigationAssignmentRepository>();
         services.AddScoped<ReportValidationRepository>();
         services.AddScoped<ScoringPanelRepository>();
+        services.AddScoped<SMSApplicationUserRepository>();
+        services.AddScoped<SMSApplicationGroupRepository>();
+        services.AddScoped<SMSStakeholderGroupRepository>();
+        services.AddScoped<SMSStakeholderUserRepository>();
+        services.AddScoped<SMSUserRoleRepository>();
 
         // SMS User Data Services
         services.AddScoped<SMSApplicationUserDataService>();
         services.AddScoped<SMSOrganizationalUserDataService>();
         services.AddScoped<SMSStakeholderUserDataService>();
+        services.AddScoped<SMSApplicationGroupDataService>();
+        services.AddScoped<SMSStakeholderGroupDataService>();
+        services.AddScoped<SMSUserRoleDataService>();
 
         // SMS Data Services - ALL AVAILABLE SERVICES
         services.AddScoped<HazardDataService>();

@@ -60,5 +60,5 @@ public interface ISMSInvestigationWorkflowService
     /// <summary>
     /// Get available investigators
     /// </summary>
-    Task<Result<List<SMSApplicationUser>>> GetAvailableInvestigatorsAsync(CancellationToken cancellationToken = default);
+    //Task<Result<List<SMSApplicationUser>>> GetAvailableInvestigatorsAsync(CancellationToken cancellationToken = default);
 }

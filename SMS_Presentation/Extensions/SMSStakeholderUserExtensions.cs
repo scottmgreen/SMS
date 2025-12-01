@@ -50,17 +50,17 @@ public static class SMSStakeholderUserExtensions
     /// <summary>
     /// Gets stakeholder access level description for UI display
     /// </summary>
-    public static string GetAccessLevelDescription(this SMSStakeholderUser stakeholder)
-    {
-        return stakeholder.AccessLevel switch
-        {
-            "Limited" => "Limited Access - View Only",
-            "Standard" => "Standard Access - View & Comment",
-            "Extended" => "Extended Access - Full Participation",
-            "Full" => "Full Access - All Operations",
-            _ => $"Custom Access - {stakeholder.AccessLevel}"
-        };
-    }
+    //public static string GetAccessLevelDescription(this SMSStakeholderUser stakeholder)
+    //{
+    //    return stakeholder.AccessLevel switch
+    //    {
+    //        "Limited" => "Limited Access - View Only",
+    //        "Standard" => "Standard Access - View & Comment",
+    //        "Extended" => "Extended Access - Full Participation",
+    //        "Full" => "Full Access - All Operations",
+    //        _ => $"Custom Access - {stakeholder.AccessLevel}"
+    //    };
+    //}
 
     /// <summary>
     /// Gets CSS class for stakeholder type badge
@@ -101,13 +101,13 @@ public static class SMSStakeholderUserExtensions
     /// <summary>
     /// Checks if stakeholder has sufficient access for risk assessment participation
     /// </summary>
-    public static bool CanParticipateInRiskAssessment(this SMSStakeholderUser stakeholder)
-    {
-        return stakeholder.IsActive && 
-               (stakeholder.AccessLevel == "Extended" || 
-                stakeholder.AccessLevel == "Full" ||
-                stakeholder.Permissions.CanParticipateInCommittees);
-    }
+    //public static bool CanParticipateInRiskAssessment(this SMSStakeholderUser stakeholder)
+    //{
+    //    return stakeholder.IsActive && 
+    //           (stakeholder.AccessLevel == "Extended" || 
+    //            stakeholder.AccessLevel == "Full" ||
+    //            stakeholder.Permissions.CanParticipateInCommittees);
+    //}
 
     /// <summary>
     /// Gets stakeholder selection priority (for UI ordering)

@@ -10,7 +10,7 @@ namespace SMS_Domain.Entities;
 public sealed class Interview : BaseAuditableEntity
 {
     // Private constructor for Entity Framework
-    private Interview() : base(new InterviewID(Guid.NewGuid().ToString()), "SYSTEM", DateTime.UtcNow) { }
+    private Interview() : base(new InterviewID("IN-0000"), "SYSTEM", DateTime.UtcNow) { }
 
     // Public constructor for domain usage
     public Interview(InterviewID id) : base(id, "SYSTEM", DateTime.UtcNow) 

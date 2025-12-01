@@ -1,115 +1,121 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.ComponentModel.DataAnnotations;
+
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.ComponentModel.DataAnnotations;
+
 using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Domain.Common;
-using SMS_Shared.Common;
 using SMS_Application.Services;
 
+using SMS_Domain.Common;
+using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
+
+using SMS_Shared.Common;
+
 namespace SMS.Presentation.Pages.SafetyRiskManagement;
+
 
 /// <summary>
 /// SIMPLIFIED Risk Assessment Wizard - Refactored for cleaner step handling
 /// Uses internal step models for better organization while keeping same UI
 /// </summary>
 
-#region Helper Classes - Defined First for Reference
-
-/// <summary>
-/// Individual Hazard Risk Analysis - Much better name than AssessmentDataWrapper!
-/// Represents the risk analysis for a single hazard within a report
-/// </summary>
-public class HazardRiskAnalysis
-{
-    public string HazardId { get; set; } = string.Empty;
-    public string HazardDescription { get; set; } = string.Empty;
-    public string HazardCategory { get; set; } = string.Empty;
-
-    /// <summary>
-    /// The worst credible (realistic) outcome that could result from this hazard
-    /// </summary>
-    [Required(ErrorMessage = "Worst credible outcome is required for risk analysis.")]
-    [StringLength(1000, MinimumLength = 10, ErrorMessage = "Worst credible outcome must be between 10 and 1000 characters.")]
-    public string WorstCredibleOutcome { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Root cause analysis identifying underlying causes that could lead to this hazard
-    /// </summary>
-    [Required(ErrorMessage = "Root cause analysis is required for risk analysis.")]
-    [StringLength(1000, MinimumLength = 10, ErrorMessage = "Root cause analysis must be between 10 and 1000 characters.")]
-    public string RootCauseAnalysis { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Additional comments, assumptions, or observations about this hazard's risk analysis
-    /// </summary>
-    public string AdditionalComments { get; set; } = string.Empty;
-
-    /// <summary>
-    /// When this analysis was last updated
-    /// </summary>
-    public DateTime AnalysisDate { get; set; } = DateTime.UtcNow;
-
-    /// <summary>
-    /// Checks if this hazard analysis is complete
-    /// </summary>
-    public bool IsComplete => 
-        !string.IsNullOrWhiteSpace(WorstCredibleOutcome) && WorstCredibleOutcome.Length >= 10 &&
-        !string.IsNullOrWhiteSpace(RootCauseAnalysis) && RootCauseAnalysis.Length >= 10;
-}
-
-/// <summary>
-/// Validation status for a single hazard in Step 3
-/// Used for providing detailed UI feedback
-/// </summary>
-public class HazardValidationStatus
-{
-    public string HazardId { get; set; } = string.Empty;
-    public string HazardDescription { get; set; } = string.Empty;
-    public bool HasWorstOutcome { get; set; }
-    public bool HasRootCause { get; set; }
-    public int WorstOutcomeLength { get; set; }
-    public int RootCauseLength { get; set; }
-    public bool IsWorstOutcomeValid { get; set; }
-    public bool IsRootCauseValid { get; set; }
-    public bool IsComplete { get; set; }
-
-    public string WorstOutcomeValidationMessage =>
-        !HasWorstOutcome ? "Required" :
-        !IsWorstOutcomeValid ? $"{WorstOutcomeLength}/10 characters (minimum 10 required)" :
-        $"{WorstOutcomeLength} characters ✓";
-
-    public string RootCauseValidationMessage =>
-        !HasRootCause ? "Required" :
-        !IsRootCauseValid ? $"{RootCauseLength}/10 characters (minimum 10 required)" :
-        $"{RootCauseLength} characters ✓";
-
-    public string ValidationCssClass =>
-        IsComplete ? "is-valid" :
-        (HasWorstOutcome || HasRootCause) ? "is-invalid" :
-        "";
-}
-
-#endregion
-
 public class RiskAssessmentWizardModel : PageModel
 {
     private readonly IMediator _mediator;
-    private readonly RiskAssessmentService _riskAssessmentService;
     private readonly ILogger<RiskAssessmentWizardModel> _logger;
 
     public RiskAssessmentWizardModel(
-        IMediator mediator, 
-        RiskAssessmentService riskAssessmentService,
+        IMediator mediator,
+        RiskAssessmentService riskAssessmentService, HazardService hazardService,
         ILogger<RiskAssessmentWizardModel> logger)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-        _riskAssessmentService = riskAssessmentService ?? throw new ArgumentNullException(nameof(riskAssessmentService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
+    #region Helper Classes for Risk Assessment
+
+    /// <summary>
+    /// Panel Member Score Data for Step 4 assessments
+    /// </summary>
+    public class PanelMemberScoreData
+    {
+        public string PanelMemberId { get; set; } = string.Empty;
+        public string MemberId { get; set; } = string.Empty;
+        public string MemberName { get; set; } = string.Empty;
+        public string HazardId { get; set; } = string.Empty;
+        public int SeverityScore { get; set; }
+        public int LikelihoodScore { get; set; }
+        public double CalculatedScore => SeverityScore * LikelihoodScore;
+        public string RiskLevel { get; set; } = string.Empty;
+        public DateTime SubmittedDate { get; set; } = DateTime.UtcNow;
+        public bool IsComplete => SeverityScore > 0 && LikelihoodScore > 0;
+
+        public PanelMemberScoreData()
+        {
+            MemberId = PanelMemberId;
+        }
+    }
+
+    /// <summary>
+    /// Individual Hazard Risk Analysis
+    /// </summary>
+    public class HazardRiskAnalysis
+    {
+        public string HazardId { get; set; } = string.Empty;
+        public string HazardDescription { get; set; } = string.Empty;
+        public string HazardCategory { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Worst credible outcome is required for risk analysis.")]
+        [StringLength(1000, MinimumLength = 10, ErrorMessage = "Worst credible outcome must be between 10 and 1000 characters.")]
+        public string WorstCredibleOutcome { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Root cause analysis is required for risk analysis.")]
+        [StringLength(1000, MinimumLength = 10, ErrorMessage = "Root cause analysis must be between 10 and 1000 characters.")]
+        public string RootCauseAnalysis { get; set; } = string.Empty;
+
+        public string AdditionalComments { get; set; } = string.Empty;
+        public DateTime AnalysisDate { get; set; } = DateTime.UtcNow;
+
+        public bool IsComplete =>
+            !string.IsNullOrWhiteSpace(WorstCredibleOutcome) && WorstCredibleOutcome.Length >= 10 &&
+            !string.IsNullOrWhiteSpace(RootCauseAnalysis) && RootCauseAnalysis.Length >= 10;
+    }
+
+    /// <summary>
+    /// Validation status for a single hazard in Step 3
+    /// </summary>
+    public class HazardValidationStatus
+    {
+        public string HazardId { get; set; } = string.Empty;
+        public string HazardDescription { get; set; } = string.Empty;
+        public bool HasWorstOutcome { get; set; }
+        public bool HasRootCause { get; set; }
+        public int WorstOutcomeLength { get; set; }
+        public int RootCauseLength { get; set; }
+        public bool IsWorstOutcomeValid { get; set; }
+        public bool IsRootCauseValid { get; set; }
+        public bool IsComplete { get; set; }
+
+        public string WorstOutcomeValidationMessage =>
+            !HasWorstOutcome ? "Required" :
+            !IsWorstOutcomeValid ? $"{WorstOutcomeLength}/10 characters (minimum 10 required)" :
+            $"{WorstOutcomeLength} characters ✓";
+
+        public string RootCauseValidationMessage =>
+            !HasRootCause ? "Required" :
+            !IsRootCauseValid ? $"{RootCauseLength}/10 characters (minimum 10 required)" :
+            $"{RootCauseLength} characters ✓";
+
+        public string ValidationCssClass =>
+            IsComplete ? "is-valid" :
+            (HasWorstOutcome || HasRootCause) ? "is-invalid" :
+            "";
+    }
+
+    #endregion
 
     #region Route Properties
 
@@ -122,15 +128,21 @@ public class RiskAssessmentWizardModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? HazardId { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public string? ReportId { get; set; }
+
     #endregion
 
     #region Core Data
 
-    public RiskAssessment? Assessment { get; set; }
+    public RiskAssessment? InitialRiskAssessment { get; set; }
+
+    public RiskAssessment? ResidualRiskAssessment { get; set; }
+
     public Hazard? PrimaryHazard { get; set; }
     public Report? SourceReport { get; set; }
     public AirportSharedDataset? SharedDataset { get; set; }
-    public List<Hazard> RelatedHazards { get; set; } = new();
+    public List<Hazard> ReportHazards { get; set; } = new();
 
     #endregion
 
@@ -139,7 +151,7 @@ public class RiskAssessmentWizardModel : PageModel
     [BindProperty]
     public Step1Model Step1 { get; set; } = new();
 
-    [BindProperty] 
+    [BindProperty]
     public Step2Model Step2 { get; set; } = new();
 
     [BindProperty]
@@ -156,12 +168,55 @@ public class RiskAssessmentWizardModel : PageModel
     #region UI Helper Properties - CLEANED UP
 
     // Essential UI properties that the views expect
-    public string AssessmentName => GetAssessmentName();
+
+    public string InitialAssessmentName => GetInitialAssessmentName();
+
+    public string ResidualAssessmentName => GetResidualAssessmentName();
+
+    // ✅ FIXED: Add missing AssessmentName property
+    public string AssessmentName => InitialAssessmentName;
+
     public string AssessmentId => Id;
     public string LeadAssessorName => AvailableAssessors.FirstOrDefault(a => a.Id.Value == Step1.LeadAssessor)?.DisplayName ?? Step1.LeadAssessor;
     public int CurrentStep => StepNumber;
     public string CurrentStepName => GetStepName(StepNumber);
-    //public int IdentifiedHazardsCount => Assessment?.IdentifiedHazardIds.Count ?? RelatedHazards.Count;
+
+    // NEW: Missing properties that the views are looking for
+    /// <summary>
+    /// Gets selected panel members from Step 4
+    /// </summary>
+    public List<string> SelectedPanelMembers => Step4?.SelectedPanelMembers ?? new List<string>();
+
+    /// <summary>
+    /// Gets completed scores from Step 4
+    /// </summary>
+    public List<PanelMemberScoreData> CompletedScores => Step4?.CompletedScores ?? new List<PanelMemberScoreData>();
+
+    /// <summary>
+    /// Gets pending scores from Step 4
+    /// </summary>
+    public List<PanelMemberScoreData> PendingScores => Step4?.PendingScores ?? new List<PanelMemberScoreData>();
+
+    /// <summary>
+    /// Gets panel scores dictionary from Step 4
+    /// </summary>
+    public Dictionary<string, List<PanelMemberScoreData>> PanelScores => Step4?.PanelScores ?? new Dictionary<string, List<PanelMemberScoreData>>();
+
+    // ✅ FIXED: Add missing Step 4 properties
+    /// <summary>
+    /// Gets hazard panel members from Step 4
+    /// </summary>
+    public Dictionary<string, List<string>> HazardPanelMembers => Step4?.HazardPanelMembers ?? new Dictionary<string, List<string>>();
+
+    /// <summary>
+    /// Gets hazard average scores from Step 4
+    /// </summary>
+    public Dictionary<string, double> HazardAverageScores => Step4?.HazardAverageScores ?? new Dictionary<string, double>();
+
+    /// <summary>
+    /// Gets identified hazards count for progress display
+    /// </summary>
+    public int IdentifiedHazardsCount => ReportHazards?.Count ?? 0;
 
     // Step 5 compatibility properties (now that Step5 exists)
     public string SavedImplementationStrategy => Step5.ImplementationStrategy;
@@ -175,27 +230,112 @@ public class RiskAssessmentWizardModel : PageModel
 
     public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
     public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
-    public List<StakeholderGroup> StakeholderGroups_Data { get; set; } = new();
+    public List<SMSApplicationUser> AvailableSMSUsers { get; set; }
+    public List<SMSStakeholderGroup> StakeholderGroups { get; set; } = new();
     public List<string> SelectedStakeholderIds { get; set; } = new();
-    public List<Hazard> AvailableHazards => RelatedHazards;
+    
+    /// <summary>
+    /// CLARIFIED: This property returns all hazards available for analysis
+    /// Includes the initial hazard + any additional hazards identified in Step 2
+    /// This is what Step 3 uses for analysis - there should always be at least one hazard
+    /// </summary>
+    public List<Hazard> AvailableHazards => ReportHazards ?? new List<Hazard>();
+    
+    /// <summary>
+    /// Gets the count of hazards available for analysis
+    /// This should always be at least 1 (the initial hazard)
+    /// </summary>
+    public int AvailableHazardsCount => AvailableHazards.Count;
+    
     public RiskAssessmentDataWrapper? AssessmentData { get; set; }
-    public int Count => RelatedHazards.Count;
-
-    // Additional properties for specific step functionality
-    [BindProperty]
-    public List<string> AdditionalComments { get; set; } = new();
     
-    public List<string> SelectedPanelMembers { get; set; } = new();
-    public Dictionary<string, List<PanelMemberScoreData>> PanelScores { get; set; } = new();
-    public Dictionary<string, double> HazardAverageScores { get; set; } = new();
-    public Dictionary<string, List<string>> HazardPanelMembers { get; set; } = new();
-    
-    // SMS Users alias for Step 4 and Step 5
-    public List<SMSApplicationUser> AvailableSMSUsers => AvailableAssessors;
+    /// <summary>
+    /// DEPRECATED: Use AvailableHazardsCount instead
+    /// </summary>
+    public int Count => ReportHazards.Count;
 
-    // Additional compatibility properties
-    public List<object> CompletedScores { get; set; } = new();
-    public List<object> PendingScores { get; set; } = new();
+    /// <summary>
+    /// Helper property for UI compatibility - gets selected stakeholder group names
+    /// </summary>
+    public List<string> SelectedStakeholderGroupNames
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(Step1?.StakeholderGroups))
+                return new List<string>();
+
+            return Step1.StakeholderGroups.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(g => g.Trim())
+                .Where(g => !string.IsNullOrEmpty(g))
+                .ToList();
+        }
+    }
+
+    /// <summary>
+    /// Helper property for UI compatibility - gets selected individual stakeholder data
+    /// </summary>
+    public List<object> SelectedIndividualStakeholderData
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(Step1?.SelectedIndividualStakeholders))
+                return new List<object>();
+
+            try
+            {
+                return global::System.Text.Json.JsonSerializer.Deserialize<List<object>>(Step1.SelectedIndividualStakeholders) ?? new List<object>();
+            }
+            catch
+            {
+                return new List<object>();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Load stakeholder data - USE DOMAIN ENTITIES DIRECTLY
+    /// </summary>
+    private async Task LoadStakeholdersAsync()
+    {
+        try
+        {
+            _logger.LogInformation("Loading stakeholder data for Assessment {AssessmentId}", Id);
+
+            // Load all active SMS Stakeholder Users
+            var stakeholdersQuery = new GetActiveSMSStakeholderUsersQuery();
+            var stakeholdersResult = await _mediator.SendAsync(stakeholdersQuery, CancellationToken.None);
+
+            if (stakeholdersResult.IsSuccess && stakeholdersResult.Value != null)
+            {
+                AvailableStakeholders = stakeholdersResult.Value.ToList();
+                _logger.LogInformation("Loaded {Count} stakeholder users", AvailableStakeholders.Count);
+            }
+            else
+            {
+                AvailableStakeholders = new List<SMSStakeholderUser>();
+            }
+
+            // Load Stakeholder Groups - USE DOMAIN ENTITY DIRECTLY
+            var stakeholderGroupsQuery = new GetAllSMSStakeholderGroupsQuery();
+            var stakeholderGroupsResult = await _mediator.SendAsync(stakeholderGroupsQuery, CancellationToken.None);
+
+            if (stakeholderGroupsResult.IsSuccess && stakeholderGroupsResult.Value != null)
+            {
+                StakeholderGroups = stakeholderGroupsResult.Value.ToList();
+                _logger.LogInformation("Loaded {GroupCount} stakeholder groups", StakeholderGroups.Count);
+            }
+            else
+            {
+                StakeholderGroups = new List<SMSStakeholderGroup>();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading stakeholder data");
+            AvailableStakeholders = new List<SMSStakeholderUser>();
+            StakeholderGroups = new List<SMSStakeholderGroup>();
+        }
+    }
 
     #endregion
 
@@ -222,7 +362,7 @@ public class RiskAssessmentWizardModel : PageModel
         }
 
         // Step 3 validation
-        var step3Validation = Step3.Validate(RelatedHazards);
+        var step3Validation = Step3.Validate(ReportHazards);
         if (!step3Validation.isValid)
         {
             return (false, $"Step 3: {step3Validation.message}");
@@ -291,33 +431,6 @@ public class RiskAssessmentWizardModel : PageModel
         public List<string> CurrentMitigations { get; set; } = new();
     }
 
-    public class StakeholderGroup
-    {
-        public string Id { get; set; } = Guid.NewGuid().ToString();
-        public string Name { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public List<string> Members { get; set; } = new();
-        public int MemberCount => Members.Count;
-    }
-
-    public class PanelMemberScoreData
-    {
-        public string PanelMemberId { get; set; } = string.Empty;
-        public string MemberId { get; set; } = string.Empty;
-        public string MemberName { get; set; } = string.Empty;
-        public int SeverityScore { get; set; }
-        public int LikelihoodScore { get; set; }
-        public double CalculatedScore => SeverityScore * LikelihoodScore;
-        public string RiskLevel { get; set; } = string.Empty;
-        public DateTime SubmittedDate { get; set; } = DateTime.UtcNow;
-        public bool IsComplete => SeverityScore > 0 && LikelihoodScore > 0;
-
-        public PanelMemberScoreData()
-        {
-            MemberId = PanelMemberId;
-        }
-    }
-
     #endregion
 
     #region UI Helper Methods
@@ -327,7 +440,7 @@ public class RiskAssessmentWizardModel : PageModel
         return stepNumber switch
         {
             1 => "System Description",
-            2 => "Hazard Identification", 
+            2 => "Hazard Identification",
             3 => "Risk Analysis",
             4 => "Risk Assessment",
             5 => "Risk Mitigation",
@@ -350,24 +463,27 @@ public class RiskAssessmentWizardModel : PageModel
 
     public bool CanSkipToStep(int targetStep)
     {
-        return Assessment?.IsStepCompleted(targetStep - 1) ?? (targetStep == 1);
+        return InitialRiskAssessment?.IsStepCompleted(targetStep - 1) ?? (targetStep == 1);
     }
 
     public int GetLastCompletedStep()
     {
-        return Assessment?.CompletedSteps.LastOrDefault() ?? 0;
+        return InitialRiskAssessment?.CompletedSteps.LastOrDefault() ?? 0;
     }
 
     public int GetRecommendedStep()
     {
-        return Assessment?.GetNextRecommendedStep() ?? 1;
+        return InitialRiskAssessment?.GetNextRecommendedStep() ?? 1;
     }
 
-    public string GetAssessmentName()
+    public string GetInitialAssessmentName()
     {
-        return Assessment?.Name ?? "Risk Assessment";
+        return InitialRiskAssessment?.Name ?? "Initial Risk Assessment";
     }
-
+    public string GetResidualAssessmentName()
+    {
+        return ResidualRiskAssessment?.Name ?? "Residual Risk Assessment";
+    }
     public string GetRiskLevelClass(string riskLevel)
     {
         return riskLevel?.ToLowerInvariant() switch
@@ -381,191 +497,108 @@ public class RiskAssessmentWizardModel : PageModel
 
     #endregion
 
-    #region Auto-Save Handlers
 
-    /// <summary>
-    /// Handles auto-save requests from the client
-    /// </summary>
-    public async Task<IActionResult> OnPostAutoSaveStep3Async()
-    {
-        try
-        {
-            if (Assessment == null)
-            {
-                await LoadAssessmentDataAsync();
-                if (Assessment == null)
-                {
-                    return new JsonResult(new { success = false, message = "Assessment not found" });
-                }
-            }
-
-            // Get form data from request
-            var formData = new Dictionary<string, string>();
-            foreach (var key in Request.Form.Keys)
-            {
-                formData[key] = Request.Form[key];
-            }
-
-            // Auto-save to Step3 model
-            Step3.AutoSave(Id, formData);
-
-            // Optionally save to database for persistence
-            if (Step3.HazardAnalyses.Values.Any(ha => !string.IsNullOrWhiteSpace(ha.WorstCredibleOutcome) || !string.IsNullOrWhiteSpace(ha.RootCauseAnalysis)))
-            {
-                Step3.ApplyToAssessment(Assessment);
-                await SaveAssessmentToDatabaseAsync();
-            }
-
-            _logger.LogInformation("Auto-saved Step 3 data for Assessment {AssessmentId}", Id);
-            
-            return new JsonResult(new { 
-                success = true, 
-                message = "Auto-saved", 
-                savedAt = DateTime.Now.ToString("HH:mm:ss"),
-                hasUnsavedChanges = Step3.HasUnsavedChanges()
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error auto-saving Step 3 data for Assessment {AssessmentId}", Id);
-            return new JsonResult(new { success = false, message = "Auto-save failed" });
-        }
-    }
-
-    /// <summary>
-    /// Gets validation status for all hazards in Step 3
-    /// </summary>
-    public async Task<IActionResult> OnGetStep3ValidationStatusAsync()
-    {
-        try
-        {
-            var validationStatuses = Step3.GetHazardValidationStatuses(RelatedHazards);
-            var (isValid, message, errors) = Step3.ValidateDetailed(RelatedHazards);
-            
-            return new JsonResult(new { 
-                success = true,
-                isValid = isValid,
-                message = message,
-                validationErrors = errors,
-                hazardStatuses = validationStatuses,
-                completionPercentage = Step3.GetCompletionPercentage(RelatedHazards)
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting Step 3 validation status for Assessment {AssessmentId}", Id);
-            return new JsonResult(new { success = false, message = "Validation check failed" });
-        }
-    }
-
-    #endregion
 
     #region Data Loading and Saving Methods
 
     /// <summary>
     /// Loads assessment data from the database using Application layer
+    /// FIXED: Added missing LoadAssessmentDataAsync method
     /// </summary>
     private async Task LoadAssessmentDataAsync()
     {
         try
         {
-            if (string.IsNullOrEmpty(Id))
+            _logger.LogInformation("Loading assessment data for ID: {AssessmentId}", Id);
+
+            // Use the enhanced method that guarantees assessment loading
+            var loadResult = await EnsureAssessmentLoadedAsync();
+            if (!loadResult.success)
             {
-                _logger.LogWarning("Cannot load assessment data - ID is empty");
-                return;
+                _logger.LogError("Failed to load assessment: {Error}", loadResult.message);
+                throw new InvalidOperationException($"Failed to load assessment: {loadResult.message}");
             }
 
-            _logger.LogInformation("Loading assessment data for ID: {AssessmentId}", Id);
-            
-            // Use the enhanced RiskAssessmentService to load data
-            var riskAssessmentId = new RiskAssessmentID(Id);
-            var result = await _riskAssessmentService.GetRiskAssessmentByIdAsync(riskAssessmentId);
-            
-            if (result.IsSuccess)
-            {
-                Assessment = result.Value;
-                LoadStepDataFromAssessment();
-                _logger.LogInformation("Successfully loaded assessment data for ID: {AssessmentId}", Id);
-            }
-            else
-            {
-                _logger.LogWarning("Assessment not found for ID: {AssessmentId}. Error: {Error}", Id, result.Error?.Message);
-                Assessment = null;
-            }
+            // Load related hazard data
+            await LoadReportHazardsAsync();
+
+            // Load step data from the assessment
+            LoadStepDataFromAssessment();
+
+            // Load reference data
+            await LoadReferenceDataAsync();
+
+            _logger.LogInformation("Successfully loaded assessment data for ID: {AssessmentId}", InitialRiskAssessment?.Id?.Value ?? "Unknown");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading assessment data for ID: {AssessmentId}", Id);
+            throw;
         }
     }
 
     /// <summary>
-    /// Creates a new risk assessment using Application layer
+    /// ENHANCED: Guaranteed Assessment Loading
     /// </summary>
-    private async Task<RiskAssessment?> CreateNewRiskAssessmentAsync()
+    private async Task<(bool success, string message)> EnsureAssessmentLoadedAsync()
     {
         try
         {
-            _logger.LogInformation("Creating new risk assessment for HazardId: {HazardId}", HazardId);
-
-            // Generate a proper RiskAssessment ID if Id is "new"
-            var actualId = Id;
-            if (string.IsNullOrEmpty(actualId) || actualId == "new")
+            if (InitialRiskAssessment == null)
             {
-                actualId = $"RA-0000";
-                Id = actualId; // Update the page property
-            }
+                _logger.LogWarning("⚠️ Assessment is null, attempting to reload...");
 
-            // Create new RiskAssessment entity with proper defaults
-            var riskAssessmentId = new RiskAssessmentID(actualId);
-            
-            // Use HazardId from the URL if available, otherwise default name
-            var assessmentName = !string.IsNullOrEmpty(HazardId) 
-                ? $"Risk Assessment for Hazard {HazardId}" 
-                : "New Risk Assessment";
-            
-            // Use a default lead assessor if Step1 is empty
-            var leadAssessor = !string.IsNullOrEmpty(Step1?.LeadAssessor) 
-                ? Step1.LeadAssessor 
-                : "SYSTEM";
+                //if (string.IsNullOrEmpty(Id) || Id == "new")
+                //{
+                var getRiskAssessmentCommand = new GetRiskAssessmentsByHazardIdQuery(new HazardID(HazardId));
+                var riskassessment = _mediator.SendAsync(getRiskAssessmentCommand, CancellationToken.None);
+                var initialriskassessment = riskassessment.Result.Value.Where(x => x.AssessmentType == RiskAssessmentType.Initial).FirstOrDefault();
+                if (initialriskassessment == null)
+                {
+                    return (false, "Failed to create new assessment");
+                }
+                InitialRiskAssessment = initialriskassessment;
+                Id = InitialRiskAssessment.Code!; // Update route parameter
+                //}
+                //else
+                //{
+                //    // Load existing assessment
+                //    var riskAssessmentId = new RiskAssessmentID(Id);
+                //    var result = await _riskAssessmentService.GetRiskAssessmentByIdAsync(riskAssessmentId);
 
-            var createResult = RiskAssessment.CreateInitial(
-                riskAssessmentId,
-                assessmentName,
-                leadAssessor,
-                RiskAssessmentCategory.FiveStep,
-                HazardId, // primaryHazardId
-                HazardId  // hazardCode
-            );
-
-            if (createResult.IsFailure)
-            {
-                _logger.LogError("Failed to create RiskAssessment entity: {Error}", createResult.Error.Message);
-                return null;
-            }
-
-            var newAssessment = createResult.Value;
-
-            // Save to database using Application layer
-            var saveResult = await _riskAssessmentService.CreateRiskAssessmentAsync(newAssessment);
-            
-            if (saveResult.IsSuccess)
-            {
-                _logger.LogInformation("Successfully created new risk assessment with ID: {Id}", saveResult.Value?.Id);
-                return saveResult.Value;
+                //    if (result.IsSuccess && result.Value != null)
+                //    {
+                //        InitialRiskAssessment = result.Value;
+                //    }
+                //    else
+                //    {
+                //        return (false, $"Assessment {Id} not found");
+                //    }
+                //}
             }
             else
             {
-                _logger.LogError("Failed to save new risk assessment: {Error}", saveResult.Error?.Message);
-                return null;
+                // Refresh assessment from database to get latest state
+                //var riskAssessmentId = new RiskAssessmentID(Assessment.Code!);
+                //var result = await _riskAssessmentService.GetRiskAssessmentByIdAsync(riskAssessmentId);
+
+                //if (result.IsSuccess && result.Value != null)
+                //{
+                //    Assessment = result.Value;
+                //    _logger.LogInformation("✅ Assessment refreshed successfully");
+                //}
             }
+
+            return (true, "Assessment loaded successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating new risk assessment");
-            return null;
+            _logger.LogError(ex, "❌ Error ensuring assessment loaded");
+            return (false, $"Assessment loading error: {ex.Message}");
         }
     }
+
+
 
     /// <summary>
     /// Saves assessment data to database using Application layer
@@ -574,32 +607,35 @@ public class RiskAssessmentWizardModel : PageModel
     {
         try
         {
-            if (Assessment == null)
+            if (InitialRiskAssessment == null)
             {
                 _logger.LogWarning("Cannot save assessment data - Assessment is null");
                 return;
             }
 
-            _logger.LogInformation("Saving assessment data for ID: {AssessmentId}", Assessment.Id);
-            
+            _logger.LogInformation("Saving assessment data for ID: {AssessmentId}", InitialRiskAssessment.Id);
+
             // Use the enhanced RiskAssessmentService to save data
-            var result = await _riskAssessmentService.UpdateRiskAssessmentAsync(Assessment);
-            
-            if (result.IsSuccess)
+
+            var updateRiskAssessmentCommand = new UpdateRiskAssessmentCommand(InitialRiskAssessment);
+            var updateResult = _mediator.SendAsync(updateRiskAssessmentCommand, new CancellationToken());
+
+
+            if (updateResult.Result.IsSuccess)
             {
                 // Update our cached assessment with the latest data
-                Assessment = result.Value;
-                _logger.LogInformation("Successfully saved assessment data for ID: {AssessmentId}", Assessment.Id);
+                InitialRiskAssessment = updateResult.Result.Value;
+                _logger.LogInformation("Successfully saved assessment data for ID: {AssessmentId}", InitialRiskAssessment.Id);
             }
             else
             {
-                _logger.LogError("Failed to save assessment data: {Error}", result.Error?.Message);
-                throw new InvalidOperationException($"Failed to save assessment: {result.Error?.Message}");
+                _logger.LogError("Failed to save assessment data: {Error}", updateResult.Result.Error?.Message);
+                throw new InvalidOperationException($"Failed to save assessment: {updateResult.Result.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error saving assessment data for ID: {AssessmentId}", Assessment?.Id?.Value ?? "Unknown");
+            _logger.LogError(ex, "Error saving assessment data for ID: {AssessmentId}", InitialRiskAssessment?.Id?.Value ?? "Unknown");
             throw; // Re-throw so calling method knows save failed
         }
     }
@@ -609,76 +645,198 @@ public class RiskAssessmentWizardModel : PageModel
     /// </summary>
     private void LoadStepDataFromAssessment()
     {
-        if (Assessment == null) return;
+        if (InitialRiskAssessment == null) return;
 
         try
         {
             // Load data into step models from assessment
-            Step1.LoadFromAssessment(Assessment);
-            //Step2.LoadFromAssessment(Assessment); // If needed
-            Step3.LoadFromAssessment(Assessment, RelatedHazards);
-            // Step4.LoadFromAssessment(Assessment); // If needed  
+            Step1.LoadFromAssessment(InitialRiskAssessment);
+            Step2.LoadFromAssessment(InitialRiskAssessment); // ✅ ENABLED - now has overload
+            Step3.LoadFromAssessment(InitialRiskAssessment, ReportHazards);
+            Step4.LoadFromAssessment(InitialRiskAssessment); // If needed  
             // Step5.LoadFromAssessment(Assessment); // If needed
 
-            _logger.LogInformation("Step data loaded from assessment {AssessmentId}", Assessment.Id);
+            // Initialize UI compatibility properties for stakeholder selection
+            InitializeStakeholderUIProperties();
+
+            _logger.LogInformation("✅ Step models loaded from assessment {AssessmentId}", InitialRiskAssessment.Id);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading step data from assessment {AssessmentId}", Assessment?.Id?.Value ?? "Unknown");
+            _logger.LogError(ex, "❌ Error loading step models from assessment {AssessmentId}", InitialRiskAssessment?.Id?.Value ?? "Unknown");
         }
     }
 
     /// <summary>
-    /// Loads the related hazard data for the current HazardId
+    /// Initialize stakeholder UI properties for proper binding with the Razor view
     /// </summary>
-    private async Task LoadRelatedHazardAsync()
+    private void InitializeStakeholderUIProperties()
     {
         try
         {
-            if (string.IsNullOrEmpty(HazardId))
+            // Initialize SelectedStakeholderIds for UI compatibility
+            SelectedStakeholderIds = new List<string>();
+
+            // Add stakeholder groups to selected IDs
+            if (!string.IsNullOrWhiteSpace(Step1?.StakeholderGroups))
             {
-                _logger.LogInformation("No HazardId provided - skipping hazard load");
-                return;
+                var groupNames = Step1.StakeholderGroups.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(g => g.Trim())
+                    .Where(g => !string.IsNullOrEmpty(g));
+
+                SelectedStakeholderIds.AddRange(groupNames);
             }
 
-            _logger.LogInformation("Loading hazard data for HazardId: {HazardId}", HazardId);
-
-            // Load the primary hazard
-            var hazardQuery = new GetHazardByIdQuery(new HazardID(HazardId));
-            var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
-            
-            if (hazardResult.IsSuccess)
+            // Add individual stakeholder IDs
+            if (!string.IsNullOrWhiteSpace(Step1?.SelectedIndividualStakeholders))
             {
-                PrimaryHazard = hazardResult.Value;
-                _logger.LogInformation("Successfully loaded primary hazard: {HazardCode}", PrimaryHazard.Code);
-
-                // Add the primary hazard to RelatedHazards for Step 3 analysis
-                RelatedHazards = new List<Hazard> { PrimaryHazard };
-
-                // Try to load the source report if available
-                if (!string.IsNullOrEmpty(PrimaryHazard.ReportCode))
+                try
                 {
-                    var reportQuery = new GetReportByIdQuery(new ReportID(PrimaryHazard.ReportCode));
-                    var reportResult = await _mediator.SendAsync(reportQuery, CancellationToken.None);
-                    if (reportResult.IsSuccess)
+                    var individuals = global::System.Text.Json.JsonSerializer.Deserialize<List<Step1Model.StakeholderSelection>>(Step1.SelectedIndividualStakeholders);
+                    if (individuals?.Any() == true)
                     {
-                        SourceReport = reportResult.Value;
-                        _logger.LogInformation("Successfully loaded source report: {ReportCode}", SourceReport.Code);
+                        SelectedStakeholderIds.AddRange(individuals.Select(i => i.Id));
                     }
                 }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Could not parse individual stakeholder selections for UI");
+                }
+            }
+
+            _logger.LogInformation("✅ Initialized stakeholder UI properties with {Count} selected stakeholders", SelectedStakeholderIds.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error initializing stakeholder UI properties");
+            SelectedStakeholderIds = new List<string>();
+        }
+    }
+    /// <summary>
+    /// Load reference data needed for dropdowns and selections
+    /// CRITICAL: DO NOT REMOVE THIS METHOD!!! IT IS REQUIRED FOR PROPER OPERATION!!!
+    /// </summary>
+    private async Task LoadReferenceDataAsync()
+    {
+        try
+        {
+            _logger.LogInformation("Loading reference data for Assessment {AssessmentId}", Id);
+
+            // Load stakeholder data using the enhanced method
+            await LoadStakeholdersAsync();
+
+            // Load SMS Application Users for Step 4 scoring panels
+            await LoadSMSApplicationUsersAsync();
+
+            // Initialize empty lists for other reference data (can be enhanced later)
+            AvailableAssessors = new List<SMSApplicationUser>();
+
+            _logger.LogInformation("Reference data loaded successfully - {StakeholderCount} stakeholders, {GroupCount} groups, {SMSUserCount} SMS users",
+                AvailableStakeholders.Count, StakeholderGroups.Count, AvailableSMSUsers?.Count ?? 0);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading reference data");
+            AvailableAssessors = new List<SMSApplicationUser>();
+            AvailableStakeholders = new List<SMSStakeholderUser>();
+            StakeholderGroups = new List<SMSStakeholderGroup>();
+            AvailableSMSUsers = new List<SMSApplicationUser>();
+        }
+    }
+
+    /// <summary>
+    /// Load SMS Application Users for Step 4 scoring panels
+    /// </summary>
+    private async Task LoadSMSApplicationUsersAsync()
+    {
+        try
+        {
+            _logger.LogInformation("Loading SMS Application Users for Step 4 scoring panels");
+
+            // Load all active SMS Application Users
+            var smsUsersQuery = new GetAllSMSApplicationUsersQuery();
+            var smsUsersResult = await _mediator.SendAsync(smsUsersQuery, CancellationToken.None);
+
+            if (smsUsersResult.IsSuccess && smsUsersResult.Value != null)
+            {
+                AvailableSMSUsers = smsUsersResult.Value.Where(u => u.IsActive).ToList();
+                _logger.LogInformation("Loaded {Count} SMS Application Users for scoring panels", AvailableSMSUsers.Count);
             }
             else
             {
-                _logger.LogWarning("Failed to load hazard with HazardId: {HazardId}. Error: {Error}", 
-                    HazardId, hazardResult.Error?.Message);
-                
-                RelatedHazards = new List<Hazard>();
+                _logger.LogWarning("Failed to load SMS Application Users or no users found");
+                AvailableSMSUsers = new List<SMSApplicationUser>();
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading related hazard for HazardId: {HazardId}", HazardId);
-            RelatedHazards = new List<Hazard>();
+            _logger.LogError(ex, "Error loading SMS Application Users");
+            AvailableSMSUsers = new List<SMSApplicationUser>();
+        }
+    }
+    /// <summary>
+    /// Loads all hazards associated with this report for risk assessment
+    /// This should ALWAYS include the initial hazard plus any additional hazards from Step 2
+    /// </summary>
+    private async Task LoadReportHazardsAsync()
+    {
+        try
+        {
+            _logger.LogInformation("Loading all report hazards for ReportId: {ReportId}, HazardId: {HazardId}", ReportId, HazardId);
+
+            // Initialize empty list
+            ReportHazards = new List<Hazard>();
+
+            // STEP 1: Load ALL hazards for this report (includes initial + Step 2 hazards)
+            if (!string.IsNullOrEmpty(ReportId))
+            {
+                var reportHazardsQuery = new GetHazardsByReportIdQuery(new ReportID(ReportId));
+                var reportHazardsResult = await _mediator.SendAsync(reportHazardsQuery, CancellationToken.None);
+
+                if (reportHazardsResult.IsSuccess && reportHazardsResult.Value.Any())
+                {
+                    ReportHazards = reportHazardsResult.Value.ToList();
+                    _logger.LogInformation("Loaded {Count} hazards from report {ReportId}: {HazardCodes}", 
+                        ReportHazards.Count, ReportId, string.Join(", ", ReportHazards.Select(h => h.Code)));
+
+                    // Set PrimaryHazard to the one matching HazardId, or first one if not found
+                    PrimaryHazard = ReportHazards.FirstOrDefault(h => h.Code == HazardId) ?? ReportHazards.First();
+                }
+            }
+
+            // STEP 2: If we still don't have hazards, try loading just the primary hazard from HazardId
+            if (!ReportHazards.Any() && !string.IsNullOrEmpty(HazardId))
+            {
+                _logger.LogWarning("No hazards found for report {ReportId}, trying to load primary hazard {HazardId}", ReportId, HazardId);
+                
+                var hazardQuery = new GetHazardByIdQuery(new HazardID(HazardId));
+                var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
+
+                if (hazardResult.IsSuccess)
+                {
+                    PrimaryHazard = hazardResult.Value;
+                    ReportHazards = new List<Hazard> { PrimaryHazard };
+                    _logger.LogInformation("Loaded primary hazard as fallback: {HazardCode}", PrimaryHazard.Code);
+                }
+            }
+
+            // STEP 3: Load source report if available
+            if (PrimaryHazard != null && !string.IsNullOrEmpty(PrimaryHazard.ReportCode))
+            {
+                var reportQuery = new GetReportByIdQuery(new ReportID(PrimaryHazard.ReportCode));
+                var reportResult = await _mediator.SendAsync(reportQuery, CancellationToken.None);
+                if (reportResult.IsSuccess)
+                {
+                    SourceReport = reportResult.Value;
+                }
+            }
+
+            _logger.LogInformation("Final report hazards loaded: {Count} hazards available for risk assessment", ReportHazards.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading report hazards for ReportId: {ReportId}, HazardId: {HazardId}", ReportId, HazardId);
+            ReportHazards = new List<Hazard>();
         }
     }
 
@@ -690,153 +848,100 @@ public class RiskAssessmentWizardModel : PageModel
     /// Handles "Save and Navigate Next" button click - using modular step save approach
     /// Much easier to debug and test individual steps
     /// </summary>
+    /// <summary>
+    /// ENHANCED: Save and Navigate with Guaranteed State Preservation
+    /// </summary>
     public async Task<IActionResult> OnPostSaveAndNavigateNextAsync()
     {
         try
         {
-            _logger.LogInformation("Save and Navigate Next: Step {CurrentStep} for Assessment {AssessmentId}, HazardId: {HazardId}", StepNumber, Id, HazardId);
+            _logger.LogInformation("🚀 ENHANCED Save and Navigate: Step {CurrentStep} for Assessment {AssessmentId}",
+                StepNumber, Id);
 
-            // Use step-specific save method
+            // CRITICAL: Reload Assessment before save operation
+            var reloadResult = await EnsureAssessmentLoadedAsync();
+            if (!reloadResult.success)
+            {
+                TempData["ErrorMessage"] = $"Failed to reload assessment: {reloadResult.message}";
+                return await ReloadPageWithErrorAsync();
+            }
+
+            // Validate current step
+            var validationResult = ValidateCurrentStep();
+            if (!validationResult.isValid)
+            {
+                TempData["ErrorMessage"] = $"Step {StepNumber} validation failed: {validationResult.message}";
+                return await ReloadPageWithErrorAsync();
+            }
+
+            // Save current step
             var saveResult = await SaveCurrentStepAsync();
-
             if (!saveResult.success)
             {
                 TempData["ErrorMessage"] = $"Step {StepNumber} save failed: {saveResult.message}";
-                return Page();
+                return await ReloadPageWithErrorAsync();
             }
 
             // Determine next step
             var nextStep = StepNumber + 1;
             if (nextStep > 5)
             {
-                // If we're on step 5, complete the assessment instead
                 TempData["SuccessMessage"] = "Assessment completed successfully!";
                 return RedirectToPage("/SafetyRiskManagement/RiskAssessment", new { assessmentId = Id });
             }
 
-            // ✅ FIXED: Navigate to next step and preserve HazardId
+            // Navigate to next step with ALL parameters preserved
             TempData["SuccessMessage"] = saveResult.message;
-            return RedirectToPage("/SafetyRiskManagement/RiskAssessmentWizard", 
-                new { id = Id, stepNumber = nextStep, hazardId = HazardId });
+            return RedirectToPage("/SafetyRiskManagement/RiskAssessmentWizard",
+                new { id = InitialRiskAssessment.Code, stepNumber = nextStep, reportId = ReportId, hazardId = HazardId });
 
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in Save and Navigate Next for Assessment {AssessmentId}, Step {StepNumber}", Id, StepNumber);
-            TempData["ErrorMessage"] = "An unexpected error occurred while saving and navigating. Please try again.";
-            return Page();
+            _logger.LogError(ex, "❌ Error in Save and Navigate Next for Assessment {AssessmentId}, Step {StepNumber}", Id, StepNumber);
+            TempData["ErrorMessage"] = "An unexpected error occurred while saving. Please try again.";
+            return await ReloadPageWithErrorAsync();
         }
     }
 
-    ///// <summary>
-    ///// Handles "Manual Save Current Step" button click - using modular approach
-    ///// </summary>
-    //public async Task<IActionResult> OnPostManualSaveCurrentStepAsync()
-    //{
-    //    try
-    //    {
-    //        _logger.LogInformation("Manual Save: Step {CurrentStep} for Assessment {AssessmentId}", StepNumber, Id);
+    /// <summary>
+    /// Reload the current page with all data after an error
+    /// </summary>
+    private async Task<IActionResult> ReloadPageWithErrorAsync()
+    {
+        try
+        {
+            if (InitialRiskAssessment == null)
+            {
+                await EnsureAssessmentLoadedAsync();
+            }
+            await LoadReportHazardsAsync();
+            LoadStepDataFromAssessment();
+            await LoadReferenceDataAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error reloading page data after error");
+        }
 
-    //        // Use step-specific save method (no validation required for manual save)
-    //        var saveResult = await SaveCurrentStepAsync();
+        return Page();
+    }
 
-    //        if (saveResult.success)
-    //        {
-    //            TempData["SuccessMessage"] = saveResult.message;
-    //        }
-    //        else
-    //        {
-    //            TempData["ErrorMessage"] = saveResult.message;
-    //        }
-
-    //        return Page();
-
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        _logger.LogError(ex, "Error in Manual Save for Assessment {AssessmentId}, Step {StepNumber}", Id, StepNumber);
-    //        TempData["ErrorMessage"] = "An error occurred while saving progress. Please try again.";
-    //        return Page();
-    //    }
-    //}
-
-    ///// <summary>
-    ///// Handles navigation to a specific step - converted from step navigation JavaScript
-    ///// </summary>
-    //public async Task<IActionResult> OnPostNavigateToStepAsync(int targetStep)
-    //{
-    //    try
-    //    {
-    //        _logger.LogInformation("Navigate to Step: {TargetStep} from {CurrentStep} for Assessment {AssessmentId}", targetStep, StepNumber, Id);
-
-    //        // Validate target step is within range
-    //        if (targetStep < 1 || targetStep > 5)
-    //        {
-    //            TempData["ErrorMessage"] = "Invalid step number.";
-    //            return Page();
-    //        }
-
-    //        // Check if user can navigate to target step
-    //        if (targetStep > StepNumber && !CanSkipToStep(targetStep))
-    //        {
-    //            TempData["ErrorMessage"] = $"Please complete Step {StepNumber} before proceeding to Step {targetStep}.";
-    //            return Page();
-    //        }
-
-    //        // If navigating forward, validate and save current step
-    //        if (targetStep > StepNumber)
-    //        {
-    //            var validationResult = ValidateCurrentStep();
-    //            if (!validationResult.isValid)
-    //            {
-    //                TempData["ErrorMessage"] = $"Please complete Step {StepNumber} before proceeding: {validationResult.message}";
-    //                return Page();
-    //            }
-
-    //            // Save current step before navigation
-    //            await SaveCurrentStepAsync();
-    //            TempData["SuccessMessage"] = $"Step {StepNumber} saved successfully!";
-    //        }
-
-    //        // Navigate to target step
-    //        return RedirectToPage("/SafetyRiskManagement/RiskAssessmentWizard", new { id = Id, stepNumber = targetStep });
-
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        _logger.LogError(ex, "Error navigating to step {TargetStep} for Assessment {AssessmentId}", targetStep, Id);
-    //        TempData["ErrorMessage"] = "An error occurred during navigation. Please try again.";
-    //        return Page();
-    //    }
-    //}
-
-    ///// <summary>
-    ///// Handles "Previous Step" navigation - converted from JavaScript
-    ///// </summary>
-    //public async Task<IActionResult> OnPostPreviousStepAsync()
-    //{
-    //    try
-    //    {
-    //        var previousStep = StepNumber - 1;
-    //        if (previousStep < 1)
-    //        {
-    //            previousStep = 1;
-    //        }
-
-    //        _logger.LogInformation("Navigate to Previous Step: {PreviousStep} from {CurrentStep}", previousStep, StepNumber);
-
-    //        // Auto-save current progress before navigating back
-    //        await SaveCurrentStepAsync();
-
-    //        return RedirectToPage("/SafetyRiskManagement/RiskAssessmentWizard", new { id = Id, stepNumber = previousStep });
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        _logger.LogError(ex, "Error navigating to previous step for Assessment {AssessmentId}", Id);
-    //        TempData["ErrorMessage"] = "An error occurred during navigation. Please try again.";
-    //        return Page();
-    //    }
-    //}
+    /// <summary>
+    /// Validate the current step based on the StepNumber
+    /// </summary>
+    private (bool isValid, string message) ValidateCurrentStep()
+    {
+        return StepNumber switch
+        {
+            1 => Step1?.Validate() ?? (false, "Step 1 data not available"),
+            2 => Step2?.Validate() ?? (false, "Step 2 data not available"),
+            3 => Step3?.Validate(ReportHazards) ?? (false, "Step 3 data not available"),
+            4 => Step4?.Validate() ?? (false, "Step 4 data not available"),
+            5 => Step5?.Validate() ?? (false, "Step 5 data not available"),
+            _ => (false, "Invalid step number")
+        };
+    }
 
     /// <summary>
     /// Handles final assessment completion - converted from JavaScript
@@ -848,7 +953,7 @@ public class RiskAssessmentWizardModel : PageModel
             _logger.LogInformation("Complete Assessment: {AssessmentId}", Id);
 
             // Load current assessment data if needed
-            if (Assessment == null)
+            if (InitialRiskAssessment == null)
             {
                 await LoadAssessmentDataAsync();
             }
@@ -879,24 +984,107 @@ public class RiskAssessmentWizardModel : PageModel
 
     #endregion
 
-    #region Supporting Methods for Page Handlers
+    #region Step 4 Specific Page Handlers
 
     /// <summary>
-    /// Validates the current step based on the StepNumber
+    /// Assign scoring panel members to a specific hazard
     /// </summary>
-    private (bool isValid, string message) ValidateCurrentStep()
+    public async Task<IActionResult> OnPostAssignScoringPanelAsync(string hazardId, string userIds)
     {
-        return StepNumber switch
+        try
         {
-            1 => Step1?.Validate() ?? (false, "Step 1 data not available"),
-            2 => Step2?.Validate() ?? (false, "Step 2 data not available"),
-            3 => Step3?.Validate(RelatedHazards) ?? (false, "Step 3 data not available"),
-            4 => Step4?.Validate() ?? (false, "Step 4 data not available"),
-            5 => Step5?.Validate() ?? (false, "Step 5 data not available"),
-            _ => (false, "Invalid step number")
-        };
-    }
+            _logger.LogInformation("Assigning scoring panel to hazard {HazardId}: {UserIds}", hazardId, userIds);
 
+            if (string.IsNullOrWhiteSpace(hazardId))
+            {
+                return new JsonResult(new { success = false, message = "Hazard ID is required" });
+            }
+
+            // Parse user IDs
+            var memberIds = userIds?.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(id => id.Trim())
+                .Where(id => !string.IsNullOrEmpty(id))
+                .ToList() ?? new List<string>();
+
+            if (!memberIds.Any())
+            {
+                return new JsonResult(new { success = false, message = "At least one panel member is required" });
+            }
+
+            // Assign panel members to the hazard
+            Step4.AssignPanelMembersToHazard(hazardId, memberIds);
+
+            _logger.LogInformation("Successfully assigned {Count} panel members to hazard {HazardId}", memberIds.Count, hazardId);
+
+            return new JsonResult(new
+            {
+                success = true,
+                message = $"Assigned {memberIds.Count} panel members to hazard {hazardId}",
+                hazardId = hazardId,
+                memberCount = memberIds.Count
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error assigning scoring panel to hazard {HazardId}", hazardId);
+            return new JsonResult(new { success = false, message = "Error assigning scoring panel: " + ex.Message });
+        }
+    }
+    /// <summary>
+    /// Submit individual panel member score for a hazard
+    /// FIXED: Type consistency issue
+    /// </summary>
+    public async Task<IActionResult> OnPostSubmitScoreAsync(string hazardId, string memberId, int severityScore, int likelihoodScore)
+    {
+        try
+        {
+            _logger.LogInformation("Submitting score for hazard {HazardId}, member {MemberId}: {Severity}x{Likelihood}",
+                hazardId, memberId, severityScore, likelihoodScore);
+
+            if (string.IsNullOrWhiteSpace(hazardId) || string.IsNullOrWhiteSpace(memberId))
+            {
+                return new JsonResult(new { success = false, message = "Hazard ID and Member ID are required" });
+            }
+
+            if (severityScore < 1 || severityScore > 5 || likelihoodScore < 1 || likelihoodScore > 5)
+            {
+                return new JsonResult(new { success = false, message = "Scores must be between 1 and 5" });
+            }
+
+            // Create score data using the correct PanelMemberScoreData class
+            var scoreData = new PanelMemberScoreData
+            {
+                HazardId = hazardId,
+                MemberId = memberId,
+                MemberName = AvailableSMSUsers?.FirstOrDefault(u => u.Id.Value == memberId)?.DisplayName ?? memberId,
+                SeverityScore = severityScore,
+                LikelihoodScore = likelihoodScore,
+                SubmittedDate = DateTime.UtcNow
+            };
+
+            // Add score to Step 4 model - FIXED: Now uses the same type
+            Step4.AddPanelMemberScore(hazardId, scoreData);
+
+            var calculatedScore = scoreData.CalculatedScore;
+            _logger.LogInformation("Score submitted successfully: {Score} for hazard {HazardId} by member {MemberId}",
+                calculatedScore, hazardId, memberId);
+
+            return new JsonResult(new
+            {
+                success = true,
+                message = $"Score {calculatedScore} submitted successfully",
+                hazardId = hazardId,
+                memberId = memberId,
+                score = calculatedScore,
+                averageScore = Step4.HazardAverageScores.ContainsKey(hazardId) ? Step4.HazardAverageScores[hazardId] : (double?)null
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error submitting score for hazard {HazardId}, member {MemberId}", hazardId, memberId);
+            return new JsonResult(new { success = false, message = "Error submitting score: " + ex.Message });
+        }
+    }
     /// <summary>
     /// Completes the entire assessment process
     /// </summary>
@@ -904,14 +1092,14 @@ public class RiskAssessmentWizardModel : PageModel
     {
         try
         {
-            if (Assessment == null)
+            if (InitialRiskAssessment == null)
             {
                 _logger.LogWarning("Cannot complete assessment - Assessment is null");
                 return;
             }
 
             // Apply all step data to ensure everything is saved
-            ApplyAllSteps(Assessment);
+            ApplyAllSteps(InitialRiskAssessment);
 
             // Mark assessment as complete
             // TODO: Add method to RiskAssessment to mark as complete
@@ -919,7 +1107,7 @@ public class RiskAssessmentWizardModel : PageModel
 
             // Save final state to database
             await SaveAssessmentToDatabaseAsync();
-            
+
             _logger.LogInformation("Assessment {AssessmentId} completed successfully", Id);
         }
         catch (Exception ex)
@@ -931,283 +1119,919 @@ public class RiskAssessmentWizardModel : PageModel
 
     #endregion
 
-    #region Step-Specific Save Methods - Modular Approach
+    #region Step-Specific Handlers - Modular Approach
 
     /// <summary>
-    /// Saves Step 1 data using Application layer service
+    /// Creates a new hazard and persists it to the database using CreateHazardCommand
     /// </summary>
-    private async Task<(bool success, string message)> SaveStep1Async()
+    public async Task<IActionResult> OnPostCreateHazardAsync(
+        string hazardDescription,
+        string hazardCategory)
     {
         try
         {
-            _logger.LogInformation("Saving Step 1 for Assessment {AssessmentId}", Id);
-
-            // Validate Step 1 model binding
-            if (Step1 == null)
+            if (string.IsNullOrWhiteSpace(hazardDescription) || hazardDescription.Length < 10)
             {
-                return (false, "Step 1 data is not properly bound");
+                TempData["ErrorMessage"] = "Hazard description must be at least 10 characters.";
+                return RedirectToPage(new { id = Id, stepNumber = StepNumber, reportId = ReportId, hazardId = HazardId });
             }
 
-            // Validate Step 1 data
-            var validation = Step1.Validate();
-            if (!validation.isValid)
-            {
-                return (false, validation.message);
-            }
+            // Generate hazard ID
+            var hazardCounter = Step2.HazardIds.Count + 1;
+            var hazardId = $"HZ-0000";
+            HazardID hazardid = new HazardID(hazardId);
+            Hazard hazard = new Hazard(hazardid);
+            hazard.Description = hazardDescription;
+            hazard.Category = hazardCategory;
+            hazard.ReportCode = ReportId;
+            hazard.CreatedBy = "WIZARD_USER";
+            hazard.ReportedBy = "New Text Area";
 
-            // Create or load assessment
-            if (Assessment == null)
-            {
-                // Create new assessment for Step 1
-                Assessment = await CreateNewRiskAssessmentAsync();
-                if (Assessment == null)
-                {
-                    return (false, "Failed to create new risk assessment");
-                }
-            }
+            // Create the command
+            var createCommand = new CreateHazardCommand(hazard);
 
-            // Use Application layer service to save Step 1 data
-            var saveResult = await _riskAssessmentService.SaveStep1Async(
-                Assessment.Code,
-                Step1.LeadAssessor,
-                Step1.SystemDescription,
-                Step1.SystemBoundaries,
-                Step1.SystemPurpose,
-                Step1.FiveMPersonnel,
-                Step1.FiveMEquipment,
-                Step1.FiveMProcedures,
-                Step1.FiveMResources,
-                Step1.FiveMPhysicalEnvironment,
-                Step1.FiveMOperationalEnvironment,
-                "WIZARD_USER"
-            );
+            var result = await _mediator.SendAsync(createCommand, CancellationToken.None);
 
-            if (saveResult.IsSuccess)
+
+            if (result.IsSuccess)
             {
-                // Update our cached assessment
-                Assessment = saveResult.Value;
-                _logger.LogInformation("Step 1 saved successfully for Assessment {AssessmentId}", Assessment.Id);
-                return (true, "Step 1 saved successfully");
+                hazard = result.Value;
+                // Add to Step2 model
+                Step2.HazardIds.Add(hazard.Code);
+                Step2.HazardDescriptions.Add(hazard.Description);
+                Step2.HazardCategories.Add(hazard.Category ?? "");
+
+                TempData["SuccessMessage"] = $"Hazard {hazardid.Value} created successfully!";
             }
             else
             {
-                _logger.LogError("Failed to save Step 1: {Error}", saveResult.Error?.Message);
-                return (false, $"Error saving Step 1: {saveResult.Error?.Message}");
+                TempData["ErrorMessage"] = $"Failed to create hazard: {result.Error?.Message}";
             }
+
+            return RedirectToPage(new { id = Id, stepNumber = StepNumber, reportId = ReportId, hazardId = HazardId });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error saving Step 1 for Assessment {AssessmentId}", Id);
-            return (false, $"Error saving Step 1: {ex.Message}");
+            _logger.LogError(ex, "Error creating hazard");
+            TempData["ErrorMessage"] = "An error occurred while creating the hazard.";
+            return RedirectToPage(new { id = Id, stepNumber = StepNumber, reportId = ReportId, hazardId = HazardId });
         }
     }
 
+    #endregion
+
+    #region Page Load and Initialization
+
     /// <summary>
-    /// Saves Step 2 data specifically - easier to debug and test
+    /// Handles GET requests - loads assessment data and initializes step models
+    /// ENHANCED: OnGetAsync with guaranteed Assessment loading
     /// </summary>
-    private async Task<(bool success, string message)> SaveStep2Async()
+    public async Task<IActionResult> OnGetAsync()
     {
         try
         {
-            _logger.LogInformation("Saving Step 2 for Assessment {AssessmentId}", Id);
+            _logger.LogInformation("🚀 ENHANCED Loading Risk Assessment Wizard - Step {StepNumber}, Assessment {AssessmentId}, ReportId : {reportid}, HazardId: {HazardId}",
+                StepNumber, Id, ReportId, HazardId);
 
-            // Validate Step 2 model binding
-            if (Step2 == null)
+            //ReportID reportid = new ReportID(ReportId);
+            //var reportcommand = new GetReportByIdQuery(reportid);
+            //var reportResult = await _mediator.SendAsync(reportcommand, CancellationToken.None);
+
+            var allRiskAssessmentCommand = new GetRiskAssessmentsByHazardIdQuery(new HazardID(HazardId));
+            var allRiskAssessmentResult = await _mediator.SendAsync(allRiskAssessmentCommand, new CancellationToken());
+
+            if (allRiskAssessmentResult.IsSuccess)
             {
-                return (false, "Step 2 data is not properly bound");
+                InitialRiskAssessment = allRiskAssessmentResult.Value.Where(x => x.AssessmentType == RiskAssessmentType.Initial).FirstOrDefault();
+                ResidualRiskAssessment = allRiskAssessmentResult.Value.Where(x => x.AssessmentType == RiskAssessmentType.Residual).FirstOrDefault();
             }
 
-            // Validate Step 2 data
-            var validation = Step2.Validate();
-            if (!validation.isValid)
+
+
+            // Validate step number
+            if (StepNumber < 1 || StepNumber > 5)
             {
-                return (false, validation.message);
+                _logger.LogWarning("Invalid step number {StepNumber}, redirecting to step 1", StepNumber);
+                return RedirectToPage("/SafetyRiskManagement/RiskAssessmentWizard",
+                    new { id = InitialRiskAssessment.Code, stepNumber = 1, reportId = ReportId, hazardId = HazardId });
             }
 
-            // Ensure we have assessment loaded
-            if (Assessment == null)
+            // STEP 1: Ensure Assessment is loaded - GUARANTEED SUCCESS
+            //var loadResult = await EnsureAssessmentLoadedAsync();
+            //if (!loadResult.success)
+            //{
+            //    _logger.LogError("❌ Failed to load assessment: {Error}", loadResult.message);
+            //    TempData["ErrorMessage"] = loadResult.message;
+            //    return RedirectToPage("/SafetyRiskManagement/RiskAssessment");
+            //}
+
+            // STEP 2: Load Related Hazard Data  
+            await LoadReportHazardsAsync();
+
+            // STEP 3: Load Step Models with Current Data
+            LoadStepDataFromAssessment();
+
+            // STEP 4: Load Reference Data for UI
+            await LoadReferenceDataAsync();
+
+            _logger.LogInformation("✅ Successfully loaded Risk Assessment Wizard - Assessment: {Name}, Step: {Step}",
+                InitialRiskAssessment.Name, StepNumber);
+
+            return Page();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Critical error loading Risk Assessment Wizard");
+            TempData["ErrorMessage"] = "Unable to load the assessment wizard. Please try again.";
+            return RedirectToPage("/SafetyRiskManagement/RiskAssessment");
+        }
+    }
+
+    #endregion
+
+    #region STAKEHOLDER MANAGEMENT POST HANDLERS
+
+    /// <summary>
+    /// Create new stakeholder from Step 1 modal
+    /// Handles stakeholder creation and returns to the current step
+    /// ENHANCED: Added comprehensive validation and logging
+    /// </summary>
+    public async Task<IActionResult> OnPostCreateStakeholderAsync(
+        string stakeholderName,
+        string stakeholderEmail,
+        string stakeholderOrganization,
+        string stakeholderGroup,
+        string stakeholderType,
+        string stakeholderCategory,
+        string stakeholderPhone)
+    {
+        try
+        {
+            _logger.LogInformation("🎯 Creating new stakeholder: {Name} from {Organization} for type {Type}", 
+                stakeholderName, stakeholderOrganization, stakeholderType);
+
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(stakeholderName))
             {
-                await LoadAssessmentDataAsync();
-                if (Assessment == null)
-                {
-                    return (false, "Assessment not found - please complete Step 1 first");
-                }
+                TempData["ErrorMessage"] = "Stakeholder name is required";
+                return await ReloadCurrentStepAsync();
             }
 
-            // Apply Step 2 data to assessment
-            Step2.ApplyToAssessment(Assessment);
+            if (string.IsNullOrWhiteSpace(stakeholderOrganization))
+            {
+                TempData["ErrorMessage"] = "Organization is required";
+                return await ReloadCurrentStepAsync();
+            }
+
+            if (string.IsNullOrWhiteSpace(stakeholderType))
+            {
+                TempData["ErrorMessage"] = "Stakeholder type is required";
+                return await ReloadCurrentStepAsync();
+            }
+
+            // Create the stakeholder user using the CreateSMSStakeholderUserCommand
+            var stakeholderId = new SMSStakeholderUserID($"SU-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}");
             
-            // Save to database
-            await SaveAssessmentToDatabaseAsync();
+            // Parse name into first and last name
+            var nameParts = stakeholderName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var firstName = nameParts.Length > 0 ? nameParts[0] : stakeholderName;
+            var lastName = nameParts.Length > 1 ? string.Join(" ", nameParts.Skip(1)) : "";
 
-            _logger.LogInformation("Step 2 saved successfully for Assessment {AssessmentId}", Assessment.Id);
-            return (true, "Step 2 saved successfully");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error saving Step 2 for Assessment {AssessmentId}", Id);
-            return (false, $"Error saving Step 2: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Saves Step 3 data using Application layer service
-    /// </summary>
-    private async Task<(bool success, string message)> SaveStep3Async()
-    {
-        try
-        {
-            _logger.LogInformation("Saving Step 3 for Assessment {AssessmentId}", Id);
-
-            // Validate Step 3 model binding
-            if (Step3 == null)
+            var stakeholder = new SMSStakeholderUser(stakeholderId)
             {
-                return (false, "Step 3 data is not properly bound");
-            }
+                Code = stakeholderId.Value,
+                FirstName = FirstName.Create(firstName).Value,
+                LastName = LastName.Create(lastName).Value,
+                UserName = UserName.Create(stakeholderEmail ?? $"{firstName.ToLower()}.{lastName.ToLower()}@temp.com").Value,
+                Password = Password.Create("TempPass123!").Value, // Temporary password
+                Organization = stakeholderOrganization,
+                StakeholderType = stakeholderType,
+                IsActive = true,
+                SMSUserType = "Stakeholder",
+                CreatedBy = "RISK_ASSESSMENT_WIZARD",
+                CreatedDate = DateTime.UtcNow
+            };
 
-            // Validate Step 3 data
-            var validation = Step3.Validate(RelatedHazards);
-            if (!validation.isValid)
+            var createCommand = new CreateSMSStakeholderUserCommand(stakeholder);
+            var result = await _mediator.SendAsync(createCommand, CancellationToken.None);
+
+            if (result.IsSuccess)
             {
-                return (false, validation.message);
-            }
-
-            // Ensure we have assessment loaded
-            if (Assessment == null)
-            {
-                await LoadAssessmentDataAsync();
-                if (Assessment == null)
-                {
-                    return (false, "Assessment not found - please complete previous steps first");
-                }
-            }
-
-            // Use Application layer service to save Step 3 data
-            var saveResult = await _riskAssessmentService.SaveStep3Async(
-                Id,
-                Step3.RiskAnalysisMethod,
-                Step3.RiskCriteria,
-                "WIZARD_USER"
-            );
-
-            if (saveResult.IsSuccess)
-            {
-                // Apply Step 3 data to assessment (for hazard-specific analysis)
-                Step3.ApplyToAssessment(Assessment);
+                TempData["SuccessMessage"] = $"Stakeholder '{stakeholderName}' created successfully and is available for selection.";
+                _logger.LogInformation("✅ Successfully created stakeholder: {StakeholderCode}", stakeholder.Code);
                 
-                // Update our cached assessment
-                Assessment = saveResult.Value;
-                _logger.LogInformation("Step 3 saved successfully for Assessment {AssessmentId}", Assessment.Id);
-                return (true, "Step 3 saved successfully");
+                // Auto-select the new stakeholder if Step1 data is available
+                if (Step1 != null && !string.IsNullOrWhiteSpace(stakeholderType))
+                {
+                    var currentGroups = Step1.StakeholderGroups?.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(g => g.Trim()).ToList() ?? new List<string>();
+
+                    if (!currentGroups.Contains(stakeholderType))
+                    {
+                        currentGroups.Add(stakeholderType);
+                        Step1.StakeholderGroups = string.Join(", ", currentGroups);
+                        _logger.LogInformation("Auto-selected stakeholder type '{Type}' for new stakeholder", stakeholderType);
+                    }
+                }
             }
             else
             {
-                _logger.LogError("Failed to save Step 3: {Error}", saveResult.Error?.Message);
-                return (false, $"Error saving Step 3: {saveResult.Error?.Message}");
+                TempData["ErrorMessage"] = $"Failed to create stakeholder: {result.Error?.Message}";
+                _logger.LogError("Failed to create stakeholder: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error saving Step 3 for Assessment {AssessmentId}", Id);
-            return (false, $"Error saving Step 3: {ex.Message}");
+            _logger.LogError(ex, "❌ Error creating stakeholder: {Name}", stakeholderName);
+            TempData["ErrorMessage"] = $"Error creating stakeholder: {ex.Message}";
+        }
+
+        return await ReloadCurrentStepAsync();
+    }
+
+    /// <summary>
+    /// Helper method to reload the current step with all data
+    /// </summary>
+    private async Task<IActionResult> ReloadCurrentStepAsync()
+    {
+        try
+        {
+            // Ensure assessment is loaded
+            if (InitialRiskAssessment == null)
+            {
+                await EnsureAssessmentLoadedAsync();
+            }
+            
+            // Reload related data
+            await LoadReportHazardsAsync();
+            LoadStepDataFromAssessment();
+            await LoadReferenceDataAsync(); // This will reload the updated stakeholder list
+            
+            return Page();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error reloading current step");
+            return RedirectToPage("/SafetyRiskManagement/RiskAssessmentWizard",
+                new { id = Id, stepNumber = StepNumber, hazardId = HazardId, reportId = ReportId });
+        }
+    }
+
+    #endregion
+
+    #region Step Models Definitions
+
+    public class Step1Model
+    {
+        #region System Overview Properties
+
+        [Required(ErrorMessage = "Lead Assessor is required.")]
+        [Display(Name = "Lead Assessor")]
+        public string LeadAssessor { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "System Description is required.")]
+        [StringLength(1000, MinimumLength = 10, ErrorMessage = "System Description must be between 10 and 1000 characters.")]
+        [Display(Name = "System Description")]
+        public string SystemDescription { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "System Boundaries are required.")]
+        [StringLength(1000, MinimumLength = 10, ErrorMessage = "System Boundaries must be between 10 and 1000 characters.")]
+        [Display(Name = "System Boundaries")]
+        public string SystemBoundaries { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "System Purpose is required.")]
+        [StringLength(1000, MinimumLength = 10, ErrorMessage = "System Purpose must be between 10 and 1000 characters.")]
+        [Display(Name = "System Purpose")]
+        public string SystemPurpose { get; set; } = string.Empty;
+
+        #endregion
+
+        #region 5M Framework Properties
+
+        [Required(ErrorMessage = "Personnel Factors (5M People) are required.")]
+        [StringLength(1000, MinimumLength = 10, ErrorMessage = "Personnel Factors must be between 10 and 1000 characters.")]
+        [Display(Name = "Personnel Factors")]
+        public string FiveMPersonnel { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Equipment Factors (5M Equipment) are required.")]
+        [StringLength(1000, MinimumLength = 10, ErrorMessage = "Equipment Factors must be between 10 and 1000 characters.")]
+        [Display(Name = "Equipment Factors")]
+        public string FiveMEquipment { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Procedure Factors (5M Procedures) are required.")]
+        [StringLength(1000, MinimumLength = 10, ErrorMessage = "Procedure Factors must be between 10 and 1000 characters.")]
+        [Display(Name = "Procedure Factors")]
+        public string FiveMProcedures { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Resource Factors (5M Resources) are required.")]
+        [StringLength(1000, MinimumLength = 10, ErrorMessage = "Resource Factors must be between 10 and 1000 characters.")]
+        [Display(Name = "Resource Factors")]
+        public string FiveMResources { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Physical Environment Factors (5M Environment) are required.")]
+        [StringLength(1000, MinimumLength = 10, ErrorMessage = "Physical Environment must be between 10 and 1000 characters.")]
+        [Display(Name = "Physical Environment")]
+        public string FiveMPhysicalEnvironment { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Operational Environment Factors are required.")]
+        [StringLength(1000, MinimumLength = 10, ErrorMessage = "Operational Environment must be between 10 and 1000 characters.")]
+        [Display(Name = "Operational Environment")]
+        public string FiveMOperationalEnvironment { get; set; } = string.Empty;
+
+        #endregion
+
+        #region Stakeholder Properties
+
+        [Display(Name = "Stakeholder Groups")]
+        public string StakeholderGroups { get; set; } = string.Empty;
+
+        [Display(Name = "Individual Stakeholders")]
+        public string SelectedIndividualStakeholders { get; set; } = string.Empty;
+
+        #endregion
+
+        #region Helper Classes for Stakeholder Selection
+
+        public class StakeholderSelection
+        {
+            public string Id { get; set; } = string.Empty;
+            public string Name { get; set; } = string.Empty;
+            public string Organization { get; set; } = string.Empty;
+            public string Type { get; set; } = string.Empty;
+            public string Category { get; set; } = string.Empty;
+        }
+
+        #endregion
+
+        #region Step 1 Methods
+
+        public (bool isValid, string message) Validate()
+        {
+            var step1Fields = new Dictionary<string, string>
+        {
+            { nameof(LeadAssessor), LeadAssessor },
+            { nameof(SystemDescription), SystemDescription },
+            { nameof(SystemBoundaries), SystemBoundaries },
+            { nameof(SystemPurpose), SystemPurpose },
+            { nameof(FiveMPersonnel), FiveMPersonnel },
+            { nameof(FiveMEquipment), FiveMEquipment },
+            { nameof(FiveMProcedures), FiveMProcedures },
+            { nameof(FiveMResources), FiveMResources },
+            { nameof(FiveMPhysicalEnvironment), FiveMPhysicalEnvironment },
+            { nameof(FiveMOperationalEnvironment), FiveMOperationalEnvironment }
+        };
+
+            int fieldsWithData = 0;
+            var missingFields = new List<string>();
+
+            foreach (var field in step1Fields)
+            {
+                var value = field.Value?.Trim() ?? string.Empty;
+
+                if (string.IsNullOrEmpty(value))
+                {
+                    missingFields.Add(field.Key);
+                }
+                else if (value.Length >= 10)
+                {
+                    fieldsWithData++;
+                }
+            }
+
+            if (fieldsWithData < 4)
+            {
+                return (false, $"Need at least 4 complete fields (found {fieldsWithData}). Missing: {string.Join(", ", missingFields)}");
+            }
+
+            return (true, $"Step 1 validation passed with {fieldsWithData} complete fields");
+        }
+
+        public void ApplyToAssessment(RiskAssessment assessment)
+        {
+            assessment.SystemDescription = SystemDescription.Trim();
+            assessment.SystemBoundaries = SystemBoundaries.Trim();
+            assessment.SystemPurpose = SystemPurpose.Trim();
+            assessment.FiveMPersonnel = FiveMPersonnel.Trim();
+            assessment.FiveMEquipment = FiveMEquipment.Trim();
+            assessment.FiveMProcedures = FiveMProcedures.Trim();
+            assessment.FiveMResources = FiveMResources.Trim();
+            assessment.FiveMOperationalEnvironment = FiveMOperationalEnvironment.Trim();
+            assessment.FiveMPhysicalEnvironment = FiveMPhysicalEnvironment.Trim();
+
+            assessment.LeadAssessorId = LeadAssessor.Trim();
+
+            if (!string.IsNullOrEmpty(StakeholderGroups.Trim()))
+            {
+                var groups = StakeholderGroups.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(g => g.Trim())
+                    .Where(g => !string.IsNullOrEmpty(g));
+
+                foreach (var group in groups)
+                {
+                    assessment.AddStakeholder(group);
+                }
+            }
+
+            assessment.CompleteStep(1);
+        }
+
+        public void LoadFromAssessment(RiskAssessment assessment)
+        {
+            if (assessment == null) return;
+
+            if (string.IsNullOrEmpty(LeadAssessor)) LeadAssessor = assessment.LeadAssessorId ?? string.Empty;
+            if (string.IsNullOrEmpty(SystemDescription)) SystemDescription = assessment.SystemDescription ?? string.Empty;
+            if (string.IsNullOrEmpty(SystemBoundaries)) SystemBoundaries = assessment.SystemBoundaries ?? string.Empty;
+            if (string.IsNullOrEmpty(SystemPurpose)) SystemPurpose = assessment.SystemPurpose ?? string.Empty;
+
+            if (string.IsNullOrEmpty(FiveMPersonnel)) FiveMPersonnel = assessment.FiveMPersonnel ?? string.Empty;
+            if (string.IsNullOrEmpty(FiveMEquipment)) FiveMEquipment = assessment.FiveMEquipment ?? string.Empty;
+            if (string.IsNullOrEmpty(FiveMProcedures)) FiveMProcedures = assessment.FiveMProcedures ?? string.Empty;
+            if (string.IsNullOrEmpty(FiveMResources)) FiveMResources = assessment.FiveMResources ?? string.Empty;
+            if (string.IsNullOrEmpty(FiveMPhysicalEnvironment)) FiveMPhysicalEnvironment = assessment.FiveMPhysicalEnvironment ?? string.Empty;
+            if (string.IsNullOrEmpty(FiveMOperationalEnvironment)) FiveMOperationalEnvironment = assessment.FiveMOperationalEnvironment ?? string.Empty;
+        }
+
+        #endregion
+    }
+
+    public class Step2Model
+    {
+        #region Hazard Properties
+
+        public List<string> HazardIds { get; set; } = new();
+        public List<string> HazardDescriptions { get; set; } = new();
+        public List<string> HazardCategories { get; set; } = new();
+
+        #endregion
+
+        #region Step 2 Methods
+
+        public (bool isValid, string message) Validate()
+        {
+            var validHazards = HazardDescriptions.Where(h => !string.IsNullOrWhiteSpace(h)).Count();
+
+            if (validHazards < 1)
+            {
+                return (false, "At least 1 hazard is required");
+            }
+
+            return (true, $"Step 2 validation passed with {validHazards} hazards");
+        }
+
+        public void LoadFromAssessment(RiskAssessment assessment)
+        {
+            if (assessment == null) return;
+
+            HazardIds = assessment.IdentifiedHazardIds.ToList();
+            HazardDescriptions = assessment.IdentifiedHazardIds.Select(id => $"Hazard {id}").ToList();
+            HazardCategories = assessment.IdentifiedHazardIds.Select(_ => string.Empty).ToList();
+        }
+
+        public void ApplyToAssessment(RiskAssessment assessment)
+        {
+            assessment.ClearIdentifiedHazards();
+
+            for (int i = 0; i < HazardIds.Count && i < HazardDescriptions.Count; i++)
+            {
+                if (!string.IsNullOrWhiteSpace(HazardDescriptions[i]))
+                {
+                    assessment.AddIdentifiedHazard(HazardIds[i], HazardDescriptions[i]);
+                }
+            }
+
+            assessment.CompleteStep(2);
+        }
+
+        #endregion
+    }
+
+    public class Step3Model
+    {
+        #region Risk Analysis Method Properties
+
+        public string RiskAnalysisMethod { get; set; } = "SMS Risk Matrix";
+        public string RiskCriteria { get; set; } = string.Empty;
+
+        #endregion
+
+        #region Multiple Hazard Risk Analysis Properties
+
+        public Dictionary<string, HazardRiskAnalysis> HazardAnalyses { get; set; } = new();
+
+        #endregion
+
+        #region Step 3 Methods
+
+        public (bool isValid, string message) Validate(List<Hazard> availableHazards = null)
+        {
+            // ENHANCED: Better validation with clear error messages
+            if (availableHazards == null || !availableHazards.Any())
+            {
+                return (false, "No hazards available for risk analysis. There should always be at least one initial hazard. Please check hazard loading.");
+            }
+
+            var incompleteHazards = new List<string>();
+            var analysisCount = 0;
+            var totalHazards = availableHazards.Count;
+
+           // _logger?.LogInformation("Validating Step 3 with {TotalHazards} available hazards", totalHazards);
+
+            foreach (var hazard in availableHazards)
+            {
+                var hazardCode = hazard.Code;
+               // _logger?.LogDebug("Validating hazard analysis for: {HazardCode}", hazardCode);
+
+                if (HazardAnalyses.TryGetValue(hazardCode, out var analysis))
+                {
+                    var worstOutcomeValid = !string.IsNullOrWhiteSpace(analysis.WorstCredibleOutcome) && analysis.WorstCredibleOutcome.Length >= 10;
+                    var rootCauseValid = !string.IsNullOrWhiteSpace(analysis.RootCauseAnalysis) && analysis.RootCauseAnalysis.Length >= 10;
+
+                    if (!worstOutcomeValid && !rootCauseValid)
+                    {
+                        incompleteHazards.Add($"{hazardCode} (missing both worst outcome and root cause analysis)");
+                    }
+                    else if (!worstOutcomeValid)
+                    {
+                        incompleteHazards.Add($"{hazardCode} (worst credible outcome incomplete: {analysis.WorstCredibleOutcome?.Length ?? 0}/10 characters)");
+                    }
+                    else if (!rootCauseValid)
+                    {
+                        incompleteHazards.Add($"{hazardCode} (root cause analysis incomplete: {analysis.RootCauseAnalysis?.Length ?? 0}/10 characters)");
+                    }
+                    else
+                    {
+                        analysisCount++;
+                      //  _logger?.LogDebug("Hazard {HazardCode} analysis complete", hazardCode);
+                    }
+                }
+                else
+                {
+                    incompleteHazards.Add($"{hazardCode} (no analysis data found)");
+                }
+            }
+
+            if (incompleteHazards.Any())
+            {
+                var message = $"Risk analysis incomplete for {incompleteHazards.Count}/{totalHazards} hazards: {string.Join("; ", incompleteHazards)}";
+               // _logger?.LogWarning("Step 3 validation failed: {Message}", message);
+                return (false, message);
+            }
+
+            var successMessage = $"Step 3 validation passed - {analysisCount}/{totalHazards} hazards have complete risk analysis";
+          //  _logger?.LogInformation("Step 3 validation successful: {Message}", successMessage);
+            return (true, successMessage);
+        }
+
+        public HazardRiskAnalysis GetHazardAnalysis(string hazardCode)
+        {
+            if (string.IsNullOrEmpty(hazardCode))
+            {
+                return new HazardRiskAnalysis { HazardId = hazardCode ?? string.Empty };
+            }
+
+            if (!HazardAnalyses.ContainsKey(hazardCode))
+            {
+                HazardAnalyses[hazardCode] = new HazardRiskAnalysis
+                {
+                    HazardId = hazardCode,
+                    HazardDescription = $"Analysis for {hazardCode}",
+                    HazardCategory = "General"
+                };
+            }
+
+            return HazardAnalyses[hazardCode];
+        }
+
+        public void InitializeHazardAnalyses(List<Hazard> availableHazards)
+        {
+            if (availableHazards == null) return;
+
+            foreach (var hazard in availableHazards)
+            {
+                if (!HazardAnalyses.ContainsKey(hazard.Code))
+                {
+                    HazardAnalyses[hazard.Code] = new HazardRiskAnalysis
+                    {
+                        HazardId = hazard.Code,
+                        HazardDescription = hazard.Description,
+                        HazardCategory = hazard.HazardType
+                    };
+                }
+            }
+        }
+
+        public void ApplyToAssessment(RiskAssessment assessment)
+        {
+            assessment.CompleteStep(3);
+        }
+
+        public void LoadFromAssessment(RiskAssessment assessment, List<Hazard> reportHazards)
+        {
+            if (assessment == null) return;
+
+            if (string.IsNullOrEmpty(RiskAnalysisMethod) && !string.IsNullOrEmpty(assessment.RiskAnalysisMethod))
+            {
+                RiskAnalysisMethod = assessment.RiskAnalysisMethod;
+            }
+
+            if (string.IsNullOrEmpty(RiskCriteria) && !string.IsNullOrEmpty(assessment.RiskCriteria))
+            {
+                RiskCriteria = assessment.RiskCriteria;
+            }
+
+            InitializeHazardAnalyses(reportHazards);
+        }
+
+        #endregion
+    }
+
+    public class Step4Model
+    {
+        #region Risk Assessment Properties
+
+        public string TolerabilityFramework { get; set; } = "PDX-SMS Default";
+        public string RiskAcceptanceCriteria { get; set; } = string.Empty;
+
+        #endregion
+
+        #region Scoring Panel Properties
+
+        public List<string> SelectedPanelMembers { get; set; } = new();
+        public Dictionary<string, List<string>> HazardPanelMembers { get; set; } = new();
+        public Dictionary<string, List<PanelMemberScoreData>> PanelScores { get; set; } = new();
+        public Dictionary<string, double> HazardAverageScores { get; set; } = new();
+        public Dictionary<string, string> HazardRiskLevels { get; set; } = new();
+
+        #endregion
+
+        #region Helper Properties for UI
+
+        public List<PanelMemberScoreData> CompletedScores
+        {
+            get
+            {
+                return PanelScores.Values
+                    .SelectMany(scores => scores)
+                    .Where(score => score.IsComplete)
+                    .ToList();
+            }
+        }
+
+        public List<PanelMemberScoreData> PendingScores
+        {
+            get
+            {
+                var allExpectedScores = new List<PanelMemberScoreData>();
+
+                foreach (var hazardPanelKvp in HazardPanelMembers)
+                {
+                    var hazardId = hazardPanelKvp.Key;
+                    var panelMemberIds = hazardPanelKvp.Value;
+
+                    foreach (var memberId in panelMemberIds)
+                    {
+                        var existingScore = PanelScores.ContainsKey(hazardId)
+                            ? PanelScores[hazardId].FirstOrDefault(s => s.MemberId == memberId)
+                            : null;
+
+                        if (existingScore == null || !existingScore.IsComplete)
+                        {
+                            allExpectedScores.Add(new PanelMemberScoreData
+                            {
+                                HazardId = hazardId,
+                                MemberId = memberId,
+                                MemberName = memberId
+                            });
+                        }
+                    }
+                }
+
+                return allExpectedScores;
+            }
+        }
+
+        #endregion
+
+        #region Step 4 Methods
+
+        public (bool isValid, string message) Validate()
+        {
+            if (string.IsNullOrWhiteSpace(TolerabilityFramework))
+            {
+                return (false, "Tolerability framework is required");
+            }
+
+            return (true, "Step 4 validation passed");
+        }
+
+        public void ApplyToAssessment(RiskAssessment assessment)
+        {
+            assessment.CompleteStep(4);
+        }
+
+        public void LoadFromAssessment(RiskAssessment assessment)
+        {
+            if (assessment == null) return;
+
+            if (string.IsNullOrEmpty(TolerabilityFramework))
+            {
+                TolerabilityFramework = "PDX-SMS Default";
+            }
+        }
+
+        public void AddPanelMemberScore(string hazardId, PanelMemberScoreData score)
+        {
+            if (!PanelScores.ContainsKey(hazardId))
+            {
+                PanelScores[hazardId] = new List<PanelMemberScoreData>();
+            }
+
+            PanelScores[hazardId].RemoveAll(s => s.MemberId == score.MemberId);
+            PanelScores[hazardId].Add(score);
+            RecalculateHazardAverage(hazardId);
+        }
+
+        private void RecalculateHazardAverage(string hazardId)
+        {
+            if (!PanelScores.ContainsKey(hazardId))
+            {
+                return;
+            }
+
+            var completedScores = PanelScores[hazardId].Where(s => s.IsComplete).ToList();
+            if (completedScores.Any())
+            {
+                var average = completedScores.Average(s => s.CalculatedScore);
+                HazardAverageScores[hazardId] = average;
+                HazardRiskLevels[hazardId] = DetermineRiskLevel(average);
+            }
+            else
+            {
+                HazardAverageScores.Remove(hazardId);
+                HazardRiskLevels.Remove(hazardId);
+            }
+        }
+
+        private string DetermineRiskLevel(double score)
+        {
+            return score switch
+            {
+                >= 15 => "High",
+                >= 8 => "Medium",
+                _ => "Low"
+            };
+        }
+
+        public void AssignPanelMembersToHazard(string hazardId, List<string> memberIds)
+        {
+            HazardPanelMembers[hazardId] = memberIds.ToList();
+        }
+
+        #endregion
+    }
+
+    public class Step5Model
+    {
+        #region Risk Mitigation Properties
+
+        public string ImplementationStrategy { get; set; } = string.Empty;
+        public DateTime? OverallTargetDate { get; set; }
+        public string ImplementationNotes { get; set; } = string.Empty;
+        public Dictionary<string, List<string>> SavedMitigationStrategies { get; set; } = new();
+
+        #endregion
+
+        #region Panel-Related Properties for Residual Risk Assessment
+
+        public Dictionary<string, List<string>> HazardPanelMembers { get; set; } = new();
+        public Dictionary<string, List<PanelMemberScoreData>> PanelScores { get; set; } = new();
+        public Dictionary<string, double> HazardAverageScores { get; set; } = new();
+
+        #endregion
+
+        #region Step 5 Methods
+
+        public (bool isValid, string message) Validate()
+        {
+            bool hasImplementation = !string.IsNullOrWhiteSpace(ImplementationStrategy);
+
+            if (!hasImplementation)
+            {
+                return (false, "Implementation strategy is required");
+            }
+
+            return (true, "Step 5 validation passed");
+        }
+
+        public void ApplyToAssessment(RiskAssessment assessment)
+        {
+            assessment.CompleteStep(5);
+        }
+
+        #endregion
+    }
+
+
+    #endregion
+
+    #region ✅ BLAZOR NAVIGATION HANDLERS
+
+    /// <summary>
+    /// Handles navigation to a specific step from Blazor components
+    /// </summary>
+    public async Task<IActionResult> OnPostNavigateToStepAsync(int targetStep)
+    {
+        try
+        {
+            _logger.LogInformation("🔄 Navigation requested to step {TargetStep} from step {CurrentStep}",
+                targetStep, StepNumber);
+
+            // Validate target step
+            if (targetStep < 1 || targetStep > 5)
+            {
+                TempData["ErrorMessage"] = "Invalid step number.";
+                return Page();
+            }
+
+            // Save current step before navigation
+            if (StepNumber != targetStep)
+            {
+                var saveResult = await SaveCurrentStepInternalAsync();
+                if (!saveResult.success)
+                {
+                    TempData["ErrorMessage"] = $"Failed to save current step: {saveResult.message}";
+                    return Page();
+                }
+            }
+
+            // Navigate to target step
+            return RedirectToPage("/SafetyRiskManagement/RiskAssessmentWizard",
+                new { id = InitialRiskAssessment?.Code ?? Id, stepNumber = targetStep, reportId = ReportId, hazardId = HazardId });
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error navigating to step {TargetStep}", targetStep);
+            TempData["ErrorMessage"] = "Navigation error occurred. Please try again.";
+            return Page();
         }
     }
 
     /// <summary>
-    /// Saves Step 4 data specifically - easier to debug and test
+    /// Handles manual save requests from UI
     /// </summary>
-    private async Task<(bool success, string message)> SaveStep4Async()
+    public async Task<IActionResult> OnPostManualSaveCurrentStepAsync()
     {
         try
         {
-            _logger.LogInformation("Saving Step 4 for Assessment {AssessmentId}", Id);
+            _logger.LogInformation("💾 Manual save requested for Step {StepNumber}", StepNumber);
 
-            // Validate Step 4 model binding
-            if (Step4 == null)
+            var saveResult = await SaveCurrentStepInternalAsync();
+
+            if (saveResult.success)
             {
-                return (false, "Step 4 data is not properly bound");
+                TempData["SuccessMessage"] = saveResult.message;
+            }
+            else
+            {
+                TempData["ErrorMessage"] = saveResult.message;
             }
 
-            // Validate Step 4 data
-            var validation = Step4.Validate();
-            if (!validation.isValid)
-            {
-                return (false, validation.message);
-            }
-
-            // Ensure we have assessment loaded
-            if (Assessment == null)
-            {
-                await LoadAssessmentDataAsync();
-                if (Assessment == null)
-                {
-                    return (false, "Assessment not found - please complete previous steps first");
-                }
-            }
-
-            // Apply Step 4 data to assessment
-            Step4.ApplyToAssessment(Assessment);
-            
-            // Save to database
-            await SaveAssessmentToDatabaseAsync();
-
-            _logger.LogInformation("Step 4 saved successfully for Assessment {AssessmentId}", Assessment.Id);
-            return (true, "Step 4 saved successfully");
+            return Page();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error saving Step 4 for Assessment {AssessmentId}", Id);
-            return (false, $"Error saving Step 4: {ex.Message}");
+            _logger.LogError(ex, "❌ Error during manual save for Step {StepNumber}", StepNumber);
+            TempData["ErrorMessage"] = "Save operation failed. Please try again.";
+            return Page();
         }
     }
 
     /// <summary>
-    /// Saves Step 5 data specifically - easier to debug and test
+    /// Handles previous step navigation
     /// </summary>
-    private async Task<(bool success, string message)> SaveStep5Async()
+    public async Task<IActionResult> OnPostPreviousStepAsync()
     {
-        try
+        if (StepNumber > 1)
         {
-            _logger.LogInformation("Saving Step 5 for Assessment {AssessmentId}", Id);
-
-            // Validate Step 5 model binding
-            if (Step5 == null)
-            {
-                return (false, "Step 5 data is not properly bound");
-            }
-
-            // Validate Step 5 data
-            var validation = Step5.Validate();
-            if (!validation.isValid)
-            {
-                return (false, validation.message);
-            }
-
-            // Ensure we have assessment loaded
-            if (Assessment == null)
-            {
-                await LoadAssessmentDataAsync();
-                if (Assessment == null)
-                {
-                    return (false, "Assessment not found - please complete previous steps first");
-                }
-            }
-
-            // Apply Step 5 data to assessment
-            Step5.ApplyToAssessment(Assessment);
-            
-            // Save to database
-            await SaveAssessmentToDatabaseAsync();
-
-            _logger.LogInformation("Step 5 saved successfully for Assessment {AssessmentId}", Assessment.Id);
-            return (true, "Step 5 saved successfully");
+            return await OnPostNavigateToStepAsync(StepNumber - 1);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error saving Step 5 for Assessment {AssessmentId}", Id);
-            return (false, $"Error saving Step 5: {ex.Message}");
-        }
+
+        return Page();
     }
+
+    /// <summary>
+    /// Internal step save method used by navigation handlers
+    /// </summary>
+    private async Task<(bool success, string message)> SaveCurrentStepInternalAsync()
+    {
+        return await SaveCurrentStepAsync();
+    }
+
+    #endregion
+
+    #region Supporting Methods for Page Handlers
 
     /// <summary>
     /// Generic step save dispatcher - calls the appropriate step save method
@@ -1225,737 +2049,94 @@ public class RiskAssessmentWizardModel : PageModel
         };
     }
 
-    #endregion
-
-    #region Page Load and Initialization
-
     /// <summary>
-    /// Handles GET requests - loads assessment data and initializes step models
+    /// Saves Step 1 data
     /// </summary>
-    public async Task<IActionResult> OnGetAsync()
+    private async Task<(bool success, string message)> SaveStep1Async()
     {
         try
         {
-            _logger.LogInformation("Loading Risk Assessment Wizard - Step {StepNumber}, Assessment {AssessmentId}, HazardId: {HazardId}", StepNumber, Id, HazardId);
-
-            // Validate required parameters
-            if (StepNumber < 1 || StepNumber > 5)
-            {
-                _logger.LogWarning("Invalid step number {StepNumber}", StepNumber);
-                return RedirectToPage("/SafetyRiskManagement/RiskAssessmentWizard", 
-                    new { id = Id, stepNumber = 1, hazardId = HazardId });
-            }
-
-            // ✅ FIXED: Load the related hazard first if we have a HazardId
-            if (!string.IsNullOrEmpty(HazardId))
-            {
-                await LoadRelatedHazardAsync();
-            }
-
-            // Load assessment data if we have an ID
-            if (!string.IsNullOrEmpty(Id))
-            {
-                await LoadAssessmentDataAsync();
-                
-                // If assessment loaded, populate step models
-                if (Assessment != null)
-                {
-                    LoadStepDataFromAssessment();
-                }
-            }
-
-            // Initialize any required reference data
-            await LoadReferenceDataAsync();
-
-            return Page();
+            Step1.ApplyToAssessment(InitialRiskAssessment);
+            await SaveAssessmentToDatabaseAsync();
+            return (true, "Step 1 saved successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading Risk Assessment Wizard page");
-            TempData["ErrorMessage"] = "Error loading the assessment wizard. Please try again.";
-            return RedirectToPage("/SafetyRiskManagement/RiskAssessment");
+            _logger.LogError(ex, "Error saving Step 1");
+            return (false, $"Error saving Step 1: {ex.Message}");
         }
     }
 
     /// <summary>
-    /// Loads reference data needed for dropdowns and selections using Application layer
+    /// Saves Step 2 data
     /// </summary>
-    private async Task LoadReferenceDataAsync()
+    private async Task<(bool success, string message)> SaveStep2Async()
     {
         try
         {
-            // TODO: Implement queries for reference data when available
-            // Example for when queries are implemented:
-            // var assessorsQuery = new GetSMSApplicationUsersQuery();
-            // var assessorsResult = await _mediator.SendAsync(assessorsQuery, CancellationToken.None);
-            // if (assessorsResult.IsSuccess)
-            // {
-            //     AvailableAssessors = assessorsResult.Value.ToList();
-            // }
-            
-            // var stakeholdersQuery = new GetSMSStakeholderUsersQuery();
-            // var stakeholdersResult = await _mediator.SendAsync(stakeholdersQuery, CancellationToken.None);
-            // if (stakeholdersResult.IsSuccess)
-            // {
-            //     AvailableStakeholders = stakeholdersResult.Value.ToList();
-            // }
-
-            // For now, initialize to empty lists to prevent null reference errors
-            AvailableAssessors = new List<SMSApplicationUser>();
-            AvailableStakeholders = new List<SMSStakeholderUser>();
-            StakeholderGroups_Data = new List<StakeholderGroup>();
-            RelatedHazards = new List<Hazard>();
-
-            _logger.LogInformation("Reference data initialized for Assessment {AssessmentId}", Id);
-            await Task.CompletedTask; // Placeholder
+            Step2.ApplyToAssessment(InitialRiskAssessment);
+            await SaveAssessmentToDatabaseAsync();
+            return (true, "Step 2 saved successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading reference data");
-            // Don't throw - just log the error and continue with empty lists
-        }
-    }
-
-    #endregion
-}
-
-public class Step1Model 
-{
-    #region System Overview Properties
-
-    [Required(ErrorMessage = "Lead Assessor is required.")]
-    [Display(Name = "Lead Assessor")]
-    public string LeadAssessor { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "System Description is required.")]
-    [StringLength(1000, MinimumLength = 10, ErrorMessage = "System Description must be between 10 and 1000 characters.")]
-    [Display(Name = "System Description")]
-    public string SystemDescription { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "System Boundaries are required.")]
-    [StringLength(1000, MinimumLength = 10, ErrorMessage = "System Boundaries must be between 10 and 1000 characters.")]
-    [Display(Name = "System Boundaries")]
-    public string SystemBoundaries { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "System Purpose is required.")]
-    [StringLength(1000, MinimumLength = 10, ErrorMessage = "System Purpose must be between 10 and 1000 characters.")]
-    [Display(Name = "System Purpose")]
-    public string SystemPurpose { get; set; } = string.Empty;
-
-    #endregion
-
-    #region 5M Framework Properties
-
-    [Required(ErrorMessage = "Personnel Factors (5M People) are required.")]
-    [StringLength(1000, MinimumLength = 10, ErrorMessage = "Personnel Factors must be between 10 and 1000 characters.")]
-    [Display(Name = "Personnel Factors")]
-    public string FiveMPersonnel { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "Equipment Factors (5M Equipment) are required.")]
-    [StringLength(1000, MinimumLength = 10, ErrorMessage = "Equipment Factors must be between 10 and 1000 characters.")]
-    [Display(Name = "Equipment Factors")]
-    public string FiveMEquipment { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "Procedure Factors (5M Procedures) are required.")]
-    [StringLength(1000, MinimumLength = 10, ErrorMessage = "Procedure Factors must be between 10 and 1000 characters.")]
-    [Display(Name = "Procedure Factors")]
-    public string FiveMProcedures { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "Resource Factors (5M Resources) are required.")]
-    [StringLength(1000, MinimumLength = 10, ErrorMessage = "Resource Factors must be between 10 and 1000 characters.")]
-    [Display(Name = "Resource Factors")]
-    public string FiveMResources { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "Physical Environment Factors (5M Environment) are required.")]
-    [StringLength(1000, MinimumLength = 10, ErrorMessage = "Physical Environment must be between 10 and 1000 characters.")]
-    [Display(Name = "Physical Environment")]
-    public string FiveMPhysicalEnvironment { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "Operational Environment Factors are required.")]
-    [StringLength(1000, MinimumLength = 10, ErrorMessage = "Operational Environment must be between 10 and 1000 characters.")]
-    [Display(Name = "Operational Environment")]
-    public string FiveMOperationalEnvironment { get; set; } = string.Empty;
-
-    #endregion
-
-    #region Stakeholder Properties
-
-    [Display(Name = "Stakeholder Groups")]
-    public string StakeholderGroups { get; set; } = string.Empty;
-
-    [Display(Name = "Individual Stakeholders")]
-    public string SelectedIndividualStakeholders { get; set; } = string.Empty;
-
-    #endregion
-
-    #region Step 1 Methods
-
-    public (bool isValid, string message) Validate()
-    {
-        var step1Fields = new Dictionary<string, string>
-        {
-            { nameof(LeadAssessor), LeadAssessor },
-            { nameof(SystemDescription), SystemDescription },
-            { nameof(SystemBoundaries), SystemBoundaries },
-            { nameof(SystemPurpose), SystemPurpose },
-            { nameof(FiveMPersonnel), FiveMPersonnel },
-            { nameof(FiveMEquipment), FiveMEquipment },
-            { nameof(FiveMProcedures), FiveMProcedures },
-            { nameof(FiveMResources), FiveMResources },
-            { nameof(FiveMPhysicalEnvironment), FiveMPhysicalEnvironment },
-            { nameof(FiveMOperationalEnvironment), FiveMOperationalEnvironment }
-        };
-        
-        int fieldsWithData = 0;
-        var missingFields = new List<string>();
-        
-        foreach (var field in step1Fields)
-        {
-            var value = field.Value?.Trim() ?? string.Empty;
-            
-            if (string.IsNullOrEmpty(value))
-            {
-                missingFields.Add(field.Key);
-            }
-            else if (value.Length >= 10)
-            {
-                fieldsWithData++;
-            }
-        }
-        
-        if (fieldsWithData < 4)
-        {
-            return (false, $"Need at least 4 complete fields (found {fieldsWithData}). Missing: {string.Join(", ", missingFields)}");
-        }
-        
-        return (true, $"Step 1 validation passed with {fieldsWithData} complete fields");
-    }
-
-    public void ApplyToAssessment(RiskAssessment assessment)
-    {
-        assessment.SystemDescription = SystemDescription.Trim();
-        assessment.SystemBoundaries = SystemBoundaries.Trim();
-        assessment.SystemPurpose = SystemPurpose.Trim();
-        assessment.FiveMPersonnel = FiveMPersonnel.Trim();
-        assessment.FiveMEquipment = FiveMEquipment.Trim();
-        assessment.FiveMProcedures = FiveMProcedures.Trim();
-        assessment.FiveMResources = FiveMResources.Trim();
-        assessment.FiveMOperationalEnvironment = FiveMOperationalEnvironment.Trim();
-        assessment.FiveMPhysicalEnvironment = FiveMPhysicalEnvironment.Trim();
-             
-        assessment.LeadAssessorId = LeadAssessor.Trim();
-
-        if (!string.IsNullOrEmpty(StakeholderGroups.Trim()))
-        {
-            var groups = StakeholderGroups.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(g => g.Trim())
-                .Where(g => !string.IsNullOrEmpty(g));
-
-            foreach (var group in groups)
-            {
-                assessment.AddStakeholder(group);
-            }
-        }
-
-        assessment.CompleteStep(1);
-    }
-
-    public void LoadFromAssessment(RiskAssessment assessment)
-    {
-        if (assessment == null) return;
-
-        if (string.IsNullOrEmpty(LeadAssessor)) LeadAssessor = assessment.LeadAssessorId ?? string.Empty;
-        if (string.IsNullOrEmpty(SystemDescription)) SystemDescription = assessment.SystemDescription ?? string.Empty;
-        if (string.IsNullOrEmpty(SystemBoundaries)) SystemBoundaries = assessment.SystemBoundaries ?? string.Empty;
-        if (string.IsNullOrEmpty(SystemPurpose)) SystemPurpose = assessment.SystemPurpose ?? string.Empty;
-        
-        // CORRECTED: Use the proper 5M property names from the updated RiskAssessment entity
-        if (string.IsNullOrEmpty(FiveMPersonnel)) FiveMPersonnel = assessment.FiveMPersonnel ?? string.Empty;
-        if (string.IsNullOrEmpty(FiveMEquipment)) FiveMEquipment = assessment.FiveMEquipment ?? string.Empty;
-        if (string.IsNullOrEmpty(FiveMProcedures)) FiveMProcedures = assessment.FiveMProcedures ?? string.Empty;
-        if (string.IsNullOrEmpty(FiveMResources)) FiveMResources = assessment.FiveMResources ?? string.Empty;
-        if (string.IsNullOrEmpty(FiveMPhysicalEnvironment)) FiveMPhysicalEnvironment = assessment.FiveMPhysicalEnvironment ?? string.Empty;
-        if (string.IsNullOrEmpty(FiveMOperationalEnvironment)) FiveMOperationalEnvironment = assessment.FiveMOperationalEnvironment ?? string.Empty;
-    }
-
-    #endregion
-}
-
-/// <summary>
-/// Step 2 Model - Hazard Identification
-/// </summary>
-public class Step2Model 
-{
-    #region Hazard Properties
-
-    public List<string> HazardIds { get; set; } = new();
-    public List<string> HazardDescriptions { get; set; } = new();
-    public List<string> HazardCategories { get; set; } = new();
-
-    #endregion
-
-    #region Step 2 Methods
-
-    public (bool isValid, string message) Validate()
-    {
-        var validHazards = HazardDescriptions.Where(h => !string.IsNullOrWhiteSpace(h)).Count();
-        
-        if (validHazards < 1)
-        {
-            return (false, "At least 1 hazard is required");
-        }
-        
-        return (true, $"Step 2 validation passed with {validHazards} hazards");
-    }
-
-    public void ApplyToAssessment(RiskAssessment assessment)
-    {
-        assessment.ClearIdentifiedHazards();
-
-        for (int i = 0; i < HazardIds.Count && i < HazardDescriptions.Count; i++)
-        {
-            if (!string.IsNullOrWhiteSpace(HazardDescriptions[i]))
-            {
-                assessment.AddIdentifiedHazard(HazardIds[i], HazardDescriptions[i]);
-            }
-        }
-
-        assessment.CompleteStep(2);
-    }
-
-    #endregion
-}
-
-/// <summary>
-/// Step 3 Model - Risk Analysis for Multiple Hazards
-/// Supports multiple hazards per report where each hazard has its own risk analysis
-/// </summary>
-public class Step3Model 
-{
-    #region Risk Analysis Method Properties
-
-    public string RiskAnalysisMethod { get; set; } = "SMS Risk Matrix";
-    public string RiskCriteria { get; set; } = string.Empty;
-
-    #endregion
-
-    #region Multiple Hazard Risk Analysis Properties
-
-    /// <summary>
-    /// Collection of risk analyses for each identified hazard
-    /// Key = HazardId, Value = HazardRiskAnalysis
-    /// </summary>
-    public Dictionary<string, HazardRiskAnalysis> HazardAnalyses { get; set; } = new();
-
-    
-    #endregion
-
-    #region Step 3 Methods
-
-    /// <summary>
-    /// Validates that each identified hazard has completed risk analysis
-    /// </summary>
-    public (bool isValid, string message) Validate(List<Hazard> availableHazards = null)
-    {
-        if (availableHazards == null || !availableHazards.Any())
-        {
-            return (false, "No hazards available for risk analysis. Please complete Step 2 first.");
-        }
-
-        var incompleteHazards = new List<string>();
-        var analysisCount = 0;
-
-        foreach (var hazard in availableHazards)
-        {
-            if (HazardAnalyses.TryGetValue(hazard.Code, out var analysis))
-            {
-                if (string.IsNullOrWhiteSpace(analysis.WorstCredibleOutcome) || analysis.WorstCredibleOutcome.Length < 10)
-                {
-                    incompleteHazards.Add($"{hazard.Code} (missing worst outcome)");
-                }
-                else if (string.IsNullOrWhiteSpace(analysis.RootCauseAnalysis) || analysis.RootCauseAnalysis.Length < 10)
-                {
-                    incompleteHazards.Add($"{hazard.Code} (missing root cause analysis)");
-                }
-                else
-                {
-                    analysisCount++;
-                }
-            }
-            else
-            {
-                incompleteHazards.Add($"{hazard.Code} (no analysis)");
-            }
-        }
-
-        if (incompleteHazards.Any())
-        {
-            return (false, $"Incomplete risk analysis for hazards: {string.Join(", ", incompleteHazards)}. All hazards need both worst credible outcome and root cause analysis (minimum 10 characters each).");
-        }
-
-        return (true, $"Step 3 validation passed - {analysisCount} hazards have complete risk analysis");
-    }
-
-    /// <summary>
-    /// Ensures all hazards have risk analysis entries initialized
-    /// </summary>
-    public void InitializeHazardAnalyses(List<Hazard> availableHazards)
-    {
-        if (availableHazards == null) return;
-
-        foreach (var hazard in availableHazards)
-        {
-            if (!HazardAnalyses.ContainsKey(hazard.Code))
-            {
-                HazardAnalyses[hazard.Code] = new HazardRiskAnalysis
-                {
-                    HazardId = hazard.Code,
-                    HazardDescription = hazard.Description,
-                    HazardCategory = hazard.HazardType
-                };
-            }
+            _logger.LogError(ex, "Error saving Step 2");
+            return (false, $"Error saving Step 2: {ex.Message}");
         }
     }
 
     /// <summary>
-    /// Gets the risk analysis for a specific hazard
+    /// Saves Step 3 data
     /// </summary>
-    public HazardRiskAnalysis GetHazardAnalysis(string hazardId)
-    {
-        if (!HazardAnalyses.TryGetValue(hazardId, out var analysis))
-        {
-            analysis = new HazardRiskAnalysis { HazardId = hazardId };
-            HazardAnalyses[hazardId] = analysis;
-        }
-        return analysis;
-    }
-
-    /// <summary>
-    /// Updates the risk analysis for a specific hazard
-    /// </summary>
-    public void UpdateHazardAnalysis(string hazardId, string worstOutcome, string rootCause, string additionalComments = "")
-    {
-        var analysis = GetHazardAnalysis(hazardId);
-        analysis.WorstCredibleOutcome = worstOutcome?.Trim() ?? string.Empty;
-        analysis.RootCauseAnalysis = rootCause?.Trim() ?? string.Empty;
-        analysis.AdditionalComments = additionalComments?.Trim() ?? string.Empty;
-        analysis.AnalysisDate = DateTime.UtcNow;
-    }
-
-    /// <summary>
-    /// Applies the Step 3 risk analysis data to the RiskAssessment entity
-    /// </summary>
-    public void ApplyToAssessment(RiskAssessment assessment)
-    {
-        // Update the overall risk analysis method
-        //assessment.UpdateRiskAnalysisMethod(RiskAnalysisMethod, RiskCriteria);
-
-        // Update individual hazard analyses
-        foreach (var hazardAnalysis in HazardAnalyses.Values)
-        {
-           // assessment.UpdateHazardWorstOutcome(hazardAnalysis.HazardId, hazardAnalysis.WorstCredibleOutcome);
-           // assessment.UpdateHazardRootCause(hazardAnalysis.HazardId, hazardAnalysis.RootCauseAnalysis);
-        }
-
-        assessment.CompleteStep(3);
-    }
-
-    /// <summary>
-    /// Loads risk analysis data from the assessment entity
-    /// </summary>
-    public void LoadFromAssessment(RiskAssessment assessment, List<Hazard> availableHazards)
-    {
-        if (assessment == null) return;
-
-        // Load overall method and criteria
-        if (string.IsNullOrEmpty(RiskAnalysisMethod) && !string.IsNullOrEmpty(assessment.RiskAnalysisMethod))
-        {
-            RiskAnalysisMethod = assessment.RiskAnalysisMethod;
-        }
-
-        if (string.IsNullOrEmpty(RiskCriteria) && !string.IsNullOrEmpty(assessment.RiskCriteria))
-        {
-            RiskCriteria = assessment.RiskCriteria;
-        }
-
-        // Initialize hazard analyses
-        InitializeHazardAnalyses(availableHazards);
-
-        // Load existing analysis data if available
-        // Note: This depends on how the RiskAssessment entity stores hazard-specific analysis
-        // You may need to add methods to RiskAssessment to retrieve this data
-    }
-
-    /// <summary>
-    /// Gets completion percentage for Step 3
-    /// </summary>
-    public int GetCompletionPercentage(List<Hazard> availableHazards)
-    {
-        if (availableHazards == null || !availableHazards.Any()) return 0;
-
-        var completedAnalyses = availableHazards.Count(h => 
-            HazardAnalyses.TryGetValue(h.Code, out var analysis) &&
-            !string.IsNullOrWhiteSpace(analysis.WorstCredibleOutcome) && 
-            analysis.WorstCredibleOutcome.Length >= 10 &&
-            !string.IsNullOrWhiteSpace(analysis.RootCauseAnalysis) && 
-            analysis.RootCauseAnalysis.Length >= 10);
-
-        return (int)((double)completedAnalyses / availableHazards.Count * 100);
-    }
-
-    #endregion
-
-    #region Step 3 Enhanced Methods
-
-    /// <summary>
-    /// Validates that each identified hazard has completed risk analysis
-    /// Enhanced with detailed validation messages
-    /// </summary>
-    public (bool isValid, string message, List<string> validationErrors) ValidateDetailed(List<Hazard> availableHazards = null)
-    {
-        if (availableHazards == null || !availableHazards.Any())
-        {
-            return (false, "No hazards available for risk analysis. Please complete Step 2 first.", new List<string>());
-        }
-
-        var incompleteHazards = new List<string>();
-        var validationErrors = new List<string>();
-        var analysisCount = 0;
-
-        foreach (var hazard in availableHazards)
-        {
-            if (HazardAnalyses.TryGetValue(hazard.Code, out var analysis))
-            {
-                var worstOutcome = analysis.WorstCredibleOutcome?.Trim() ?? string.Empty;
-                var rootCause = analysis.RootCauseAnalysis?.Trim() ?? string.Empty;
-
-                // Check if fields are empty
-                if (string.IsNullOrWhiteSpace(worstOutcome) || string.IsNullOrWhiteSpace(rootCause))
-                {
-                    incompleteHazards.Add(hazard.Code);
-                }
-                else
-                {
-                    // Check minimum length requirements
-                    if (worstOutcome.Length < 10)
-                    {
-                        validationErrors.Add($"{hazard.Code}: Worst Credible Outcome must be at least 10 characters (currently {worstOutcome.Length})");
-                    }
-                    
-                    if (rootCause.Length < 10)
-                    {
-                        validationErrors.Add($"{hazard.Code}: Root Cause Analysis must be at least 10 characters (currently {rootCause.Length})");
-                    }
-
-                    if (worstOutcome.Length >= 10 && rootCause.Length >= 10)
-                    {
-                        analysisCount++;
-                    }
-                }
-            }
-            else
-            {
-                incompleteHazards.Add($"{hazard.Code} (no analysis)");
-            }
-        }
-
-        // Build comprehensive error message
-        var errorMessages = new List<string>();
-        
-        if (incompleteHazards.Any())
-        {
-            errorMessages.Add($"Please complete the risk analysis for the following hazards: {string.Join(", ", incompleteHazards)}");
-            errorMessages.Add("Both 'Worst Credible Outcome' and 'Root Cause Analysis' are required for each hazard.");
-        }
-
-        if (validationErrors.Any())
-        {
-            errorMessages.Add("Please provide more detailed analysis:");
-            errorMessages.AddRange(validationErrors);
-            errorMessages.Add("Both fields require at least 10 characters for meaningful analysis.");
-        }
-
-        var isValid = !incompleteHazards.Any() && !validationErrors.Any();
-        var message = isValid 
-            ? $"Step 3 validation passed - {analysisCount} hazards have complete risk analysis"
-            : string.Join("\n", errorMessages);
-
-        return (isValid, message, validationErrors);
-    }
-
-    /// <summary>
-    /// Auto-saves the current step data (server-side implementation)
-    /// </summary>
-    public void AutoSave(string assessmentId, Dictionary<string, string> formData)
+    private async Task<(bool success, string message)> SaveStep3Async()
     {
         try
         {
-            // Update hazard analyses from form data
-            foreach (var kvp in formData)
-            {
-                var key = kvp.Key;
-                var value = kvp.Value?.Trim() ?? string.Empty;
-
-                // Parse form field names like "Step3.HazardAnalyses[HAZ-001].WorstCredibleOutcome"
-                if (key.Contains("HazardAnalyses[") && key.Contains("]"))
-                {
-                    var startIndex = key.IndexOf("[") + 1;
-                    var endIndex = key.IndexOf("]");
-                    var hazardId = key.Substring(startIndex, endIndex - startIndex);
-                    
-                    var analysis = GetHazardAnalysis(hazardId);
-                    
-                    if (key.Contains("WorstCredibleOutcome"))
-                    {
-                        analysis.WorstCredibleOutcome = value;
-                    }
-                    else if (key.Contains("RootCauseAnalysis"))
-                    {
-                        analysis.RootCauseAnalysis = value;
-                    }
-                    else if (key.Contains("AdditionalComments"))
-                    {
-                        analysis.AdditionalComments = value;
-                    }
-                }
-                else if (key.Contains("RiskCriteria"))
-                {
-                    RiskCriteria = value;
-                }
-            }
-            
-            // Mark as auto-saved
-            LastAutoSaved = DateTime.UtcNow;
+            Step3.ApplyToAssessment(InitialRiskAssessment);
+            await SaveAssessmentToDatabaseAsync();
+            return (true, "Step 3 saved successfully");
         }
         catch (Exception ex)
         {
-            // Log error but don't throw - auto-save should be resilient
-            System.Diagnostics.Debug.WriteLine($"Auto-save error: {ex.Message}");
+            _logger.LogError(ex, "Error saving Step 3");
+            return (false, $"Error saving Step 3: {ex.Message}");
         }
     }
 
     /// <summary>
-    /// Gets validation status for each hazard (for UI feedback)
+    /// Saves Step 4 data
     /// </summary>
-    public Dictionary<string, HazardValidationStatus> GetHazardValidationStatuses(List<Hazard> availableHazards)
+    private async Task<(bool success, string message)> SaveStep4Async()
     {
-        var statuses = new Dictionary<string, HazardValidationStatus>();
-        
-        if (availableHazards == null) return statuses;
-
-        foreach (var hazard in availableHazards)
+        try
         {
-            var status = new HazardValidationStatus
-            {
-                HazardId = hazard.Code,
-                HazardDescription = hazard.Description
-            };
-
-            if (HazardAnalyses.TryGetValue(hazard.Code, out var analysis))
-            {
-                var worstOutcome = analysis.WorstCredibleOutcome?.Trim() ?? string.Empty;
-                var rootCause = analysis.RootCauseAnalysis?.Trim() ?? string.Empty;
-
-                status.HasWorstOutcome = !string.IsNullOrWhiteSpace(worstOutcome);
-                status.HasRootCause = !string.IsNullOrWhiteSpace(rootCause);
-                status.WorstOutcomeLength = worstOutcome.Length;
-                status.RootCauseLength = rootCause.Length;
-                status.IsWorstOutcomeValid = worstOutcome.Length >= 10;
-                status.IsRootCauseValid = rootCause.Length >= 10;
-                status.IsComplete = status.IsWorstOutcomeValid && status.IsRootCauseValid;
-            }
-
-            statuses[hazard.Code] = status;
+            Step4.ApplyToAssessment(InitialRiskAssessment);
+            await SaveAssessmentToDatabaseAsync();
+            return (true, "Step 4 saved successfully");
         }
-
-        return statuses;
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error saving Step 4");
+            return (false, $"Error saving Step 4: {ex.Message}");
+        }
     }
 
     /// <summary>
-    /// When this step was last auto-saved
+    /// Saves Step 5 data
     /// </summary>
-    public DateTime? LastAutoSaved { get; set; }
-
-    /// <summary>
-    /// Checks if there are unsaved changes since the last auto-save
-    /// </summary>
-    public bool HasUnsavedChanges()
+    private async Task<(bool success, string message)> SaveStep5Async()
     {
-        // Simple check - could be enhanced with change tracking
-        return LastAutoSaved == null || 
-               HazardAnalyses.Values.Any(ha => ha.AnalysisDate > LastAutoSaved);
-    }
-
-    #endregion
-}
-
-/// <summary>
-/// Step 4 Model - Risk Assessment & Scoring
-/// Supports multiple hazards with individual risk scoring panels
-/// </summary>
-public class Step4Model 
-{
-    #region Risk Assessment Properties
-
-    public string TolerabilityFramework { get; set; } = "PDX-SMS Default";
-    public string RiskAcceptanceCriteria { get; set; } = string.Empty;
-
-    #endregion
-
-    #region Step 4 Methods
-
-    public (bool isValid, string message) Validate()
-    {
-        if (string.IsNullOrWhiteSpace(TolerabilityFramework))
+        try
         {
-            return (false, "Tolerability framework is required");
+            Step5.ApplyToAssessment(InitialRiskAssessment);
+            await SaveAssessmentToDatabaseAsync();
+            return (true, "Step 5 saved successfully");
         }
-        
-        return (true, "Step 4 validation passed");
-    }
-
-    public void ApplyToAssessment(RiskAssessment assessment)
-    {
-        //assessment.UpdateTolerabilityFramework(TolerabilityFramework, RiskAcceptanceCriteria);
-        assessment.CompleteStep(4);
-    }
-
-    #endregion
-}
-
-/// <summary>
-/// Step 5 Model - Risk Mitigation
-/// Supports mitigation strategies for multiple hazards
-/// </summary>
-public class Step5Model 
-{
-    #region Risk Mitigation Properties
-
-    public string ImplementationStrategy { get; set; } = string.Empty;
-    public DateTime? OverallTargetDate { get; set; }
-    public string ImplementationNotes { get; set; } = string.Empty;
-    public Dictionary<string, List<string>> SavedMitigationStrategies { get; set; } = new();
-
-    #endregion
-
-    #region Step 5 Methods
-
-    public (bool isValid, string message) Validate()
-    {
-        bool hasImplementation = !string.IsNullOrWhiteSpace(ImplementationStrategy);
-        
-        if (!hasImplementation)
+        catch (Exception ex)
         {
-            return (false, "Implementation strategy is required");
+            _logger.LogError(ex, "Error saving Step 5");
+            return (false, $"Error saving Step 5: {ex.Message}");
         }
-        
-        return (true, "Step 5 validation passed");
-    }
-
-    public void ApplyToAssessment(RiskAssessment assessment)
-    {
-        //assessment.UpdateImplementationStrategy(ImplementationStrategy, OverallTargetDate, ImplementationNotes);
-        assessment.CompleteStep(5);
     }
 
     #endregion

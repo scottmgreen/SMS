@@ -15,7 +15,7 @@ using SMS_Domain.Interfaces;
 
 using SMS_Shared.Common;
 
-namespace SMS.Presentation.Pages.SafetyRiskManagement;
+namespace SMS_Presentation.Pages.SafetyRiskManagement;
 
 /// <summary>
 /// SMS Report Validation Page - Fixed ValidationDecision binding
@@ -32,10 +32,10 @@ public class ReportValidationModel : PageModel
     }
 
     #region PageModel Properties for Form Binding
-    
-    [BindProperty(SupportsGet = true)]
-    public string ReportId { get; set; } = string.Empty;
-    
+
+    [BindProperty()]
+    public string? ReportId { get; set; }
+
     [BindProperty]
     public string ValidationDecision { get; set; } = string.Empty;
     
@@ -65,7 +65,7 @@ public class ReportValidationModel : PageModel
     public SelectList ValidationTypeOptions => new SelectList(
         new List<object>
         {
-            new { Value = "Preliminary", Text = "Preliminary Accessment" },
+            new { Value = "Preliminary", Text = "Preliminary Assessment" },
             new { Value = "Technical", Text = "Technical Assessment" } //,
             //new { Value = "Complex", Text = "Complex Case Validation" }
         },
@@ -88,7 +88,7 @@ public class ReportValidationModel : PageModel
                 foreach (var assessor in AvailableAssessors)
                 {
                     var assessorUserName = assessor.UserName.Value;
-                    var assessorText = $"{assessor.DisplayName} ({assessorUserName}) - {assessor.ApplicationRole}";
+                    var assessorText = $"{assessor.DisplayName} ({assessorUserName}) - {assessor.UserRole}";
                     options.Add(new { Value = assessorUserName, Text = assessorText });
                 }
             }
@@ -203,7 +203,7 @@ public class ReportValidationModel : PageModel
                 
                 // Set defaults for new validation - EXPLICITLY set to null for new validations
                 ValidatedBy = string.Empty;
-                ValidationType = "Standard";
+                ValidationType = "Technical"; // Default to Technical assessment
                 ValidationDecision = string.Empty;
                 ValidationComments = string.Empty;
                 
@@ -274,8 +274,8 @@ public class ReportValidationModel : PageModel
 
     public async Task<IActionResult> OnPostProceedToAssessmentAsync()
     {
-        _logger.LogInformation("🚀 OnPostProceedToAssessmentAsync - ReportId: {ReportId}, ValidationDecision: '{Decision}', ValidatedBy: '{ValidatedBy}'", 
-            ReportId, ValidationDecision, ValidatedBy);
+        _logger.LogInformation("🚀 OnPostProceedToAssessmentAsync - ReportId: {ReportId}, ValidationDecision: '{Decision}', ValidationType: '{ValidationType}', ValidatedBy: '{ValidatedBy}'", 
+            ReportId, ValidationDecision, ValidationType, ValidatedBy);
         
         try
         {
@@ -306,11 +306,36 @@ public class ReportValidationModel : PageModel
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Report validation completed as {Decision} for report: {ReportId} by {ValidatedBy}", 
-                    ValidationDecision, ReportId, ValidatedBy);
-
+                var getHazardCommand = new GetHazardsByReportIdQuery(new ReportID(ReportId));
+                var hazards = await _mediator.SendAsync(getHazardCommand, CancellationToken.None);
+                var hazardId = hazards.Value.FirstOrDefault().Code;
                 
-                return RedirectToPage("/SafetyRiskManagement/RiskAssessmentWizard", new { id = "new", stepNumber = 1, hazardId = HazardId });
+                var getRiskAssessmentCommand = new GetRiskAssessmentsByHazardIdQuery(new HazardID(hazardId));
+                var riskassessment = await _mediator.SendAsync(getRiskAssessmentCommand, CancellationToken.None);
+                var existingAssessment = riskassessment.Value.Where(x => x.AssessmentType == RiskAssessmentType.Initial).FirstOrDefault();
+
+                _logger.LogInformation("Report validation completed as {Decision} for report: {ReportId} by {ValidatedBy}, routing to {ValidationType} assessment", 
+                    ValidationDecision, ReportId, ValidatedBy, ValidationType);
+
+                // Route based on ValidationType
+                if (ValidationType == "Preliminary")
+                {
+                    // Route to SimplifiedRiskAssessment
+                    var assessmentId = existingAssessment?.Code ?? $"SRA-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
+                    
+                    _logger.LogInformation("Routing to Simplified Risk Assessment: {AssessmentId} for hazard: {HazardId}", assessmentId, hazardId);
+                    
+                    return RedirectToPage("/SafetyRiskManagement/SimplifiedRiskAssessment", new { hazardId = hazardId, assessmentId = assessmentId });
+                }
+                else // ValidationType == "Technical" or default
+                {
+                    // Route to RiskAssessmentWizard (existing behavior)
+                    var riskId = existingAssessment?.Code ?? "new";
+                    
+                    _logger.LogInformation("Routing to Risk Assessment Wizard: {RiskId} for hazard: {HazardId}", riskId, hazardId);
+                    
+                    return RedirectToPage("/SafetyRiskManagement/RiskAssessmentWizard", new { id = riskId, stepNumber = 1, reportId = ReportId, hazardId = HazardId });
+                }
             }
             else
             {

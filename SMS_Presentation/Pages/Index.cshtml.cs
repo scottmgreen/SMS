@@ -106,7 +106,7 @@ public class IndexModel : PageModel
         {
             if (userType == SMSUserType.Application)
             {
-                var query = new GetSMSApplicationUserByIdQuery(userId);
+                var query = new GetSMSApplicationUserByCodeQuery(userId);
                 var result = await _mediator.SendAsync(query, CancellationToken.None);
                 return result.IsSuccess ? result.Value : null;
             }
@@ -118,7 +118,7 @@ public class IndexModel : PageModel
             }
             else if (userType == SMSUserType.Stakeholder)
             {
-                var query = new GetSMSStakeholderUserByIdQuery(userId);
+                var query = new GetSMSStakeholderUserByCodeQuery(userId);
                 var result = await _mediator.SendAsync(query, CancellationToken.None);
                 return result.IsSuccess ? result.Value : null;
             }
@@ -137,20 +137,46 @@ public class IndexModel : PageModel
         {
             case var type when type == SMSUserType.Application && user is SMSApplicationUser appUser:
                 Department = "IT Administration";
-                AccessLevel = appUser.PermissionLevel;
+                AccessLevel = GetAccessLevelFromPermissions(user.UserRole);
                 break;
 
             case var type when type == SMSUserType.Organizational && user is SMSOrganizationalUser orgUser:
-                Department = orgUser.Department;
-                AccessLevel = orgUser.OrganizationLevel;
+                Department = orgUser.Department ?? "Unknown Department";
+                AccessLevel = GetAccessLevelFromPermissions(user.UserRole) ?? orgUser.OrganizationLevel ?? "No Role Assigned";
                 break;
 
             case var type when type == SMSUserType.Stakeholder && user is SMSStakeholderUser stakeholderUser:
-                Organization = stakeholderUser.Organization;
-                Department = stakeholderUser.StakeholderType;
-                AccessLevel = stakeholderUser.AccessLevel;
+                Organization = stakeholderUser.Organization ?? "Unknown Organization";
+                Department = stakeholderUser.StakeholderType ?? "Unknown Stakeholder Type";
+                AccessLevel = GetAccessLevelFromPermissions(user.UserRole);
+                break;
+
+            default:
+                Department = "Unknown";
+                AccessLevel = "Unknown";
+                Organization = "Unknown";
                 break;
         }
+    }
+
+    private string GetAccessLevelFromPermissions(SMSUserRole userRole)
+    {
+        if (userRole?.Permissions == null || !userRole.Permissions.Any())
+            return "No Permissions";
+
+        var hasCreate = userRole.Permissions.Any(p => p.Create);
+        var hasUpdate = userRole.Permissions.Any(p => p.Update);
+        var hasDelete = userRole.Permissions.Any(p => p.Delete);
+        var hasRead = userRole.Permissions.Any(p => p.Read);
+
+        if (hasCreate && hasUpdate && hasDelete)
+            return "Full Access";
+        else if (hasCreate && hasUpdate)
+            return "Write Access";
+        else if (hasRead)
+            return "Read Only";
+        else
+            return "Limited Access";
     }
 
     private void PopulateDashboardStats()

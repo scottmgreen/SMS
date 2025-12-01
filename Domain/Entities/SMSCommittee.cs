@@ -10,7 +10,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public sealed class SMSCommittee : BaseAuditableEntity
 {
-    private readonly List<CommitteeMembership> _memberships = new();
+    //private readonly List<CommitteeMembership> _memberships = new();
     private readonly List<CommitteeMeeting> _meetings = new();
 
     public SMSCommittee(CommitteeID id, CommitteeType type, string name, string purpose, string chairPersonId, string createdBy)
@@ -40,69 +40,69 @@ public sealed class SMSCommittee : BaseAuditableEntity
     public int? QuorumRequired { get; private set; }
     
     // Collections
-    public IReadOnlyList<CommitteeMembership> Memberships => _memberships.AsReadOnly();
+    //public IReadOnlyList<CommitteeMembership> Memberships => _memberships.AsReadOnly();
     public IReadOnlyList<CommitteeMeeting> Meetings => _meetings.AsReadOnly();
 
     // Business Methods
-    public Result<CommitteeMembership> AddMember(string userId, MembershipType membershipType, bool isVotingMember, string assignedBy)
-    {
-        try
-        {
-            // Validate inputs
-            if (string.IsNullOrWhiteSpace(userId))
-                return Result<CommitteeMembership>.Failure<CommitteeMembership>(DomainErrors.CommitteeError.InvalidUserId);
+    //public Result<CommitteeMembership> AddMember(string userId, MembershipType membershipType, bool isVotingMember, string assignedBy)
+    //{
+    //    try
+    //    {
+    //        // Validate inputs
+    //        if (string.IsNullOrWhiteSpace(userId))
+    //            return Result<CommitteeMembership>.Failure<CommitteeMembership>(DomainErrors.CommitteeError.InvalidUserId);
 
-            if (membershipType == null)
-                return Result<CommitteeMembership>.Failure<CommitteeMembership>(DomainErrors.CommitteeError.InvalidMembershipType);
+    //        if (membershipType == null)
+    //            return Result<CommitteeMembership>.Failure<CommitteeMembership>(DomainErrors.CommitteeError.InvalidMembershipType);
 
-            // Check if user is already a member
-            if (_memberships.Any(m => m.UserId == userId && m.IsActive))
-            {
-                return Result<CommitteeMembership>.Failure<CommitteeMembership>(DomainErrors.CommitteeError.UserAlreadyMember);
-            }
+    //        // Check if user is already a member
+    //        if (_memberships.Any(m => m.UserId == userId && m.IsActive))
+    //        {
+    //            return Result<CommitteeMembership>.Failure<CommitteeMembership>(DomainErrors.CommitteeError.UserAlreadyMember);
+    //        }
 
-            // Check maximum members limit
-            if (MaxMembers.HasValue && _memberships.Count(m => m.IsActive) >= MaxMembers.Value)
-            {
-                return Result<CommitteeMembership>.Failure<CommitteeMembership>(DomainErrors.CommitteeError.MaxMembersExceeded);
-            }
+    //        // Check maximum members limit
+    //        if (MaxMembers.HasValue && _memberships.Count(m => m.IsActive) >= MaxMembers.Value)
+    //        {
+    //            return Result<CommitteeMembership>.Failure<CommitteeMembership>(DomainErrors.CommitteeError.MaxMembersExceeded);
+    //        }
 
-            var membership = new CommitteeMembership(
-                new MembershipID(Guid.NewGuid().ToString()),
-                userId,
-                Id.Value,
-                membershipType,
-                isVotingMember,
-                assignedBy
-            );
+    //        var membership = new CommitteeMembership(
+    //            new MembershipID(Guid.NewGuid().ToString()),
+    //            userId,
+    //            Id.Value,
+    //            membershipType,
+    //            isVotingMember,
+    //            assignedBy
+    //        );
 
-            _memberships.Add(membership);
-            return Result<CommitteeMembership>.Success(membership);
-        }
-        catch (Exception)
-        {
-            return Result<CommitteeMembership>.Failure<CommitteeMembership>(DomainErrors.CommitteeError.MembershipCreationFailed);
-        }
-    }
+    //        _memberships.Add(membership);
+    //        return Result<CommitteeMembership>.Success(membership);
+    //    }
+    //    catch (Exception)
+    //    {
+    //        return Result<CommitteeMembership>.Failure<CommitteeMembership>(DomainErrors.CommitteeError.MembershipCreationFailed);
+    //    }
+    //}
 
-    public Result RemoveMember(string userId, string deactivatedBy)
-    {
-        try
-        {
-            var membership = _memberships.FirstOrDefault(m => m.UserId == userId && m.IsActive);
-            if (membership == null)
-            {
-                return Result.Failure(DomainErrors.CommitteeError.MemberNotFound);
-            }
+    //public Result RemoveMember(string userId, string deactivatedBy)
+    //{
+    //    try
+    //    {
+    //        var membership = _memberships.FirstOrDefault(m => m.UserId == userId && m.IsActive);
+    //        if (membership == null)
+    //        {
+    //            return Result.Failure(DomainErrors.CommitteeError.MemberNotFound);
+    //        }
 
-            membership.Deactivate(deactivatedBy, DateTime.UtcNow);
-            return Result.Success();
-        }
-        catch (Exception)
-        {
-            return Result.Failure(DomainErrors.CommitteeError.MemberRemovalFailed);
-        }
-    }
+    //        membership.Deactivate(deactivatedBy, DateTime.UtcNow);
+    //        return Result.Success();
+    //    }
+    //    catch (Exception)
+    //    {
+    //        return Result.Failure(DomainErrors.CommitteeError.MemberRemovalFailed);
+    //    }
+    //}
 
     public Result<CommitteeMeeting> ScheduleMeeting(DateTime meetingDate, MeetingType meetingType, string facilitatorId, string scheduledBy)
     {
@@ -162,46 +162,46 @@ public sealed class SMSCommittee : BaseAuditableEntity
     }
 
     // Query Methods
-    public IEnumerable<CommitteeMembership> GetActiveMembers()
-    {
-        return _memberships.Where(m => m.IsActive);
-    }
+    //public IEnumerable<CommitteeMembership> GetActiveMembers()
+    //{
+    //    return _memberships.Where(m => m.IsActive);
+    //}
 
-    public IEnumerable<CommitteeMembership> GetVotingMembers()
-    {
-        return _memberships.Where(m => m.IsActive && m.IsVotingMember);
-    }
+    //public IEnumerable<CommitteeMembership> GetVotingMembers()
+    //{
+    //    return _memberships.Where(m => m.IsActive && m.IsVotingMember);
+    //}
 
-    public bool HasQuorum()
-    {
-        if (!QuorumRequired.HasValue) return true;
-        return GetVotingMembers().Count() >= QuorumRequired.Value;
-    }
+    //public bool HasQuorum()
+    //{
+    //    if (!QuorumRequired.HasValue) return true;
+    //    return GetVotingMembers().Count() >= QuorumRequired.Value;
+    //}
 
-    public bool IsUserMember(string userId)
-    {
-        return _memberships.Any(m => m.UserId == userId && m.IsActive);
-    }
+    //public bool IsUserMember(string userId)
+    //{
+    //    return _memberships.Any(m => m.UserId == userId && m.IsActive);
+    //}
 
-    public bool CanUserVote(string userId)
-    {
-        return _memberships.Any(m => m.UserId == userId && m.IsActive && m.IsVotingMember);
-    }
+    //public bool CanUserVote(string userId)
+    //{
+    //    return _memberships.Any(m => m.UserId == userId && m.IsActive && m.IsVotingMember);
+    //}
 
-    public int GetActiveMemberCount()
-    {
-        return _memberships.Count(m => m.IsActive);
-    }
+    //public int GetActiveMemberCount()
+    //{
+    //    return _memberships.Count(m => m.IsActive);
+    //}
 
-    public int GetVotingMemberCount()
-    {
-        return _memberships.Count(m => m.IsActive && m.IsVotingMember);
-    }
+    //public int GetVotingMemberCount()
+    //{
+    //    return _memberships.Count(m => m.IsActive && m.IsVotingMember);
+    //}
 
-    public CommitteeMembership? GetMembershipForUser(string userId)
-    {
-        return _memberships.FirstOrDefault(m => m.UserId == userId && m.IsActive);
-    }
+    //public CommitteeMembership? GetMembershipForUser(string userId)
+    //{
+    //    return _memberships.FirstOrDefault(m => m.UserId == userId && m.IsActive);
+    //}
 
     public IEnumerable<CommitteeMeeting> GetUpcomingMeetings()
     {

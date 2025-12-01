@@ -1,0 +1,65 @@
+<!-- Edit Application User Modal -->
+<div class="modal fade" id="editAppUserModal" tabindex="-1" aria-labelledby="editAppUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="UpdateApplicationUser">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editAppUserModalLabel">
+                        <i class="fas fa-user-edit me-2"></i>Edit Application User
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editUserId" name="userId">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editFirstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editFirstName" name="firstName" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editLastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editLastName" name="lastName" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editApplicationRole" class="form-label">Application Role <span class="text-danger">*</span></label>
+                                <select class="form-select" id="editApplicationRole" name="applicationRole" required>
+                                    <option value="">Select Role</option>
+                                    <option value="Administrator">Administrator</option>
+                                    <option value="Manager">Manager</option>
+                                    <option value="Analyst">Analyst</option>
+                                    <option value="Viewer">Viewer</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editPermissionLevel" class="form-label">Permission Level <span class="text-danger">*</span></label>
+                                <select class="form-select" id="editPermissionLevel" name="permissionLevel" required>
+                                    <option value="">Select Level</option>
+                                    <option value="Full">Full Access</option>
+                                    <option value="High">High Access</option>
+                                    <option value="Medium">Medium Access</option>
+                                    <option value="Low">Low Access</option>
+                                    <option value="ReadOnly">Read Only</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Update User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
