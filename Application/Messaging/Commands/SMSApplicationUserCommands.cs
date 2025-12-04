@@ -1,3 +1,4 @@
+using SMS_Application.Common;
 using SMS_Application.Interfaces;
 using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
@@ -14,7 +15,7 @@ namespace SMS_Application.Messaging.Commands;
 /// <summary>
 /// Command to create a new SMS Application User
 /// </summary>
-public class CreateSMSApplicationUserCommand : BaseCommandBundle, IRequest<Result<SMSApplicationUser>>
+public class CreateSMSApplicationUserCommand : BaseCommandBundle, IRequest<Result<SMSApplicationUser>>, ICreateCommand
 {
     /// <summary>
     /// The SMS Application User entity to create
@@ -30,6 +31,17 @@ public class CreateSMSApplicationUserCommand : BaseCommandBundle, IRequest<Resul
     {
         SMSApplicationUser = smsApplicationUser ?? throw new ArgumentNullException(nameof(smsApplicationUser));
     }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        SMSApplicationUser.CreatedBy = userId;
+        SMSApplicationUser.CreatedDate = timestamp;
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        // For create commands, we typically don't set UpdatedBy
+    }
 }
 
 #endregion
@@ -39,7 +51,7 @@ public class CreateSMSApplicationUserCommand : BaseCommandBundle, IRequest<Resul
 /// <summary>
 /// Command to update an existing SMS Application User
 /// </summary>
-public class UpdateSMSApplicationUserCommand : BaseCommandBundle, IRequest<Result<SMSApplicationUser>>
+public class UpdateSMSApplicationUserCommand : BaseCommandBundle, IRequest<Result<SMSApplicationUser>>, IUpdateCommand
 {
     /// <summary>
     /// The SMS Application User entity to update
@@ -55,12 +67,23 @@ public class UpdateSMSApplicationUserCommand : BaseCommandBundle, IRequest<Resul
     {
         SMSApplicationUser = smsApplicationUser ?? throw new ArgumentNullException(nameof(smsApplicationUser));
     }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // For update commands, we typically don't modify CreatedBy
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        SMSApplicationUser.UpdatedBy = userId;
+        SMSApplicationUser.UpdatedDate = timestamp;
+    }
 }
 
 /// <summary>
 /// Command to update SMS Application User password
 /// </summary>
-public class UpdateSMSApplicationUserPasswordCommand : BaseCommandBundle, IRequest<Result<bool>>
+public class UpdateSMSApplicationUserPasswordCommand : BaseCommandBundle, IRequest<Result<bool>>, IHasAuditFields
 {
     /// <summary>
     /// The user ID
@@ -82,17 +105,24 @@ public class UpdateSMSApplicationUserPasswordCommand : BaseCommandBundle, IReque
     /// </summary>
     /// <param name="userId">The user ID</param>
     /// <param name="newPassword">The new password</param>
-    /// <param name="updatedBy">User updating the password</param>
-    /// <exception cref="ArgumentException">Thrown when userId, newPassword, or updatedBy is null or empty</exception>
-    public UpdateSMSApplicationUserPasswordCommand(string userId, string newPassword, string updatedBy)
+    /// <exception cref="ArgumentException">Thrown when userId or newPassword is null or empty</exception>
+    public UpdateSMSApplicationUserPasswordCommand(string userId, string newPassword)
     {
         if (string.IsNullOrWhiteSpace(userId)) throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
         if (string.IsNullOrWhiteSpace(newPassword)) throw new ArgumentException("New password cannot be null or empty", nameof(newPassword));
-        if (string.IsNullOrWhiteSpace(updatedBy)) throw new ArgumentException("Updated by cannot be null or empty", nameof(updatedBy));
 
         UserId = userId;
         NewPassword = newPassword;
-        UpdatedBy = updatedBy;
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // This is an update operation, not create
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        UpdatedBy = userId;
     }
 }
 
@@ -134,7 +164,7 @@ public class AuthenticateSMSApplicationUserCommand : BaseCommandBundle, IRequest
 /// <summary>
 /// Command to record SMS Application User login
 /// </summary>
-public class RecordSMSApplicationUserLoginCommand : BaseCommandBundle, IRequest<Result<bool>>
+public class RecordSMSApplicationUserLoginCommand : BaseCommandBundle, IRequest<Result<bool>>, IHasAuditFields
 {
     /// <summary>
     /// The user ID
@@ -145,6 +175,11 @@ public class RecordSMSApplicationUserLoginCommand : BaseCommandBundle, IRequest<
     /// The login date
     /// </summary>
     public DateTime LoginDate { get; set; }
+
+    /// <summary>
+    /// User who updated the login record
+    /// </summary>
+    public string UpdatedBy { get; set; }
 
     /// <summary>
     /// Initializes a new instance of the RecordSMSApplicationUserLoginCommand class.
@@ -158,6 +193,16 @@ public class RecordSMSApplicationUserLoginCommand : BaseCommandBundle, IRequest<
 
         UserId = userId;
         LoginDate = loginDate;
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // This is an update operation, not create
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        UpdatedBy = userId;
     }
 }
 

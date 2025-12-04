@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
+using SMS_Application.Interfaces;
+using SMS_Application.Services;
 
 namespace SMS.Presentation.Configuration;
 
@@ -26,6 +28,12 @@ public static class SMSPresentationConfiguration
             options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
             options.Cookie.SameSite = SameSiteMode.Strict;
         });
+
+        // Only add HTTP context accessor - no helper services
+        services.AddHttpContextAccessor();
+        
+        // Add the audit services for the pipeline system
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         return services;
     }
@@ -78,6 +86,8 @@ public class SMSAuthenticationMiddleware
             context.Items["SMS_DisplayName"] = context.Session.GetString("SMS_DisplayName");
             context.Items["SMS_FirstName"] = context.Session.GetString("SMS_FirstName");
             context.Items["SMS_LastName"] = context.Session.GetString("SMS_LastName");
+            
+            // No need to manipulate claims - session data is sufficient
         }
 
         await _next(context);

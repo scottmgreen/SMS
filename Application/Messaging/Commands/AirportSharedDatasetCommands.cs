@@ -3,7 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
+using SMS_Application.Common;
+using SMS_Application.Interfaces;
+using SMS_Shared.Common;
 
 namespace SMS_Application.Messaging.Commands;
 
@@ -11,7 +15,7 @@ namespace SMS_Application.Messaging.Commands;
 /// Command to create a new Airport Shared Dataset.
 /// IMPORTANT: Requires ReportID - cannot create dataset without parent report.
 /// </summary>
-public class CreateAirportSharedDatasetCommand : BaseCommandBundle, IRequest<Result<AirportSharedDataset>>
+public class CreateAirportSharedDatasetCommand : BaseCommandBundle, IRequest<Result<AirportSharedDataset>>, ICreateCommand
 {
     /// <summary>
     /// The Airport Shared Dataset entity to create
@@ -27,12 +31,23 @@ public class CreateAirportSharedDatasetCommand : BaseCommandBundle, IRequest<Res
     {
         AirportSharedDataset = airportSharedDataset ?? throw new ArgumentNullException(nameof(airportSharedDataset));
     }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        AirportSharedDataset.CreatedBy = userId;
+        AirportSharedDataset.CreatedDate = timestamp;
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        // For create commands, we typically don't set UpdatedBy
+    }
 }
 
 /// <summary>
 /// Command to update an existing Airport Shared Dataset.
 /// </summary>
-public class UpdateAirportSharedDatasetCommand : BaseCommandBundle, IRequest<Result<AirportSharedDataset>>
+public class UpdateAirportSharedDatasetCommand : BaseCommandBundle, IRequest<Result<AirportSharedDataset>>, IUpdateCommand
 {
     /// <summary>
     /// The Airport Shared Dataset entity to update
@@ -47,6 +62,17 @@ public class UpdateAirportSharedDatasetCommand : BaseCommandBundle, IRequest<Res
     public UpdateAirportSharedDatasetCommand(AirportSharedDataset airportSharedDataset)
     {
         AirportSharedDataset = airportSharedDataset ?? throw new ArgumentNullException(nameof(airportSharedDataset));
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // For update commands, we typically don't modify CreatedBy
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        AirportSharedDataset.UpdatedBy = userId;
+        AirportSharedDataset.UpdatedDate = timestamp;
     }
 }
 

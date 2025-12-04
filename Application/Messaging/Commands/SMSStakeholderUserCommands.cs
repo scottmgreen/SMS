@@ -1,3 +1,4 @@
+using SMS_Application.Common;
 using SMS_Application.Interfaces;
 using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
@@ -14,7 +15,7 @@ namespace SMS_Application.Messaging.Commands;
 /// <summary>
 /// Command to create a new SMS Stakeholder User
 /// </summary>
-public class CreateSMSStakeholderUserCommand : BaseCommandBundle, IRequest<Result<SMSStakeholderUser>>
+public class CreateSMSStakeholderUserCommand : BaseCommandBundle, IRequest<Result<SMSStakeholderUser>>, ICreateCommand
 {
     /// <summary>
     /// The SMS Stakeholder User entity to create
@@ -30,6 +31,17 @@ public class CreateSMSStakeholderUserCommand : BaseCommandBundle, IRequest<Resul
     {
         SMSStakeholderUser = smsStakeholderUser ?? throw new ArgumentNullException(nameof(smsStakeholderUser));
     }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        SMSStakeholderUser.CreatedBy = userId;
+        SMSStakeholderUser.CreatedDate = timestamp;
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        // For create commands, we typically don't set UpdatedBy
+    }
 }
 
 #endregion
@@ -39,7 +51,7 @@ public class CreateSMSStakeholderUserCommand : BaseCommandBundle, IRequest<Resul
 /// <summary>
 /// Command to update an existing SMS Stakeholder User
 /// </summary>
-public class UpdateSMSStakeholderUserCommand : BaseCommandBundle, IRequest<Result<SMSStakeholderUser>>
+public class UpdateSMSStakeholderUserCommand : BaseCommandBundle, IRequest<Result<SMSStakeholderUser>>, IUpdateCommand
 {
     /// <summary>
     /// The SMS Stakeholder User entity to update
@@ -55,12 +67,23 @@ public class UpdateSMSStakeholderUserCommand : BaseCommandBundle, IRequest<Resul
     {
         SMSStakeholderUser = smsStakeholderUser ?? throw new ArgumentNullException(nameof(smsStakeholderUser));
     }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // For update commands, we typically don't modify CreatedBy
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        SMSStakeholderUser.UpdatedBy = userId;
+        SMSStakeholderUser.UpdatedDate = timestamp;
+    }
 }
 
 /// <summary>
 /// Command to update SMS Stakeholder User password
 /// </summary>
-public class UpdateSMSStakeholderUserPasswordCommand : BaseCommandBundle, IRequest<Result<bool>>
+public class UpdateSMSStakeholderUserPasswordCommand : BaseCommandBundle, IRequest<Result<bool>>, IHasAuditFields
 {
     /// <summary>
     /// The user ID
@@ -82,17 +105,24 @@ public class UpdateSMSStakeholderUserPasswordCommand : BaseCommandBundle, IReque
     /// </summary>
     /// <param name="userId">The user ID</param>
     /// <param name="newPassword">The new password</param>
-    /// <param name="updatedBy">User updating the password</param>
-    /// <exception cref="ArgumentException">Thrown when userId, newPassword, or updatedBy is null or empty</exception>
-    public UpdateSMSStakeholderUserPasswordCommand(string userId, string newPassword, string updatedBy)
+    /// <exception cref="ArgumentException">Thrown when userId or newPassword is null or empty</exception>
+    public UpdateSMSStakeholderUserPasswordCommand(string userId, string newPassword)
     {
         if (string.IsNullOrWhiteSpace(userId)) throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
         if (string.IsNullOrWhiteSpace(newPassword)) throw new ArgumentException("New password cannot be null or empty", nameof(newPassword));
-        if (string.IsNullOrWhiteSpace(updatedBy)) throw new ArgumentException("Updated by cannot be null or empty", nameof(updatedBy));
 
         UserId = userId;
         NewPassword = newPassword;
-        UpdatedBy = updatedBy;
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // This is an update operation, not create
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        UpdatedBy = userId;
     }
 }
 
@@ -134,7 +164,7 @@ public class AuthenticateSMSStakeholderUserCommand : BaseCommandBundle, IRequest
 /// <summary>
 /// Command to record SMS Stakeholder User login
 /// </summary>
-public class RecordSMSStakeholderUserLoginCommand : BaseCommandBundle, IRequest<Result<bool>>
+public class RecordSMSStakeholderUserLoginCommand : BaseCommandBundle, IRequest<Result<bool>>, IHasAuditFields
 {
     /// <summary>
     /// The user ID
@@ -145,6 +175,11 @@ public class RecordSMSStakeholderUserLoginCommand : BaseCommandBundle, IRequest<
     /// The login date
     /// </summary>
     public DateTime LoginDate { get; set; }
+
+    /// <summary>
+    /// User who updated the login record
+    /// </summary>
+    public string UpdatedBy { get; set; }
 
     /// <summary>
     /// Initializes a new instance of the RecordSMSStakeholderUserLoginCommand class.
@@ -158,6 +193,16 @@ public class RecordSMSStakeholderUserLoginCommand : BaseCommandBundle, IRequest<
 
         UserId = userId;
         LoginDate = loginDate;
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // This is an update operation, not create
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        UpdatedBy = userId;
     }
 }
 

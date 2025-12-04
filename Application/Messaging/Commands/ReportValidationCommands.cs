@@ -1,6 +1,12 @@
+using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
+using SMS_Application.Common;
+using SMS_Application.Interfaces;
+using SMS_Shared.Common;
+
 namespace SMS_Application.Messaging.Commands;
 
-public class CreateReportValidationCommand : BaseCommandBundle, IRequest<Result<ReportValidation>>
+public class CreateReportValidationCommand : BaseCommandBundle, IRequest<Result<ReportValidation>>, ICreateCommand
 {
     public ReportValidation ReportValidation { get; set; }
 
@@ -8,15 +14,37 @@ public class CreateReportValidationCommand : BaseCommandBundle, IRequest<Result<
     {
         ReportValidation = reportValidation ?? throw new ArgumentNullException(nameof(reportValidation));
     }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        ReportValidation.CreatedBy = userId;
+        ReportValidation.CreatedDate = timestamp;
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        // For create commands, we typically don't set UpdatedBy
+    }
 }
 
-public class UpdateReportValidationCommand : BaseCommandBundle, IRequest<Result<ReportValidation>>
+public class UpdateReportValidationCommand : BaseCommandBundle, IRequest<Result<ReportValidation>>, IUpdateCommand
 {
     public ReportValidation ReportValidation { get; set; }
 
     public UpdateReportValidationCommand(ReportValidation reportValidation)
     {
         ReportValidation = reportValidation ?? throw new ArgumentNullException(nameof(reportValidation));
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // For update commands, we typically don't modify CreatedBy
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        ReportValidation.UpdatedBy = userId;
+        ReportValidation.UpdatedDate = timestamp;
     }
 }
 

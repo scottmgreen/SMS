@@ -1,3 +1,4 @@
+using SMS_Application.Common;
 using SMS_Application.Interfaces;
 using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
@@ -14,7 +15,7 @@ namespace SMS_Application.Messaging.Commands;
 /// <summary>
 /// Command to create a new SMS User Role assignment
 /// </summary>
-public class CreateSMSUserRoleCommand : BaseCommandBundle, IRequest<Result<SMSUserRole>>
+public class CreateSMSUserRoleCommand : BaseCommandBundle, IRequest<Result<SMSUserRole>>, ICreateCommand
 {
     /// <summary>
     /// The SMS User Role entity to create
@@ -30,6 +31,17 @@ public class CreateSMSUserRoleCommand : BaseCommandBundle, IRequest<Result<SMSUs
     {
         SMSUserRole = smsUserRole ?? throw new ArgumentNullException(nameof(smsUserRole));
     }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // SMSUserRole doesn't have standard CreatedBy/CreatedDate fields
+        // The audit trail is maintained through other properties
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        // For create commands, we typically don't set UpdatedBy
+    }
 }
 
 #endregion
@@ -39,7 +51,7 @@ public class CreateSMSUserRoleCommand : BaseCommandBundle, IRequest<Result<SMSUs
 /// <summary>
 /// Command to update an existing SMS User Role assignment
 /// </summary>
-public class UpdateSMSUserRoleCommand : BaseCommandBundle, IRequest<Result<SMSUserRole>>
+public class UpdateSMSUserRoleCommand : BaseCommandBundle, IRequest<Result<SMSUserRole>>, IUpdateCommand
 {
     /// <summary>
     /// The SMS User Role entity to update
@@ -55,12 +67,23 @@ public class UpdateSMSUserRoleCommand : BaseCommandBundle, IRequest<Result<SMSUs
     {
         SMSUserRole = smsUserRole ?? throw new ArgumentNullException(nameof(smsUserRole));
     }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // For update commands, we typically don't modify CreatedBy
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        // SMSUserRole doesn't have standard UpdatedBy/UpdatedDate fields
+        // The audit trail is maintained through other properties
+    }
 }
 
 /// <summary>
 /// Command to activate SMS User Role assignment
 /// </summary>
-public class ActivateSMSUserRoleCommand : BaseCommandBundle, IRequest<Result<bool>>
+public class ActivateSMSUserRoleCommand : BaseCommandBundle, IRequest<Result<bool>>, IHasAuditFields
 {
     /// <summary>
     /// The ID of the SMS User Role to activate
@@ -76,22 +99,29 @@ public class ActivateSMSUserRoleCommand : BaseCommandBundle, IRequest<Result<boo
     /// Initializes a new instance of the ActivateSMSUserRoleCommand class.
     /// </summary>
     /// <param name="userRoleId">The user role ID</param>
-    /// <param name="activatedBy">User activating the role</param>
-    /// <exception cref="ArgumentException">Thrown when userRoleId or activatedBy is null or empty</exception>
-    public ActivateSMSUserRoleCommand(string userRoleId, string activatedBy)
+    /// <exception cref="ArgumentException">Thrown when userRoleId is null or empty</exception>
+    public ActivateSMSUserRoleCommand(string userRoleId)
     {
         if (string.IsNullOrWhiteSpace(userRoleId)) throw new ArgumentException("User role ID cannot be null or empty", nameof(userRoleId));
-        if (string.IsNullOrWhiteSpace(activatedBy)) throw new ArgumentException("Activated by cannot be null or empty", nameof(activatedBy));
 
         UserRoleId = userRoleId;
-        ActivatedBy = activatedBy;
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // This is not a create operation
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        ActivatedBy = userId;
     }
 }
 
 /// <summary>
 /// Command to deactivate SMS User Role assignment
 /// </summary>
-public class DeactivateSMSUserRoleCommand : BaseCommandBundle, IRequest<Result<bool>>
+public class DeactivateSMSUserRoleCommand : BaseCommandBundle, IRequest<Result<bool>>, IHasAuditFields
 {
     /// <summary>
     /// The ID of the SMS User Role to deactivate
@@ -112,24 +142,31 @@ public class DeactivateSMSUserRoleCommand : BaseCommandBundle, IRequest<Result<b
     /// Initializes a new instance of the DeactivateSMSUserRoleCommand class.
     /// </summary>
     /// <param name="userRoleId">The user role ID</param>
-    /// <param name="deactivatedBy">User deactivating the role</param>
     /// <param name="deactivationReason">Reason for deactivation</param>
-    /// <exception cref="ArgumentException">Thrown when userRoleId or deactivatedBy is null or empty</exception>
-    public DeactivateSMSUserRoleCommand(string userRoleId, string deactivatedBy, string deactivationReason = null)
+    /// <exception cref="ArgumentException">Thrown when userRoleId is null or empty</exception>
+    public DeactivateSMSUserRoleCommand(string userRoleId, string deactivationReason = null)
     {
         if (string.IsNullOrWhiteSpace(userRoleId)) throw new ArgumentException("User role ID cannot be null or empty", nameof(userRoleId));
-        if (string.IsNullOrWhiteSpace(deactivatedBy)) throw new ArgumentException("Deactivated by cannot be null or empty", nameof(deactivatedBy));
 
         UserRoleId = userRoleId;
-        DeactivatedBy = deactivatedBy;
         DeactivationReason = deactivationReason ?? string.Empty;
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // This is not a create operation
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        DeactivatedBy = userId;
     }
 }
 
 /// <summary>
 /// Command to extend SMS User Role assignment expiration
 /// </summary>
-public class ExtendSMSUserRoleExpirationCommand : BaseCommandBundle, IRequest<Result<bool>>
+public class ExtendSMSUserRoleExpirationCommand : BaseCommandBundle, IRequest<Result<bool>>, IHasAuditFields
 {
     /// <summary>
     /// The ID of the SMS User Role to extend
@@ -151,16 +188,23 @@ public class ExtendSMSUserRoleExpirationCommand : BaseCommandBundle, IRequest<Re
     /// </summary>
     /// <param name="userRoleId">The user role ID</param>
     /// <param name="newExpirationDate">New expiration date</param>
-    /// <param name="extendedBy">User extending the role</param>
-    /// <exception cref="ArgumentException">Thrown when userRoleId or extendedBy is null or empty</exception>
-    public ExtendSMSUserRoleExpirationCommand(string userRoleId, DateTime newExpirationDate, string extendedBy)
+    /// <exception cref="ArgumentException">Thrown when userRoleId is null or empty</exception>
+    public ExtendSMSUserRoleExpirationCommand(string userRoleId, DateTime newExpirationDate)
     {
         if (string.IsNullOrWhiteSpace(userRoleId)) throw new ArgumentException("User role ID cannot be null or empty", nameof(userRoleId));
-        if (string.IsNullOrWhiteSpace(extendedBy)) throw new ArgumentException("Extended by cannot be null or empty", nameof(extendedBy));
 
         UserRoleId = userRoleId;
         NewExpirationDate = newExpirationDate;
-        ExtendedBy = extendedBy;
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // This is not a create operation
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        ExtendedBy = userId;
     }
 }
 
@@ -196,7 +240,7 @@ public class DeleteSMSUserRoleCommand : BaseCommandBundle, IRequest<Result<bool>
 /// <summary>
 /// Command to assign a role to a user
 /// </summary>
-public class AssignRoleToUserCommand : BaseCommandBundle, IRequest<Result<SMSUserRole>>
+public class AssignRoleToUserCommand : BaseCommandBundle, IRequest<Result<SMSUserRole>>, IHasAuditFields
 {
     /// <summary>
     /// User ID to assign role to
@@ -241,15 +285,13 @@ public class AssignRoleToUserCommand : BaseCommandBundle, IRequest<Result<SMSUse
         string roleCode, 
         string department, 
         string userType, 
-        DateTime effectiveDate, 
-        string assignedBy,
+        DateTime effectiveDate,
         DateTime? expirationDate = null)
     {
         if (string.IsNullOrWhiteSpace(userId)) throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
         if (string.IsNullOrWhiteSpace(roleCode)) throw new ArgumentException("Role code cannot be null or empty", nameof(roleCode));
         if (string.IsNullOrWhiteSpace(department)) throw new ArgumentException("Department cannot be null or empty", nameof(department));
         if (string.IsNullOrWhiteSpace(userType)) throw new ArgumentException("User type cannot be null or empty", nameof(userType));
-        if (string.IsNullOrWhiteSpace(assignedBy)) throw new ArgumentException("Assigned by cannot be null or empty", nameof(assignedBy));
 
         UserId = userId;
         RoleCode = roleCode;
@@ -257,14 +299,23 @@ public class AssignRoleToUserCommand : BaseCommandBundle, IRequest<Result<SMSUse
         UserType = userType;
         EffectiveDate = effectiveDate;
         ExpirationDate = expirationDate;
-        AssignedBy = assignedBy;
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // This is not a create operation in the traditional sense
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        AssignedBy = userId;
     }
 }
 
 /// <summary>
 /// Command to remove a role from a user
 /// </summary>
-public class RemoveRoleFromUserCommand : BaseCommandBundle, IRequest<Result<bool>>
+public class RemoveRoleFromUserCommand : BaseCommandBundle, IRequest<Result<bool>>, IHasAuditFields
 {
     /// <summary>
     /// User ID to remove role from
@@ -284,15 +335,23 @@ public class RemoveRoleFromUserCommand : BaseCommandBundle, IRequest<Result<bool
     /// <summary>
     /// Initializes a new instance of the RemoveRoleFromUserCommand class.
     /// </summary>
-    public RemoveRoleFromUserCommand(string userId, string roleCode, string removedBy)
+    public RemoveRoleFromUserCommand(string userId, string roleCode)
     {
         if (string.IsNullOrWhiteSpace(userId)) throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
         if (string.IsNullOrWhiteSpace(roleCode)) throw new ArgumentException("Role code cannot be null or empty", nameof(roleCode));
-        if (string.IsNullOrWhiteSpace(removedBy)) throw new ArgumentException("Removed by cannot be null or empty", nameof(removedBy));
 
         UserId = userId;
         RoleCode = roleCode;
-        RemovedBy = removedBy;
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // This is not a create operation
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        RemovedBy = userId;
     }
 }
 

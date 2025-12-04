@@ -4,16 +4,24 @@ namespace SMS_Application.Configuration;
 
 internal static class ServiceCollectionExtensions
 {
-
+    /// <summary>
+    /// Adds the mediator with pipeline support to the service collection
+    /// This is the clean wrapper you had before - restored!
+    /// </summary>
     public static IServiceCollection AddMediator(this IServiceCollection services, Assembly assembly)
     {
-
+        // Core mediator service
         services.AddTransient<IMediator, Mediator>();
+        
+        // Register all command/query handlers  
         services.Register(typeof(IRequestHandler<,>), LifeTime.Scoped);
-        services.AddTransient(typeof(IPipeline<,>), typeof(LoggingPipeline<,>));
-        services.AddTransient(typeof(IPipeline<,>), typeof(AuditLogPipeline<,>));
+        
+        // 🔥 NEW: Register pipelines in execution order (AuditFieldsPipeline runs FIRST)
+        services.AddTransient(typeof(IPipeline<,>), typeof(AuditFieldsPipeline<,>)); // First - set audit fields
+        services.AddTransient(typeof(IPipeline<,>), typeof(LoggingPipeline<,>));     // Second - log execution
+        services.AddTransient(typeof(IPipeline<,>), typeof(AuditLogPipeline<,>));    // Third - audit logging
+        
         return services;
-
     }
 
     private static IServiceCollection Register(this IServiceCollection services, Type genericInterface, LifeTime lifetime)

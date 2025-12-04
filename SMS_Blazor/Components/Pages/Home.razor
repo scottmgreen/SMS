@@ -1,7 +1,200 @@
 ﻿@page "/"
+@inject ISMSSessionService SessionService
+@inject ILogger<Home> Logger
 
-<PageTitle>Home</PageTitle>
+<PageTitle>PDXSMS Dashboard</PageTitle>
 
-<h1>Hello, world!</h1>
+@if (!isAuthenticated)
+{
+    <style>
+        body {
+            background-image: url('/images/background_opening.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        .button-center-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+    </style>
 
-Welcome to your new app.
+    <!-- Not authenticated - show only the centered Access System button -->
+    <div class="button-center-container">
+        <div class="text-center">
+            <a href="/login" class="btn btn-primary btn-lg px-5">
+                <i class="fas fa-sign-in-alt"></i> Access System
+            </a>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Authenticated user - show full dashboard (no background image) -->
+    <div class="container-fluid">
+        <!-- Welcome Message -->
+        @if (!string.IsNullOrEmpty(displayName))
+        {
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <h2 class="card-title mb-1">
+                                        <i class="fas fa-shield-alt"></i> PDX Safety Management System (PDXSMS)
+                                    </h2>
+                                    <p class="card-text mb-0">
+                                        Welcome back, <strong>@displayName</strong> | Type: @userType
+                                    </p>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="text-end">
+                                        <small class="text-light opacity-75">
+                                            <i class="fas fa-clock"></i> @DateTime.Now.ToString("MMM dd, yyyy HH:mm")
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Quick Stats Dashboard -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center border-danger">
+                    <div class="card-body">
+                        <h5 class="card-title text-danger">Active Hazards</h5>
+                        <h5 class="display-7">5</h5>
+                        <p class="card-text">Requiring attention</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-warning">
+                    <div class="card-body">
+                        <h5 class="card-title text-warning">Pending Reviews</h5>
+                        <h5 class="display-7">3</h5>
+                        <p class="card-text">Awaiting processing</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-info">
+                    <div class="card-body">
+                        <h5 class="card-title text-info">Active Audits</h5>
+                        <h5 class="display-7">2</h5>
+                        <p class="card-text">In progress</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-success">
+                    <div class="card-body">
+                        <h5 class="card-title text-success">Mitigations</h5>
+                        <h5 class="display-7">8</h5>
+                        <p class="card-text">Under implementation</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4><i class="fas fa-clock"></i> Recent Activity</h4>
+                        <small class="text-muted">(12 recent items)</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Activity Detected:</strong> There are 12 recent activities in the system.
+                            <br><small>Note: Detailed activity log display is under development. Check specific modules for latest updates.</small>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="text-center">
+                                        <a href="/hazard-reporting" class="btn btn-outline-primary">
+                                            <i class="fas fa-plus-circle"></i><br>
+                                            <small>Submit New Hazard Report</small>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-center">
+                                        <a href="/hazard-processing" class="btn btn-outline-info">
+                                            <i class="fas fa-tasks"></i><br>
+                                            <small>View Hazard Processing</small>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-center">
+                                        <a href="/risk-assessment" class="btn btn-outline-success">
+                                            <i class="fas fa-clipboard-list"></i><br>
+                                            <small>Risk Assessment</small>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="btn-group" role="group">
+                            <a href="/hazard-processing" class="btn btn-outline-primary">
+                                <i class="fas fa-chart-bar"></i> View All Activities
+                            </a>
+                            <button type="button" class="btn btn-outline-info">
+                                <i class="fas fa-download"></i> Export Data
+                            </button>
+                            <a href="/system-status" class="btn btn-outline-secondary">
+                                <i class="fas fa-chart-pie"></i> System Status
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isAuthenticated = false;
+    private string displayName = string.Empty;
+    private string userType = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            isAuthenticated = SessionService.IsAuthenticated();
+            
+            if (isAuthenticated)
+            {
+                displayName = SessionService.GetCurrentUserDisplayName() ?? "User";
+                userType = SessionService.GetCurrentUserType() ?? "User";
+                
+                Logger.LogInformation("Dashboard loaded for user {UserId}", SessionService.GetCurrentUserId());
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading dashboard");
+            isAuthenticated = false;
+        }
+    }
+}

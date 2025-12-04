@@ -73,7 +73,7 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
                 while (await reader.ReadAsync().ConfigureAwait(false))
                 {
                     var userRoleCode = reader.GetString(FieldNames.fSMSUserRoleCode);
-                    var user = users.FirstOrDefault(u => u.UserRole.Code == userRoleCode);
+                    var user = users.FirstOrDefault(u => u.UserRole.Code == userRoleCode.Trim());
                     if (user?.UserRole != null)
                     {
                         if (user.UserRole.Permissions == null)

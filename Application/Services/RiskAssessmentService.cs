@@ -164,7 +164,6 @@ public sealed class RiskAssessmentService
         string fiveMResources,
         string fiveMPhysicalEnvironment,
         string fiveMOperationalEnvironment,
-        string updatedBy = "SYSTEM",
         CancellationToken ct = default)
     {
         try
@@ -182,8 +181,7 @@ public sealed class RiskAssessmentService
                 fiveMProcedures,
                 fiveMResources,
                 fiveMPhysicalEnvironment,
-                fiveMOperationalEnvironment,
-                updatedBy);
+                fiveMOperationalEnvironment);
 
             var result = await _mediator.SendAsync(command, ct).ConfigureAwait(false);
 
@@ -213,7 +211,6 @@ public sealed class RiskAssessmentService
         string riskAssessmentId,
         string riskAnalysisMethod,
         string riskCriteria,
-        string updatedBy = "SYSTEM",
         CancellationToken ct = default)
     {
         try
@@ -223,8 +220,7 @@ public sealed class RiskAssessmentService
             var command = new SaveStep3Command(
                 riskAssessmentId,
                 riskAnalysisMethod,
-                riskCriteria,
-                updatedBy);
+                riskCriteria);
 
             var result = await _mediator.SendAsync(command, ct).ConfigureAwait(false);
 
@@ -259,7 +255,6 @@ public sealed class RiskAssessmentService
         string finalRiskLevel,
         string riskTolerability,
         string assessmentRationale,
-        string updatedBy = "SYSTEM",
         CancellationToken ct = default)
     {
         try
@@ -274,8 +269,7 @@ public sealed class RiskAssessmentService
                 finalLikelihoodScore,
                 finalRiskLevel,
                 riskTolerability,
-                assessmentRationale,
-                updatedBy);
+                assessmentRationale);
 
             var result = await _mediator.SendAsync(command, ct).ConfigureAwait(false);
 
@@ -306,7 +300,6 @@ public sealed class RiskAssessmentService
         string implementationStrategy,
         DateTime? overallTargetDate,
         string implementationNotes,
-        string updatedBy = "SYSTEM",
         CancellationToken ct = default)
     {
         try
@@ -317,8 +310,7 @@ public sealed class RiskAssessmentService
                 riskAssessmentId,
                 implementationStrategy,
                 overallTargetDate,
-                implementationNotes,
-                updatedBy);
+                implementationNotes);
 
             var result = await _mediator.SendAsync(command, ct).ConfigureAwait(false);
 
@@ -351,7 +343,6 @@ public sealed class RiskAssessmentService
         int completionPercentage,
         string status = null,
         string stage = null,
-        string updatedBy = "SYSTEM",
         CancellationToken ct = default)
     {
         try
@@ -365,8 +356,7 @@ public sealed class RiskAssessmentService
                 completedSteps,
                 completionPercentage,
                 status,
-                stage,
-                updatedBy);
+                stage);
 
             var result = await _mediator.SendAsync(command, ct).ConfigureAwait(false);
 

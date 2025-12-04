@@ -1,13 +1,14 @@
 ﻿using SMS_Domain.Entities;
-
+using SMS_Application.Common;
+using SMS_Application.Interfaces;
 using SMS_Shared.Common;
 
 namespace SMS_Application.Messaging.Commands;
 
 /// <summary>
-/// Command to create a new SMS stakeholder group
+/// Command to create a new SMS application group
 /// </summary>
-public class CreateSMSApplicationGroupCommand : BaseCommandBundle, IRequest<Result<SMSApplicationGroup>>
+public class CreateSMSApplicationGroupCommand : BaseCommandBundle, IRequest<Result<SMSApplicationGroup>>, ICreateCommand
 {
     /// <summary>
     /// The SMS Application Group entity to create
@@ -17,18 +18,29 @@ public class CreateSMSApplicationGroupCommand : BaseCommandBundle, IRequest<Resu
     /// <summary>
     /// Initializes a new instance of the CreateSMSApplicationGroupCommand class.
     /// </summary>
-    /// <param name="stakeholderGroup">The stakeholder group to create</param>
-    /// <exception cref="ArgumentNullException">Thrown when stakeholderGroup is null</exception>
-    public CreateSMSApplicationGroupCommand(SMSApplicationGroup stakeholderGroup)
+    /// <param name="applicationGroup">The application group to create</param>
+    /// <exception cref="ArgumentNullException">Thrown when applicationGroup is null</exception>
+    public CreateSMSApplicationGroupCommand(SMSApplicationGroup applicationGroup)
     {
-        ApplicationGroup = stakeholderGroup ?? throw new ArgumentNullException(nameof(stakeholderGroup));
+        ApplicationGroup = applicationGroup ?? throw new ArgumentNullException(nameof(applicationGroup));
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        ApplicationGroup.CreatedBy = userId;
+        ApplicationGroup.CreatedDate = timestamp;
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        // For create commands, we typically don't set UpdatedBy
     }
 }
 
 /// <summary>
-/// Command to update an existing SMS stakeholder group
+/// Command to update an existing SMS application group
 /// </summary>
-public class UpdateSMSApplicationGroupCommand : BaseCommandBundle, IRequest<Result<SMSApplicationGroup>>
+public class UpdateSMSApplicationGroupCommand : BaseCommandBundle, IRequest<Result<SMSApplicationGroup>>, IUpdateCommand
 {
     /// <summary>
     /// The SMS Application Group entity to update
@@ -38,16 +50,27 @@ public class UpdateSMSApplicationGroupCommand : BaseCommandBundle, IRequest<Resu
     /// <summary>
     /// Initializes a new instance of the UpdateSMSApplicationGroupCommand class.
     /// </summary>
-    /// <param name="applicationGroup">The stakeholder group to update</param>
+    /// <param name="applicationGroup">The application group to update</param>
     /// <exception cref="ArgumentNullException">Thrown when applicationGroup is null</exception>
     public UpdateSMSApplicationGroupCommand(SMSApplicationGroup applicationGroup)
     {
         ApplicationGroup = applicationGroup ?? throw new ArgumentNullException(nameof(applicationGroup));
     }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // For update commands, we typically don't modify CreatedBy
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        ApplicationGroup.UpdatedBy = userId;
+        ApplicationGroup.UpdatedDate = timestamp;
+    }
 }
 
 /// <summary>
-/// Command to delete an SMS stakeholder group
+/// Command to delete an SMS application group
 /// </summary>
 public class DeleteSMSApplicationGroupCommand : BaseCommandBundle, IRequest<Result<bool>>
 {
@@ -59,7 +82,7 @@ public class DeleteSMSApplicationGroupCommand : BaseCommandBundle, IRequest<Resu
     /// <summary>
     /// Initializes a new instance of the DeleteSMSApplicationGroupCommand class.
     /// </summary>
-    /// <param name="groupCode">The code of the stakeholder group to delete</param>
+    /// <param name="groupCode">The code of the application group to delete</param>
     /// <exception cref="ArgumentException">Thrown when groupCode is null or empty</exception>
     public DeleteSMSApplicationGroupCommand(string groupCode)
     {
@@ -71,9 +94,9 @@ public class DeleteSMSApplicationGroupCommand : BaseCommandBundle, IRequest<Resu
 }
 
 /// <summary>
-/// Command to assign a user to a stakeholder group
+/// Command to assign a user to an application group
 /// </summary>
-public class AssignUserToApplicationGroupCommand : BaseCommandBundle, IRequest<Result<bool>>
+public class AssignUserToApplicationGroupCommand : BaseCommandBundle, IRequest<Result<bool>>, IHasAuditFields
 {
     /// <summary>
     /// The user code to assign to the group
@@ -95,9 +118,8 @@ public class AssignUserToApplicationGroupCommand : BaseCommandBundle, IRequest<R
     /// </summary>
     /// <param name="userCode">The user code to assign</param>
     /// <param name="groupCode">The group code to assign to</param>
-    /// <param name="assignedBy">The user making the assignment</param>
     /// <exception cref="ArgumentException">Thrown when userCode or groupCode is null or empty</exception>
-    public AssignUserToApplicationGroupCommand(string userCode, string groupCode, string assignedBy = "SYSTEM")
+    public AssignUserToApplicationGroupCommand(string userCode, string groupCode)
     {
         if (string.IsNullOrWhiteSpace(userCode))
             throw new ArgumentException("User code cannot be null or empty", nameof(userCode));
@@ -106,12 +128,21 @@ public class AssignUserToApplicationGroupCommand : BaseCommandBundle, IRequest<R
 
         UserCode = userCode;
         GroupCode = groupCode;
-        AssignedBy = assignedBy ?? "SYSTEM";
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // This is not a create operation
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        AssignedBy = userId;
     }
 }
 
 /// <summary>
-/// Command to remove a user from a stakeholder group
+/// Command to remove a user from an application group
 /// </summary>
 public class RemoveUserFromApplicationGroupCommand : BaseCommandBundle, IRequest<Result<bool>>
 {

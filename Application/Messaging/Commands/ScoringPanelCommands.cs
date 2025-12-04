@@ -1,6 +1,12 @@
+using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
+using SMS_Application.Common;
+using SMS_Application.Interfaces;
+using SMS_Shared.Common;
+
 namespace SMS_Application.Messaging.Commands;
 
-public class CreateScoringPanelCommand : BaseCommandBundle, IRequest<Result<ScoringPanel>>
+public class CreateScoringPanelCommand : BaseCommandBundle, IRequest<Result<ScoringPanel>>, ICreateCommand
 {
     public ScoringPanel ScoringPanel { get; set; }
 
@@ -8,15 +14,37 @@ public class CreateScoringPanelCommand : BaseCommandBundle, IRequest<Result<Scor
     {
         ScoringPanel = scoringPanel ?? throw new ArgumentNullException(nameof(scoringPanel));
     }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        ScoringPanel.CreatedBy = userId;
+        ScoringPanel.CreatedDate = timestamp;
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        // For create commands, we typically don't set UpdatedBy
+    }
 }
 
-public class UpdateScoringPanelCommand : BaseCommandBundle, IRequest<Result<ScoringPanel>>
+public class UpdateScoringPanelCommand : BaseCommandBundle, IRequest<Result<ScoringPanel>>, IUpdateCommand
 {
     public ScoringPanel ScoringPanel { get; set; }
 
     public UpdateScoringPanelCommand(ScoringPanel scoringPanel)
     {
         ScoringPanel = scoringPanel ?? throw new ArgumentNullException(nameof(scoringPanel));
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // For update commands, we typically don't modify CreatedBy
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        ScoringPanel.UpdatedBy = userId;
+        ScoringPanel.UpdatedDate = timestamp;
     }
 }
 

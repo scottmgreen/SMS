@@ -1,10 +1,16 @@
+using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
+using SMS_Application.Common;
+using SMS_Application.Interfaces;
+using SMS_Shared.Common;
+
 namespace SMS_Application.Messaging.Commands;
 
 // =============================================
 // BASIC RISK ASSESSMENT COMMANDS
 // =============================================
 
-public class CreateRiskAssessmentCommand : BaseCommandBundle, IRequest<Result<RiskAssessment>>
+public class CreateRiskAssessmentCommand : BaseCommandBundle, IRequest<Result<RiskAssessment>>, ICreateCommand
 {
     public RiskAssessment RiskAssessment { get; set; }
 
@@ -12,15 +18,37 @@ public class CreateRiskAssessmentCommand : BaseCommandBundle, IRequest<Result<Ri
     {
         RiskAssessment = riskAssessment ?? throw new ArgumentNullException(nameof(riskAssessment));
     }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        RiskAssessment.CreatedBy = userId;
+        RiskAssessment.CreatedDate = timestamp;
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        // For create commands, we typically don't set UpdatedBy
+    }
 }
 
-public class UpdateRiskAssessmentCommand : BaseCommandBundle, IRequest<Result<RiskAssessment>>
+public class UpdateRiskAssessmentCommand : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IUpdateCommand
 {
     public RiskAssessment RiskAssessment { get; set; }
 
     public UpdateRiskAssessmentCommand(RiskAssessment riskAssessment)
     {
         RiskAssessment = riskAssessment ?? throw new ArgumentNullException(nameof(riskAssessment));
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // For update commands, we typically don't modify CreatedBy
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        RiskAssessment.UpdatedBy = userId;
+        RiskAssessment.UpdatedDate = timestamp;
     }
 }
 
@@ -41,7 +69,7 @@ public class DeleteRiskAssessmentCommand : BaseCommandBundle, IRequest<Result<bo
 /// <summary>
 /// Command to save Step 1 - System Description data
 /// </summary>
-public class SaveStep1Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>
+public class SaveStep1Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IHasAuditFields
 {
     public string RiskAssessmentId { get; set; }
     public string LeadAssessorId { get; set; }
@@ -67,8 +95,7 @@ public class SaveStep1Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
         string fiveMProcedures,
         string fiveMResources,
         string fiveMPhysicalEnvironment,
-        string fiveMOperationalEnvironment,
-        string updatedBy = "SYSTEM")
+        string fiveMOperationalEnvironment)
     {
         RiskAssessmentId = riskAssessmentId ?? throw new ArgumentNullException(nameof(riskAssessmentId));
         LeadAssessorId = leadAssessorId ?? throw new ArgumentNullException(nameof(leadAssessorId));
@@ -81,14 +108,23 @@ public class SaveStep1Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
         FiveMResources = fiveMResources ?? string.Empty;
         FiveMPhysicalEnvironment = fiveMPhysicalEnvironment ?? string.Empty;
         FiveMOperationalEnvironment = fiveMOperationalEnvironment ?? string.Empty;
-        UpdatedBy = updatedBy ?? "SYSTEM";
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // This is an update operation, not create
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        UpdatedBy = userId;
     }
 }
 
 /// <summary>
 /// Command to save Step 3 - Risk Analysis data
 /// </summary>
-public class SaveStep3Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>
+public class SaveStep3Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IHasAuditFields
 {
     public string RiskAssessmentId { get; set; }
     public string RiskAnalysisMethod { get; set; }
@@ -98,20 +134,28 @@ public class SaveStep3Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
     public SaveStep3Command(
         string riskAssessmentId,
         string riskAnalysisMethod,
-        string riskCriteria,
-        string updatedBy = "SYSTEM")
+        string riskCriteria)
     {
         RiskAssessmentId = riskAssessmentId ?? throw new ArgumentNullException(nameof(riskAssessmentId));
         RiskAnalysisMethod = riskAnalysisMethod ?? "SMS Risk Matrix";
         RiskCriteria = riskCriteria ?? string.Empty;
-        UpdatedBy = updatedBy ?? "SYSTEM";
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // This is an update operation, not create
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        UpdatedBy = userId;
     }
 }
 
 /// <summary>
 /// Command to save Step 4 - Risk Assessment data
 /// </summary>
-public class SaveStep4Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>
+public class SaveStep4Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IHasAuditFields
 {
     public string RiskAssessmentId { get; set; }
     public string TolerabilityFramework { get; set; }
@@ -131,8 +175,7 @@ public class SaveStep4Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
         int? finalLikelihoodScore,
         string finalRiskLevel,
         string riskTolerability,
-        string assessmentRationale,
-        string updatedBy = "SYSTEM")
+        string assessmentRationale)
     {
         RiskAssessmentId = riskAssessmentId ?? throw new ArgumentNullException(nameof(riskAssessmentId));
         TolerabilityFramework = tolerabilityFramework ?? "PDX-SMS Default";
@@ -142,14 +185,23 @@ public class SaveStep4Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
         FinalRiskLevel = finalRiskLevel ?? string.Empty;
         RiskTolerability = riskTolerability ?? string.Empty;
         AssessmentRationale = assessmentRationale ?? string.Empty;
-        UpdatedBy = updatedBy ?? "SYSTEM";
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // This is an update operation, not create
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        UpdatedBy = userId;
     }
 }
 
 /// <summary>
 /// Command to save Step 5 - Implementation data
 /// </summary>
-public class SaveStep5Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>
+public class SaveStep5Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IHasAuditFields
 {
     public string RiskAssessmentId { get; set; }
     public string ImplementationStrategy { get; set; }
@@ -161,21 +213,29 @@ public class SaveStep5Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
         string riskAssessmentId,
         string implementationStrategy,
         DateTime? overallTargetDate,
-        string implementationNotes,
-        string updatedBy = "SYSTEM")
+        string implementationNotes)
     {
         RiskAssessmentId = riskAssessmentId ?? throw new ArgumentNullException(nameof(riskAssessmentId));
         ImplementationStrategy = implementationStrategy ?? string.Empty;
         OverallTargetDate = overallTargetDate;
         ImplementationNotes = implementationNotes ?? string.Empty;
-        UpdatedBy = updatedBy ?? "SYSTEM";
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // This is an update operation, not create
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        UpdatedBy = userId;
     }
 }
 
 /// <summary>
 /// Command to update progress tracking data
 /// </summary>
-public class UpdateProgressCommand : BaseCommandBundle, IRequest<Result<RiskAssessment>>
+public class UpdateProgressCommand : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IHasAuditFields
 {
     public string RiskAssessmentId { get; set; }
     public int CurrentStep { get; set; }
@@ -191,8 +251,7 @@ public class UpdateProgressCommand : BaseCommandBundle, IRequest<Result<RiskAsse
         string completedSteps,
         int completionPercentage,
         string status = null,
-        string stage = null,
-        string updatedBy = "SYSTEM")
+        string stage = null)
     {
         RiskAssessmentId = riskAssessmentId ?? throw new ArgumentNullException(nameof(riskAssessmentId));
         CurrentStep = currentStep;
@@ -200,6 +259,15 @@ public class UpdateProgressCommand : BaseCommandBundle, IRequest<Result<RiskAsse
         CompletionPercentage = completionPercentage;
         Status = status;
         Stage = stage;
-        UpdatedBy = updatedBy ?? "SYSTEM";
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // This is an update operation, not create
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        UpdatedBy = userId;
     }
 }

@@ -1,4 +1,7 @@
 using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
+using SMS_Application.Common;
+using SMS_Application.Interfaces;
 using SMS_Shared.Common;
 
 namespace SMS_Application.Messaging.Commands;
@@ -6,7 +9,7 @@ namespace SMS_Application.Messaging.Commands;
 /// <summary>
 /// Command to create a new SMS stakeholder group
 /// </summary>
-public class CreateSMSStakeholderGroupCommand : BaseCommandBundle, IRequest<Result<SMSStakeholderGroup>>
+public class CreateSMSStakeholderGroupCommand : BaseCommandBundle, IRequest<Result<SMSStakeholderGroup>>, ICreateCommand
 {
     /// <summary>
     /// The SMS Stakeholder Group entity to create
@@ -22,12 +25,23 @@ public class CreateSMSStakeholderGroupCommand : BaseCommandBundle, IRequest<Resu
     {
         StakeholderGroup = stakeholderGroup ?? throw new ArgumentNullException(nameof(stakeholderGroup));
     }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        StakeholderGroup.CreatedBy = userId;
+        StakeholderGroup.CreatedDate = timestamp;
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        // For create commands, we typically don't set UpdatedBy
+    }
 }
 
 /// <summary>
 /// Command to update an existing SMS stakeholder group
 /// </summary>
-public class UpdateSMSStakeholderGroupCommand : BaseCommandBundle, IRequest<Result<SMSStakeholderGroup>>
+public class UpdateSMSStakeholderGroupCommand : BaseCommandBundle, IRequest<Result<SMSStakeholderGroup>>, IUpdateCommand
 {
     /// <summary>
     /// The SMS Stakeholder Group entity to update
@@ -42,6 +56,17 @@ public class UpdateSMSStakeholderGroupCommand : BaseCommandBundle, IRequest<Resu
     public UpdateSMSStakeholderGroupCommand(SMSStakeholderGroup stakeholderGroup)
     {
         StakeholderGroup = stakeholderGroup ?? throw new ArgumentNullException(nameof(stakeholderGroup));
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // For update commands, we typically don't modify CreatedBy
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        StakeholderGroup.UpdatedBy = userId;
+        StakeholderGroup.UpdatedDate = timestamp;
     }
 }
 
@@ -58,11 +83,11 @@ public class DeleteSMSStakeholderGroupCommand : BaseCommandBundle, IRequest<Resu
     /// <summary>
     /// Initializes a new instance of the DeleteSMSStakeholderGroupCommand class.
     /// </summary>
-    /// <param name="groupCode">The code of the stakeholder group to delete</param>
-    /// <exception cref="ArgumentException">Thrown when groupCode is null or empty</exception>
+    /// <param name="group">The stakeholder group to delete</param>
+    /// <exception cref="ArgumentException">Thrown when group is null or has empty code</exception>
     public DeleteSMSStakeholderGroupCommand(SMSStakeholderGroup group)
     {
-        if (string.IsNullOrWhiteSpace(group.Code))
+        if (string.IsNullOrWhiteSpace(group?.Code))
             throw new ArgumentException("Group code cannot be null or empty", nameof(group));
 
         StakeholderGroup = group;
@@ -72,7 +97,7 @@ public class DeleteSMSStakeholderGroupCommand : BaseCommandBundle, IRequest<Resu
 /// <summary>
 /// Command to assign a user to a stakeholder group
 /// </summary>
-public class AssignUserToStakeholderGroupCommand : BaseCommandBundle, IRequest<Result<bool>>
+public class AssignUserToStakeholderGroupCommand : BaseCommandBundle, IRequest<Result<bool>>, IHasAuditFields
 {
     /// <summary>
     /// The user code to assign to the group
@@ -93,19 +118,27 @@ public class AssignUserToStakeholderGroupCommand : BaseCommandBundle, IRequest<R
     /// Initializes a new instance of the AssignUserToStakeholderGroupCommand class.
     /// </summary>
     /// <param name="userCode">The user code to assign</param>
-    /// <param name="groupCode">The group code to assign to</param>
-    /// <param name="assignedBy">The user making the assignment</param>
-    /// <exception cref="ArgumentException">Thrown when userCode or groupCode is null or empty</exception>
-    public AssignUserToStakeholderGroupCommand(string userCode, SMSStakeholderGroupID groupID, string assignedBy = "SYSTEM")
+    /// <param name="groupID">The group ID to assign to</param>
+    /// <exception cref="ArgumentException">Thrown when userCode or groupID is invalid</exception>
+    public AssignUserToStakeholderGroupCommand(string userCode, SMSStakeholderGroupID groupID)
     {
         if (string.IsNullOrWhiteSpace(userCode))
             throw new ArgumentException("User code cannot be null or empty", nameof(userCode));
-        if (string.IsNullOrWhiteSpace(groupID.Value))
-            throw new ArgumentException("Group code cannot be null or empty", nameof(groupID.Value));
+        if (string.IsNullOrWhiteSpace(groupID?.Value))
+            throw new ArgumentException("Group ID cannot be null or empty", nameof(groupID));
         
         UserCode = userCode;
         StakeholderGroupID = groupID;
-        AssignedBy = assignedBy ?? "SYSTEM";
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // This is not a create operation
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        AssignedBy = userId;
     }
 }
 
@@ -128,14 +161,14 @@ public class RemoveUserFromStakeholderGroupCommand : BaseCommandBundle, IRequest
     /// Initializes a new instance of the RemoveUserFromStakeholderGroupCommand class.
     /// </summary>
     /// <param name="userCode">The user code to remove</param>
-    /// <param name="groupCode">The group code to remove from</param>
-    /// <exception cref="ArgumentException">Thrown when userCode or groupCode is null or empty</exception>
+    /// <param name="groupID">The group ID to remove from</param>
+    /// <exception cref="ArgumentException">Thrown when userCode or groupID is invalid</exception>
     public RemoveUserFromStakeholderGroupCommand(string userCode, SMSStakeholderGroupID groupID)
     {
         if (string.IsNullOrWhiteSpace(userCode))
             throw new ArgumentException("User code cannot be null or empty", nameof(userCode));
-        if (string.IsNullOrWhiteSpace(groupID.Value))
-            throw new ArgumentException("Group code cannot be null or empty", nameof(groupID.Value));
+        if (string.IsNullOrWhiteSpace(groupID?.Value))
+            throw new ArgumentException("Group ID cannot be null or empty", nameof(groupID));
         
         UserCode = userCode;
         StakeholderGroupID = groupID;

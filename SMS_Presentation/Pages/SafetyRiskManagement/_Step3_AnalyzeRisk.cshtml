@@ -1,7 +1,7 @@
 @model SMS.Presentation.Pages.SafetyRiskManagement.RiskAssessmentWizardModel
 
 @{
-    var hazardCount = Model.AvailableHazards?.Count ?? 0;
+    var hazardCount = Model.ReportHazards?.Count ?? 0;
     var analyzedCount = Model.Step3.HazardAnalyses?.Count(ha => ha.Value.IsComplete) ?? 0;
     var analysisProgress = hazardCount > 0 ? (analyzedCount * 100) / hazardCount : 0;
 }
@@ -87,15 +87,15 @@
                 </div>
             </div>
             <div class="card-body">
-                @if (Model.AvailableHazards?.Any() == true)
+                @if (Model.ReportHazards?.Any() == true)
                 {
                     <!-- Hidden fields to maintain state -->
                     <input type="hidden" asp-for="Id" />
                     <input type="hidden" asp-for="StepNumber" />
 
-                    @for (int i = 0; i < Model.AvailableHazards.Count; i++)
+                    @for (int i = 0; i < Model.ReportHazards.Count; i++)
                     {
-                        var hazard = Model.AvailableHazards[i];
+                        var hazard = Model.ReportHazards[i];
                         var hazardAnalysis = Model.Step3.GetHazardAnalysis(hazard.Code);
                         
                         <!-- Hidden fields to preserve hazard data -->

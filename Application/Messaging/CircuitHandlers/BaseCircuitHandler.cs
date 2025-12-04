@@ -3,6 +3,7 @@ using SMS_Infrastructure.Interfaces;
 using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Http;
 
 using System.Collections.Concurrent;
 namespace SMS_Application.Messaging.CircuitHandlers;
@@ -11,18 +12,58 @@ public abstract class BaseCircuitHandler : CircuitHandler
 {
     protected readonly ILogger _logger;
     protected readonly ILogSupport _logsupport;
+    protected readonly IHttpContextAccessor _httpContextAccessor;
     protected string HostName { get; set; }
-    protected  string IPAddress { get; set; }
+    protected string IPAddress { get; set; }
     protected string ConnectionId { get; set; }
     protected IMediator Mediator;
 
     private static readonly ConcurrentDictionary<string, Circuit> _activeCircuits = new();
 
-    public BaseCircuitHandler(ILogger<SMS_CircuitHandler> logger, ILogSupport logsupport, IMediator mediator)
+    public BaseCircuitHandler(ILogger<SMS_CircuitHandler> logger, ILogSupport logsupport, IMediator mediator, IHttpContextAccessor httpContextAccessor = null)
     {
         _logger = logger;
         _logsupport = logsupport;
         Mediator = mediator;
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    /// <summary>
+    /// Gets current user code for audit trails - uses session data
+    /// </summary>
+    protected string GetCurrentUserCode()
+    {
+        var session = _httpContextAccessor?.HttpContext?.Session;
+        if (session == null) return "SYSTEM";
+        
+        return session.GetString("SMS_UserCode") ?? 
+               session.GetString("SMS_UserId") ?? 
+               "SYSTEM";
+    }
+
+    /// <summary>
+    /// Gets current user display name
+    /// </summary>
+    protected string GetCurrentUserDisplayName()
+    {
+        var session = _httpContextAccessor?.HttpContext?.Session;
+        if (session == null) return "System";
+        
+        return session.GetString("SMS_DisplayName") ?? 
+               session.GetString("SMS_Email") ?? 
+               "System";
+    }
+
+    /// <summary>
+    /// Checks if user is authenticated
+    /// </summary>
+    protected bool IsUserAuthenticated()
+    {
+        var session = _httpContextAccessor?.HttpContext?.Session;
+        if (session == null) return false;
+        
+        return session.GetString("IsAuthenticated") == "true" &&
+               !string.IsNullOrEmpty(session.GetString("SMS_UserId"));
     }
 
     public override async Task OnConnectionUpAsync(Circuit circuit, CancellationToken cancellationToken)

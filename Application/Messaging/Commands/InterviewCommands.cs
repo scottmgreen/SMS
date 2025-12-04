@@ -1,6 +1,12 @@
+using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
+using SMS_Application.Common;
+using SMS_Application.Interfaces;
+using SMS_Shared.Common;
+
 namespace SMS_Application.Messaging.Commands;
 
-public class CreateInterviewCommand : BaseCommandBundle, IRequest<Result<Interview>>
+public class CreateInterviewCommand : BaseCommandBundle, IRequest<Result<Interview>>, ICreateCommand
 {
     public Interview Interview { get; set; }
 
@@ -8,15 +14,37 @@ public class CreateInterviewCommand : BaseCommandBundle, IRequest<Result<Intervi
     {
         Interview = interview ?? throw new ArgumentNullException(nameof(interview));
     }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        Interview.CreatedBy = userId;
+        Interview.CreatedDate = timestamp;
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        // For create commands, we typically don't set UpdatedBy
+    }
 }
 
-public class UpdateInterviewCommand : BaseCommandBundle, IRequest<Result<Interview>>
+public class UpdateInterviewCommand : BaseCommandBundle, IRequest<Result<Interview>>, IUpdateCommand
 {
     public Interview Interview { get; set; }
 
     public UpdateInterviewCommand(Interview interview)
     {
         Interview = interview ?? throw new ArgumentNullException(nameof(interview));
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // For update commands, we typically don't modify CreatedBy
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        Interview.UpdatedBy = userId;
+        Interview.UpdatedDate = timestamp;
     }
 }
 

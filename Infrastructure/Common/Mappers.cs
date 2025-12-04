@@ -258,6 +258,7 @@ public static partial class Mappers
         hazard.Code = reader.GetValue<string>(FieldNames.fHazardCode) ?? string.Empty;
         hazard.Name = reader.GetValue<string>(FieldNames.fHazardName);
         hazard.Description = reader.GetValue<string>(FieldNames.fHazardDescription) ?? string.Empty;
+        hazard.Category = reader.GetValue<string>(FieldNames.fHazardCategory);
         hazard.ReportCode = reader.GetValue<string>(FieldNames.fHazardReportCode) ?? string.Empty;
         hazard.ScoringPanelCode = reader.GetValue<string>(FieldNames.fHazardScoringPanelCode);
         hazard.AverageScore = reader.GetValue<string>(FieldNames.fHazardAverageScore);
@@ -269,12 +270,7 @@ public static partial class Mappers
         try
         {
             // Enhanced Classification Fields
-            var category = reader.GetValue<string>(FieldNames.fHazardCategory);
-            if (!string.IsNullOrEmpty(category))
-            {
-                hazard.Category = category;
-            }
-
+            
             var hazardType = reader.GetValue<string>(FieldNames.fHazardType);
             if (!string.IsNullOrEmpty(hazardType))
             {

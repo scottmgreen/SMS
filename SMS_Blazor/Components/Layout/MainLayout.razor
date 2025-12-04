@@ -1,23 +1,254 @@
 ﻿@inherits LayoutComponentBase
+@inject ISMSSessionService SessionService
+@inject NavigationManager Navigation
+@inject ILogger<MainLayout> Logger
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+<div class="min-vh-100 d-flex flex-column">
+    <header>
+        <!-- PDXSMS Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/">
+                    <i class="fas fa-shield-alt me-2"></i>PDXSMS
+                    <small class="d-none d-sm-inline ms-2 opacity-75" style="font-size: 0.8rem;">Safety Management System</small>
+                </a>
+                
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <!-- Main Navigation -->
+                    <ul class="navbar-nav me-auto">
+                        @if (isAuthenticated)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="/">
+                                    <i class="fas fa-home me-1"></i>Dashboard
+                                </a>
+                            </li>
+                            
+                            <!-- Safety Risk Management -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Safety Risk Management
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><h6 class="dropdown-header">Hazard Management</h6></li>
+                                    <li><a class="dropdown-item" href="/SafetyRiskManagement/HazardReporting">
+                                        <i class="fas fa-file-medical-alt me-2"></i>Hazard Reporting
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/SafetyRiskManagement/ReportProcessing">
+                                        <i class="fas fa-tasks me-2"></i>Report Processing
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/SafetyRiskManagement/HazardReview">
+                                        <i class="fas fa-search me-2"></i>Hazard Review
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header">Risk Assessment</h6></li>
+                                    <li><a class="dropdown-item" href="/SafetyRiskManagement/RiskAssessment">
+                                        <i class="fas fa-balance-scale me-2"></i>Risk Assessment
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/SafetyRiskManagement/RiskAssessmentWizard">
+                                        <i class="fas fa-magic me-2"></i>Assessment Wizard
+                                    </a></li>
+                                </ul>
+                            </li>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+                            <!-- Safety Assurance -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-shield-check me-1"></i>Safety Assurance
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/SafetyAssurance">
+                                        <i class="fas fa-home me-2"></i>Assurance Overview
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/SafetyAssurance/SafetyPerformanceMonitoring">
+                                        <i class="fas fa-chart-line me-2"></i>Performance Monitoring
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/SafetyAssurance/SafetyAudits">
+                                        <i class="fas fa-clipboard-check me-2"></i>Safety Audits
+                                    </a></li>
+                                </ul>
+                            </li>
 
-        <article class="content px-4">
+                            <!-- Safety Policy -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-book me-1"></i>Safety Policy
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/SafetyPolicy/SafetyPolicy">
+                                        <i class="fas fa-file-alt me-2"></i>Policy Management
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/SafetyPolicy/OrganizationalStructure">
+                                        <i class="fas fa-users me-2"></i>Organizational Structure
+                                    </a></li>
+                                </ul>
+                            </li>
+
+                            <!-- Safety Promotion -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-bullhorn me-1"></i>Safety Promotion
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/SafetyPromotion/SafetyCommunications">
+                                        <i class="fas fa-comments me-2"></i>Communications
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/SafetyPromotion/SafetyTraining">
+                                        <i class="fas fa-graduation-cap me-2"></i>Training
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/SafetyPromotion/SafetyCulture">
+                                        <i class="fas fa-users me-2"></i>Culture
+                                    </a></li>
+                                </ul>
+                            </li>
+                            
+                            <!-- System -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-cog me-1"></i>System
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/System/UserManagement">
+                                        <i class="fas fa-users me-2"></i>User Management
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/System/RolesAndPermissions">
+                                        <i class="fas fa-user-shield me-2"></i>Roles & Permissions
+                                    </a></li>
+                                </ul>
+                            </li>
+                        }
+                    </ul>
+                    
+                    <!-- User Information -->
+                    <ul class="navbar-nav">
+                        @if (isAuthenticated)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-user-circle me-2"></i>
+                                        <div class="d-none d-md-block me-2">
+                                            <div class="fw-semibold">@displayName</div>
+                                        </div>
+                                        <span class="badge user-badge @GetUserBadgeClass()">
+                                            @userType
+                                        </span>
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><h6 class="dropdown-header">@displayName</h6></li>
+                                    <li class="dropdown-item-text">
+                                        <small class="text-muted">
+                                            <strong>Type:</strong> @GetUserTypeDisplay()<br>
+                                            <strong>User ID:</strong> @userId
+                                        </small>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="/Account/Profile">
+                                        <i class="fas fa-user-edit me-2"></i>Profile Settings
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/Account/ChangePassword">
+                                        <i class="fas fa-lock me-2"></i>Change Password
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="/api/auth/logout">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                    </a></li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link btn btn-outline-light ms-2" href="/login">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Access PDXSMS
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="flex-grow-1">
+        <div class="container-fluid pdx-main-content">
             @Body
-        </article>
+        </div>
     </main>
+
+    <footer class="pdx-footer text-center py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 mx-auto">
+                    <small class="d-block mb-2">
+                        <strong>PDXSMS</strong> - Port of Portland Safety Management System
+                    </small>
+                    <small class="d-block mb-2">
+                        &copy; @DateTime.Now.Year Port of Portland. All rights reserved.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
 </div>
 
 <div id="blazor-error-ui">
+    <i class="fas fa-exclamation-triangle"></i>
     An unhandled error has occurred.
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+
+@code {
+    private bool isAuthenticated = false;
+    private string displayName = string.Empty;
+    private string userType = string.Empty;
+    private string userId = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            isAuthenticated = SessionService.IsAuthenticated();
+            
+            if (isAuthenticated)
+            {
+                displayName = SessionService.GetCurrentUserDisplayName() ?? "User";
+                userType = SessionService.GetCurrentUserType() ?? "User";
+                userId = SessionService.GetCurrentUserId() ?? "Unknown";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error checking authentication state in MainLayout");
+            isAuthenticated = false;
+        }
+    }
+
+    private string GetUserBadgeClass()
+    {
+        return userType switch
+        {
+            "APPLICATION" => "bg-info",
+            "ORGANIZATIONAL" => "bg-success",
+            "STAKEHOLDER" => "bg-warning text-dark",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetUserTypeDisplay()
+    {
+        return userType switch
+        {
+            "APPLICATION" => "System Administrator",
+            "ORGANIZATIONAL" => "Safety Manager",
+            "STAKEHOLDER" => "Stakeholder",
+            _ => "User"
+        };
+    }
+}

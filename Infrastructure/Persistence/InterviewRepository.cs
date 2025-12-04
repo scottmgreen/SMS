@@ -224,7 +224,7 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
         catch (Exception ex)
         {
             _logger.LogInfrastructureGetItemsError($"{_logheader} {ex.Message}", null);
-            return Result<List<Interview>>.Failure<List<Interview>>(DomainErrors.InterviewError.NullOrEmpty);
+            return Result<List<Interview>>. Failure<List<Interview>>(DomainErrors.InterviewError.NullOrEmpty);
         }
     }
 
@@ -453,7 +453,7 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewCode, interviewCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewStatus, status.ToString()));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM")); // This will need to be fixed - should accept updatedBy parameter
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
@@ -492,7 +492,7 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewLocation, location));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewDurationMinutes, durationMinutes ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewStatus, InterviewStatus.Scheduled.ToString()));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM")); // This will need to be fixed - should accept updatedBy parameter
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
@@ -532,7 +532,7 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewKeyFindings, keyFindings ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewStatus, InterviewStatus.Completed.ToString()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewCompletedDate, DateTime.UtcNow));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM")); // This will need to be fixed - should accept updatedBy parameter
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);

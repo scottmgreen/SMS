@@ -45,7 +45,7 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportDescription, report.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportStatus, report.Status));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportStage, report.Stage));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, report.CreatedBy ?? "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
@@ -174,7 +174,7 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportDescription, report.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportStatus, report.Status));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportStage, report.Stage));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, report.UpdatedBy ?? "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);

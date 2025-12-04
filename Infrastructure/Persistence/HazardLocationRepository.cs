@@ -89,7 +89,7 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationLongitude, hazardLocation.Longitude));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationDescription, hazardLocation.Description ?? (object)DBNull.Value));
             //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationDateSelected, hazardLocation.DateSelected));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, hazardLocation.CreatedBy ?? "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
@@ -259,7 +259,7 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationLatitude, hazardLocation.Latitude));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationLongitude, hazardLocation.Longitude));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationDescription, hazardLocation.Description ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, hazardLocation.UpdatedBy ?? "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);

@@ -35,13 +35,7 @@ public class SMS_CircuitHandler : BaseCircuitHandler
 
                 if (circuit.Id != null)
                 {
-                    //TrainingStation trainingstation = new();
-                    //trainingstation.HostName = base.HostName;
-                    //trainingstation.CircuitId = circuit.Id;
-                    //trainingstation.Status = SMS_Domain.Enums.TrainingStationStatus.MachineStopped;
-
-                    //UpdateTrainingStationCommand request = new UpdateTrainingStationCommand(trainingstation);
-                    //_ = Task.Run(() => Mediator.SendAsync(request, default)).Result;
+                    //TEAR DOWN HERE
                 }
 
             }
@@ -65,13 +59,7 @@ public class SMS_CircuitHandler : BaseCircuitHandler
             {
                 if (circuit.Id != null)
                 {
-                    //TrainingStation trainingstation = new();
-                    //trainingstation.HostName = base.HostName;
-                    //trainingstation.CircuitId = circuit.Id;
-                    //trainingstation.Status = SMS_Domain.Enums.TrainingStationStatus.MachineRunning;
-
-                    //UpdateTrainingStationCommand request = new UpdateTrainingStationCommand(trainingstation);
-                    //_ = Task.Run(() => Mediator.SendAsync(request, default)).Result;
+                    //SETUP HERE
                 }
 
             }

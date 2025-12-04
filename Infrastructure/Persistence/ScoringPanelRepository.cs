@@ -46,7 +46,7 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelLikelihood, scoringPanel.Likelihood));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelSeverity, scoringPanel.Severity));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelScore, scoringPanel.Score));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, scoringPanel.CreatedBy ?? "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
@@ -176,7 +176,7 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelLikelihood, scoringPanel.Likelihood));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelSeverity, scoringPanel.Severity));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelScore, scoringPanel.Score));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, scoringPanel.UpdatedBy ?? "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);

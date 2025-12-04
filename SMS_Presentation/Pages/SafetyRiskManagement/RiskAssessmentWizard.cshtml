@@ -63,6 +63,8 @@
                                 <form method="post" style="display: inline;">
                                     <input type="hidden" asp-for="Id" />
                                     <input type="hidden" asp-for="StepNumber" />
+                                    <input type="hidden" asp-for="HazardId" />
+                                    <input type="hidden" asp-for="ReportId" />
                                     @if (isDisabled)
                                     {
                                         <button type="button" class="btn @stepClass btn-sm w-100" disabled>
@@ -145,6 +147,7 @@
                         <input type="hidden" asp-for="Id" />
                         <input type="hidden" asp-for="StepNumber" />
                         <input type="hidden" asp-for="HazardId" />
+                        <input type="hidden" asp-for="ReportId" />
                         
                         @if (Model.StepNumber == 1)
                         {

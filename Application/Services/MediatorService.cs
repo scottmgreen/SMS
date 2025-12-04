@@ -30,7 +30,8 @@ namespace SMS_Application.Services
 
             RequestPipelineDelegate<TResponse> next = () => (Task<TResponse>)methodInfo!.Invoke(handler, new object[] { request, cancellation }!);
 
-            behaviors.Reverse();
+            // 🔥 FIX: Don't reverse! Keep the registration order
+            // behaviors.Reverse(); // ❌ REMOVED - This was causing audit fields to set AFTER command execution
 
             foreach (var behavior in behaviors)
             {
@@ -54,6 +55,7 @@ namespace SMS_Application.Services
 
 
 }
+
 
 
 

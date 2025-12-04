@@ -245,7 +245,7 @@ public class ApplicationUsersModel : PageModel
                 return RedirectToPage();
             }
 
-            var command = new UpdateSMSApplicationUserPasswordCommand(userId, newPassword, "SYSTEM");
+            var command = new UpdateSMSApplicationUserPasswordCommand(userId, newPassword);
             var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)

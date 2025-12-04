@@ -326,7 +326,7 @@ public class StakeholderGroupsModel : PageModel
             }
 
             var groupId = new SMSStakeholderGroupID(groupCode);
-            var command = new AssignUserToStakeholderGroupCommand(userCode, groupId, "SYSTEM");
+            var command = new AssignUserToStakeholderGroupCommand(userCode, groupId);
             var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
@@ -397,7 +397,7 @@ public class StakeholderGroupsModel : PageModel
                 try
                 {
                     var groupId = new SMSStakeholderGroupID(groupCode);
-                    var command = new AssignUserToStakeholderGroupCommand(userCode, groupId, "SYSTEM");
+                    var command = new AssignUserToStakeholderGroupCommand(userCode, groupId);
                     var result = await _mediator.SendAsync(command, CancellationToken.None);
 
                     if (result.IsSuccess)

@@ -230,7 +230,7 @@ public class StakeholderUsersModel : PageModel
                 return RedirectToPage();
             }
 
-            var command = new UpdateSMSStakeholderUserPasswordCommand(userId, newPassword, "SYSTEM");
+            var command = new UpdateSMSStakeholderUserPasswordCommand(userId, newPassword);
             var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)

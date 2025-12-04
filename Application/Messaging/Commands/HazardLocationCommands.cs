@@ -7,9 +7,9 @@ using SMS_Shared.Common;
 namespace SMS_Application.Messaging.Commands;
 
 /// <summary>
-/// Command to create a hazard from an existing Hazard entity
+/// Command to create a hazard location from an existing HazardLocation entity
 /// </summary>
-public class CreateHazardLocationCommand : BaseCommandBundle, IRequest<Result<HazardLocation>>
+public class CreateHazardLocationCommand : BaseCommandBundle, IRequest<Result<HazardLocation>>, ICreateCommand
 {
     public HazardLocation HazardLocation { get; set; }
 
@@ -17,12 +17,23 @@ public class CreateHazardLocationCommand : BaseCommandBundle, IRequest<Result<Ha
     {
         HazardLocation = hazardlocation ?? throw new ArgumentNullException(nameof(hazardlocation));
     }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        HazardLocation.CreatedBy = userId;
+        HazardLocation.CreatedDate = timestamp;
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        // For create commands, we typically don't set UpdatedBy
+    }
 }
 
 /// <summary>
-/// Command to update an existing hazard
+/// Command to update an existing hazard location
 /// </summary>
-public class UpdateHazardLocationCommand : BaseCommandBundle, IRequest<Result<HazardLocation>>
+public class UpdateHazardLocationCommand : BaseCommandBundle, IRequest<Result<HazardLocation>>, IUpdateCommand
 {
     public HazardLocation HazardLocation { get; set; }
 
@@ -30,10 +41,21 @@ public class UpdateHazardLocationCommand : BaseCommandBundle, IRequest<Result<Ha
     {
         HazardLocation = hazardlocation ?? throw new ArgumentNullException(nameof(hazardlocation));
     }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // For update commands, we typically don't modify CreatedBy
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        HazardLocation.UpdatedBy = userId;
+        HazardLocation.UpdatedDate = timestamp;
+    }
 }
 
 /// <summary>
-/// Command to delete a hazard (soft delete)
+/// Command to delete a hazard location (soft delete)
 /// </summary>
 public class DeleteHazardLocationCommand : BaseCommandBundle, IRequest<Result<bool>>
 {

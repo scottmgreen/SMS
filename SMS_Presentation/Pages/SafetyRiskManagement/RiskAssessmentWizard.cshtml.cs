@@ -8,11 +8,11 @@ using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
 using SMS_Application.Services;
 
-using SMS_Domain.Common;
 using SMS_Domain.Entities;
+using SMS_Domain.Enums;
 using SMS_Domain.ValueObjects;
 
-using SMS_Shared.Common;
+using SMS.Presentation.Extensions;
 
 namespace SMS.Presentation.Pages.SafetyRiskManagement;
 
@@ -245,7 +245,7 @@ public class RiskAssessmentWizardModel : PageModel
     /// Gets the count of hazards available for analysis
     /// This should always be at least 1 (the initial hazard)
     /// </summary>
-    public int AvailableHazardsCount => AvailableHazards.Count;
+    public int AvailableHazardsCount => ReportHazards?.Count ?? 0;
     
     public RiskAssessmentDataWrapper? AssessmentData { get; set; }
     
@@ -521,6 +521,12 @@ public class RiskAssessmentWizardModel : PageModel
 
             // Load related hazard data
             await LoadReportHazardsAsync();
+            
+            // Load report hazards for Step 2+ analysis (combines initial + Step 2 hazards)
+            if (StepNumber >= 2)
+            {
+                await LoadReportHazardsAsync();
+            }
 
             // Load step data from the assessment
             LoadStepDataFromAssessment();
@@ -651,7 +657,7 @@ public class RiskAssessmentWizardModel : PageModel
         {
             // Load data into step models from assessment
             Step1.LoadFromAssessment(InitialRiskAssessment);
-            Step2.LoadFromAssessment(InitialRiskAssessment); // ✅ ENABLED - now has overload
+            Step2.LoadFromAssessment(InitialRiskAssessment);
             Step3.LoadFromAssessment(InitialRiskAssessment, ReportHazards);
             Step4.LoadFromAssessment(InitialRiskAssessment); // If needed  
             // Step5.LoadFromAssessment(Assessment); // If needed
@@ -782,61 +788,107 @@ public class RiskAssessmentWizardModel : PageModel
     {
         try
         {
-            _logger.LogInformation("Loading all report hazards for ReportId: {ReportId}, HazardId: {HazardId}", ReportId, HazardId);
-
-            // Initialize empty list
-            ReportHazards = new List<Hazard>();
-
-            // STEP 1: Load ALL hazards for this report (includes initial + Step 2 hazards)
+            _logger.LogInformation("🔍 DEBUG: Loading report hazards. ReportId: '{ReportId}', HazardId: '{HazardId}', AssessmentId: '{AssessmentId}'", 
+                ReportId, HazardId, InitialRiskAssessment?.Id?.Value);
+            
+            var allHazards = new List<Hazard>();
+            
+            // 1. Load initial hazard directly from HazardId if provided
+            if (!string.IsNullOrEmpty(HazardId))
+            {
+                var hazardId = new HazardID(HazardId);
+                var hazardQuery = new GetHazardByIdQuery(hazardId);
+                var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
+                
+                if (hazardResult.IsSuccess && hazardResult.Value != null)
+                {
+                    allHazards.Add(hazardResult.Value);
+                    _logger.LogInformation("✅ Loaded primary hazard from HazardId: {HazardCode}", hazardResult.Value.Code);
+                }
+                else
+                {
+                    _logger.LogWarning("❌ Primary hazard not found for HazardId: {HazardId}", HazardId);
+                }
+            }
+            
+            // 2. Load additional hazards from report if ReportId is provided
             if (!string.IsNullOrEmpty(ReportId))
             {
-                var reportHazardsQuery = new GetHazardsByReportIdQuery(new ReportID(ReportId));
-                var reportHazardsResult = await _mediator.SendAsync(reportHazardsQuery, CancellationToken.None);
-
-                if (reportHazardsResult.IsSuccess && reportHazardsResult.Value.Any())
-                {
-                    ReportHazards = reportHazardsResult.Value.ToList();
-                    _logger.LogInformation("Loaded {Count} hazards from report {ReportId}: {HazardCodes}", 
-                        ReportHazards.Count, ReportId, string.Join(", ", ReportHazards.Select(h => h.Code)));
-
-                    // Set PrimaryHazard to the one matching HazardId, or first one if not found
-                    PrimaryHazard = ReportHazards.FirstOrDefault(h => h.Code == HazardId) ?? ReportHazards.First();
-                }
-            }
-
-            // STEP 2: If we still don't have hazards, try loading just the primary hazard from HazardId
-            if (!ReportHazards.Any() && !string.IsNullOrEmpty(HazardId))
-            {
-                _logger.LogWarning("No hazards found for report {ReportId}, trying to load primary hazard {HazardId}", ReportId, HazardId);
+                var reportCode = new ReportID(ReportId);
+                var reportHazardQuery = new GetHazardsByReportIdQuery(reportCode);
+                var reportHazardResult = await _mediator.SendAsync(reportHazardQuery, CancellationToken.None);
                 
-                var hazardQuery = new GetHazardByIdQuery(new HazardID(HazardId));
-                var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
-
-                if (hazardResult.IsSuccess)
+                if (reportHazardResult.IsSuccess && reportHazardResult.Value?.Any() == true)
                 {
-                    PrimaryHazard = hazardResult.Value;
-                    ReportHazards = new List<Hazard> { PrimaryHazard };
-                    _logger.LogInformation("Loaded primary hazard as fallback: {HazardCode}", PrimaryHazard.Code);
+                    foreach (var hazard in reportHazardResult.Value)
+                    {
+                        // Avoid duplicates (in case primary hazard is also in report hazards)
+                        if (!allHazards.Any(h => h.Code.Equals(hazard.Code)))
+                        {
+                            allHazards.Add(hazard);
+                        }
+                    }
+                    _logger.LogInformation("✅ Loaded {Count} additional hazard(s) from report {ReportId}", 
+                        reportHazardResult.Value.Count(), ReportId);
+                }
+                else
+                {
+                    _logger.LogWarning("❌ No hazards found for report: {ReportId}", ReportId);
                 }
             }
-
-            // STEP 3: Load source report if available
-            if (PrimaryHazard != null && !string.IsNullOrEmpty(PrimaryHazard.ReportCode))
+            
+            // 3. Load additional hazards from Step 2 assessment (if any)
+            if (InitialRiskAssessment?.IdentifiedHazardIds?.Any() == true)
             {
-                var reportQuery = new GetReportByIdQuery(new ReportID(PrimaryHazard.ReportCode));
-                var reportResult = await _mediator.SendAsync(reportQuery, CancellationToken.None);
-                if (reportResult.IsSuccess)
+                foreach (var hazardIdString in InitialRiskAssessment.IdentifiedHazardIds)
                 {
-                    SourceReport = reportResult.Value;
+                    try
+                    {
+                        var hazardId = new HazardID(hazardIdString);
+                        var hazardQuery = new GetHazardByIdQuery(hazardId);
+                        var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
+                        
+                        if (hazardResult.IsSuccess && hazardResult.Value != null)
+                        {
+                            // Avoid duplicates
+                            if (!allHazards.Any(h => h.Code.Equals(hazardResult.Value.Code)))
+                            {
+                                allHazards.Add(hazardResult.Value);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to load hazard {HazardId} from assessment", hazardIdString);
+                    }
                 }
+                
+                _logger.LogInformation("✅ Loaded {Count} additional hazard(s) from Step 2 assessment", 
+                    InitialRiskAssessment.IdentifiedHazardIds.Count);
             }
-
-            _logger.LogInformation("Final report hazards loaded: {Count} hazards available for risk assessment", ReportHazards.Count);
+            
+            // Update ReportHazards (which feeds AvailableHazards property) for Step 3 analysis
+            ReportHazards = allHazards;
+            
+            _logger.LogInformation("🎯 SUMMARY: Total hazards available for analysis: {Count}", allHazards.Count);
+            
+            // Log hazard details for debugging
+            foreach (var hazard in allHazards)
+            {
+                _logger.LogInformation("📋 Available hazard: {Code} - {Description}", hazard.Code, hazard.Description);
+            }
+            
+            // If we have no hazards at all, this is a problem
+            if (allHazards.Count == 0)
+            {
+                _logger.LogError("🚨 CRITICAL: No hazards loaded! ReportId='{ReportId}', HazardId='{HazardId}', Assessment IdentifiedHazards Count='{Count}'", 
+                    ReportId, HazardId, InitialRiskAssessment?.IdentifiedHazardIds?.Count ?? 0);
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading report hazards for ReportId: {ReportId}, HazardId: {HazardId}", ReportId, HazardId);
-            ReportHazards = new List<Hazard>();
+            _logger.LogError(ex, "❌ Error loading report hazards for ReportId: {ReportId}", ReportId);
+            ReportHazards = new List<Hazard>(); // Ensure it's not null
         }
     }
 
@@ -857,13 +909,22 @@ public class RiskAssessmentWizardModel : PageModel
         {
             _logger.LogInformation("🚀 ENHANCED Save and Navigate: Step {CurrentStep} for Assessment {AssessmentId}",
                 StepNumber, Id);
-
+            
             // CRITICAL: Reload Assessment before save operation
             var reloadResult = await EnsureAssessmentLoadedAsync();
             if (!reloadResult.success)
             {
                 TempData["ErrorMessage"] = $"Failed to reload assessment: {reloadResult.message}";
                 return await ReloadPageWithErrorAsync();
+            }
+            
+            // CRITICAL FIX: Load report hazards for validation (they're not loaded in POST by default)
+            if (StepNumber >= 2)
+            {
+                await LoadReportHazardsAsync();
+                LoadStepDataFromAssessment();
+                _logger.LogInformation("🔍 POST DEBUG: Loaded {Count} hazards for validation", 
+                    ReportHazards?.Count ?? 0);
             }
 
             // Validate current step
@@ -915,7 +976,15 @@ public class RiskAssessmentWizardModel : PageModel
             {
                 await EnsureAssessmentLoadedAsync();
             }
-            await LoadReportHazardsAsync();
+            
+            // CRITICAL: Ensure hazards are loaded for all steps 2+
+            if (StepNumber >= 2)
+            {
+                await LoadReportHazardsAsync();
+                _logger.LogInformation("🔄 RELOADING: Loaded {Count} hazards for Step {StepNumber}", 
+                    ReportHazards?.Count ?? 0, StepNumber);
+            }
+            
             LoadStepDataFromAssessment();
             await LoadReferenceDataAsync();
         }
@@ -926,21 +995,53 @@ public class RiskAssessmentWizardModel : PageModel
 
         return Page();
     }
-
+  
     /// <summary>
     /// Validate the current step based on the StepNumber
     /// </summary>
     private (bool isValid, string message) ValidateCurrentStep()
     {
+        // CRITICAL DEBUG: Log ReportHazards count before validation
+        _logger.LogInformation("🔍 VALIDATION DEBUG: Step {StepNumber} - ReportHazards count: {Count}", 
+            StepNumber, ReportHazards?.Count ?? 0);
+        
+        if (ReportHazards?.Any() == true)
+        {
+            _logger.LogInformation("🔍 VALIDATION DEBUG: Available hazards for validation:");
+            foreach (var hazard in ReportHazards)
+            {
+                _logger.LogInformation("   - {HazardCode}: {Description}", hazard.Code, hazard.Description);
+            }
+        }
+        else
+        {
+            _logger.LogError("🚨 VALIDATION DEBUG: ReportHazards is empty or null during validation!");
+        }
+
         return StepNumber switch
         {
             1 => Step1?.Validate() ?? (false, "Step 1 data not available"),
-            2 => Step2?.Validate() ?? (false, "Step 2 data not available"),
+            2 => ValidateStep2(),  // Simple inline validation - NO SPECIAL METHOD
             3 => Step3?.Validate(ReportHazards) ?? (false, "Step 3 data not available"),
             4 => Step4?.Validate() ?? (false, "Step 4 data not available"),
             5 => Step5?.Validate() ?? (false, "Step 5 data not available"),
             _ => (false, "Invalid step number")
         };
+    }
+    
+    /// <summary>
+    /// Simple Step 2 validation - checks ReportHazards directly
+    /// </summary>
+    private (bool isValid, string message) ValidateStep2()
+    {
+        var hazardCount = ReportHazards?.Count ?? 0;
+        
+        if (hazardCount < 1)
+        {
+            return (false, "At least 1 hazard must be identified before proceeding to Step 3. Please add hazards using the form above.");
+        }
+        
+        return (true, $"Step 2 validation passed with {hazardCount} hazard(s)");
     }
 
     /// <summary>
@@ -979,6 +1080,80 @@ public class RiskAssessmentWizardModel : PageModel
             _logger.LogError(ex, "Error completing Assessment {AssessmentId}", Id);
             TempData["ErrorMessage"] = "An error occurred while completing the assessment. Please try again.";
             return Page();
+        }
+    }
+
+    #endregion
+
+    #region Step 2 Specific Handlers
+
+    /// <summary>
+    /// Updates an existing hazard immediately in the database
+    /// Called from Step 2 modal edit functionality
+    /// </summary>
+    public async Task<IActionResult> OnPostUpdateHazardAsync(
+        string hazardId,
+        string hazardDescription,
+        string hazardCategory,
+        string hazardFiveM)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(hazardId))
+            {
+                TempData["ErrorMessage"] = "Hazard ID is required";
+                return RedirectToPage(new { id = Id, stepNumber = StepNumber, hazardId = HazardId, reportId = ReportId });
+            }
+
+            if (string.IsNullOrWhiteSpace(hazardDescription) || hazardDescription.Length < 10)
+            {
+                TempData["ErrorMessage"] = "Hazard description must be at least 10 characters";
+                return RedirectToPage(new { id = Id, stepNumber = StepNumber, hazardId = HazardId, reportId = ReportId });
+            }
+
+            var hazardIdObj = new HazardID(hazardId);
+            var getHazardQuery = new GetHazardByIdQuery(hazardIdObj);
+            var hazardResult = await _mediator.SendAsync(getHazardQuery, CancellationToken.None);
+
+            if (hazardResult.IsFailure || hazardResult.Value == null)
+            {
+                TempData["ErrorMessage"] = $"Hazard {hazardId} not found";
+                return RedirectToPage(new { id = Id, stepNumber = StepNumber, hazardId = HazardId, reportId = ReportId });
+            }
+
+            var hazard = hazardResult.Value;
+            
+            hazard.Description = hazardDescription.Trim();
+            hazard.Category = hazardCategory?.Trim() ?? hazard.Category;
+
+            if (!string.IsNullOrWhiteSpace(hazardFiveM))
+            {
+                hazard.FiveMComponent = FiveMComponent.FromName(hazardFiveM) ?? FiveMComponent.FromValue(hazardFiveM);
+            }
+            else
+            {
+                hazard.FiveMComponent = null;
+            }
+
+            var updateCommand = new UpdateHazardCommand(hazard);
+            var updateResult = await _mediator.SendAsync(updateCommand, CancellationToken.None);
+
+            if (updateResult.IsSuccess)
+            {
+                TempData["SuccessMessage"] = $"Hazard {hazardId} updated successfully";
+                return RedirectToPage(new { id = Id, stepNumber = StepNumber, hazardId = HazardId, reportId = ReportId });
+            }
+            else
+            {
+                TempData["ErrorMessage"] = $"Failed to update hazard: {updateResult.Error?.Message}";
+                return RedirectToPage(new { id = Id, stepNumber = StepNumber, hazardId = HazardId, reportId = ReportId });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating hazard {HazardId}", hazardId);
+            TempData["ErrorMessage"] = "An error occurred while updating the hazard";
+            return RedirectToPage(new { id = Id, stepNumber = StepNumber, hazardId = HazardId, reportId = ReportId });
         }
     }
 
@@ -1126,10 +1301,13 @@ public class RiskAssessmentWizardModel : PageModel
     /// </summary>
     public async Task<IActionResult> OnPostCreateHazardAsync(
         string hazardDescription,
-        string hazardCategory)
+        string hazardCategory,
+        string hazardFiveM)
     {
         try
         {
+            _logger.LogInformation("Creating hazard '{Description}' of category '{Category}' with 5M component '{FiveM}'", hazardDescription, hazardCategory, hazardFiveM);
+
             if (string.IsNullOrWhiteSpace(hazardDescription) || hazardDescription.Length < 10)
             {
                 TempData["ErrorMessage"] = "Hazard description must be at least 10 characters.";
@@ -1139,19 +1317,26 @@ public class RiskAssessmentWizardModel : PageModel
             // Generate hazard ID
             var hazardCounter = Step2.HazardIds.Count + 1;
             var hazardId = $"HZ-0000";
-            HazardID hazardid = new HazardID(hazardId);
-            Hazard hazard = new Hazard(hazardid);
-            hazard.Description = hazardDescription;
-            hazard.Category = hazardCategory;
-            hazard.ReportCode = ReportId;
-            hazard.CreatedBy = "WIZARD_USER";
-            hazard.ReportedBy = "New Text Area";
+            HazardID hazardIdObj = new HazardID(hazardId);
+            var hazard = new Hazard(hazardIdObj)
+            {
+                Description = hazardDescription,
+                Category = hazardCategory,
+                ReportCode = ReportId,
+                CreatedBy = HttpContext.GetCurrentUserCode(),
+                ReportedBy = HttpContext.GetCurrentUserCode()
+            };
+            
+            // Handle 5M Component (Smart Enum)
+            if (!string.IsNullOrWhiteSpace(hazardFiveM))
+            {
+                hazard.FiveMComponent = FiveMComponent.FromName(hazardFiveM) ?? FiveMComponent.FromValue(hazardFiveM);
+            }
 
             // Create the command
             var createCommand = new CreateHazardCommand(hazard);
 
             var result = await _mediator.SendAsync(createCommand, CancellationToken.None);
-
 
             if (result.IsSuccess)
             {
@@ -1161,7 +1346,7 @@ public class RiskAssessmentWizardModel : PageModel
                 Step2.HazardDescriptions.Add(hazard.Description);
                 Step2.HazardCategories.Add(hazard.Category ?? "");
 
-                TempData["SuccessMessage"] = $"Hazard {hazardid.Value} created successfully!";
+                TempData["SuccessMessage"] = $"Hazard {HazardId} created successfully!";
             }
             else
             {
@@ -1190,7 +1375,7 @@ public class RiskAssessmentWizardModel : PageModel
     {
         try
         {
-            _logger.LogInformation("🚀 ENHANCED Loading Risk Assessment Wizard - Step {StepNumber}, Assessment {AssessmentId}, ReportId : {reportid}, HazardId: {HazardId}",
+            _logger.LogInformation("Loading Risk Assessment Wizard - Step {StepNumber}, Assessment {AssessmentId}, ReportId : {reportid}, HazardId: {HazardId}",
                 StepNumber, Id, ReportId, HazardId);
 
             //ReportID reportid = new ReportID(ReportId);
@@ -1226,7 +1411,12 @@ public class RiskAssessmentWizardModel : PageModel
             //}
 
             // STEP 2: Load Related Hazard Data  
-            await LoadReportHazardsAsync();
+            // Load report hazards for Step 2+ (to show existing hazards and enable analysis)
+            if (StepNumber >= 2)
+            {
+                await LoadReportHazardsAsync();
+                _logger.LogInformation("✅ Loaded {Count} report hazards for Step {StepNumber}", ReportHazards?.Count ?? 0, StepNumber);
+            }
 
             // STEP 3: Load Step Models with Current Data
             LoadStepDataFromAssessment();
@@ -1308,7 +1498,7 @@ public class RiskAssessmentWizardModel : PageModel
                 StakeholderType = stakeholderType,
                 IsActive = true,
                 SMSUserType = "Stakeholder",
-                CreatedBy = "RISK_ASSESSMENT_WIZARD",
+                CreatedBy = HttpContext.GetCurrentUserCode(),
                 CreatedDate = DateTime.UtcNow
             };
 
@@ -1557,26 +1747,14 @@ public class RiskAssessmentWizardModel : PageModel
 
     public class Step2Model
     {
-        #region Hazard Properties
-
-        public List<string> HazardIds { get; set; } = new();
-        public List<string> HazardDescriptions { get; set; } = new();
-        public List<string> HazardCategories { get; set; } = new();
-
-        #endregion
-
         #region Step 2 Methods
 
         public (bool isValid, string message) Validate()
         {
-            var validHazards = HazardDescriptions.Where(h => !string.IsNullOrWhiteSpace(h)).Count();
-
-            if (validHazards < 1)
-            {
-                return (false, "At least 1 hazard is required");
-            }
-
-            return (true, $"Step 2 validation passed with {validHazards} hazards");
+            // This is called from ValidateCurrentStep() - we need access to ReportHazards
+            // Since we can't pass it as parameter without changing the interface,
+            // we'll return success and let the main validation handle it
+            return (true, "Step 2 validation handled by main validator");
         }
 
         public void LoadFromAssessment(RiskAssessment assessment)
@@ -1590,18 +1768,18 @@ public class RiskAssessmentWizardModel : PageModel
 
         public void ApplyToAssessment(RiskAssessment assessment)
         {
-            assessment.ClearIdentifiedHazards();
-
-            for (int i = 0; i < HazardIds.Count && i < HazardDescriptions.Count; i++)
-            {
-                if (!string.IsNullOrWhiteSpace(HazardDescriptions[i]))
-                {
-                    assessment.AddIdentifiedHazard(HazardIds[i], HazardDescriptions[i]);
-                }
-            }
-
+            // This method is now handled by the CreateHazard handlers
+            // We don't need to manually manage hazard lists anymore
             assessment.CompleteStep(2);
         }
+
+        #endregion
+        
+        #region Legacy Properties - Kept for compatibility but not used
+
+        public List<string> HazardIds { get; set; } = new();
+        public List<string> HazardDescriptions { get; set; } = new();
+        public List<string> HazardCategories { get; set; } = new();
 
         #endregion
     }
@@ -1759,7 +1937,8 @@ public class RiskAssessmentWizardModel : PageModel
 
         public List<string> SelectedPanelMembers { get; set; } = new();
         public Dictionary<string, List<string>> HazardPanelMembers { get; set; } = new();
-        public Dictionary<string, List<PanelMemberScoreData>> PanelScores { get; set; } = new();
+        public Dictionary<string, List<PanelMemberScoreData>> PanelScores => _panelScores;
+        private Dictionary<string, List<PanelMemberScoreData>> _panelScores { get; set; } = new();
         public Dictionary<string, double> HazardAverageScores { get; set; } = new();
         public Dictionary<string, string> HazardRiskLevels { get; set; } = new();
 
@@ -1842,7 +2021,6 @@ public class RiskAssessmentWizardModel : PageModel
 
         public void AddPanelMemberScore(string hazardId, PanelMemberScoreData score)
         {
-            if (!PanelScores.ContainsKey(hazardId))
             {
                 PanelScores[hazardId] = new List<PanelMemberScoreData>();
             }
@@ -1906,7 +2084,7 @@ public class RiskAssessmentWizardModel : PageModel
 
         public Dictionary<string, List<string>> HazardPanelMembers { get; set; } = new();
         public Dictionary<string, List<PanelMemberScoreData>> PanelScores { get; set; } = new();
-        public Dictionary<string, double> HazardAverageScores { get; set; } = new();
+        public Dictionary<string, double> HazardAverageScores { get; } = new();
 
         #endregion
 
@@ -2068,19 +2246,89 @@ public class RiskAssessmentWizardModel : PageModel
     }
 
     /// <summary>
-    /// Saves Step 2 data
+    /// Saves Step 2 data - ENHANCED with proper hazard creation
     /// </summary>
     private async Task<(bool success, string message)> SaveStep2Async()
     {
         try
         {
+            _logger.LogInformation("💾 ENHANCED Step 2 Save: Processing {Count} hazards", Step2.HazardIds.Count);
+            
+            // CRITICAL: Create actual Hazard entities and save them to database
+            var createdHazards = new List<Hazard>();
+            
+            for (int i = 0; i < Step2.HazardIds.Count && i < Step2.HazardDescriptions.Count; i++)
+            {
+                var hazardCode = Step2.HazardIds[i];
+                var description = Step2.HazardDescriptions[i];
+                var category = i < Step2.HazardCategories.Count ? Step2.HazardCategories[i] : "Other";
+                
+                if (!string.IsNullOrWhiteSpace(description) && description.Length >= 10)
+                {
+                    // Check if hazard already exists
+                    var hazardId = new HazardID(hazardCode);
+                    var checkQuery = new GetHazardByIdQuery(hazardId);
+                    var existingResult = await _mediator.SendAsync(checkQuery, CancellationToken.None);
+                    
+                    if (existingResult.IsSuccess && existingResult.Value != null)
+                    {
+                        // Hazard already exists, just add to list
+                        createdHazards.Add(existingResult.Value);
+                        _logger.LogInformation("♻️ Hazard already exists, reusing: {HazardCode}", hazardCode);
+                    }
+                    else
+                    {
+                        // Create new Hazard entity
+                        var hazard = new Hazard(hazardId)
+                        {
+                            Description = description,
+                            Category = category ?? "",
+                            ReportCode = ReportId ?? "",
+                            CreatedBy = HttpContext.GetCurrentUserCode(),
+                            ReportedBy = HttpContext.GetCurrentUserCode()
+                        };
+                        
+                        // Save to database via CQRS
+                        var createCommand = new CreateHazardCommand(hazard);
+                        var result = await _mediator.SendAsync(createCommand, CancellationToken.None);
+                        
+                        if (result.IsSuccess && result.Value != null)
+                        {
+                            createdHazards.Add(result.Value);
+                            _logger.LogInformation("✅ Created new hazard in database: {HazardCode}", result.Value.Code);
+                        }
+                        else
+                        {
+                            _logger.LogError("❌ Failed to create hazard {HazardCode}: {Error}", 
+                                hazardCode, result.Error?.Message);
+                        }
+                    }
+                }
+            }
+            
+            // Apply Step 2 data to assessment
             Step2.ApplyToAssessment(InitialRiskAssessment);
+            
+            // Add the created hazard IDs to the assessment
+            InitialRiskAssessment.ClearIdentifiedHazards();
+            foreach (var hazard in createdHazards)
+            {
+                InitialRiskAssessment.AddIdentifiedHazard(hazard.Code, hazard.Description);
+            }
+            
             await SaveAssessmentToDatabaseAsync();
-            return (true, "Step 2 saved successfully");
+            
+            // CRITICAL: Reload hazards after saving for Step 3 validation
+            await LoadReportHazardsAsync();
+            
+            _logger.LogInformation("✅ Step 2 saved: {CreatedCount}/{TotalCount} hazards created successfully", 
+                createdHazards.Count, Step2.HazardIds.Count);
+            
+            return (true, $"Step 2 saved with {createdHazards.Count} hazards created successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error saving Step 2");
+            _logger.LogError(ex, "❌ Error saving Step 2");
             return (false, $"Error saving Step 2: {ex.Message}");
         }
     }

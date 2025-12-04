@@ -88,6 +88,10 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
                 return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NullOrEmpty);
             }
 
+            // 🔥 DEBUG: Log the actual values before sending to stored proc
+            _logger.LogInformation("🔍 REPO DEBUG - Hazard.CreatedBy: '{CreatedBy}', Code: '{Code}'", 
+                hazard.CreatedBy ?? "NULL", hazard.Code ?? "NULL");
+
             _logger.LogInfrastructurePostItem($"{_logheader} {StoredProcs.pr_Hazard_Insert} Code:{hazard.Code}", null);
 
             using SqlConnection sql = new(_connectionString);
@@ -99,11 +103,21 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardCode, hazard.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardName, hazard.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardDescription, hazard.Description));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardCategory, hazard.Category));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFiveMComponent, hazard.FiveMComponent?.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardReportCode, hazard.ReportCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardScoringPanelCode, hazard.ScoringPanelCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardAverageScore, hazard.AverageScore));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, "SYSTEM"));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
+            
+            // 🔥 DEBUG: Log what we're about to send to the stored proc
+            var createdByParam = DataAccess.Parameter(ParameterNames.pmCreatedBy, hazard.CreatedBy);
+            var createdDateParam = DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow);
+            
+            _logger.LogInformation("🔍 SQL PARAM DEBUG - @pCreatedBy: '{Value}', ParameterName: '{ParamName}'", 
+                createdByParam.Value ?? "NULL", createdByParam.ParameterName);
+                
+            cmd.Parameters.Add(createdByParam);
+            cmd.Parameters.Add(createdDateParam);
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             var newCode = new SqlParameter("@pNewHazardCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
@@ -117,6 +131,10 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
             int newIdValue = (int)newID.Value;
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
             HazardID hazardId = new (newCodeValue);
+
+            // 🔥 DEBUG: Log what we got back
+            _logger.LogInformation("🔍 STORED PROC RESULT - NewID: {NewID}, NewCode: '{NewCode}'", 
+                newIdValue, newCodeValue);
 
             return await GetHazardByIdAsync(hazardId, ct).ConfigureAwait(false);
         }
@@ -274,10 +292,12 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardCode, hazard.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardName, hazard.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardDescription, hazard.Description));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardCategory, hazard.Category));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFiveMComponent, hazard.FiveMComponent?.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardReportCode, hazard.ReportCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardScoringPanelCode, hazard.ScoringPanelCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardAverageScore, hazard.AverageScore));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, hazard.UpdatedBy ?? "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);

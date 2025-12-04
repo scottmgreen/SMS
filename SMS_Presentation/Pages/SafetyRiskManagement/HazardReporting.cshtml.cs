@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using SMS.Presentation.Extensions;
 
 using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Commands;
@@ -117,12 +118,10 @@ public class HazardReportingModel : PageModel
         HazardReport.ReportedOn = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day,
             tenMinutesAgo.Hour, tenMinutesAgo.Minute, 0);
 
-        // Set default ReportedBy from session or provide a placeholder
+        // Set default ReportedBy using consistent extension method
         if (string.IsNullOrEmpty(HazardReport.ReportedBy))
         {
-            HazardReport.ReportedBy = HttpContext.Session.GetString("SMS_UserDisplayName") ??
-                                    HttpContext.Session.GetString("SMS_Email") ??
-                                    ""; // Leave empty to force user to enter it
+            HazardReport.ReportedBy = HttpContext.GetCurrentUserDisplayName();
         }
 
         InitializeDropdowns();
@@ -190,7 +189,6 @@ public class HazardReportingModel : PageModel
             var report = new Report(new ReportID("RP-0000"))
             {
                 Code = "RP-0000",
-                CreatedBy = HazardReport.CreatedBy ?? "SYSTEM",
                 Name = HazardReport.HazardType,
                 Description = hazard.Description,
                 Stage = "Initial",
@@ -644,15 +642,72 @@ public class HazardReportingModel : PageModel
 
     public IActionResult OnPostCloseFinalConfirmation()
     {
+        _logger.LogInformation("🔄 OnPostCloseFinalConfirmation called - clearing form after successful submission");
+        
+        // Clear all form data after successful submission
         HazardReport = new HazardReportForm();
-        ResetForm();
+        SelectedGeoLocation = new GeoLocationData();
+        TempFileIds.Clear();
+        SelectedFiles.Clear();
+        GeneratedHazardId = null;
+        GeneratedReportId = null;
+        SubmissionDateTime = null;
+        
+        // Reset all UI state flags
+        ShowPreview = false;
+        ShowCustomLocation = false;
+        ShowConfidentialInfo = false;
+        ShowMapModal = false;
+        ShowSubmissionConfirmation = false;
+        ShowFinalSuccessConfirmation = false;
+        
+        // Set default ReportedBy for new form
+        var tenMinutesAgo = DateTime.Now.AddMinutes(-10);
+        HazardReport.ReportedOn = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day,
+            tenMinutesAgo.Hour, tenMinutesAgo.Minute, 0);
+        HazardReport.ReportedBy = HttpContext.GetCurrentUserDisplayName();
+        
+        // Clear model state and reinitialize
+        ModelState.Clear();
+        InitializeDropdowns();
+        InitializeUIState();
+        
+        _logger.LogInformation("✅ Form cleared successfully - ReportedBy reset to: {ReportedBy}", HazardReport.ReportedBy);
+        
+        TempData["InfoMessage"] = "Form cleared successfully. Ready for new hazard report.";
+        
         return Page();
     }
 
     public IActionResult OnPostClearForm()
     {
+        // Clear all form data
         HazardReport = new HazardReportForm();
-        ResetForm();
+        SelectedGeoLocation = new GeoLocationData();
+        TempFileIds.Clear();
+        SelectedFiles.Clear();
+        
+        // Reset UI state
+        ShowPreview = false;
+        ShowCustomLocation = false;
+        ShowConfidentialInfo = false;
+        ShowMapModal = false;
+        ShowSubmissionConfirmation = false;
+        ShowFinalSuccessConfirmation = false;
+        
+        // Set defaults for new form
+        var tenMinutesAgo = DateTime.Now.AddMinutes(-10);
+        HazardReport.ReportedOn = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day,
+            tenMinutesAgo.Hour, tenMinutesAgo.Minute, 0);
+        HazardReport.ReportedBy = HttpContext.GetCurrentUserDisplayName();
+        
+        // Clear model state and reinitialize
+        ModelState.Clear();
+        InitializeDropdowns();
+        InitializeUIState();
+        
+        TempData["InfoMessage"] = "Form cleared successfully.";
+        
         return Page();
     }
 
@@ -1036,7 +1091,7 @@ public class SavedFileInfo
 {
     public string OriginalFileName { get; set; } = string.Empty;
     public string SavedFileName { get; set; } = string.Empty;
-    public string SavedFilePath { get; set; } = string.Empty;
+    public string SavedFilePath { get; } = string.Empty;
     public string ContentType { get; set; } = string.Empty;
     public long FileSizeBytes { get; set; }
 }

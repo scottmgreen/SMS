@@ -1,15 +1,6 @@
 @model SMS.Presentation.Pages.SafetyRiskManagement.RiskAssessmentWizardModel
-@* @using ApplicationDto = PDXSMS.UseCases.Queries.RiskAssessmentQueries.IdentifiedHazardDto *@
 
-@* <div class="row">
-    <div class="col-12">
-        <div class="alert alert-info">
-            <i class="fas fa-exclamation-triangle"></i>
-            <strong>Step 2 Objective:</strong> Systematically identify potential hazards within the system boundaries defined in Step 1.
-            Use the 5M framework analysis to ensure comprehensive hazard discovery.
-        </div>
-    </div>
-</div> *@
+<!-- ENHANCED Step 2: Hazard Identification -->
 
 <!-- System Context from Step 1 -->
 <div class="row mb-4">
@@ -26,46 +17,6 @@
                     </div>
                     <div class="col-md-6">
                         <p class="mb-2"><strong>Purpose:</strong> @Model.Step1.SystemPurpose</p>
-                        <p class="mb-0"><strong>Stakeholders:</strong> 
-                            @{
-                                var stakeholderDisplay = new List<string>();
-                                
-                                //Add stakeholder groups - FIXED: Use correct property path
-                                if (!string.IsNullOrWhiteSpace(Model.Step1.StakeholderGroups))
-                                {
-                                    var groups = Model.Step1.StakeholderGroups.Split(',', StringSplitOptions.RemoveEmptyEntries);
-                                    foreach (var group in groups)
-                                    {
-                                        stakeholderDisplay.Add($"<span class=\"badge bg-primary me-1\">{group.Trim()}</span>");
-                                    }
-                                }
-                                
-                                //Add individual stakeholders - FIXED: Use correct property path
-                                if (!string.IsNullOrWhiteSpace(Model.Step1.SelectedIndividualStakeholders))
-                                {
-                                    // Count how many individual stakeholders (simple check for JSON array)
-                                    var individualCount = Model.Step1.SelectedIndividualStakeholders.Count(c => c == '{');
-                                    if (individualCount > 0)
-                                    {
-                                        stakeholderDisplay.Add($"<span class=\"badge bg-info me-1\">{individualCount} Individual(s)</span>");
-                                    }
-                                    else
-                                    {
-                                        // Plain text fallback
-                                        stakeholderDisplay.Add($"<span class=\"badge bg-secondary me-1\">Individual: {Model.Step1.SelectedIndividualStakeholders}</span>");
-                                    }
-                                }
-                            }
-                            
-                            @if (stakeholderDisplay.Any())
-                            {
-                                @Html.Raw(string.Join("", stakeholderDisplay))
-                            }
-                            else
-                            {
-                                <span class="text-muted">No stakeholders selected</span>
-                            }
-                        </p>
                     </div>
                 </div>
             </div>
@@ -73,30 +24,74 @@
     </div>
 </div>
 
-<!-- Add New Hazard Section -->
+<!-- Existing Hazards Display - FIRST AS REQUESTED -->
+@if (Model.ReportHazards?.Any() == true)
+{
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-list"></i> Identified Hazards
+                        <span class="badge bg-light text-dark ms-2">@Model.ReportHazards.Count</span>
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Hazard ID</th>
+                                    <th>Description</th>
+                                    <th>Category</th>
+                                    <th>5M Component</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < Model.ReportHazards.Count; i++)
+                                {
+                                    var hazard = Model.ReportHazards[i];
+                                    <tr>
+                                        <td><span class="badge bg-primary">@hazard.Code</span></td>
+                                        <td>@hazard.Description</td>
+                                        <td><span class="badge bg-secondary">@(hazard.Category ?? "Not specified")</span></td>
+                                        <td><span class="badge bg-warning">@(hazard.FiveMComponent?.Name ?? "Not specified")</span></td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                    data-bs-toggle="modal" data-bs-target="#editHazardModal"
+                                                    onclick="editHazard('@hazard.Code', '@Html.Raw(hazard.Description?.Replace("'", "\\'").Replace("\"", "&quot;").Replace("\r", "").Replace("\n", " "))', '@(hazard.Category ?? "")', '@(hazard.FiveMComponent?.Value ?? "")')"
+                                                    title="Edit hazard @hazard.Code">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            @* Debug info - Remove this after testing *@
+                                            <small class="d-block text-muted">ID: @hazard.Code</small>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Add New Hazard Form - SECOND AS REQUESTED -->
 <div class="row mb-4">
     <div class="col-12">
         <div class="card">
             <div class="card-header bg-success text-white">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <h6 class="mb-0"><i class="fas fa-plus-circle"></i> Add New Hazard</h6>
-                    </div>
-                    <div class="col-auto">
-                        <button type="button" class="btn btn-light btn-sm" id="toggleAddHazardBtn" onclick="toggleAddHazardForm()">
-                            <i class="fas fa-chevron-down" id="toggleAddHazardIcon"></i>
-                            <span id="toggleAddHazardText">Show Form</span>
-                        </button>
-                    </div>
-                </div>
+                <h6 class="mb-0"><i class="fas fa-plus-circle"></i> Add New Hazard</h6>
             </div>
-            <div class="card-body collapse" id="addHazardForm">
+            <div class="card-body">
                 <div class="row">
                     <div class="col-md-8">
                         <div class="mb-3">
                             <label class="form-label">Hazard Description <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="newHazardDescription" rows="3" 
-                                      placeholder="Describe the hazard clearly and specifically using Who, What, When, Where, Why format..."></textarea>
+                            <textarea class="form-control" name="newHazardDescription" rows="3" 
+                                      placeholder="Describe the hazard clearly and specifically..."></textarea>
                             <div class="form-text">Be specific about the hazardous condition, not just the potential outcome</div>
                         </div>
                         
@@ -104,7 +99,7 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Hazard Category</label>
-                                    <select class="form-select" id="newHazardCategory">
+                                    <select class="form-select" name="newHazardCategory">
                                         <option value="">Select category...</option>
                                         <option value="Aircraft Operations">Aircraft Operations</option>
                                         <option value="Ground Operations">Ground Operations</option>
@@ -122,139 +117,62 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">5M Component <span class="text-info">(Optional)</span></label>
-                                    <select class="form-select" id="newHazardFiveM">
-                                        <option value="">Select related 5M component...</option>
-                                        <option value="Man">Man (Personnel/Human Factors)</option>
-                                        <option value="Machine">Machine (Equipment/Technology)</option>
-                                        <option value="Method">Method (Procedures/Processes)</option>
-                                        <option value="Material">Material (Resources/Supplies)</option>
-                                        <option value="Milieu">Milieu (Environment/Context)</option>
+                                    <label class="form-label">5M Framework Component</label>
+                                    <select class="form-select" name="newHazardFiveM">
+                                        <option value="">Select 5M component...</option>
+                                        <option value="MAN">Man (Human)</option>
+                                        <option value="MACHINE">Machine (Equipment)</option>
+                                        <option value="METHOD">Method (Procedures)</option>
+                                        <option value="MATERIAL">Material (Resources)</option>
+                                        <option value="MILIEU">Milieu (Environment)</option>
                                     </select>
-                                    <div class="form-text">Link hazard to 5M analysis component</div>
+                                    <div class="form-text">Which 5M factor does this hazard relate to?</div>
                                 </div>
                             </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-success" onclick="addNewHazard()">
+                                <i class="fas fa-plus"></i> Add Hazard
+                            </button>
                         </div>
                     </div>
                     
                     <div class="col-md-4">
                         <div class="card bg-light">
                             <div class="card-body">
-                                <h6 class="card-title"><i class="fas fa-lightbulb text-warning"></i> Hazard Identification Tips</h6>
+                                <h6 class="card-title"><i class="fas fa-lightbulb text-warning"></i> 5M Framework Guide</h6>
                                 <div class="small">
-                                    <strong>Good hazard descriptions:</strong>
-                                    <ul class="mb-2">
+                                    <strong>People:</strong> Personnel qualifications, training, fatigue, workload<br>
+                                    <strong>Procedures:</strong> Operating procedures, checklists, documentation<br>
+                                    <strong>Equipment:</strong> Tools, machinery, systems, materials<br>
+                                    <strong>Resources:</strong> Staffing levels, time constraints, funding<br>
+                                    <strong>Environment:</strong> Weather, lighting, noise, workspace design
+                                </div>
+                                <hr>
+                                <div class="small">
+                                    <strong>Good descriptions:</strong>
+                                    <ul class="mb-0">
                                         <li>"Wet floors in terminal during rain"</li>
                                         <li>"Aircraft engine intake exposed during gate operations"</li>
                                         <li>"Inadequate lighting on taxiway Charlie"</li>
                                     </ul>
-                                    <strong>Use 5M analysis to find hazards in:</strong>
-                                    <ul class="mb-2">
-                                        <li><strong>Man:</strong> Training gaps, fatigue, workload</li>
-                                        <li><strong>Machine:</strong> Equipment failures, design flaws</li>
-                                        <li><strong>Method:</strong> Procedure gaps, unclear steps</li>
-                                        <li><strong>Material:</strong> Missing resources, quality issues</li>
-                                        <li><strong>Milieu:</strong> Weather, noise, distractions</li>
-                                    </ul>
-                                    @* <div class="alert alert-warning small mt-2">
-                                        <i class="fas fa-info-circle"></i>
-                                        <strong>Focus on hazard identification only.</strong> Risk analysis and mitigation planning will be covered in Steps 3-5.
-                                    </div> *@
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="text-center mt-3">
-                            <button type="submit" class="btn btn-success" 
-                                    asp-page-handler="CreateHazard" 
-                                    onclick="return validateHazardForm()">
-                                <i class="fas fa-plus"></i> Add to Hazard List
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary ms-2" onclick="clearHazardForm()">
-                                <i class="fas fa-broom"></i> Clear
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Identified Hazards Table -->
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header bg-secondary text-white">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <h6 class="mb-0">
-                            <i class="fas fa-list"></i> Identified Hazards
-                            <span class="badge bg-light text-dark ms-2" id="hazardCount">0</span>
-                        </h6>
-                    </div>
-                    <div class="col-auto">
-                        <small><i class="fas fa-info-circle"></i> At least 1 hazard required to continue (initial hazard cannot be deleted)</small>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <!-- Progress indicator -->
-                <div id="hazardProgress" class="mb-3" style="display: none;">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="small text-muted">Hazards identified:</span>
-                        <span class="badge bg-primary" id="hazardProgressText">0 hazards</span>
-                    </div>
-                    <div class="progress mt-1" style="height: 4px;">
-                        <div class="progress-bar bg-success" role="progressbar" id="hazardProgressBar" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <!-- Hazards Table -->
-                <div id="hazardsTableContainer">
-                    <div class="table-responsive">
-                        <table class="table table-hover" id="hazardsTable" style="display: none;">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="12%">Hazard ID</th>
-                                    <th width="50%">Description</th>
-                                    <th width="18%">Category</th>
-                                    <th width="15%">5M Component</th>
-                                    <th width="10%">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="hazardsTableBody">
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- No hazards message -->
-                <div class="text-center text-muted py-5" id="noHazardsMessage">
-                    <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i>
-                    <h5>No hazards identified yet</h5>
-                    <p>Use the "Add New Hazard" form above to identify potential hazards in your system.</p>
-                    <p class="small text-info">
-                        <i class="fas fa-lightbulb"></i> 
-                        Tip: Review your 5M analysis from Step 1 to systematically identify hazards in each component.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Hidden fields to store hazards data for form submission -->
-<div id="hazardDataContainer"></div>
 
 <!-- Edit Hazard Modal -->
-<div class="modal fade" id="editHazardModal" tabindex="-1" aria-labelledby="editHazardModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade" id="editHazardModal" tabindex="-1">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="editHazardModalLabel">
-                    <i class="fas fa-edit"></i> Edit Hazard
-                </h5>
+                <h5 class="modal-title"><i class="fas fa-edit"></i> Edit Hazard</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -293,24 +211,19 @@
                             <label class="form-label">5M Component</label>
                             <select class="form-select" id="editHazardFiveM">
                                 <option value="">Select 5M component...</option>
-                                <option value="Man">Man (Personnel/Human Factors)</option>
-                                <option value="Machine">Machine (Equipment/Technology)</option>
-                                <option value="Method">Method (Procedures/Processes)</option>
-                                <option value="Material">Material (Resources/Supplies)</option>
-                                <option value="Milieu">Milieu (Environment/Context)</option>
+                                <option value="MAN">Man (Human)</option>
+                                <option value="MACHINE">Machine (Equipment)</option>
+                                <option value="METHOD">Method (Procedures)</option>
+                                <option value="MATERIAL">Material (Resources)</option>
+                                <option value="MILIEU">Milieu (Environment)</option>
                             </select>
                         </div>
                     </div>
                 </div>
-                
-                @* <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    <strong>Note:</strong> Risk analysis, worst credible outcomes, and current mitigations will be established in Steps 3-5 of the assessment process.
-                </div> *@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="saveHazardEdit()">
+                <button type="button" class="btn btn-primary" onclick="updateHazard()">
                     <i class="fas fa-save"></i> Save Changes
                 </button>
             </div>
@@ -318,637 +231,128 @@
     </div>
 </div>
 
+<!-- MINIMAL JavaScript - Only for modal population and onclick handlers -->
 <script>
-// Global variables for hazard management
-let hazardCounter = @(Model.Step2?.HazardIds?.Count ?? 0);
-let hazardsList = [];
-let editingHazardIndex = -1;
+function editHazard(hazardId, description, category, fiveM) {
+    // Debug: Log what parameters we received
+    console.log('editHazard called with:', {
+        hazardId: hazardId,
+        description: description,
+        category: category,
+        fiveM: fiveM
+    });
 
-// Initialize hazards from existing data
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('?? Step 2 Hazard Management Starting...');
+    document.getElementById('editHazardId').value = hazardId;
+    document.getElementById('editHazardDescription').value = description;
+    document.getElementById('editHazardCategory').value = category;
+    document.getElementById('editHazardFiveM').value = fiveM || '';
     
-    // Load existing hazards from Step2 model - FIXED: Use correct model structure
-    @if (Model.Step2?.HazardIds?.Any() == true)
-    {
-        <text>
-        @for (int i = 0; i < Model.Step2.HazardIds.Count; i++)
-        {
-            var hazardId = Model.Step2.HazardIds[i];
-            var hazardDesc = i < Model.Step2.HazardDescriptions.Count ? Model.Step2.HazardDescriptions[i] : "";
-            var hazardCat = i < Model.Step2.HazardCategories.Count ? Model.Step2.HazardCategories[i] : "";
-            <text>
-            hazardsList.push({
-                id: '@hazardId',
-                description: '@Html.Raw(hazardDesc?.Replace("'", "\\'").Replace("\n", "\\n").Replace("\r", ""))',
-                category: '@hazardCat',
-                fiveM: ''  // Not stored in Step2 model currently
-            });
-            </text>
-        }
-        hazardCounter = @Model.Step2.HazardIds.Count;
-        console.log('? Loaded existing hazards from Step2 model:', hazardsList.length);
-        </text>
-    }
-    else
-    {
-        <text>
-        console.log('?? No existing hazards found in Step2 model');
-        
-        // Check if we have a primary hazard from the URL parameter
-        @if (!string.IsNullOrEmpty(Model.HazardId))
-        {
-            <text>
-            // Add the primary hazard from URL parameter as the initial hazard
-            const primaryHazard = {
-                id: '@Model.HazardId',
-                description: '@(Model.PrimaryHazard?.Description ?? "Primary hazard from report")',
-                category: '@(Model.PrimaryHazard?.HazardType ?? "")',
-                fiveM: ''
-            };
-            
-            hazardsList.push(primaryHazard);
-            hazardCounter = 1;
-            console.log('? Added primary hazard from URL:', primaryHazard);
-            </text>
-        }
-        </text>
-    }
-    
-    updateHazardsDisplay();
-    updateFormFields();
-    
-    // Auto-expand if no hazards exist
-    if (hazardsList.length === 0) {
-        toggleAddHazardForm();
-    }
-    
-    console.log('? Step 2 initialization complete');
-});
-
-function toggleAddHazardForm() {
-    const form = document.getElementById('addHazardForm');
-    const icon = document.getElementById('toggleAddHazardIcon');
-    const text = document.getElementById('toggleAddHazardText');
-    
-    const isCollapsed = form.classList.contains('collapse');
-    
-    if (isCollapsed) {
-        form.classList.remove('collapse');
-        form.classList.add('show');
-        icon.className = 'fas fa-chevron-up';
-        text.textContent = 'Hide Form';
-    } else {
-        form.classList.remove('show');
-        form.classList.add('collapse');
-        icon.className = 'fas fa-chevron-down';
-        text.textContent = 'Show Form';
-    }
+    // Debug: Confirm what was set in the modal
+    console.log('Modal populated with:', {
+        id: document.getElementById('editHazardId').value,
+        description: document.getElementById('editHazardDescription').value,
+        category: document.getElementById('editHazardCategory').value,
+        fiveM: document.getElementById('editHazardFiveM').value
+    });
 }
 
-// Enhanced addHazardToList function that persists to database via AJAX
-async function addHazardToList() {
-    const description = document.getElementById('newHazardDescription').value.trim();
-    const category = document.getElementById('newHazardCategory').value;
-    const fiveM = document.getElementById('newHazardFiveM').value;
-    
-    // Validation
-    if (!description) {
-        alert('Please enter a hazard description');
-        document.getElementById('newHazardDescription').focus();
+function updateHazard() {
+    // Target the main form more specifically
+    const form = document.querySelector('form[method="post"]:not([id])');
+    if (!form) {
+        alert('Form not found');
         return;
     }
     
-    if (description.length < 10) {
-        alert('Please provide a more detailed hazard description (at least 10 characters)');
-        document.getElementById('newHazardDescription').focus();
-        return;
-    }
-
-    // Disable form during submission
-    const submitButton = document.querySelector('[onclick="addHazardToList()"]');
-    const originalText = submitButton.innerHTML;
-    submitButton.disabled = true;
-    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
-
-    try {
-        // Create FormData for POST request
-        const formData = new FormData();
-        formData.append('hazardDescription', description);
-        formData.append('hazardCategory', category);
-        formData.append('fiveMComponent', fiveM);
-        formData.append('Id', '@Model.Id');
-        formData.append('StepNumber', '@Model.StepNumber');
-        formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
-
-        // Send AJAX request to create hazard
-        const response = await fetch(`${window.location.pathname}?handler=CreateHazard`, {
-            method: 'POST',
-            body: formData
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            // Add to local hazardsList for immediate UI update
-            const newHazard = result.hazard;
-            hazardsList.push(newHazard);
-            hazardCounter++;
-
-            // Update display and form fields
-            updateHazardsDisplay();
-            updateFormFields();
-
-            // Clear form
-            clearHazardForm();
-
-            // Show success message
-            showMessage(result.message, 'success');
-
-            console.log('? Hazard persisted to database:', newHazard);
-
-            // Trigger auto-save for backup
-            triggerStep2AutoSave();
-        } else {
-            // Show error message
-            showMessage(result.message || 'Failed to create hazard', 'danger');
-            console.error('? Failed to create hazard:', result.message);
+    // Remove ALL hazard-related hidden inputs from ALL forms to be safe
+    document.querySelectorAll('input[type="hidden"]').forEach(input => {
+        if (input.name && (input.name.includes('hazard') || input.name.includes('Hazard'))) {
+            input.remove();
         }
-    } catch (error) {
-        console.error('? Error creating hazard:', error);
-        showMessage('Network error occurred while creating hazard. Please try again.', 'danger');
-    } finally {
-        // Re-enable form
-        submitButton.disabled = false;
-        submitButton.innerHTML = originalText;
-    }
-}
-
-// Clear form fields
-function clearHazardForm() {
-    document.getElementById('newHazardDescription').value = '';
-    document.getElementById('newHazardCategory').value = '';
-    document.getElementById('newHazardFiveM').value = '';
-}
-
-function editHazard(index) {
-    if (index < 0 || index >= hazardsList.length) return;
-    
-    const hazard = hazardsList[index];
-    editingHazardIndex = index;
-    
-    // Populate modal fields
-    document.getElementById('editHazardId').value = hazard.id;
-    document.getElementById('editHazardDescription').value = hazard.description;
-    document.getElementById('editHazardCategory').value = hazard.category;
-    document.getElementById('editHazardFiveM').value = hazard.fiveM;
-    
-    // Show modal
-    const modal = new bootstrap.Modal(document.getElementById('editHazardModal'));
-    modal.show();
-}
-
-// Enhanced saveHazardEdit function that persists updates to database via AJAX
-async function saveHazardEdit() {
-    if (editingHazardIndex < 0) return;
-    
-    const hazardId = document.getElementById('editHazardId').value;
-    const description = document.getElementById('editHazardDescription').value.trim();
-    const category = document.getElementById('editHazardCategory').value;
-    const fiveM = document.getElementById('editHazardFiveM').value;
-    
-    // Validation
-    if (!description) {
-        alert('Please enter a hazard description');
-        return;
-    }
-    
-    if (description.length < 10) {
-        alert('Please provide a more detailed hazard description (at least 10 characters)');
-        return;
-    }
-
-    // Disable save button during submission
-    const saveButton = document.querySelector('[onclick="saveHazardEdit()"]');
-    const originalText = saveButton.innerHTML;
-    saveButton.disabled = true;
-    saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-
-    try {
-        // Create FormData for POST request
-        const formData = new FormData();
-        formData.append('hazardId', hazardId);
-        formData.append('hazardDescription', description);
-        formData.append('hazardCategory', category);
-        formData.append('fiveMComponent', fiveM);
-        formData.append('Id', '@Model.Id');
-        formData.append('StepNumber', '@Model.StepNumber');
-        formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
-
-        // Send AJAX request to update hazard
-        const response = await fetch(`${window.location.pathname}?handler=UpdateHazard`, {
-            method: 'POST',
-            body: formData
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            // Update local hazardsList for immediate UI update
-            const hazard = hazardsList[editingHazardIndex];
-            hazard.description = description;
-            hazard.category = category;
-            hazard.fiveM = fiveM;
-
-            // Update display and form fields
-            updateHazardsDisplay();
-            updateFormFields();
-
-            // Hide modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('editHazardModal'));
-            modal.hide();
-
-            // Reset editing index
-            editingHazardIndex = -1;
-
-            // Show success message
-            showMessage(result.message, 'success');
-
-            console.log('? Hazard updated in database:', result.hazard);
-
-            // Trigger auto-save for backup
-            triggerStep2AutoSave();
-        } else {
-            // Show error message
-            showMessage(result.message || 'Failed to update hazard', 'danger');
-            console.error('? Failed to update hazard:', result.message);
-        }
-    } catch (error) {
-        console.error('? Error updating hazard:', error);
-        showMessage('Network error occurred while updating hazard. Please try again.', 'danger');
-    } finally {
-        // Re-enable save button
-        saveButton.disabled = false;
-        saveButton.innerHTML = originalText;
-    }
-}
-
-// Enhanced deleteHazard function that persists deletion to database via AJAX
-async function deleteHazard(index) {
-    if (index < 0 || index >= hazardsList.length) return;
-    
-    // Prevent deletion of the initial hazard (index 0)
-    if (index === 0) {
-        showMessage('The initial hazard cannot be deleted. You can edit it if needed.', 'warning');
-        return;
-    }
-    
-    const hazard = hazardsList[index];
-    
-    if (!confirm(`Are you sure you want to delete hazard ${hazard.id}?\n\n"${hazard.description}"\n\nThis action cannot be undone.`)) {
-        return;
-    }
-
-    try {
-        // Create FormData for POST request
-        const formData = new FormData();
-        formData.append('hazardId', hazard.id);
-        formData.append('Id', '@Model.Id');
-        formData.append('StepNumber', '@Model.StepNumber');
-        formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
-
-        // Send AJAX request to delete hazard
-        const response = await fetch(`${window.location.pathname}?handler=DeleteHazard`, {
-            method: 'POST',
-            body: formData
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            // Remove from local hazardsList for immediate UI update
-            hazardsList.splice(index, 1);
-
-            // Update display and form fields
-            updateHazardsDisplay();
-            updateFormFields();
-
-            // Show success message
-            showMessage(result.message, 'success');
-
-            console.log('??? Hazard deleted from database:', result.deletedHazardId);
-
-            // Trigger auto-save for backup
-            triggerStep2AutoSave();
-        } else {
-            // Show error message
-            showMessage(result.message || 'Failed to delete hazard', 'danger');
-            console.error('? Failed to delete hazard:', result.message);
-        }
-    } catch (error) {
-        console.error('? Error deleting hazard:', error);
-        showMessage('Network error occurred while deleting hazard. Please try again.', 'danger');
-    }
-}
-
-function updateHazardsDisplay() {
-    const count = hazardsList.length;
-    const hazardCount = document.getElementById('hazardCount');
-    const noHazardsMessage = document.getElementById('noHazardsMessage');
-    const hazardsTable = document.getElementById('hazardsTable');
-    const hazardProgress = document.getElementById('hazardProgress');
-    const hazardProgressText = document.getElementById('hazardProgressText');
-    const hazardProgressBar = document.getElementById('hazardProgressBar');
-    
-    // Update count
-    hazardCount.textContent = count;
-    
-    // Update progress
-    if (count > 0) {
-        hazardProgress.style.display = 'block';
-        hazardProgressText.textContent = `${count} hazard${count !== 1 ? 's' : ''}`;
-        
-        // Progress calculation (minimum 1 hazard, good if 3+, excellent if 5+)
-        let progressPercent = Math.min(100, (count / 5) * 100);
-        hazardProgressBar.style.width = progressPercent + '%';
-        
-        if (count >= 5) {
-            hazardProgressBar.className = 'progress-bar bg-success';
-        } else if (count >= 3) {
-            hazardProgressBar.className = 'progress-bar bg-info';
-        } else {
-            hazardProgressBar.className = 'progress-bar bg-warning';
-        }
-    } else {
-        hazardProgress.style.display = 'none';
-    }
-    
-    if (count === 0) {
-        noHazardsMessage.style.display = 'block';
-        hazardsTable.style.display = 'none';
-    } else {
-        noHazardsMessage.style.display = 'none';
-        hazardsTable.style.display = 'table';
-        
-        // Update table body
-        const tbody = document.getElementById('hazardsTableBody');
-        tbody.innerHTML = '';
-        
-        hazardsList.forEach((hazard, index) => {
-            const row = document.createElement('tr');
-            
-            // Truncate long descriptions for table display
-            const shortDescription = hazard.description.length > 120 ? 
-                hazard.description.substring(0, 117) + '...' : hazard.description;
-            
-            // Determine if this is the initial hazard (first hazard - index 0)
-            const isInitialHazard = index === 0;
-            
-            // Create delete button with conditional disabled state and styling
-            const deleteButtonHtml = isInitialHazard ? 
-                `<button type="button" class="btn btn-outline-secondary" disabled title="Initial hazard cannot be deleted">
-                    <i class="fas fa-lock"></i>
-                </button>` :
-                `<button type="button" class="btn btn-outline-danger" onclick="deleteHazard(${index})" title="Delete hazard">
-                    <i class="fas fa-trash"></i>
-                </button>`;
-            
-            row.innerHTML = `
-                <td>
-                    <span class="badge bg-primary">${hazard.id}</span>
-                    ${isInitialHazard ? '<br><small class="text-muted"><i class="fas fa-lock"></i> Initial Hazard</small>' : ''}
-                </td>
-                <td>
-                    <div class="small" title="${escapeHtml(hazard.description)}">
-                        ${escapeHtml(shortDescription)}
-                    </div>
-                </td>
-                <td>
-                    <span class="badge bg-secondary">${hazard.category || 'Not specified'}</span>
-                </td>
-                <td>
-                    <span class="badge bg-info">${hazard.fiveM || 'Not linked'}</span>
-                </td>
-                <td>
-                    <div class="btn-group btn-group-sm">
-                        <button type="button" class="btn btn-outline-primary" onclick="editHazard(${index})" title="Edit hazard">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        ${deleteButtonHtml}
-                    </div>
-                </td>
-            `;
-            
-            tbody.appendChild(row);
-        });
-    }
-}
-
-// CRITICAL FUNCTION: Update form fields for server-side processing
-function updateFormFields() {
-    const container = document.getElementById('hazardDataContainer');
-    container.innerHTML = '';
-    
-    hazardsList.forEach((hazard, index) => {
-        // Create hidden fields for Step2 model binding - FIXED: Use correct naming convention
-        const fields = [
-            { name: `Step2.HazardIds[${index}]`, value: hazard.id },
-            { name: `Step2.HazardDescriptions[${index}]`, value: hazard.description },
-            { name: `Step2.HazardCategories[${index}]`, value: hazard.category || '' }
-        ];
-        
-        fields.forEach(field => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = field.name;
-            input.value = field.value;
-            container.appendChild(input);
-        });
     });
     
-    console.log('? Updated Step2 form fields for', hazardsList.length, 'hazards');
-}
-
-function showMessage(message, type = 'success') {
-    // Create temporary alert
-    const alert = document.createElement('div');
-    alert.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
-    alert.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    document.body.appendChild(alert);
-    
-    // Auto-remove after 3 seconds
-    setTimeout(() => {
-        if (alert.parentNode) {
-            alert.remove();
-        }
-    }, 3000);
-}
-
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// SINGLE COMPREHENSIVE VALIDATION FUNCTION FOR STEP 2
-// Enhanced Step 2 validation and navigation with database persistence
-async function validateStep2Hazards() {
-    if (hazardsList.length === 0) {
-        alert('At least one hazard must be identified before proceeding to Step 3.\n\nPlease use the "Add New Hazard" form to identify potential hazards in your system.');
-        return false;
+    // Get the hazard ID directly from the modal input
+    const currentHazardId = document.getElementById('editHazardId').value;
+    if (!currentHazardId) {
+        alert('No hazard ID found in modal');
+        return;
     }
     
-    // Check for adequate descriptions
-    const inadequateHazards = hazardsList.filter((h, index) => {
-        const description = h.description?.trim() || '';
-        return description.length < 10;
+    // Create a temporary form to ensure clean submission
+    const tempForm = document.createElement('form');
+    tempForm.method = 'post';
+    tempForm.action = '?handler=UpdateHazard';
+    
+    // Add all the necessary hidden inputs
+    ['__RequestVerificationToken', 'Id', 'StepNumber', 'HazardId', 'ReportId'].forEach(fieldName => {
+        const existing = form.querySelector(`input[name="${fieldName}"]`);
+        if (existing) {
+            const copy = document.createElement('input');
+            copy.type = 'hidden';
+            copy.name = fieldName;
+            copy.value = existing.value;
+            tempForm.appendChild(copy);
+        }
     });
     
-    if (inadequateHazards.length > 0) {
-        const hazardNumbers = inadequateHazards.map(h => h.id).join(', ');
-        const proceed = confirm(`The following hazards have brief descriptions that may not provide enough detail for risk analysis:\n\n${hazardNumbers}\n\nWould you like to continue anyway, or go back and add more detail?`);
-        if (!proceed) return false;
-    }
-
-    // Ensure all hazards are saved to database before proceeding
-    console.log('?? Ensuring all hazards are saved to database before navigation...');
-    const bulkSaveSuccess = await ensureHazardsPersisted();
+    // Add the hazard-specific data
+    const hazardData = [
+        { name: 'hazardId', value: currentHazardId },
+        { name: 'hazardDescription', value: document.getElementById('editHazardDescription').value },
+        { name: 'hazardCategory', value: document.getElementById('editHazardCategory').value },
+        { name: 'hazardFiveM', value: document.getElementById('editHazardFiveM').value }
+    ];
     
-    if (!bulkSaveSuccess) {
-        alert('Some hazards could not be saved to the database. Please try again or check your connection.');
-        return false;
-    }
+    hazardData.forEach(data => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = data.name;
+        input.value = data.value;
+        tempForm.appendChild(input);
+    });
     
-    console.log('? Step 2 validation passed:', hazardsList.length, 'hazards');
-    return true;
+    // Append to body, submit, then remove
+    document.body.appendChild(tempForm);
+    tempForm.submit();
 }
 
-// Function to ensure all hazards are persisted to database
-async function ensureHazardsPersisted() {
-    try {
-        // First update form fields with current hazardsList data
-        updateFormFields();
-        
-        console.log('?? Performing bulk save to ensure database persistence...');
-        
-        // Create FormData for bulk save request
-        const formData = new FormData();
-        formData.append('Id', '@Model.Id');
-        formData.append('StepNumber', '@Model.StepNumber');
-        formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
-
-        // Send AJAX request for bulk save
-        const response = await fetch(`${window.location.pathname}?handler=BulkSaveHazards`, {
-            method: 'POST',
-            body: formData
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            console.log('? Bulk save successful:', result.message);
-            showMessage(result.message, 'success');
-            return true;
-        } else {
-            console.error('? Bulk save failed:', result.message);
-            if (result.errors && result.errors.length > 0) {
-                console.error('? Bulk save errors:', result.errors);
-                showMessage(`${result.message}\n\nErrors:\n${result.errors.join('\n')}`, 'danger');
-            } else {
-                showMessage(result.message, 'danger');
-            }
-            return false;
-        }
-    } catch (error) {
-        console.error('? Error during bulk save:', error);
-        showMessage('Network error occurred during save. Please check your connection and try again.', 'danger');
-        return false;
-    }
-}
-
-// ENHANCED AUTO-SAVE WITH STEP2 MODEL INTEGRATION
-function triggerStep2AutoSave() {
-    console.log('?? Triggering Step 2 auto-save...');
+function addNewHazard() {
+    const form = document.querySelector('form[method="post"]');
     
-    // Always update form fields first
-    updateFormFields();
+    // CRITICAL: Remove any existing hidden inputs to prevent conflicts
+    const existingInputs = form.querySelectorAll('input[name="hazardDescription"], input[name="hazardCategory"], input[name="hazardFiveM"], input[name="hazardId"]');
+    existingInputs.forEach(input => input.remove());
     
-    // Save to session storage as backup
-    const assessmentId = '@Model.Id';
-    const sessionKey = `Assessment_${assessmentId}_Step2Hazards`;
+    // Create hidden inputs for the CreateHazard handler
+    const hazardDescription = document.createElement('input');
+    hazardDescription.type = 'hidden';
+    hazardDescription.name = 'hazardDescription';
+    hazardDescription.value = document.querySelector('textarea[name="newHazardDescription"]').value;
     
-    try {
-        sessionStorage.setItem(sessionKey, JSON.stringify({
-            hazards: hazardsList,
-            savedAt: new Date().toISOString()
-        }));
-        console.log('?? Auto-saved Step 2 hazards to session storage');
-    } catch (error) {
-        console.error('? Error auto-saving Step 2 hazards:', error);
-    }
-}
-
-// Load from session storage on page load
-document.addEventListener('DOMContentLoaded', function() {
-    const assessmentId = '@Model.Id';
-    const sessionKey = `Assessment_${assessmentId}_Step2Hazards`;
+    const hazardCategory = document.createElement('input');
+    hazardCategory.type = 'hidden';
+    hazardCategory.name = 'hazardCategory';
+    hazardCategory.value = document.querySelector('select[name="newHazardCategory"]').value;
     
-    try {
-        const savedData = sessionStorage.getItem(sessionKey);
-        if (savedData && hazardsList.length === 0) {
-            const data = JSON.parse(savedData);
-            if (data.hazards && Array.isArray(data.hazards)) {
-                hazardsList = data.hazards;
-                hazardCounter = Math.max(...hazardsList.map(h => {
-                    const match = h.id.match(/HZ-(\d+)/);
-                    return match ? parseInt(match[1]) : 0;
-                }), 0);
-                
-                updateHazardsDisplay();
-                updateFormFields();
-                console.log('?? Loaded hazards from session storage:', hazardsList.length);
-            }
-        }
-    } catch (error) {
-        console.error('? Error loading hazards from session storage:', error);
-    }
-});
-
-// Legacy compatibility functions (kept for backward compatibility)
-function triggerAutoSave() {
-    triggerStep2AutoSave();
-}
-
-window.ensureStep2HazardsSaved = function() {
-    return window.ensureStep2Ready();
-};
-
-function validateHazardForm() {
-    const description = document.getElementById('newHazardDescription').value.trim();
+    const hazardFiveM = document.createElement('input');
+    hazardFiveM.type = 'hidden';
+    hazardFiveM.name = 'hazardFiveM';
+    hazardFiveM.value = document.querySelector('select[name="newHazardFiveM"]').value;
     
-    if (!description) {
-        alert('Please enter a hazard description');
-        document.getElementById('newHazardDescription').focus();
-        return false;
-    }
+    // Add inputs to form
+    form.appendChild(hazardDescription);
+    form.appendChild(hazardCategory);
+    form.appendChild(hazardFiveM);
     
-    if (description.length < 10) {
-        alert('Please provide a more detailed hazard description (at least 10 characters)');
-        document.getElementById('newHazardDescription').focus();
-        return false;
-    }
+    // Debug: Log what we're sending
+    console.log('Creating new hazard:', {
+        description: hazardDescription.value,
+        category: hazardCategory.value,
+        fiveM: hazardFiveM.value
+    });
     
-    // Set form values for submission
-    document.getElementById('newHazardDescription').name = 'hazardDescription';
-    document.getElementById('newHazardCategory').name = 'hazardCategory';
-    
-    return true;
+    // Set form action and submit
+    form.action = '?handler=CreateHazard';
+    form.submit();
 }
 </script>

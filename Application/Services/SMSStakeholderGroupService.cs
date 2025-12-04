@@ -257,7 +257,7 @@ public class SMSStakeholderGroupService
         {
             _logger.LogInformation("Assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
 
-            var command = new AssignUserToStakeholderGroupCommand(userCode, groupCode, assignedBy);
+            var command = new AssignUserToStakeholderGroupCommand(userCode, groupCode);
             var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)

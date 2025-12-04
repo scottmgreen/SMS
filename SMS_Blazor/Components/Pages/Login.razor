@@ -1,0 +1,96 @@
+@page "/login"
+@layout SMS_Blazor.Components.Layout.LoginLayout
+@inject IMediator Mediator
+@inject NavigationManager Navigation
+@inject ILogger<Login> Logger
+
+<PageTitle>Login to PDXSMS</PageTitle>
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="text-center mb-4">
+                <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
+                <h2 class="text-primary">SMS Portal</h2>
+                <p class="text-muted">Port of Portland Safety Management System</p>
+            </div>
+        </div>
+        
+        <div class="login-body">
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Login Failed:</strong> @ErrorMessage
+                </div>
+            }
+
+            <!-- Use HTML form with POST to controller to avoid Blazor Server session issues -->
+            <form method="post" action="/api/auth/login">
+                <div class="mb-3">
+                    <label for="email" class="form-label">
+                        <i class="fas fa-envelope"></i> Email Address
+                    </label>
+                    <input type="email" 
+                           class="form-control form-control-lg" 
+                           id="email" 
+                           name="Email"
+                           value="@Email"
+                           placeholder="Enter your email address" 
+                           autocomplete="email" 
+                           required />
+                </div>
+                
+                <div class="mb-3">
+                    <label for="password" class="form-label">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    <input type="password"
+                           class="form-control form-control-lg" 
+                           id="password" 
+                           name="Password"
+                           placeholder="Enter your password"
+                           autocomplete="current-password" 
+                           required />
+                </div>
+                
+                <div class="d-grid mb-3">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        <span>Access SMS Portal</span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Guest Access Section -->
+            <div class="mt-4 pt-3 border-top">
+                <div class="text-center mb-3">
+                    <h6 class="text-muted">Anonymous Reporting</h6>
+                    <p class="small text-muted">Submit confidential safety reports without logging in</p>
+                </div>
+                <div class="d-grid">
+                    <a href="/anonymous-reporting" class="btn btn-outline-dark btn-lg">
+                        <i class="fas fa-shield-alt"></i> Submit Confidential Report
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? Email { get; set; }
+    
+    [SupplyParameterFromQuery] 
+    public string? ErrorMessage { get; set; }
+
+    protected override void OnInitialized()
+    {
+        // Clear any existing error message if user navigates back to login
+        if (string.IsNullOrEmpty(ErrorMessage))
+        {
+            Email = string.Empty;
+        }
+    }
+}

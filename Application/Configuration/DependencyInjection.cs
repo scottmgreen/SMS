@@ -16,6 +16,7 @@ using SMS_Domain.Interfaces;
 using SMS_Infrastructure.Interfaces;
 using SMS_Infrastructure.Persistence;
 using Application.Interfaces;
+
 namespace SMS_Application.Configuration
 {
     /// <summary>
@@ -30,12 +31,13 @@ namespace SMS_Application.Configuration
         /// <returns>The updated service collection.</returns>
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
-            // Core Application Services - SINGLE REGISTRATION ONLY
-            services.AddScoped<IMediator, Mediator>();
+            // 🔥 CLEANER: Use the Assembly class itself instead of a random handler
+            var applicationAssembly = Assembly.GetExecutingAssembly(); // Gets current assembly (Application)
             
-            // REGISTER ALL QUERY AND COMMAND HANDLERS
-            var applicationAssembly = typeof(GetSMSApplicationUserByUserNameQueryHandler).Assembly;
-            RegisterHandlers(services, applicationAssembly);
+            // Alternative: Use the marker interface approach
+            // var applicationAssembly = typeof(IApplicationAssemblyMarker).Assembly;
+            
+            services.AddMediator(applicationAssembly);
             
             // SMS User Application Services - INTERFACE BINDINGS ONLY
             services.AddScoped<ISMSApplicationUserService, SMSApplicationUserService>();
@@ -52,6 +54,9 @@ namespace SMS_Application.Configuration
             // Application Services - INTERFACE BINDINGS ONLY
             services.AddScoped<IHazardFileService, HazardFileService>();
             services.AddScoped<IReportValidationService, ReportValidationService>();
+
+            // **NEW**: SMS Session Service - Direct Session Management
+            services.AddScoped<ISMSSessionService, SMSSessionService>();
             
             // Concrete Application Services (where no interface exists)
             services.AddScoped<SystemService>();
@@ -69,32 +74,6 @@ namespace SMS_Application.Configuration
             services.AddScoped<ScoringPanelService>();
 
             return services;
-        }
-        
-        /// <summary>
-        /// Register all command and query handlers from the specified assembly
-        /// </summary>
-        private static void RegisterHandlers(IServiceCollection services, Assembly assembly)
-        {
-            // Find all types that implement IRequestHandler<TRequest, TResponse>
-            var handlerTypes = assembly.GetTypes()
-                .Where(t => t.IsClass && !t.IsAbstract)
-                .Where(t => t.GetInterfaces()
-                    .Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRequestHandler<,>)))
-                .ToList();
-
-            foreach (var handlerType in handlerTypes)
-            {
-                // Get all IRequestHandler interfaces implemented by this type
-                var handlerInterfaces = handlerType.GetInterfaces()
-                    .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRequestHandler<,>))
-                    .ToList();
-
-                foreach (var handlerInterface in handlerInterfaces)
-                {
-                    services.AddScoped(handlerInterface, handlerType);
-                }
-            }
         }
     }
 }

@@ -1,6 +1,12 @@
+using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
+using SMS_Application.Common;
+using SMS_Application.Interfaces;
+using SMS_Shared.Common;
+
 namespace SMS_Application.Messaging.Commands;
 
-public class CreateMitigationAssignmentCommand : BaseCommandBundle, IRequest<Result<MitigationAssignment>>
+public class CreateMitigationAssignmentCommand : BaseCommandBundle, IRequest<Result<MitigationAssignment>>, ICreateCommand
 {
     public MitigationAssignment MitigationAssignment { get; set; }
 
@@ -8,15 +14,37 @@ public class CreateMitigationAssignmentCommand : BaseCommandBundle, IRequest<Res
     {
         MitigationAssignment = mitigationAssignment ?? throw new ArgumentNullException(nameof(mitigationAssignment));
     }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        MitigationAssignment.CreatedBy = userId;
+        MitigationAssignment.CreatedDate = timestamp;
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        // For create commands, we typically don't set UpdatedBy
+    }
 }
 
-public class UpdateMitigationAssignmentCommand : BaseCommandBundle, IRequest<Result<MitigationAssignment>>
+public class UpdateMitigationAssignmentCommand : BaseCommandBundle, IRequest<Result<MitigationAssignment>>, IUpdateCommand
 {
     public MitigationAssignment MitigationAssignment { get; set; }
 
     public UpdateMitigationAssignmentCommand(MitigationAssignment mitigationAssignment)
     {
         MitigationAssignment = mitigationAssignment ?? throw new ArgumentNullException(nameof(mitigationAssignment));
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // For update commands, we typically don't modify CreatedBy
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        MitigationAssignment.UpdatedBy = userId;
+        MitigationAssignment.UpdatedDate = timestamp;
     }
 }
 
