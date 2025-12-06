@@ -1,0 +1,178 @@
+@page "/SMSRiskManagement/TechnicalAssessment"
+@page "/SMSRiskManagement/TechnicalAssessment/{Id}"
+@page "/SMSRiskManagement/TechnicalAssessment/{Id}/{StepNumber:int}"
+@using SMS3.Components.Pages.SMSRiskManagement.Components
+@using SMS_Application.Messaging.Queries
+@using SMS_Application.Messaging.Commands
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using SMS_Domain.ValueObjects
+@using SMS_Domain.Common
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Technical Assessment - Step @CurrentStep</PageTitle>
+
+<RadzenRow Gap="1rem">
+    <RadzenColumn Size="12">
+        <!-- Assessment Header -->
+        <RadzenCard Variant="Variant.Outlined" Style="margin-bottom: 1rem;">
+            <RadzenCardContent>
+                <RadzenRow AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="12" SizeMD="8">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                            <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">
+                                <RadzenIcon Icon="@GetStepIcon(CurrentStep)" Style="margin-right: 0.5rem;" />
+                                Step @CurrentStep: @GetStepName(CurrentStep)
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-text-secondary-color); margin: 0;">
+                                @AssessmentName
+                            </RadzenText>
+                        </RadzenStack>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                            <RadzenBadge Text="@($"{CurrentStep}/5")" IsPill="true" BadgeStyle="BadgeStyle.Info" />
+                            @if (!string.IsNullOrWhiteSpace(LeadAssessorName))
+                            {
+                                <RadzenBadge Text="@LeadAssessorName" IsPill="true" BadgeStyle="BadgeStyle.Success" />
+                            }
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenCardContent>
+        </RadzenCard>
+
+        <!-- Progress Bar -->
+        <RadzenCard Variant="Variant.Outlined" Style="margin-bottom: 1rem;">
+            <RadzenCardContent Style="padding: 1rem;">
+                <RadzenRow>
+                    <RadzenColumn Size="12">
+                        <RadzenProgressBar Value="@((double)CurrentStep / 5 * 100)" ShowValue="false" Style="height: 8px;" />
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Style="margin-top: 0.5rem;">
+                            @for (int step = 1; step <= 5; step++)
+                            {
+                                var stepClass = step <= CurrentStep ? "text-primary fw-bold" : "text-muted";
+                                <RadzenText TextStyle="TextStyle.Caption" Style="@($"font-size: 0.75rem; {(step == CurrentStep ? "color: var(--rz-primary); font-weight: bold;" : "")}")" Text="@($"Step {step}")" />
+                            }
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenCardContent>
+        </RadzenCard>
+
+        <!-- Step Content -->
+        <RadzenCard>
+            <RadzenCardContent>
+                @if (IsLoading)
+                {
+                    <RadzenStack AlignItems="AlignItems.Center" Style="padding: 2rem;">
+                        <RadzenProgressBarCircular ShowValue="false" />
+                        <RadzenText Text="Loading assessment data..." />
+                    </RadzenStack>
+                }
+                else if (InitialRiskAssessment == null)
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Danger" Icon="error" Title="Assessment Not Found">
+                        The requested assessment could not be loaded. Please check the assessment ID and try again.
+                    </RadzenAlert>
+                }
+                else
+                {
+                    <!-- Render Current Step -->
+                    @switch (CurrentStep)
+                    {
+                        case 1:
+                            <TechnicalAssessmentStep1 Step1="@Step1" 
+                                                     Step1Changed="@UpdateStep1"
+                                                     AvailableAssessors="AvailableAssessors"
+                                                     StakeholderGroups="StakeholderGroups"
+                                                     AvailableStakeholders="AvailableStakeholders" />
+                            break;
+                        case 2:
+                            <TechnicalAssessmentStep2 Step1="@Step1"
+                                                     Step2="@Step2" 
+                                                     Step2Changed="@UpdateStep2"
+                                                     AvailableHazards="AvailableHazards"
+                                                     OnHazardAdded="@AddHazard"
+                                                     OnHazardUpdated="@UpdateHazard" />
+                            break;
+                        case 3:
+                            <TechnicalAssessmentStep3 Step1="@Step1"
+                                                     Step3="@Step3" 
+                                                     Step3Changed="@UpdateStep3"
+                                                     AvailableHazards="AvailableHazards" />
+                            break;
+                        case 4:
+                            <TechnicalAssessmentStep4 Step4="@Step4" 
+                                                     Step4Changed="@UpdateStep4"
+                                                     AvailableHazards="AvailableHazards"
+                                                     AvailableStakeholders="AvailableStakeholders"
+                                                     AvailableAssessors="AvailableAssessors" />
+                            break;
+                        case 5:
+                            <TechnicalAssessmentStep5 Step4="@Step4"
+                                                     Step5="@Step5" 
+                                                     Step5Changed="@UpdateStep5"
+                                                     AvailableHazards="AvailableHazards"
+                                                     AvailableStakeholders="AvailableStakeholders"
+                                                     AvailableAssessors="AvailableAssessors" />
+                            break;
+                        default:
+                            <RadzenAlert AlertStyle="AlertStyle.Warning" Text="Invalid step number. Please select a valid step." />
+                            break;
+                    }
+                }
+            </RadzenCardContent>
+        </RadzenCard>
+
+        <!-- Navigation Buttons -->
+        @if (InitialRiskAssessment != null && !IsLoading)
+        {
+            <RadzenCard Style="margin-top: 1rem;">
+                <RadzenCardContent>
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                        <!-- Previous Button -->
+                        <RadzenButton Text="Previous Step" 
+                                     Icon="arrow_back" 
+                                     ButtonStyle="ButtonStyle.Light"
+                                     Disabled="@(CurrentStep <= 1 || IsSaving)"
+                                     Click="@PreviousStep" />
+
+                        <!-- Middle Section - Manual Save -->
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                            <RadzenButton Text="Save Draft" 
+                                         Icon="save" 
+                                         ButtonStyle="ButtonStyle.Secondary"
+                                         Disabled="IsSaving"
+                                         Click="@SaveCurrentStep" />
+                            
+                            @if (IsSaving)
+                            {
+                                <RadzenProgressBarCircular ShowValue="false" Size="ProgressBarCircularSize.Small" />
+                            }
+                        </RadzenStack>
+
+                        <!-- Next/Complete Button -->
+                        @if (CurrentStep < 5)
+                        {
+                            <RadzenButton Text="Next Step" 
+                                         Icon="arrow_forward" 
+                                         ButtonStyle="ButtonStyle.Success"
+                                         Disabled="IsSaving"
+                                         Click="@NextStep" />
+                        }
+                        else
+                        {
+                            <RadzenButton Text="Complete Assessment" 
+                                         Icon="check_circle" 
+                                         ButtonStyle="ButtonStyle.Primary"
+                                         Disabled="IsSaving"
+                                         Click="@CompleteAssessment" />
+                        }
+                    </RadzenStack>
+                </RadzenCardContent>
+            </RadzenCard>
+        }
+    </RadzenColumn>
+</RadzenRow>

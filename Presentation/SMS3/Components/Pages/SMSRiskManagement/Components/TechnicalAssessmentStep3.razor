@@ -1,0 +1,241 @@
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using SMS3.Components.Pages.SMSRiskManagement
+@using global::System.Text.Json
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenRow Gap="1rem">
+    <!-- Main Content Column -->
+    <RadzenColumn Size="12" SizeLG="8">
+        <RadzenStack Gap="1.5rem">
+            <!-- Risk Analysis Method -->
+            <RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid var(--rz-primary);">
+                <RadzenStack Gap="1rem">
+                    <RadzenRow AlignItems="AlignItems.Center">
+                        <RadzenColumn Size="10">
+                            <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
+                                <RadzenIcon Icon="analytics" Style="margin-right: 0.5rem;" />
+                                Risk Analysis Method
+                            </RadzenText>
+                        </RadzenColumn>
+                        <RadzenColumn Size="2">
+                            <RadzenButton Icon="help" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Light" 
+                                          title="Document any assumptions, criteria, or notes about the risk analysis approach" />
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Icon="info" ShowIcon="true">
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Subtitle2" Text="Risk Analysis - SMS Risk Matrix" Style="margin: 0;" />
+                                <RadzenText TextStyle="TextStyle.Body2">
+                                    For each identified hazard, we need to determine the <strong>worst credible outcome</strong> 
+                                    and analyze the <strong>root causes</strong> that could lead to that outcome.
+                                </RadzenText>
+                            </RadzenStack>
+                            <RadzenStack Gap="0.25rem" Style="text-align: right;">
+                                <RadzenText TextStyle="TextStyle.Caption" Text="Method: SMS Risk Matrix" />
+                                <RadzenText TextStyle="TextStyle.Caption" Text="@($"Hazards: {AvailableHazards?.Count ?? 0}")" />
+                                <RadzenText TextStyle="TextStyle.Caption" Text="@($"Analyzed: {GetAnalyzedCount()}")" />
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenAlert>
+
+                    <RadzenFormField Text="Risk Analysis Criteria" Variant="Variant.Outlined">
+                        <RadzenTextArea @bind-Value="@Step3.RiskCriteria" Rows="2" 
+                                        Placeholder="Specify any specific criteria or assumptions for this risk analysis..." 
+                                        Style="width: 100%;" />
+                    </RadzenFormField>
+                    <RadzenText TextStyle="TextStyle.Caption" Text="Specify any specific criteria or assumptions for this risk analysis" />
+                </RadzenStack>
+            </RadzenCard>
+
+            <!-- Hazard Risk Analysis -->
+            <RadzenCard>
+                <RadzenStack Gap="1rem">
+                    <RadzenRow AlignItems="AlignItems.Center">
+                        <RadzenColumn Size="10">
+                            <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-secondary); margin: 0;">
+                                <RadzenIcon Icon="assignment" Style="margin-right: 0.5rem;" />
+                                Hazard Risk Analysis
+                            </RadzenText>
+                        </RadzenColumn>
+                        <RadzenColumn Size="2">
+                            <RadzenText TextStyle="TextStyle.Caption" Text="Complete analysis for each hazard" />
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    @if (AvailableHazards?.Any() == true)
+                    {
+                        @foreach (var hazard in AvailableHazards)
+                        {
+                            var analysis = Step3.GetHazardAnalysis(hazard.Code);
+                            
+                            <RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid var(--rz-secondary);">
+                                <RadzenStack Gap="1rem">
+                                    <!-- Hazard Header -->
+                                    <RadzenRow AlignItems="AlignItems.Center">
+                                        <RadzenColumn Size="10">
+                                            <RadzenStack Gap="0.25rem">
+                                                <RadzenText TextStyle="TextStyle.Subtitle1" Text="@($"{hazard.Code}: {hazard.Description}")" Style="margin: 0;" />
+                                                @if (!string.IsNullOrEmpty(hazard.HazardType))
+                                                {
+                                                    <RadzenBadge Text="@hazard.HazardType" BadgeStyle="BadgeStyle.Info" />
+                                                }
+                                            </RadzenStack>
+                                        </RadzenColumn>
+                                        <RadzenColumn Size="2">
+                                            @if (IsAnalysisComplete(analysis))
+                                            {
+                                                <RadzenBadge Text="Analyzed" BadgeStyle="BadgeStyle.Success" />
+                                            }
+                                            else
+                                            {
+                                                <RadzenBadge Text="Pending" BadgeStyle="BadgeStyle.Warning" />
+                                            }
+                                        </RadzenColumn>
+                                    </RadzenRow>
+
+                                    <!-- Analysis Fields -->
+                                    <RadzenRow Gap="1rem">
+                                        <RadzenColumn Size="12" SizeMD="6">
+                                            <RadzenStack Gap="0.5rem">
+                                                <RadzenFormField Text="Worst Credible Outcome *" Variant="Variant.Outlined">
+                                                    <RadzenTextArea @bind-Value="@analysis.WorstCredibleOutcome" Rows="3"
+                                                                    Placeholder="Describe the worst reasonable outcome that could result from this hazard..."
+                                                                    Style="width: 100%;" />
+                                                </RadzenFormField>
+                                                <RadzenText TextStyle="TextStyle.Caption" Text="Focus on the most severe but realistic consequence - what could actually happen?" />
+                                                <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(analysis.WorstCredibleOutcome, 10)" />
+                                            </RadzenStack>
+                                        </RadzenColumn>
+                                        <RadzenColumn Size="12" SizeMD="6">
+                                            <RadzenStack Gap="0.5rem">
+                                                <RadzenFormField Text="Root Cause Analysis *" Variant="Variant.Outlined">
+                                                    <RadzenTextArea @bind-Value="@analysis.RootCauseAnalysis" Rows="3"
+                                                                    Placeholder="Identify the underlying root causes that could lead to this hazard..."
+                                                                    Style="width: 100%;" />
+                                                </RadzenFormField>
+                                                <RadzenText TextStyle="TextStyle.Caption" Text="Identify underlying causes, not just symptoms - ask 'why' multiple times" />
+                                                <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(analysis.RootCauseAnalysis, 10)" />
+                                            </RadzenStack>
+                                        </RadzenColumn>
+                                    </RadzenRow>
+
+                                    <!-- Additional Comments -->
+                                    <RadzenFormField Text="Additional Analysis Comments" Variant="Variant.Outlined">
+                                        <RadzenTextArea @bind-Value="@analysis.AdditionalComments" Rows="2"
+                                                        Placeholder="Document any additional context, assumptions, or observations..."
+                                                        Style="width: 100%;" />
+                                    </RadzenFormField>
+                                    <RadzenText TextStyle="TextStyle.Caption" Text="Document any additional context, assumptions, or observations relevant to this hazard" />
+                                </RadzenStack>
+                            </RadzenCard>
+                        }
+                    }
+                    else
+                    {
+                        <RadzenCard Style="text-align: center; padding: 2rem;">
+                            <RadzenStack AlignItems="AlignItems.Center" Gap="1rem">
+                                <RadzenIcon Icon="warning" Style="font-size: 3rem; color: var(--rz-warning);" />
+                                <RadzenText TextStyle="TextStyle.H5" Text="No hazards identified yet" />
+                                <RadzenText TextStyle="TextStyle.Body2" Text="Please complete Step 2 (Identify Hazards) before proceeding with risk analysis." />
+                                <RadzenButton Text="Go to Step 2" Icon="arrow_back" ButtonStyle="ButtonStyle.Warning" 
+                                              Click="@GoToStep2" />
+                            </RadzenStack>
+                        </RadzenCard>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenStack>
+    </RadzenColumn>
+
+    <!-- Debug Panel -->
+    <RadzenColumn Size="12" SizeLG="4">
+        <RadzenCard Style="position: sticky; top: 20px;">
+            <RadzenStack Gap="1rem">
+                <RadzenText TextStyle="TextStyle.H6" Text="Step 3 Debug Info" Style="color: var(--rz-primary);" />
+                
+                <RadzenFieldset Text="Analysis Progress">
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Total Hazards: {AvailableHazards?.Count ?? 0}")" />
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Analyzed: {GetAnalyzedCount()}")" />
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Progress: {GetAnalysisProgress()}%")" />
+                </RadzenFieldset>
+
+                <RadzenFieldset Text="Validation">
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@GetValidationSummary()" />
+                </RadzenFieldset>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>
+
+@code {
+    [Parameter] public Step1Model Step1 { get; set; } = new();
+    [Parameter] public Step3Model Step3 { get; set; } = new();
+    [Parameter] public EventCallback<Step3Model> Step3Changed { get; set; }
+    [Parameter] public List<Hazard> AvailableHazards { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        // Initialize hazard analyses for all available hazards
+        if (AvailableHazards?.Any() == true)
+        {
+            Step3.InitializeHazardAnalyses(AvailableHazards);
+        }
+    }
+
+    private int GetAnalyzedCount()
+    {
+        return Step3.HazardAnalyses?.Count(ha => IsAnalysisComplete(ha.Value)) ?? 0;
+    }
+
+    private int GetAnalysisProgress()
+    {
+        var totalHazards = AvailableHazards?.Count ?? 0;
+        if (totalHazards == 0) return 0;
+        
+        return (GetAnalyzedCount() * 100) / totalHazards;
+    }
+
+    private bool IsAnalysisComplete(Step3Model.HazardRiskAnalysis analysis)
+    {
+        return !string.IsNullOrWhiteSpace(analysis.WorstCredibleOutcome) && 
+               analysis.WorstCredibleOutcome.Length >= 10 &&
+               !string.IsNullOrWhiteSpace(analysis.RootCauseAnalysis) && 
+               analysis.RootCauseAnalysis.Length >= 10;
+    }
+
+    private string GetFieldValidation(string? text, int minLength)
+    {
+        var length = text?.Trim().Length ?? 0;
+        
+        if (length == 0)
+            return $"0/{minLength} characters";
+        else if (length < minLength)
+            return $"{length}/{minLength} characters (minimum {minLength} required)";
+        else
+            return $"{length} characters ?";
+    }
+
+    private string GetValidationSummary()
+    {
+        var totalHazards = AvailableHazards?.Count ?? 0;
+        var analyzedCount = GetAnalyzedCount();
+        
+        if (totalHazards == 0)
+            return "No hazards to analyze";
+        
+        if (analyzedCount == totalHazards)
+            return "All hazards analyzed ?";
+        
+        return $"{totalHazards - analyzedCount} hazards need analysis";
+    }
+
+    private void GoToStep2()
+    {
+        // Simple placeholder - in a real implementation this would navigate
+        Console.WriteLine("Navigate to Step 2");
+    }
+}

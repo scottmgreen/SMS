@@ -1,0 +1,62 @@
+﻿@page "/"
+@inject SMS_Application.Interfaces.ISMSSessionService SessionService
+@inject NavigationManager Navigation
+
+<PageTitle>SMS3 Dashboard</PageTitle>
+
+<div class="home-background">
+    @if (IsAuthenticated)
+    {
+        @* <div class="alert alert-success">
+            <strong>Welcome, @CurrentUserName!</strong> You are successfully logged in.
+            <small class="d-block mt-1 text-muted">User Type: @CurrentUserType</small>
+        </div> *@
+        
+        @* <div class="row">
+            <div class="col-md-6">
+                <RadzenCard>
+                    <RadzenText TextStyle="TextStyle.H5">Quick Actions</RadzenText>
+                    <div class="d-flex gap-2 mt-3">
+                        <RadzenButton Text="View Reports" ButtonStyle="ButtonStyle.Primary" Click="@(() => Navigation.NavigateTo("/reports"))" />
+                        <RadzenButton Text="View Hazards" ButtonStyle="ButtonStyle.Secondary" Click="@(() => Navigation.NavigateTo("/hazards"))" />
+                    </div>
+                </RadzenCard>
+            </div>
+            <div class="col-md-6">
+                <RadzenCard>
+                    <RadzenText TextStyle="TextStyle.H5">System Status</RadzenText>
+                    <p class="mt-3">SMS3 is operational and ready for use.</p>
+                    <small class="text-muted">Authenticated as: @CurrentUserType User</small>
+                </RadzenCard>
+            </div>
+        </div> *@
+    }
+    else
+    {
+        @* <div class="alert alert-info">
+            <strong>Welcome to SMS3</strong><br />
+            Please <a href="/login">login</a> to access the Safety Management System.
+        </div> *@
+    }
+</div>
+
+<style>
+.home-background {
+    background-image: url('images/background_opening.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    width: calc(100% + 3rem);
+    min-height: calc(100vh + 3rem);
+    margin: -1.5rem;
+    padding: 2rem;
+    overflow: hidden;
+}
+</style>
+
+@code {
+    private bool IsAuthenticated => SessionService.IsAuthenticated();
+    private string? CurrentUserName => SessionService.GetCurrentUserDisplayName();
+    private string? CurrentUserType => SessionService.GetCurrentUserType();
+}

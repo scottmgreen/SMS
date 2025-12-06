@@ -2,6 +2,7 @@
 @layout SMS_Blazor.Components.Layout.LoginLayout
 @inject IMediator Mediator
 @inject NavigationManager Navigation
+@inject ISMSSessionService SessionService
 @inject ILogger<Login> Logger
 
 <PageTitle>Login to PDXSMS</PageTitle>
@@ -26,7 +27,7 @@
             }
 
             <!-- Use HTML form with POST to controller to avoid Blazor Server session issues -->
-            <form method="post" action="/api/auth/login">
+            <form method="post" action="/api/auth/login" onsubmit="console.log('Form submitting to:', this.action); return true;">
                 <div class="mb-3">
                     <label for="email" class="form-label">
                         <i class="fas fa-envelope"></i> Email Address
@@ -79,18 +80,107 @@
 </div>
 
 @code {
-    [SupplyParameterFromQuery]
-    public string? Email { get; set; }
-    
-    [SupplyParameterFromQuery] 
-    public string? ErrorMessage { get; set; }
+    private string Email = "";
+    private string Password = "";
+    private string ErrorMessage = "";
+    private bool isLoading = false;
 
-    protected override void OnInitialized()
+    private async Task DoLogin()
     {
-        // Clear any existing error message if user navigates back to login
-        if (string.IsNullOrEmpty(ErrorMessage))
+        Logger.LogInformation("Login attempt for: {Email}", Email);
+        
+        if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
         {
-            Email = string.Empty;
+            ErrorMessage = "Email and password are required.";
+            Logger.LogWarning("Validation failed - missing credentials");
+            return;
         }
+
+        isLoading = true;
+        ErrorMessage = "";
+
+        try
+        {
+            Logger.LogInformation("Starting SMS Backend authentication for: {Email}", Email);
+
+            // Direct SMS Backend Authentication using CQRS/Mediator (same as Login.cshtml.cs)
+            var (user, userType) = await AuthenticateWithSMSBackendAsync(Email, Password);
+
+            if (user == null)
+            {
+                ErrorMessage = "Invalid email or password.";
+                Logger.LogWarning("Authentication failed for: {Email}", Email);
+                return;
+            }
+
+            // **KEY CHANGE**: Use SMS Session Service instead of local session creation
+            await SessionService.CreateSMSSessionAsync(user, userType);
+
+            Logger.LogInformation("SMS Backend authentication successful: {UserId} ({UserType})",
+                user.Code, userType.Value);
+
+            // Redirect to home page
+            Navigation.NavigateTo("/", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "SMS Backend authentication error for: {Email}", Email);
+            ErrorMessage = "An error occurred during login. Please try again.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    /// <summary>
+    /// Direct SMS Backend Authentication using CQRS/Mediator
+    /// EXACT same logic as Login.cshtml.cs - no changes
+    /// </summary>
+    private async Task<(BaseUser? user, SMSUserType userType)> AuthenticateWithSMSBackendAsync(string email, string password)
+    {
+        // Try SMSApplicationUser first
+        try
+        {
+            var appQuery = new GetSMSApplicationUserByUserNameQuery(email);
+            var appResult = await Mediator.SendAsync(appQuery, CancellationToken.None);
+
+            if (appResult.IsSuccess && appResult.Value.Authenticate(password))
+            {
+                appResult.Value.RecordLogin();
+                return (appResult.Value, SMSUserType.Application);
+            }
+        }
+        catch (Exception ex) { Logger.LogDebug("App user auth failed: {Error}", ex.Message); }
+
+        // Try SMSOrganizationalUser
+        try
+        {
+            var orgQuery = new GetSMSOrganizationalUserByUserNameQuery(email);
+            var orgResult = await Mediator.SendAsync(orgQuery, CancellationToken.None);
+
+            if (orgResult.IsSuccess && orgResult.Value.Authenticate(password))
+            {
+                orgResult.Value.RecordLogin();
+                return (orgResult.Value, SMSUserType.Organizational);
+            }
+        }
+        catch (Exception ex) { Logger.LogDebug("Org user auth failed: {Error}", ex.Message); }
+
+        // Try SMSStakeholderUser
+        try
+        {
+            var stakeholderQuery = new GetSMSStakeholderUserByUserNameQuery(email);
+            var stakeholderResult = await Mediator.SendAsync(stakeholderQuery, CancellationToken.None);
+
+            if (stakeholderResult.IsSuccess && stakeholderResult.Value.Authenticate(password))
+            {
+                stakeholderResult.Value.RecordLogin();
+                return (stakeholderResult.Value, SMSUserType.Stakeholder);
+            }
+        }
+        catch (Exception ex) { Logger.LogDebug("Stakeholder user auth failed: {Error}", ex.Message); }
+
+        return (null, SMSUserType.Application);
     }
 }

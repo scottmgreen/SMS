@@ -1,0 +1,206 @@
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using SMS3.Components.Pages.SMSRiskManagement
+@using global::System.Text.Json
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenRow Gap="1rem">
+    <!-- Main Content Column -->
+    <RadzenColumn Size="12" SizeLG="8">
+        <RadzenStack Gap="1.5rem">
+            <!-- Header with Implementation Planning -->
+            <RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid var(--rz-primary);">
+                <RadzenStack Gap="1rem">
+                    <RadzenRow AlignItems="AlignItems.Center">
+                        <RadzenColumn Size="10">
+                            <RadzenText TextStyle="TextStyle.H5" Style="color: var(--rz-primary); margin: 0;">
+                                <RadzenIcon Icon="security" Style="margin-right: 0.5rem;" />
+                                Step 5: Risk Mitigation & Residual Assessment
+                            </RadzenText>
+                        </RadzenColumn>
+                        <RadzenColumn Size="2">
+                            <RadzenBadge Text="@($"{GetHazardsNeedingMitigation()} Need Mitigation")" BadgeStyle="BadgeStyle.Warning" />
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        Develop mitigation strategies for hazards requiring risk reduction, then assess residual risk levels after mitigation implementation.
+                    </RadzenText>
+
+                    <!-- Implementation Planning -->
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenFormField Text="Implementation Strategy" Variant="Variant.Outlined">
+                                <RadzenDropDown @bind-Value="@Step5.ImplementationStrategy" Data="@ImplementationStrategies"
+                                                Placeholder="Select strategy..." Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenFormField Text="Overall Timeline" Variant="Variant.Outlined">
+                                <RadzenDatePicker @bind-Value="@Step5.OverallTargetDate" DateFormat="yyyy-MM-dd" Style="width: 100%;" />
+                            </RadzenFormField>
+                            <RadzenText TextStyle="TextStyle.Caption" Text="Target completion for all mitigation strategies" />
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenFormField Text="Implementation Notes" Variant="Variant.Outlined">
+                        <RadzenTextArea @bind-Value="@Step5.ImplementationNotes" Rows="2"
+                                        Placeholder="Document overall implementation approach, resource requirements, and coordination notes..."
+                                        Style="width: 100%;" />
+                    </RadzenFormField>
+                </RadzenStack>
+            </RadzenCard>
+
+            <!-- Hazard Mitigation Panels -->
+            @if (AvailableHazards?.Any() == true)
+            {
+                @foreach (var hazard in AvailableHazards)
+                {
+                    var needsMitigation = DetermineIfNeedsMitigation(hazard);
+                    
+                    <HazardMitigationPanel Hazard="@hazard"
+                                          Step4="@Step4"
+                                          Step5="@Step5"
+                                          NeedsMitigation="@needsMitigation"
+                                          AvailableStakeholders="@AvailableStakeholders"
+                                          AvailableAssessors="@AvailableAssessors"
+                                          OnMitigationUpdated="@OnMitigationUpdated" 
+                                          OnResidualScoreSubmitted="@OnResidualScoreSubmitted" />
+                }
+            }
+            else
+            {
+                <RadzenCard Style="text-align: center; padding: 2rem;">
+                    <RadzenStack AlignItems="AlignItems.Center" Gap="1rem">
+                        <RadzenIcon Icon="warning" Style="font-size: 3rem; color: var(--rz-warning);" />
+                        <RadzenText TextStyle="TextStyle.H5" Text="No hazards found" />
+                        <RadzenText TextStyle="TextStyle.Body2" Text="Please complete the previous steps before proceeding with mitigation planning." />
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                            <RadzenButton Text="Step 2 - Identify Hazards" Icon="warning" ButtonStyle="ButtonStyle.Warning" 
+                                          Click="@(() => NavigateToStep(2))" />
+                            <RadzenButton Text="Step 3 - Analyze Risk" Icon="analytics" ButtonStyle="ButtonStyle.Info" 
+                                          Click="@(() => NavigateToStep(3))" />
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            }
+        </RadzenStack>
+    </RadzenColumn>
+
+    <!-- Progress Panel -->
+    <RadzenColumn Size="12" SizeLG="4">
+        <RadzenCard Style="position: sticky; top: 20px;">
+            <RadzenStack Gap="1rem">
+                <RadzenText TextStyle="TextStyle.H6" Text="Step 5 Progress" Style="color: var(--rz-primary);" />
+                
+                <RadzenFieldset Text="Mitigation Progress">
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Total Hazards: {AvailableHazards?.Count ?? 0}")" />
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Need Mitigation: {GetHazardsNeedingMitigation()}")" />
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"With Strategies: {GetHazardsWithMitigations()}")" />
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Progress: {GetMitigationProgress()}%")" />
+                </RadzenFieldset>
+
+                <RadzenFieldset Text="Residual Risk Status">
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Residual Assessments: {GetResidualAssessments()}")" />
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Completed: {GetCompletedResidualAssessments()}")" />
+                </RadzenFieldset>
+
+                <RadzenFieldset Text="Implementation">
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Strategy: {Step5.ImplementationStrategy ?? "Not selected"}")" />
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Target Date: {Step5.OverallTargetDate?.ToString("yyyy-MM-dd") ?? "Not set"}")" />
+                </RadzenFieldset>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>
+
+@code {
+    [Parameter] public Step4Model Step4 { get; set; } = new();
+    [Parameter] public Step5Model Step5 { get; set; } = new();
+    [Parameter] public EventCallback<Step5Model> Step5Changed { get; set; }
+    [Parameter] public List<Hazard> AvailableHazards { get; set; } = new();
+    [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
+    [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
+
+    private List<string> ImplementationStrategies = new()
+    {
+        "Immediate Implementation",
+        "Phased Implementation", 
+        "Risk-Based Priority",
+        "Resource-Based Priority"
+    };
+
+    protected override void OnInitialized()
+    {
+        // Set default values if not already set
+        if (Step5.OverallTargetDate == null)
+        {
+            Step5.OverallTargetDate = DateTime.Now.AddMonths(6);
+        }
+    }
+
+    private void NavigateToStep(int stepNumber)
+    {
+        Console.WriteLine($"Navigate to Step {stepNumber}");
+    }
+
+    private bool DetermineIfNeedsMitigation(Hazard hazard)
+    {
+        // Check if this hazard has a high risk score that needs mitigation
+        if (Step4.HazardAverageScores.ContainsKey(hazard.Code))
+        {
+            var averageScore = Step4.HazardAverageScores[hazard.Code];
+            // Assume scores > 10 need mitigation (adjust based on your 5x5 matrix)
+            return averageScore > 10;
+        }
+        
+        // Default to needing mitigation if no score available
+        return true;
+    }
+
+    private int GetHazardsNeedingMitigation()
+    {
+        return AvailableHazards?.Count(h => DetermineIfNeedsMitigation(h)) ?? 0;
+    }
+
+    private int GetHazardsWithMitigations()
+    {
+        return Step5.HazardMitigations?.Count(kvp => kvp.Value?.Any() == true) ?? 0;
+    }
+
+    private int GetMitigationProgress()
+    {
+        var needingMitigation = GetHazardsNeedingMitigation();
+        if (needingMitigation == 0) return 100;
+        
+        var withMitigations = GetHazardsWithMitigations();
+        return (withMitigations * 100) / needingMitigation;
+    }
+
+    private int GetResidualAssessments()
+    {
+        // Count hazards that have both mitigations and residual risk panels assigned
+        return Step5.HazardMitigations?.Count(kvp => 
+            kvp.Value?.Any() == true && 
+            Step5.ResidualRiskPanels.ContainsKey(kvp.Key)) ?? 0;
+    }
+
+    private int GetCompletedResidualAssessments()
+    {
+        return Step5.ResidualRiskScores?.Count(kvp => kvp.Value?.Any(s => s.IsComplete) == true) ?? 0;
+    }
+
+    private async Task OnMitigationUpdated(string hazardId)
+    {
+        await Step5Changed.InvokeAsync(Step5);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnResidualScoreSubmitted(Step5Model.ResidualRiskScoreData scoreData)
+    {
+        Step5.AddResidualRiskScore(scoreData.HazardId, scoreData);
+        await Step5Changed.InvokeAsync(Step5);
+        await InvokeAsync(StateHasChanged);
+    }
+}}

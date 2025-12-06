@@ -1,0 +1,286 @@
+/* =============================================================================
+   SMS COLOR SYSTEM - STRICT COMPLIANCE
+   NO RANDOM COLORS - ONLY THESE APPROVED VALUES
+   ============================================================================= */
+
+/* =============================================================================
+   CSS CUSTOM PROPERTIES (VARIABLES) - EXACT HEX VALUES
+   ============================================================================= */
+:root {
+  /* BLUE TEAL PALETTE */
+  --sms-blue-dark-bold:     #212e61;  /* Pantone 274 C - Primary Brand */
+  --sms-blue-accent:        #4ac6f7;  /* Pantone 298 C - Interactive Elements */
+  --sms-blue-primary:       #006AA9;  /* Pantone 300 C - Main Actions */
+  --sms-blue-light:         #c9e3ed;  /* Pantone 642 C - Backgrounds */
+  
+  /* TEAL PALETTE */
+  --sms-teal-accent:        #22d1d3;  /* Pantone 319 C - Highlights */
+  --sms-teal-dark-bold:     #02446588; /* Pantone 548 C - Dark Elements */
+  --sms-teal-primary:       #01838d;  /* Pantone 321 C - Secondary Actions */
+  --sms-teal-light:         #cdebf1;  /* Pantone 628 C - Light Backgrounds */
+  
+  /* GREEN PALETTE */
+  --sms-green-accent:       #7ec72a;  /* Pantone 368 C - Success States */
+  --sms-green-dark-bold:    #005a4f;  /* Pantone 330 C - Success Dark */
+  --sms-green-primary:      #0d8944;  /* Pantone 348 C - Positive Actions */
+  --sms-green-light:        #e5ede4;  /* Pantone 621 C - Success Backgrounds */
+  
+  /* RED PALETTE */
+  --sms-red-accent:         #fa9a46;  /* Pantone 804 C - Warnings */
+  --sms-red-dark-bold:      #7f2a29;  /* Pantone 181 C - Critical Dark */
+  --sms-red-primary:        #d91e3e;  /* Pantone 186 C - Danger/Critical */
+  --sms-red-light:          #f4e5eb;  /* Pantone 705 C - Error Backgrounds */
+}
+
+/* =============================================================================
+   SEMANTIC COLOR MAPPINGS - CONSISTENT USAGE
+   ============================================================================= */
+:root {
+  /* PRIMARY BRAND COLORS */
+  --sms-brand-primary:      var(--sms-blue-dark-bold);
+  --sms-brand-secondary:    var(--sms-blue-primary);
+  --sms-brand-accent:       var(--sms-teal-accent);
+  
+  /* NAVIGATION & HEADERS */
+  --sms-nav-bg:             var(--sms-blue-dark-bold);
+  --sms-nav-text:           white;
+  --sms-nav-hover:          var(--sms-blue-accent);
+  --sms-header-bg:          var(--sms-blue-primary);
+  --sms-header-text:        white;
+  
+  /* BUTTONS */
+  --sms-btn-primary-bg:     var(--sms-blue-primary);
+  --sms-btn-primary-text:   white;
+  --sms-btn-primary-hover:  var(--sms-blue-dark-bold);
+  
+  --sms-btn-success-bg:     var(--sms-green-primary);
+  --sms-btn-success-text:   white;
+  --sms-btn-success-hover:  var(--sms-green-dark-bold);
+  
+  --sms-btn-danger-bg:      var(--sms-red-primary);
+  --sms-btn-danger-text:    white;
+  --sms-btn-danger-hover:   var(--sms-red-dark-bold);
+  
+  --sms-btn-info-bg:        var(--sms-teal-primary);
+  --sms-btn-info-text:      white;
+  --sms-btn-info-hover:     var(--sms-teal-dark-bold);
+  
+  --sms-btn-warning-bg:     var(--sms-red-accent);
+  --sms-btn-warning-text:   var(--sms-blue-dark-bold);
+  --sms-btn-warning-hover:  var(--sms-red-dark-bold);
+  
+  /* ALERTS & NOTIFICATIONS */
+  --sms-alert-success-bg:   var(--sms-green-light);
+  --sms-alert-success-text: var(--sms-green-dark-bold);
+  --sms-alert-success-border: var(--sms-green-primary);
+  
+  --sms-alert-danger-bg:    var(--sms-red-light);
+  --sms-alert-danger-text:  var(--sms-red-dark-bold);
+  --sms-alert-danger-border: var(--sms-red-primary);
+  
+  --sms-alert-warning-bg:   #fdf3cd; /* Derived from red-accent with opacity */
+  --sms-alert-warning-text: var(--sms-red-dark-bold);
+  --sms-alert-warning-border: var(--sms-red-accent);
+  
+  --sms-alert-info-bg:      var(--sms-teal-light);
+  --sms-alert-info-text:    var(--sms-teal-dark-bold);
+  --sms-alert-info-border:  var(--sms-teal-primary);
+  
+  /* CARDS & PANELS */
+  --sms-card-bg:            white;
+  --sms-card-border:        var(--sms-blue-light);
+  --sms-card-header-bg:     var(--sms-blue-light);
+  --sms-card-header-text:   var(--sms-blue-dark-bold);
+  
+  /* FORMS */
+  --sms-form-border:        var(--sms-blue-light);
+  --sms-form-focus:         var(--sms-blue-primary);
+  --sms-form-error:         var(--sms-red-primary);
+  --sms-form-success:       var(--sms-green-primary);
+  
+  /* STATUS COLORS */
+  --sms-status-active:      var(--sms-green-primary);
+  --sms-status-pending:     var(--sms-red-accent);
+  --sms-status-closed:      var(--sms-blue-primary);
+  --sms-status-cancelled:   var(--sms-red-primary);
+}
+
+/* =============================================================================
+   BOOTSTRAP OVERRIDE CLASSES - CONSISTENT WITH SMS PALETTE
+   ============================================================================= */
+
+/* PRIMARY COLORS */
+.bg-primary { background-color: var(--sms-blue-primary) !important; }
+.text-primary { color: var(--sms-blue-primary) !important; }
+.btn-primary { 
+  background-color: var(--sms-btn-primary-bg) !important;
+  border-color: var(--sms-btn-primary-bg) !important;
+  color: var(--sms-btn-primary-text) !important;
+}
+.btn-primary:hover { 
+  background-color: var(--sms-btn-primary-hover) !important;
+  border-color: var(--sms-btn-primary-hover) !important;
+}
+
+/* SUCCESS COLORS */
+.bg-success { background-color: var(--sms-green-primary) !important; }
+.text-success { color: var(--sms-green-primary) !important; }
+.btn-success { 
+  background-color: var(--sms-btn-success-bg) !important;
+  border-color: var(--sms-btn-success-bg) !important;
+  color: var(--sms-btn-success-text) !important;
+}
+.btn-success:hover { 
+  background-color: var(--sms-btn-success-hover) !important;
+  border-color: var(--sms-btn-success-hover) !important;
+}
+
+/* DANGER COLORS */
+.bg-danger { background-color: var(--sms-red-primary) !important; }
+.text-danger { color: var(--sms-red-primary) !important; }
+.btn-danger { 
+  background-color: var(--sms-btn-danger-bg) !important;
+  border-color: var(--sms-btn-danger-bg) !important;
+  color: var(--sms-btn-danger-text) !important;
+}
+.btn-danger:hover { 
+  background-color: var(--sms-btn-danger-hover) !important;
+  border-color: var(--sms-btn-danger-hover) !important;
+}
+
+/* INFO COLORS */
+.bg-info { background-color: var(--sms-teal-primary) !important; }
+.text-info { color: var(--sms-teal-primary) !important; }
+.btn-info { 
+  background-color: var(--sms-btn-info-bg) !important;
+  border-color: var(--sms-btn-info-bg) !important;
+  color: var(--sms-btn-info-text) !important;
+}
+.btn-info:hover { 
+  background-color: var(--sms-btn-info-hover) !important;
+  border-color: var(--sms-btn-info-hover) !important;
+}
+
+/* WARNING COLORS */
+.bg-warning { background-color: var(--sms-red-accent) !important; }
+.text-warning { color: var(--sms-red-accent) !important; }
+.btn-warning { 
+  background-color: var(--sms-btn-warning-bg) !important;
+  border-color: var(--sms-btn-warning-bg) !important;
+  color: var(--sms-btn-warning-text) !important;
+}
+.btn-warning:hover { 
+  background-color: var(--sms-btn-warning-hover) !important;
+  border-color: var(--sms-btn-warning-hover) !important;
+  color: white !important;
+}
+
+/* =============================================================================
+   ALERT COMPONENTS - STRICT COLOR COMPLIANCE
+   ============================================================================= */
+.alert-success {
+  background-color: var(--sms-alert-success-bg) !important;
+  color: var(--sms-alert-success-text) !important;
+  border-color: var(--sms-alert-success-border) !important;
+}
+
+.alert-danger {
+  background-color: var(--sms-alert-danger-bg) !important;
+  color: var(--sms-alert-danger-text) !important;
+  border-color: var(--sms-alert-danger-border) !important;
+}
+
+.alert-warning {
+  background-color: var(--sms-alert-warning-bg) !important;
+  color: var(--sms-alert-warning-text) !important;
+  border-color: var(--sms-alert-warning-border) !important;
+}
+
+.alert-info {
+  background-color: var(--sms-alert-info-bg) !important;
+  color: var(--sms-alert-info-text) !important;
+  border-color: var(--sms-alert-info-border) !important;
+}
+
+/* =============================================================================
+   SMS-SPECIFIC COMPONENT STYLES
+   ============================================================================= */
+
+/* Navigation Menu */
+.sms-nav {
+  background-color: var(--sms-nav-bg) !important;
+  color: var(--sms-nav-text) !important;
+}
+
+.sms-nav .nav-link {
+  color: var(--sms-nav-text) !important;
+}
+
+.sms-nav .nav-link:hover {
+  background-color: var(--sms-nav-hover) !important;
+  color: white !important;
+}
+
+/* Card Headers */
+.sms-card-header {
+  background-color: var(--sms-card-header-bg) !important;
+  color: var(--sms-card-header-text) !important;
+  border-bottom: 1px solid var(--sms-card-border) !important;
+}
+
+/* Form Controls */
+.sms-form-control {
+  border-color: var(--sms-form-border) !important;
+}
+
+.sms-form-control:focus {
+  border-color: var(--sms-form-focus) !important;
+  box-shadow: 0 0 0 0.2rem rgba(0, 106, 169, 0.25) !important;
+}
+
+/* Status Badges */
+.badge-status-active { 
+  background-color: var(--sms-status-active) !important; 
+  color: white !important;
+}
+.badge-status-pending { 
+  background-color: var(--sms-status-pending) !important; 
+  color: var(--sms-blue-dark-bold) !important;
+}
+.badge-status-closed { 
+  background-color: var(--sms-status-closed) !important; 
+  color: white !important;
+}
+.badge-status-cancelled { 
+  background-color: var(--sms-status-cancelled) !important; 
+  color: white !important;
+}
+
+/* =============================================================================
+   UTILITY CLASSES - SMS COLOR PALETTE
+   ============================================================================= */
+
+/* Background Colors */
+.bg-sms-blue-dark { background-color: var(--sms-blue-dark-bold) !important; }
+.bg-sms-blue-light { background-color: var(--sms-blue-light) !important; }
+.bg-sms-teal-accent { background-color: var(--sms-teal-accent) !important; }
+.bg-sms-green-light { background-color: var(--sms-green-light) !important; }
+.bg-sms-red-light { background-color: var(--sms-red-light) !important; }
+
+/* Text Colors */
+.text-sms-blue-dark { color: var(--sms-blue-dark-bold) !important; }
+.text-sms-blue-primary { color: var(--sms-blue-primary) !important; }
+.text-sms-green-dark { color: var(--sms-green-dark-bold) !important; }
+.text-sms-red-dark { color: var(--sms-red-dark-bold) !important; }
+.text-sms-teal-dark { color: var(--sms-teal-dark-bold) !important; }
+
+/* Border Colors */
+.border-sms-blue { border-color: var(--sms-blue-primary) !important; }
+.border-sms-green { border-color: var(--sms-green-primary) !important; }
+.border-sms-red { border-color: var(--sms-red-primary) !important; }
+.border-sms-teal { border-color: var(--sms-teal-primary) !important; }
+
+/* =============================================================================
+   END OF SMS COLOR SYSTEM
+   NO MODIFICATIONS WITHOUT APPROVAL
+   ============================================================================= */

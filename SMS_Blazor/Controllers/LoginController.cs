@@ -26,8 +26,13 @@ public class LoginController : Controller
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login(string email, string password)
+    public async Task<IActionResult> Login(string Email, string Password)
     {
+        _logger.LogInformation("LoginController.Login called with Email: {Email}", Email);
+        
+        var email = Email;
+        var password = Password;
+        
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
             _logger.LogWarning("Login attempt with missing credentials");

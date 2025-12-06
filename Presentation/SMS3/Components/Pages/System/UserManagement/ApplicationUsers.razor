@@ -1,0 +1,205 @@
+@page "/System/UserManagement/ApplicationUsers"
+@page "/System/UserManagement/ApplicationUsers/Edit/{Id?}"
+@using SMS_Application.Messaging.Commands
+@using SMS_Application.Messaging.Queries
+@using SMS_Domain.Entities
+@using SMS_Domain.ValueObjects
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Application User Management - SMS3</PageTitle>
+
+<div class="container-fluid">
+ 
+
+    <!-- Messages -->
+    @if (!string.IsNullOrEmpty(SuccessMessage))
+    {
+        <RadzenRow Gap="1rem" class="rz-mb-3">
+            <RadzenColumn Size="12">
+                <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter">
+                    <RadzenIcon Icon="check_circle" Style="margin-right: 0.5rem;" />
+                    @SuccessMessage
+                </RadzenAlert>
+            </RadzenColumn>
+        </RadzenRow>
+    }
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <RadzenRow Gap="1rem" class="rz-mb-3">
+            <RadzenColumn Size="12">
+                <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+                    <RadzenIcon Icon="error" Style="margin-right: 0.5rem;" />
+                    @ErrorMessage
+                </RadzenAlert>
+            </RadzenColumn>
+        </RadzenRow>
+    }
+
+    <!-- Edit User Form -->
+    @if (IsEditMode && CurrentUser != null)
+    {
+        <RadzenRow Gap="1rem" class="rz-mb-4">
+            <RadzenColumn Size="12">
+                <RadzenCard Variant="Variant.Outlined">
+                    <RadzenCardHeader>
+                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
+                            <RadzenIcon Icon="edit" Style="margin-right: 0.5rem;" />
+                            Edit User: @CurrentUser.DisplayName
+                        </RadzenText>
+                    </RadzenCardHeader>
+                    <RadzenCardContent>
+                        <RadzenTemplateForm Data="@editUser" Submit="@((EditUserModel model) => UpdateUser(model))">
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenFormField Text="First Name" Variant="Variant.Outlined">
+                                        <RadzenTextBox @bind-Value="@editUser.FirstName" Name="FirstName" />
+                                    </RadzenFormField>
+                                    <RadzenRequiredValidator Component="FirstName" Text="First name is required" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenFormField Text="Last Name" Variant="Variant.Outlined">
+                                        <RadzenTextBox @bind-Value="@editUser.LastName" Name="LastName" />
+                                    </RadzenFormField>
+                                    <RadzenRequiredValidator Component="LastName" Text="Last name is required" />
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <RadzenRow Gap="1rem" class="rz-mt-3">
+                                <RadzenColumn Size="12">
+                                    <RadzenFormField Text="Username" Variant="Variant.Outlined">
+                                        <RadzenTextBox Value="@CurrentUser.UserName?.Value" Disabled="true" />
+                                    </RadzenFormField>
+                                    <RadzenText TextStyle="TextStyle.Caption">Username cannot be changed after creation</RadzenText>
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <RadzenRow Gap="1rem" class="rz-mt-4">
+                                <RadzenColumn Size="12">
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                        <RadzenButton Text="Update User" Icon="save" ButtonStyle="ButtonStyle.Warning" 
+                                                    ButtonType="ButtonType.Submit" />
+                                        <RadzenButton Text="Cancel" Icon="cancel" Variant="Variant.Text" 
+                                                    Click="@CancelEdit" />
+                                        <RadzenButton Text="Change Password" Icon="vpn_key" ButtonStyle="ButtonStyle.Info" 
+                                                    Click="@(() => ShowPasswordDialog(CurrentUser.Code, CurrentUser.DisplayName))" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
+                        </RadzenTemplateForm>
+                    </RadzenCardContent>
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenRow>
+    }
+
+    <!-- Users DataGrid -->
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12">
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenCardHeader>
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
+                            <RadzenIcon Icon="list" Style="margin-right: 0.5rem;" />
+                            Application Users (@ApplicationUsersList.Count())
+                        </RadzenText>
+                        <RadzenButton Text="Export" Icon="download" Variant="Variant.Outlined" Size="ButtonSize.Small" 
+                                    Click="@ExportUsers" />
+                    </RadzenStack>
+                </RadzenCardHeader>
+                <RadzenCardContent>
+                    @if (ApplicationUsersList.Any())
+                    {
+                        <RadzenDataGrid @ref="usersGrid" Data="@ApplicationUsersList" TItem="SMSApplicationUser" 
+                                      AllowFiltering="true" AllowSorting="true" AllowPaging="true" 
+                                      PageSize="10" ShowPagingSummary="true" 
+                                      FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="SMSApplicationUser" Property="DisplayName" Title="User" Width="250px">
+                                    <Template Context="user">
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                            <RadzenGravatar Email="@($"{user.FirstName?.Value?.ToLower()}.{user.LastName?.Value?.ToLower()}@example.com")" 
+                                                          Size="35" />
+                                            <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                                                <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; font-weight: 600;">
+                                                    @user.DisplayName
+                                                </RadzenText>
+                                                <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                                                    @user.Code
+                                                </RadzenText>
+                                            </RadzenStack>
+                                        </RadzenStack>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="SMSApplicationUser" Property="UserName.Value" Title="Username" Width="150px" />
+                                <RadzenDataGridColumn TItem="SMSApplicationUser" Property="IsActive" Title="Status" Width="100px">
+                                    <Template Context="user">
+                                        <RadzenBadge Variant="Variant.Filled" 
+                                                   BadgeStyle="@(user.IsActive ? BadgeStyle.Success : BadgeStyle.Danger)"
+                                                   Text="@(user.IsActive ? "Active" : "Inactive")" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="SMSApplicationUser" Property="LastLoginDate" Title="Last Login" Width="150px">
+                                    <Template Context="user">
+                                        @if (user.LastLoginDate.HasValue)
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Body2">
+                                                @user.LastLoginDate.Value.ToString("MM/dd/yyyy HH:mm")
+                                            </RadzenText>
+                                        }
+                                        else
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-disabled-color);">
+                                                Never
+                                            </RadzenText>
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="SMSApplicationUser" Property="CreatedDate" Title="Created" Width="150px">
+                                    <Template Context="user">
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                                @user.CreatedDate?.ToString("MM/dd/yyyy")
+                                            </RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                                                by @user.CreatedBy
+                                            </RadzenText>
+                                        </RadzenStack>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="SMSApplicationUser" Title="Actions" Width="200px" Sortable="false" Filterable="false">
+                                    <Template Context="user">
+                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
+                                                        Click="@(() => EditUser(user.Code))" 
+                                                        title="Edit User" />
+                                            <RadzenButton Icon="vpn_key" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small" 
+                                                        Click="@(() => ShowPasswordDialog(user.Code, user.DisplayName))" 
+                                                        title="Change Password" />
+                                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
+                                                        Click="@(() => ShowDeleteDialog(user.Code, user.DisplayName))" 
+                                                        title="Delete User" />
+                                        </RadzenStack>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    }
+                    else
+                    {
+                        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 3rem;">
+                            <RadzenIcon Icon="people" Style="font-size: 4rem; color: var(--rz-text-disabled-color);" />
+                            <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-text-disabled-color);">
+                                No Application Users Found
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-disabled-color);">
+                                Click "Add User" to create your first application user.
+                            </RadzenText>
+                            <RadzenButton Text="Add First User" Icon="add" ButtonStyle="ButtonStyle.Primary" 
+                                        Click="@ShowCreateDialog" />
+                        </RadzenStack>
+                    }
+                </RadzenCardContent>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+</div>

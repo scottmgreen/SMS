@@ -25,20 +25,20 @@ public sealed class MitigationStrategy : BaseAuditableEntity
          UpdatedDate = DateTime.UtcNow;
     }
 
-    // Public Properties (immutable from outside)
-    public string Description { get; private set; } = string.Empty;
-    public string HazardId { get; private set; } = string.Empty; // Link to hazard
-    public string ControlType { get; private set; } = string.Empty;
-    public string Priority { get; private set; } = string.Empty;
-    public DateTime? TargetDate { get; private set; }
-    public decimal EstimatedCost { get; private set; }
-    public MitigationStatus Status { get; private set; }
-    public DateTime? CompletedDate { get; private set; }
-    public string? CompletedBy { get; private set; }
-    public string? ImplementationNotes { get; private set; }
-    public int ProgressPercentage { get; private set; } = 0;
-    public string? ResponsibleDepartment { get; private set; }
-    public string? ResponsiblePerson { get; private set; }
+    // Public Properties (now with public setters for UI binding)
+    public string Description { get; set; } = string.Empty;
+    public string HazardId { get; set; } = string.Empty; // Link to hazard
+    public string ControlType { get; set; } = string.Empty;
+    public string Priority { get; set; } = string.Empty;
+    public DateTime? TargetDate { get; set; }
+    public decimal EstimatedCost { get; set; }
+    public MitigationStatus Status { get; set; }
+    public DateTime? CompletedDate { get; set; }
+    public string? CompletedBy { get; set; }
+    public string? ImplementationNotes { get; set; }
+    public int ProgressPercentage { get; set; } = 0;
+    public string? ResponsibleDepartment { get; set; }
+    public string? ResponsiblePerson { get; set; }
 
     /// <summary>
     /// Factory method to create new Mitigation Strategy

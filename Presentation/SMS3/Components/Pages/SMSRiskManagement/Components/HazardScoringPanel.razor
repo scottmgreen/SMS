@@ -1,0 +1,407 @@
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using SMS3.Components.Pages.SMSRiskManagement
+@using global::System.Text.Json
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid var(--rz-secondary);">
+    <RadzenStack Gap="1rem">
+        <!-- Hazard Header -->
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="8">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
+                        <RadzenIcon Icon="warning" Style="color: var(--rz-warning); margin-right: 0.5rem;" />
+                        @($"{Hazard.Code}: {Hazard.Description}")
+                    </RadzenText>
+                    @if (!string.IsNullOrEmpty(Hazard.HazardType))
+                    {
+                        <RadzenBadge Text="@Hazard.HazardType" BadgeStyle="BadgeStyle.Info" />
+                    }
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="4">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Text="Manage Panel" Icon="people" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                                  Click="@(() => ShowPanelDialog = true)" />
+                    @if (GetHazardAverage() != null)
+                    {
+                        <RadzenBadge Text="@($"Avg: {GetHazardAverage():F1}")" BadgeStyle="BadgeStyle.Success" Style="font-size: 1rem;" />
+                    }
+                    else if (GetPanelMembers().Any())
+                    {
+                        <RadzenBadge Text="@($"{GetCompletedCount()}/{GetPanelMembers().Count} Scored")" BadgeStyle="BadgeStyle.Warning" />
+                    }
+                    else
+                    {
+                        <RadzenBadge Text="No Panel" BadgeStyle="BadgeStyle.Secondary" />
+                    }
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <!-- Scoring Panel -->
+        @if (GetPanelMembers().Any())
+        {
+            <RadzenDataGrid Data="@GetPanelMembersData()" TItem="PanelMemberData" AllowPaging="false" AllowSorting="false">
+                <Columns>
+                    <RadzenDataGridColumn TItem="PanelMemberData" Property="Name" Title="Panel Member">
+                        <Template Context="member">
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenText TextStyle="TextStyle.Subtitle2" Text="@member.Name" Style="margin: 0;" />
+                                <RadzenText TextStyle="TextStyle.Caption" Text="@member.Role" />
+                                @if (member.IsCompleted)
+                                {
+                                    <RadzenBadge Text="Scored" BadgeStyle="BadgeStyle.Success" />
+                                }
+                                else
+                                {
+                                    <RadzenBadge Text="Pending" BadgeStyle="BadgeStyle.Warning" />
+                                }
+                            </RadzenStack>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="PanelMemberData" Title="Severity (1-5)">
+                        <Template Context="member">
+                            @if (member.IsCompleted)
+                            {
+                                <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenBadge Text="@member.SeverityScore.ToString()" BadgeStyle="BadgeStyle.Primary" />
+                                    <RadzenText TextStyle="TextStyle.Caption" Text="@GetSeverityLabel(member.SeverityScore)" />
+                                </RadzenStack>
+                            }
+                            else
+                            {
+                                <RadzenDropDown @bind-Value="@member.SeverityScore" Data="@SeverityOptions" 
+                                                ValueProperty="Value" TextProperty="Text"
+                                                Placeholder="Select..." Style="width: 100%;" 
+                                                Change="@(() => CalculateScore(member))" />
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="PanelMemberData" Title="Likelihood (1-5)">
+                        <Template Context="member">
+                            @if (member.IsCompleted)
+                            {
+                                <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenBadge Text="@member.LikelihoodScore.ToString()" BadgeStyle="BadgeStyle.Primary" />
+                                    <RadzenText TextStyle="TextStyle.Caption" Text="@GetLikelihoodLabel(member.LikelihoodScore)" />
+                                </RadzenStack>
+                            }
+                            else
+                            {
+                                <RadzenDropDown @bind-Value="@member.LikelihoodScore" Data="@LikelihoodOptions" 
+                                                ValueProperty="Value" TextProperty="Text"
+                                                Placeholder="Select..." Style="width: 100%;" 
+                                                Change="@(() => CalculateScore(member))" />
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="PanelMemberData" Title="Score">
+                        <Template Context="member">
+                            @if (member.CalculatedScore > 0)
+                            {
+                                <RadzenBadge Text="@member.CalculatedScore.ToString("F1")" BadgeStyle="BadgeStyle.Success" Style="font-size: 1rem;" />
+                            }
+                            else
+                            {
+                                <RadzenText TextStyle="TextStyle.Caption" Text="-" />
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="PanelMemberData" Title="Action">
+                        <Template Context="member">
+                            @if (member.IsCompleted)
+                            {
+                                <RadzenButton Text="Edit" Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                              Click="@(() => EditScore(member))" />
+                            }
+                            else if (member.SeverityScore > 0 && member.LikelihoodScore > 0)
+                            {
+                                <RadzenButton Text="Submit" Icon="save" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                                              Click="@(() => SubmitScore(member))" />
+                            }
+                            else
+                            {
+                                <RadzenButton Text="Submit" Icon="save" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" Disabled="true" />
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+
+            <!-- Panel Summary -->
+            @if (GetHazardAverage() != null)
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Success" Icon="check_circle" ShowIcon="true">
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="@($"Panel Consensus for {Hazard.Code}")" Style="margin: 0;" />
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="@($"Average Score: {GetHazardAverage():F1} (from {GetCompletedCount()} scores)")" Style="margin: 0;" />
+                    </RadzenStack>
+                </RadzenAlert>
+            }
+            else if (GetPanelMembers().Any())
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Info" Icon="schedule" ShowIcon="true">
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Scoring in Progress: {GetCompletedCount()} of {GetPanelMembers().Count} panel members have scored this hazard.")" />
+                </RadzenAlert>
+            }
+        }
+        else
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Warning" Icon="warning" ShowIcon="true">
+                <RadzenText TextStyle="TextStyle.Body2" Text="@($"No Scoring Panel for {Hazard.Code}: Click 'Manage Panel' to assign stakeholders for scoring.")" />
+            </RadzenAlert>
+        }
+    </RadzenStack>
+</RadzenCard>
+
+<!-- Panel Management Dialog -->
+@if (ShowPanelDialog)
+{
+    <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+        <RadzenCard Style="width: 800px; max-width: 90vw; max-height: 80vh; overflow-y: auto;">
+            <RadzenStack Gap="1rem">
+                <RadzenRow AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="10">
+                        <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
+                            <RadzenIcon Icon="people" Style="margin-right: 0.5rem;" />
+                            Select Panel Members for @Hazard.Code
+                        </RadzenText>
+                    </RadzenColumn>
+                    <RadzenColumn Size="2">
+                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
+                                      Click="@(() => ShowPanelDialog = false)" />
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenAlert AlertStyle="AlertStyle.Primary" Icon="info" ShowIcon="true">
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Configuring scoring panel for: {Hazard.Code} - {Hazard.Description}")" />
+                </RadzenAlert>
+
+                <!-- Available Stakeholders -->
+                <RadzenDataGrid Data="@GetAvailableStakeholdersForSelection()" TItem="StakeholderSelectionItem" AllowPaging="false">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="StakeholderSelectionItem" Title="Select">
+                            <Template Context="stakeholder">
+                                <RadzenCheckBox @bind-Value="@stakeholder.IsSelected" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="StakeholderSelectionItem" Property="Name" Title="Name" />
+                        <RadzenDataGridColumn TItem="StakeholderSelectionItem" Property="Organization" Title="Organization" />
+                        <RadzenDataGridColumn TItem="StakeholderSelectionItem" Property="Role" Title="Role" />
+                    </Columns>
+                </RadzenDataGrid>
+
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@(() => ShowPanelDialog = false)" />
+                    <RadzenButton Text="Update Panel" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="@UpdatePanel" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+    </div>
+}
+
+@code {
+    [Parameter] public Hazard Hazard { get; set; } = new(new HazardID("HZ-0000"));
+    [Parameter] public Step4Model Step4 { get; set; } = new();
+    [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
+    [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
+    [Parameter] public EventCallback<string> OnPanelUpdated { get; set; }
+    [Parameter] public EventCallback<Step4Model.PanelMemberScoreData> OnScoreSubmitted { get; set; }
+
+    private bool ShowPanelDialog { get; set; } = false;
+    private List<StakeholderSelectionItem> StakeholderSelectionItems { get; set; } = new();
+
+    private List<ScoreOption> SeverityOptions = new()
+    {
+        new() { Value = 1, Text = "1 - Minor" },
+        new() { Value = 2, Text = "2 - Moderate" },
+        new() { Value = 3, Text = "3 - Serious" },
+        new() { Value = 4, Text = "4 - Major" },
+        new() { Value = 5, Text = "5 - Catastrophic" }
+    };
+
+    private List<ScoreOption> LikelihoodOptions = new()
+    {
+        new() { Value = 1, Text = "1 - Rare" },
+        new() { Value = 2, Text = "2 - Unlikely" },
+        new() { Value = 3, Text = "3 - Possible" },
+        new() { Value = 4, Text = "4 - Likely" },
+        new() { Value = 5, Text = "5 - Frequent" }
+    };
+
+    protected override void OnInitialized()
+    {
+        InitializeStakeholderSelection();
+    }
+
+    private void InitializeStakeholderSelection()
+    {
+        var currentPanelMembers = GetPanelMembers();
+        
+        StakeholderSelectionItems = AvailableStakeholders.Select(s => new StakeholderSelectionItem
+        {
+            Id = s.Code,
+            Name = s.DisplayName,
+            Organization = s.Organization,
+            Role = s.StakeholderType,
+            IsSelected = currentPanelMembers.Contains(s.Code)
+        }).ToList();
+
+        // Also add assessors
+        StakeholderSelectionItems.AddRange(AvailableAssessors.Select(a => new StakeholderSelectionItem
+        {
+            Id = a.Id.Value,
+            Name = a.DisplayName ?? a.UserName.Value,
+            Organization = "SMS Team",
+            Role = a.UserRole.Name,
+            IsSelected = currentPanelMembers.Contains(a.Id.Value)
+        }));
+    }
+
+    private List<string> GetPanelMembers()
+    {
+        return Step4.HazardPanelMembers.ContainsKey(Hazard.Code) 
+            ? Step4.HazardPanelMembers[Hazard.Code] 
+            : new List<string>();
+    }
+
+    private List<PanelMemberData> GetPanelMembersData()
+    {
+        var panelMembers = GetPanelMembers();
+        var scores = Step4.PanelScores.ContainsKey(Hazard.Code) 
+            ? Step4.PanelScores[Hazard.Code] 
+            : new List<Step4Model.PanelMemberScoreData>();
+
+        return panelMembers.Select(memberId =>
+        {
+            var stakeholder = AvailableStakeholders.FirstOrDefault(s => s.Code == memberId);
+            var assessor = AvailableAssessors.FirstOrDefault(a => a.Id.Value == memberId);
+            var score = scores.FirstOrDefault(s => s.MemberId == memberId);
+
+            return new PanelMemberData
+            {
+                MemberId = memberId,
+                Name = stakeholder?.DisplayName ?? stakeholder?.DisplayName ?? "Unknown",
+                Role = stakeholder?.StakeholderType ?? stakeholder?.UserRole.Name ?? "Unknown",
+                SeverityScore = score?.SeverityScore ?? 0,
+                LikelihoodScore = score?.LikelihoodScore ?? 0,
+                CalculatedScore = score?.CalculatedScore ?? 0,
+                IsCompleted = score?.IsComplete ?? false
+            };
+        }).ToList();
+    }
+
+    private List<StakeholderSelectionItem> GetAvailableStakeholdersForSelection()
+    {
+        return StakeholderSelectionItems;
+    }
+
+    private double? GetHazardAverage()
+    {
+        return Step4.HazardAverageScores.ContainsKey(Hazard.Code) 
+            ? Step4.HazardAverageScores[Hazard.Code] 
+            : null;
+    }
+
+    private int GetCompletedCount()
+    {
+        if (!Step4.PanelScores.ContainsKey(Hazard.Code)) return 0;
+        return Step4.PanelScores[Hazard.Code].Count(s => s.IsComplete);
+    }
+
+    private string GetSeverityLabel(int severity)
+    {
+        return severity switch
+        {
+            1 => "Minor",
+            2 => "Moderate",
+            3 => "Serious",
+            4 => "Major",
+            5 => "Catastrophic",
+            _ => ""
+        };
+    }
+
+    private string GetLikelihoodLabel(int likelihood)
+    {
+        return likelihood switch
+        {
+            1 => "Rare",
+            2 => "Unlikely",
+            3 => "Possible",
+            4 => "Likely",
+            5 => "Frequent",
+            _ => ""
+        };
+    }
+
+    private void CalculateScore(PanelMemberData member)
+    {
+        if (member.SeverityScore > 0 && member.LikelihoodScore > 0)
+        {
+            member.CalculatedScore = member.SeverityScore * member.LikelihoodScore;
+        }
+        else
+        {
+            member.CalculatedScore = 0;
+        }
+    }
+
+    private async Task SubmitScore(PanelMemberData member)
+    {
+        var scoreData = new Step4Model.PanelMemberScoreData
+        {
+            HazardId = Hazard.Code,
+            MemberId = member.MemberId,
+            SeverityScore = member.SeverityScore,
+            LikelihoodScore = member.LikelihoodScore,
+            SubmittedDate = DateTime.UtcNow
+        };
+
+        await OnScoreSubmitted.InvokeAsync(scoreData);
+        member.IsCompleted = true;
+    }
+
+    private void EditScore(PanelMemberData member)
+    {
+        member.IsCompleted = false;
+    }
+
+    private async Task UpdatePanel()
+    {
+        var selectedMembers = StakeholderSelectionItems.Where(s => s.IsSelected).Select(s => s.Id).ToList();
+        Step4.HazardPanelMembers[Hazard.Code] = selectedMembers;
+        
+        ShowPanelDialog = false;
+        await OnPanelUpdated.InvokeAsync(Hazard.Code);
+    }
+
+    public class PanelMemberData
+    {
+        public string MemberId { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+        public int SeverityScore { get; set; }
+        public int LikelihoodScore { get; set; }
+        public double CalculatedScore { get; set; }
+        public bool IsCompleted { get; set; }
+    }
+
+    public class StakeholderSelectionItem
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Organization { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+        public bool IsSelected { get; set; }
+    }
+
+    public class ScoreOption
+    {
+        public int Value { get; set; }
+        public string Text { get; set; } = string.Empty;
+    }
+}

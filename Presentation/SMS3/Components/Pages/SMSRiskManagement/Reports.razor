@@ -1,0 +1,225 @@
+﻿@page "/SMSRiskManagement/Reports"
+
+<PageTitle>SMS Reports Management - PDXSMS</PageTitle>
+
+@if (!IsAuthenticated)
+{
+    <!-- Unauthorized Access -->
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+        <strong>Access Denied:</strong> You must be logged in to view SMS reports.
+    </RadzenAlert>
+}
+else if (IsLoading)
+{
+    <!-- Loading State -->
+    <div class="text-center py-5">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+        <p class="mt-3 text-muted">Loading SMS reports...</p>
+    </div>
+}
+else if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <!-- Error State -->
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+        <strong>Error:</strong> @ErrorMessage
+        <div class="mt-2">
+            <RadzenButton ButtonStyle="ButtonStyle.Danger" 
+                         Text="Try Again" 
+                         Click="RefreshAsync" 
+                         Size="ButtonSize.Small" />
+        </div>
+    </RadzenAlert>
+}
+else
+{
+    <!-- Main Content -->
+    <div class="row">
+        <div class="col-12">
+            <RadzenCard>
+                <!-- Toolbar -->
+                <div class="row mb-3 align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2"></i>Reports List
+                            <RadzenBadge BadgeStyle="BadgeStyle.Info" 
+                                        Text="@AllReports.Count.ToString()" 
+                                        Variant="Variant.Flat" 
+                                        Class="ms-2" />
+                        </h5>
+                    </div>
+                    <div class="col-auto">
+                        <div class="d-flex align-items-center gap-3">
+                            <!-- Create New Report Button -->
+                            <RadzenButton ButtonStyle="ButtonStyle.Success" 
+                                        Text="Create New Report" 
+                                        Click="@ShowCreateReportDialog" 
+                                        Size="ButtonSize.Medium" />
+                            
+                            <!-- Page Size Selector -->
+                            <div class="d-flex align-items-center">
+                                <small class="text-muted me-2">Show:</small>
+                                <RadzenDropDown @bind-Value="PageSize" 
+                                               Data="@PageSizeOptions" 
+                                               Change="OnPageSizeChanged"
+                                               Style="width: 80px;" />
+                            </div>
+                            
+                            <!-- Refresh Button -->
+                            <RadzenButton ButtonStyle="ButtonStyle.Primary" 
+                                         Text="Refresh" 
+                                         Click="RefreshAsync" 
+                                         Size="ButtonSize.Small" />
+                        </div>
+                    </div>
+                </div>
+
+                @if (!AllReports.Any())
+                {
+                    <!-- Empty State -->
+                    <div class="text-center py-5">
+                        <i class="fas fa-file-alt text-muted" style="font-size: 4rem;"></i>
+                        <h5 class="mt-3 text-muted">No Reports Found</h5>
+                        <p class="text-muted">There are currently no reports in the system.</p>
+                        <RadzenButton ButtonStyle="ButtonStyle.Success" 
+                                    Text="Create Your First Report" 
+                                    Click="ShowCreateReportDialog" 
+                                    Size="ButtonSize.Large" />
+                    </div>
+                }
+                else
+                {
+                    <!-- Paged Reports List -->
+                    <RadzenDataList @ref="reportsDataList"
+                                   WrapItems="false" 
+                                   AllowPaging="true" 
+                                   Data="@AllReports" 
+                                   TItem="Report"
+                                   PageSize="@PageSize"
+                                   Count="@AllReports.Count"
+                                   PagerHorizontalAlign="HorizontalAlign.Left"
+                                   ShowPagingSummary="true"
+                                   PagingSummaryFormat="Showing {0} to {1} of {2} reports"
+                                   PageSizeText="Reports per page">
+                        
+                        <Template Context="report">
+                            <!-- Report Card Template -->
+                            <div class="mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <!-- Expand/Collapse Button -->
+                                            <div class="col-auto">
+                                                <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                                            Variant="Variant.Text" 
+                                                            Size="ButtonSize.Small"
+                                                            Click="@(() => ToggleRowExpansion(report))"
+                                                            title="@(IsRowExpanded(report) ? "Hide Hazards" : "Show Hazards")">
+                                                    <Template>
+                                                        <i class="fas @(IsRowExpanded(report) ? "fa-chevron-up" : "fa-chevron-down")"></i>
+                                                    </Template>
+                                                </RadzenButton>
+                                            </div>
+
+                                            <!-- Report Code -->
+                                            <div class="col-auto">
+                                                <strong class="text-primary">@report.Code</strong>
+                                            </div>
+
+                                            <!-- Report Name & Description -->
+                                            <div class="col">
+                                                <div class="d-flex flex-column">
+                                                    <strong>@(report.Name ?? "Unnamed Report")</strong>
+                                                    @if (!string.IsNullOrEmpty(report.Description))
+                                                    {
+                                                        <small class="text-muted">@report.Description</small>
+                                                    }
+                                                </div>
+                                            </div>
+
+                                            <!-- Status -->
+                                            <div class="col-auto">
+                                                @if (!string.IsNullOrEmpty(report.Status))
+                                                {
+                                                    <RadzenBadge Text="@report.Status" 
+                                                               BadgeStyle="@GetStatusBadgeStyle(report.Status)" 
+                                                               Variant="Variant.Flat" />
+                                                }
+                                            </div>
+
+                                            <!-- Stage -->
+                                            <div class="col-auto">
+                                                @if (!string.IsNullOrEmpty(report.Stage))
+                                                {
+                                                    <RadzenBadge Text="@report.Stage" 
+                                                               BadgeStyle="@GetStageBadgeStyle(report.Stage)" 
+                                                               Variant="Variant.Flat" />
+                                                }
+                                            </div>
+
+                                            <!-- Created Date -->
+                                            <div class="col-auto">
+                                                <small class="text-muted">
+                                                    @(report.CreatedDate?.ToString("MM/dd/yyyy") ?? "N/A")
+                                                </small>
+                                            </div>
+
+                                            <!-- Actions -->
+                                            <div class="col-auto">
+                                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                                                    <RadzenButton ButtonStyle="ButtonStyle.Info" 
+                                                                Variant="Variant.Text" 
+                                                                Size="ButtonSize.Small"
+                                                                Click="@(() => OnViewReportAsync(report))"
+                                                                title="View Details">
+                                                        <Template>
+                                                            <i class="fas fa-eye"></i>
+                                                        </Template>
+                                                    </RadzenButton>
+                                                    <RadzenButton ButtonStyle="ButtonStyle.Warning" 
+                                                                Variant="Variant.Text" 
+                                                                Size="ButtonSize.Small"
+                                                                Click="@(() => OnEditReportAsync(report))"
+                                                                title="Edit Report">
+                                                        <Template>
+                                                            <i class="fas fa-edit"></i>
+                                                        </Template>
+                                                    </RadzenButton>
+                                                    <RadzenButton ButtonStyle="ButtonStyle.Danger" 
+                                                                Variant="Variant.Text" 
+                                                                Size="ButtonSize.Small"
+                                                                Click="@(() => OnDeleteReportAsync(report))"
+                                                                title="Delete Report">
+                                                        <Template>
+                                                            <i class="fas fa-trash"></i>
+                                                        </Template>
+                                                    </RadzenButton>
+                                                </RadzenStack>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Expandable Hazard Details -->
+                                    @if (IsRowExpanded(report))
+                                    {
+                                        <SMS3.Components.Pages.SMSRiskManagement.Components.HazardDetails 
+                                            ReportCode="@report.Code"
+                                            OnViewHazardCallback="@((hazard) => OnViewHazard(hazard))"
+                                            OnEditHazardCallback="@((hazard) => OnEditHazard(hazard))" />
+                                    }
+                                </div>
+                            </div>
+                        </Template>
+                        
+                        <EmptyTemplate>
+                            <div class="text-center py-5">
+                                <i class="fas fa-file-alt text-muted" style="font-size: 4rem;"></i>
+                                <h5 class="mt-3 text-muted">No Reports Found</h5>
+                                <p class="text-muted">There are currently no reports in the system.</p>
+                            </div>
+                        </EmptyTemplate>
+                    </RadzenDataList>
+                }
+            </RadzenCard>
+        </div>
+    </div>
+}

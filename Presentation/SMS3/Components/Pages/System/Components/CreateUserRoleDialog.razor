@@ -1,0 +1,129 @@
+@using SMS3.Components.Pages.System.UserRoles
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenTemplateForm Data="@Model" Submit="@((UserRoles.CreateRoleModel model) => OnSubmit())">
+    <RadzenStack Gap="1rem">
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="12">
+                <RadzenFormField Text="Role Name" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="@Model.RoleName" Name="RoleName" Placeholder="Enter role name (e.g., Safety Manager, Report Viewer)" />
+                </RadzenFormField>
+                <RadzenRequiredValidator Component="RoleName" Text="Role name is required" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <!-- Permission Matrix -->
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="12">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" class="rz-mb-3">
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
+                        <RadzenIcon Icon="security" Style="margin-right: 0.5rem;" />
+                        Module Permissions
+                    </RadzenText>
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                        <RadzenButton Text="Select All" Icon="check_box" Size="ButtonSize.Small" 
+                                    Click="@(() => ToggleAllPermissions(true))" />
+                        <RadzenButton Text="Clear All" Icon="check_box_outline_blank" Size="ButtonSize.Small" Variant="Variant.Outlined"
+                                    Click="@(() => ToggleAllPermissions(false))" />
+                    </RadzenStack>
+                </RadzenStack>
+                
+                <RadzenDataGrid Data="@SMSModules" TItem="string" AllowPaging="false" class="permission-grid">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="string" Title="Module" Width="25%">
+                            <Template Context="module">
+                                <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@module</RadzenText>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="string" Title="Create" Width="15%">
+                            <Template Context="module">
+                                <div class="d-flex justify-content-center">
+                                    <RadzenCheckBox @bind-Value="@Model.CreatePermissions[module]" Name="@($"create_{module}")" />
+                                </div>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="string" Title="Read" Width="15%">
+                            <Template Context="module">
+                                <div class="d-flex justify-content-center">
+                                    <RadzenCheckBox @bind-Value="@Model.ReadPermissions[module]" Name="@($"read_{module}")" />
+                                </div>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="string" Title="Update" Width="15%">
+                            <Template Context="module">
+                                <div class="d-flex justify-content-center">
+                                    <RadzenCheckBox @bind-Value="@Model.UpdatePermissions[module]" Name="@($"update_{module}")" />
+                                </div>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="string" Title="Delete" Width="15%">
+                            <Template Context="module">
+                                <div class="d-flex justify-content-center">
+                                    <RadzenCheckBox @bind-Value="@Model.DeletePermissions[module]" Name="@($"delete_{module}")" />
+                                </div>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="string" Title="Actions" Width="15%">
+                            <Template Context="module">
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                                    <RadzenButton Text="All" Size="ButtonSize.ExtraSmall" ButtonStyle="ButtonStyle.Primary" 
+                                                Click="@(() => ToggleModulePermissions(module, true))" />
+                                    <RadzenButton Text="None" Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined" 
+                                                Click="@(() => ToggleModulePermissions(module, false))" />
+                                </RadzenStack>
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" class="rz-mt-4">
+            <RadzenButton Text="Cancel" Variant="Variant.Text" Click="@Cancel" />
+            <RadzenButton Text="Create Role" Icon="save" ButtonStyle="ButtonStyle.Success" ButtonType="ButtonType.Submit" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public UserRoles.CreateRoleModel Model { get; set; } = new();
+    [Parameter] public string[] SMSModules { get; set; } = Array.Empty<string>();
+    [CascadingParameter] public DialogService? DialogService { get; set; }
+
+    private void OnSubmit()
+    {
+        if (string.IsNullOrWhiteSpace(Model.RoleName))
+        {
+            return; // Form validation will handle the errors
+        }
+
+        DialogService?.Close(Model);
+    }
+
+    private void Cancel()
+    {
+        DialogService?.Close();
+    }
+
+    private void ToggleAllPermissions(bool enable)
+    {
+        foreach (var module in SMSModules)
+        {
+            Model.CreatePermissions[module] = enable;
+            Model.ReadPermissions[module] = enable;
+            Model.UpdatePermissions[module] = enable;
+            Model.DeletePermissions[module] = enable;
+        }
+        StateHasChanged();
+    }
+
+    private void ToggleModulePermissions(string module, bool enable)
+    {
+        Model.CreatePermissions[module] = enable;
+        Model.ReadPermissions[module] = enable;
+        Model.UpdatePermissions[module] = enable;
+        Model.DeletePermissions[module] = enable;
+        StateHasChanged();
+    }
+}

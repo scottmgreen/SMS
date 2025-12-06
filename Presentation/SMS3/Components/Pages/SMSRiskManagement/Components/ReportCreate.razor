@@ -1,0 +1,827 @@
+<!-- Report Creation Component -->
+<div class="container-fluid">
+    
+
+    @if (IsLoading)
+    {
+        <!-- Loading State -->
+        <div class="text-center py-5">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+            <p class="mt-3 text-muted">Processing your report...</p>
+        </div>
+    }
+    else if (ShowSuccessConfirmation)
+    {
+        <!-- Final Success Confirmation Modal -->
+        <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-check-circle"></i> Hazard Report Successfully Submitted!
+                        </h5>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-12">
+                                <!-- Success Message -->
+                                <div class="alert alert-success">
+                                    <div class="row align-items-center">
+                                        <div class="col-auto">
+                                            <i class="fas fa-clipboard-check fa-4x"></i>
+                                        </div>
+                                        <div class="col">
+                                            <h4 class="alert-heading mb-3">Report Successfully Submitted!</h4>
+                                            <p class="mb-2">
+                                                <strong>Your Hazard Report ID:</strong>
+                                            </p>
+                                            <h2 class="text-success mb-3">
+                                                <i class="fas fa-id-badge"></i> @GeneratedHazardId
+                                            </h2>
+                                            <p class="mb-0">
+                                                <small class="text-muted">Please save this ID for your records and future reference.</small>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Report Details -->
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-info-circle"></i> Report Details
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <p class="mb-2">
+                                                    <strong>Hazard Report ID:</strong><br>
+                                                    <span class="badge bg-primary fs-6">@GeneratedHazardId</span>
+                                                </p>
+                                                <p class="mb-2">
+                                                    <strong>Tracking ID:</strong><br>
+                                                    <span class="text-muted">@GeneratedReportId</span>
+                                                </p>
+                                                <p class="mb-2">
+                                                    <strong>Submission Date:</strong><br>
+                                                    <span class="text-muted">@DateTime.Now.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt")</span>
+                                                </p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p class="mb-2">
+                                                    <strong>Status:</strong><br>
+                                                    <span class="badge bg-success">Submitted</span>
+                                                </p>
+                                                <p class="mb-2">
+                                                    <strong>Confidential:</strong><br>
+                                                    <span class="text-muted">@(HazardReportData.IsConfidential ? "Yes" : "No")</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Next Steps -->
+                                <div class="mt-3">
+                                    <div class="alert alert-info">
+                                        <h6 class="alert-heading">
+                                            <i class="fas fa-route"></i> What Happens Next:
+                                        </h6>
+                                        <ul class="mb-2">
+                                            <li><strong>Email Confirmation:</strong> You will receive a detailed confirmation email within 5 minutes</li>
+                                            <li><strong>Initial Review:</strong> Your report will be reviewed by SMS personnel within 24-48 hours</li>
+                                            <li><strong>Validation:</strong> The hazard will be validated for SMS risk assessment</li>
+                                            <li><strong>Assessment:</strong> If validated, a formal risk assessment will be conducted</li>
+                                            <li><strong>Follow-up Updates:</strong> You will receive email notifications of any status changes</li>
+                                        </ul>
+                                        <div class="small text-muted">
+                                            <i class="fas fa-clock"></i> <strong>Timeline:</strong> Most hazard reports are processed within 5-7 business days.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Contact Information -->
+                                <div class="mt-3">
+                                    <div class="card bg-light">
+                                        <div class="card-body text-center">
+                                            <h6><i class="fas fa-phone"></i> Need Help?</h6>
+                                            <p class="mb-2">
+                                                For questions about this report, contact:
+                                            </p>
+                                            <p class="mb-0">
+                                                <strong>SMS Team:</strong> (503) 555-0100<br>
+                                                <strong>Email:</strong> sms@flypdx.com<br>
+                                                <strong>Reference:</strong> @GeneratedHazardId
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="text-center mt-4">
+                                    <RadzenButton ButtonStyle="ButtonStyle.Primary" 
+                                                Click="ResetForm" 
+                                                Text="Continue & Clear Form" 
+                                                Icon="check"
+                                                Size="ButtonSize.Large" />
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle"></i> Clicking this button will clear the form for a new hazard report
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Main Content -->
+        <div class="row">
+            <!-- Form Column -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-edit"></i> Hazard Report Details</h3>
+                    </div>
+                    <div class="card-body">
+                        <RadzenTemplateForm Data="@HazardReportData" Submit="@HandleFormSubmit" TItem="ReportHazardData">
+                            <!-- Hazard Type -->
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label for="hazardType" class="form-label mb-0">Hazard Type <span class="text-danger">*</span></label>
+                                </div>
+                                <div class="input-group">
+                                    <RadzenDropDown @bind-Value="@HazardReportData.HazardType" 
+                                                  Data="@HazardTypeOptions" 
+                                                  TextProperty="Text" 
+                                                  ValueProperty="Value"
+                                                  Placeholder="Select hazard type..."
+                                                  Name="HazardType"
+                                                  Class="form-select" />
+                                </div>
+                                <RadzenRequiredValidator Component="HazardType" Text="Hazard type is required" />
+                            </div>
+
+                            <!-- Reported By and Reported On -->
+                            <div class="mb-3">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <label for="reportedBy" class="form-label">Reported By <span class="text-danger">*</span></label>
+                                        <RadzenTextBox @bind-Value="@HazardReportData.ReportedBy" 
+                                                     Placeholder="Provide the name and position of the person reporting this hazard (e.g., 'John Smith - Ground Operations Supervisor')"
+                                                     Name="ReportedBy"
+                                                     Class="form-control" />
+                                        <RadzenRequiredValidator Component="ReportedBy" Text="Reported by is required" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="reportedOn" class="form-label">Reported On <span class="text-danger">*</span></label>
+                                        <RadzenDatePicker @bind-Value="@HazardReportData.ReportedOn" 
+                                                        ShowTime="true"
+                                                        DateFormat="MM/dd/yyyy HH:mm"
+                                                        Class="form-control" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Department -->
+                            <div class="mb-3">
+                                <label for="department" class="form-label">Reporting Department</label>
+                                <RadzenDropDown @bind-Value="@HazardReportData.ReportingDepartment" 
+                                              Data="@DepartmentOptions" 
+                                              TextProperty="Text" 
+                                              ValueProperty="Value"
+                                              Placeholder="Select your department..."
+                                              AllowClear="true"
+                                              Class="form-select" />
+                            </div>
+
+                            <!-- Location -->
+                            <div class="mb-3">
+                                <label for="location" class="form-label">Location <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <RadzenButton ButtonStyle="ButtonStyle.Primary" 
+                                                Click="ShowLocationSelector"
+                                                Text="Select on Map" 
+                                                Icon="map" />
+                                    <RadzenTextBox Value="@LocationDisplayText" 
+                                                 ReadOnly="true"
+                                                 Placeholder="No location selected - click 'Select on Map'"
+                                                 Class="form-control" />
+                                </div>
+                                @if (HasGeoLocation)
+                                {
+                                    <small class="text-success">
+                                        <i class="fas fa-map-pin"></i> Location set: @LocationDisplayText
+                                    </small>
+                                }
+                            </div>
+
+                            <!-- Enhanced Location Selector -->
+                            <SMS3.Components.Pages.SMSRiskManagement.Components.HazardLocationOpenLayers @ref="hazardLocationComponent"
+                                                                                                                   OnLocationSelected="@OnLocationSelected"
+                                                                                                                   InitialLocation="@GetInitialLocation()" />
+
+                            <!-- Description -->
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Hazard Description <span class="text-danger">*</span></label>
+                                <RadzenTextArea @bind-Value="@HazardReportData.Description" 
+                                              Rows="6"
+                                              Name="Description"
+                                              Placeholder="Provide a detailed description of the hazard including what happened, when, who was involved, conditions, immediate actions taken, and potential consequences..."
+                                              Class="form-control" />
+                                <div class="form-text">
+                                    <span class="float-end">
+                                        <span class="@(DescriptionCharacterCount > 1950 ? "text-danger" : DescriptionCharacterCount > 1800 ? "text-warning" : "")">
+                                            @DescriptionCharacterCount
+                                        </span>/2000 characters
+                                    </span>
+                                </div>
+                                <RadzenRequiredValidator Component="Description" Text="Description is required" />
+                            </div>
+
+                            <!-- Confidential Flag -->
+                            <div class="mb-3">
+                                <div class="card border-info">
+                                    <div class="card-body">
+                                        <div class="form-check">
+                                            <RadzenCheckBox @bind-Value="@HazardReportData.IsConfidential" 
+                                                          Name="IsConfidential" 
+                                                          TriState="false" />
+                                            <RadzenLabel Text="Submit as Confidential Report" Component="IsConfidential" Class="form-check-label ms-2" />
+                                            <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                                        Variant="Variant.Text"
+                                                        Icon="info"
+                                                        Size="ButtonSize.ExtraSmall"
+                                                        Click="ShowConfidentialInfo"
+                                                        Class="btn btn-sm btn-outline-primary ms-2" />
+                                        </div>
+                                        @if (ShowConfidentialDetails)
+                                        {
+                                            <div class="mt-2">
+                                                <div class="alert alert-info small mb-0">
+                                                    <i class="fas fa-shield-alt"></i> 
+                                                    <strong>Confidential Protection:</strong> Your identity will be protected and access to this report will be restricted to authorized SMS personnel only.
+                                                    <br><strong>Benefits:</strong> Enhanced protection from retaliation, restricted access, anonymous follow-up options.
+                                                    <br><strong>Note:</strong> Confidential reports may take longer to process due to additional security measures.
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- File Attachments -->
+                            <div class="mb-3">
+                                <label for="attachments" class="form-label">Supporting Documents</label>
+                                <RadzenFileInput @bind-Value="@SelectedFiles" 
+                                               Multiple="true"
+                                               Accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt"
+                                               MaxFileSize="10485760"
+                                               Class="form-control" />
+                                <div class="form-text">
+                                    <i class="fas fa-paperclip"></i> Attach photos, documents, or other supporting evidence
+                                    <br><strong>Supported formats:</strong> JPG, PNG, PDF, DOC, DOCX, TXT (Max 10MB per file)
+                                </div>
+                                @if (AttachedFiles.Any())
+                                {
+                                    <div class="mt-2">
+                                        <div class="alert alert-info small">
+                                            <strong>Selected files:</strong>
+                                            <ul class="mb-0 mt-1">
+                                                @foreach (var file in AttachedFiles)
+                                                {
+                                                    <li>@file.FileName (@file.SizeDisplay)</li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <hr>
+                                    <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                                        <div>
+                                            <RadzenButton ButtonStyle="ButtonStyle.Info" 
+                                                        Variant="Variant.Outlined"
+                                                        Icon="preview"
+                                                        Text="Preview Report"
+                                                        Click="ShowPreview"
+                                                        Disabled="@(!IsFormValidForPreview)" />
+                                        </div>
+                                        <div>
+                                            <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
+                                                        Icon="clear"
+                                                        Text="Clear Form"
+                                                        Click="ClearForm" />
+                                            <RadzenButton ButtonStyle="ButtonStyle.Danger" 
+                                                        Icon="send"
+                                                        Text="Submit Hazard Report"
+                                                        Click="ShowSubmissionConfirmationDialog"
+                                                        Disabled="@(!IsFormValidForSubmission)"
+                                                        Class="ms-2" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </RadzenTemplateForm>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help Panel -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5><i class="fas fa-question-circle"></i> Reporting Guidelines</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>What to Report:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Actual incidents or accidents</li>
+                            <li><i class="fas fa-check text-success"></i> Near-miss events</li>
+                            <li><i class="fas fa-check text-success"></i> Unsafe conditions</li>
+                            <li><i class="fas fa-check text-success"></i> Equipment malfunctions</li>
+                            <li><i class="fas fa-check text-success"></i> Procedural violations</li>
+                            <li><i class="fas fa-check text-success"></i> Security concerns</li>
+                            <li><i class="fas fa-check text-success"></i> Environmental hazards</li>
+                        </ul>
+
+                        <h6 class="mt-3">Confidential Reporting:</h6>
+                        <p class="small">
+                            Use confidential reporting when concerned about:
+                        </p>
+                        <ul class="list-unstyled small">
+                            <li><i class="fas fa-shield-alt text-primary"></i> Personal safety or retaliation</li>
+                            <li><i class="fas fa-shield-alt text-primary"></i> Sensitive operational information</li>
+                            <li><i class="fas fa-shield-alt text-primary"></i> Personnel-related issues</li>
+                            <li><i class="fas fa-shield-alt text-primary"></i> Management or supervisory concerns</li>
+                        </ul>
+
+                        <div class="mt-3">
+                            <h6>Need Help?</h6>
+                            <p class="small">
+                                Contact the SMS Team:
+                                <br><i class="fas fa-phone"></i> (503) 555-0100
+                                <br><i class="fas fa-envelope"></i> sms@flypdx.com
+                                <br><i class="fas fa-clock"></i> 24/7 Emergency Hotline
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Submission Confirmation Modal -->
+    @if (ShowSubmissionConfirmation)
+    {
+        <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title">
+                            <i class="fas fa-exclamation-triangle"></i> Confirm Hazard Report Submission
+                        </h5>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-12">
+                                <!-- Confirmation Message -->
+                                <div class="alert alert-warning">
+                                    <div class="row align-items-center">
+                                        <div class="col-auto">
+                                            <i class="fas fa-question-circle fa-3x"></i>
+                                        </div>
+                                        <div class="col">
+                                            <h5 class="alert-heading mb-2">Are you sure you want to submit this hazard report?</h5>
+                                            <p class="mb-1">
+                                                <strong>Once submitted, this report will be entered into the SMS system for processing.</strong>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Report Summary -->
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-file-alt"></i> Report Summary
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <p class="mb-2">
+                                                    <strong>Hazard Type:</strong><br>
+                                                    <span class="text-muted">@GetHazardTypeDisplay(HazardReportData.HazardType)</span>
+                                                </p>
+                                                <p class="mb-2">
+                                                    <strong>Location:</strong><br>
+                                                    <span class="text-muted">@LocationDisplayText</span>
+                                                </p>
+                                                <p class="mb-2">
+                                                    <strong>Reported By:</strong><br>
+                                                    <span class="text-muted">@HazardReportData.ReportedBy</span>
+                                                </p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p class="mb-2">
+                                                    <strong>Reported On:</strong><br>
+                                                    <span class="text-muted">@HazardReportData.ReportedOn.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt")</span>
+                                                </p>
+                                                @if (!string.IsNullOrEmpty(HazardReportData.ReportingDepartment))
+                                                {
+                                                    <p class="mb-2">
+                                                        <strong>Department:</strong><br>
+                                                        <span class="text-muted">@GetDepartmentDisplay(HazardReportData.ReportingDepartment)</span>
+                                                    </p>
+                                                }
+                                                <p class="mb-2">
+                                                    <strong>Confidential:</strong><br>
+                                                    <span class="text-muted">@(HazardReportData.IsConfidential ? "Yes" : "No")</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
+                                        <hr>
+                                        
+                                        <p class="mb-2">
+                                            <strong>Description:</strong>
+                                        </p>
+                                        <div class="bg-light p-3 rounded" style="max-height: 150px; overflow-y: auto;">
+                                            <small style="white-space: pre-wrap;">@HazardReportData.Description</small>
+                                        </div>
+                                        
+                                        @if (AttachedFiles.Any())
+                                        {
+                                            <hr>
+                                            <p class="mb-2">
+                                                <strong>Attachments:</strong> @AttachedFiles.Count file(s)
+                                            </p>
+                                            <ul class="list-unstyled small">
+                                                @foreach (var file in AttachedFiles)
+                                                {
+                                                    <li><i class="fas fa-paperclip"></i> @file.FileName (@file.SizeDisplay)</li>
+                                                }
+                                            </ul>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="mt-3 text-center">
+                                    <h5 class="text-primary mb-3">
+                                        <i class="fas fa-question-circle"></i> Submit this hazard report?
+                                    </h5>
+                                    
+                                    <div class="d-grid gap-2 d-md-flex justify-content-center">
+                                        <RadzenButton ButtonStyle="ButtonStyle.Success" 
+                                                    Text="Yes, Submit Report" 
+                                                    Icon="check"
+                                                    Click="SubmitReportConfirmed"
+                                                    Size="ButtonSize.Large"
+                                                    Class="me-md-2" />
+                                        
+                                        <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
+                                                    Text="No, Continue Editing" 
+                                                    Icon="edit"
+                                                    Click="CancelSubmission"
+                                                    Size="ButtonSize.Large"
+                                                    Variant="Variant.Outlined" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    /* =============================================================================
+       REPORT CREATE COMPONENT - SMS COLOR COMPLIANCE
+       USING ONLY APPROVED SMS PALETTE - NO RANDOM COLORS
+       ============================================================================= */
+    
+    .report-create-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1rem;
+    }
+    
+    /* HEADER STYLING - SMS BRAND COLORS */
+    .card.bg-primary {
+        background-color: var(--sms-blue-primary) !important;
+    }
+    
+    .card-title {
+        color: white !important;
+    }
+    
+    /* FORM STYLING - SMS COMPLIANT */
+    .form-control, .form-select {
+        border: 1px solid var(--sms-form-border) !important;
+        border-radius: 0.375rem;
+        padding: 0.375rem 0.75rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--sms-form-focus) !important;
+        box-shadow: 0 0 0 0.2rem rgba(0, 106, 169, 0.25) !important;
+    }
+    
+    .form-label {
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--sms-blue-dark-bold) !important;
+    }
+    
+    /* CARD HEADERS - SMS INFO COLOR */
+    .card-header {
+        background-color: var(--sms-teal-light) !important;
+        color: var(--sms-blue-dark-bold) !important;
+        border-bottom: 1px solid var(--sms-card-border) !important;
+    }
+    
+    .card-header.bg-info {
+        background-color: var(--sms-teal-primary) !important;
+        color: white !important;
+    }
+    
+    /* HELP PANEL STYLING - SMS TEAL */
+    .card-header.bg-info.text-white {
+        background-color: var(--sms-teal-primary) !important;
+        border-bottom: 1px solid var(--sms-teal-dark-bold) !important;
+    }
+    
+    /* LIST STYLING */
+    .list-unstyled li {
+        margin-bottom: 0.25rem;
+    }
+    
+    .list-unstyled .fa-check {
+        color: var(--sms-green-primary) !important;
+    }
+    
+    .list-unstyled .fa-shield-alt {
+        color: var(--sms-blue-primary) !important;
+    }
+    
+    /* BUTTON STYLING - SMS EXACT COLORS */
+    .btn-primary {
+        background-color: var(--sms-btn-primary-bg) !important;
+        border-color: var(--sms-btn-primary-bg) !important;
+        color: var(--sms-btn-primary-text) !important;
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--sms-btn-primary-hover) !important;
+        border-color: var(--sms-btn-primary-hover) !important;
+    }
+    
+    .btn-success {
+        background-color: var(--sms-btn-success-bg) !important;
+        border-color: var(--sms-btn-success-bg) !important;
+        color: var(--sms-btn-success-text) !important;
+    }
+    
+    .btn-success:hover {
+        background-color: var(--sms-btn-success-hover) !important;
+        border-color: var(--sms-btn-success-hover) !important;
+    }
+    
+    .btn-danger {
+        background-color: var(--sms-btn-danger-bg) !important;
+        border-color: var(--sms-btn-danger-bg) !important;
+        color: var(--sms-btn-danger-text) !important;
+    }
+    
+    .btn-danger:hover {
+        background-color: var(--sms-btn-danger-hover) !important;
+        border-color: var(--sms-btn-danger-hover) !important;
+    }
+    
+    .btn-info {
+        background-color: var(--sms-btn-info-bg) !important;
+        border-color: var(--sms-btn-info-bg) !important;
+        color: var(--sms-btn-info-text) !important;
+    }
+    
+    .btn-info:hover {
+        background-color: var(--sms-btn-info-hover) !important;
+        border-color: var(--sms-btn-info-hover) !important;
+    }
+    
+    .btn-warning {
+        background-color: var(--sms-btn-warning-bg) !important;
+        border-color: var(--sms-btn-warning-bg) !important;
+        color: var(--sms-btn-warning-text) !important;
+    }
+    
+    .btn-warning:hover {
+        background-color: var(--sms-btn-warning-hover) !important;
+        border-color: var(--sms-btn-warning-hover) !important;
+        color: white !important;
+    }
+    
+    .btn-secondary {
+        background-color: var(--sms-blue-light) !important;
+        border-color: var(--sms-blue-light) !important;
+        color: var(--sms-blue-dark-bold) !important;
+    }
+    
+    .btn-secondary:hover {
+        background-color: var(--sms-blue-primary) !important;
+        border-color: var(--sms-blue-primary) !important;
+        color: white !important;
+    }
+    
+    /* ALERT STYLING - SMS COMPLIANT */
+    .alert-success {
+        background-color: var(--sms-alert-success-bg) !important;
+        color: var(--sms-alert-success-text) !important;
+        border-color: var(--sms-alert-success-border) !important;
+    }
+    
+    .alert-danger {
+        background-color: var(--sms-alert-danger-bg) !important;
+        color: var(--sms-alert-danger-text) !important;
+        border-color: var(--sms-alert-danger-border) !important;
+    }
+    
+    .alert-warning {
+        background-color: var(--sms-alert-warning-bg) !important;
+        color: var(--sms-alert-warning-text) !important;
+        border-color: var(--sms-alert-warning-border) !important;
+    }
+    
+    .alert-info {
+        background-color: var(--sms-alert-info-bg) !important;
+        color: var(--sms-alert-info-text) !important;
+        border-color: var(--sms-alert-info-border) !important;
+    }
+    
+    /* MAP CONTAINER - SMS STYLED */
+    .map-container {
+        width: 100% !important;
+        height: 400px !important;
+        border: 2px solid var(--sms-blue-primary) !important;
+        border-radius: 0.5rem !important;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 0.125rem 0.25rem rgba(33, 46, 97, 0.15) !important;
+    }
+    
+    /* MODAL STYLING - SMS COLORS */
+    .modal-header.bg-success {
+        background-color: var(--sms-green-primary) !important;
+        border-bottom: 1px solid var(--sms-green-dark-bold) !important;
+    }
+    
+    .modal-header.bg-warning {
+        background-color: var(--sms-red-accent) !important;
+        color: var(--sms-blue-dark-bold) !important;
+        border-bottom: 1px solid var(--sms-red-primary) !important;
+    }
+    
+    .modal-header.bg-info {
+        background-color: var(--sms-teal-primary) !important;
+        border-bottom: 1px solid var(--sms-teal-dark-bold) !important;
+    }
+    
+    .modal-content {
+        border-radius: 0.5rem !important;
+        box-shadow: 0 0.5rem 1rem rgba(33, 46, 97, 0.25) !important;
+        border: 1px solid var(--sms-blue-light) !important;
+    }
+    
+    /* BADGE STYLING - SMS STATUS COLORS */
+    .badge.bg-primary {
+        background-color: var(--sms-blue-primary) !important;
+    }
+    
+    .badge.bg-success {
+        background-color: var(--sms-green-primary) !important;
+    }
+    
+    .badge.bg-info {
+        background-color: var(--sms-teal-primary) !important;
+    }
+    
+    /* TEXT COLORS - SMS COMPLIANCE */
+    .text-success {
+        color: var(--sms-green-primary) !important;
+    }
+    
+    .text-danger {
+        color: var(--sms-red-primary) !important;
+    }
+    
+    .text-warning {
+        color: var(--sms-red-accent) !important;
+    }
+    
+    .text-primary {
+        color: var(--sms-blue-primary) !important;
+    }
+    
+    .text-muted {
+        color: var(--sms-blue-light) !important;
+    }
+    
+    /* CONFIDENTIAL SECTION - SMS BLUE ACCENT */
+    .card.border-info {
+        border-color: var(--sms-blue-accent) !important;
+    }
+    
+    .alert-info.small {
+        background-color: var(--sms-blue-light) !important;
+        color: var(--sms-blue-dark-bold) !important;
+        border-color: var(--sms-blue-accent) !important;
+    }
+    
+    /* CHARACTER COUNT STYLING */
+    .form-text .text-warning {
+        color: var(--sms-red-accent) !important;
+    }
+    
+    .form-text .text-danger {
+        color: var(--sms-red-primary) !important;
+    }
+    
+    /* BREADCRUMB STYLING */
+    .breadcrumb-item a {
+        color: var(--sms-blue-primary) !important;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item a:hover {
+        color: var(--sms-blue-dark-bold) !important;
+        text-decoration: underline;
+    }
+    
+    .breadcrumb-item.active {
+        color: var(--sms-blue-dark-bold) !important;
+    }
+    
+    /* REQUIRED FIELD INDICATORS */
+    .text-danger {
+        color: var(--sms-red-primary) !important;
+    }
+    
+    /* VALIDATION STYLING */
+    .border-danger {
+        border-color: var(--sms-red-primary) !important;
+    }
+    
+    .border-warning {
+        border-color: var(--sms-red-accent) !important;
+    }
+    
+    /* CONTACT INFO STYLING */
+    .card.bg-light {
+        background-color: var(--sms-green-light) !important;
+        border-color: var(--sms-green-primary) !important;
+    }
+    
+    /* ICON COLORS */
+    .fas.fa-exclamation-triangle {
+        color: var(--sms-red-accent) !important;
+    }
+    
+    .fas.fa-check-circle {
+        color: var(--sms-green-primary) !important;
+    }
+    
+    .fas.fa-info-circle {
+        color: var(--sms-teal-primary) !important;
+    }
+    
+    .fas.fa-question-circle {
+        color: var(--sms-blue-accent) !important;
+    }
+    
+    .fas.fa-map-pin {
+        color: var(--sms-green-primary) !important;
+    }
+    
+    .fas.fa-lock {
+        color: var(--sms-blue-primary) !important;
+    }
+    
+    .fas.fa-shield-alt {
+        color: var(--sms-blue-primary) !important;
+    }
+    
+    /* =============================================================================
+       END SMS REPORT CREATE STYLING - NO RANDOM COLORS ALLOWED
+       ============================================================================= */
+</style>

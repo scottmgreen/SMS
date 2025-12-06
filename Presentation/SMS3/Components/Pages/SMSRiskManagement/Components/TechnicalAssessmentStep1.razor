@@ -1,0 +1,305 @@
+﻿@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using SMS3.Components.Pages.SMSRiskManagement
+@using global::System.Text.Json
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenStack Gap="1.5rem">
+    <RadzenRow Gap="1rem">
+        <!-- Main Content Column -->
+        <RadzenColumn Size="12" SizeLG="8">
+            <RadzenStack Gap="1.5rem">
+                <!-- System Overview Section -->
+                <RadzenFieldset Text="System Overview">
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenFormField Text="Lead Assessor *" Variant="Variant.Outlined">
+                                    <RadzenTextBox @bind-Value="@Step1.LeadAssessor" Placeholder="Enter the name of the lead assessor..." Style="width: 100%;" 
+                                                   title="Person responsible for conducting this risk assessment" />
+                                </RadzenFormField>
+                                <RadzenText TextStyle="TextStyle.Caption" Text="Person responsible for conducting this risk assessment" />
+                                <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step1.LeadAssessor, 3)" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenFormField Text="System Description *" Variant="Variant.Outlined">
+                                    <RadzenTextArea @bind-Value="@Step1.SystemDescription" Rows="4" Placeholder="Provide a comprehensive description of the system being assessed..." Style="width: 100%;"
+                                                title="Describe what the system does, its primary functions, and operational context" />
+                                </RadzenFormField>
+                                <RadzenText TextStyle="TextStyle.Caption" Text="Describe what the system does, its primary functions, and operational context" />
+                                <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step1.SystemDescription, 10)" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenFormField Text="System Boundaries *" Variant="Variant.Outlined">
+                                    <RadzenTextArea @bind-Value="@Step1.SystemBoundaries" Rows="4" Placeholder="Define what is included and excluded from this assessment..." Style="width: 100%;"
+                                                title="Clearly define the scope - what's in and what's out of this assessment" />
+                                </RadzenFormField>
+                                <RadzenText TextStyle="TextStyle.Caption" Text="Clearly define the scope - what's in and what's out of this assessment" />
+                                <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step1.SystemBoundaries, 10)" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                    </RadzenRow>
+                    
+                    <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+                        <RadzenColumn Size="12">
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenFormField Text="System Purpose & Objectives" Variant="Variant.Outlined">
+                                    <RadzenTextArea @bind-Value="@Step1.SystemPurpose" Rows="3" Placeholder="What is the system designed to achieve? What are its key objectives?" Style="width: 100%;"
+                                                title="Define the intended purpose and key performance objectives" />
+                                </RadzenFormField>
+                                <RadzenText TextStyle="TextStyle.Caption" Text="Define the intended purpose and key performance objectives" />
+                                <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step1.SystemPurpose, 5)" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </RadzenFieldset>
+
+                <!-- 5M Framework Analysis -->
+                <RadzenFieldset Text="5M Framework Analysis">
+                    <RadzenStack Gap="1.5rem">
+                        <!-- Man (People) -->
+                        <RadzenCard Style="border-left: 4px solid var(--rz-primary);">
+                            <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-primary); margin: 0;">
+                                    <RadzenIcon Icon="people" Style="margin-right: 0.5rem;" />
+                                    Man (People)
+                                </RadzenText>
+                                <RadzenStack Gap="0.5rem">
+                                    <RadzenFormField Text="Personnel & Human Factors *" Variant="Variant.Outlined">
+                                        <RadzenTextArea @bind-Value="@Step1.FiveMPersonnel" Rows="4" Placeholder="Who are the people involved? What human factors apply?" Style="width: 100%;" />
+                                    </RadzenFormField>
+                                    <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step1.FiveMPersonnel, 10)" />
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenCard>
+
+                        <!-- Machine (Equipment) -->
+                        <RadzenCard Style="border-left: 4px solid var(--rz-success);">
+                            <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-success); margin: 0;">
+                                    <RadzenIcon Icon="settings" Style="margin-right: 0.5rem;" />
+                                    Machine (Equipment)
+                                </RadzenText>
+                                <RadzenStack Gap="0.5rem">
+                                    <RadzenFormField Text="Equipment & Technology *" Variant="Variant.Outlined">
+                                        <RadzenTextArea @bind-Value="@Step1.FiveMEquipment" Rows="4" Placeholder="What equipment and technology is involved?" Style="width: 100%;" />
+                                    </RadzenFormField>
+                                    <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step1.FiveMEquipment, 10)" />
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenCard>
+
+                        <!-- Method (Procedures) -->
+                        <RadzenCard Style="border-left: 4px solid var(--rz-info);">
+                            <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-info); margin: 0;">
+                                    <RadzenIcon Icon="list_alt" Style="margin-right: 0.5rem;" />
+                                    Method (Procedures)
+                                </RadzenText>
+                                <RadzenStack Gap="0.5rem">
+                                    <RadzenFormField Text="Procedures & Processes *" Variant="Variant.Outlined">
+                                        <RadzenTextArea @bind-Value="@Step1.FiveMProcedures" Rows="4" Placeholder="What procedures and processes are followed?" Style="width: 100%;" />
+                                    </RadzenFormField>
+                                    <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step1.FiveMProcedures, 10)" />
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenCard>
+
+                        <!-- Material (Resources) -->
+                        <RadzenCard Style="border-left: 4px solid var(--rz-warning);">
+                            <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-warning); margin: 0;">
+                                    <RadzenIcon Icon="inventory" Style="margin-right: 0.5rem;" />
+                                    Material (Resources)
+                                </RadzenText>
+                                <RadzenStack Gap="0.5rem">
+                                    <RadzenFormField Text="Materials & Resources *" Variant="Variant.Outlined">
+                                        <RadzenTextArea @bind-Value="@Step1.FiveMResources" Rows="4" Placeholder="What materials and resources are required?" Style="width: 100%;" />
+                                    </RadzenFormField>
+                                    <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step1.FiveMResources, 10)" />
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenCard>
+
+                        <!-- Milieu (Environment) -->
+                        <RadzenCard Style="border-left: 4px solid var(--rz-danger);">
+                            <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-danger); margin: 0;">
+                                    <RadzenIcon Icon="public" Style="margin-right: 0.5rem;" />
+                                    Milieu (Environment)
+                                </RadzenText>
+                                <RadzenRow Gap="1rem">
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenStack Gap="0.5rem">
+                                            <RadzenFormField Text="Physical Environment *" Variant="Variant.Outlined">
+                                                <RadzenTextArea @bind-Value="@Step1.FiveMPhysicalEnvironment" Rows="3" Placeholder="Physical environmental factors..." Style="width: 100%;" />
+                                            </RadzenFormField>
+                                            <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step1.FiveMPhysicalEnvironment, 10)" />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenStack Gap="0.5rem">
+                                            <RadzenFormField Text="Operational Environment *" Variant="Variant.Outlined">
+                                                <RadzenTextArea @bind-Value="@Step1.FiveMOperationalEnvironment" Rows="3" Placeholder="Operational environmental factors..." Style="width: 100%;" />
+                                            </RadzenFormField>
+                                            <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step1.FiveMOperationalEnvironment, 10)" />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            </RadzenStack>
+                        </RadzenCard>
+                    </RadzenStack>
+                </RadzenFieldset>
+
+                <!-- Stakeholder Selection - SIMPLIFIED -->
+                <RadzenFieldset Text="Stakeholder Selection">
+                    <RadzenStack Gap="1rem">
+                        <!-- Show Current Selected Stakeholders -->
+                        <RadzenCard>
+                            <RadzenCardContent>
+                                <RadzenText TextStyle="TextStyle.H6" Text="Selected Stakeholder Groups" Style="margin-bottom: 0.5rem;" />
+                                @if (Step1.SelectedStakeholderGroupIds.Any())
+                                {
+                                    @foreach (var groupId in Step1.SelectedStakeholderGroupIds)
+                                    {
+                                        var group = StakeholderGroups?.FirstOrDefault(g => g.Code == groupId);
+                                        if (group != null)
+                                        {
+                                            <RadzenBadge Text="@group.Name" BadgeStyle="BadgeStyle.Primary" Style="margin: 0.2rem;" />
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body2" Text="No stakeholder groups selected" Style="color: var(--rz-text-secondary-color);" />
+                                }
+                            </RadzenCardContent>
+                        </RadzenCard>
+
+                        <!-- Stakeholder Groups Selection -->
+                        <RadzenCard>
+                            <RadzenCardContent>
+                                <RadzenText TextStyle="TextStyle.H6" Text="Available Stakeholder Groups" Style="margin-bottom: 0.5rem;" />
+                                <RadzenDataGrid Data="@StakeholderGroups" TItem="SMSStakeholderGroup" AllowFiltering="false" AllowPaging="false" Style="height: 300px;">
+                                    <Columns>
+                                        <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="Name" Title="Group Name" />
+                                        <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="Description" Title="Description" />
+                                        <RadzenDataGridColumn TItem="SMSStakeholderGroup" Title="Action">
+                                            <Template Context="group">
+                                                @if (!Step1.SelectedStakeholderGroupIds.Contains(group.Code))
+                                                {
+                                                    <RadzenButton Text="Add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" 
+                                                                  Click="@(() => AddStakeholderGroup(group.Code))" />
+                                                }
+                                                else
+                                                {
+                                                    <RadzenButton Text="Remove" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
+                                                                  Click="@(() => RemoveStakeholderGroup(group.Code))" />
+                                                }
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                    </Columns>
+                                </RadzenDataGrid>
+                            </RadzenCardContent>
+                        </RadzenCard>
+                    </RadzenStack>
+                </RadzenFieldset>
+            </RadzenStack>
+        </RadzenColumn>
+
+        <!-- Debug Panel -->
+        <RadzenColumn Size="12" SizeLG="4">
+            <RadzenCard Style="position: sticky; top: 20px;">
+                <RadzenCardContent>
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H6" Text="Debug Info" Style="color: var(--rz-primary);" />
+                        
+                        <RadzenFieldset Text="Data Counts">
+                            <RadzenText TextStyle="TextStyle.Body2" Text="@($"StakeholderGroups: {StakeholderGroups?.Count ?? 0}")" />
+                            <RadzenText TextStyle="TextStyle.Body2" Text="@($"AvailableStakeholders: {AvailableStakeholders?.Count ?? 0}")" />
+                            <RadzenText TextStyle="TextStyle.Body2" Text="@($"Selected Groups: {Step1.SelectedStakeholderGroupIds?.Count ?? 0}")" />
+                        </RadzenFieldset>
+
+                        <RadzenFieldset Text="Step1 Data">
+                            <RadzenText TextStyle="TextStyle.Body2" Text="@($"Lead Assessor: {Step1.LeadAssessor}")" />
+                            <RadzenText TextStyle="TextStyle.Body2" Text="@($"System Description: {Step1.SystemDescription?.Length ?? 0} chars")" />
+                        </RadzenFieldset>
+                    </RadzenStack>
+                </RadzenCardContent>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenStack>
+
+@code {
+    [Parameter] public Step1Model Step1 { get; set; } = new();
+    [Parameter] public EventCallback<Step1Model> Step1Changed { get; set; }
+    [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
+    [Parameter] public List<SMSStakeholderGroup> StakeholderGroups { get; set; } = new();
+    [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        // Ensure Step1 and its collections are initialized
+        if (Step1 == null)
+        {
+            Step1 = new Step1Model();
+        }
+        
+        if (Step1.SelectedStakeholderGroupIds == null)
+        {
+            Step1.SelectedStakeholderGroupIds = new List<string>();
+        }
+        
+        if (Step1.SelectedIndividualStakeholderIds == null)
+        {
+            Step1.SelectedIndividualStakeholderIds = new List<string>();
+        }
+    }
+
+    private string GetFieldValidation(string? text, int minLength)
+    {
+        var length = text?.Trim().Length ?? 0;
+        
+        if (length == 0)
+            return $"0/{minLength} characters";
+        else if (length < minLength)
+            return $"{length}/{minLength} characters (minimum {minLength} required)";
+        else
+            return $"{length} characters ✓";
+    }
+
+    private async Task AddStakeholderGroup(string groupCode)
+    {
+        if (!Step1.SelectedStakeholderGroupIds.Contains(groupCode))
+        {
+            Step1.SelectedStakeholderGroupIds.Add(groupCode);
+            UpdateStakeholderGroupsString();
+            await Step1Changed.InvokeAsync(Step1);
+        }
+    }
+
+    private async Task RemoveStakeholderGroup(string groupCode)
+    {
+        if (Step1.SelectedStakeholderGroupIds.Contains(groupCode))
+        {
+            Step1.SelectedStakeholderGroupIds.Remove(groupCode);
+            UpdateStakeholderGroupsString();
+            await Step1Changed.InvokeAsync(Step1);
+        }
+    }
+
+    private void UpdateStakeholderGroupsString()
+    {
+        var groupNames = Step1.SelectedStakeholderGroupIds
+            .Select(id => StakeholderGroups?.FirstOrDefault(g => g.Code == id)?.Name)
+            .Where(name => !string.IsNullOrEmpty(name));
+        
+        Step1.StakeholderGroups = string.Join(", ", groupNames!);
+    }
+}

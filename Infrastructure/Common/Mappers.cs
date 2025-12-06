@@ -301,13 +301,13 @@ public static partial class Mappers
             hazard.IsAnonymous = isAnonymous;
 
             // Status and Priority (with enum parsing)
-            var statusValue = reader.GetValue<string>(FieldNames.fHazardStatus);
+            var statusValue = reader.GetValue<string>(FieldNames.fHazardStatus)?.Trim(); // ✅ FIXED: Trim whitespace
             if (!string.IsNullOrEmpty(statusValue))
             {
                 hazard.Status = HazardStatus.FromValue(statusValue) ?? HazardStatus.Active;
             }
 
-            var priorityValue = reader.GetValue<string>(FieldNames.fHazardPriority);
+            var priorityValue = reader.GetValue<string>(FieldNames.fHazardPriority)?.Trim(); // ✅ FIXED: Trim whitespace
             if (!string.IsNullOrEmpty(priorityValue))
             {
                 hazard.Priority = HazardPriority.FromValue(priorityValue) ?? HazardPriority.Medium;
@@ -407,8 +407,8 @@ public static partial class Mappers
         report.Code = reader.GetValue<string>(FieldNames.fReportCode) ?? string.Empty;
         report.Name = reader.GetValue<string>(FieldNames.fReportName);
         report.Description = reader.GetValue<string>(FieldNames.fReportDescription);
-        report.Status = reader.GetValue<string>(FieldNames.fReportStatus);
-        report.Stage = reader.GetValue<string>(FieldNames.fReportStage);
+        report.Status = reader.GetValue<string>(FieldNames.fReportStatus)?.Trim(); // ✅ FIXED: Trim whitespace
+        report.Stage = reader.GetValue<string>(FieldNames.fReportStage)?.Trim();   // ✅ FIXED: Trim whitespace
 
         return report;
     }

@@ -1,0 +1,20 @@
+@using SMS_Application.Interfaces
+@using SMS_Domain.Entities
+@inject IMediator Mediator
+@inject ILogger<HazardDetails> Logger
+
+@* Simple Hazard Details Display Component *@
+<div class="p-3 bg-light border-top">
+    <div class="text-center py-3">
+        <i class="fas fa-exclamation-triangle text-warning" style="font-size: 2rem;"></i>
+        <h6 class="mt-2">Hazard Details</h6>
+        <p class="text-muted">Hazard details for report @ReportCode will be displayed here.</p>
+        <small class="text-muted">Component under development</small>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string ReportCode { get; set; } = string.Empty;
+    [Parameter] public EventCallback<Hazard> OnViewHazardCallback { get; set; }
+    [Parameter] public EventCallback<Hazard> OnEditHazardCallback { get; set; }
+}

@@ -1,0 +1,532 @@
+@using SMS_Domain.Entities
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject IJSRuntime JSRuntime
+
+<!-- Enhanced Hazard Location Selection Component with OpenLayers (OpenStreetMap) -->
+<div class="hazard-location-container">
+    @if (ShowLocationPanel)
+    {
+        <RadzenCard Variant="Variant.Outlined" Class="mt-3">
+            <RadzenStack Gap="1rem">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <RadzenIcon Icon="map" Style="color: var(--rz-primary); font-size: 1.5rem;" />
+                        <h5 class="mb-0">Select Hazard Location</h5>
+                    </div>
+                    <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                Variant="Variant.Text"
+                                Icon="close"
+                                Size="ButtonSize.Small"
+                                Click="CloseLocationPanel"
+                                title="Close location selector" />
+                </div>
+
+                <!-- Location Selection Methods -->
+                <RadzenCard Variant="Variant.Text">
+                    <RadzenRadioButtonList @bind-Value="LocationSelectionMode" 
+                                         TValue="string" 
+                                         Orientation="Orientation.Horizontal"
+                                         Change="OnLocationModeChanged">
+                        <Items>
+                            <RadzenRadioButtonListItem Text="Interactive Map" Value="@("map")" />
+                            <RadzenRadioButtonListItem Text="Current Location" Value="@("current")" />
+                            <RadzenRadioButtonListItem Text="Enter Coordinates" Value="@("coordinates")" />
+                            <RadzenRadioButtonListItem Text="Text Description" Value="@("description")" />
+                        </Items>
+                    </RadzenRadioButtonList>
+                </RadzenCard>
+
+                @if (LocationSelectionMode == "map")
+                {
+                    <!-- OpenLayers Map Integration -->
+                    <RadzenCard>
+                        <RadzenStack Gap="1rem">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">Click on the map to select location</h6>
+                                <RadzenBadge Text="OpenStreetMap" BadgeStyle="BadgeStyle.Success" />
+                            </div>
+                            
+                            <!-- Map Container -->
+                            <div id="@MapContainerId" style="height: 400px; border: 1px solid #ddd; border-radius: 4px;" class="map-container">
+                                <!-- Map will be initialized here via JavaScript -->
+                            </div>
+
+                            <!-- Map Instructions -->
+                            <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small">
+                                <strong>Instructions:</strong> Click anywhere on the map to place a location marker. The red marker shows your selected hazard location.
+                            </RadzenAlert>
+
+                            <!-- Quick Location Buttons -->
+                            <div class="d-flex gap-2 flex-wrap">
+                                <RadzenButton Text="PDX Terminal" Size="ButtonSize.Small" 
+                                            Click="@(() => SetMapLocation(45.5898, -122.5951, "PDX Terminal Area"))" />
+                                <RadzenButton Text="Runway 28L" Size="ButtonSize.Small" 
+                                            Click="@(() => SetMapLocation(45.5895, -122.6015, "Runway 28L Area"))" />
+                                <RadzenButton Text="Cargo Area" Size="ButtonSize.Small" 
+                                            Click="@(() => SetMapLocation(45.5901, -122.5980, "Cargo Operations Area"))" />
+                                <RadzenButton Text="Reset View" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Light"
+                                            Click="ResetMapView" />
+                            </div>
+                        </RadzenStack>
+                    </RadzenCard>
+                }
+                else if (LocationSelectionMode == "current")
+                {
+                    <!-- Current Location -->
+                    <RadzenCard>
+                        <RadzenStack Gap="1rem">
+                            <div class="d-flex align-items-center gap-2">
+                                <RadzenIcon Icon="my_location" Style="color: var(--rz-primary);" />
+                                <h6 class="mb-0">Use Current GPS Location</h6>
+                            </div>
+                            <p class="text-muted mb-2">Click the button below to automatically detect your current location using GPS.</p>
+                            <RadzenButton ButtonStyle="ButtonStyle.Primary" 
+                                        Icon="gps_fixed"
+                                        Text="@(IsGettingLocation ? "Getting Location..." : "Get Current Location")"
+                                        Click="GetCurrentLocation"
+                                        Disabled="@IsGettingLocation" />
+                        </RadzenStack>
+                    </RadzenCard>
+                }
+                else if (LocationSelectionMode == "coordinates")
+                {
+                    <!-- Manual Coordinates Entry -->
+                    <RadzenCard>
+                        <RadzenStack Gap="1rem">
+                            <h6>Enter Coordinates Manually</h6>
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="6">
+                                    <RadzenFormField Text="Latitude" Variant="Variant.Outlined">
+                                        <RadzenNumeric @bind-Value="@ManualLatitude" 
+                                                     Step="0.000001M"
+                                                     Min="-90M"
+                                                     Max="90M"
+                                                     Placeholder="45.589800"
+                                                     Style="width: 100%;" />
+                                    </RadzenFormField>
+                                    <small class="text-muted">Valid range: -90 to 90</small>
+                                </RadzenColumn>
+                                <RadzenColumn Size="6">
+                                    <RadzenFormField Text="Longitude" Variant="Variant.Outlined">
+                                        <RadzenNumeric @bind-Value="@ManualLongitude" 
+                                                     Step="0.000001M"
+                                                     Min="-180M"
+                                                     Max="180M"
+                                                     Placeholder="-122.595100"
+                                                     Style="width: 100%;" />
+                                    </RadzenFormField>
+                                    <small class="text-muted">Valid range: -180 to 180</small>
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <RadzenFormField Text="Location Description (Optional)" Variant="Variant.Outlined">
+                                <RadzenTextBox @bind-Value="@ManualDescription" 
+                                             Placeholder="Describe the specific location (e.g., 'Terminal A, Gate 5')..."
+                                             Style="width: 100%;" />
+                            </RadzenFormField>
+                            <RadzenButton ButtonStyle="ButtonStyle.Success" 
+                                        Icon="check"
+                                        Text="Use These Coordinates"
+                                        Click="UseManualCoordinates"
+                                        Disabled="@(!HasValidManualCoordinates)" />
+                        </RadzenStack>
+                    </RadzenCard>
+                }
+                else if (LocationSelectionMode == "description")
+                {
+                    <!-- Text Description Only -->
+                    <RadzenCard>
+                        <RadzenStack Gap="1rem">
+                            <h6>Describe Location</h6>
+                            <RadzenFormField Text="Location Description" Variant="Variant.Outlined">
+                                <RadzenTextArea @bind-Value="@LocationDescription" 
+                                              Rows="4"
+                                              Placeholder="Provide a detailed description of where the hazard occurred:&#10;&#10;Examples:&#10;• Terminal A, Gate 5, near security checkpoint&#10;• Runway 28L, approximately 2000ft from threshold&#10;• Maintenance hangar, east side, near equipment storage&#10;• Baggage claim area, carousel #3"
+                                              Style="width: 100%;" />
+                            </RadzenFormField>
+                            <RadzenButton ButtonStyle="ButtonStyle.Success" 
+                                        Icon="check"
+                                        Text="Use Description"
+                                        Click="UseLocationDescription"
+                                        Disabled="@(string.IsNullOrWhiteSpace(LocationDescription))" />
+                        </RadzenStack>
+                    </RadzenCard>
+                }
+
+                <!-- Current Selection Display -->
+                @if (HasSelectedLocation)
+                {
+                    <RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid var(--rz-success);">
+                        <RadzenStack Gap="1rem">
+                            <div class="d-flex align-items-center gap-2">
+                                <RadzenIcon Icon="location_on" Style="color: var(--rz-success); font-size: 1.5rem;" />
+                                <h6 class="mb-0 text-success">Selected Location</h6>
+                            </div>
+                            @if (SelectedLocation.Latitude != 0 && SelectedLocation.Longitude != 0)
+                            {
+                                <p class="mb-1"><strong>Coordinates:</strong> @SelectedLocation.Latitude.ToString("F6"), @SelectedLocation.Longitude.ToString("F6")</p>
+                            }
+                            @if (!string.IsNullOrEmpty(SelectedLocation.Description))
+                            {
+                                <p class="mb-1"><strong>Description:</strong> @SelectedLocation.Description</p>
+                            }
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                <RadzenButton ButtonStyle="ButtonStyle.Success" 
+                                            Icon="save"
+                                            Text="Confirm This Location"
+                                            Click="ConfirmLocation" />
+                                <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                            Icon="edit"
+                                            Text="Modify"
+                                            Click="() => {}" />
+                                <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
+                                            Icon="clear"
+                                            Text="Clear"
+                                            Click="ClearSelection" />
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenCard>
+                }
+            </RadzenStack>
+        </RadzenCard>
+    }
+</div>
+
+<style>
+    .hazard-location-container {
+        width: 100%;
+    }
+    
+    .map-container {
+        border-radius: 4px;
+        position: relative;
+    }
+</style>
+
+@code {
+    [Parameter] public EventCallback<SMS_Blazor.Components.Pages.SMSRiskManagement.Components.GeoLocationData> OnLocationSelected { get; set; }
+    [Parameter] public SMS_Blazor.Components.Pages.SMSRiskManagement.Components.GeoLocationData? InitialLocation { get; set; }
+
+    // UI State
+    public bool ShowLocationPanel { get; set; }
+    public string LocationSelectionMode { get; set; } = "map";
+    public bool IsGettingLocation { get; set; }
+    public string MapContainerId { get; set; } = $"hazard-map-{Guid.NewGuid():N}";
+
+    // Manual Entry
+    public decimal ManualLatitude { get; set; }
+    public decimal ManualLongitude { get; set; }
+    public string ManualDescription { get; set; } = string.Empty;
+    public string LocationDescription { get; set; } = string.Empty;
+
+    // Selected Location
+    public SMS_Blazor.Components.Pages.SMSRiskManagement.Components.GeoLocationData SelectedLocation { get; set; } = new();
+
+    // Computed Properties
+    public bool HasValidManualCoordinates => ManualLatitude != 0 && ManualLongitude != 0 && 
+                                           ManualLatitude >= -90 && ManualLatitude <= 90 &&
+                                           ManualLongitude >= -180 && ManualLongitude <= 180;
+
+    public bool HasSelectedLocation => SelectedLocation.IsValid || !string.IsNullOrEmpty(SelectedLocation.Description);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (InitialLocation != null)
+        {
+            SelectedLocation = InitialLocation;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && LocationSelectionMode == "map")
+        {
+            await InitializeMapAsync();
+        }
+    }
+
+    private async Task InitializeMapAsync()
+    {
+        try
+        {
+            var lat = InitialLocation?.Latitude ?? 45.5898M; // PDX Airport
+            var lng = InitialLocation?.Longitude ?? -122.5951M;
+            
+            await JSRuntime.InvokeVoidAsync("initializeOpenLayersMap", MapContainerId, (double)lat, (double)lng, 
+                DotNetObjectReference.Create(this));
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Map Initialization",
+                Detail = "Map initialization failed. Please use coordinate entry.",
+                Duration = 3000
+            });
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnMapClicked(double lat, double lng)
+    {
+        try
+        {
+            SelectedLocation = new SMS_Blazor.Components.Pages.SMSRiskManagement.Components.GeoLocationData
+            {
+                Latitude = (decimal)lat,
+                Longitude = (decimal)lng,
+                Description = $"Map location: {lat:F6}, {lng:F6}",
+                SelectedDateTime = DateTime.UtcNow
+            };
+
+            StateHasChanged();
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Location Selected",
+                Detail = $"Location set to: {lat:F6}, {lng:F6}",
+                Duration = 3000
+            });
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Map Error",
+                Detail = "Error processing map click. Please try again.",
+                Duration = 3000
+            });
+        }
+    }
+
+    public void OpenLocationPanel()
+    {
+        ShowLocationPanel = true;
+        StateHasChanged();
+    }
+
+    public void CloseLocationPanel()
+    {
+        ShowLocationPanel = false;
+        StateHasChanged();
+    }
+
+    public void ShowLocationSelector()
+    {
+        OpenLocationPanel();
+    }
+
+    private void OnLocationModeChanged(object value)
+    {
+        ClearSelection();
+        StateHasChanged();
+        
+        if (value?.ToString() == "map")
+        {
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(100); // Let the DOM update
+                await InvokeAsync(InitializeMapAsync);
+            });
+        }
+    }
+
+    private async Task SetMapLocation(double lat, double lng, string description)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("setMapLocation", MapContainerId, lat, lng);
+            
+            SelectedLocation = new SMS_Blazor.Components.Pages.SMSRiskManagement.Components.GeoLocationData
+            {
+                Latitude = (decimal)lat,
+                Longitude = (decimal)lng,
+                Description = description,
+                SelectedDateTime = DateTime.UtcNow
+            };
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Map Error",
+                Detail = "Error setting map location.",
+                Duration = 3000
+            });
+        }
+    }
+
+    private async Task ResetMapView()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("resetMapView", MapContainerId);
+            ClearSelection();
+        }
+        catch (Exception ex)
+        {
+            // Silently handle map reset errors
+        }
+    }
+
+    private async Task GetCurrentLocation()
+    {
+        try
+        {
+            IsGettingLocation = true;
+            StateHasChanged();
+
+            // Use browser geolocation API
+            var position = await JSRuntime.InvokeAsync<GeolocationPosition>("getCurrentPosition");
+            
+            SelectedLocation = new SMS_Blazor.Components.Pages.SMSRiskManagement.Components.GeoLocationData
+            {
+                Latitude = (decimal)position.Latitude,
+                Longitude = (decimal)position.Longitude,
+                Description = "Current GPS location",
+                SelectedDateTime = DateTime.UtcNow
+            };
+
+            // Update map if in map mode
+            if (LocationSelectionMode == "map")
+            {
+                await SetMapLocation(position.Latitude, position.Longitude, "Current GPS location");
+            }
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Location Found",
+                Detail = "Current location has been determined.",
+                Duration = 3000
+            });
+        }
+        catch (Exception ex)
+        {
+            // Fallback to simulated PDX location
+            var random = new Random();
+            var lat = 45.5898 + (random.NextDouble() - 0.5) * 0.01;
+            var lng = -122.5951 + (random.NextDouble() - 0.5) * 0.01;
+
+            SelectedLocation = new SMS_Blazor.Components.Pages.SMSRiskManagement.Components.GeoLocationData
+            {
+                Latitude = (decimal)lat,
+                Longitude = (decimal)lng,
+                Description = "Simulated current location (GPS unavailable)",
+                SelectedDateTime = DateTime.UtcNow
+            };
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "GPS Unavailable",
+                Detail = "Using simulated location. Please verify coordinates.",
+                Duration = 5000
+            });
+        }
+        finally
+        {
+            IsGettingLocation = false;
+            StateHasChanged();
+        }
+    }
+
+    private void UseManualCoordinates()
+    {
+        if (!HasValidManualCoordinates) return;
+
+        SelectedLocation = new SMS_Blazor.Components.Pages.SMSRiskManagement.Components.GeoLocationData
+        {
+            Latitude = ManualLatitude,
+            Longitude = ManualLongitude,
+            Description = string.IsNullOrEmpty(ManualDescription) ? 
+                $"Manual coordinates: {ManualLatitude:F6}, {ManualLongitude:F6}" : 
+                ManualDescription,
+            SelectedDateTime = DateTime.UtcNow
+        };
+
+        // Update map if in map mode
+        if (LocationSelectionMode == "map")
+        {
+            _ = Task.Run(async () => await SetMapLocation((double)ManualLatitude, (double)ManualLongitude, SelectedLocation.Description));
+        }
+
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Coordinates Set",
+            Detail = "Manual coordinates have been set.",
+            Duration = 3000
+        });
+
+        StateHasChanged();
+    }
+
+    private void UseLocationDescription()
+    {
+        if (string.IsNullOrWhiteSpace(LocationDescription)) return;
+
+        SelectedLocation = new SMS_Blazor.Components.Pages.SMSRiskManagement.Components.GeoLocationData
+        {
+            Latitude = 0,
+            Longitude = 0,
+            Description = LocationDescription.Trim(),
+            SelectedDateTime = DateTime.UtcNow
+        };
+
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Description Set",
+            Detail = "Location description has been set.",
+            Duration = 3000
+        });
+
+        StateHasChanged();
+    }
+
+    private async Task ConfirmLocation()
+    {
+        if (!HasSelectedLocation) return;
+
+        if (OnLocationSelected.HasDelegate)
+        {
+            await OnLocationSelected.InvokeAsync(SelectedLocation);
+        }
+
+        CloseLocationPanel();
+
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Location Confirmed",
+            Detail = "Location has been set for the hazard report.",
+            Duration = 3000
+        });
+    }
+
+    private void ClearSelection()
+    {
+        SelectedLocation = new SMS_Blazor.Components.Pages.SMSRiskManagement.Components.GeoLocationData();
+        ManualLatitude = 0;
+        ManualLongitude = 0;
+        ManualDescription = string.Empty;
+        LocationDescription = string.Empty;
+        StateHasChanged();
+    }
+
+    // Supporting classes for JS interop
+    public class GeolocationPosition
+    {
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+        public double Accuracy { get; set; }
+    }
+}

@@ -1,0 +1,63 @@
+<svg width='800' height='600' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'>
+    <defs>
+        <linearGradient id='bgGradient' x1='0%' y1='0%' x2='100%' y2='100%'>
+            <stop offset='0%' style='stop-color:#e8f4f8;stop-opacity:1' />
+            <stop offset='100%' style='stop-color:#d0e7ff;stop-opacity:1' />
+        </linearGradient>
+        <pattern id='grid' width='50' height='50' patternUnits='userSpaceOnUse'>
+            <path d='M 50 0 L 0 0 0 50' fill='none' stroke='#cce7ff' stroke-width='1' opacity='0.5'/>
+        </pattern>
+        <filter id='shadow' x='-20%' y='-20%' width='140%' height='140%'>
+            <feDropShadow dx='3' dy='3' stdDeviation='2' flood-color='rgba(0,0,0,0.3)'/>
+        </filter>
+    </defs>
+    <rect width='800' height='600' fill='url(#bgGradient)' stroke='#0066cc' stroke-width='3' rx='10'/>
+    <rect x='50' y='80' width='700' height='450' fill='url(#grid)'/>
+    <rect x='50' y='80' width='700' height='450' fill='none' stroke='#0066cc' stroke-width='2' stroke-dasharray='5,5'/>
+    <rect x='0' y='0' width='800' height='70' fill='#0066cc' rx='10'/>
+    <rect x='0' y='60' width='800' height='10' fill='#0066cc'/>
+    <text x='50' y='35' font-family='Arial, sans-serif' font-size='24' font-weight='bold' fill='white'>?? Hazard Location Map</text>
+    <text x='50' y='55' font-family='Arial, sans-serif' font-size='14' fill='#cce7ff'>Report ID: SMS-2025-0020 | Generated: 10/30/2025 13:26</text>
+    <rect x='60' y='100' width='320' height='140' fill='white' stroke='#0066cc' stroke-width='2' rx='8' filter='url(#shadow)'/>
+    <rect x='60' y='100' width='320' height='30' fill='#0066cc' rx='8'/>
+    <rect x='60' y='125' width='320' height='5' fill='#0066cc'/>
+    <text x='70' y='120' font-family='Arial, sans-serif' font-size='14' font-weight='bold' fill='white'>?? Location Details</text>
+    <text x='75' y='150' font-family='Arial, sans-serif' font-size='13' font-weight='bold' fill='#333'>Latitude: 45.589146</text>
+    <text x='75' y='170' font-family='Arial, sans-serif' font-size='13' font-weight='bold' fill='#333'>Longitude: -122.596886</text>
+    <text x='75' y='195' font-family='Arial, sans-serif' font-size='12' font-weight='bold' fill='#666'>Description:</text>
+    <text x='75' y='215' font-family='Arial, sans-serif' font-size='11' fill='#333'>With Map</text>
+    <rect x='400' y='100' width='340' height='280' fill='#f0f8ff' stroke='#0066cc' stroke-width='1' rx='5'/>
+    <rect x='450' y='200' width='240' height='8' fill='#666' opacity='0.7'/>
+    <rect x='500' y='150' width='8' height='180' fill='#666' opacity='0.7'/>
+    <rect x='480' y='160' width='60' height='40' fill='#8db4d6' stroke='#4a90b8' stroke-width='1'/>
+    <rect x='560' y='180' width='40' height='60' fill='#8db4d6' stroke='#4a90b8' stroke-width='1'/>
+    <rect x='620' y='160' width='50' height='30' fill='#8db4d6' stroke='#4a90b8' stroke-width='1'/>
+    <g transform='translate(438.2920000000024, 186.2280000000021)'>
+        <ellipse cx='2' cy='30' rx='8' ry='4' fill='rgba(0,0,0,0.3)'/>
+        <circle cx='0' cy='0' r='12' fill='#dc3545' stroke='white' stroke-width='3'/>
+        <polygon points='0,12 -6,24 6,24' fill='#dc3545'/>
+        <circle cx='0' cy='0' r='4' fill='white'/>
+    </g>
+    <g transform='translate(680, 140)'>
+        <circle cx='0' cy='0' r='25' fill='white' stroke='#0066cc' stroke-width='2'/>
+        <polygon points='0,-20 5,-5 0,-8 -5,-5' fill='#dc3545'/>
+        <text x='0' y='-30' text-anchor='middle' font-family='Arial, sans-serif' font-size='10' font-weight='bold' fill='#0066cc'>N</text>
+        <text x='30' y='5' text-anchor='middle' font-family='Arial, sans-serif' font-size='8' fill='#666'>E</text>
+        <text x='0' y='40' text-anchor='middle' font-family='Arial, sans-serif' font-size='8' fill='#666'>S</text>
+        <text x='-30' y='5' text-anchor='middle' font-family='Arial, sans-serif' font-size='8' fill='#666'>W</text>
+    </g>
+    <g transform='translate(420, 360)'>
+        <rect x='0' y='0' width='80' height='20' fill='white' stroke='#0066cc' stroke-width='1'/>
+        <rect x='0' y='0' width='40' height='20' fill='#0066cc'/>
+        <text x='40' y='35' text-anchor='middle' font-family='Arial, sans-serif' font-size='10' fill='#666'>500ft</text>
+    </g>
+    <text x='420' y='400' font-family='Arial, sans-serif' font-size='11' fill='#666'>?? PDX Airport Boundary</text>
+    <rect x='60' y='400' width='320' height='120' fill='white' stroke='#28a745' stroke-width='2' rx='8' filter='url(#shadow)'/>
+    <rect x='60' y='400' width='320' height='30' fill='#28a745' rx='8'/>
+    <rect x='60' y='425' width='320' height='5' fill='#28a745'/>
+    <text x='70' y='420' font-family='Arial, sans-serif' font-size='14' font-weight='bold' fill='white'>? Location Captured</text>
+    <text x='75' y='450' font-family='Arial, sans-serif' font-size='12' fill='#333'>?? GPS-level precision</text>
+    <text x='75' y='470' font-family='Arial, sans-serif' font-size='12' fill='#333'>??? OpenStreetMap data</text>
+    <text x='75' y='490' font-family='Arial, sans-serif' font-size='12' fill='#333'>?? PDX boundaries validated</text>
+    <text x='400' y='585' text-anchor='middle' font-family='Arial, sans-serif' font-size='10' fill='#999'>PDX SMS • Generated: 10/30/2025 13:26</text>
+</svg>

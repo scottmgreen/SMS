@@ -1,0 +1,111 @@
+﻿@inherits LayoutComponentBase
+
+<div class="d-flex flex-column min-vh-100 sms-main-layout">
+    <!-- Horizontal Navigation -->
+    <header class="sms-main-header">
+        <NavMenu />
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow-1 sms-main-content">
+        <div class="container-fluid py-3">
+            @Body
+        </div>
+    </main>
+</div>
+
+<!-- Radzen Dialog Components - Required for dialogs to work -->
+<RadzenDialog />
+<RadzenNotification />
+<RadzenTooltip />
+<RadzenContextMenu />
+
+<div id="blazor-error-ui" class="sms-error-ui">
+    <div class="sms-error-content">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        An unhandled error has occurred.
+        <a href="" class="reload sms-error-reload">Reload</a>
+        <a class="dismiss sms-error-dismiss">🗙</a>
+    </div>
+</div>
+
+<style>
+/* =============================================================================
+   SMS MAIN LAYOUT - EXACT COLOR COMPLIANCE
+   ============================================================================= */
+
+.sms-main-layout {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.sms-main-header {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    box-shadow: 0 0.125rem 0.25rem rgba(33, 46, 97, 0.15);
+}
+
+.sms-main-content {
+    background: linear-gradient(135deg, rgba(201, 227, 237, 0.1) 0%, rgba(205, 235, 241, 0.1) 100%);
+    min-height: calc(100vh - 70px);
+}
+
+/* Error UI Styling */
+.sms-error-ui {
+    background: var(--sms-red-primary);
+    color: white;
+    padding: 1rem;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    display: none;
+    border-top: 2px solid var(--sms-red-dark-bold);
+}
+
+.sms-error-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+}
+
+.sms-error-reload {
+    color: white;
+    text-decoration: underline;
+    margin-left: 1rem;
+    font-weight: 600;
+}
+
+.sms-error-reload:hover {
+    color: var(--sms-blue-light);
+}
+
+.sms-error-dismiss {
+    margin-left: 1rem;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 0.5rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s;
+}
+
+.sms-error-dismiss:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Ensure consistent spacing */
+.container-fluid {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+/* =============================================================================
+   END SMS MAIN LAYOUT STYLING
+   ============================================================================= */
+</style>

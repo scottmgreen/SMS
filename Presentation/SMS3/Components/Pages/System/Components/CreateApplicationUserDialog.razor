@@ -1,0 +1,68 @@
+@using SMS3.Components.Pages.System.UserManagement
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenTemplateForm Data="@Model" Submit="@((ApplicationUsers.CreateUserModel model) => OnSubmit())">
+    <RadzenStack Gap="1rem">
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenFormField Text="First Name" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="@Model.FirstName" Name="FirstName" />
+                </RadzenFormField>
+                <RadzenRequiredValidator Component="FirstName" Text="First name is required" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenFormField Text="Last Name" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="@Model.LastName" Name="LastName" />
+                </RadzenFormField>
+                <RadzenRequiredValidator Component="LastName" Text="Last name is required" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="12">
+                <RadzenFormField Text="Username" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="@Model.UserName" Name="UserName" />
+                </RadzenFormField>
+                <RadzenRequiredValidator Component="UserName" Text="Username is required" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="12">
+                <RadzenFormField Text="Password" Variant="Variant.Outlined">
+                    <RadzenPassword @bind-Value="@Model.Password" Name="Password" />
+                </RadzenFormField>
+                <RadzenRequiredValidator Component="Password" Text="Password is required" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" class="rz-mt-4">
+            <RadzenButton Text="Cancel" Variant="Variant.Text" Click="@Cancel" />
+            <RadzenButton Text="Create User" Icon="save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public ApplicationUsers.CreateUserModel Model { get; set; } = new();
+    [CascadingParameter] public DialogService? DialogService { get; set; }
+
+    private void OnSubmit()
+    {
+        if (string.IsNullOrWhiteSpace(Model.FirstName) || 
+            string.IsNullOrWhiteSpace(Model.LastName) || 
+            string.IsNullOrWhiteSpace(Model.UserName) || 
+            string.IsNullOrWhiteSpace(Model.Password))
+        {
+            return; // Form validation will handle the errors
+        }
+
+        DialogService?.Close(Model);
+    }
+
+    private void Cancel()
+    {
+        DialogService?.Close();
+    }
+}

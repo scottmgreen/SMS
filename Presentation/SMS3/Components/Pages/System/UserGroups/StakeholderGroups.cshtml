@@ -1,0 +1,635 @@
+@page
+@model SMS_Presentation.Pages.System.StakeholderGroupsModel
+@{
+    ViewData["Title"] = "Stakeholder Group Management";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/System">System Administration</a></li>
+                    <li class="breadcrumb-item"><a href="/System/UserManagement">User Management</a></li>
+                    <li class="breadcrumb-item active">Stakeholder Groups</li>
+                </ol>
+            </nav>
+            <div class="card bg-secondary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="card-title"><i class="fas fa-users"></i> Stakeholder Group Management</h1>
+                            <p class="card-text">Manage SMS Stakeholder User Groups for External Organizations</p>
+                        </div>
+                        <div>
+                            <a href="/System/UserManagement" class="btn btn-light me-2">
+                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                            </a>
+                            @if (!Model.IsEditMode)
+                            {
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createGroupModal">
+                                    <i class="fas fa-plus"></i> Add Group
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+  @*   @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    } *@
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle"></i> @Model.ErrorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Quick Actions -->
+    @if (!Model.IsEditMode && !Model.StakeholderGroups.Any())
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0"><i class="fas fa-magic"></i> Quick Setup</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3">Get started quickly by creating common stakeholder groups for airport operations.</p>
+                        <form method="post" asp-page-handler="CreateDefaultGroups" style="display: inline;">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-magic"></i> Create Default Groups
+                            </button>
+                        </form>
+                        <button type="button" class="btn btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#createGroupModal">
+                            <i class="fas fa-plus"></i> Create Custom Group
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Edit Group Form -->
+    @if (Model.IsEditMode && Model.CurrentGroup != null)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0"><i class="fas fa-edit"></i> Edit Group: @Model.CurrentGroup.Name</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" asp-page-handler="Update">
+                            <input type="hidden" name="groupCode" value="@Model.CurrentGroup.Code" />
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="editGroupName" class="form-label">Group Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="editGroupName" name="groupName" value="@Model.CurrentGroup.Name" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="editIsActive" class="form-label">Status</label>
+                                        <select class="form-select" id="editIsActive" name="isActive">
+                                            <option value="true" selected="@Model.CurrentGroup.IsActive">Active</option>
+                                            <option value="false" selected="@(!Model.CurrentGroup.IsActive)">Inactive</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="editDescription" name="description" rows="3">@Model.CurrentGroup.Description</textarea>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="fas fa-save"></i> Update Group
+                                </button>
+                                <a href="/System/StakeholderGroups" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Group Membership Management -->
+    @if (Model.IsManagingMembers && Model.CurrentGroup != null)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-users"></i> Manage Members: @Model.CurrentGroup.Name
+                            </h5>
+                            <div>
+                                <small class="me-3">Total: @(Model.GroupMembers.Count() + Model.AvailableUsers.Count()) users</small>
+                                <a href="/System/StakeholderGroups" class="btn btn-light btn-sm">
+                                    <i class="fas fa-arrow-left"></i> Back to Groups
+                                </a>
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.CurrentGroup.Description))
+                        {
+                            <small class="d-block mt-1 opacity-75">@Model.CurrentGroup.Description</small>
+                        }
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Current Members -->
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-user-check text-success"></i> 
+                                        Current Members
+                                    </h6>
+                                    <span class="badge bg-success">@Model.GroupMembers.Count()</span>
+                                </div>
+                                @if (Model.GroupMembers.Any())
+                                {
+                                    <div class="list-group mb-3" style="max-height: 500px; overflow-y: auto;">
+                                        @foreach (var member in Model.GroupMembers)
+                                        {
+                                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="me-3">
+                                                            <div class="bg-success rounded-circle d-flex align-items-center justify-content-center" 
+                                                                 style="width: 40px; height: 40px;">
+                                                                <i class="fas fa-user text-white"></i>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <strong class="d-block">@member.FirstName.Value @member.LastName.Value</strong>
+                                                            <small class="text-muted">@member.Organization</small>
+                                                            <br><small class="text-muted">Type: @member.StakeholderType</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <form method="post" asp-page-handler="RemoveUser" style="display: inline;">
+                                                    <input type="hidden" name="userCode" value="@member.Code" />
+                                                    <input type="hidden" name="groupCode" value="@Model.CurrentGroupCode" />
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                                            onclick="return confirm('Remove @member.FirstName.Value @member.LastName.Value from the group?')" 
+                                                            title="Remove from Group">
+                                                        <i class="fas fa-user-times"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        }
+                                    </div>
+                                    @if (Model.GroupMembers.Count() >= 5)
+                                    {
+                                        <div class="alert alert-info">
+                                            <small>
+                                                <i class="fas fa-info-circle"></i>
+                                                Scroll within the members list to see all @Model.GroupMembers.Count() members.
+                                            </small>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="text-center text-muted py-4 border rounded">
+                                        <i class="fas fa-users fa-3x mb-3"></i>
+                                        <h6>No members in this group yet</h6>
+                                        <p class="small mb-0">Add users from the available list to get started.</p>
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- Available Users -->
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-user-plus text-primary"></i> 
+                                        Available Users
+                                    </h6>
+                                    <span class="badge bg-primary">@Model.AvailableUsers.Count()</span>
+                                </div>
+                                @if (Model.AvailableUsers.Any())
+                                {
+                                    <form method="post" asp-page-handler="AssignMultipleUsers">
+                                        <input type="hidden" name="groupCode" value="@Model.CurrentGroupCode" />
+                                        <div class="mb-3">
+                                            <div class="btn-group w-100">
+                                                <button type="submit" class="btn btn-success btn-sm">
+                                                    <i class="fas fa-user-plus"></i> Add Selected
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="selectAllUsers(true)">
+                                                    Select All
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="selectAllUsers(false)">
+                                                    Clear All
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="list-group" style="max-height: 500px; overflow-y: auto;">
+                                            @foreach (var user in Model.AvailableUsers)
+                                            {
+                                                <div class="list-group-item list-group-item-action">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input user-checkbox" type="checkbox" 
+                                                               name="selectedUsers" value="@user.Code" id="user_@user.Code">
+                                                        <label class="form-check-label w-100 cursor-pointer" for="user_@user.Code">
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="me-3">
+                                                                    <div class="bg-light border rounded-circle d-flex align-items-center justify-content-center" 
+                                                                         style="width: 35px; height: 35px;">
+                                                                        <i class="fas fa-user text-muted"></i>
+                                                                    </div>
+                                                                </div>
+                                                                <div>
+                                                                    <strong class="d-block">@user.FirstName.Value @user.LastName.Value</strong>
+                                                                    <small class="text-muted">@user.Organization</small>
+                                                                    <br><small class="text-muted">Type: @user.StakeholderType</small>
+                                                                </div>
+                                                            </div>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </form>
+                                    @if (Model.AvailableUsers.Count() >= 5)
+                                    {
+                                        <div class="alert alert-info mt-3">
+                                            <small>
+                                                <i class="fas fa-info-circle"></i>
+                                                Scroll within the users list to see all @Model.AvailableUsers.Count() available users.
+                                            </small>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="text-center text-muted py-4 border rounded">
+                                        <i class="fas fa-user-check fa-3x mb-3"></i>
+                                        <h6>All users are members</h6>
+                                        <p class="small mb-0">All stakeholder users are already assigned to this group.</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Actions -->
+                        @if (Model.AvailableUsers.Any())
+                        {
+                            <hr class="my-4">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h6 class="mb-3"><i class="fas fa-magic text-info"></i> Quick Actions</h6>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <button type="button" class="btn btn-outline-info btn-sm" onclick="selectUsersByType('Airline')">
+                                            <i class="fas fa-plane"></i> Select All Airlines
+                                        </button>
+                                        <button type="button" class="btn btn-outline-info btn-sm" onclick="selectUsersByType('Ground Handler')">
+                                            <i class="fas fa-truck"></i> Select Ground Handlers
+                                        </button>
+                                        <button type="button" class="btn btn-outline-info btn-sm" onclick="selectUsersByType('Contractor')">
+                                            <i class="fas fa-hard-hat"></i> Select Contractors
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="selectAllUsers(false)">
+                                            <i class="fas fa-times"></i> Clear Selection
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Groups Display -->
+    @if (!Model.IsManagingMembers)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-list"></i> Stakeholder Groups (@Model.StakeholderGroups.Count())</h5>
+                            <div>
+                                @if (Model.StakeholderGroups.Any())
+                                {
+                                    <form method="post" asp-page-handler="CreateDefaultGroups" class="d-inline me-2">
+                                        <button type="submit" class="btn btn-outline-success btn-sm" title="Add more default groups">
+                                            <i class="fas fa-magic"></i> Add Defaults
+                                        </button>
+                                    </form>
+                                }
+                                <button type="button" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-download"></i> Export
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.StakeholderGroups.Any())
+                        {
+                            <div class="row">
+                                @foreach (var group in Model.StakeholderGroups)
+                                {
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card border-secondary h-100 @(group.Code == Model.CurrentGroup?.Code ? "bg-secondary bg-opacity-10" : "")">
+                                            <div class="card-header bg-light">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <h6 class="mb-0">
+                                                        <i class="fas fa-users text-secondary"></i> @group.Name
+                                                    </h6>
+                                                    <span class="badge bg-@(group.IsActive ? "success" : "secondary")">
+                                                        @(group.IsActive ? "Active" : "Inactive")
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="card-text small">
+                                                    @if (!string.IsNullOrEmpty(group.Description))
+                                                    {
+                                                        @group.Description
+                                                    }
+                                                    else
+                                                    {
+                                                        <em class="text-muted">No description provided</em>
+                                                    }
+                                                </p>
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <small class="text-muted">
+                                                        Code: @group.Code
+                                                    </small>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <small class="text-muted">
+                                                        Created: @group.CreatedDate.Value.ToString("MM/dd/yyyy") by @group.CreatedBy
+                                                    </small>
+                                                </div>
+                                                @if (group.CreatedDate.HasValue)
+                                                {
+                                                    <div class="mb-2">
+                                                        <small class="text-muted">
+                                                            Modified: @group.CreatedDate.Value.ToString("MM/dd/yyyy") by @group.CreatedDate
+                                                        </small>
+                                                    </div>
+                                                }
+                                            </div>
+                                            <div class="card-footer bg-light">
+                                                <div class="btn-group w-100">
+                                                    <a href="/System/StakeholderGroups/Edit/@group.Code" class="btn btn-outline-primary btn-sm">
+                                                        <i class="fas fa-edit"></i> Edit
+                                                    </a>
+                                                    <a href="/System/StakeholderGroups?action=members&groupCode=@group.Code" class="btn btn-outline-info btn-sm" title="Manage Members">
+                                                        <i class="fas fa-users"></i> Members
+                                                    </a>
+                                                    <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                            onclick="confirmDelete('@group.Code', '@group.Name')" title="Delete Group">
+                                                        <i class="fas fa-trash"></i> Delete
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-5">
+                                <i class="fas fa-users fa-3x text-muted"></i>
+                                <h5 class="mt-3 text-muted">No Stakeholder Groups Found</h5>
+                                <p class="text-muted">Create groups to organize external stakeholder users by organization type.</p>
+                                <div>
+                                    <form method="post" asp-page-handler="CreateDefaultGroups" class="d-inline me-2">
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-magic"></i> Create Default Groups
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#createGroupModal">
+                                        <i class="fas fa-plus"></i> Create Custom Group
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Create Group Modal -->
+<div class="modal fade" id="createGroupModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus"></i> Create Stakeholder Group</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Create">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="groupName" class="form-label">Group Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="groupName" name="groupName" required 
+                               placeholder="Enter group name (e.g., Airlines, Ground Handlers)">
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"
+                                  placeholder="Optional description of the group's purpose or member organizations"></textarea>
+                    </div>
+                    <div class="alert alert-info">
+                        <small>
+                            <i class="fas fa-info-circle"></i> 
+                            Stakeholder groups help organize external partners and organizations. 
+                            Groups can be used for targeted communications and access control.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Create Group
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-trash"></i> Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the group <strong id="deleteGroupName"></strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> This action cannot be undone and may affect users assigned to this group.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" asp-page-handler="Delete" style="display: inline;">
+                    <input type="hidden" id="deleteGroupCode" name="groupCode" />
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete Group
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(groupCode, groupName) {
+    document.getElementById('deleteGroupCode').value = groupCode;
+    document.getElementById('deleteGroupName').textContent = groupName;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+function selectAllUsers(select) {
+    const checkboxes = document.querySelectorAll('.user-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = select;
+    });
+}
+
+function selectUsersByType(type) {
+    // Clear all selections first
+    selectAllUsers(false);
+    
+    // Select users of specific type
+    const userItems = document.querySelectorAll('.list-group-item');
+    userItems.forEach(item => {
+        const text = item.textContent;
+        if (text.includes(`Type: ${type}`)) {
+            const checkbox = item.querySelector('.user-checkbox');
+            if (checkbox) {
+                checkbox.checked = true;
+            }
+        }
+    });
+}
+
+// Auto-update selected count
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.user-checkbox');
+    const submitButton = document.querySelector('button[type="submit"].btn-success'); // Target the specific Add Selected button
+    
+    function updateSelectedCount() {
+        const selectedCount = document.querySelectorAll('.user-checkbox:checked').length;
+        if (submitButton) {
+            submitButton.innerHTML = `<i class="fas fa-user-plus"></i> Add Selected (${selectedCount})`;
+            submitButton.disabled = selectedCount === 0;
+        }
+    }
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedCount);
+    });
+    
+    // Initial update
+    updateSelectedCount();
+});
+</script>
+
+<style>
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.list-group-item-action:hover {
+    background-color: #f8f9fa;
+}
+
+.form-check-label {
+    cursor: pointer;
+}
+
+/* Custom scrollbar for member lists */
+.list-group {
+    scrollbar-width: thin;
+    scrollbar-color: #6c757d #f8f9fa;
+}
+
+.list-group::-webkit-scrollbar {
+    width: 6px;
+}
+
+.list-group::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 3px;
+}
+
+.list-group::-webkit-scrollbar-thumb {
+    background: #6c757d;
+    border-radius: 3px;
+}
+
+.list-group::-webkit-scrollbar-thumb:hover {
+    background: #495057;
+}
+
+/* Member count badges */
+.badge {
+    font-weight: 600;
+}
+
+/* User avatars */
+.bg-success, .bg-light {
+    transition: all 0.2s ease;
+}
+
+.list-group-item:hover .bg-light {
+    background-color: #e9ecef !important;
+}
+
+/* Quick action buttons */
+.btn-outline-info:hover {
+    transform: translateY(-1px);
+}
+</style>

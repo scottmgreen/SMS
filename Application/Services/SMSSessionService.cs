@@ -24,7 +24,7 @@ public class SMSSessionService : ISMSSessionService
 
     /// <summary>
     /// Creates SMS session using Domain Entity data directly
-    /// Modified for Blazor Server compatibility
+    /// FIXED - Direct session creation without middleware complexity
     /// </summary>
     public async Task CreateSMSSessionAsync(BaseUser user, SMSUserType userType)
     {
@@ -37,117 +37,72 @@ public class SMSSessionService : ISMSSessionService
 
         try
         {
-            // Check if response has started
-            if (context.Response.HasStarted)
-            {
-                _logger.LogError("Cannot establish session - response has already started");
-                throw new InvalidOperationException("Cannot establish session after response has started");
-            }
-
             var session = context.Session;
 
-            // **FIX**: Store consistent session keys - use SMS_UserId instead of SMS_UserCode
-            session.SetString("SMS_UserId", user.Code); // This is what middleware expects
+            // BLAZOR FIX: Force session to load before writing
+            await session.LoadAsync();
+
+            // Store consistent session keys
+            session.SetString("SMS_UserId", user.Code);
             session.SetString("SMS_UserCode", user.Code);
-            session.SetString("SMS_UserType", userType.Value); // Use .Value, not .Name
+            session.SetString("SMS_UserType", userType.Value);
             session.SetString("SMS_Email", user.UserName.Value);
             session.SetString("SMS_DisplayName", user.DisplayName);
             session.SetString("SMS_FirstName", user.FirstName.Value);
             session.SetString("SMS_LastName", user.LastName.Value);
+            session.SetString("IsAuthenticated", "true");
 
             _logger.LogInformation("Creating SMS Session: UserId={UserId}, UserType={UserType}, DisplayName={DisplayName}",
                 user.Code, userType.Value, user.DisplayName);
 
-            // Store user role information (common for all user types)
+            // Store user role information
             if (user.UserRole != null)
             {
                 session.SetString("SMS_UserRoleCode", user.UserRole.Code ?? string.Empty);
                 session.SetString("SMS_UserRoleName", user.UserRole.Name ?? string.Empty);
 
-                // Store serialized permissions with proper null checking and debugging
-                try
+                if (user.UserRole.Permissions != null && user.UserRole.Permissions.Any())
                 {
-                    if (user.UserRole.Permissions != null && user.UserRole.Permissions.Any())
-                    {
-                        var permissionsData = user.UserRole.Permissions.Select(p => new {
-                            Module = p.SMSModule ?? string.Empty,
-                            Create = p.Create,
-                            Read = p.Read,
-                            Update = p.Update,
-                            Delete = p.Delete
-                        }).ToList();
+                    var permissionsData = user.UserRole.Permissions.Select(p => new {
+                        Module = p.SMSModule ?? string.Empty,
+                        Create = p.Create,
+                        Read = p.Read,
+                        Update = p.Update,
+                        Delete = p.Delete
+                    }).ToList();
 
-                        var permissionsJson = System.Text.Json.JsonSerializer.Serialize(permissionsData);
-                        session.SetString("SMS_UserPermissions", permissionsJson);
-
-                        _logger.LogInformation("Stored {Count} permissions for user {UserId}",
-                            user.UserRole.Permissions.Count, user.Code);
-                    }
-                    else
-                    {
-                        // No permissions found - store empty array
-                        session.SetString("SMS_UserPermissions", "[]");
-                        _logger.LogWarning("No permissions found for user {UserId} with role {RoleCode}",
-                            user.Code, user.UserRole.Code);
-                    }
+                    var permissionsJson = System.Text.Json.JsonSerializer.Serialize(permissionsData);
+                    session.SetString("SMS_UserPermissions", permissionsJson);
                 }
-                catch (Exception ex)
+                else
                 {
-                    _logger.LogError(ex, "Failed to serialize permissions for user {UserId}", user.UserId?.Value);
                     session.SetString("SMS_UserPermissions", "[]");
                 }
             }
-            else
-            {
-                // No user role assigned
-                _logger.LogWarning("No UserRole assigned to user {UserCode}", user.Code);
-                session.SetString("SMS_UserRoleCode", string.Empty);
-                session.SetString("SMS_UserRoleName", string.Empty);
-                session.SetString("SMS_UserPermissions", "[]");
-            }
 
-            _logger.LogInformation("Session base data stored successfully");
-
-            // Store user type-specific data from Domain Entities
+            // Store user type-specific data
             switch (userType)
             {
                 case var type when type == SMSUserType.Application && user is SMSApplicationUser appUser:
-                    // Application users now only have basic properties + UserRole
                     session.SetString("SMS_ApplicationUserCode", appUser.Code ?? string.Empty);
-                    _logger.LogInformation("Application user session data: UserId={UserId}, Role={RoleName}",
-                        appUser.ApplicationUserId?.Value, user.UserRole?.Name);
                     break;
 
                 case var type when type == SMSUserType.Organizational && user is SMSOrganizationalUser orgUser:
                     session.SetString("SMS_Department", orgUser.Department ?? string.Empty);
                     session.SetString("SMS_Position", orgUser.Position ?? string.Empty);
                     session.SetString("SMS_OrganizationLevel", orgUser.OrganizationLevel ?? string.Empty);
-                    session.SetString("SMS_OrganizationalUserId", orgUser.OrganizationalUserId?.Value ?? string.Empty);
-                    _logger.LogInformation("Organizational user session data: Dept={Dept}, Position={Position}, Level={Level}",
-                        orgUser.Department, orgUser.Position, orgUser.OrganizationLevel);
                     break;
 
                 case var type when type == SMSUserType.Stakeholder && user is SMSStakeholderUser stakeholderUser:
                     session.SetString("SMS_Organization", stakeholderUser.Organization ?? string.Empty);
                     session.SetString("SMS_StakeholderType", stakeholderUser.StakeholderType ?? string.Empty);
-                    session.SetString("SMS_StakeholderUserId", stakeholderUser.StakeholderUserId?.Value ?? string.Empty);
-                    // Note: AccessLevel removed - now handled through UserRole permissions
-                    _logger.LogInformation("Stakeholder user session data: Org={Org}, Type={Type}, Role={RoleName}",
-                        stakeholderUser.Organization, stakeholderUser.StakeholderType, user.UserRole?.Name);
-                    break;
-
-                default:
-                    _logger.LogWarning("Unknown user type or casting failed: UserType={UserType}, UserClass={UserClass}",
-                        userType.Value, user.GetType().Name);
                     break;
             }
 
-            // **IMPORTANT**: Mark session as authenticated
-            session.SetString("IsAuthenticated", "true");
+            // BLAZOR FIX: Explicitly commit session
+            await session.CommitAsync();
 
-            // **BLAZOR FIX**: Don't call CommitAsync here - let the natural request cycle handle it
-            // This prevents the "session cannot be established after response has started" error
-            _logger.LogInformation("SMS Session created successfully for user {UserId}", user.Code);
+            _logger.LogInformation("SMS Session created and committed successfully for user {UserId}", user.Code);
         }
         catch (Exception ex)
         {

@@ -739,4 +739,29 @@ public static class DomainErrors
         public static Error FileSizeExceedsLimit => new Error("HazardFile.FileSizeExceedsLimit", "The file size exceeds the maximum allowed limit.");
         public static Error StorageError => new Error("HazardFile.StorageError", "An error occurred while storing the file.");
     }
+
+    /// <summary>
+    /// Contains report validation-related errors.
+    /// </summary>
+    public static class ReportValidationError
+    {
+        public static Error NullOrEmpty => new Error("ReportValidation.NullOrEmpty", "The Report Validation is required.");
+        public static Error CodeRequired => new Error("ReportValidation.CodeRequired", "The Report Validation Code is required.");
+        public static Error ReportCodeRequired => new Error("ReportValidation.ReportCodeRequired", "The Report Code is required.");
+        public static Error ValidatedByRequired => new Error("ReportValidation.ValidatedByRequired", "The ValidatedBy field is required.");
+        public static Error ValidationDecisionRequired => new Error("ReportValidation.ValidationDecisionRequired", "The Validation Decision is required.");
+        public static Error ValidationCommentsRequired => new Error("ReportValidation.ValidationCommentsRequired", "Validation Comments are required (minimum 5 characters).");
+        public static Error InvalidCode => new Error("ReportValidation.InvalidCode", "The Report Validation Code is invalid.");
+        public static Error InvalidValidationDecision => new Error("ReportValidation.InvalidValidationDecision", "The Validation Decision is invalid.");
+        public static Error InvalidValidationType => new Error("ReportValidation.InvalidValidationType", "The Validation Type is invalid.");
+        public static Error AssessorRequiredForSmsRisk => new Error("ReportValidation.AssessorRequiredForSmsRisk", "Assigned Assessor is required for SMS Risk validations.");
+        public static Error CannotModifyCompleted => new Error("ReportValidation.CannotModifyCompleted", "Cannot modify a completed Report Validation.");
+        public static Error NotFound => new Error("ReportValidation.NotFound", "The Report Validation was not found.");
+        public static Error CreateFailed => new Error("ReportValidation.CreateFailed", "Failed to create the Report Validation.");
+        public static Error UpdateFailed => new Error("ReportValidation.UpdateFailed", "Failed to update the Report Validation.");
+        public static Error DeleteFailed => new Error("ReportValidation.DeleteFailed", "Failed to delete the Report Validation.");
+        public static Error AlreadyExists => new Error("ReportValidation.AlreadyExists", "A validation for this report already exists.");
+        public static Error StatusUpdateFailed => new Error("ReportValidation.StatusUpdateFailed", "Failed to update the validation status.");
+        public static Error WorkflowViolation => new Error("ReportValidation.WorkflowViolation", "The validation operation violates workflow rules.");
+    }
 }

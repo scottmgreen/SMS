@@ -1,0 +1,175 @@
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using SMS3.Components.Pages.SMSRiskManagement
+@using global::System.Text.Json
+@using Radzen
+@using Radzen.Blazor
+
+<!-- Progress Summary -->
+<RadzenCard Style="margin-bottom: 1rem;">
+    <RadzenRow Gap="1rem" AlignItems="AlignItems.Center">
+        <RadzenColumn Size="3">
+            <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                <RadzenIcon Icon="assignment" Style="font-size: 2rem; color: var(--rz-info);" />
+                <RadzenText TextStyle="TextStyle.H4" Text="@($"{AvailableHazards?.Count ?? 0}")" Style="margin: 0; color: var(--rz-info);" />
+                <RadzenText TextStyle="TextStyle.Caption" Text="Hazards" Style="text-align: center;" />
+            </RadzenStack>
+        </RadzenColumn>
+        <RadzenColumn Size="3">
+            <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                <RadzenIcon Icon="people" Style="font-size: 2rem; color: var(--rz-info);" />
+                <RadzenText TextStyle="TextStyle.H4" Text="@GetTotalPanelMembers()" Style="margin: 0; color: var(--rz-info);" />
+                <RadzenText TextStyle="TextStyle.Caption" Text="Panel Members" Style="text-align: center;" />
+            </RadzenStack>
+        </RadzenColumn>
+        <RadzenColumn Size="3">
+            <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                <RadzenIcon Icon="check_circle" Style="font-size: 2rem; color: var(--rz-info);" />
+                <RadzenText TextStyle="TextStyle.H4" Text="@GetCompletedScores()" Style="margin: 0; color: var(--rz-info);" />
+                <RadzenText TextStyle="TextStyle.Caption" Text="Completed Scores" Style="text-align: center;" />
+            </RadzenStack>
+        </RadzenColumn>
+        <RadzenColumn Size="3">
+            <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                <RadzenIcon Icon="schedule" Style="font-size: 2rem; color: var(--rz-info);" />
+                <RadzenText TextStyle="TextStyle.H4" Text="@GetPendingScores()" Style="margin: 0; color: var(--rz-info);" />
+                <RadzenText TextStyle="TextStyle.Caption" Text="Pending Scores" Style="text-align: center;" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenCard>
+
+<RadzenRow Gap="1rem">
+    <!-- Main Content Column -->
+    <RadzenColumn Size="12" SizeLG="8">
+        <RadzenStack Gap="1.5rem">
+            <!-- Header -->
+            <RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid var(--rz-primary);">
+                <RadzenStack Gap="1rem">
+                    <RadzenRow AlignItems="AlignItems.Center">
+                        <RadzenColumn Size="10">
+                            <RadzenText TextStyle="TextStyle.H5" Style="color: var(--rz-primary); margin: 0;">
+                                <RadzenIcon Icon="trending_up" Style="margin-right: 0.5rem;" />
+                                Step 4: Assess Risk Level & Tolerability
+                            </RadzenText>
+                        </RadzenColumn>
+                        <RadzenColumn Size="2">
+                            <RadzenBadge Text="@($"{AvailableHazards?.Count ?? 0} Hazards")" BadgeStyle="BadgeStyle.Light" />
+                        </RadzenColumn>
+                    </RadzenRow>
+                    
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        Use the 5x5 risk matrix to assess each identified hazard. Each panel member scores independently using severity (impact) and likelihood (probability) 
+                        to determine their individual risk assessment. The system calculates average scores per hazard.
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+
+            <!-- Hazard Scoring Panels -->
+            @if (AvailableHazards?.Any() == true)
+            {
+                @foreach (var hazard in AvailableHazards)
+                {
+                    <HazardScoringPanel Hazard="@hazard" 
+                                       Step4="@Step4"
+                                       AvailableStakeholders="@AvailableStakeholders"
+                                       AvailableAssessors="@AvailableAssessors"
+                                       OnPanelUpdated="@OnPanelUpdated" 
+                                       OnScoreSubmitted="@OnScoreSubmitted" />
+                }
+            }
+            else
+            {
+                <RadzenCard Style="text-align: center; padding: 2rem;">
+                    <RadzenStack AlignItems="AlignItems.Center" Gap="1rem">
+                        <RadzenIcon Icon="warning" Style="font-size: 3rem; color: var(--rz-warning);" />
+                        <RadzenText TextStyle="TextStyle.H5" Text="No hazards identified yet" />
+                        <RadzenText TextStyle="TextStyle.Body2" Text="Please complete Step 2 (Identify Hazards) before proceeding with risk assessment." />
+                        <RadzenButton Text="Go to Step 2" Icon="arrow_back" ButtonStyle="ButtonStyle.Warning" 
+                                      Click="@GoToStep2" />
+                    </RadzenStack>
+                </RadzenCard>
+            }
+        </RadzenStack>
+    </RadzenColumn>
+
+    <!-- Debug Panel -->
+    <RadzenColumn Size="12" SizeLG="4">
+        <RadzenCard Style="position: sticky; top: 20px;">
+            <RadzenStack Gap="1rem">
+                <RadzenText TextStyle="TextStyle.H6" Text="Step 4 Debug Info" Style="color: var(--rz-primary);" />
+                
+                <RadzenFieldset Text="Scoring Progress">
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Total Hazards: {AvailableHazards?.Count ?? 0}")" />
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Panel Members: {GetTotalPanelMembers()}")" />
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Completed Scores: {GetCompletedScores()}")" />
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Progress: {GetScoringProgress()}%")" />
+                </RadzenFieldset>
+
+                <RadzenFieldset Text="Hazard Averages">
+                    @if (Step4.HazardAverageScores?.Any() == true)
+                    {
+                        @foreach (var hazardAvg in Step4.HazardAverageScores)
+                        {
+                            <RadzenText TextStyle="TextStyle.Body2" Text="@($"{hazardAvg.Key}: {hazardAvg.Value:F1}")" />
+                        }
+                    }
+                    else
+                    {
+                        <RadzenText TextStyle="TextStyle.Body2" Text="No averages calculated yet" />
+                    }
+                </RadzenFieldset>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>
+
+@code {
+    [Parameter] public Step4Model Step4 { get; set; } = new();
+    [Parameter] public EventCallback<Step4Model> Step4Changed { get; set; }
+    [Parameter] public List<Hazard> AvailableHazards { get; set; } = new();
+    [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
+    [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
+
+    private void GoToStep2()
+    {
+        Console.WriteLine("Navigate to Step 2");
+    }
+
+    private string GetTotalPanelMembers()
+    {
+        return Step4.SelectedPanelMembers?.Count.ToString() ?? "0";
+    }
+
+    private string GetCompletedScores()
+    {
+        return Step4.CompletedScores?.Count.ToString() ?? "0";
+    }
+
+    private string GetPendingScores()
+    {
+        return Step4.PendingScores?.Count.ToString() ?? "0";
+    }
+
+    private int GetScoringProgress()
+    {
+        var totalRequired = (AvailableHazards?.Count ?? 0) * (Step4.SelectedPanelMembers?.Count ?? 0);
+        if (totalRequired == 0) return 0;
+        
+        var completed = Step4.CompletedScores?.Count ?? 0;
+        return (completed * 100) / totalRequired;
+    }
+
+    private async Task OnPanelUpdated(string hazardId)
+    {
+        await Step4Changed.InvokeAsync(Step4);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnScoreSubmitted(Step4Model.PanelMemberScoreData scoreData)
+    {
+        Step4.AddPanelMemberScore(scoreData.HazardId, scoreData);
+        await Step4Changed.InvokeAsync(Step4);
+        await InvokeAsync(StateHasChanged);
+    }
+}

@@ -1,0 +1,216 @@
+@page "/SMSPolicy/SafetyPolicy"
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Safety Policy - SMS3</PageTitle>
+
+<div class="container-fluid">
+    <!-- Policy Documents Section -->
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12" SizeLG="8">
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenCardHeader>
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
+                        <RadzenIcon Icon="picture_as_pdf" Style="margin-right: 0.5rem;" />
+                        Safety Policy Documents
+                    </RadzenText>
+                </RadzenCardHeader>
+                <RadzenCardContent>
+                    <RadzenRow Gap="1rem">
+                        <!-- SMS Policy Overview -->
+                        <RadzenColumn Size="12" SizeMD="6" class="rz-mb-3">
+                            <RadzenCard Variant="Variant.Outlined" Style="height: 100%; border-color: var(--rz-primary);">
+                                <RadzenCardContent>
+                                    <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="1rem">
+                                        <RadzenIcon Icon="picture_as_pdf" Style="font-size: 3rem; color: var(--rz-primary);" />
+                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; text-align: center;">SMS Policy Overview</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; text-align: center;">
+                                            14 CFR Part 139
+                                        </RadzenText>
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" Style="width: 100%;">
+                                            <RadzenButton Text="View Document" Icon="visibility" ButtonStyle="ButtonStyle.Primary" 
+                                                        Click="@(() => ViewDocument("14 CFR Part 139.pdf", "policies"))" Style="width: 100%;" />
+                                            <RadzenButton Text="Download" Icon="download" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Success" 
+                                                        Click="@(() => DownloadDocument("policies/14 CFR Part 139.pdf"))" Size="ButtonSize.Small" Style="width: 100%;" />
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                </RadzenCardContent>
+                            </RadzenCard>
+                        </RadzenColumn>
+
+                        <!-- Regulatory Compliance -->
+                        <RadzenColumn Size="12" SizeMD="6" class="rz-mb-3">
+                            <RadzenCard Variant="Variant.Outlined" Style="height: 100%; border-color: var(--rz-info);">
+                                <RadzenCardContent>
+                                    <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="1rem">
+                                        <RadzenIcon Icon="picture_as_pdf" Style="font-size: 3rem; color: var(--rz-info);" />
+                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; text-align: center;">Regulatory Compliance</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; text-align: center;">
+                                            FAA Final Rule
+                                        </RadzenText>
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" Style="width: 100%;">
+                                            <RadzenButton Text="View Document" Icon="visibility" ButtonStyle="ButtonStyle.Info" 
+                                                        Click="@(() => ViewDocument("FAA Final Rule.pdf", "policies"))" Style="width: 100%;" />
+                                            <RadzenButton Text="Download" Icon="download" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Success" 
+                                                        Click="@(() => DownloadDocument("policies/FAA Final Rule.pdf"))" Size="ButtonSize.Small" Style="width: 100%;" />
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                </RadzenCardContent>
+                            </RadzenCard>
+                        </RadzenColumn>
+
+                        <!-- Emergency Procedures -->
+                        <RadzenColumn Size="12" SizeMD="6" class="rz-mb-3">
+                            <RadzenCard Variant="Variant.Outlined" Style="height: 100%; border-color: var(--rz-warning);">
+                                <RadzenCardContent>
+                                    <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="1rem">
+                                        <RadzenIcon Icon="picture_as_pdf" Style="font-size: 3rem; color: var(--rz-warning);" />
+                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; text-align: center;">Emergency Procedures</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; text-align: center;">
+                                            Emergency response procedures and crisis management protocols.
+                                        </RadzenText>
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" Style="width: 100%;">
+                                            <RadzenButton Text="View Document" Icon="visibility" ButtonStyle="ButtonStyle.Warning" 
+                                                        Click="@(() => ViewDocument("part-139-cert-alert-23-02-SMS-rule.pdf", "policies"))" Style="width: 100%;" />
+                                            <RadzenButton Text="Download" Icon="download" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Success" 
+                                                        Click="@(() => DownloadDocument("policies/emergency-procedures.pdf"))" Size="ButtonSize.Small" Style="width: 100%;" />
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                </RadzenCardContent>
+                            </RadzenCard>
+                        </RadzenColumn>
+
+                        <!-- Training Manual -->
+                        <RadzenColumn Size="12" SizeMD="6" class="rz-mb-3">
+                            <RadzenCard Variant="Variant.Outlined" Style="height: 100%; border-color: var(--rz-success);">
+                                <RadzenCardContent>
+                                    <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="1rem">
+                                        <RadzenIcon Icon="picture_as_pdf" Style="font-size: 3rem; color: var(--rz-success);" />
+                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; text-align: center;">Training Manual</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; text-align: center;">
+                                            Safety training procedures and educational materials for staff.
+                                        </RadzenText>
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" Style="width: 100%;">
+                                            <RadzenButton Text="View Document" Icon="visibility" ButtonStyle="ButtonStyle.Success" 
+                                                        Click="@(() => ViewDocument("safety-training-manual.pdf", "manuals"))" Style="width: 100%;" />
+                                            <RadzenButton Text="Download" Icon="download" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Success" 
+                                                        Click="@(() => DownloadDocument("manuals/safety-training-manual.pdf"))" Size="ButtonSize.Small" Style="width: 100%;" />
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                </RadzenCardContent>
+                            </RadzenCard>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <!-- Information Alert -->
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" class="rz-mt-4">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; font-weight: 600;">
+                                <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
+                                Adding Your PDF Documents
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">To add your PDF documents:</RadzenText>
+                            <RadzenList>
+                                <RadzenListItem Text="Copy your PDF files to: Presentation/wwwroot/documents/policies/" />
+                                <RadzenListItem Text="Update the file names in the links above to match your actual PDF files" />
+                                <RadzenListItem Text="The 'View Document' buttons will open PDFs in the same page using the embedded viewer" />
+                                <RadzenListItem Text="The 'Download' buttons allow direct file downloads" />
+                            </RadzenList>
+                        </RadzenStack>
+                    </RadzenAlert>
+                </RadzenCardContent>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <!-- Information Panel -->
+        <RadzenColumn Size="12" SizeLG="4">
+            <!-- Document Viewer Features -->
+            <RadzenCard Variant="Variant.Outlined" class="rz-mb-3">
+                <RadzenCardHeader>
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-primary);">
+                        <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
+                        Document Viewer Features
+                    </RadzenText>
+                </RadzenCardHeader>
+                <RadzenCardContent>
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="check" Style="color: var(--rz-success);" />
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">View PDFs in the same page</RadzenText>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="check" Style="color: var(--rz-success);" />
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">No new browser tabs required</RadzenText>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="check" Style="color: var(--rz-success);" />
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Built-in PDF controls (zoom, print, etc.)</RadzenText>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="check" Style="color: var(--rz-success);" />
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Responsive design for mobile</RadzenText>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="check" Style="color: var(--rz-success);" />
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Fallback for unsupported browsers</RadzenText>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCardContent>
+            </RadzenCard>
+
+            <!-- Document Categories -->
+            <RadzenCard Variant="Variant.Outlined" class="rz-mb-3">
+                <RadzenCardHeader>
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-info);">
+                        <RadzenIcon Icon="folder" Style="margin-right: 0.5rem;" />
+                        Document Categories
+                    </RadzenText>
+                </RadzenCardHeader>
+                <RadzenCardContent>
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="book" Style="color: var(--rz-primary);" />
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Policies:</strong> Safety policies and procedures</RadzenText>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="school" Style="color: var(--rz-success);" />
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Manuals:</strong> Training and user guides</RadzenText>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="description" Style="color: var(--rz-warning);" />
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Templates:</strong> Downloadable forms</RadzenText>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="assignment" Style="color: var(--rz-info);" />
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Forms:</strong> Official documents</RadzenText>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCardContent>
+            </RadzenCard>
+
+            <!-- Quick Actions -->
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenCardHeader>
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-secondary);">
+                        <RadzenIcon Icon="settings" Style="margin-right: 0.5rem;" />
+                        Quick Actions
+                    </RadzenText>
+                </RadzenCardHeader>
+                <RadzenCardContent>
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                        <RadzenButton Text="Organizational Structure" Icon="account_tree" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Primary" 
+                                    Click="@(() => NavigateToPage("/SMSPolicy/OrganizationalStructure"))" Size="ButtonSize.Small" Style="width: 100%;" />
+                        <RadzenButton Text="Role Assignments" Icon="badge" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Success" 
+                                    Click="@(() => NavigateToPage("/SMSPolicy/ResponsibilitiesAndAccountability"))" Size="ButtonSize.Small" Style="width: 100%;" />
+                        <RadzenButton Text="Safety Training" Icon="school" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Primary" 
+                                    Click="@(() => NavigateToPage("/SMSPromotion/SafetyTraining"))" Size="ButtonSize.Small" Style="width: 100%;" />
+                        <RadzenButton Text="Compliance Reports" Icon="fact_check" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Info" 
+                                    Click="@(() => NavigateToPage("/SMSAssurance/ComplianceReporting"))" Size="ButtonSize.Small" Style="width: 100%;" />
+                        <RadzenButton Text="System Administration" Icon="settings" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Secondary" 
+                                    Click="@(() => NavigateToPage("/System"))" Size="ButtonSize.Small" Style="width: 100%;" />
+                    </RadzenStack>
+                </RadzenCardContent>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+</div>

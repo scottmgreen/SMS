@@ -1,0 +1,56 @@
+@page "/SMSRiskManagement/ReportProcessing"
+@using SMS_Application.Messaging.Queries
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Report Processing - SMS3</PageTitle>
+
+<div class="container-fluid">
+    <!-- Header -->
+    <RadzenRow Gap="1rem" class="rz-mb-4">
+        <RadzenColumn Size="12">
+            <RadzenCard Variant="Variant.Filled" Style="background: linear-gradient(135deg, var(--rz-primary) 0%, var(--rz-primary-dark) 100%); color: white;">
+                <RadzenCardContent>
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; color: white;">
+                                <RadzenIcon Icon="settings" Style="margin-right: 0.5rem;" />
+                                Report Processing Workflow
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; color: white; opacity: 0.9;">
+                                Process reports and manage SMS risk validation workflow
+                            </RadzenText>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCardContent>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Main Tabs -->
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12">
+            <RadzenTabs @bind-SelectedIndex="selectedTabIndex">
+                <Tabs>
+                    <RadzenTabsItem Text="@($"Validation ({PendingValidation.Count})")" Icon="check_circle">
+                        @RenderValidationTab()
+                    </RadzenTabsItem>
+                    <RadzenTabsItem Text="@($"Risk Assessment ({PendingRiskAssessment.Count})")" Icon="assessment">
+                        @RenderRiskAssessmentTab()
+                    </RadzenTabsItem>
+                    <RadzenTabsItem Text="@($"Investigation ({PendingInvestigation.Count})")" Icon="search">
+                        @RenderInvestigationTab()
+                    </RadzenTabsItem>
+                    <RadzenTabsItem Text="@($"Mitigation ({InMitigation.Count})")" Icon="build">
+                        @RenderMitigationTab()
+                    </RadzenTabsItem>
+                    <RadzenTabsItem Text="@($"Closed ({ClosedReferred.Count})")" Icon="archive">
+                        @RenderClosedTab()
+                    </RadzenTabsItem>
+                </Tabs>
+            </RadzenTabs>
+        </RadzenColumn>
+    </RadzenRow>
+</div>

@@ -1,0 +1,239 @@
+@page "/login"
+@layout SMS3.Components.Layout.LoginLayout
+
+<div class="login-background">
+    <div class="sms-login-card">
+        <!-- Login Card Header -->
+        <div class="sms-login-header">
+            <i class="fas fa-shield-alt sms-login-icon"></i>
+            <h2 class="sms-login-title">SMS3 Portal</h2>
+            <p class="sms-login-subtitle-text">Portland International Airport</p>
+        </div>
+        
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger sms-login-error">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Login Failed:</strong> @ErrorMessage
+            </div>
+        }
+
+        <RadzenTemplateForm TItem="LoginFormModel" Data="@LoginModel" Submit="@HandleLoginAsync">
+            <div class="mb-3">
+                <label class="form-label sms-form-label">
+                    <i class="fas fa-envelope me-2"></i> Email Address
+                </label>
+                <RadzenTextBox @bind-Value="@LoginModel.Username" 
+                               Name="Username" 
+                               Placeholder="Enter your email address"
+                               Class="sms-form-input" />
+                <RadzenRequiredValidator Component="Username" Text="Email is required" Class="sms-validation-error" />
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label sms-form-label">
+                    <i class="fas fa-lock me-2"></i> Password
+                </label>
+                <RadzenPassword @bind-Value="@LoginModel.Password" 
+                                Name="Password" 
+                                Placeholder="Enter your password"
+                                Class="sms-form-input" />
+                <RadzenRequiredValidator Component="Password" Text="Password is required" Class="sms-validation-error" />
+            </div>
+            
+            <div class="d-grid mb-3">
+                <RadzenButton ButtonType="ButtonType.Submit" 
+                              ButtonStyle="ButtonStyle.Primary" 
+                              Text="@(IsLoading ? "Signing in..." : "Access SMS Portal")"
+                              Disabled="@IsLoading" 
+                              Size="ButtonSize.Large"
+                              Class="sms-login-button" />
+            </div>
+        </RadzenTemplateForm>
+
+        <!-- Anonymous Reporting Section -->
+        <div class="sms-anonymous-section">
+            <div class="sms-anonymous-header">
+                <h6 class="sms-anonymous-title">Anonymous Reporting</h6>
+                <p class="sms-anonymous-description">Submit confidential safety reports without logging in</p>
+            </div>
+            <div class="d-grid">
+                <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                              Text="Submit Confidential Report" 
+                              Click="@(() => Navigation.NavigateTo("/anonymous-reporting"))"
+                              Size="ButtonSize.Large"
+                              Class="sms-anonymous-button" />
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* =============================================================================
+   LOGIN BACKGROUND - SAME AS HOME PAGE
+   ============================================================================= */
+
+.login-background {
+    background-image: url('images/background_opening.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    width: calc(100% + 3rem);
+    min-height: calc(100vh + 3rem);
+    margin: -1.5rem;
+    padding: 2rem;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* =============================================================================
+   SMS LOGIN PAGE - EXACT COLOR COMPLIANCE
+   ============================================================================= */
+
+.sms-login-card {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 1rem 3rem rgba(33, 46, 97, 0.15);
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 450px;
+    border: 1px solid var(--sms-blue-light);
+}
+
+/* Login Header */
+.sms-login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--sms-blue-light);
+}
+
+.sms-login-icon {
+    font-size: 3.5rem;
+    color: var(--sms-blue-primary);
+    margin-bottom: 1rem;
+    display: block;
+    text-shadow: 0 0.125rem 0.25rem rgba(0, 106, 169, 0.25);
+}
+
+.sms-login-title {
+    color: var(--sms-blue-dark-bold);
+    font-weight: 700;
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.sms-login-subtitle-text {
+    color: var(--sms-teal-primary);
+    font-weight: 500;
+    font-size: 1rem;
+    margin-bottom: 0;
+}
+
+/* Form Styling */
+.sms-form-label {
+    color: var(--sms-blue-dark-bold);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.sms-form-input {
+    width: 100% !important;
+    padding: 0.875rem 1rem !important;
+    border-radius: 0.5rem !important;
+    border: 2px solid var(--sms-blue-light) !important;
+    font-size: 1rem !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.sms-form-input:focus {
+    border-color: var(--sms-blue-primary) !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 106, 169, 0.25) !important;
+    outline: none !important;
+}
+
+.sms-validation-error {
+    color: var(--sms-red-primary) !important;
+    font-size: 0.875rem !important;
+    margin-top: 0.25rem !important;
+}
+
+/* Login Button */
+.sms-login-button {
+    padding: 0.875rem 1.5rem !important;
+    font-weight: 600 !important;
+    border-radius: 0.5rem !important;
+    font-size: 1.1rem !important;
+    background-color: var(--sms-btn-primary-bg) !important;
+    border-color: var(--sms-btn-primary-bg) !important;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 106, 169, 0.25) !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.sms-login-button:hover {
+    background-color: var(--sms-btn-primary-hover) !important;
+    border-color: var(--sms-btn-primary-hover) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 0.375rem 0.75rem rgba(0, 106, 169, 0.35) !important;
+}
+
+.sms-login-button:disabled {
+    opacity: 0.6 !important;
+    transform: none !important;
+}
+
+/* Error Alert */
+.sms-login-error {
+    background-color: var(--sms-alert-danger-bg) !important;
+    color: var(--sms-alert-danger-text) !important;
+    border: 1px solid var(--sms-alert-danger-border) !important;
+    border-radius: 0.5rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+/* Anonymous Reporting Section */
+.sms-anonymous-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--sms-blue-light);
+}
+
+.sms-anonymous-header {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.sms-anonymous-title {
+    color: var(--sms-blue-dark-bold);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.sms-anonymous-description {
+    color: var(--sms-teal-primary);
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
+.sms-anonymous-button {
+    padding: 0.875rem 1.5rem !important;
+    font-weight: 600 !important;
+    border-radius: 0.5rem !important;
+    background-color: var(--sms-btn-danger-bg) !important;
+    border-color: var(--sms-btn-danger-bg) !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.sms-anonymous-button:hover {
+    background-color: var(--sms-btn-danger-hover) !important;
+    border-color: var(--sms-btn-danger-hover) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* =============================================================================
+   END SMS LOGIN PAGE STYLING
+   ============================================================================= */
+</style>
