@@ -1,0 +1,691 @@
+@page "/SMSRiskManagement/PreliminaryRiskAssessment/{HazardId}/{AssessmentId}"
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using SMS_Domain.ValueObjects
+@using SMS_Application.Messaging.Queries
+@using SMS_Application.Messaging.Commands
+@using SMS_Application.Interfaces
+@using SMS_Shared.Common
+@using Radzen
+@using Radzen.Blazor
+@inject IMediator Mediator
+@inject NavigationManager Navigation
+@inject NotificationService NotificationService
+@inject ILogger<PreliminaryRiskAssessment> Logger
+
+<PageTitle>Preliminary Risk Assessment</PageTitle>
+
+<!-- Breadcrumb -->
+<RadzenBreadCrumb>
+    <RadzenBreadCrumbItem Text="Dashboard" Path="/" />
+    <RadzenBreadCrumbItem Text="Safety Risk Management" Path="/SMSRiskManagement" />
+    <RadzenBreadCrumbItem Text="Report Processing" Path="/SMSRiskManagement/ReportProcessing" />
+    <RadzenBreadCrumbItem Text="Preliminary Risk Assessment" />
+</RadzenBreadCrumb>
+
+@if (IsLoading)
+{
+    <RadzenCard>
+        <RadzenStack AlignItems="AlignItems.Center" Gap="1rem">
+            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <RadzenText TextStyle="TextStyle.H6" Text="Loading assessment..." />
+        </RadzenStack>
+    </RadzenCard>
+}
+else
+{
+    <!-- Header -->
+    <RadzenCard Style="background: linear-gradient(45deg, var(--rz-success), var(--rz-success-dark)); color: white; margin-bottom: 1rem;">
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="8">
+                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; color: white;">
+                    <RadzenIcon Icon="speed" Style="margin-right: 0.5rem;" />
+                    Preliminary Risk Assessment
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Style="color: rgba(255,255,255,0.9);">
+                    Streamlined risk assessment for moderate complexity hazards
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Style="color: rgba(255,255,255,0.8); margin: 0;">
+                    <strong>Assessment ID:</strong> @AssessmentId | <strong>Hazard:</strong> @HazardId
+                </RadzenText>
+            </RadzenColumn>
+            <RadzenColumn Size="4">
+                <RadzenStack AlignItems="AlignItems.End" Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.H3" Text="@($"{ProgressPercentage}%")" Style="margin: 0; color: white;" />
+                    <RadzenProgressBar Value="@ProgressPercentage" Style="width: 100%;" ProgressBarStyle="ProgressBarStyle.Light" />
+                    <RadzenText TextStyle="TextStyle.Caption" Text="@CurrentSection" Style="color: rgba(255,255,255,0.8);" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenRow Gap="1rem">
+        <!-- Main Form -->
+        <RadzenColumn Size="12" SizeLG="8">
+            <RadzenCard>
+                <RadzenStack Gap="1.5rem">
+                    <RadzenText TextStyle="TextStyle.H5" Style="color: var(--rz-success); margin: 0;">
+                        <RadzenIcon Icon="assignment" Style="margin-right: 0.5rem;" />
+                        Preliminary Risk Assessment Form
+                    </RadzenText>
+
+                    <!-- Hazard Summary -->
+                    @if (Hazard != null)
+                    {
+                        <RadzenCard Variant="Variant.Outlined" Style="background-color: #f8f9fa;">
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0;">
+                                    <RadzenIcon Icon="warning" Style="color: var(--rz-warning); margin-right: 0.5rem;" />
+                                    Hazard Summary
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Type:</strong> @Hazard.HazardType</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Location:</strong> @Hazard.Location</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Description:</strong> @Hazard.Description</RadzenText>
+                            </RadzenStack>
+                        </RadzenCard>
+                    }
+
+                    <!-- Section 1: Immediate Risk Level -->
+                    <RadzenFieldset Text="1. Immediate Risk Level Assessment">
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Likelihood of Occurrence *" Variant="Variant.Outlined">
+                                    <RadzenDropDown @bind-Value="@Model.Likelihood" Data="@LikelihoodOptions" 
+                                                    Placeholder="Select likelihood..." Style="width: 100%;" />
+                                </RadzenFormField>
+                                <RadzenText TextStyle="TextStyle.Caption" Text="Probability this hazard will occur" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Severity of Consequences *" Variant="Variant.Outlined">
+                                    <RadzenDropDown @bind-Value="@Model.Severity" Data="@SeverityOptions" 
+                                                    Placeholder="Select severity..." Style="width: 100%;" />
+                                </RadzenFormField>
+                                <RadzenText TextStyle="TextStyle.Caption" Text="Impact if this hazard occurs" />
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenFieldset>
+
+                    <!-- Section 2: Current Controls -->
+                    <RadzenFieldset Text="2. Current Risk Controls">
+                        <RadzenStack Gap="1rem">
+                            <RadzenFormField Text="Existing Safety Measures" Variant="Variant.Outlined">
+                                <RadzenTextArea @bind-Value="@Model.ExistingControls" Rows="3"
+                                                Placeholder="List current safety controls, procedures, or barriers in place..."
+                                                Style="width: 100%;" />
+                            </RadzenFormField>
+
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenFormField Text="Control Effectiveness" Variant="Variant.Outlined">
+                                        <RadzenDropDown @bind-Value="@Model.ControlEffectiveness" Data="@EffectivenessOptions"
+                                                        Placeholder="Select effectiveness..." Style="width: 100%;" />
+                                    </RadzenFormField>
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenFormField Text="Residual Risk Level *" Variant="Variant.Outlined">
+                                        <RadzenDropDown @bind-Value="@Model.ResidualRisk" Data="@ResidualRiskOptions"
+                                                        Placeholder="Select residual risk..." Style="width: 100%;" />
+                                    </RadzenFormField>
+                                </RadzenColumn>
+                            </RadzenRow>
+                        </RadzenStack>
+                    </RadzenFieldset>
+
+                    <!-- Section 3: Recommended Actions -->
+                    <RadzenFieldset Text="3. Recommended Risk Mitigation">
+                        <RadzenStack Gap="1rem">
+                            <RadzenFormField Text="Recommended Actions *" Variant="Variant.Outlined">
+                                <RadzenTextArea @bind-Value="@Model.RecommendedActions" Rows="4"
+                                                Placeholder="Describe specific actions to reduce or eliminate the risk..."
+                                                Style="width: 100%;" />
+                            </RadzenFormField>
+
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenFormField Text="Implementation Priority *" Variant="Variant.Outlined">
+                                        <RadzenDropDown @bind-Value="@Model.Priority" Data="@PriorityOptions"
+                                                        Placeholder="Select priority..." Style="width: 100%;" />
+                                    </RadzenFormField>
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenFormField Text="Estimated Cost" Variant="Variant.Outlined">
+                                        <RadzenDropDown @bind-Value="@Model.EstimatedCost" Data="@CostOptions"
+                                                        Placeholder="Select cost range..." Style="width: 100%;" />
+                                    </RadzenFormField>
+                                </RadzenColumn>
+                            </RadzenRow>
+                        </RadzenStack>
+                    </RadzenFieldset>
+
+                    <!-- Section 4: Assessment Summary -->
+                    <RadzenFieldset Text="4. Assessment Summary">
+                        <RadzenStack Gap="1rem">
+                            <RadzenFormField Text="Assessor Comments" Variant="Variant.Outlined">
+                                <RadzenTextArea @bind-Value="@Model.AssessorComments" Rows="3"
+                                                Placeholder="Additional observations, concerns, or recommendations..."
+                                                Style="width: 100%;" />
+                            </RadzenFormField>
+
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenFormField Text="Assessment Confidence" Variant="Variant.Outlined">
+                                        <RadzenDropDown @bind-Value="@Model.AssessmentConfidence" Data="@ConfidenceOptions"
+                                                        Placeholder="Select confidence level..." Style="width: 100%;" />
+                                    </RadzenFormField>
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenFormField Text="Follow-up Required" Variant="Variant.Outlined">
+                                        <RadzenDropDown @bind-Value="@Model.RequiresFollowUp" Data="@FollowUpOptions"
+                                                        Placeholder="Select follow-up..." Style="width: 100%;" />
+                                    </RadzenFormField>
+                                </RadzenColumn>
+                            </RadzenRow>
+                        </RadzenStack>
+                    </RadzenFieldset>
+
+                    <!-- Action Buttons -->
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Style="border-top: 1px solid #ddd; padding-top: 1rem;">
+                        <RadzenButton Text="Back to Processing Queue" Icon="arrow_back" ButtonStyle="ButtonStyle.Light"
+                                      Click="@(() => Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing"))" />
+                        
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                            <RadzenButton Text="Save as Draft" Icon="save" ButtonStyle="ButtonStyle.Secondary"
+                                          Click="@SaveDraft" Disabled="@IsSaving" />
+                            <RadzenButton Text="Complete Assessment" Icon="check_circle" ButtonStyle="ButtonStyle.Success"
+                                          Size="ButtonSize.Large" Click="@CompleteAssessment" Disabled="@IsSaving" />
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <!-- Help Panel -->
+        <RadzenColumn Size="12" SizeLG="4">
+            <RadzenStack Gap="1rem">
+                <!-- Risk Matrix -->
+                <RadzenCard>
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-success); margin: 0;">
+                            <RadzenIcon Icon="help" Style="margin-right: 0.5rem;" />
+                            Assessment Guidelines
+                        </RadzenText>
+
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="Risk Matrix" Style="margin: 0;" />
+                        <div style="overflow-x: auto;">
+                            <table class="table table-bordered table-sm text-center">
+                                <thead>
+                                    <tr>
+                                        <th style="font-size: 0.75rem;"></th>
+                                        <th style="font-size: 0.75rem;">Negligible</th>
+                                        <th style="font-size: 0.75rem;">Minor</th>
+                                        <th style="font-size: 0.75rem;">Moderate</th>
+                                        <th style="font-size: 0.75rem;">Major</th>
+                                        <th style="font-size: 0.75rem;">Catastrophic</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th style="font-size: 0.75rem;">Very High</th>
+                                        <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                        <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                        <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">High</td>
+                                        <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">High</td>
+                                        <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">Critical</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="font-size: 0.75rem;">High</th>
+                                        <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                        <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                        <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                        <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">High</td>
+                                        <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">High</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="font-size: 0.75rem;">Medium</th>
+                                        <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                        <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                        <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                        <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                        <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">High</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="font-size: 0.75rem;">Low</th>
+                                        <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                        <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                        <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                        <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                        <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="font-size: 0.75rem;">Very Low</th>
+                                        <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                        <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                        <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                        <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                        <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="Control Hierarchy" Style="margin: 0;" />
+                        <ol style="font-size: 0.875rem;">
+                            <li><strong>Elimination:</strong> Remove the hazard</li>
+                            <li><strong>Substitution:</strong> Replace with safer alternative</li>
+                            <li><strong>Engineering:</strong> Physical safeguards</li>
+                            <li><strong>Administrative:</strong> Procedures and training</li>
+                            <li><strong>PPE:</strong> Personal protective equipment</li>
+                        </ol>
+
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="ALARP Principle" Style="margin: 0;" />
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            Risks should be reduced to <strong>As Low As Reasonably Practicable</strong> (ALARP), considering cost-benefit and available technology.
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+
+                <!-- Assessment Progress -->
+                <RadzenCard>
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-primary); margin: 0;">
+                            <RadzenIcon Icon="analytics" Style="margin-right: 0.5rem;" />
+                            Assessment Progress
+                        </RadzenText>
+
+                        <RadzenStack Gap="0.5rem">
+                            <div>
+                                <RadzenText TextStyle="TextStyle.Caption" Text="Risk Level Assessment" Style="margin: 0;" />
+                                <RadzenProgressBar Value="@GetSectionProgress(1)" Style="width: 100%;" />
+                            </div>
+                            <div>
+                                <RadzenText TextStyle="TextStyle.Caption" Text="Current Controls" Style="margin: 0;" />
+                                <RadzenProgressBar Value="@GetSectionProgress(2)" Style="width: 100%;" />
+                            </div>
+                            <div>
+                                <RadzenText TextStyle="TextStyle.Caption" Text="Recommended Actions" Style="margin: 0;" />
+                                <RadzenProgressBar Value="@GetSectionProgress(3)" Style="width: 100%;" />
+                            </div>
+                            <div>
+                                <RadzenText TextStyle="TextStyle.Caption" Text="Assessment Summary" Style="margin: 0;" />
+                                <RadzenProgressBar Value="@GetSectionProgress(4)" Style="width: 100%;" />
+                            </div>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+}
+
+@code {
+    [Parameter] public string HazardId { get; set; } = string.Empty;
+    [Parameter] public string AssessmentId { get; set; } = string.Empty;
+
+    private bool IsLoading { get; set; } = true;
+    private bool IsSaving { get; set; } = false;
+    
+    public int ProgressPercentage { get; set; } = 0;
+    public string CurrentSection { get; set; } = "Risk Level Assessment";
+    public Hazard? Hazard { get; set; }
+    public RiskAssessment? Assessment { get; set; }
+
+    // Form Model
+    public PreliminaryAssessmentModel Model { get; set; } = new();
+
+    // Dropdown Options
+    private List<string> LikelihoodOptions = new()
+    {
+        "Very Low (< 1% chance)",
+        "Low (1-10% chance)", 
+        "Medium (10-50% chance)",
+        "High (50-90% chance)",
+        "Very High (> 90% chance)"
+    };
+
+    private List<string> SeverityOptions = new()
+    {
+        "Negligible (Minor inconvenience)",
+        "Minor (Temporary disruption)",
+        "Moderate (Significant impact)", 
+        "Major (Serious consequences)",
+        "Catastrophic (Severe/fatal consequences)"
+    };
+
+    private List<string> EffectivenessOptions = new()
+    {
+        "Highly Effective (90%+ risk reduction)",
+        "Effective (70-90% risk reduction)",
+        "Moderately Effective (50-70% risk reduction)",
+        "Limited Effectiveness (30-50% risk reduction)",
+        "Ineffective (< 30% risk reduction)"
+    };
+
+    private List<string> ResidualRiskOptions = new()
+    {
+        "Low (Acceptable with monitoring)",
+        "Medium (Requires additional controls)",
+        "High (Requires immediate action)",
+        "Critical (Stop operations until mitigated)"
+    };
+
+    private List<string> PriorityOptions = new()
+    {
+        "Immediate (Within 24 hours)",
+        "Urgent (Within 1 week)",
+        "High (Within 1 month)",
+        "Medium (Within 3 months)",
+        "Low (Within 6 months)"
+    };
+
+    private List<string> CostOptions = new()
+    {
+        "Minimal (< $1,000)",
+        "Low ($1,000 - $10,000)",
+        "Medium ($10,000 - $50,000)",
+        "High ($50,000 - $100,000)",
+        "Very High (> $100,000)"
+    };
+
+    private List<string> ConfidenceOptions = new()
+    {
+        "High (Sufficient data, clear analysis)",
+        "Medium (Some uncertainty, additional data helpful)",
+        "Low (Limited data, requires further investigation)"
+    };
+
+    private List<string> FollowUpOptions = new()
+    {
+        "No - Assessment complete",
+        "Monitoring - Track implementation",
+        "Review - Reassess after actions",
+        "TRA - Requires Technical Risk Assessment"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAssessment();
+    }
+
+    private async Task LoadAssessment()
+    {
+        if (string.IsNullOrWhiteSpace(HazardId) || string.IsNullOrWhiteSpace(AssessmentId))
+        {
+            ShowErrorNotification("Hazard ID and Assessment ID are required for preliminary risk assessment");
+            Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
+            return;
+        }
+
+        try
+        {
+            IsLoading = true;
+            
+            // Load hazard
+            var hazardQuery = new GetHazardByIdQuery(new HazardID(HazardId));
+            var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
+            
+            if (hazardResult.IsSuccess)
+            {
+                Hazard = hazardResult.Value;
+            }
+
+            // Load or create assessment
+            await LoadOrCreateAssessment();
+            
+            CalculateProgress();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading preliminary risk assessment: {HazardId}, {AssessmentId}", HazardId, AssessmentId);
+            ShowErrorNotification("An error occurred while loading the risk assessment");
+            Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task LoadOrCreateAssessment()
+    {
+        var assessmentQuery = new GetRiskAssessmentByIdQuery(new RiskAssessmentID(AssessmentId));
+        var assessmentResult = await Mediator.SendAsync(assessmentQuery, CancellationToken.None);
+        
+        if (assessmentResult.IsSuccess)
+        {
+            Assessment = assessmentResult.Value;
+            LoadFormFromAssessment(Assessment);
+        }
+        else
+        {
+            await CreateNewAssessment();
+        }
+    }
+
+    private async Task CreateNewAssessment()
+    {
+        var createResult = RiskAssessment.CreateInitial(
+            new RiskAssessmentID(AssessmentId),
+            $"Preliminary Risk Assessment for {HazardId}",
+            "System User",
+            RiskAssessmentCategory.FiveStep,
+            HazardId);
+
+        if (createResult.IsSuccess)
+        {
+            Assessment = createResult.Value;
+            var createCommand = new CreateRiskAssessmentCommand(Assessment);
+            await Mediator.SendAsync(createCommand, CancellationToken.None);
+        }
+    }
+
+    private void LoadFormFromAssessment(RiskAssessment assessment)
+    {
+        if (!string.IsNullOrEmpty(assessment.Description))
+        {
+            try
+            {
+                var data = global::System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(assessment.Description);
+                if (data != null)
+                {
+                    Model.Likelihood = data.GetValueOrDefault("likelihood", "");
+                    Model.Severity = data.GetValueOrDefault("severity", "");
+                    Model.ExistingControls = data.GetValueOrDefault("existingControls", "");
+                    Model.ControlEffectiveness = data.GetValueOrDefault("controlEffectiveness", "");
+                    Model.ResidualRisk = data.GetValueOrDefault("residualRisk", "");
+                    Model.RecommendedActions = data.GetValueOrDefault("recommendedActions", "");
+                    Model.Priority = data.GetValueOrDefault("priority", "");
+                    Model.EstimatedCost = data.GetValueOrDefault("estimatedCost", "");
+                    Model.AssessorComments = data.GetValueOrDefault("assessorComments", "");
+                    Model.AssessmentConfidence = data.GetValueOrDefault("assessmentConfidence", "");
+                    Model.RequiresFollowUp = data.GetValueOrDefault("requiresFollowUp", "No - Assessment complete");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Error loading preliminary assessment data");
+            }
+        }
+    }
+
+    private async Task SaveDraft()
+    {
+        IsSaving = true;
+        try
+        {
+            await SaveAssessment(isDraft: true);
+            ShowSuccessNotification("Assessment saved as draft successfully.");
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+
+    private async Task CompleteAssessment()
+    {
+        if (!ValidateForm())
+        {
+            ShowErrorNotification("Please fill in all required fields before completing the assessment.");
+            return;
+        }
+
+        IsSaving = true;
+        try
+        {
+            await SaveAssessment(isDraft: false);
+            
+            var overallRisk = DetermineOverallRisk();
+            var nextAction = DetermineNextAction();
+            
+            ShowSuccessNotification($"Preliminary risk assessment {AssessmentId} completed successfully. Risk level: {overallRisk}. Next: {nextAction}.");
+            Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+
+    private async Task SaveAssessment(bool isDraft = false)
+    {
+        if (Assessment == null) return;
+
+        var data = new Dictionary<string, string>
+        {
+            ["likelihood"] = Model.Likelihood ?? "",
+            ["severity"] = Model.Severity ?? "",
+            ["existingControls"] = Model.ExistingControls ?? "",
+            ["controlEffectiveness"] = Model.ControlEffectiveness ?? "",
+            ["residualRisk"] = Model.ResidualRisk ?? "",
+            ["recommendedActions"] = Model.RecommendedActions ?? "",
+            ["priority"] = Model.Priority ?? "",
+            ["estimatedCost"] = Model.EstimatedCost ?? "",
+            ["assessorComments"] = Model.AssessorComments ?? "",
+            ["assessmentConfidence"] = Model.AssessmentConfidence ?? "",
+            ["requiresFollowUp"] = Model.RequiresFollowUp ?? "No"
+        };
+
+        Assessment.Description = global::System.Text.Json.JsonSerializer.Serialize(data);
+        Assessment.Status = isDraft ? RiskAssessmentStatus.InProgress : RiskAssessmentStatus.Completed;
+        Assessment.UpdatedDate = DateTime.UtcNow;
+
+        if (!isDraft)
+        {
+            Assessment.CompletedDate = DateTime.UtcNow;
+            Assessment.CompletedBy = "System User";
+            Assessment.FinalRiskLevel = DetermineOverallRisk();
+            Assessment.AssessmentRationale = $"Preliminary risk assessment completed. Overall risk: {Assessment.FinalRiskLevel}";
+        }
+
+        var updateCommand = new UpdateRiskAssessmentCommand(Assessment);
+        var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+
+        if (!result.IsSuccess)
+        {
+            throw new Exception($"Failed to save assessment: {result.Error?.Message}");
+        }
+    }
+
+    private bool ValidateForm()
+    {
+        return !string.IsNullOrWhiteSpace(Model.Likelihood) &&
+               !string.IsNullOrWhiteSpace(Model.Severity) &&
+               !string.IsNullOrWhiteSpace(Model.ResidualRisk) &&
+               !string.IsNullOrWhiteSpace(Model.RecommendedActions) &&
+               !string.IsNullOrWhiteSpace(Model.Priority);
+    }
+
+    private void CalculateProgress()
+    {
+        var completedFields = 0;
+        var totalFields = 8;
+
+        if (!string.IsNullOrWhiteSpace(Model.Likelihood)) completedFields++;
+        if (!string.IsNullOrWhiteSpace(Model.Severity)) completedFields++;
+        if (!string.IsNullOrWhiteSpace(Model.ExistingControls)) completedFields++;
+        if (!string.IsNullOrWhiteSpace(Model.ControlEffectiveness)) completedFields++;
+        if (!string.IsNullOrWhiteSpace(Model.ResidualRisk)) completedFields++;
+        if (!string.IsNullOrWhiteSpace(Model.RecommendedActions)) completedFields++;
+        if (!string.IsNullOrWhiteSpace(Model.Priority)) completedFields++;
+        if (!string.IsNullOrWhiteSpace(Model.AssessmentConfidence)) completedFields++;
+
+        ProgressPercentage = (int)Math.Round((double)completedFields / totalFields * 100);
+    }
+
+    private int GetSectionProgress(int section)
+    {
+        return section switch
+        {
+            1 => (!string.IsNullOrWhiteSpace(Model.Likelihood) && !string.IsNullOrWhiteSpace(Model.Severity)) ? 100 : 0,
+            2 => (!string.IsNullOrWhiteSpace(Model.ExistingControls) && !string.IsNullOrWhiteSpace(Model.ResidualRisk)) ? 100 : 0,
+            3 => (!string.IsNullOrWhiteSpace(Model.RecommendedActions) && !string.IsNullOrWhiteSpace(Model.Priority)) ? 100 : 0,
+            4 => !string.IsNullOrWhiteSpace(Model.AssessmentConfidence) ? 100 : 0,
+            _ => 0
+        };
+    }
+
+    private string DetermineOverallRisk()
+    {
+        var severity = Model.Severity?.ToLowerInvariant();
+        var likelihood = Model.Likelihood?.ToLowerInvariant();
+
+        if (severity?.Contains("catastrophic") == true && (likelihood?.Contains("high") == true))
+            return "Critical";
+        if (severity?.Contains("major") == true || (severity?.Contains("catastrophic") == true && likelihood?.Contains("medium") == true))
+            return "High";
+        if (severity?.Contains("moderate") == true || (severity?.Contains("major") == true && likelihood?.Contains("low") == true))
+            return "Medium";
+
+        return "Low";
+    }
+
+    private string DetermineNextAction()
+    {
+        var overallRisk = DetermineOverallRisk();
+        return overallRisk switch
+        {
+            "Critical" => "Immediate action required - operations may need to stop",
+            "High" => "Urgent mitigation required - may require TRA",
+            "Medium" => "Mitigation planning required within 30 days",
+            "Low" => "Monitor and track implementation",
+            _ => "Continue with normal process"
+        };
+    }
+
+    private void ShowSuccessNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Success",
+            Detail = message,
+            Duration = 4000
+        });
+    }
+
+    private void ShowErrorNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Error,
+            Summary = "Error", 
+            Detail = message,
+            Duration = 6000
+        });
+    }
+
+    public class PreliminaryAssessmentModel
+    {
+        public string Likelihood { get; set; } = string.Empty;
+        public string Severity { get; set; } = string.Empty;
+        public string ExistingControls { get; set; } = string.Empty;
+        public string ControlEffectiveness { get; set; } = string.Empty;
+        public string ResidualRisk { get; set; } = string.Empty;
+        public string RecommendedActions { get; set; } = string.Empty;
+        public string Priority { get; set; } = string.Empty;
+        public string EstimatedCost { get; set; } = string.Empty;
+        public string AssessorComments { get; set; } = string.Empty;
+        public string AssessmentConfidence { get; set; } = string.Empty;
+        public string RequiresFollowUp { get; set; } = "No - Assessment complete";
+    }
+}
