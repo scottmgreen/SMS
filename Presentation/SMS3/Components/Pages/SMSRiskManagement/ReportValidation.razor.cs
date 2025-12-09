@@ -19,6 +19,7 @@ public partial class ReportValidation : ComponentBase
     [Inject] private ILogger<ReportValidation> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private DialogService DialogService { get; set; } = default!;
 
     // Form Data Properties - Using Smart Enum
     private ValidationDecision? SelectedValidationDecision { get; set; }
@@ -158,7 +159,7 @@ public partial class ReportValidation : ComponentBase
                     ValidatedByOptions.Add(new DropdownOption 
                     { 
                         Value = assessor.UserName.Value, 
-                        Text = $"{assessor.DisplayName} ({assessor.UserName.Value}) - {assessor.UserRole}" 
+                        Text = $"{assessor.DisplayName}" // ({assessor.UserName.Value}) - {assessor.UserRole}" 
                     });
                 }
             }
@@ -264,7 +265,7 @@ public partial class ReportValidation : ComponentBase
             }
 
             // Create validation record using proper domain entity
-            var validationId = new ReportValidationID($"VAL-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}");
+            var validationId = new ReportValidationID($"RV-0000");
             
             var validation = new SMS_Domain.Entities.ReportValidation(validationId)
             {
@@ -286,11 +287,19 @@ public partial class ReportValidation : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification($"Validation submitted successfully. Decision: {SelectedValidationDecision.Name}");
-                
-                // Navigate back to processing queue
-                await Task.Delay(1500); // Give user time to see the success message
-                Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
+                // Check if this needs investigation
+                if (SelectedValidationDecision.Value == "NEEDS_INVESTIGATION")
+                {
+                    await CreateAndNavigateToInvestigation();
+                }
+                else
+                {
+                    ShowSuccessNotification($"Validation submitted successfully. Decision: {SelectedValidationDecision.Name}");
+                    
+                    // Navigate back to processing queue
+                    await Task.Delay(1500); // Give user time to see the success message
+                    Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
+                }
             }
             else
             {
@@ -301,6 +310,62 @@ public partial class ReportValidation : ComponentBase
         {
             Logger.LogError(ex, "Error submitting validation for ReportId: {ReportId}", ReportId);
             ShowErrorNotification("Error submitting validation. Please try again.");
+        }
+    }
+
+    /// <summary>
+    /// Create investigation and navigate to Investigation page
+    /// </summary>
+    private async Task CreateAndNavigateToInvestigation()
+    {
+        try
+        {
+            if (ReportHazard == null)
+            {
+                ShowErrorNotification("Cannot create investigation - hazard information not found");
+                return;
+            }
+
+            // Create investigation for the hazard
+            var investigationResult = SMS_Domain.Entities.Investigation.CreateForHazard(
+                ReportHazard.Code, 
+                GetCurrentUserCode(), 
+                ReportId);
+
+            if (investigationResult.IsSuccess)
+            {
+                var investigation = investigationResult.Value;
+                investigation.InvestigationObjectives = $"Investigation required based on validation decision for hazard {ReportHazard.Code}";
+                investigation.InvestigationNotes = $"Investigation initiated from report validation. Validation comments: {ValidationComments}";
+
+                var createCommand = new CreateInvestigationCommand(investigation);
+                var result = await Mediator.SendAsync(createCommand, CancellationToken.None);
+
+                if (result.IsSuccess)
+                {
+                    ShowSuccessNotification($"Investigation {investigation.Code} created successfully. Proceeding to investigation...");
+                    
+                    // Navigate to investigation page
+                    await Task.Delay(1500);
+                    var navigationUrl = $"/SMSRiskManagement/Investigation/{investigation.Code}/{ReportHazard.Code}";
+                    
+                    Logger.LogInformation("Navigating to investigation: {Url}", navigationUrl);
+                    Navigation.NavigateTo(navigationUrl);
+                }
+                else
+                {
+                    ShowErrorNotification($"Failed to create investigation: {result.Error?.Message}");
+                }
+            }
+            else
+            {
+                ShowErrorNotification($"Failed to create investigation: {investigationResult.Error?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error creating investigation for ReportId: {ReportId}", ReportId);
+            ShowErrorNotification("Error creating investigation. Please try again.");
         }
     }
 
@@ -337,7 +402,7 @@ public partial class ReportValidation : ComponentBase
             }
 
             // Create validation record
-            var validationId = new ReportValidationID($"VAL-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}");
+            var validationId = new ReportValidationID($"RV-0000");
             
             var validation = new SMS_Domain.Entities.ReportValidation(validationId)
             {
@@ -361,24 +426,8 @@ public partial class ReportValidation : ComponentBase
             {
                 ShowSuccessNotification($"Validation completed. Proceeding to {ValidationType} Assessment...");
                 
-                // Navigate to the appropriate assessment page with proper parameters
-                var assessmentType = ValidationType?.ToLower() switch
-                {
-                    "technical" => "TechnicalAssessment",
-                    "preliminary" => "PreliminaryAssessment",
-                    _ => "TechnicalAssessment"
-                };
-
-                // Build navigation URL with required parameters
-                var navigationUrl = ReportHazard != null 
-                    ? $"/SMSRiskManagement/{assessmentType}/New/1?hazardId={ReportHazard.Code}&reportId={ReportId}"
-                    : $"/SMSRiskManagement/{assessmentType}/New/1?reportId={ReportId}";
-
-                // Add a slight delay to show the success message
-                await Task.Delay(1500);
-                
-                Logger.LogInformation("Navigating to assessment: {Url}", navigationUrl);
-                Navigation.NavigateTo(navigationUrl);
+                // Show Airport Shared Dataset dialog before proceeding to assessment
+                await ShowAirportSharedDatasetDialog();
             }
             else
             {
@@ -392,6 +441,77 @@ public partial class ReportValidation : ComponentBase
         }
     }
 
+    /// <summary>
+    /// Show dialog asking if user wants to create an Airport Shared Dataset
+    /// </summary>
+    private async Task ShowAirportSharedDatasetDialog()
+    {
+        var result = await DialogService.Confirm(
+            message: "Do you want to create an Airport Shared Dataset for this SMS Risk assessment?",
+            title: "Airport Shared Dataset", 
+            options: new ConfirmOptions() 
+            { 
+                OkButtonText = "Yes, Create Dataset", 
+                CancelButtonText = "No, Skip",
+                Width = "500px"
+            });
+
+        if (result == true)
+        {
+            // User wants to create dataset - navigate to dataset creation page
+            Logger.LogInformation("User chose to create Airport Shared Dataset for Report: {ReportId}", ReportId);
+            var datasetUrl = $"/SMSRiskManagement/AirportSharedDataset/{ReportId}";
+            
+            if (!string.IsNullOrEmpty(ReportHazard?.Code))
+            {
+                datasetUrl += $"/{ReportHazard.Code}";
+            }
+            
+            Navigation.NavigateTo(datasetUrl);
+        }
+        else
+        {
+            // User skipped dataset creation - proceed directly to assessment
+            Logger.LogInformation("User skipped Airport Shared Dataset creation for Report: {ReportId}", ReportId);
+            await NavigateToAssessment();
+        }
+    }
+
+    /// <summary>
+    /// Navigate to the appropriate risk assessment page
+    /// </summary>
+    private async Task NavigateToAssessment()
+    {
+        var assessmentType = ValidationType?.ToLower() switch
+        {
+            "technical" => "TechnicalAssessment",
+            "preliminary" => "PreliminaryAssessment", 
+            _ => "TechnicalAssessment"
+        };
+
+        // Simple, reliable routing - use Report ID directly
+        string navigationUrl;
+        if (ReportHazard != null)
+        {
+            // Pass Report ID as AssessmentId and Hazard ID as second parameter
+            // /SMSRiskManagement/PreliminaryAssessment/{AssessmentId}/{HazardId}
+            navigationUrl = $"/SMSRiskManagement/{assessmentType}/{ReportId}/{ReportHazard.Code}";
+        }
+        else
+        {
+            // Just Report ID if no hazard
+            // /SMSRiskManagement/PreliminaryAssessment/{AssessmentId}
+            navigationUrl = $"/SMSRiskManagement/{assessmentType}/{ReportId}";
+        }
+
+        // Add a slight delay to show the success message
+        await Task.Delay(1500);
+        
+        Logger.LogInformation("Navigating to assessment: {Url} (ReportId: {ReportId}, HazardId: {HazardId})", 
+            navigationUrl, ReportId, ReportHazard?.Code ?? "None");
+        Navigation.NavigateTo(navigationUrl);
+    }
+    
     #endregion
 
     #region Validation Entity Management

@@ -1,20 +1,275 @@
 @using SMS_Application.Interfaces
+@using SMS_Application.Messaging.Queries
 @using SMS_Domain.Entities
+@using SMS_Shared.Common
+@using Radzen
+@using Radzen.Blazor
+@using SMS3.Components.Shared
 @inject IMediator Mediator
 @inject ILogger<HazardDetails> Logger
 
-@* Simple Hazard Details Display Component *@
-<div class="p-3 bg-light border-top">
-    <div class="text-center py-3">
-        <i class="fas fa-exclamation-triangle text-warning" style="font-size: 2rem;"></i>
-        <h6 class="mt-2">Hazard Details</h6>
-        <p class="text-muted">Hazard details for report @ReportCode will be displayed here.</p>
-        <small class="text-muted">Component under development</small>
-    </div>
+<div class="hazard-details-container">
+    <!-- Debug Information -->
+    @* <div class="alert alert-info mb-3">
+        <small>
+            <strong>Debug Info:</strong> ReportCode = "@ReportCode", IsLoading = @IsLoading, Hazards Count = @Hazards.Count
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <br><strong>Error:</strong> @ErrorMessage
+            }
+        </small>
+    </div> *@
+
+    @if (IsLoading)
+    {
+        <!-- Loading State -->
+        <div class="text-center py-3">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium" />
+            <p class="mt-2 text-muted">Loading hazards for report @ReportCode...</p>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <!-- Error State -->
+        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
+            <strong>Warning:</strong> @ErrorMessage
+        </RadzenAlert>
+    }
+    else if (!Hazards.Any())
+    {
+        <!-- No Hazards State -->
+        <div class="text-center py-3">
+            <i class="fas fa-info-circle text-info" style="font-size: 2rem;"></i>
+            <h6 class="mt-2">No Hazards Found</h6>
+            <p class="text-muted">No hazards are associated with report @ReportCode.</p>
+            <small class="text-muted">This may be normal if the report doesn't have any hazards yet.</small>
+        </div>
+    }
+    else
+    {
+        <!-- Hazards List -->
+        <div class="hazards-list">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    @* <RadzenLabel Text="@Hazards.Count.ToString()" Class="ms-2" /> *@
+                </h6>
+            </div>
+            
+            @foreach (var hazard in Hazards)
+            {
+                <RadzenCard Variant="Variant.Outlined" Class="mb-3 hazard-card">
+                    <div class="row align-items-start">
+                        <!-- Hazard Code & Status -->
+                        @* <div class="col-auto">
+                            <RadzenBadge Text="@hazard.Code" BadgeStyle="BadgeStyle.Primary" Variant="Variant.Flat" />
+                            @if (hazard.Status != null)
+                            {
+                                <br />
+                                <RadzenBadge Text="@hazard.Status.Name" BadgeStyle="@GetHazardStatusBadge(hazard.Status.Value)" Variant="Variant.Flat" Class="mt-1" />
+                            }
+                        </div> *@
+                        
+                        <!-- Hazard Details -->
+                        <div class="col">
+                            <div class="d-flex flex-column">
+                                <strong class="text-primary">@(hazard.Name ?? hazard.HazardType ?? "Unnamed Hazard")</strong>
+                                @if (!string.IsNullOrEmpty(hazard.Description))
+                                {
+                                    <p class="mb-2 text-black">@TruncateText(hazard.Description, 150)</p>
+                                }
+                                
+                                <!-- Hazard Meta Information -->
+                                <div class="row text-black small">
+                                    <div class="col-md-6">
+                                        <div><strong>Reported By:</strong> @(hazard.ReportedBy ?? "Unknown")</div>
+                                        <div><strong>Reported On:</strong> @hazard.ReportedOn.ToString("MM/dd/yyyy HH:mm")</div>
+                                        @if (!string.IsNullOrEmpty(hazard.Category))
+                                        {
+                                            <div><strong>Category:</strong> @hazard.Category</div>
+                                        }
+                                    </div>
+                                    <div class="col-md-6">
+                                        @if (hazard.Priority != null)
+                                        {
+                                            <div><strong>Priority:</strong> @hazard.Priority.Name</div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(hazard.RiskLevel))
+                                        {
+                                            <div><strong>Risk Level:</strong> @hazard.RiskLevel</div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(hazard.ReportingDepartment))
+                                        {
+                                            <div><strong>Department:</strong> @hazard.ReportingDepartment</div>
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- Hazard Location Display -->
+                                @if (HasLocationData(hazard))
+                                {
+                                    <div class="mt-3">
+                                        <HazardLocationDisplay Hazard="@hazard"
+                                                             MapHeight="250px"
+                                                             ShowCoordinates="true"
+                                                             ShowLocationDetails="true"
+                                                             ShowZoomControls="true"
+                                                             ShowLayerControls="false"
+                                                             ZoomLevel="16" />
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="col-auto">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                <RadzenButton ButtonStyle="ButtonStyle.Info"
+                                            Size="ButtonSize.Small"
+                                            Icon="visibility"
+                                            Click="@(() => OnViewHazard(hazard))"
+                                            title="View Hazard Details" />
+                                <RadzenButton ButtonStyle="ButtonStyle.Warning" 
+                                            Size="ButtonSize.Small"
+                                            Icon="edit"
+                                            Click="@(() => OnEditHazard(hazard))"
+                                            title="Edit Hazard" />
+                            </RadzenStack>
+                        </div>
+                    </div>
+                </RadzenCard>
+            }
+        </div>
+    }
 </div>
 
 @code {
     [Parameter] public string ReportCode { get; set; } = string.Empty;
     [Parameter] public EventCallback<Hazard> OnViewHazardCallback { get; set; }
     [Parameter] public EventCallback<Hazard> OnEditHazardCallback { get; set; }
-}
+
+    private List<Hazard> Hazards = new();
+    private bool IsLoading = true;
+    private string? ErrorMessage = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadHazardsAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(ReportCode))
+        {
+            await LoadHazardsAsync();
+        }
+    }
+
+    private async Task LoadHazardsAsync()
+    {
+        if (string.IsNullOrEmpty(ReportCode))
+        {
+            IsLoading = false;
+            return;
+        }
+
+        try
+        {
+            IsLoading = true;
+            ErrorMessage = null;
+
+            Logger.LogInformation("Loading hazards for report: {ReportCode}", ReportCode);
+
+            // Execute GetHazardsByReportCodeQuery via Mediator
+            var query = new GetHazardsByReportCodeQuery(ReportCode);
+            var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+            if (result.IsSuccess && result.Value != null)
+            {
+                Hazards = result.Value.ToList();
+                Logger.LogInformation("Successfully loaded {Count} hazards for report {ReportCode}", Hazards.Count, ReportCode);
+            }
+            else
+            {
+                Hazards = new List<Hazard>();
+                ErrorMessage = result.Error?.Message ?? "Failed to load hazards";
+                Logger.LogWarning("Failed to load hazards for report {ReportCode}: {Error}", ReportCode, ErrorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Exception occurred while loading hazards for report {ReportCode}", ReportCode);
+            Hazards = new List<Hazard>();
+            ErrorMessage = "An unexpected error occurred while loading hazards.";
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnViewHazard(Hazard hazard)
+    {
+        if (OnViewHazardCallback.HasDelegate)
+        {
+            await OnViewHazardCallback.InvokeAsync(hazard);
+        }
+    }
+
+    private async Task OnEditHazard(Hazard hazard)
+    {
+        if (OnEditHazardCallback.HasDelegate)
+        {
+            await OnEditHazardCallback.InvokeAsync(hazard);
+        }
+    }
+
+    private BadgeStyle GetHazardStatusBadge(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "active" => BadgeStyle.Success,
+            "pending" => BadgeStyle.Warning,
+            "closed" => BadgeStyle.Secondary,
+            "cancelled" => BadgeStyle.Danger,
+            "under_review" => BadgeStyle.Info,
+            "escalated" => BadgeStyle.Warning,
+            _ => BadgeStyle.Light
+        };
+    }
+
+    private string TruncateText(string text, int maxLength)
+    {
+        if (string.IsNullOrEmpty(text) || text.Length <= maxLength)
+        {
+            return text ?? "";
+        }
+        
+        return text.Substring(0, maxLength) + "...";
+    }
+
+    /// <summary>
+    /// Check if hazard has any location data to display
+    /// </summary>
+    private bool HasLocationData(Hazard hazard)
+    {
+        if (hazard == null) return false;
+
+        // Check if we have coordinates in LocationArea
+        if (!string.IsNullOrEmpty(hazard.LocationArea))
+        {
+            var hasCoords = Regex.IsMatch(
+                hazard.LocationArea, 
+                @"Lat:\s*(-?\d+\.?\d*)", 
+                RegexOptions.IgnoreCase);
+            
+            if (hasCoords) return true;
+        }
+
+        // Check if we have any location description
+        return !string.IsNullOrEmpty(hazard.LocationArea) || 
+               !string.IsNullOrEmpty(hazard.LocationSubArea) || 
+               hazard.HazardLocation != null;
+    }
+}}}

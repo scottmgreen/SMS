@@ -1,0 +1,310 @@
+@using Radzen
+@using Radzen.Blazor
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+@inject ILogger<ReadOnlyLocationMap> Logger
+
+<div class="readonly-location-map-container">
+    @if (HasValidLocation)
+    {
+        <RadzenCard Variant="Variant.Outlined" Class="map-card">
+            <RadzenStack Gap="0.5rem">
+                <!-- Map Header -->
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenIcon Icon="location_on" Style="color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
+                            @(Title ?? "Hazard Location")
+                        </RadzenText>
+                    </RadzenStack>
+                    @if (ShowCoordinates && HasCoordinates)
+                    {
+                        <RadzenBadge Text="@CoordinateDisplay" BadgeStyle="BadgeStyle.Info" />
+                    }
+                </RadzenStack>
+
+                <!-- Map Container -->
+                <div id="@MapContainerId" style="height: @MapHeight; width: 100%; border: 1px solid #ddd; border-radius: 4px; position: relative;">
+                    <!-- Map will be rendered here -->
+                </div>
+
+                <!-- Location Details -->
+                @if (ShowLocationDetails)
+                {
+                    <RadzenCard Variant="Variant.Text" Class="location-details">
+                        <RadzenStack Gap="0.25rem">
+                            @if (!string.IsNullOrEmpty(LocationDescription))
+                            {
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="description" Style="color: var(--rz-info); font-size: 0.9rem;" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                        <strong>Description:</strong> @LocationDescription
+                                    </RadzenText>
+                                </RadzenStack>
+                            }
+                            @if (!string.IsNullOrEmpty(LocationArea))
+                            {
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="place" Style="color: var(--rz-success); font-size: 0.9rem;" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                        <strong>Area:</strong> @LocationArea
+                                    </RadzenText>
+                                </RadzenStack>
+                            }
+                            @if (!string.IsNullOrEmpty(LocationSubArea))
+                            {
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="near_me" Style="color: var(--rz-warning); font-size: 0.9rem;" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                        <strong>Sub-area:</strong> @LocationSubArea
+                                    </RadzenText>
+                                </RadzenStack>
+                            }
+                            @if (HasCoordinates && ShowCoordinates)
+                            {
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="gps_fixed" Style="color: var(--rz-danger); font-size: 0.9rem;" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                        <strong>Coordinates:</strong> @CoordinateDisplay
+                                    </RadzenText>
+                                </RadzenStack>
+                            }
+                        </RadzenStack>
+                    </RadzenCard>
+                }
+            </RadzenStack>
+        </RadzenCard>
+    }
+    else
+    {
+        <!-- No Location Available -->
+        <RadzenCard Variant="Variant.Text" Class="no-location-card">
+            <RadzenStack Gap="0.5rem" AlignItems="AlignItems.Center" Class="rz-p-3">
+                <RadzenIcon Icon="location_off" Style="color: var(--rz-text-secondary-color); font-size: 2rem;" />
+                <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; color: var(--rz-text-secondary-color);">
+                    No location information available
+                </RadzenText>
+                @if (!string.IsNullOrEmpty(LocationDescription))
+                {
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; color: var(--rz-text-tertiary-color);">
+                        @LocationDescription
+                    </RadzenText>
+                }
+            </RadzenStack>
+        </RadzenCard>
+    }
+</div>
+
+<!-- Leaflet.js CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+<!-- Leaflet.js JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<style>
+.readonly-location-map-container {
+    width: 100%;
+}
+
+.map-card {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+.location-details {
+    background-color: rgba(13, 110, 253, 0.05);
+    border-left: 3px solid var(--rz-primary);
+}
+
+.no-location-card {
+    background-color: #f8f9fa;
+    border: 1px dashed #dee2e6;
+}
+
+#@MapContainerId {
+    cursor: default !important;
+}
+
+::deep .leaflet-container {
+    cursor: default !important;
+}
+
+::deep .leaflet-control-zoom {
+    display: @(ShowZoomControls ? "block" : "none") !important;
+}
+
+::deep .leaflet-control-layers {
+    display: @(ShowLayerControls ? "block" : "none") !important;
+}
+</style>
+
+@code {
+    #region Parameters
+    /// <summary>
+    /// Latitude coordinate
+    /// </summary>
+    [Parameter] public decimal? Latitude { get; set; }
+
+    /// <summary>
+    /// Longitude coordinate  
+    /// </summary>
+    [Parameter] public decimal? Longitude { get; set; }
+
+    /// <summary>
+    /// Location description/title
+    /// </summary>
+    [Parameter] public string? LocationDescription { get; set; }
+
+    /// <summary>
+    /// Location area (general area)
+    /// </summary>
+    [Parameter] public string? LocationArea { get; set; }
+
+    /// <summary>
+    /// Location sub-area (specific area)
+    /// </summary>
+    [Parameter] public string? LocationSubArea { get; set; }
+
+    /// <summary>
+    /// Map title
+    /// </summary>
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>
+    /// Map height (default: 300px)
+    /// </summary>
+    [Parameter] public string MapHeight { get; set; } = "300px";
+
+    /// <summary>
+    /// Show coordinate information
+    /// </summary>
+    [Parameter] public bool ShowCoordinates { get; set; } = true;
+
+    /// <summary>
+    /// Show location details panel
+    /// </summary>
+    [Parameter] public bool ShowLocationDetails { get; set; } = true;
+
+    /// <summary>
+    /// Show zoom controls
+    /// </summary>
+    [Parameter] public bool ShowZoomControls { get; set; } = true;
+
+    /// <summary>
+    /// Show layer controls (street/satellite)
+    /// </summary>
+    [Parameter] public bool ShowLayerControls { get; set; } = false;
+
+    /// <summary>
+    /// Initial zoom level
+    /// </summary>
+    [Parameter] public int ZoomLevel { get; set; } = 15;
+    #endregion
+
+    #region Private Properties
+    private IJSObjectReference? _mapModule;
+    private string _mapContainerId = $"readonly-map-{Guid.NewGuid():N}";
+    private string MapContainerId => _mapContainerId;
+    
+    private bool HasCoordinates => Latitude.HasValue && Longitude.HasValue && 
+                                  Latitude.Value != 0 && Longitude.Value != 0;
+    
+    private bool HasValidLocation => HasCoordinates || !string.IsNullOrEmpty(LocationDescription) || 
+                                   !string.IsNullOrEmpty(LocationArea) || !string.IsNullOrEmpty(LocationSubArea);
+
+    private string CoordinateDisplay => HasCoordinates ? 
+        $"{Latitude:F6}, {Longitude:F6}" : "No coordinates";
+    #endregion
+
+    #region Lifecycle Methods
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Logger.LogInformation("ReadOnlyLocationMap - FirstRender: HasCoordinates={HasCoordinates}, Lat={Lat}, Lng={Lng}, HasValidLocation={HasValidLocation}", 
+                HasCoordinates, Latitude, Longitude, HasValidLocation);
+                
+            if (HasCoordinates)
+            {
+                await InitializeMapAsync();
+            }
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_mapModule != null)
+        {
+            try
+            {
+                await _mapModule.InvokeVoidAsync("destroyMap", MapContainerId);
+                await _mapModule.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Error disposing map module");
+            }
+        }
+    }
+    #endregion
+
+    #region Map Methods
+    private async Task InitializeMapAsync()
+    {
+        if (!HasCoordinates) 
+        {
+            Logger.LogWarning("InitializeMapAsync skipped - No coordinates available");
+            return;
+        }
+
+        try
+        {
+            Logger.LogInformation("Starting map initialization for container: {ContainerId}, Lat: {Lat}, Lng: {Lng}", 
+                MapContainerId, Latitude, Longitude);
+
+            // Load the map JavaScript module
+            _mapModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "/js/readonly-map.js");
+            Logger.LogInformation("JavaScript module loaded successfully");
+            
+            // Give DOM time to render
+            await Task.Delay(100);
+            
+            // Initialize read-only map
+            await _mapModule.InvokeVoidAsync("initializeReadOnlyMap", 
+                MapContainerId,
+                (double)Latitude!.Value,
+                (double)Longitude!.Value, 
+                ZoomLevel,
+                LocationDescription ?? "Hazard Location",
+                ShowZoomControls,
+                ShowLayerControls);
+                
+            Logger.LogInformation("Read-only map initialized successfully for container: {ContainerId}, Lat: {Lat}, Lng: {Lng}", 
+                MapContainerId, Latitude, Longitude);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to initialize read-only map for container: {ContainerId}", MapContainerId);
+        }
+    }
+    #endregion
+
+    #region Support Classes
+    /// <summary>
+    /// Record for representing a read-only map location
+    /// </summary>
+    public record ReadOnlyMapLocation
+    {
+        public decimal? Latitude { get; init; }
+        public decimal? Longitude { get; init; }
+        public string? Description { get; init; }
+        public string? Area { get; init; }
+        public string? SubArea { get; init; }
+        
+        public bool HasCoordinates => Latitude.HasValue && Longitude.HasValue && 
+                                     Latitude.Value != 0 && Longitude.Value != 0;
+    }
+    #endregion
+}

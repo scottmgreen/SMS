@@ -1,0 +1,157 @@
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using Radzen
+@using Radzen.Blazor
+
+@if (Interview != null)
+{
+    <RadzenStack Gap="1rem">
+        
+        <!-- Interview Header -->
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+            <RadzenText TextStyle="TextStyle.H6">@Interview.PersonInterviewed</RadzenText>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                <RadzenBadge Text="@Interview.Status.Name" BadgeStyle="@GetStatusBadge()" IsPill="true" />
+                <RadzenBadge Text="@Interview.Type.Name" BadgeStyle="BadgeStyle.Info" IsPill="true" />
+                @if (Interview.IsConfidential)
+                {
+                    <RadzenBadge Text="Confidential" BadgeStyle="BadgeStyle.Warning" IsPill="true" />
+                }
+            </RadzenStack>
+        </RadzenStack>
+
+        <!-- Interview Details -->
+        <RadzenCard Variant="Variant.Outlined">
+            <RadzenFieldset Text="Interview Information">
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.Overline" Text="PERSON INTERVIEWED" />
+                            <RadzenText TextStyle="TextStyle.Body1">@Interview.PersonInterviewed</RadzenText>
+                        </RadzenStack>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.Overline" Text="ROLE" />
+                            <RadzenText TextStyle="TextStyle.Body1">@(Interview.PersonInterviewedRole ?? "Not specified")</RadzenText>
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+                <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.Overline" Text="DEPARTMENT" />
+                            <RadzenText TextStyle="TextStyle.Body1">@(Interview.PersonInterviewedDepartment ?? "Not specified")</RadzenText>
+                        </RadzenStack>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.Overline" Text="INTERVIEW TYPE" />
+                            <RadzenText TextStyle="TextStyle.Body1">@Interview.Type.Name</RadzenText>
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenFieldset>
+        </RadzenCard>
+
+        @if (Interview.InterviewDate.HasValue)
+        {
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenFieldset Text="Schedule Information">
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Overline" Text="DATE & TIME" />
+                                <RadzenText TextStyle="TextStyle.Body1">@Interview.InterviewDate.Value.ToString("MMM dd, yyyy 'at' h:mm tt")</RadzenText>
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Overline" Text="LOCATION" />
+                                <RadzenText TextStyle="TextStyle.Body1">@(Interview.InterviewLocation ?? "Not specified")</RadzenText>
+                            </RadzenStack>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </RadzenFieldset>
+            </RadzenCard>
+        }
+
+        <!-- Preparation Notes -->
+        @if (!string.IsNullOrEmpty(Interview.PreparationNotes))
+        {
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenFieldset Text="Preparation Notes">
+                    <RadzenText TextStyle="TextStyle.Body1">@Interview.PreparationNotes</RadzenText>
+                </RadzenFieldset>
+            </RadzenCard>
+        }
+
+        <!-- Interview Notes -->
+        @if (!string.IsNullOrEmpty(Interview.PersonInterviewedNotes) || !string.IsNullOrEmpty(Interview.InvestigatorNotes))
+        {
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenFieldset Text="Interview Notes">
+                    @if (!string.IsNullOrEmpty(Interview.PersonInterviewedNotes))
+                    {
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" Style="margin-bottom: 1rem;">
+                            <RadzenText TextStyle="TextStyle.Overline" Text="INTERVIEWEE NOTES" />
+                            <RadzenText TextStyle="TextStyle.Body1">@Interview.PersonInterviewedNotes</RadzenText>
+                        </RadzenStack>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(Interview.InvestigatorNotes))
+                    {
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.Overline" Text="INVESTIGATOR NOTES" />
+                            <RadzenText TextStyle="TextStyle.Body1">@Interview.InvestigatorNotes</RadzenText>
+                        </RadzenStack>
+                    }
+                </RadzenFieldset>
+            </RadzenCard>
+        }
+
+        <!-- Key Findings -->
+        @if (!string.IsNullOrEmpty(Interview.KeyFindings))
+        {
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenFieldset Text="Key Findings">
+                    <RadzenText TextStyle="TextStyle.Body1">@Interview.KeyFindings</RadzenText>
+                </RadzenFieldset>
+            </RadzenCard>
+        }
+
+        <!-- Follow-up Required -->
+        @if (!string.IsNullOrEmpty(Interview.FollowUpRequired))
+        {
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenFieldset Text="Follow-up Required">
+                    <RadzenText TextStyle="TextStyle.Body1">@Interview.FollowUpRequired</RadzenText>
+                </RadzenFieldset>
+            </RadzenCard>
+        }
+
+        <!-- Additional Witnesses -->
+        @if (!string.IsNullOrEmpty(Interview.AdditionalWitnesses))
+        {
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenFieldset Text="Additional Witnesses Mentioned">
+                    <RadzenText TextStyle="TextStyle.Body1">@Interview.AdditionalWitnesses</RadzenText>
+                </RadzenFieldset>
+            </RadzenCard>
+        }
+
+        <!-- Action Buttons -->
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+            <RadzenButton Text="Close" 
+                        ButtonStyle="ButtonStyle.Secondary" 
+                        Click="@(() => DialogService.Close())" />
+        </RadzenStack>
+
+    </RadzenStack>
+}
+else
+{
+    <RadzenAlert AlertStyle="AlertStyle.Warning" Icon="warning" Title="Interview Not Found">
+        The interview details could not be loaded.
+    </RadzenAlert>
+}

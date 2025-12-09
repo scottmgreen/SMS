@@ -537,7 +537,7 @@ public static class FieldNames
     /// <summary>
     /// Investigation field names
     /// </summary>
-    private static readonly Lazy<string> _fInvestigationCode = new Lazy<string>(() => "fldv_InvestigationCode");
+    private static readonly Lazy<string> _fInvestigationCode = new Lazy<string>(() => "fldv_Code");
     public static string fInvestigationCode => _fInvestigationCode.Value;
 
     private static readonly Lazy<string> _fInvestigationReportCode = new Lazy<string>(() => "fldv_ReportCode");

@@ -1,16 +1,14 @@
 ﻿@page "/dashboard"
 @using Radzen
 @using Radzen.Blazor
+@using SMS3.Components.Shared
 
 <PageTitle>Dashboard - SMS3</PageTitle>
 
-<RadzenRow Gap="1rem">
-    <RadzenColumn Size="12">
-        <RadzenText TextStyle="TextStyle.H3" TagName="TagName.H1" class="rz-pt-8">
-            SMS Dashboard
-        </RadzenText>
-    </RadzenColumn>
-</RadzenRow>
+<!-- SMS Page Header using reusable component -->
+<PageHeader Title="SMS Dashboard"
+           Subtitle="Safety Management System overview and key performance metrics"
+           Icon="fas fa-tachometer-alt" />
 
 <!-- Key Metrics Cards -->
 <RadzenRow Gap="1rem" class="rz-my-4">

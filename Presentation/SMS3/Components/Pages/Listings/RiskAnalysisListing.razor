@@ -1,0 +1,44 @@
+@page "/Listings/RiskAnalysis"
+@using SMS_Domain.Entities
+@using SMS_Domain.ValueObjects
+@using SMS_Application.Messaging.Queries
+@using SMS_Application.Interfaces
+@using SMS_Shared.Common
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Risk Analysis</PageTitle>
+
+<RadzenDataGrid @ref="analysisGrid" 
+                Data="@analysisResults" 
+                Count="@totalCount" 
+                LoadData="@LoadData"
+                AllowPaging="true" 
+                AllowSorting="true" 
+                AllowFiltering="true"
+                PageSize="25"
+                PagerHorizontalAlign="HorizontalAlign.Left"
+                ShowPagingSummary="true"
+                FilterMode="FilterMode.Advanced"
+                SelectionMode="DataGridSelectionMode.Single"
+                Style="height: calc(100vh - 200px)">
+    
+    <Columns>
+        <RadzenDataGridColumn TItem="RiskAnalysis" Property="Code" Title="Code" Width="150px" />
+        <RadzenDataGridColumn TItem="RiskAnalysis" Property="Name" Title="Name" Width="200px" />
+        <RadzenDataGridColumn TItem="RiskAnalysis" Property="HazardCode" Title="Hazard Code" Width="120px" />
+        <RadzenDataGridColumn TItem="RiskAnalysis" Property="RiskAssessmentCode" Title="Assessment Code" Width="150px" />
+        <RadzenDataGridColumn TItem="RiskAnalysis" Property="AnalysisType" Title="Type" Width="120px" />
+        <RadzenDataGridColumn TItem="RiskAnalysis" Property="Status" Title="Status" Width="120px" />
+        <RadzenDataGridColumn TItem="RiskAnalysis" Property="AnalyzedBy" Title="Analyzed By" Width="150px" />
+        <RadzenDataGridColumn TItem="RiskAnalysis" Property="CreatedBy" Title="Created By" Width="150px" />
+        <RadzenDataGridColumn TItem="RiskAnalysis" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
+        
+        <RadzenDataGridColumn TItem="RiskAnalysis" Title="Actions" Width="100px" Sortable="false" Filterable="false">
+            <Template Context="analysis">
+                <RadzenButton Icon="more_vert" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
+                            Click="@(() => ShowActions(analysis))" Disabled="true" />
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>

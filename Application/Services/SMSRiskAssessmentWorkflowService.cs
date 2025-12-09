@@ -15,7 +15,7 @@ namespace SMS_Application.Services;
 /// </summary>
 public interface ISMSRiskAssessmentWorkflowService
 {
-    Task<Result<RiskAssessment>> CreateRiskAssessmentAsync(string assessmentName, string leadAssessorId, RiskAssessmentCategory category = RiskAssessmentCategory.FiveStep, string hazardId = null);
+    Task<Result<RiskAssessment>> CreateRiskAssessmentAsync(string assessmentName, string leadAssessorId, RiskAssessmentCategory? category = null, string hazardId = null);
     Task<Result<RiskAssessment>> CreateResidualRiskAssessmentAsync(string assessmentName, string leadAssessorId, string parentAssessmentId, string hazardId = null);
     Task<Result<RiskAssessment>> GetRiskAssessmentAsync(string assessmentId);
     Task<Result<RiskAssessment>> UpdateStep1SystemDescriptionAsync(string assessmentId, Step1SystemDescriptionData data);
@@ -101,7 +101,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
         _hazardRepository = hazardRepository;
     }
 
-    public async Task<Result<RiskAssessment>> CreateRiskAssessmentAsync(string assessmentName, string leadAssessorId, RiskAssessmentCategory category = RiskAssessmentCategory.FiveStep, string hazardId = null)
+    public async Task<Result<RiskAssessment>> CreateRiskAssessmentAsync(string assessmentName, string leadAssessorId, RiskAssessmentCategory? category = null, string hazardId = null)
     {
         try
         {
@@ -114,6 +114,9 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.SMSApplicationUserError.NotFound);
             }
 
+            // Default to Technical if category not specified
+            var assessmentCategory = category ?? RiskAssessmentCategory.Technical;
+
             // Create risk assessment ID
             var assessmentId = new RiskAssessmentID($"RA-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}");
             // Create new initial risk assessment
@@ -121,7 +124,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
                 assessmentId,
                 assessmentName,
                 leadAssessorId,
-                category,
+                assessmentCategory,
                 hazardId
             );
 

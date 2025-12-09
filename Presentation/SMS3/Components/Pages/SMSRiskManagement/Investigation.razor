@@ -1,0 +1,16 @@
+@page "/SMSRiskManagement/Investigation"
+@page "/SMSRiskManagement/Investigation/{InvestigationId}"
+@using SMS_Application.Messaging.Commands
+@using SMS_Application.Messaging.Queries
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using Radzen
+@using Radzen.Blazor
+@using SMS3.Components.Shared
+
+<PageTitle>SMS Investigation - SMS3</PageTitle>
+
+<!-- SMS Page Header using reusable component -->
+<PageHeader Title="SMS Investigation"
+           Subtitle="Conduct comprehensive investigations into safety incidents and hazard reports"
+           Icon="fas fa-search" />

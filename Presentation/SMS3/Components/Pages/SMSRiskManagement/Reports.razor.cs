@@ -5,6 +5,7 @@ using SMS_Application.Messaging.Queries;
 using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
 using SMS_Shared.Common;
+using SMS3.Components.Layout;
 using Radzen;
 using Radzen.Blazor;
 
@@ -18,11 +19,14 @@ public partial class Reports : ComponentBase
 {
     #region Dependencies
     [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ISMSSessionService SessionService { get; set; } = default!;
     [Inject] private ILogger<Reports> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    // **CASCADING PARAMETER**: Get authentication from MainLayout
+    [CascadingParameter(Name = "AuthState")]
+    public AuthenticationState? AuthState { get; set; }
     #endregion
 
     #region Properties
@@ -30,6 +34,11 @@ public partial class Reports : ComponentBase
     /// List of all reports loaded from SMS backend
     /// </summary>
     public IList<Report> AllReports { get; set; } = new List<Report>();
+
+    /// <summary>
+    /// List of hazards for expanded reports (cached for performance)
+    /// </summary>
+    public Dictionary<string, List<Hazard>> ReportHazards { get; set; } = new Dictionary<string, List<Hazard>>();
 
     /// <summary>
     /// Loading state indicator
@@ -42,24 +51,19 @@ public partial class Reports : ComponentBase
     public string? ErrorMessage { get; set; }
 
     /// <summary>
-    /// Current user authentication state
+    /// Current user authentication state (from cascading parameter)
     /// </summary>
-    public bool IsAuthenticated { get; set; }
+    public bool IsAuthenticated => AuthState?.IsAuthenticated == true;
 
     /// <summary>
-    /// Current user display name
+    /// Current user display name (from cascading parameter)
     /// </summary>
-    public string? CurrentUserName { get; set; }
+    public string? CurrentUserName => AuthState?.DisplayName;
 
     /// <summary>
-    /// Reference to the Radzen DataList component
+    /// Set of currently expanded report codes
     /// </summary>
-    private RadzenDataList<Report> reportsDataList = default!;
-
-    /// <summary>
-    /// Currently expanded report for manual tracking
-    /// </summary>
-    private Report? expandedReport = null;
+    private HashSet<string> expandedReports = new();
 
     /// <summary>
     /// Current page size for pagination
@@ -70,6 +74,16 @@ public partial class Reports : ComponentBase
     /// Available page size options
     /// </summary>
     public IList<int> PageSizeOptions { get; set; } = new List<int> { 5, 10, 15, 20, 25, 50 };
+
+    /// <summary>
+    /// Current page number (1-based)
+    /// </summary>
+    public int CurrentPage { get; set; } = 1;
+
+    /// <summary>
+    /// Total number of pages
+    /// </summary>
+    public int TotalPages => (int)Math.Ceiling((double)AllReports.Count / PageSize);
     #endregion
 
     #region Lifecycle Methods
@@ -91,19 +105,19 @@ public partial class Reports : ComponentBase
     {
         try
         {
-            IsAuthenticated = SessionService.IsAuthenticated();
-            CurrentUserName = SessionService.GetCurrentUserDisplayName();
-            
             if (!IsAuthenticated)
             {
                 Logger.LogWarning("Unauthorized access attempt to Reports page");
                 ErrorMessage = "You must be logged in to view reports.";
             }
+            else
+            {
+                Logger.LogInformation("Authenticated user {UserName} accessing Reports page", CurrentUserName);
+            }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error checking authentication status");
-            IsAuthenticated = false;
             ErrorMessage = "Authentication check failed.";
         }
     }
@@ -194,9 +208,10 @@ public partial class Reports : ComponentBase
         {
             Logger.LogInformation("Page size changed from {OldSize} to {NewSize}", PageSize, pageSize);
             PageSize = pageSize;
+            CurrentPage = 1; // Reset to first page when page size changes
             
             // Collapse any expanded row when changing page size
-            expandedReport = null;
+            expandedReports.Clear();
             
             StateHasChanged();
             
@@ -223,7 +238,7 @@ public partial class Reports : ComponentBase
             Logger.LogInformation("Opening create new report dialog");
 
             var result = await DialogService.OpenAsync<SMS3.Components.Pages.SMSRiskManagement.Components.ReportCreate>(
-                "Create New Hazard Report",
+                "",
                 new Dictionary<string, object>()
                 {
                     { "OnReportCreated", EventCallback.Factory.Create(this, OnReportCreatedCallback) }
@@ -231,7 +246,7 @@ public partial class Reports : ComponentBase
                 new DialogOptions()
                 {
                     Width = "95vw",
-                    Height = "90vh",
+                    Height = "80vh",
                     Resizable = true,
                     Draggable = true,
                     CloseDialogOnEsc = true
@@ -292,15 +307,15 @@ public partial class Reports : ComponentBase
             // Show detailed report information dialog
             var reportDetails = $@"Report Details:
 
-Code: {report.Code}
-Name: {report.Name ?? "Not specified"}
-Description: {report.Description ?? "Not specified"}
-Status: {report.Status ?? "Not specified"}
-Stage: {report.Stage ?? "Not specified"}
-Created: {report.CreatedDate.Value:MM/dd/yyyy HH:mm}
-Created By: {report.CreatedBy ?? "System"}
-Updated: {(report.UpdatedDate.HasValue ? report.UpdatedDate.Value.ToString("MM/dd/yyyy HH:mm") : "Never")}
-Updated By: {report.UpdatedBy ?? "N/A"}";
+            Code: {report.Code}
+            Name: {report.Name ?? "Not specified"}
+            Description: {report.Description ?? "Not specified"}
+            Status: {report.Status ?? "Not specified"}
+            Stage: {report.Stage ?? "Not specified"}
+            Created: {report.CreatedDate.Value:MM/dd/yyyy HH:mm}
+            Created By: {report.CreatedBy ?? "System"}
+            Updated: {(report.UpdatedDate.HasValue ? report.UpdatedDate.Value.ToString("MM/dd/yyyy HH:mm") : "Never")}
+            Updated By: {report.UpdatedBy ?? "N/A"}";
 
             await DialogService.Alert(reportDetails, $"Report Information - {report.Code}");
         }
@@ -472,9 +487,9 @@ Updated By: {report.UpdatedBy ?? "N/A"}";
                     AllReports = reportList;
 
                     // Collapse expanded row if it was the deleted report
-                    if (expandedReport?.Code == report.Code)
+                    if (expandedReports.Contains(report.Code))
                     {
-                        expandedReport = null;
+                        expandedReports.Remove(report.Code);
                     }
 
                     StateHasChanged();
@@ -514,42 +529,70 @@ Updated By: {report.UpdatedBy ?? "N/A"}";
     /// </summary>
     public async Task RefreshAsync()
     {
-        // Collapse any expanded row when refreshing
-        expandedReport = null;
+        // Clear expanded reports and hazard cache when refreshing
+        expandedReports.Clear();
+        ReportHazards.Clear();
+        CurrentPage = 1; // Reset to first page
         await LoadReportsAsync();
     }
 
     /// <summary>
-    /// Handle row selection in the data list
+    /// Get paginated reports for current page
     /// </summary>
-    /// <param name="report">Selected report</param>
-    public void OnRowSelect(Report report)
+    /// <returns>Reports for current page</returns>
+    public IEnumerable<Report> GetPaginatedReports()
     {
-        Logger.LogInformation("Report selected: {ReportCode}", report.Code);
-        // Row selection doesn't auto-expand anymore since we have dedicated expand buttons
+        return AllReports.Skip((CurrentPage - 1) * PageSize).Take(PageSize);
     }
 
     /// <summary>
-    /// Toggle row expansion to show/hide hazards
+    /// Handle page change
     /// </summary>
-    /// <param name="report">Report to expand/collapse</param>
-    public void ToggleRowExpansion(Report report)
+    /// <param name="pageIndex">New page index (0-based)</param>
+    public async Task OnPageChanged(int pageIndex)
     {
-        Logger.LogInformation("Toggling row expansion for report: {ReportCode}", report.Code);
+        CurrentPage = pageIndex + 1; // Convert from 0-based to 1-based
+        Logger.LogInformation("Page changed to {PageNumber}", CurrentPage);
+        
+        // Collapse all expanded reports when changing pages for better performance
+        expandedReports.Clear();
+        
+        StateHasChanged();
+        
+        // Show notification
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = "Page Changed",
+            Detail = $"Showing page {CurrentPage} of {TotalPages}",
+            Duration = 2000
+        });
+    }
+
+    /// <summary>
+    /// Handle report expansion changed
+    /// </summary>
+    /// <param name="report">Report being expanded/collapsed</param>
+    /// <param name="expanded">True if expanding, false if collapsing</param>
+    public async Task OnReportExpandedChanged(Report report, bool expanded)
+    {
+        Logger.LogInformation("Report {ReportCode} accordion {Action}, ExpandedReports before: {ExpandedReports}", 
+            report.Code, expanded ? "expanded" : "collapsed", string.Join(", ", expandedReports));
         
         try
         {
-            if (IsRowExpanded(report))
+            if (expanded)
             {
-                // Collapse the row
-                expandedReport = null;
-                Logger.LogInformation("Collapsed row for report: {ReportCode}", report.Code);
-            }
-            else
-            {
-                // Expand the row (collapse any other expanded row first)
-                expandedReport = report;
-                Logger.LogInformation("Expanded row for report: {ReportCode}", report.Code);
+                // Add to expanded set
+                expandedReports.Add(report.Code);
+                Logger.LogInformation("Added {ReportCode} to expandedReports. Current count: {Count}", 
+                    report.Code, expandedReports.Count);
+                
+                // Load hazards for this report if not already cached
+                if (!ReportHazards.ContainsKey(report.Code))
+                {
+                    await LoadHazardsForReportAsync(report.Code);
+                }
                 
                 // Show notification about loading hazards
                 NotificationService.Notify(new NotificationMessage
@@ -560,31 +603,134 @@ Updated By: {report.UpdatedBy ?? "N/A"}";
                     Duration = 2000
                 });
             }
+            else
+            {
+                // Remove from expanded set
+                expandedReports.Remove(report.Code);
+                Logger.LogInformation("Removed {ReportCode} from expandedReports. Current count: {Count}", 
+                    report.Code, expandedReports.Count);
+            }
             
+            Logger.LogInformation("ExpandedReports after: {ExpandedReports}", string.Join(", ", expandedReports));
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error toggling row expansion for report {ReportCode}", report.Code);
+            Logger.LogError(ex, "Error handling report expansion for report {ReportCode}", report.Code);
             
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
                 Summary = "Error",
-                Detail = "Failed to expand report details.",
+                Detail = "Failed to load report details.",
                 Duration = 3000
             });
         }
     }
 
     /// <summary>
-    /// Check if a row is currently expanded
+    /// Check if a report is currently expanded
     /// </summary>
     /// <param name="report">Report to check</param>
     /// <returns>True if expanded</returns>
-    public bool IsRowExpanded(Report report)
+    public bool IsReportExpanded(Report report)
     {
-        return expandedReport?.Code == report.Code;
+        var isExpanded = expandedReports.Contains(report.Code);
+        Logger.LogDebug("IsReportExpanded check: Report {ReportCode}, Expanded: {IsExpanded}, ExpandedReports count: {Count}", 
+            report.Code, isExpanded, expandedReports.Count);
+        return isExpanded;
+    }
+
+    /// <summary>
+    /// Get display text for the accordion header
+    /// </summary>
+    /// <param name="report">Report to get display text for</param>
+    /// <returns>Formatted display text</returns>
+    public string GetReportDisplayText(Report report)
+    {
+        return $"{report.Code} - {report.Name ?? "Unnamed Report"}";
+    }
+    /// <summary>
+    /// Get primary hazard reported date for display
+    /// </summary>
+    /// <param name="report">Report to get primary hazard date for</param>
+    /// <returns>Formatted date string</returns>
+    public string GetPrimaryHazardDate(Report report)
+    {
+        try
+        {
+            // If hazards are cached for this report
+            if (ReportHazards.TryGetValue(report.Code, out var hazards) && hazards.Any())
+            {
+                // Find the primary/initial hazard (first one reported)
+                var primaryHazard = hazards.OrderBy(h => h.ReportedOn).FirstOrDefault();
+                if (primaryHazard != null)
+                {
+                    return primaryHazard.ReportedOn.ToString("MM/dd/yyyy");
+                }
+            }
+            
+            // Fallback to report created date
+            return report.CreatedDate?.ToString("MM/dd/yyyy") ?? "N/A";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error getting primary hazard date for report {ReportCode}", report.Code);
+            return report.CreatedDate?.ToString("MM/dd/yyyy") ?? "N/A";
+        }
+    }
+
+    /// <summary>
+    /// Truncate description text for display
+    /// </summary>
+    /// <param name="description">Description to truncate</param>
+    /// <param name="maxLength">Maximum length</param>
+    /// <returns>Truncated description</returns>
+    public string TruncateDescription(string description, int maxLength)
+    {
+        if (string.IsNullOrEmpty(description) || description.Length <= maxLength)
+        {
+            return description ?? "";
+        }
+        
+        return description.Substring(0, maxLength) + "...";
+    }
+
+    /// <summary>
+    /// Load hazards for a specific report
+    /// </summary>
+    /// <param name="reportCode">Report code to load hazards for</param>
+    private async Task LoadHazardsForReportAsync(string reportCode)
+    {
+        try
+        {
+            Logger.LogInformation("Loading hazards for report: {ReportCode}", reportCode);
+
+            // Execute GetHazardsByReportCodeQuery via Mediator
+            var query = new GetHazardsByReportCodeQuery(reportCode);
+            var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+            if (result.IsSuccess && result.Value != null)
+            {
+                // Cache the hazards
+                ReportHazards[reportCode] = result.Value.ToList();
+                Logger.LogInformation("Successfully loaded {Count} hazards for report {ReportCode}", 
+                    result.Value.Count(), reportCode);
+            }
+            else
+            {
+                // Cache empty list to avoid repeated failed requests
+                ReportHazards[reportCode] = new List<Hazard>();
+                Logger.LogWarning("No hazards found for report {ReportCode}: {Error}", 
+                    reportCode, result.Error?.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Exception occurred while loading hazards for report {ReportCode}", reportCode);
+            // Cache empty list to avoid repeated failed requests
+            ReportHazards[reportCode] = new List<Hazard>();
+        }
     }
 
     /// <summary>

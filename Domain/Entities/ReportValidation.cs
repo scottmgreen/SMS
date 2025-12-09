@@ -10,16 +10,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public class ReportValidation : BaseAuditableEntity, IReportValidation
 {
-    // For Entity Framework
-    private ReportValidation() : base(new ReportValidationID(Guid.NewGuid().ToString()), "SYSTEM", DateTime.UtcNow)
-    {
-        Code = string.Empty;
-        ReportCode = string.Empty;
-        ValidationDecision = string.Empty;
-        Status = string.Empty;
-        Stage = string.Empty;
-    }
-
+    
     // Public constructor for domain usage
     public ReportValidation(ReportValidationID id) : base(id, "SYSTEM", DateTime.UtcNow)
     {

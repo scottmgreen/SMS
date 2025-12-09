@@ -1,0 +1,44 @@
+@page "/Listings/HazardLocations"
+@using SMS_Domain.Entities
+@using SMS_Domain.ValueObjects
+@using SMS_Application.Messaging.Queries
+@using SMS_Application.Interfaces
+@using SMS_Shared.Common
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Hazard Locations</PageTitle>
+
+<RadzenDataGrid @ref="locationsGrid" 
+                Data="@locations" 
+                Count="@totalCount" 
+                LoadData="@LoadData"
+                AllowPaging="true" 
+                AllowSorting="true" 
+                AllowFiltering="true"
+                PageSize="25"
+                PagerHorizontalAlign="HorizontalAlign.Left"
+                ShowPagingSummary="true"
+                FilterMode="FilterMode.Advanced"
+                SelectionMode="DataGridSelectionMode.Single"
+                Style="height: calc(100vh - 200px)">
+    
+    <Columns>
+        <RadzenDataGridColumn TItem="HazardLocation" Property="Code" Title="Code" Width="150px" />
+        <RadzenDataGridColumn TItem="HazardLocation" Property="HazardCode" Title="Hazard Code" Width="120px" />
+        <RadzenDataGridColumn TItem="HazardLocation" Property="LocationArea" Title="Area" Width="150px" />
+        <RadzenDataGridColumn TItem="HazardLocation" Property="LocationSubArea" Title="Sub Area" Width="150px" />
+        <RadzenDataGridColumn TItem="HazardLocation" Property="Latitude" Title="Latitude" Width="120px" />
+        <RadzenDataGridColumn TItem="HazardLocation" Property="Longitude" Title="Longitude" Width="120px" />
+        <RadzenDataGridColumn TItem="HazardLocation" Property="Description" Title="Description" Width="300px" />
+        <RadzenDataGridColumn TItem="HazardLocation" Property="CreatedBy" Title="Created By" Width="150px" />
+        <RadzenDataGridColumn TItem="HazardLocation" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
+        
+        <RadzenDataGridColumn TItem="HazardLocation" Title="Actions" Width="100px" Sortable="false" Filterable="false">
+            <Template Context="location">
+                <RadzenButton Icon="more_vert" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
+                            Click="@(() => ShowActions(location))" Disabled="true" />
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>

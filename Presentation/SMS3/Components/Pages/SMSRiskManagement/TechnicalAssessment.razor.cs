@@ -17,10 +17,10 @@ public partial class TechnicalAssessment : ComponentBase
     #region Parameters and Injection
 
     [Parameter] public string? Id { get; set; }
+    [Parameter] public string? HazardId { get; set; }  // Now a route parameter
     [Parameter] public int StepNumber { get; set; } = 1;
     
-    // Add query parameters for HazardId and ReportId
-    [SupplyParameterFromQuery(Name = "hazardId")] public string? HazardId { get; set; }
+    // Keep query parameters for backward compatibility
     [SupplyParameterFromQuery(Name = "reportId")] public string? ReportId { get; set; }
 
     [Inject] private IMediator Mediator { get; set; } = default!;
@@ -248,7 +248,8 @@ public partial class TechnicalAssessment : ComponentBase
 
         try
         {
-            var assessmentQuery = new GetRiskAssessmentByIdQuery(new RiskAssessmentID(Id));
+            // First try to load as a RiskAssessment ID
+            var assessmentQuery = new GetRiskAssessmentByIdQuery(new RiskAssessmentID(Id!));
             var assessmentResult = await Mediator.SendAsync(assessmentQuery, CancellationToken.None);
 
             if (assessmentResult.IsSuccess && assessmentResult.Value != null)
@@ -277,15 +278,109 @@ public partial class TechnicalAssessment : ComponentBase
                         await LoadAssessmentsByHazardIdAsync(); // This will find both Initial and Residual
                     }
                 }
+                
+                Logger.LogInformation("Successfully loaded RiskAssessment with ID: {Id}", Id);
             }
             else
             {
-                Logger.LogWarning("No risk assessment found for Id: {Id}", Id);
+                // If not found as RiskAssessment ID, check if it's a Report ID (like RP-0263)
+                Logger.LogInformation("No RiskAssessment found for ID: {Id}, checking if it's a Report ID", Id);
+                await LoadAssessmentByReportIdAsync();
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading assessment by ID: {Id}", Id);
+        }
+    }
+
+    private async Task LoadAssessmentByReportIdAsync()
+    {
+        Logger.LogInformation("Loading assessment by Report ID: {Id}", Id);
+
+        try
+        {
+            // If Id looks like a Report ID (RP-xxxx), try to find assessments for this report
+            if (Id?.StartsWith("RP-") == true)
+            {
+                ReportId = Id; // Set ReportId for consistency
+                await LoadAssessmentsByReportIdAsync();
+                
+                // If no assessments found, create them
+                if (InitialRiskAssessment == null && !string.IsNullOrEmpty(HazardId))
+                {
+                    await CreateAssessmentsForReport();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading assessment by Report ID: {Id}", Id);
+        }
+    }
+
+    private async Task CreateAssessmentsForReport()
+    {
+        Logger.LogInformation("Creating new assessments for Report: {ReportId}, Hazard: {HazardId}", ReportId, HazardId);
+
+        try
+        {
+            // Generate RiskAssessment ID from Report ID (RP-0263 -> RS-0263)
+            var riskAssessmentId = Id!.Replace("RP-", "RS-");
+
+            // Create Initial assessment
+            var createInitialResult = RiskAssessment.CreateInitial(
+                new RiskAssessmentID(riskAssessmentId),
+                $"Technical Risk Assessment for Report {Id}",
+                "System User",
+                RiskAssessmentCategory.Technical,
+                HazardId,
+                HazardId);
+
+            if (createInitialResult.IsSuccess)
+            {
+                InitialRiskAssessment = createInitialResult.Value;
+                InitialRiskAssessment.Description = $"Created from Report {Id}";
+                
+                var createCommand = new CreateRiskAssessmentCommand(InitialRiskAssessment);
+                var result = await Mediator.SendAsync(createCommand, CancellationToken.None);
+                
+                if (!result.IsSuccess)
+                {
+                    Logger.LogError("Failed to create Initial assessment: {Error}", result.Error?.Message);
+                    throw new Exception($"Failed to create Initial assessment: {result.Error?.Message}");
+                }
+
+                // Create Residual assessment
+                var residualId = riskAssessmentId.Replace("RS-", "RRS-"); // RRS for Residual Risk Assessment
+                var createResidualResult = RiskAssessment.CreateResidual(
+                    new RiskAssessmentID(residualId),
+                    $"Residual Risk Assessment for Report {Id}",
+                    "System User",
+                    InitialRiskAssessment.Code!,
+                    HazardId,
+                    HazardId);
+
+                if (createResidualResult.IsSuccess)
+                {
+                    ResidualRiskAssessment = createResidualResult.Value;
+                    var createResidualCommand = new CreateRiskAssessmentCommand(ResidualRiskAssessment);
+                    await Mediator.SendAsync(createResidualCommand, CancellationToken.None);
+                }
+
+                Logger.LogInformation("Created new assessments - Initial: {InitialId}, Residual: {ResidualId}", 
+                    riskAssessmentId, residualId);
+            }
+            else
+            {
+                Logger.LogError("Failed to create Initial assessment object: {Error}", createInitialResult.Error?.Message);
+                throw new Exception($"Failed to create Initial assessment: {createInitialResult.Error?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error creating assessments for Report: {ReportId}", ReportId);
+            throw;
         }
     }
 

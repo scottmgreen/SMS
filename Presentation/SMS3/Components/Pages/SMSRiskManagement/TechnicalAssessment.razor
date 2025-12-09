@@ -1,23 +1,25 @@
 @page "/SMSRiskManagement/TechnicalAssessment"
-@page "/SMSRiskManagement/TechnicalAssessment/{Id}"
-@page "/SMSRiskManagement/TechnicalAssessment/{Id}/{StepNumber:int}"
-@using SMS3.Components.Pages.SMSRiskManagement.Components
-@using SMS_Application.Messaging.Queries
+@page "/SMSRiskManagement/TechnicalAssessment/{AssessmentId}"
 @using SMS_Application.Messaging.Commands
+@using SMS_Application.Messaging.Queries
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
-@using SMS_Domain.ValueObjects
-@using SMS_Domain.Common
 @using Radzen
 @using Radzen.Blazor
+@using SMS3.Components.Shared
 
-<PageTitle>Technical Assessment - Step @CurrentStep</PageTitle>
+<PageTitle>Technical Assessment - SMS3</PageTitle>
+
+<!-- SMS Page Header using reusable component -->
+<PageHeader Title="Technical Assessment"
+           Subtitle="Perform detailed technical analysis and risk assessment of safety incidents"
+           Icon="fas fa-cogs" />
 
 <RadzenRow Gap="1rem">
     <RadzenColumn Size="12">
         <!-- Assessment Header -->
         <RadzenCard Variant="Variant.Outlined" Style="margin-bottom: 1rem;">
-            <RadzenCardContent>
+            <RadzenCard>
                 <RadzenRow AlignItems="AlignItems.Center">
                     <RadzenColumn Size="12" SizeMD="8">
                         <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
@@ -40,12 +42,12 @@
                         </RadzenStack>
                     </RadzenColumn>
                 </RadzenRow>
-            </RadzenCardContent>
+            </RadzenCard>
         </RadzenCard>
 
         <!-- Progress Bar -->
         <RadzenCard Variant="Variant.Outlined" Style="margin-bottom: 1rem;">
-            <RadzenCardContent Style="padding: 1rem;">
+            <RadzenCard Style="padding: 1rem;">
                 <RadzenRow>
                     <RadzenColumn Size="12">
                         <RadzenProgressBar Value="@((double)CurrentStep / 5 * 100)" ShowValue="false" Style="height: 8px;" />
@@ -58,12 +60,12 @@
                         </RadzenStack>
                     </RadzenColumn>
                 </RadzenRow>
-            </RadzenCardContent>
+            </RadzenCard>
         </RadzenCard>
 
         <!-- Step Content -->
         <RadzenCard>
-            <RadzenCardContent>
+            <RadzenCard>
                 @if (IsLoading)
                 {
                     <RadzenStack AlignItems="AlignItems.Center" Style="padding: 2rem;">
@@ -123,14 +125,14 @@
                             break;
                     }
                 }
-            </RadzenCardContent>
+            </RadzenCard>
         </RadzenCard>
 
         <!-- Navigation Buttons -->
         @if (InitialRiskAssessment != null && !IsLoading)
         {
             <RadzenCard Style="margin-top: 1rem;">
-                <RadzenCardContent>
+                <RadzenCard>
                     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
                         <!-- Previous Button -->
                         <RadzenButton Text="Previous Step" 
@@ -171,7 +173,7 @@
                                          Click="@CompleteAssessment" />
                         }
                     </RadzenStack>
-                </RadzenCardContent>
+                </RadzenCard>
             </RadzenCard>
         }
     </RadzenColumn>

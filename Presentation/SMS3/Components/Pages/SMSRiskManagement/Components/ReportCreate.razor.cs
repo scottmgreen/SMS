@@ -87,18 +87,36 @@ public partial class ReportCreate : ComponentBase
     /// </summary>
     public List<DropdownOption> DepartmentOptions { get; set; } = new();
 
+    // Location Selection Properties - Updated for compact selector
+    private bool ShowLocationSelector { get; set; } = false;
+    private string ManualLocationDescription { get; set; } = string.Empty;
+    private string SelectedQuickLocation { get; set; } = string.Empty;
+
     /// <summary>
     /// Display text for selected location
     /// </summary>
-    public string LocationDisplayText => HasGeoLocation ? 
-        $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}" + 
-        (!string.IsNullOrEmpty(SelectedGeoLocation.Description) ? $" - {SelectedGeoLocation.Description}" : "") :
-        "No location selected";
+    public string LocationDisplayText 
+    { 
+        get 
+        { 
+            if (!string.IsNullOrEmpty(SelectedQuickLocation))
+            {
+                return SelectedQuickLocation;
+            }
+            if (!string.IsNullOrEmpty(ManualLocationDescription))
+            {
+                return ManualLocationDescription.Length > 50 
+                    ? ManualLocationDescription[..47] + "..." 
+                    : ManualLocationDescription;
+            }
+            return "No location selected";
+        } 
+    }
 
     /// <summary>
     /// Check if geographic location has been selected
     /// </summary>
-    public bool HasGeoLocation => SelectedGeoLocation.IsValid;
+    public bool HasGeoLocation => !string.IsNullOrEmpty(SelectedQuickLocation) || !string.IsNullOrEmpty(ManualLocationDescription);
 
     /// <summary>
     /// Character count for description field
@@ -206,20 +224,20 @@ public partial class ReportCreate : ComponentBase
     private SMS3.Components.Pages.SMSRiskManagement.Components.HazardLocationOpenLayers hazardLocationComponent = default!;
 
     /// <summary>
-    /// Show location selector dialog
+    /// Show location selector dialog - Updated for compact selector
     /// </summary>
-    public async Task ShowLocationSelector()
+    public void ShowLocationSelectorPanel()
     {
         try
         {
-            // Open the inline location panel instead of a modal
-            hazardLocationComponent?.OpenLocationSelector();
+            ShowLocationSelector = true;
+            StateHasChanged();
             
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Info,
                 Summary = "Location Selector",
-                Detail = "Choose a method to specify the hazard location below.",
+                Detail = "Choose a location method below.",
                 Duration = 3000
             });
         }
@@ -833,6 +851,73 @@ Attachments: {AttachedFiles.Count} file(s)";
             Severity = NotificationSeverity.Info,
             Summary = "Submission Cancelled",
             Detail = "You can continue editing your report.",
+            Duration = 3000
+        });
+    }
+    #endregion
+
+    #region Location Selection Methods
+    /// <summary>
+    /// Set a quick location option
+    /// </summary>
+    /// <param name="location">Quick location name</param>
+    private void SetQuickLocation(string location)
+    {
+        SelectedQuickLocation = location;
+        ManualLocationDescription = string.Empty; // Clear manual description when quick location is selected
+        
+        // Update form data
+        HazardReportData.GeoLocation = location;
+        
+        Logger.LogInformation("Quick location selected: {Location}", location);
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Show detailed location selector for advanced options
+    /// </summary>
+    private void ShowDetailedLocationSelector()
+    {
+        // This would open a more detailed location selector dialog
+        // For now, just focus on the manual description
+        ManualLocationDescription = string.Empty;
+        SelectedQuickLocation = string.Empty;
+        StateHasChanged();
+        
+        Logger.LogInformation("Detailed location selector opened");
+    }
+
+    /// <summary>
+    /// Confirm the selected location and close the selector
+    /// </summary>
+    private void ConfirmLocationSelection()
+    {
+        if (!string.IsNullOrEmpty(ManualLocationDescription))
+        {
+            // Use manual description
+            SelectedQuickLocation = string.Empty;
+            
+            // Update the form data
+            HazardReportData.GeoLocation = ManualLocationDescription;
+            
+            Logger.LogInformation("Manual location confirmed: {Location}", ManualLocationDescription);
+        }
+        else if (!string.IsNullOrEmpty(SelectedQuickLocation))
+        {
+            // Update the form data with quick location
+            HazardReportData.GeoLocation = SelectedQuickLocation;
+            
+            Logger.LogInformation("Quick location confirmed: {Location}", SelectedQuickLocation);
+        }
+        
+        ShowLocationSelector = false;
+        StateHasChanged();
+        
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Location Set",
+            Detail = $"Location has been set: {LocationDisplayText}",
             Duration = 3000
         });
     }

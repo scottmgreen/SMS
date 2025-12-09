@@ -1,0 +1,82 @@
+@using SMS_Domain.Entities
+@using SMS_Domain.ValueObjects
+@using SMS_Application.Messaging.Commands
+@using SMS_Application.Interfaces
+@using SMS_Shared.Common
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenTemplateForm Data="@Model" Submit="@UploadFile" TItem="UploadFileModel">
+    <RadzenStack Gap="1rem">
+        
+        <!-- File Selection -->
+        <RadzenFormField Text="Select File *" Variant="Variant.Outlined">
+            <RadzenFileInput @bind-Value="@Model.SelectedFiles" 
+                           Multiple="false" 
+                           MaxFileSize="52428800"
+                           Style="width: 100%;"
+                           Accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.mp4,.avi,.mov,.txt,.xlsx,.xls,.zip" />
+            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color); margin-top: 0.25rem;">
+                Accepted formats: PDF, Word, Excel, Images (JPG, PNG, GIF), Videos (MP4, AVI, MOV), Text files, ZIP archives. Max size: 50MB
+            </RadzenText>
+        </RadzenFormField>
+
+        <!-- File Description -->
+        <RadzenFormField Text="File Description *" Variant="Variant.Outlined">
+            <RadzenTextArea @bind-Value="@Model.Description" 
+                          Rows="3" 
+                          Placeholder="Describe what this evidence file contains and its relevance to the investigation..."
+                          Style="width: 100%;" />
+        </RadzenFormField>
+
+        <!-- File Category -->
+        <RadzenFormField Text="Evidence Category" Variant="Variant.Outlined">
+            <RadzenDropDown @bind-Value="@Model.Category" 
+                          Data="@CategoryOptions" 
+                          TextProperty="Text" 
+                          ValueProperty="Value"
+                          Style="width: 100%;" />
+        </RadzenFormField>
+
+        <!-- Confidentiality -->
+        <RadzenFormField Text="Classification" Variant="Variant.Outlined">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                    <RadzenCheckBox @bind-Value="@Model.IsConfidential" Name="confidential" />
+                    <RadzenLabel Text="Mark as confidential" Component="confidential" />
+                </RadzenStack>
+                
+                @if (Model.IsConfidential)
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Warning" Icon="warning" Title="Confidential File" Size="AlertSize.Small">
+                        This file will be restricted to authorized investigation personnel only.
+                    </RadzenAlert>
+                }
+            </RadzenStack>
+        </RadzenFormField>
+
+        <!-- Upload Progress -->
+        @if (IsUploading)
+        {
+            <RadzenCard Variant="Variant.Outlined" Style="background: #f8f9fa;">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
+                    <RadzenProgressBarCircular Value="@UploadProgress" ShowValue="true" ProgressBarStyle="ProgressBarStyle.Success" />
+                    <RadzenText TextStyle="TextStyle.Caption">Uploading evidence file...</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        }
+
+        <!-- Action Buttons -->
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+            <RadzenButton Text="Cancel" 
+                        ButtonStyle="ButtonStyle.Secondary" 
+                        Click="@(() => DialogService.Close(false))"
+                        Disabled="@IsUploading" />
+            <RadzenButton Text="Upload Evidence" 
+                        ButtonStyle="ButtonStyle.Primary" 
+                        ButtonType="ButtonType.Submit"
+                        Disabled="@(IsUploading || !CanUpload())" />
+        </RadzenStack>
+
+    </RadzenStack>
+</RadzenTemplateForm>

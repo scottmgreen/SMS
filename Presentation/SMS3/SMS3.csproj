@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -7,29 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Components\Pages\SMSRiskManagement\Temp\HazardReporting.cshtml.cs" />
-    <Compile Remove="Components\Pages\SMSRiskManagement\Temp\ReportProcessing.cshtml.cs" />
-    <Compile Remove="Components\Pages\SMSRiskManagement\Temp\ReportValidation.cshtml.cs" />
-    <Compile Remove="Components\Pages\SMSRiskManagement\Temp\RiskAssessment.cshtml.cs" />
-    <Compile Remove="Components\Pages\SMSRiskManagement\Temp\RiskAssessmentWizard.cshtml.cs" />
-    <Compile Remove="Components\Pages\SMSRiskManagement\Temp\SimplifiedRiskAssessment.cshtml.cs" />
+    <Compile Remove="Components\Pages\SMSRiskManagement\HazardReporting.cshtml.cs" />
     <Compile Remove="Components\Pages\System\UserRoles\UserRoleManagement.cshtml.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Remove="Components\Pages\Counter.razor" />
-    <Content Remove="Components\Pages\SMSRiskManagement\Temp\HazardReporting.cshtml" />
-    <Content Remove="Components\Pages\SMSRiskManagement\Temp\ReportProcessing.cshtml" />
-    <Content Remove="Components\Pages\SMSRiskManagement\Temp\ReportValidation.cshtml" />
-    <Content Remove="Components\Pages\SMSRiskManagement\Temp\RiskAssessment.cshtml" />
-    <Content Remove="Components\Pages\SMSRiskManagement\Temp\RiskAssessmentWizard.cshtml" />
-    <Content Remove="Components\Pages\SMSRiskManagement\Temp\RiskAssessmentWizardRoute.cshtml" />
-    <Content Remove="Components\Pages\SMSRiskManagement\Temp\_Step1_DescribeSystem.cshtml" />
-    <Content Remove="Components\Pages\SMSRiskManagement\Temp\_Step2_IdentifyHazards.cshtml" />
-    <Content Remove="Components\Pages\SMSRiskManagement\Temp\_Step3_AnalyzeRisk.cshtml" />
-    <Content Remove="Components\Pages\SMSRiskManagement\Temp\_Step4_AssessRisk.cshtml" />
-    <Content Remove="Components\Pages\SMSRiskManagement\Temp\SimplifiedRiskAssessment.cshtml" />
-    <Content Remove="Components\Pages\SMSRiskManagement\Temp\_Step5_MitigateRisk.cshtml" />
     <Content Remove="Components\Pages\System\UserRoles\UserRoleManagement.cshtml" />
     <Content Remove="Components\Pages\Weather.razor" />
   </ItemGroup>
@@ -48,7 +31,6 @@
   <ItemGroup>
     <Folder Include="Components\Pages\SMSAssurance\" />
     <Folder Include="Components\Pages\SMSPromotion\" />
-    <Folder Include="Components\Pages\SMSRiskManagement\Temp\" />
     <Folder Include="Components\Pages\System\UserGroups\" />
   </ItemGroup>
 

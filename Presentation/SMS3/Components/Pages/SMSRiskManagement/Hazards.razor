@@ -1,11 +1,12 @@
-﻿<h3>Hazards</h3>
-
-
-@page "/SMSRiskManagement/Hazards"
+﻿@page "/SMSRiskManagement/Hazards"
+@using SMS3.Components.Shared
 
 <PageTitle>SMS Hazards Management - PDXSMS</PageTitle>
 
-
+<!-- SMS Page Header using reusable component -->
+<PageHeader Title="SMS Hazards Management"
+           Subtitle="Comprehensive listing and management of all SMS hazards and safety risks"
+           Icon="fas fa-exclamation-triangle" />
 
 @if (!IsAuthenticated)
 {
@@ -28,9 +29,11 @@ else if (!string.IsNullOrEmpty(ErrorMessage))
     <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
         <strong>Error:</strong> @ErrorMessage
         <div class="mt-2">
-            <button type="button" class="btn btn-danger" @onclick="RefreshAsync">
-                <i class="fas fa-sync-alt me-1"></i>Try Again
-            </button>
+            <RadzenButton ButtonStyle="ButtonStyle.Danger" 
+                         Text="Try Again" 
+                         Click="RefreshAsync" 
+                         Size="ButtonSize.Small" 
+                         Icon="refresh" />
         </div>
     </RadzenAlert>
 }
@@ -45,15 +48,20 @@ else
                     <div class="col">
                         <h5 class="mb-0">
                             <i class="fas fa-list me-2"></i>Hazards List
-                            <span class="badge bg-info ms-2">@AllHazards.Count</span>
+                            <RadzenBadge BadgeStyle="BadgeStyle.Info" 
+                                        Text="@AllHazards.Count.ToString()" 
+                                        Variant="Variant.Flat" 
+                                        Class="ms-2" />
                         </h5>
                     </div>
                     <div class="col-auto">
                         <div class="d-flex align-items-center gap-3">
                             <!-- Create New Hazard Button -->
-                            <button type="button" class="btn btn-success" @onclick="ShowCreateHazardDialog">
-                                <i class="fas fa-plus-circle me-1"></i>Create New Hazard
-                            </button>
+                            <RadzenButton ButtonStyle="ButtonStyle.Success" 
+                                        Text="Create New Hazard" 
+                                        Click="@ShowCreateHazardDialog" 
+                                        Size="ButtonSize.Medium" 
+                                        Icon="add" />
                             
                             <!-- Page Size Selector -->
                             <div class="d-flex align-items-center">
@@ -65,9 +73,11 @@ else
                             </div>
                             
                             <!-- Refresh Button -->
-                            <button type="button" class="btn btn-primary" @onclick="RefreshAsync">
-                                <i class="fas fa-sync-alt me-1"></i>Refresh
-                            </button>
+                            <RadzenButton ButtonStyle="ButtonStyle.Primary" 
+                                         Text="Refresh" 
+                                         Click="RefreshAsync" 
+                                         Size="ButtonSize.Small" 
+                                         Icon="refresh" />
                         </div>
                     </div>
                 </div>
@@ -79,9 +89,11 @@ else
                         <i class="fas fa-exclamation-triangle text-muted" style="font-size: 4rem;"></i>
                         <h5 class="mt-3 text-muted">No Hazards Found</h5>
                         <p class="text-muted">There are currently no hazards in the system.</p>
-                        <button type="button" class="btn btn-success btn-lg" @onclick="ShowCreateHazardDialog">
-                            <i class="fas fa-plus-circle me-1"></i>Create Your First Hazard
-                        </button>
+                        <RadzenButton ButtonStyle="ButtonStyle.Success" 
+                                    Text="Create Your First Hazard" 
+                                    Click="ShowCreateHazardDialog" 
+                                    Size="ButtonSize.Large" 
+                                    Icon="add" />
                     </div>
                 }
                 else
@@ -102,107 +114,122 @@ else
                         <Template Context="hazard">
                             <!-- Hazard Card Template -->
                             <div class="mb-3">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="row align-items-center">
-                                            <!-- Expand/Collapse Button -->
-                                            <div class="col-auto">
-                                                <button type="button" class="btn btn-light btn-sm" @onclick="@(() => ToggleRowExpansion(hazard))" 
-                                                        title="@(IsRowExpanded(hazard) ? "Hide Details" : "Show Details")">
+                                <RadzenCard>
+                                    <div class="row align-items-center">
+                                        <!-- Expand/Collapse Button -->
+                                        <div class="col-auto">
+                                            <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                                        Size="ButtonSize.Small" 
+                                                        Click="@(() => ToggleRowExpansion(hazard))" 
+                                                        title="@(IsRowExpanded(hazard) ? "Hide Details" : "Show Details")"
+                                                        Variant="Variant.Text">
+                                                <Template>
                                                     <i class="fas @(IsRowExpanded(hazard) ? "fa-chevron-up" : "fa-chevron-down")"></i>
-                                                </button>
-                                            </div>
+                                                </Template>
+                                            </RadzenButton>
+                                        </div>
 
-                                            <!-- Hazard Code -->
-                                            <div class="col-auto">
-                                                <strong class="text-primary">@hazard.Code</strong>
-                                            </div>
+                                        <!-- Hazard Code -->
+                                        <div class="col-auto">
+                                            <strong class="text-primary">@hazard.Code</strong>
+                                        </div>
 
-                                            <!-- Hazard Name & Description -->
-                                            <div class="col">
-                                                <div class="d-flex flex-column">
-                                                    <strong>@(hazard.Name ?? "Unnamed Hazard")</strong>
-                                                    @if (!string.IsNullOrEmpty(hazard.Description))
-                                                    {
-                                                        <small class="text-muted" title="@hazard.Description">
-                                                            @(hazard.Description.Length > 80 ? hazard.Description[..77] + "..." : hazard.Description)
-                                                        </small>
-                                                    }
-                                                </div>
-                                            </div>
-
-                                            <!-- Category -->
-                                            <div class="col-auto">
-                                                @if (!string.IsNullOrEmpty(hazard.Category))
+                                        <!-- Hazard Name & Description -->
+                                        <div class="col">
+                                            <div class="d-flex flex-column">
+                                                <strong>@(hazard.Name ?? "Unnamed Hazard")</strong>
+                                                @if (!string.IsNullOrEmpty(hazard.Description))
                                                 {
-                                                    <span class="badge bg-light text-dark">@hazard.Category</span>
+                                                    <small class="text-muted" title="@hazard.Description">
+                                                        @(hazard.Description.Length > 80 ? hazard.Description[..77] + "..." : hazard.Description)
+                                                    </small>
                                                 }
-                                            </div>
-
-                                            <!-- Status -->
-                                            <div class="col-auto">
-                                                @if (hazard.Status != null)
-                                                {
-                                                    <RadzenBadge Text="@hazard.Status.Name" 
-                                                               BadgeStyle="@GetStatusBadgeStyle(hazard.Status.Name)" 
-                                                               Variant="Variant.Flat" />
-                                                }
-                                            </div>
-
-                                            <!-- Priority -->
-                                            <div class="col-auto">
-                                                @if (hazard.Priority != null)
-                                                {
-                                                    <RadzenBadge Text="@hazard.Priority.Name" 
-                                                               BadgeStyle="@GetPriorityBadgeStyle(hazard.Priority.Name)" 
-                                                               Variant="Variant.Flat" />
-                                                }
-                                            </div>
-
-                                            <!-- Reported Date -->
-                                            <div class="col-auto">
-                                                <small class="text-muted">
-                                                    @hazard.ReportedOn.ToString("MM/dd/yyyy")
-                                                </small>
-                                            </div>
-
-                                            <!-- Actions -->
-                                            <div class="col-auto">
-                                                <div class="btn-group btn-group-sm">
-                                                    <button type="button" class="btn btn-info btn-sm" @onclick="@(() => OnViewHazardAsync(hazard))" title="View Details">
-                                                        <i class="fas fa-eye"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-warning btn-sm" @onclick="@(() => OnEditHazardAsync(hazard))" title="Edit Hazard">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-danger btn-sm" @onclick="@(() => OnDeleteHazardAsync(hazard))" title="Delete Hazard">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </div>
                                             </div>
                                         </div>
 
-                                        <!-- Additional Details Row -->
-                                        <div class="row mt-2">
-                                            <div class="col">
-                                                <small class="text-muted">
-                                                    <strong>Reported by:</strong> @(hazard.ReportedBy ?? "Unknown") 
-                                                    @if (!string.IsNullOrEmpty(hazard.ReportingDepartment))
-                                                    {
-                                                        <span>(@hazard.ReportingDepartment)</span>
-                                                    }
-                                                </small>
-                                            </div>
+                                        <!-- Category -->
+                                        <div class="col-auto">
+                                            @if (!string.IsNullOrEmpty(hazard.Category))
+                                            {
+                                                <RadzenBadge Text="@hazard.Category" 
+                                                           BadgeStyle="BadgeStyle.Light" 
+                                                           Variant="Variant.Flat" />
+                                            }
+                                        </div>
+
+                                        <!-- Status -->
+                                        <div class="col-auto">
+                                            @if (hazard.Status != null)
+                                            {
+                                                <RadzenBadge Text="@hazard.Status.Name" 
+                                                           BadgeStyle="@GetStatusBadgeStyle(hazard.Status.Name)" 
+                                                           Variant="Variant.Flat" />
+                                            }
+                                        </div>
+
+                                        <!-- Priority -->
+                                        <div class="col-auto">
+                                            @if (hazard.Priority != null)
+                                            {
+                                                <RadzenBadge Text="@hazard.Priority.Name" 
+                                                           BadgeStyle="@GetPriorityBadgeStyle(hazard.Priority.Name)" 
+                                                           Variant="Variant.Flat" />
+                                            }
+                                        </div>
+
+                                        <!-- Reported Date -->
+                                        <div class="col-auto">
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar-alt me-1"></i>
+                                                @hazard.ReportedOn.ToString("MM/dd/yyyy")
+                                            </small>
+                                        </div>
+
+                                        <!-- Actions -->
+                                        <div class="col-auto">
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                                                <RadzenButton ButtonStyle="ButtonStyle.Info" 
+                                                            Size="ButtonSize.Small"
+                                                            Click="@(() => OnViewHazardAsync(hazard))" 
+                                                            title="View Details"
+                                                            Icon="visibility" />
+                                                <RadzenButton ButtonStyle="ButtonStyle.Warning" 
+                                                            Size="ButtonSize.Small"
+                                                            Click="@(() => OnEditHazardAsync(hazard))" 
+                                                            title="Edit Hazard"
+                                                            Icon="edit" />
+                                                <RadzenButton ButtonStyle="ButtonStyle.Danger" 
+                                                            Size="ButtonSize.Small"
+                                                            Click="@(() => OnDeleteHazardAsync(hazard))" 
+                                                            title="Delete Hazard"
+                                                            Icon="delete" />
+                                            </RadzenStack>
+                                        </div>
+                                    </div>
+
+                                    <!-- Additional Details Row -->
+                                    <div class="row mt-2">
+                                        <div class="col">
+                                            <small class="text-muted">
+                                                <strong>Reported by:</strong> @(hazard.ReportedBy ?? "Unknown") 
+                                                @if (!string.IsNullOrEmpty(hazard.ReportingDepartment))
+                                                {
+                                                    <span>(@hazard.ReportingDepartment)</span>
+                                                }
+                                            </small>
                                         </div>
                                     </div>
 
                                     <!-- Expandable Hazard Details -->
                                     @if (IsRowExpanded(hazard))
                                     {
-                                        <div class="card-footer">
+                                        <div class="mt-3 pt-3 border-top">
                                             <div class="row">
                                                 <div class="col-md-6">
-                                                    <h6>Hazard Details</h6>
+                                                    <h6 class="text-primary">
+                                                        <i class="fas fa-info-circle me-1"></i>
+                                                        Hazard Details
+                                                    </h6>
                                                     <dl class="row">
                                                         <dt class="col-sm-4">Five M Component:</dt>
                                                         <dd class="col-sm-8">@(hazard.FiveMComponent?.Name ?? "Not specified")</dd>
@@ -218,10 +245,17 @@ else
                                                     </dl>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <h6>Investigation Status</h6>
+                                                    <h6 class="text-primary">
+                                                        <i class="fas fa-search me-1"></i>
+                                                        Investigation Status
+                                                    </h6>
                                                     <dl class="row">
                                                         <dt class="col-sm-6">Requires Investigation:</dt>
-                                                        <dd class="col-sm-6">@(hazard.RequiresInvestigation ? "Yes" : "No")</dd>
+                                                        <dd class="col-sm-6">
+                                                            <RadzenBadge Text="@(hazard.RequiresInvestigation ? "Yes" : "No")" 
+                                                                       BadgeStyle="@(hazard.RequiresInvestigation ? BadgeStyle.Warning : BadgeStyle.Success)" 
+                                                                       Variant="Variant.Flat" />
+                                                        </dd>
                                                         
                                                         @if (hazard.InvestigationCompletedDate.HasValue)
                                                         {
@@ -239,7 +273,7 @@ else
                                             </div>
                                         </div>
                                     }
-                                </div>
+                                </RadzenCard>
                             </div>
                         </Template>
                         

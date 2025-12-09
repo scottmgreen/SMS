@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
-using SMS_Application.Messaging.CircuitHandlers;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 
 namespace SMS_Application.Services;
@@ -24,8 +23,7 @@ public class SMSSessionService : ISMSSessionService
     }
 
     /// <summary>
-    /// Creates SMS session using Circuit Handler (no session timing issues)
-    /// FIXED - Uses circuit-based authentication instead of session
+    /// Creates SMS session using simple session approach (FORGET CIRCUITS!)
     /// </summary>
     public async Task CreateSMSSessionAsync(BaseUser user, SMSUserType userType)
     {
@@ -38,41 +36,9 @@ public class SMSSessionService : ISMSSessionService
 
         try
         {
-            // Get the current circuit ID
-            var circuitId = GetCurrentCircuitId(context);
-            
-            if (string.IsNullOrEmpty(circuitId))
-            {
-                _logger.LogWarning("No circuit ID found - using fallback session approach");
-                await CreateFallbackSession(context, user, userType);
-                return;
-            }
-
-            // Store authentication in circuit handler - NO TIMING ISSUES!
-            SMS_CircuitHandler.SetCircuitAuthentication(circuitId, user, userType);
-            
-            _logger.LogInformation("Circuit authentication set successfully: CircuitId={CircuitId}, UserId={UserId}, UserType={UserType}", 
-                circuitId, user.Code, userType.Value);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating circuit authentication for user {UserId}", user.Code);
-            
-            // Fallback to session if circuit approach fails
-            await CreateFallbackSession(context, user, userType);
-        }
-    }
-
-    /// <summary>
-    /// Fallback session creation (original approach)
-    /// </summary>
-    private async Task CreateFallbackSession(HttpContext context, BaseUser user, SMSUserType userType)
-    {
-        try
-        {
             var session = context.Session;
-            await session.LoadAsync();
 
+            // **SIMPLE SESSION APPROACH** - Just set the session data directly
             session.SetString("SMS_UserId", user.Code);
             session.SetString("SMS_UserCode", user.Code);
             session.SetString("SMS_UserType", userType.Value);
@@ -82,18 +48,64 @@ public class SMSSessionService : ISMSSessionService
             session.SetString("SMS_LastName", user.LastName.Value);
             session.SetString("IsAuthenticated", "true");
 
-            await session.CommitAsync();
-            
-            _logger.LogInformation("Fallback session created for user {UserId}", user.Code);
+            _logger.LogInformation("Session data set directly: UserId={UserId}, UserType={UserType}, DisplayName={DisplayName}",
+                user.Code, userType.Value, user.DisplayName);
+
+            // Store user role information
+            if (user.UserRole != null)
+            {
+                session.SetString("SMS_UserRoleCode", user.UserRole.Code ?? string.Empty);
+                session.SetString("SMS_UserRoleName", user.UserRole.Name ?? string.Empty);
+
+                if (user.UserRole.Permissions != null && user.UserRole.Permissions.Any())
+                {
+                    var permissionsData = user.UserRole.Permissions.Select(p => new {
+                        Module = p.SMSModule ?? string.Empty,
+                        Create = p.Create,
+                        Read = p.Read,
+                        Update = p.Update,
+                        Delete = p.Delete
+                    }).ToList();
+
+                    var permissionsJson = System.Text.Json.JsonSerializer.Serialize(permissionsData);
+                    session.SetString("SMS_UserPermissions", permissionsJson);
+                }
+                else
+                {
+                    session.SetString("SMS_UserPermissions", "[]");
+                }
+            }
+
+            // Store user type-specific data
+            switch (userType)
+            {
+                case var type when type == SMSUserType.Application && user is SMSApplicationUser appUser:
+                    session.SetString("SMS_ApplicationUserCode", appUser.Code ?? string.Empty);
+                    break;
+
+                case var type when type == SMSUserType.Organizational && user is SMSOrganizationalUser orgUser:
+                    session.SetString("SMS_Department", orgUser.Department ?? string.Empty);
+                    session.SetString("SMS_Position", orgUser.Position ?? string.Empty);
+                    session.SetString("SMS_OrganizationLevel", orgUser.OrganizationLevel ?? string.Empty);
+                    break;
+
+                case var type when type == SMSUserType.Stakeholder && user is SMSStakeholderUser stakeholderUser:
+                    session.SetString("SMS_Organization", stakeholderUser.Organization ?? string.Empty);
+                    session.SetString("SMS_StakeholderType", stakeholderUser.StakeholderType ?? string.Empty);
+                    break;
+            }
+
+            _logger.LogInformation("SMS Session data set successfully for user {UserId}", user.Code);
         }
-        catch (InvalidOperationException ex) when (ex.Message.Contains("response has started"))
+        catch (Exception ex)
         {
-            _logger.LogWarning("Fallback session also failed due to timing for user {UserId}", user.Code);
+            _logger.LogWarning(ex, "Session creation failed for user {UserId} - but continuing anyway", user.Code);
+            // Don't throw - let the calling code continue
         }
     }
 
     /// <summary>
-    /// Clears SMS session data (circuit and session)
+    /// Clears SMS session data (SIMPLE SESSION ONLY)
     /// </summary>
     public async Task ClearSMSSessionAsync()
     {
@@ -106,17 +118,10 @@ public class SMSSessionService : ISMSSessionService
 
         try
         {
-            // Clear circuit authentication
-            var circuitId = GetCurrentCircuitId(context);
-            if (!string.IsNullOrEmpty(circuitId))
-            {
-                SMS_CircuitHandler.ClearCircuitAuthentication(circuitId);
-                _logger.LogInformation("Cleared circuit authentication for circuit {CircuitId}", circuitId);
-            }
-
-            // Clear session as well
             var session = context.Session;
             var userId = session.GetString("SMS_UserId");
+            
+            // Simple session clear
             session.Clear();
             
             _logger.LogInformation("Cleared session for user: {UserId}", userId);
@@ -129,8 +134,7 @@ public class SMSSessionService : ISMSSessionService
     }
 
     /// <summary>
-    /// Checks if current session is authenticated (circuit-first approach)
-    /// Safe to call from Blazor components
+    /// Checks if current session is authenticated (SIMPLE SESSION ONLY)
     /// </summary>
     public bool IsAuthenticated()
     {
@@ -139,17 +143,13 @@ public class SMSSessionService : ISMSSessionService
             var context = _httpContextAccessor.HttpContext;
             if (context == null) return false;
 
-            // Try circuit authentication first
-            var circuitId = GetCurrentCircuitId(context);
-            if (!string.IsNullOrEmpty(circuitId) && SMS_CircuitHandler.IsCircuitAuthenticated(circuitId))
-            {
-                return true;
-            }
-
-            // Fallback to session
+            // **SIMPLE**: Just check session - NO CIRCUIT COMPLEXITY
             var session = context.Session;
-            return session.GetString("IsAuthenticated") == "true" &&
-                   !string.IsNullOrEmpty(session.GetString("SMS_UserId"));
+            var isAuth = session.GetString("IsAuthenticated") == "true" &&
+                        !string.IsNullOrEmpty(session.GetString("SMS_UserId"));
+            
+            _logger.LogInformation("Simple session auth check: {IsAuth}", isAuth);
+            return isAuth;
         }
         catch (Exception ex)
         {
@@ -159,7 +159,7 @@ public class SMSSessionService : ISMSSessionService
     }
 
     /// <summary>
-    /// Gets current user ID (circuit-first approach)
+    /// Gets current user ID (SIMPLE SESSION ONLY)
     /// </summary>
     public string? GetCurrentUserId()
     {
@@ -168,18 +168,6 @@ public class SMSSessionService : ISMSSessionService
             var context = _httpContextAccessor.HttpContext;
             if (context == null) return null;
 
-            // Try circuit authentication first
-            var circuitId = GetCurrentCircuitId(context);
-            if (!string.IsNullOrEmpty(circuitId))
-            {
-                var authState = SMS_CircuitHandler.GetCircuitAuthentication(circuitId);
-                if (authState?.IsAuthenticated == true)
-                {
-                    return authState.UserId;
-                }
-            }
-
-            // Fallback to session
             return context.Session.GetString("SMS_UserId");
         }
         catch (Exception ex)
@@ -190,7 +178,7 @@ public class SMSSessionService : ISMSSessionService
     }
 
     /// <summary>
-    /// Gets current user display name (circuit-first approach)
+    /// Gets current user display name (SIMPLE SESSION ONLY)
     /// </summary>
     public string? GetCurrentUserDisplayName()
     {
@@ -199,18 +187,6 @@ public class SMSSessionService : ISMSSessionService
             var context = _httpContextAccessor.HttpContext;
             if (context == null) return null;
 
-            // Try circuit authentication first
-            var circuitId = GetCurrentCircuitId(context);
-            if (!string.IsNullOrEmpty(circuitId))
-            {
-                var authState = SMS_CircuitHandler.GetCircuitAuthentication(circuitId);
-                if (authState?.IsAuthenticated == true)
-                {
-                    return authState.DisplayName;
-                }
-            }
-
-            // Fallback to session
             return context.Session.GetString("SMS_DisplayName");
         }
         catch (Exception ex)
@@ -221,7 +197,7 @@ public class SMSSessionService : ISMSSessionService
     }
 
     /// <summary>
-    /// Gets current user type (circuit-first approach)
+    /// Gets current user type (SIMPLE SESSION ONLY)
     /// </summary>
     public string? GetCurrentUserType()
     {
@@ -230,18 +206,6 @@ public class SMSSessionService : ISMSSessionService
             var context = _httpContextAccessor.HttpContext;
             if (context == null) return null;
 
-            // Try circuit authentication first
-            var circuitId = GetCurrentCircuitId(context);
-            if (!string.IsNullOrEmpty(circuitId))
-            {
-                var authState = SMS_CircuitHandler.GetCircuitAuthentication(circuitId);
-                if (authState?.IsAuthenticated == true)
-                {
-                    return authState.UserType;
-                }
-            }
-
-            // Fallback to session
             return context.Session.GetString("SMS_UserType");
         }
         catch (Exception ex)
@@ -249,26 +213,5 @@ public class SMSSessionService : ISMSSessionService
             _logger.LogError(ex, "Error getting current user type");
             return null;
         }
-    }
-
-    /// <summary>
-    /// Get current circuit ID from various possible sources
-    /// </summary>
-    private string? GetCurrentCircuitId(HttpContext context)
-    {
-        // Try to get circuit ID from items first
-        if (context.Items.TryGetValue("CircuitId", out var circuitIdObj))
-        {
-            return circuitIdObj?.ToString();
-        }
-
-        // Try to get from connection feature
-        var connectionFeature = context.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpConnectionFeature>();
-        if (connectionFeature != null)
-        {
-            return connectionFeature.ConnectionId;
-        }
-
-        return null;
     }
 }

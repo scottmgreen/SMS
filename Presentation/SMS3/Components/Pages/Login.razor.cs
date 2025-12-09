@@ -3,6 +3,7 @@ using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Queries;
 using SMS_Shared.Common;
 using SMS_Domain.Enums;
+using SMS3.Components.Layout;
 using System.ComponentModel.DataAnnotations;
 
 namespace SMS3.Components.Pages;
@@ -10,23 +11,13 @@ namespace SMS3.Components.Pages;
 public partial class Login : ComponentBase
 {
     [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ISMSSessionService SessionService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private ILogger<Login> Logger { get; set; } = default!;
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
 
     private LoginFormModel LoginModel { get; set; } = new();
     private string ErrorMessage { get; set; } = string.Empty;
     private bool IsLoading { get; set; } = false;
-
-    protected override void OnInitialized()
-    {
-        // If already authenticated, redirect to home
-        if (SessionService.IsAuthenticated())
-        {
-            Logger.LogInformation("User already authenticated, redirecting to home");
-            Navigation.NavigateTo("/");
-        }
-    }
 
     private async Task HandleLoginAsync(LoginFormModel model)
     {
@@ -53,20 +44,12 @@ public partial class Login : ComponentBase
                     var user = userResult.Value;
                     Logger.LogInformation("Login successful for user: {Username}", model.Username);
 
-                    try
-                    {
-                        // **BLAZOR FIX**: Create session before navigation
-                        await SessionService.CreateSMSSessionAsync(user, SMSUserType.Application);
-                        
-                        // **BLAZOR FIX**: Use ForceLoad to trigger a full page reload which will establish the session properly
-                        Navigation.NavigateTo("/", forceLoad: true);
-                    }
-                    catch (InvalidOperationException ex) when (ex.Message.Contains("response has started"))
-                    {
-                        // Handle the response started case - the session will be established on the next request
-                        Logger.LogInformation("Response started - redirecting to complete session setup");
-                        Navigation.NavigateTo("/", forceLoad: true);
-                    }
+                    // **AUTHENTICATION SERVICE SOLUTION**: Set auth in service
+                    AuthService.SetAuthentication(user, SMSUserType.Application);
+                    Logger.LogInformation("Authentication set in service for user: {Username}", model.Username);
+                    
+                    // Simple navigation - MainLayout will pick up the auth state
+                    Navigation.NavigateTo("/");
                 }
                 else
                 {

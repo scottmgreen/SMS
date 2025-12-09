@@ -5,6 +5,7 @@ using SMS_Application.Configuration;
 using SMS_Infrastructure.Configuration;
 
 using SMS_Shared.Configuration;
+using SMS3.Components.Layout;
 
 using SMS3.Components;
 using SMS3.Configuration;
@@ -31,6 +32,9 @@ public class Program
             options.Cookie.Name = "SMS3_Session";
             options.Cookie.SameSite = SameSiteMode.Lax;
         });
+
+        // **NEW**: Register authentication service as singleton
+        builder.Services.AddSingleton<AuthenticationService>();
 
         builder.Services.AddSharedServices(builder.Configuration);
         builder.Services.AddInfrastructureServices(builder.Configuration);

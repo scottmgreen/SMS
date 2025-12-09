@@ -1,0 +1,43 @@
+@page "/Listings/AirportSharedDatasets"
+@using SMS_Domain.Entities
+@using SMS_Domain.ValueObjects
+@using SMS_Application.Messaging.Queries
+@using SMS_Application.Interfaces
+@using SMS_Shared.Common
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Airport Shared Datasets</PageTitle>
+
+<RadzenDataGrid @ref="datasetsGrid" 
+                Data="@datasets" 
+                Count="@totalCount" 
+                LoadData="@LoadData"
+                AllowPaging="true" 
+                AllowSorting="true" 
+                AllowFiltering="true"
+                PageSize="25"
+                PagerHorizontalAlign="HorizontalAlign.Left"
+                ShowPagingSummary="true"
+                FilterMode="FilterMode.Advanced"
+                SelectionMode="DataGridSelectionMode.Single"
+                Style="height: calc(100vh - 200px)">
+    
+    <Columns>
+        <RadzenDataGridColumn TItem="AirportSharedDataset" Property="Code" Title="Code" Width="150px" />
+        <RadzenDataGridColumn TItem="AirportSharedDataset" Property="ReportCode" Title="Report Code" Width="120px" />
+        <RadzenDataGridColumn TItem="AirportSharedDataset" Property="HazardCode" Title="Hazard Code" Width="120px" />
+        <RadzenDataGridColumn TItem="AirportSharedDataset" Property="LocationArea" Title="Location" Width="150px" />
+        <RadzenDataGridColumn TItem="AirportSharedDataset" Property="TriggeringEvent" Title="Event" Width="120px" />
+        <RadzenDataGridColumn TItem="AirportSharedDataset" Property="Weather" Title="Weather" Width="120px" />
+        <RadzenDataGridColumn TItem="AirportSharedDataset" Property="CreatedBy" Title="Created By" Width="150px" />
+        <RadzenDataGridColumn TItem="AirportSharedDataset" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
+        
+        <RadzenDataGridColumn TItem="AirportSharedDataset" Title="Actions" Width="100px" Sortable="false" Filterable="false">
+            <Template Context="dataset">
+                <RadzenButton Icon="more_vert" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
+                            Click="@(() => ShowActions(dataset))" Disabled="true" />
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>

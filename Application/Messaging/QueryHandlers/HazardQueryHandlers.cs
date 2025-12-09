@@ -121,3 +121,54 @@ public class GetHazardsByReportIdQueryHandler : BaseQueryBundle, IRequestHandler
         }
     }
 }
+
+public class GetHazardsByReportCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardsByReportCodeQuery, Result<List<Hazard>>>
+{
+    private readonly HazardDataService _hazardDataService;
+    private readonly HazardLocationDataService _hazardLocationDataService;
+    private readonly ILogger<GetHazardsByReportCodeQueryHandler> _logger;
+
+    public GetHazardsByReportCodeQueryHandler(HazardDataService hazardDataService, HazardLocationDataService hazardLocationDataService, ILogger<GetHazardsByReportCodeQueryHandler> logger)
+    {
+        _hazardDataService = hazardDataService ?? throw new ArgumentNullException(nameof(hazardDataService));
+        _hazardLocationDataService = hazardLocationDataService ?? throw new ArgumentNullException(nameof(hazardLocationDataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<List<Hazard>>> HandleAsync(GetHazardsByReportCodeQuery request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing GetHazardsByReportCodeQuery for ReportCode: {ReportCode}", request.ReportCode);
+            
+            // Convert report code to ReportID and use existing method
+            var reportId = new ReportID(request.ReportCode);
+            var result = await _hazardDataService.GetHazardsByReportIdAsync(reportId, ct).ConfigureAwait(false);
+            
+            if (result.IsFailure || result.Value == null)
+            {
+                return result;
+            }
+
+            // Enhance hazards with location data
+            List<Hazard> hazards = new();
+            foreach (Hazard hz in result.Value)
+            {
+                string code = hz.Code;
+                var locationResult = await _hazardLocationDataService.GetHazardLocationsByHazardCodeAsync(code, ct);
+                if (locationResult.IsSuccess && locationResult.Value?.Any() == true)
+                {
+                    hz.HazardLocation = locationResult.Value.FirstOrDefault();
+                }
+                hazards.Add(hz);
+            }
+
+            return Result<List<Hazard>>.Success(hazards);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing GetHazardsByReportCodeQuery for ReportCode: {ReportCode}", request.ReportCode);
+            return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
+        }
+    }
+}

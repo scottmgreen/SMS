@@ -1,0 +1,46 @@
+@page "/Listings/Investigations"
+@using SMS_Domain.Entities
+@using SMS_Domain.ValueObjects
+@using SMS_Application.Messaging.Queries
+@using SMS_Application.Interfaces
+@using SMS_Shared.Common
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Investigations</PageTitle>
+
+<RadzenDataGrid @ref="investigationsGrid" 
+                Data="@investigations" 
+                Count="@totalCount" 
+                LoadData="@LoadData"
+                AllowPaging="true" 
+                AllowSorting="true" 
+                AllowFiltering="true"
+                PageSize="25"
+                PagerHorizontalAlign="HorizontalAlign.Left"
+                ShowPagingSummary="true"
+                FilterMode="FilterMode.Advanced"
+                SelectionMode="DataGridSelectionMode.Single"
+                Style="height: calc(100vh - 200px)">
+    
+    <Columns>
+        <RadzenDataGridColumn TItem="Investigation" Property="Code" Title="Code" Width="150px" />
+        <RadzenDataGridColumn TItem="Investigation" Property="Name" Title="Name" Width="200px" />
+        <RadzenDataGridColumn TItem="Investigation" Property="InvestigationType" Title="Type" Width="150px" />
+        <RadzenDataGridColumn TItem="Investigation" Property="Status" Title="Status" Width="120px" />
+        <RadzenDataGridColumn TItem="Investigation" Property="Priority" Title="Priority" Width="100px" />
+        <RadzenDataGridColumn TItem="Investigation" Property="AssignedTo" Title="Assigned To" Width="150px" />
+        <RadzenDataGridColumn TItem="Investigation" Property="StartDate" Title="Start Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
+        <RadzenDataGridColumn TItem="Investigation" Property="DueDate" Title="Due Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
+        <RadzenDataGridColumn TItem="Investigation" Property="CompletedDate" Title="Completed Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
+        <RadzenDataGridColumn TItem="Investigation" Property="CreatedBy" Title="Created By" Width="150px" />
+        <RadzenDataGridColumn TItem="Investigation" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
+        
+        <RadzenDataGridColumn TItem="Investigation" Title="Actions" Width="100px" Sortable="false" Filterable="false">
+            <Template Context="investigation">
+                <RadzenButton Icon="more_vert" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
+                            Click="@(() => ShowActions(investigation))" Disabled="true" />
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>

@@ -1,31 +1,35 @@
+@page "/SMSRiskManagement/ReportValidation"
 @page "/SMSRiskManagement/ReportValidation/{ReportId}"
-@using SMS_Application.Messaging.Queries
 @using SMS_Application.Messaging.Commands
+@using SMS_Application.Messaging.Queries
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
-@using SMS_Domain.Common
-@using Microsoft.AspNetCore.Components.Forms
 @using Radzen
 @using Radzen.Blazor
+@using SMS3.Components.Shared
 
 <PageTitle>SMS Report Validation - SMS3</PageTitle>
 
+<!-- SMS Page Header using reusable component -->
+<PageHeader Title="SMS Report Validation"
+           Subtitle="Review and validate incoming safety reports for accuracy and completeness"
+           Icon="fas fa-check-circle" />
+
 <div class="container-fluid">
-    <!-- Header -->
-    <RadzenRow Gap="1rem" class="rz-mb-4">
-        <RadzenColumn Size="12">
-            <RadzenCard Variant="Variant.Filled" Style="background: linear-gradient(135deg, var(--rz-info) 0%, var(--rz-info-dark) 100%); color: white;">
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="padding: 1rem;">
-                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-                        <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; color: white;">
-                            <RadzenIcon Icon="check_circle" Style="margin-right: 0.5rem;" />
-                            SMS Report Validation - @(ReportDetails?.Code ?? ReportId)
-                        </RadzenText>
-                    </RadzenStack>
-                </RadzenStack>
-            </RadzenCard>
-        </RadzenColumn>
-    </RadzenRow>
+    <!-- SMS Page Header -->
+    <!-- <div class="sms-page-header mb-4">
+        <div class="row align-items-center">
+            <div class="col">
+                <h4 class="mb-1">
+                    <i class="fas fa-check-circle me-2"></i>
+                    SMS Report Validation - @(ReportDetails?.Code ?? ReportId)
+                </h4>
+                <p class="mb-0 text-white-50">
+                    Review and validate SMS reports for risk assessment workflow
+                </p>
+            </div>
+        </div>
+    </div> -->
 
     <RadzenRow Gap="1rem">
         <!-- Left Column - Main Form -->

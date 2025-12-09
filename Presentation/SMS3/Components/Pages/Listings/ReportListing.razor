@@ -1,0 +1,45 @@
+@page "/Listings/Reports"
+@using SMS_Domain.Entities
+@using SMS_Domain.ValueObjects
+@using SMS_Application.Messaging.Queries
+@using SMS_Application.Interfaces
+@using SMS_Shared.Common
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Reports</PageTitle>
+
+<RadzenDataGrid @ref="reportsGrid" 
+                Data="@reports" 
+                Count="@totalCount" 
+                LoadData="@LoadData"
+                AllowPaging="true" 
+                AllowSorting="true" 
+                AllowFiltering="true"
+                PageSize="25"
+                PagerHorizontalAlign="HorizontalAlign.Left"
+                ShowPagingSummary="true"
+                FilterMode="FilterMode.Advanced"
+                SelectionMode="DataGridSelectionMode.Single"
+                Style="height: calc(100vh - 200px)">
+    
+    <Columns>
+        <RadzenDataGridColumn TItem="Report" Property="Code" Title="Code" Width="120px" />
+        <RadzenDataGridColumn TItem="Report" Property="Name" Title="Name" Width="200px" />
+        <RadzenDataGridColumn TItem="Report" Property="Description" Title="Description" Width="300px" />
+        <RadzenDataGridColumn TItem="Report" Property="Status" Title="Status" Width="120px" />
+        <RadzenDataGridColumn TItem="Report" Property="Stage" Title="Stage" Width="120px" />
+        <RadzenDataGridColumn TItem="Report" Property="CreatedBy" Title="Created By" Width="150px" />
+        <RadzenDataGridColumn TItem="Report" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
+        <RadzenDataGridColumn TItem="Report" Property="UpdatedBy" Title="Updated By" Width="150px" />
+        <RadzenDataGridColumn TItem="Report" Property="UpdatedDate" Title="Updated Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
+        
+        <!-- Actions Column - Placeholder for future implementation -->
+        <RadzenDataGridColumn TItem="Report" Title="Actions" Width="100px" Sortable="false" Filterable="false">
+            <Template Context="report">
+                <RadzenButton Icon="more_vert" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
+                            Click="@(() => ShowActions(report))" Disabled="true" />
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>

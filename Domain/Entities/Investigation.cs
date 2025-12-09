@@ -1,5 +1,4 @@
 ﻿using SMS_Shared.Common;
-using SMS_Domain.Enums;
 
 namespace SMS_Domain.Entities;
 
@@ -300,15 +299,4 @@ public sealed class Investigation : BaseAuditableEntity
     }
 
     #endregion
-}
-
-/// <summary>
-/// Investigation Status Enumeration
-/// </summary>
-public enum InvestigationStatus
-{
-    InProgress,
-    Completed,
-    OnHold,
-    Cancelled
 }

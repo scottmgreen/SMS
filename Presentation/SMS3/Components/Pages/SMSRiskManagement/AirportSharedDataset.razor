@@ -1,0 +1,409 @@
+@page "/SMSRiskManagement/AirportSharedDataset/{ReportId}"
+@page "/SMSRiskManagement/AirportSharedDataset/{ReportId}/{HazardId}"
+@using SMS_Domain.Entities
+@using SMS_Domain.ValueObjects
+@using SMS_Application.Messaging.Queries
+@using SMS_Application.Messaging.Commands
+@using SMS_Application.Interfaces
+@using SMS_Shared.Common
+@using Radzen
+@using Radzen.Blazor
+@using SMS3.Components.Shared
+
+<PageTitle>Airport Shared Dataset - SMS3</PageTitle>
+
+<!-- SMS Page Header using reusable component -->
+<PageHeader Title="Airport Shared Dataset"
+           Subtitle="Manage and access shared airport operational data and safety metrics"
+           Icon="fas fa-database" />
+
+@if (IsLoading)
+{
+    <RadzenCard>
+        <RadzenStack AlignItems="AlignItems.Center" Gap="1rem">
+            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <RadzenText TextStyle="TextStyle.H6" Text="Loading dataset..." />
+        </RadzenStack>
+    </RadzenCard>
+}
+else
+{
+    <div class="container-fluid mt-4 clearfix mb-4">
+               
+        <RadzenTemplateForm Data="@Model" Submit="@HandleFormSubmit" TItem="AirportSharedDatasetModel">
+            
+            <!-- General Information Section -->
+            <RadzenFieldset Text="General Information" Style="margin-bottom: 2rem;">
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Date and Time *" Variant="Variant.Outlined">
+                            <RadzenDatePicker @bind-Value="@Model.DateTime" ShowTime="true" 
+                                            DateFormat="MM/dd/yyyy HH:mm" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Location *" Variant="Variant.Outlined">
+                            <RadzenDropDown @bind-Value="@Model.Location" Data="@LocationOptions" 
+                                          Placeholder="Select a Location" Style="width: 100%;"
+                                          Change="@OnLocationChange" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                @if (Model.Location == "Other")
+                {
+                    <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+                        <RadzenColumn Size="12">
+                            <RadzenFormField Text="Other Location Details" Variant="Variant.Outlined">
+                                <RadzenTextBox @bind-Value="@Model.LocationOther" 
+                                             Placeholder="Please specify the location" 
+                                             Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    </RadzenRow>
+                }
+
+                <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+                    <RadzenColumn Size="12">
+                        <RadzenFormField Text="Weather" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="@Model.Weather" 
+                                         Placeholder="Weather conditions at time of incident" 
+                                         Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Private Narrative" Variant="Variant.Outlined">
+                            <RadzenTextArea @bind-Value="@Model.PrivateNarrative" Rows="4"
+                                          Placeholder="This text can only be viewed by users from your airport"
+                                          Style="width: 100%;" />
+                        </RadzenFormField>
+                        <RadzenText TextStyle="TextStyle.Caption" Text="This text can only be viewed by users from your airport." />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Shared Narrative" Variant="Variant.Outlined">
+                            <RadzenTextArea @bind-Value="@Model.SharedNarrative" Rows="4"
+                                          Placeholder="This text is displayed to all authorized users of ADAM"
+                                          Style="width: 100%;" />
+                        </RadzenFormField>
+                        <RadzenText TextStyle="TextStyle.Caption" Text="This text is displayed to all authorized users of ADAM." />
+                        <RadzenText TextStyle="TextStyle.Caption" Text="Where needed to anonymize individuals, airlines, vendor names, etc., use [an identifier in square brackets]." />
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenFieldset>
+
+            <!-- Triggering Event Section -->
+            <RadzenFieldset Text="Triggering Event" Style="margin-bottom: 2rem;">
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12">
+                        <RadzenFormField Text="Category Path" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="@Model.TriggeringEvent" 
+                                         Placeholder="Enter category path (e.g., 12.2)" 
+                                         Style="width: 100%;" />
+                        </RadzenFormField>
+                        <RadzenText TextStyle="TextStyle.Caption" Text="Use the standardized event classification system." />
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenFieldset>
+
+            <!-- Contributing Factors Section -->
+            <RadzenFieldset Text="Contributing Factors" Style="margin-bottom: 2rem;">
+                <RadzenRow Gap="0.5rem">
+                    <RadzenColumn Size="12" SizeSM="6" SizeLG="4" SizeXL="3">
+                        <RadzenCheckBox @bind-Value="@Model.Fatigue" Name="fatigue" />
+                        <RadzenLabel Text="Fatigue" Component="fatigue" Style="margin-left: 0.5rem;" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeSM="6" SizeLG="4" SizeXL="3">
+                        <RadzenCheckBox @bind-Value="@Model.Speed" Name="speed" />
+                        <RadzenLabel Text="Speed" Component="speed" Style="margin-left: 0.5rem;" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeSM="6" SizeLG="4" SizeXL="3">
+                        <RadzenCheckBox @bind-Value="@Model.WeatherFactor" Name="weather-factor" />
+                        <RadzenLabel Text="Weather" Component="weather-factor" Style="margin-left: 0.5rem;" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeSM="6" SizeLG="4" SizeXL="3">
+                        <RadzenCheckBox @bind-Value="@Model.Lighting" Name="lighting" />
+                        <RadzenLabel Text="Lighting" Component="lighting" Style="margin-left: 0.5rem;" />
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow Gap="0.5rem" Style="margin-top: 0.5rem;">
+                    <RadzenColumn Size="12" SizeSM="6" SizeLG="4" SizeXL="3">
+                        <RadzenCheckBox @bind-Value="@Model.Signage" Name="signage" />
+                        <RadzenLabel Text="Signage/Markings" Component="signage" Style="margin-left: 0.5rem;" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeSM="6" SizeLG="4" SizeXL="3">
+                        <RadzenCheckBox @bind-Value="@Model.Training" Name="training" />
+                        <RadzenLabel Text="Training" Component="training" Style="margin-left: 0.5rem;" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeSM="6" SizeLG="4" SizeXL="3">
+                        <RadzenCheckBox @bind-Value="@Model.Construction" Name="construction" />
+                        <RadzenLabel Text="Construction" Component="construction" Style="margin-left: 0.5rem;" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeSM="6" SizeLG="4" SizeXL="3">
+                        <RadzenCheckBox @bind-Value="@Model.Administrative" Name="admin" />
+                        <RadzenLabel Text="Administrative Controls" Component="admin" Style="margin-left: 0.5rem;" />
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow Gap="0.5rem" Style="margin-top: 0.5rem;">
+                    <RadzenColumn Size="12" SizeSM="6" SizeLG="4" SizeXL="3">
+                        <RadzenCheckBox @bind-Value="@Model.HumanFactors" Name="human" />
+                        <RadzenLabel Text="Human Factors" Component="human" Style="margin-left: 0.5rem;" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeSM="6" SizeLG="4" SizeXL="3">
+                        <RadzenCheckBox @bind-Value="@Model.Engineering" Name="engineering" />
+                        <RadzenLabel Text="Engineering" Component="engineering" Style="margin-left: 0.5rem;" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeSM="6" SizeLG="4" SizeXL="3">
+                        <RadzenCheckBox @bind-Value="@Model.Mechanical" Name="mechanical" />
+                        <RadzenLabel Text="Mechanical" Component="mechanical" Style="margin-left: 0.5rem;" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeSM="6" SizeLG="4" SizeXL="3">
+                        <RadzenCheckBox @bind-Value="@Model.OtherFactor" Name="other-factor" />
+                        <RadzenLabel Text="Other" Component="other-factor" Style="margin-left: 0.5rem;" />
+                    </RadzenColumn>
+                </RadzenRow>
+
+                @if (Model.OtherFactor)
+                {
+                    <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+                        <RadzenColumn Size="12">
+                            <RadzenFormField Text="Other Factors (comma-separated)" Variant="Variant.Outlined">
+                                <RadzenTextBox @bind-Value="@Model.FactorsOtherDescription" 
+                                             Placeholder="Please specify other contributing factors" 
+                                             Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    </RadzenRow>
+                }
+            </RadzenFieldset>
+
+            <!-- Operational Impact Section -->
+            <RadzenFieldset Text="Operational Impact" Style="margin-bottom: 2rem;">
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12">
+                        <RadzenFormField Text="Airline/Company/Operator(s) Involved" Variant="Variant.Outlined">
+                            <RadzenTextArea @bind-Value="@Model.AirlineCompanyOperator" Rows="3"
+                                          Placeholder="List airlines, companies, or operators involved"
+                                          Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+                    <RadzenColumn Size="12" SizeLG="6" SizeXL="3">
+                        <RadzenFormField Text="Were operators authorized?" Variant="Variant.Outlined">
+                            <RadzenDropDown @bind-Value="@Model.OperatorsAuthorized" 
+                                          Data="@YesNoNAOptions" TextProperty="Text" ValueProperty="Value"
+                                          Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeLG="6" SizeXL="3">
+                        <RadzenFormField Text="Was there a flight delay?" Variant="Variant.Outlined">
+                            <RadzenDropDown @bind-Value="@Model.FlightDelay" 
+                                          Data="@YesNoNAOptions" TextProperty="Text" ValueProperty="Value"
+                                          Style="width: 100%;" Change="@OnFlightDelayChange" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeLG="6" SizeXL="3">
+                        <RadzenFormField Text="Was equipment removed from service?" Variant="Variant.Outlined">
+                            <RadzenDropDown @bind-Value="@Model.EquipmentRemovedFromService" 
+                                          Data="@YesNoNAOptions" TextProperty="Text" ValueProperty="Value"
+                                          Style="width: 100%;" Change="@OnEquipmentRemovedChange" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeLG="6" SizeXL="3">
+                        <RadzenFormField Text="Was a police report taken?" Variant="Variant.Outlined">
+                            <RadzenDropDown @bind-Value="@Model.PoliceReport" 
+                                          Data="@YesNoNAOptions" TextProperty="Text" ValueProperty="Value"
+                                          Style="width: 100%;" Change="@OnPoliceReportChange" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <!-- Conditional Detail Fields -->
+                @if (Model.FlightDelay == "Yes")
+                {
+                    <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+                        <RadzenColumn Size="12">
+                            <RadzenFormField Text="Flight Delay Details" Variant="Variant.Outlined">
+                                <RadzenTextArea @bind-Value="@Model.FlightDelayDetails" Rows="3"
+                                              Placeholder="Provide details about the flight delays"
+                                              Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    </RadzenRow>
+                }
+
+                @if (Model.EquipmentRemovedFromService == "Yes")
+                {
+                    <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+                        <RadzenColumn Size="12">
+                            <RadzenFormField Text="Equipment Removal Details" Variant="Variant.Outlined">
+                                <RadzenTextArea @bind-Value="@Model.EquipmentRemovalDetails" Rows="3"
+                                              Placeholder="Provide details about equipment removed from service"
+                                              Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    </RadzenRow>
+                }
+
+                @if (Model.PoliceReport == "Yes")
+                {
+                    <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+                        <RadzenColumn Size="12">
+                            <RadzenFormField Text="Police Report Details" Variant="Variant.Outlined">
+                                <RadzenTextArea @bind-Value="@Model.PoliceReportDetails" Rows="3"
+                                              Placeholder="Provide details about the police report"
+                                              Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    </RadzenRow>
+                }
+            </RadzenFieldset>
+
+            <!-- Advanced Options (Collapsible) -->
+            <RadzenAccordion Style="margin-bottom: 2rem;">
+                <Items>
+                    <RadzenAccordionItem Text="Advanced Dataset Options" Icon="settings">
+                        
+                        <!-- Involved Components -->
+                        <RadzenFieldset Text="Involved Components" Style="margin-bottom: 1.5rem;">
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                                    <RadzenCheckBox @bind-Value="@Model.AircraftInvolved" Name="aircraft" />
+                                    <RadzenLabel Text="Aircraft Involved" Component="aircraft" Style="margin-left: 0.5rem;" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                                    <RadzenCheckBox @bind-Value="@Model.PoweredEquipmentInvolved" Name="powered" />
+                                    <RadzenLabel Text="Powered Equipment" Component="powered" Style="margin-left: 0.5rem;" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                                    <RadzenCheckBox @bind-Value="@Model.NonPoweredEquipmentInvolved" Name="nonpowered" />
+                                    <RadzenLabel Text="Non-Powered Equipment" Component="nonpowered" Style="margin-left: 0.5rem;" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                                    <RadzenCheckBox @bind-Value="@Model.PedestrianInvolved" Name="pedestrian" />
+                                    <RadzenLabel Text="Pedestrian(s)" Component="pedestrian" Style="margin-left: 0.5rem;" />
+                                </RadzenColumn>
+                            </RadzenRow>
+                            
+                            <RadzenRow Gap="1rem" Style="margin-top: 0.5rem;">
+                                <RadzenColumn Size="12" SizeSM="6">
+                                    <RadzenCheckBox @bind-Value="@Model.OtherInvolved" Name="other-involved" />
+                                    <RadzenLabel Text="Other Components" Component="other-involved" Style="margin-left: 0.5rem;" />
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            @if (Model.OtherInvolved)
+                            {
+                                <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+                                    <RadzenColumn Size="12">
+                                        <RadzenFormField Text="Other Component Description" Variant="Variant.Outlined">
+                                            <RadzenTextBox @bind-Value="@Model.OtherDescription" 
+                                                         Placeholder="Describe other involved components" 
+                                                         Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            }
+                        </RadzenFieldset>
+
+                        <!-- Resulting Issues -->
+                        <RadzenFieldset Text="Resulting Issues" Style="margin-bottom: 1.5rem;">
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                                    <RadzenCheckBox @bind-Value="@Model.PropertyDamage" Name="property" />
+                                    <RadzenLabel Text="Property Damage" Component="property" Style="margin-left: 0.5rem;" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                                    <RadzenCheckBox @bind-Value="@Model.PersonalInjury" Name="injury" />
+                                    <RadzenLabel Text="Personal Injury" Component="injury" Style="margin-left: 0.5rem;" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                                    <RadzenCheckBox @bind-Value="@Model.Fatality" Name="fatality" />
+                                    <RadzenLabel Text="Fatality" Component="fatality" Style="margin-left: 0.5rem;" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                                    <RadzenCheckBox @bind-Value="@Model.OtherIssues" Name="other-issues" />
+                                    <RadzenLabel Text="Other Issues" Component="other-issues" Style="margin-left: 0.5rem;" />
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            <!-- Conditional Comments for Issues -->
+                            @if (Model.PropertyDamage)
+                            {
+                                <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+                                    <RadzenColumn Size="12">
+                                        <RadzenFormField Text="Property Damage Comments" Variant="Variant.Outlined">
+                                            <RadzenTextArea @bind-Value="@Model.PropertyDamageComments" Rows="3"
+                                                          Placeholder="Describe property damage details"
+                                                          Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            }
+
+                            @if (Model.PersonalInjury)
+                            {
+                                <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+                                    <RadzenColumn Size="12">
+                                        <RadzenFormField Text="Personal Injury Comments" Variant="Variant.Outlined">
+                                            <RadzenTextArea @bind-Value="@Model.PersonalInjuryComments" Rows="3"
+                                                          Placeholder="Describe personal injury details"
+                                                          Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            }
+
+                            @if (Model.Fatality)
+                            {
+                                <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+                                    <RadzenColumn Size="12">
+                                        <RadzenFormField Text="Fatality Comments" Variant="Variant.Outlined">
+                                            <RadzenTextArea @bind-Value="@Model.FatalityComments" Rows="3"
+                                                          Placeholder="Describe fatality details"
+                                                          Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            }
+
+                            @if (Model.OtherIssues)
+                            {
+                                <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+                                    <RadzenColumn Size="12">
+                                        <RadzenFormField Text="Other Issues Description" Variant="Variant.Outlined">
+                                            <RadzenTextArea @bind-Value="@Model.OtherIssuesDescription" Rows="3"
+                                                          Placeholder="Describe other issues"
+                                                          Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            }
+                        </RadzenFieldset>
+
+                    </RadzenAccordionItem>
+                </Items>
+            </RadzenAccordion>
+
+            <!-- Action Buttons -->
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem">
+                <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Secondary"
+                            Click="@CancelAndReturnToAssessment" />
+                
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                    <RadzenButton Text="Save Dataset" Icon="save" ButtonStyle="ButtonStyle.Success"
+                                Click="@SaveDataset" Disabled="@IsSaving" />
+                    <RadzenButton Text="Save & Continue to Assessment" Icon="arrow_forward" ButtonStyle="ButtonStyle.Primary"
+                                Click="@SaveAndContinue" Disabled="@IsSaving" />
+                </RadzenStack>
+            </RadzenStack>
+
+        </RadzenTemplateForm>
+    </div>
+}

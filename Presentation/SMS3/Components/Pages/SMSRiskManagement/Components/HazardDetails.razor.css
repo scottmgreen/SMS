@@ -1,0 +1,96 @@
+/* =============================================================================
+   SMS HAZARD DETAILS COMPONENT STYLING
+   ============================================================================= */
+
+.hazard-details-container {
+    background-color: #f8f9fa;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    border: 1px solid #c9e3ed; /* SMS Blue Light */
+}
+
+.hazards-list {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.hazard-card {
+    transition: all 0.2s ease-in-out;
+    border-color: #c9e3ed !important; /* SMS Blue Light */
+}
+
+.hazard-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.25rem 0.5rem rgba(33, 46, 97, 0.15) !important;
+}
+
+.hazard-card .text-primary {
+    color: #006AA9 !important; /* SMS Blue Primary */
+}
+
+.hazard-card .text-muted {
+    color: #4ac6f7 !important; /* SMS Blue Accent */
+}
+
+/* Badge Styling */
+.hazard-card ::deep .rz-badge {
+    font-size: 0.75rem;
+}
+
+/* Button Styling */
+.hazard-card ::deep .rz-button.rz-variant-text {
+    padding: 0.25rem !important;
+    border-radius: 0.25rem !important;
+}
+
+.hazard-card ::deep .rz-button.rz-variant-text:hover {
+    background-color: rgba(74, 198, 247, 0.1) !important;
+}
+
+/* Scrollbar Styling */
+.hazards-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.hazards-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.hazards-list::-webkit-scrollbar-thumb {
+    background: #4ac6f7; /* SMS Blue Accent */
+    border-radius: 4px;
+}
+
+.hazards-list::-webkit-scrollbar-thumb:hover {
+    background: #006AA9; /* SMS Blue Primary */
+}
+
+/* Loading and Empty States */
+.hazard-details-container .text-center {
+    color: #4ac6f7 !important; /* SMS Blue Accent */
+}
+
+.hazard-details-container .text-info {
+    color: #01838d !important; /* SMS Teal Primary */
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .hazard-details-container {
+        padding: 0.75rem;
+    }
+    
+    .hazard-card .row {
+        flex-direction: column;
+    }
+    
+    .hazard-card .col-auto,
+    .hazard-card .col {
+        margin-bottom: 0.5rem;
+    }
+    
+    .hazards-list {
+        max-height: 300px;
+    }
+}

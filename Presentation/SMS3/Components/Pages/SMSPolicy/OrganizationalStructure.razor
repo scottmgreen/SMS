@@ -3,15 +3,21 @@
 @using SMS_Domain.Entities
 @using Radzen
 @using Radzen.Blazor
+@using SMS3.Components.Shared
 
-<PageTitle>SMS Organizational Structure - SMS3</PageTitle>
+<PageTitle>Organizational Structure - SMS3</PageTitle>
+
+<!-- SMS Page Header using reusable component -->
+<PageHeader Title="Organizational Structure"
+           Subtitle="SMS organizational framework, roles, responsibilities and accountabilities"
+           Icon="fas fa-sitemap" />
 
 <div class="container-fluid">
     <!-- Header -->
     <RadzenRow Gap="1rem" class="rz-mb-4">
         <RadzenColumn Size="12">
             <RadzenCard Variant="Variant.Filled" Style="background: linear-gradient(135deg, var(--rz-primary) 0%, var(--rz-primary-dark) 100%); color: white;">
-                <RadzenCardContent>
+                <RadzenCard>
                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
                         <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
                             <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; color: white;">
@@ -25,7 +31,7 @@
                         <RadzenButton Text="Manage Users" Icon="people" ButtonStyle="ButtonStyle.Light" 
                                     Click="@(() => Navigation.NavigateTo("/System/UserManagement/OrganizationalUsers"))" />
                     </RadzenStack>
-                </RadzenCardContent>
+                </RadzenCard>
             </RadzenCard>
         </RadzenColumn>
     </RadzenRow>
@@ -34,34 +40,34 @@
     <RadzenRow Gap="1rem" class="rz-mb-4">
         <RadzenColumn Size="12" SizeMD="3">
             <RadzenCard Variant="Variant.Outlined" Style="text-align: center;">
-                <RadzenCardContent>
+                <RadzenCard>
                     <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; color: var(--rz-primary);">@GetTotalRoles()</RadzenText>
                     <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Total SMS Roles</RadzenText>
-                </RadzenCardContent>
+                </RadzenCard>
             </RadzenCard>
         </RadzenColumn>
         <RadzenColumn Size="12" SizeMD="3">
             <RadzenCard Variant="Variant.Outlined" Style="text-align: center;">
-                <RadzenCardContent>
+                <RadzenCard>
                     <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; color: var(--rz-success);">@GetFilledRoles()</RadzenText>
                     <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Filled Positions</RadzenText>
-                </RadzenCardContent>
+                </RadzenCard>
             </RadzenCard>
         </RadzenColumn>
         <RadzenColumn Size="12" SizeMD="3">
             <RadzenCard Variant="Variant.Outlined" Style="text-align: center;">
-                <RadzenCardContent>
+                <RadzenCard>
                     <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; color: var(--rz-warning);">@GetVacantRoles()</RadzenText>
                     <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Vacant Positions</RadzenText>
-                </RadzenCardContent>
+                </RadzenCard>
             </RadzenCard>
         </RadzenColumn>
         <RadzenColumn Size="12" SizeMD="3">
             <RadzenCard Variant="Variant.Outlined" Style="text-align: center;">
-                <RadzenCardContent>
+                <RadzenCard>
                     <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; color: var(--rz-info);">@GetCompliancePercentage()%</RadzenText>
                     <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Staffing Level</RadzenText>
-                </RadzenCardContent>
+                </RadzenCard>
             </RadzenCard>
         </RadzenColumn>
     </RadzenRow>
@@ -91,13 +97,13 @@
     <RadzenRow Gap="1rem" class="rz-mb-4">
         <RadzenColumn Size="12">
             <RadzenCard Variant="Variant.Outlined">
-                <RadzenCardHeader>
+                <RadzenCard>
                     <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
                         <RadzenIcon Icon="account_tree" Style="margin-right: 0.5rem;" />
                         SMS Organizational Hierarchy
                     </RadzenText>
-                </RadzenCardHeader>
-                <RadzenCardContent>
+                </RadzenCard>
+                <RadzenCard>
                     <!-- Executive Level -->
                     <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
                         @foreach (var role in GetSMSRoles().OrderBy(r => r.Level))
@@ -107,7 +113,7 @@
                             </div>
                         }
                     </RadzenStack>
-                </RadzenCardContent>
+                </RadzenCard>
             </RadzenCard>
         </RadzenColumn>
     </RadzenRow>
@@ -116,13 +122,13 @@
     <RadzenRow Gap="1rem">
         <RadzenColumn Size="12">
             <RadzenCard Variant="Variant.Outlined">
-                <RadzenCardHeader>
+                <RadzenCard>
                     <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
                         <RadzenIcon Icon="gavel" Style="margin-right: 0.5rem;" />
                         Risk Approval Authority Matrix
                     </RadzenText>
-                </RadzenCardHeader>
-                <RadzenCardContent>
+                </RadzenCard>
+                <RadzenCard>
                     <RadzenDataGrid Data="@GetSMSRoles()" TItem="SMSRole" AllowPaging="false">
                         <Columns>
                             <RadzenDataGridColumn TItem="SMSRole" Property="Title" Title="Role" Width="250px">
@@ -169,7 +175,7 @@
                             </RadzenDataGridColumn>
                         </Columns>
                     </RadzenDataGrid>
-                </RadzenCardContent>
+                </RadzenCard>
             </RadzenCard>
         </RadzenColumn>
     </RadzenRow>

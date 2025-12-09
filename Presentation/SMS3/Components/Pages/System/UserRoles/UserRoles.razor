@@ -41,13 +41,13 @@
         <RadzenRow Gap="1rem" class="rz-mb-4">
             <RadzenColumn Size="12">
                 <RadzenCard Variant="Variant.Outlined">
-                    <RadzenCardHeader>
+                    <RadzenCard>
                         <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
                             <RadzenIcon Icon="edit" Style="margin-right: 0.5rem;" />
                             Edit Role: @CurrentRole.Name
                         </RadzenText>
-                    </RadzenCardHeader>
-                    <RadzenCardContent>
+                    </RadzenCard>
+                    <RadzenCard>
                         <RadzenTemplateForm Data="@editRole" Submit="@((EditRoleModel model) => UpdateRole(model))">
                             <RadzenRow Gap="1rem">
                                 <RadzenColumn Size="12">
@@ -135,7 +135,7 @@
                                 </RadzenColumn>
                             </RadzenRow>
                         </RadzenTemplateForm>
-                    </RadzenCardContent>
+                    </RadzenCard>
                 </RadzenCard>
             </RadzenColumn>
         </RadzenRow>
@@ -145,7 +145,7 @@
     <RadzenRow Gap="1rem">
         <RadzenColumn Size="12">
             <RadzenCard Variant="Variant.Outlined">
-                <RadzenCardHeader>
+                <RadzenCard>
                     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
                         <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
                             <RadzenIcon Icon="admin_panel_settings" Style="margin-right: 0.5rem;" />
@@ -161,8 +161,8 @@
                             }
                         </RadzenStack>
                     </RadzenStack>
-                </RadzenCardHeader>
-                <RadzenCardContent>
+                </RadzenCard>
+                <RadzenCard>
                     @if (UserRolesList.Any())
                     {
                         <RadzenDataGrid @ref="rolesGrid" Data="@UserRolesList" TItem="SMSUserRole" 
@@ -262,7 +262,7 @@
                                         Click="@ShowCreateDialog" />
                         </RadzenStack>
                     }
-                </RadzenCardContent>
+                </RadzenCard>
             </RadzenCard>
         </RadzenColumn>
     </RadzenRow>

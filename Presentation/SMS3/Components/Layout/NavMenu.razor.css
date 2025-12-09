@@ -5,7 +5,6 @@
 /* Base Navigation Styling */
 .sms-nav {
     background-color: #212e61 !important; /* SMS Blue Dark Bold */
-    border-bottom: 2px solid #4ac6f7 !important; /* SMS Blue Accent */
     box-shadow: 0 0.125rem 0.25rem rgba(33, 46, 97, 0.25) !important;
 }
 
@@ -17,12 +16,12 @@
     text-decoration: none !important;
 }
 
-.sms-brand:hover {
-    color: #4ac6f7 !important; /* SMS Blue Accent */
-}
+    .sms-brand:hover {
+        color: #4ac6f7 !important; /* SMS Blue Accent */
+    }
 
 .sms-brand-icon {
-    color: #4ac6f7 !important;
+    color: #4ac6f7 !important; /* SMS Blue Accent */
 }
 
 /* Navigation Links */
@@ -33,15 +32,17 @@
     margin: 0 0.25rem !important;
     transition: all 0.2s ease-in-out !important;
     text-decoration: none !important;
+    background-color: transparent !important; /* Start with transparent background */
 }
 
-.sms-nav-link:hover {
-    background-color: #4ac6f7 !important; /* SMS Blue Accent */
-    color: white !important;
-    transform: translateY(-1px) !important;
-}
+    .sms-nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.1) !important; /* Subtle gray/white overlay - much more professional */
+        color: white !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1) !important; /* Very subtle shadow */
+    }
 
-/* SMS RADZEN MENU STYLING - Using SMS Color Variables */
+/* SMS RADZEN MENU STYLING - FIXED TOP LEVEL ITEMS */
 .sms-radzen-menu ::deep .rz-menu {
     background: transparent !important;
     border: none !important;
@@ -53,9 +54,10 @@
     border: none !important;
 }
 
+/* TOP LEVEL MENU ITEMS - SMS Blue Dark Bold Background */
 .sms-radzen-menu ::deep .rz-menuitem > .rz-menuitem-link {
     color: white !important;
-    background-color: var(--sms-blue-dark-bold) !important;
+    background-color: #212e61 !important; /* SMS Blue Dark Bold - FIXED */
     padding: 0.75rem 1rem !important;
     border-radius: 0.375rem !important;
     margin: 0 0.25rem !important;
@@ -64,15 +66,15 @@
 }
 
 .sms-radzen-menu ::deep .rz-menuitem > .rz-menuitem-link:hover {
-    background-color: var(--sms-blue-accent) !important;
+    background-color: #4ac6f7 !important; /* SMS Blue Accent */
     color: white !important;
     transform: translateY(-1px) !important;
 }
 
-/* SMS MENU ITEM STYLING - Primary menu items */
+/* SMS MENU ITEM STYLING - Primary menu items - FIXED */
 .sms-menu-item ::deep .rz-menuitem-link {
     color: white !important;
-    background-color: var(--sms-blue-dark-bold) !important;
+    background-color: #212e61 !important; /* SMS Blue Dark Bold - FIXED */
     padding: 0.75rem 1rem !important;
     border-radius: 0.375rem !important;
     margin: 0 0.25rem !important;
@@ -80,16 +82,16 @@
     border: 1px solid transparent !important;
 }
 
-.sms-menu-item ::deep .rz-menuitem-link:hover {
-    background-color: var(--sms-blue-accent) !important;
-    color: white !important;
-    transform: translateY(-1px) !important;
-}
+    .sms-menu-item ::deep .rz-menuitem-link:hover {
+        background-color: #4ac6f7 !important; /* SMS Blue Accent */
+        color: white !important;
+        transform: translateY(-1px) !important;
+    }
 
 /* Dropdown Menu Styling */
 .sms-radzen-menu ::deep .rz-menu-popup {
     background-color: white !important;
-    border: 1px solid var(--sms-blue-accent) !important;
+    border: 1px solid #212e61 !important; /* SMS Blue Dark Bold */
     border-radius: 0.5rem !important;
     box-shadow: 0 0.5rem 1rem rgba(33, 46, 97, 0.25) !important;
     margin-top: 0.25rem !important;
@@ -97,7 +99,7 @@
 }
 
 .sms-radzen-menu ::deep .rz-menu-popup .rz-menuitem > .rz-menuitem-link {
-    color: var(--sms-blue-dark-bold) !important;
+    color: #212e61 !important; /* SMS Blue Dark Bold */
     padding: 0.75rem 1.25rem !important;
     background: white !important;
     border-radius: 0 !important;
@@ -106,10 +108,122 @@
 }
 
 .sms-radzen-menu ::deep .rz-menu-popup .rz-menuitem > .rz-menuitem-link:hover {
-    background-color: var(--sms-blue-light) !important;
-    color: var(--sms-blue-dark-bold) !important;
+    background-color: #c9e3ed !important; /* SMS Blue Light */
+    color: #212e61 !important;
     transform: none !important;
 }
+
+/* =============================================================================
+   SMS PROFILE MENU STYLING - RadzenProfileMenu Component
+   ============================================================================= */
+
+/* Profile Menu Container */
+.sms-profile-menu {
+    margin-left: 0.5rem !important;
+}
+
+/* Profile Menu Button/Template */
+.sms-profile-menu ::deep .rz-profilemenu > .rz-button {
+    background-color: rgba(74, 198, 247, 0.1) !important;
+    border: 1px solid transparent !important;
+    border-radius: 0.5rem !important;
+    padding: 0.5rem 0.75rem !important;
+    color: white !important;
+    transition: all 0.2s ease-in-out !important;
+    box-shadow: none !important;
+}
+
+.sms-profile-menu ::deep .rz-profilemenu > .rz-button:hover {
+    background-color: #4ac6f7 !important; /* SMS Blue Accent */
+    border-color: #4ac6f7 !important;
+    color: white !important;
+    transform: translateY(-1px) !important;
+}
+
+.sms-profile-menu ::deep .rz-profilemenu > .rz-button:focus {
+    box-shadow: 0 0 0 0.2rem rgba(74, 198, 247, 0.25) !important;
+}
+
+/* Profile Menu Dropdown Panel */
+.sms-profile-menu ::deep .rz-panel {
+    background-color: white !important;
+    border: 1px solid #212e61 !important; /* SMS Blue Dark Bold */
+    border-radius: 0.5rem !important;
+    box-shadow: 0 0.5rem 1rem rgba(33, 46, 97, 0.25) !important;
+    margin-top: 0.5rem !important;
+    padding: 0.5rem 0 !important;
+    min-width: 200px !important;
+}
+
+/* Profile Menu Items */
+.sms-profile-menu ::deep .rz-panel .rz-menuitem {
+    border-bottom: none !important;
+    margin: 0 !important;
+}
+
+.sms-profile-menu ::deep .rz-panel .rz-menuitem > .rz-menuitem-link {
+    color: #212e61 !important; /* SMS Blue Dark Bold */
+    padding: 0.75rem 1.25rem !important;
+    background: white !important;
+    border-radius: 0 !important;
+    transition: all 0.2s ease-in-out !important;
+    display: flex !important;
+    align-items: center !important;
+    border: none !important;
+}
+
+.sms-profile-menu ::deep .rz-panel .rz-menuitem > .rz-menuitem-link:hover {
+    background-color: #c9e3ed !important; /* SMS Blue Light */
+    color: #212e61 !important;
+}
+
+/* Profile Menu Icons */
+.sms-profile-menu ::deep .rz-panel .rz-menuitem .rz-menuitem-icon {
+    color: #006AA9 !important; /* SMS Blue Primary */
+    margin-right: 0.75rem !important;
+    font-size: 1.1rem !important;
+}
+
+/* Logout Menu Item Special Styling */
+.sms-profile-menu ::deep .rz-panel .rz-menuitem:last-child > .rz-menuitem-link {
+    color: #d91e3e !important; /* SMS Red Primary */
+    border-top: 1px solid #eee !important;
+    margin-top: 0.25rem !important;
+    padding-top: 0.75rem !important;
+}
+
+.sms-profile-menu ::deep .rz-panel .rz-menuitem:last-child > .rz-menuitem-link:hover {
+    background-color: #f4e5eb !important; /* SMS Red Light */
+    color: #7f2a29 !important; /* SMS Red Dark Bold */
+}
+
+.sms-profile-menu ::deep .rz-panel .rz-menuitem:last-child .rz-menuitem-icon {
+    color: #d91e3e !important; /* SMS Red Primary */
+}
+
+/* User Name and Type Styling */
+.sms-user-name {
+    color: #c9e3ed !important; /* SMS Blue Light */
+    font-size: 0.9rem !important;
+    margin-bottom: 0.1rem !important;
+}
+
+.sms-user-type {
+    color: #4ac6f7 !important; /* SMS Blue Accent */
+    font-size: 0.75rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.025em !important;
+}
+
+/* Gravatar/Avatar Styling */
+.sms-profile-menu ::deep .rz-gravatar {
+    border: 2px solid #4ac6f7 !important; /* SMS Blue Accent */
+    border-radius: 50% !important;
+}
+
+/* =============================================================================
+   END SMS PROFILE MENU STYLING
+   ============================================================================= */
 
 /* Multi-level Dropdown Support */
 .dropdown-submenu {
@@ -187,14 +301,6 @@
     color: white !important;
 }
 
-.sms-user-name {
-    color: #c9e3ed !important; /* SMS Blue Light */
-}
-
-.sms-user-type {
-    color: #4ac6f7 !important; /* SMS Blue Accent */
-}
-
 /* User Menu Item Special Styling */
 .sms-user-menu-item ::deep .rz-menuitem-link {
     background-color: rgba(74, 198, 247, 0.1) !important;
@@ -205,9 +311,9 @@
 }
 
 .sms-user-menu-item ::deep .rz-menuitem-link:hover {
-    background-color: var(--sms-blue-accent) !important;
+    background-color: #4ac6f7 !important; /* SMS Blue Accent */
     color: white !important;
-    border-color: var(--sms-blue-accent) !important;
+    border-color: #4ac6f7 !important;
 }
 
 /* Logout Button Special Styling */
@@ -286,11 +392,11 @@
         padding-left: 2rem !important;
         background: #212e61 !important;
     }
-    
-    .sms-radzen-menu ::deep .rz-menu-popup .rz-menuitem > .rz-menuitem-link:hover {
-        background-color: #4ac6f7 !important; /* SMS Blue Accent */
-        color: white !important;
-    }
+
+        .sms-radzen-menu ::deep .rz-menu-popup .rz-menuitem > .rz-menuitem-link:hover  {
+            background-color: #4ac6f7 !important; /* SMS Blue Accent */
+            color: white !important;
+        }
 
     /* Mobile submenu adjustments */
     .sms-radzen-menu ::deep .rz-menu-popup .rz-menu-popup {
@@ -303,6 +409,42 @@
         padding-left: 3rem !important;
         color: white !important;
     }
+
+    /* Mobile Profile Menu adjustments */
+    .sms-profile-menu ::deep .rz-panel {
+        position: static !important;
+        background-color: #212e61 !important;
+        border: none !important;
+        box-shadow: none !important;
+        margin-top: 0.5rem !important;
+        border-radius: 0.375rem !important;
+    }
+
+    .sms-profile-menu ::deep .rz-panel .rz-menuitem > .rz-menuitem-link {
+        color: white !important;
+        background: #212e61 !important;
+    }
+
+    .sms-profile-menu ::deep .rz-panel .rz-menuitem > .rz-menuitem-link:hover {
+        background-color: #4ac6f7 !important;
+        color: white !important;
+    }
+
+    .sms-profile-menu ::deep .rz-panel .rz-menuitem .rz-menuitem-icon {
+        color: #4ac6f7 !important;
+    }
+}
+
+/* Accordion Icon Styling - FIXED SPECIFICITY */
+.rz-accordion-toggle-icon {
+    width: var(--rz-accordion-icon-width);
+    height: var(--rz-accordion-icon-height);
+    font-size: var(--rz-accordion-icon-font-size);
+    order: var(--rz-accordion-toggle-icon-order);
+}
+
+.rz-accordion-toggle-icon .rzi {
+    margin: var(--rz-accordion-toggle-icon-margin);
 }
 
 /* =============================================================================

@@ -1,0 +1,45 @@
+@page "/Listings/Mitigations"
+@using SMS_Domain.Entities
+@using SMS_Domain.ValueObjects
+@using SMS_Application.Messaging.Queries
+@using SMS_Application.Interfaces
+@using SMS_Shared.Common
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Mitigations</PageTitle>
+
+<RadzenDataGrid @ref="mitigationsGrid" 
+                Data="@mitigations" 
+                Count="@totalCount" 
+                LoadData="@LoadData"
+                AllowPaging="true" 
+                AllowSorting="true" 
+                AllowFiltering="true"
+                PageSize="25"
+                PagerHorizontalAlign="HorizontalAlign.Left"
+                ShowPagingSummary="true"
+                FilterMode="FilterMode.Advanced"
+                SelectionMode="DataGridSelectionMode.Single"
+                Style="height: calc(100vh - 200px)">
+    
+    <Columns>
+        <RadzenDataGridColumn TItem="Mitigation" Property="Code" Title="Code" Width="150px" />
+        <RadzenDataGridColumn TItem="Mitigation" Property="Name" Title="Name" Width="200px" />
+        <RadzenDataGridColumn TItem="Mitigation" Property="Description" Title="Description" Width="300px" />
+        <RadzenDataGridColumn TItem="Mitigation" Property="Type" Title="Type" Width="120px" />
+        <RadzenDataGridColumn TItem="Mitigation" Property="Status" Title="Status" Width="120px" />
+        <RadzenDataGridColumn TItem="Mitigation" Property="Priority" Title="Priority" Width="100px" />
+        <RadzenDataGridColumn TItem="Mitigation" Property="AssignedTo" Title="Assigned To" Width="150px" />
+        <RadzenDataGridColumn TItem="Mitigation" Property="DueDate" Title="Due Date" Width="120px" FormatString="{0:MM/dd/yyyy}" />
+        <RadzenDataGridColumn TItem="Mitigation" Property="CreatedBy" Title="Created By" Width="150px" />
+        <RadzenDataGridColumn TItem="Mitigation" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
+        
+        <RadzenDataGridColumn TItem="Mitigation" Title="Actions" Width="100px" Sortable="false" Filterable="false">
+            <Template Context="mitigation">
+                <RadzenButton Icon="more_vert" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
+                            Click="@(() => ShowActions(mitigation))" Disabled="true" />
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>

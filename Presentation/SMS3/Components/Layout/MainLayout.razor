@@ -1,17 +1,24 @@
 ﻿@inherits LayoutComponentBase
+@using SMS3.Components.Layout
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@inject AuthenticationService AuthService
 
 <div class="d-flex flex-column min-vh-100 sms-main-layout">
-    <!-- Horizontal Navigation -->
-    <header class="sms-main-header">
-        <NavMenu />
-    </header>
+    <!-- Cascading Authentication State to all child components -->
+    <CascadingValue Value="@AuthService.AuthState" Name="AuthState">
+        <!-- Horizontal Navigation -->
+        <header class="sms-main-header">
+            <NavMenu OnLogoutRequested="@HandleLogout" />
+        </header>
 
-    <!-- Main Content Area -->
-    <main class="flex-grow-1 sms-main-content">
-        <div class="container-fluid py-3">
-            @Body
-        </div>
-    </main>
+        <!-- Main Content Area -->
+        <main class="flex-grow-1 sms-main-content">
+            <div class="container-fluid py-3">
+                @Body
+            </div>
+        </main>
+    </CascadingValue>
 </div>
 
 <!-- Radzen Dialog Components - Required for dialogs to work -->
@@ -28,6 +35,32 @@
         <a class="dismiss sms-error-dismiss">🗙</a>
     </div>
 </div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Subscribe to auth state changes with proper async handling
+        AuthService.OnAuthStateChanged(async () => {
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+
+    /// <summary>
+    /// Handle logout - called by NavMenu
+    /// </summary>
+    public void HandleLogout()
+    {
+        AuthService.ClearAuthentication();
+        // StateHasChanged will be called automatically by the auth service callback
+    }
+
+    public void Dispose()
+    {
+        // Note: We can't easily remove the callback since it's a lambda
+        // In a production app, you might want to store the callback reference
+        // For now, this is acceptable since MainLayout lives for the app lifetime
+    }
+}
 
 <style>
 /* =============================================================================

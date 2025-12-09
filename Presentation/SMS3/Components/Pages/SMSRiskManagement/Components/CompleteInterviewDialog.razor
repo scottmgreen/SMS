@@ -1,0 +1,103 @@
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using SMS_Application.Messaging.Commands
+@using SMS_Application.Interfaces
+@using SMS_Shared.Common
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenTemplateForm Data="@Model" Submit="@CompleteInterview" TItem="CompleteInterviewModel">
+    <RadzenStack Gap="1rem">
+        
+        <!-- Interview Summary -->
+        <RadzenCard Variant="Variant.Outlined" Style="background: #f8f9fa;">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.H6">Completing Interview: @Interview.PersonInterviewed</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                    @Interview.Type • @(Interview.InterviewDate?.ToString("MMM dd, yyyy 'at' h:mm tt") ?? "Not scheduled")
+                </RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+
+        <!-- Interview Notes -->
+        <RadzenFieldset Text="Interview Notes">
+            <RadzenFormField Text="Interviewee Notes" Variant="Variant.Outlined">
+                <RadzenTextArea @bind-Value="@Model.PersonInterviewedNotes" 
+                              Rows="4" 
+                              Placeholder="What did the interviewee say? Record their statements and responses..."
+                              Style="width: 100%;" />
+            </RadzenFormField>
+            
+            <RadzenFormField Text="Investigator Notes *" Variant="Variant.Outlined">
+                <RadzenTextArea @bind-Value="@Model.InvestigatorNotes" 
+                              Rows="4" 
+                              Placeholder="Your observations, analysis, and conclusions from this interview..."
+                              Style="width: 100%;" />
+            </RadzenFormField>
+        </RadzenFieldset>
+
+        <!-- Key Findings -->
+        <RadzenFormField Text="Key Findings" Variant="Variant.Outlined">
+            <RadzenTextArea @bind-Value="@Model.KeyFindings" 
+                          Rows="3" 
+                          Placeholder="Summarize the most important information learned from this interview..."
+                          Style="width: 100%;" />
+        </RadzenFormField>
+
+        <!-- Follow-up Actions -->
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenFormField Text="Follow-up Required" Variant="Variant.Outlined">
+                    <RadzenTextArea @bind-Value="@Model.FollowUpRequired" 
+                                  Rows="3" 
+                                  Placeholder="Any follow-up actions or additional interviews needed..."
+                                  Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenFormField Text="Additional Witnesses" Variant="Variant.Outlined">
+                    <RadzenTextArea @bind-Value="@Model.AdditionalWitnesses" 
+                                  Rows="3" 
+                                  Placeholder="Names of additional people who should be interviewed..."
+                                  Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <!-- Interview Quality Assessment -->
+        <RadzenCard Variant="Variant.Outlined">
+            <RadzenFieldset Text="Interview Assessment">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                    
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenCheckBox @bind-Value="@Model.IntervieweeCooperative" Name="cooperative" />
+                        <RadzenLabel Text="Interviewee was cooperative and forthcoming" Component="cooperative" />
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenCheckBox @bind-Value="@Model.InformationReliable" Name="reliable" />
+                        <RadzenLabel Text="Information provided appears reliable and accurate" Component="reliable" />
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenCheckBox @bind-Value="@Model.RequiresFollowUp" Name="followup" />
+                        <RadzenLabel Text="This interview requires follow-up action" Component="followup" />
+                    </RadzenStack>
+
+                </RadzenStack>
+            </RadzenFieldset>
+        </RadzenCard>
+
+        <!-- Action Buttons -->
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+            <RadzenButton Text="Cancel" 
+                        ButtonStyle="ButtonStyle.Secondary" 
+                        Click="@(() => DialogService.Close(false))" />
+            <RadzenButton Text="Complete Interview" 
+                        ButtonStyle="ButtonStyle.Success" 
+                        ButtonType="ButtonType.Submit"
+                        Disabled="@IsSaving" />
+        </RadzenStack>
+
+    </RadzenStack>
+</RadzenTemplateForm>

@@ -1,0 +1,199 @@
+/* =============================================================================
+   SMS REPORTS PAGE - RADZEN ACCORDION STYLING
+   Using SMS Color Palette for RadzenAccordion component
+   ============================================================================= */
+
+/* SMS Report Accordion Container */
+.sms-report-accordion {
+    margin-bottom: 0.75rem;
+}
+
+/* SMS Accordion Item Styling */
+.sms-report-accordion ::deep .rz-accordion-header {
+    background-color: #ffffff !important;
+    border: 1px solid #212e61 !important; /* SMS Blue Dark Bold */
+    border-radius: 0.375rem !important;
+    padding: 0.75rem !important;
+    transition: all 0.2s ease-in-out !important;
+    box-shadow: 0 0.125rem 0.25rem rgba(33, 46, 97, 0.1) !important;
+}
+
+.sms-report-accordion ::deep .rz-accordion-header:hover {
+    background-color: #c9e3ed !important; /* SMS Blue Light */
+    border-color: #4ac6f7 !important; /* SMS Blue Accent */
+    transform: translateY(-1px) !important;
+    box-shadow: 0 0.25rem 0.5rem rgba(33, 46, 97, 0.15) !important;
+}
+
+.sms-report-accordion ::deep .rz-accordion-header.rz-state-active {
+    background-color: #212e61 !important; /* SMS Blue Dark Bold */
+    color: white !important;
+    border-color: #212e61 !important;
+}
+
+.sms-report-accordion ::deep .rz-accordion-header.rz-state-active:hover {
+    background-color: #006AA9 !important; /* SMS Blue Primary */
+    border-color: #006AA9 !important;
+}
+
+/* SMS Accordion Header Text */
+.sms-report-accordion ::deep .rz-accordion-header-text {
+    color: #212e61 !important; /* SMS Blue Dark Bold */
+    font-weight: 600 !important;
+}
+
+.sms-report-accordion ::deep .rz-accordion-header.rz-state-active .rz-accordion-header-text {
+    color: white !important;
+}
+
+/* SMS Accordion Icon */
+.sms-report-accordion ::deep .rz-accordion-toggle-icon {
+    color: #4ac6f7 !important; /* SMS Blue Accent */
+}
+
+.sms-report-accordion ::deep .rz-accordion-header.rz-state-active .rz-accordion-toggle-icon {
+    color: white !important;
+}
+
+/* SMS Accordion Content Panel */
+.sms-report-accordion ::deep .rz-accordion-content {
+    background-color: #ffffff !important;
+    border: 1px solid #212e61 !important; /* SMS Blue Dark Bold */
+    border-top: none !important;
+    border-radius: 0 0 0.375rem 0.375rem !important;
+    padding: 0 !important; /* Remove default padding since we add it in ChildContent */
+    box-shadow: 0 0.125rem 0.25rem rgba(33, 46, 97, 0.1) !important;
+}
+
+/* Custom Header Template Styling */
+.sms-report-accordion .d-flex.align-items-center {
+    width: 100% !important;
+}
+
+.sms-report-accordion .text-primary {
+    color: #006AA9 !important; /* SMS Blue Primary */
+    font-weight: 700 !important;
+}
+
+.sms-report-accordion .text-muted {
+    color: #4ac6f7 !important; /* SMS Blue Accent instead of default muted */
+}
+
+/* Badge Styling in Accordion */
+.sms-report-accordion ::deep .rz-badge {
+    font-size: 0.75rem !important;
+    padding: 0.25rem 0.5rem !important;
+}
+
+/* Action Button Styling in Accordion Header */
+.sms-report-accordion ::deep .rz-button.rz-variant-text {
+    padding: 0.25rem !important;
+    margin: 0 0.125rem !important;
+    border-radius: 0.25rem !important;
+    transition: all 0.15s ease-in-out !important;
+}
+
+.sms-report-accordion ::deep .rz-button.rz-variant-text:hover {
+    background-color: rgba(74, 198, 247, 0.1) !important; /* SMS Blue Accent with transparency */
+    transform: scale(1.05) !important;
+}
+
+/* Specific Button Colors in Accordion */
+.sms-report-accordion ::deep .rz-button.rz-button-info .rz-icon {
+    color: #01838d !important; /* SMS Teal Primary */
+}
+
+.sms-report-accordion ::deep .rz-button.rz-button-warning .rz-icon {
+    color: #fa9a46 !important; /* SMS Orange Accent */
+}
+
+.sms-report-accordion ::deep .rz-button.rz-button-danger .rz-icon {
+    color: #d91e3e !important; /* SMS Red Primary */
+}
+
+/* Calendar Icon Color */
+.sms-report-accordion .fa-calendar-alt {
+    color: #01838d !important; /* SMS Teal Primary */
+}
+
+/* Hazard Content Area Styling */
+.sms-report-accordion .p-3 {
+    background-color: #f8f9fa !important;
+    border-top: 1px solid #c9e3ed !important; /* SMS Blue Light */
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .sms-report-accordion ::deep .rz-accordion-header {
+        padding: 0.5rem !important;
+    }
+    
+    .sms-report-accordion .d-flex.flex-column {
+        margin-bottom: 0.5rem;
+    }
+    
+    .sms-report-accordion .d-flex.align-items-center.gap-2 {
+        flex-wrap: wrap;
+        gap: 0.5rem !important;
+    }
+    
+    .sms-report-accordion .d-flex.align-items-center.gap-1 {
+        gap: 0.25rem !important;
+    }
+    
+    /* Stack badges vertically on mobile */
+    .sms-report-accordion .d-flex.align-items-center.gap-2.me-3 {
+        flex-direction: column;
+        align-items: flex-start !important;
+        margin-right: 0.5rem !important;
+    }
+    
+    /* Adjust text sizes */
+    .sms-report-accordion small {
+        font-size: 0.7rem !important;
+    }
+    
+    .sms-report-accordion strong {
+        font-size: 0.9rem !important;
+    }
+}
+
+/* Animation for Accordion Expansion */
+.sms-report-accordion ::deep .rz-accordion-content {
+    animation: sms-accordion-expand 0.3s ease-out;
+}
+
+@keyframes sms-accordion-expand {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Hover Effect for Report Cards */
+.sms-report-accordion:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s ease-in-out;
+}
+
+/* Focus States for Accessibility */
+.sms-report-accordion ::deep .rz-accordion-header:focus {
+    outline: 2px solid #4ac6f7 !important; /* SMS Blue Accent */
+    outline-offset: 2px !important;
+}
+
+/* Loading State for Hazard Content */
+.sms-report-accordion .text-center.text-muted.py-2 {
+    background-color: #f8f9fa !important;
+    border-radius: 0.25rem !important;
+    font-style: italic !important;
+    color: #4ac6f7 !important; /* SMS Blue Accent */
+}
+
+/* =============================================================================
+   END SMS REPORTS ACCORDION STYLING
+   ============================================================================= */

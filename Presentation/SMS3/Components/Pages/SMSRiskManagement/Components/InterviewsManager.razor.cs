@@ -1,0 +1,330 @@
+using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
+using SMS_Domain.Enums;
+using SMS_Application.Messaging.Queries;
+using SMS_Application.Messaging.Commands;
+using SMS_Application.Interfaces;
+using SMS_Shared.Common;
+using Radzen;
+
+namespace SMS3.Components.Pages.SMSRiskManagement.Components;
+
+public partial class InterviewsManager : ComponentBase
+{
+    #region Injected Services
+    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private ILogger<InterviewsManager> Logger { get; set; } = default!;
+    [Inject] private DialogService DialogService { get; set; } = default!;
+    #endregion
+
+    #region Parameters
+    [Parameter] public string InvestigationCode { get; set; } = default!;
+    #endregion
+
+    #region State Properties
+    private bool IsLoading { get; set; } = true;
+    public List<Interview> Interviews { get; set; } = new();
+    #endregion
+
+    #region Lifecycle Methods
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadInterviews();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(InvestigationCode))
+        {
+            await LoadInterviews();
+        }
+    }
+    #endregion
+
+    #region Public Methods
+    public async Task RefreshInterviews()
+    {
+        await LoadInterviews();
+        StateHasChanged();
+    }
+    #endregion
+
+    #region Data Loading
+    private async Task LoadInterviews()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(InvestigationCode))
+            {
+                return;
+            }
+
+            IsLoading = true;
+            
+            var query = new GetAllInterviewsQuery();
+            var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+            if (result.IsSuccess && result.Value != null)
+            {
+                Interviews = result.Value
+                    .Where(i => i.InvestigationCode == InvestigationCode)
+                    .OrderBy(i => i.InterviewDate ?? DateTime.MaxValue)
+                    .ToList();
+                
+                Logger.LogInformation("Loaded {Count} interviews for investigation {Code}", 
+                    Interviews.Count, InvestigationCode);
+            }
+            else
+            {
+                Logger.LogError("Failed to load interviews: {Error}", result.Error?.Message);
+                Interviews = new List<Interview>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading interviews for investigation: {Code}", InvestigationCode);
+            ShowErrorNotification("Error loading interviews");
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+    #endregion
+
+    #region Interview Actions
+    private async Task ShowCreateInterviewDialog()
+    {
+        var options = new DialogOptions() 
+        { 
+            Width = "600px", 
+            Height = "500px",
+            Resizable = true,
+            Draggable = true,
+            CloseDialogOnOverlayClick = false,
+            CloseDialogOnEsc = true
+        };
+
+        var parameters = new Dictionary<string, object> 
+        { 
+            { "InvestigationCode", InvestigationCode } 
+        };
+
+        var result = await DialogService.OpenAsync<CreateInterviewDialog>(
+            "Schedule New Interview", 
+            parameters,
+            options);
+
+        if (result == true)
+        {
+            await RefreshInterviews();
+            ShowSuccessNotification("Interview scheduled successfully");
+        }
+    }
+
+    private async Task ViewInterview(Interview interview)
+    {
+        var options = new DialogOptions() 
+        { 
+            Width = "800px", 
+            Height = "600px",
+            Resizable = true,
+            Draggable = true,
+            CloseDialogOnOverlayClick = false,
+            CloseDialogOnEsc = true
+        };
+
+        var parameters = new Dictionary<string, object> 
+        { 
+            { "Interview", interview } 
+        };
+
+        await DialogService.OpenAsync<ViewInterviewDialog>(
+            $"Interview: {interview.PersonInterviewed}", 
+            parameters,
+            options);
+    }
+
+    private async Task EditInterview(Interview interview)
+    {
+        var options = new DialogOptions() 
+        { 
+            Width = "700px", 
+            Height = "600px",
+            Resizable = true,
+            Draggable = true,
+            CloseDialogOnOverlayClick = false,
+            CloseDialogOnEsc = true
+        };
+
+        var parameters = new Dictionary<string, object> 
+        { 
+            { "Interview", interview } 
+        };
+
+        var result = await DialogService.OpenAsync<EditInterviewDialog>(
+            $"Edit Interview: {interview.PersonInterviewed}", 
+            parameters,
+            options);
+
+        if (result == true)
+        {
+            await RefreshInterviews();
+            ShowSuccessNotification("Interview updated successfully");
+        }
+    }
+
+    private async Task StartInterview(Interview interview)
+    {
+        try
+        {
+            var confirmed = await DialogService.Confirm(
+                $"Are you ready to start the interview with {interview.PersonInterviewed}?",
+                "Start Interview",
+                new ConfirmOptions() { OkButtonText = "Start", CancelButtonText = "Cancel" });
+
+            if (confirmed == true)
+            {
+                var startResult = interview.StartInterview();
+                if (startResult.IsSuccess)
+                {
+                    var updateCommand = new UpdateInterviewCommand(interview);
+                    var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+
+                    if (result.IsSuccess)
+                    {
+                        await RefreshInterviews();
+                        ShowSuccessNotification("Interview started");
+                    }
+                    else
+                    {
+                        ShowErrorNotification($"Failed to start interview: {result.Error?.Message}");
+                    }
+                }
+                else
+                {
+                    ShowErrorNotification($"Cannot start interview: {startResult.Error?.Message}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error starting interview: {Code}", interview.Code);
+            ShowErrorNotification("Error starting interview");
+        }
+    }
+
+    private async Task CompleteInterview(Interview interview)
+    {
+        var options = new DialogOptions() 
+        { 
+            Width = "700px", 
+            Height = "500px",
+            Resizable = true,
+            Draggable = true,
+            CloseDialogOnOverlayClick = false,
+            CloseDialogOnEsc = false // Don't allow ESC to close completion dialog
+        };
+
+        var parameters = new Dictionary<string, object> 
+        { 
+            { "Interview", interview } 
+        };
+
+        var result = await DialogService.OpenAsync<CompleteInterviewDialog>(
+            $"Complete Interview: {interview.PersonInterviewed}", 
+            parameters,
+            options);
+
+        if (result == true)
+        {
+            await RefreshInterviews();
+            ShowSuccessNotification("Interview completed successfully");
+        }
+    }
+
+    private async Task CancelInterview(Interview interview)
+    {
+        try
+        {
+            var confirmed = await DialogService.Confirm(
+                $"Are you sure you want to cancel the interview with {interview.PersonInterviewed}?",
+                "Cancel Interview",
+                new ConfirmOptions() { OkButtonText = "Yes, Cancel", CancelButtonText = "Keep Interview" });
+
+            if (confirmed == true)
+            {
+                // Use a default reason since Radzen doesn't have a built-in prompt
+                var reason = "Interview cancelled by investigator";
+                
+                var cancelResult = interview.CancelInterview(reason);
+                if (cancelResult.IsSuccess)
+                {
+                    var updateCommand = new UpdateInterviewCommand(interview);
+                    var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+
+                    if (result.IsSuccess)
+                    {
+                        await RefreshInterviews();
+                        ShowSuccessNotification("Interview cancelled");
+                    }
+                    else
+                    {
+                        ShowErrorNotification($"Failed to cancel interview: {result.Error?.Message}");
+                    }
+                }
+                else
+                {
+                    ShowErrorNotification($"Cannot cancel interview: {cancelResult.Error?.Message}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error cancelling interview: {Code}", interview.Code);
+            ShowErrorNotification("Error cancelling interview");
+        }
+    }
+    #endregion
+
+    #region UI Helpers
+    private BadgeStyle GetInterviewStatusBadge(Interview interview)
+    {
+        return interview.Status.Value switch
+        {
+            "PLANNED" => BadgeStyle.Secondary,
+            "SCHEDULED" => BadgeStyle.Info,
+            "IN_PROGRESS" => BadgeStyle.Warning,
+            "COMPLETED" => BadgeStyle.Success,
+            "CANCELLED" => BadgeStyle.Danger,
+            _ => BadgeStyle.Light
+        };
+    }
+    #endregion
+
+    #region Notifications
+    private void ShowSuccessNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Success",
+            Detail = message,
+            Duration = 4000
+        });
+    }
+
+    private void ShowErrorNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Error,
+            Summary = "Error",
+            Detail = message,
+            Duration = 6000
+        });
+    }
+    #endregion
+}

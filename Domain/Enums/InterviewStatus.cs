@@ -128,11 +128,75 @@ public sealed class InterviewStatus : BaseEnum<InterviewStatus>
         return Value switch
         {
             "PLANNED" => "status-planned",
-            "SCHEDULED" => "status-scheduled", 
+            "SCHEDULED" => "status-scheduled",
             "IN_PROGRESS" => "status-in-progress",
             "COMPLETED" => "status-completed",
             "CANCELLED" => "status-cancelled",
             _ => "status-default"
+        };
+    }
+
+    /// <summary>
+    /// Get icon class for status display
+    /// </summary>
+    public string GetIconClass()
+    {
+        return Value switch
+        {
+            "PLANNED" => "fas fa-clipboard-list",
+            "SCHEDULED" => "fas fa-calendar-check",
+            "IN_PROGRESS" => "fas fa-play-circle",
+            "COMPLETED" => "fas fa-check-circle",
+            "CANCELLED" => "fas fa-times-circle",
+            _ => "fas fa-question-circle"
+        };
+    }
+
+    /// <summary>
+    /// Get color class for status display
+    /// </summary>
+    public string GetColorClass()
+    {
+        return Value switch
+        {
+            "PLANNED" => "text-secondary",
+            "SCHEDULED" => "text-info",
+            "IN_PROGRESS" => "text-warning",
+            "COMPLETED" => "text-success",
+            "CANCELLED" => "text-danger",
+            _ => "text-muted"
+        };
+    }
+
+    /// <summary>
+    /// Check if this status represents an interview that can be rescheduled
+    /// </summary>
+    public bool CanBeRescheduled()
+    {
+        return this == Planned || this == Scheduled;
+    }
+
+    /// <summary>
+    /// Check if this status represents an active interview workflow state
+    /// </summary>
+    public bool IsActiveWorkflow()
+    {
+        return this == Planned || this == Scheduled || this == InProgress;
+    }
+
+    /// <summary>
+    /// Get progress percentage for this status
+    /// </summary>
+    public int GetProgressPercentage()
+    {
+        return Value switch
+        {
+            "PLANNED" => 10,
+            "SCHEDULED" => 25,
+            "IN_PROGRESS" => 75,
+            "COMPLETED" => 100,
+            "CANCELLED" => 0,
+            _ => 0
         };
     }
 }

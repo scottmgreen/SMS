@@ -39,7 +39,7 @@
     <RadzenRow Gap="1rem">
         <RadzenColumn Size="12">
             <RadzenCard Variant="Variant.Outlined">
-                <RadzenCardHeader>
+                <RadzenCard>
                     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
                         <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
                             <RadzenIcon Icon="corporate_fare" Style="margin-right: 0.5rem;" />
@@ -52,8 +52,8 @@
                                         Click="@ShowCreateDialog" />
                         </RadzenStack>
                     </RadzenStack>
-                </RadzenCardHeader>
-                <RadzenCardContent>
+                </RadzenCard>
+                <RadzenCard>
                     @if (OrganizationalUsersList.Any())
                     {
                         <RadzenDataGrid @ref="usersGrid" Data="@OrganizationalUsersList" TItem="SMSOrganizationalUser" 
@@ -167,7 +167,7 @@
                                         Click="@ShowCreateDialog" />
                         </RadzenStack>
                     }
-                </RadzenCardContent>
+                </RadzenCard>
             </RadzenCard>
         </RadzenColumn>
     </RadzenRow>

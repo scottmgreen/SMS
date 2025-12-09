@@ -49,3 +49,93 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+/* =============================================================================
+   SMS GLOBAL STYLES - REUSABLE COMPONENTS
+   ============================================================================= */
+
+/* SMS Page Header - Matches NavMenu styling */
+.sms-page-header {
+    background-color: #212e61 !important; /* SMS Blue Dark Bold */
+    padding: 1.5rem 2rem;
+    border-radius: 0.375rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(33, 46, 97, 0.25);
+    border-bottom: 2px solid #212e61; /* SMS Blue Dark Bold DO NOT CHNAGE THIS !!!  */
+}
+
+.sms-page-header h1,
+.sms-page-header h2,
+.sms-page-header h3,
+.sms-page-header h4,
+.sms-page-header h5,
+.sms-page-header h6 {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: white !important;
+}
+
+.sms-page-header .text-white {
+    color: white !important;
+}
+
+.sms-page-header .text-white-50 {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.sms-page-header .fas,
+.sms-page-header .fa {
+    color: #4ac6f7 !important; /* SMS Blue Accent */
+}
+
+/* Responsive adjustments for SMS Page Header */
+@media (max-width: 768px) {
+    .sms-page-header {
+        padding: 1rem 1.5rem;
+    }
+    
+    .sms-page-header h1 { font-size: 1.5rem; }
+    .sms-page-header h2 { font-size: 1.4rem; }
+    .sms-page-header h3 { font-size: 1.3rem; }
+    .sms-page-header h4 { font-size: 1.25rem; }
+    .sms-page-header h5 { font-size: 1.15rem; }
+    .sms-page-header h6 { font-size: 1.1rem; }
+}
+
+/* SMS GLOBAL RADZEN MENU OVERRIDES - Ensure consistent NavMenu styling */
+.rz-menu {
+    background: transparent !important;
+}
+
+.rz-menuitem > .rz-menuitem-link {
+    color: white !important;
+    background-color: #212e61 !important; /* SMS Blue Dark Bold */
+}
+
+.rz-menuitem > .rz-menuitem-link:hover {
+    background-color: #4ac6f7 !important; /* SMS Blue Accent */
+    color: white !important;
+}
+
+/* Override any default Radzen menu colors that might conflict */
+.navbar .rz-menu .rz-menuitem > .rz-menuitem-link {
+    background-color: #212e61 !important; /* SMS Blue Dark Bold */
+    color: white !important;
+}
+
+/* SMS GLOBAL RADZEN INPUT OVERRIDES - Subtle gray focus instead of bright blue */
+.rz-textbox:focus,
+.rz-password:focus,
+.rz-textarea:focus,
+.rz-dropdown:focus,
+.rz-numeric:focus,
+.rz-datepicker:focus {
+    border-color: #6c757d !important; /* Subtle gray instead of bright blue */
+    box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25) !important; /* Subtle gray shadow */
+}
+
+/* Ensure RadzenTextBox and RadzenPassword specifically use subtle focus */
+::deep .rz-textbox-input:focus,
+::deep .rz-password-input:focus {
+    border-color: #6c757d !important;
+    box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25) !important;
+}

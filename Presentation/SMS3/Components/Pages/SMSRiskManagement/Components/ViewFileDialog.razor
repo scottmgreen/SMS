@@ -1,0 +1,132 @@
+@using SMS_Domain.Entities
+@using Radzen
+@using Radzen.Blazor
+
+@if (HazardFile != null)
+{
+    <RadzenStack Gap="1rem">
+        
+        <!-- File Header -->
+        <RadzenCard Variant="Variant.Outlined" Style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">@HazardFile.FileName</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                        @HazardFile.FileType • @HazardFile.FileSize • Uploaded @HazardFile.UploadedDate?.ToString("MMM dd, yyyy")
+                    </RadzenText>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                    <RadzenBadge Text="@(HazardFile.Category ?? "Evidence")" BadgeStyle="BadgeStyle.Info" IsPill="true" />
+                    @if (HazardFile.IsConfidential)
+                    {
+                        <RadzenBadge Text="Confidential" BadgeStyle="BadgeStyle.Warning" IsPill="true" />
+                    }
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+
+        <!-- File Information -->
+        <RadzenCard Variant="Variant.Outlined">
+            <RadzenFieldset Text="File Information">
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.Overline" Text="HAZARD CODE" />
+                            <RadzenText TextStyle="TextStyle.Body1">@HazardFile.HazardCode</RadzenText>
+                        </RadzenStack>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.Overline" Text="UPLOADED BY" />
+                            <RadzenText TextStyle="TextStyle.Body1">@HazardFile.UploadedBy</RadzenText>
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenFieldset>
+        </RadzenCard>
+
+        <!-- File Description -->
+        @if (!string.IsNullOrEmpty(HazardFile.Description))
+        {
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenFieldset Text="Description">
+                    <RadzenText TextStyle="TextStyle.Body1">@HazardFile.Description</RadzenText>
+                </RadzenFieldset>
+            </RadzenCard>
+        }
+
+        <!-- File Preview Area -->
+        <RadzenCard Variant="Variant.Outlined">
+            <RadzenFieldset Text="File Preview">
+                <div style="min-height: 300px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border-radius: 4px;">
+                    @if (IsImageFile())
+                    {
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" AlignItems="AlignItems.Center">
+                            <RadzenIcon Icon="image" Style="font-size: 4rem; color: var(--rz-text-tertiary-color);" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-secondary-color);">
+                                Image preview not available in this demo
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary-color);">
+                                In a full implementation, the actual image would be displayed here
+                            </RadzenText>
+                        </RadzenStack>
+                    }
+                    else if (IsPdfFile())
+                    {
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" AlignItems="AlignItems.Center">
+                            <RadzenIcon Icon="picture_as_pdf" Style="font-size: 4rem; color: #d32f2f;" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-secondary-color);">
+                                PDF document preview not available
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary-color);">
+                                Click Download to open the PDF file
+                            </RadzenText>
+                        </RadzenStack>
+                    }
+                    else if (IsVideoFile())
+                    {
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" AlignItems="AlignItems.Center">
+                            <RadzenIcon Icon="videocam" Style="font-size: 4rem; color: #1976d2;" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-secondary-color);">
+                                Video preview not available
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary-color);">
+                                Click Download to view the video file
+                            </RadzenText>
+                        </RadzenStack>
+                    }
+                    else
+                    {
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" AlignItems="AlignItems.Center">
+                            <RadzenIcon Icon="insert_drive_file" Style="font-size: 4rem; color: var(--rz-text-tertiary-color);" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-secondary-color);">
+                                File preview not available
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary-color);">
+                                Click Download to open the file
+                            </RadzenText>
+                        </RadzenStack>
+                    }
+                </div>
+            </RadzenFieldset>
+        </RadzenCard>
+
+        <!-- Action Buttons -->
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+            <RadzenButton Text="Download" 
+                        Icon="download"
+                        ButtonStyle="ButtonStyle.Primary" 
+                        Click="@DownloadFile" />
+            <RadzenButton Text="Close" 
+                        ButtonStyle="ButtonStyle.Secondary" 
+                        Click="@(() => DialogService.Close())" />
+        </RadzenStack>
+
+    </RadzenStack>
+}
+else
+{
+    <RadzenAlert AlertStyle="AlertStyle.Warning" Icon="warning" Title="File Not Found">
+        The file details could not be loaded.
+    </RadzenAlert>
+}

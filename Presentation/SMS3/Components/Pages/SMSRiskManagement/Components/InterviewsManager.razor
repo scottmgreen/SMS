@@ -1,0 +1,142 @@
+@using SMS_Domain.Entities
+@using SMS_Domain.ValueObjects
+@using SMS_Domain.Enums
+@using SMS_Application.Messaging.Queries
+@using SMS_Application.Messaging.Commands
+@using SMS_Application.Interfaces
+@using SMS_Shared.Common
+@using Radzen
+@using Radzen.Blazor
+
+<!-- Interviews Manager Component -->
+<RadzenCard Style="margin-top: 1rem;">
+    
+    <!-- Header with Add Button -->
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="margin-bottom: 1rem;">
+        <RadzenText TextStyle="TextStyle.H6">
+            <RadzenIcon Icon="people" Style="margin-right: 0.5rem;" />
+            Investigation Interviews (@Interviews.Count)
+        </RadzenText>
+        <RadzenButton Text="Schedule Interview" 
+                    Icon="add" 
+                    ButtonStyle="ButtonStyle.Primary"
+                    Click="@ShowCreateInterviewDialog" 
+                    Size="ButtonSize.Small" />
+    </RadzenStack>
+
+    @if (IsLoading)
+    {
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else if (!Interviews.Any())
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Info" Icon="info" Title="No Interviews Scheduled">
+            No interviews have been scheduled for this investigation yet. Click "Schedule Interview" to add the first interview.
+        </RadzenAlert>
+    }
+    else
+    {
+        <!-- Interviews List -->
+        <RadzenDataList Data="@Interviews" TItem="Interview" Style="margin-top: 1rem;">
+            <Template Context="interview">
+                <RadzenCard Variant="Variant.Outlined" Style="margin-bottom: 1rem;">
+                    <RadzenRow Gap="1rem" AlignItems="AlignItems.Center">
+                        <RadzenColumn Size="12" SizeMD="8">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
+                                        @interview.PersonInterviewed
+                                    </RadzenText>
+                                    <RadzenBadge Text="@interview.Status.Name" BadgeStyle="@GetInterviewStatusBadge(interview)" IsPill="true" />
+                                    <RadzenBadge Text="@interview.Type.Name" BadgeStyle="BadgeStyle.Info" IsPill="true" />
+                                </RadzenStack>
+                                
+                                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                                    @if (!string.IsNullOrEmpty(interview.PersonInterviewedRole))
+                                    {
+                                        <span>@interview.PersonInterviewedRole</span>
+                                        @if (!string.IsNullOrEmpty(interview.PersonInterviewedDepartment))
+                                        {
+                                            <span> - @interview.PersonInterviewedDepartment</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span>Role not specified</span>
+                                    }
+                                </RadzenText>
+
+                                @if (interview.InterviewDate.HasValue)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                        <RadzenIcon Icon="schedule" Style="font-size: 14px; margin-right: 0.25rem;" />
+                                        @interview.InterviewDate.Value.ToString("MMM dd, yyyy 'at' h:mm tt")
+                                        @if (!string.IsNullOrEmpty(interview.InterviewLocation))
+                                        {
+                                            <span> - @interview.InterviewLocation</span>
+                                        }
+                                    </RadzenText>
+                                }
+
+                                @if (interview.HasFindings)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-success);">
+                                        <RadzenIcon Icon="check_circle" Style="font-size: 14px; margin-right: 0.25rem;" />
+                                        Key findings recorded
+                                    </RadzenText>
+                                }
+                            </RadzenStack>
+                        </RadzenColumn>
+                        
+                        <RadzenColumn Size="12" SizeMD="4" Style="text-align: end;">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+                                <RadzenButton Icon="visibility" 
+                                            ButtonStyle="ButtonStyle.Light" 
+                                            Size="ButtonSize.Small"
+                                            Click="@(() => ViewInterview(interview))" 
+                                            Title="View Details" />
+                                
+                                @if (!interview.IsCompleted)
+                                {
+                                    <RadzenButton Icon="edit" 
+                                                ButtonStyle="ButtonStyle.Primary" 
+                                                Size="ButtonSize.Small"
+                                                Click="@(() => EditInterview(interview))" 
+                                                Title="Edit Interview" />
+                                }
+                                
+                                @if (interview.IsScheduled)
+                                {
+                                    <RadzenButton Icon="play_arrow" 
+                                                ButtonStyle="ButtonStyle.Success" 
+                                                Size="ButtonSize.Small"
+                                                Click="@(() => StartInterview(interview))" 
+                                                Title="Start Interview" />
+                                }
+                                
+                                @if (interview.IsInProgress)
+                                {
+                                    <RadzenButton Icon="stop" 
+                                                ButtonStyle="ButtonStyle.Warning" 
+                                                Size="ButtonSize.Small"
+                                                Click="@(() => CompleteInterview(interview))" 
+                                                Title="Complete Interview" />
+                                }
+                                
+                                @if (!interview.IsCompleted && !interview.IsCancelled)
+                                {
+                                    <RadzenButton Icon="cancel" 
+                                                ButtonStyle="ButtonStyle.Danger" 
+                                                Size="ButtonSize.Small"
+                                                Click="@(() => CancelInterview(interview))" 
+                                                Title="Cancel Interview" />
+                                }
+                            </RadzenStack>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </RadzenCard>
+            </Template>
+        </RadzenDataList>
+    }
+
+</RadzenCard>

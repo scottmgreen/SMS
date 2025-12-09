@@ -3,6 +3,7 @@ using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Queries;
 using SMS_Domain.Entities;
 using SMS_Shared.Common;
+using SMS3.Components.Layout;
 using Radzen;
 using Radzen.Blazor;
 
@@ -11,9 +12,14 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 public partial class Hazards : ComponentBase
 {
     [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ISMSSessionService SessionService { get; set; } = default!;
     [Inject] private ILogger<Hazards> Logger { get; set; } = default!;
+    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    // **CASCADING PARAMETER**: Get authentication from MainLayout (same pattern as Reports.razor)
+    [CascadingParameter(Name = "AuthState")]
+    public AuthenticationState? AuthState { get; set; }
 
     // Radzen DataList Reference
     private RadzenDataList<Hazard>? hazardsDataList;
@@ -22,8 +28,10 @@ public partial class Hazards : ComponentBase
     private List<Hazard> AllHazards { get; set; } = new();
     private bool IsLoading { get; set; } = true;
     private string ErrorMessage { get; set; } = string.Empty;
-    private bool IsAuthenticated { get; set; } = false;
-    private string CurrentUserName { get; set; } = string.Empty;
+
+    // Authentication Properties (same pattern as Reports.razor)
+    private bool IsAuthenticated => AuthState?.IsAuthenticated == true;
+    private string? CurrentUserName => AuthState?.DisplayName;
 
     // Pagination Properties
     private int PageSize { get; set; } = 10;
@@ -34,65 +42,97 @@ public partial class Hazards : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        await CheckAuthenticationAsync();
+        await LoadHazardsAsync();
+    }
+
+    /// <summary>
+    /// Check user authentication status
+    /// </summary>
+    private async Task CheckAuthenticationAsync()
+    {
         try
         {
-            // Check authentication
-            IsAuthenticated = SessionService.IsAuthenticated();
             if (!IsAuthenticated)
             {
-                Logger.LogWarning("Unauthenticated access attempt to Hazards page");
-                ErrorMessage = "Authentication required to access SMS hazards";
-                return;
+                Logger.LogWarning("Unauthorized access attempt to Hazards page");
+                ErrorMessage = "You must be logged in to view hazards.";
             }
-
-            CurrentUserName = SessionService.GetCurrentUserDisplayName() ?? "User";
-            Logger.LogInformation("Hazards page accessed by user: {UserName}", CurrentUserName);
-
-            // Load hazards
-            await LoadHazardsAsync();
+            else
+            {
+                Logger.LogInformation("Authenticated user {UserName} accessing Hazards page", CurrentUserName);
+            }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error initializing Hazards page");
-            ErrorMessage = "Failed to initialize hazards page. Please try refreshing.";
-        }
-        finally
-        {
-            IsLoading = false;
-            StateHasChanged();
+            Logger.LogError(ex, "Error checking authentication status");
+            ErrorMessage = "Authentication check failed.";
         }
     }
 
     private async Task LoadHazardsAsync()
     {
+        if (!IsAuthenticated)
+        {
+            IsLoading = false;
+            return;
+        }
+
         try
         {
-            ErrorMessage = string.Empty;
             IsLoading = true;
-            StateHasChanged();
+            ErrorMessage = string.Empty;
 
-            Logger.LogInformation("Loading all hazards via CQRS");
+            Logger.LogInformation("Loading all hazards for user: {UserName}", CurrentUserName);
 
+            // Execute GetAllHazardsQuery via Mediator
             var query = new GetAllHazardsQuery();
             var result = await Mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess)
+            if (result.IsSuccess && result.Value != null)
             {
-                AllHazards = result.Value?.ToList() ?? new List<Hazard>();
+                AllHazards = result.Value.ToList();
                 Logger.LogInformation("Successfully loaded {Count} hazards", AllHazards.Count);
+                
+                // Show success notification
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Hazards Loaded",
+                    Detail = $"Successfully loaded {AllHazards.Count} hazards",
+                    Duration = 3000
+                });
             }
             else
             {
-                ErrorMessage = result.Error?.Message ?? "Failed to load hazards";
-                Logger.LogError("Failed to load hazards: {Error}", ErrorMessage);
                 AllHazards = new List<Hazard>();
+                ErrorMessage = result.Error?.Message ?? "Failed to load hazards";
+                Logger.LogWarning("Failed to load hazards: {Error}", ErrorMessage);
+                
+                // Show error notification
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Load Failed",
+                    Detail = ErrorMessage,
+                    Duration = 5000
+                });
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading hazards");
-            ErrorMessage = "An unexpected error occurred while loading hazards.";
+            Logger.LogError(ex, "Exception occurred while loading hazards");
             AllHazards = new List<Hazard>();
+            ErrorMessage = "An unexpected error occurred while loading hazards.";
+            
+            // Show error notification
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "An unexpected error occurred while loading hazards.",
+                Duration = 5000
+            });
         }
         finally
         {
@@ -104,6 +144,7 @@ public partial class Hazards : ComponentBase
     private async Task RefreshAsync()
     {
         Logger.LogInformation("Refreshing hazards list");
+        _expandedRows.Clear(); // Clear expanded rows when refreshing
         await LoadHazardsAsync();
     }
 
@@ -116,7 +157,38 @@ public partial class Hazards : ComponentBase
     private async Task OnViewHazardAsync(Hazard hazard)
     {
         Logger.LogInformation("View hazard details: {HazardCode}", hazard.Code);
-        Navigation.NavigateTo($"/SMSRiskManagement/HazardDetails/{hazard.Code}");
+        
+        try
+        {
+            // Show detailed hazard information dialog
+            var hazardDetails = $@"Hazard Details:
+
+Code: {hazard.Code}
+Name: {hazard.Name ?? "Not specified"}
+Type: {hazard.HazardType ?? "Not specified"}
+Category: {hazard.Category ?? "Not specified"}
+Description: {hazard.Description ?? "Not specified"}
+Status: {hazard.Status?.Name ?? "Not specified"}
+Priority: {hazard.Priority?.Name ?? "Not specified"}
+Risk Level: {hazard.RiskLevel ?? "Not assessed"}
+Reported By: {hazard.ReportedBy ?? "Unknown"}
+Reported On: {hazard.ReportedOn:MM/dd/yyyy}
+Created: {hazard.CreatedDate?.ToString("MM/dd/yyyy") ?? "N/A"}";
+
+            await DialogService.Alert(hazardDetails, $"Hazard Information - {hazard.Code}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error showing hazard details for {HazardCode}", hazard.Code);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "View Error",
+                Detail = "Failed to display hazard details.",
+                Duration = 3000
+            });
+        }
     }
 
     private async Task OnEditHazardAsync(Hazard hazard)
@@ -129,38 +201,76 @@ public partial class Hazards : ComponentBase
     {
         Logger.LogInformation("Delete hazard request: {HazardCode}", hazard.Code);
         
-        // TODO: Add proper confirmation dialog
-        var confirmed = await Task.FromResult(true);
-        
-        if (confirmed)
+        try
         {
-            try
+            // Show confirmation dialog
+            var confirmed = await DialogService.Confirm(
+                $"Are you sure you want to delete hazard {hazard.Code}?\n\nThis action cannot be undone.",
+                "Confirm Delete",
+                new ConfirmOptions()
+                {
+                    OkButtonText = "Yes, Delete",
+                    CancelButtonText = "Cancel"
+                });
+
+            if (confirmed == true)
             {
-                // TODO: Implement delete via CQRS command
-                Logger.LogInformation("Deleting hazard: {HazardCode}", hazard.Code);
-                await RefreshAsync();
+                // TODO: Implement delete via CQRS command when available
+                Logger.LogInformation("Delete confirmed for hazard: {HazardCode}", hazard.Code);
+                
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Info,
+                    Summary = "Delete Hazard",
+                    Detail = $"Hazard deletion for {hazard.Code} will be implemented in a future update.",
+                    Duration = 5000
+                });
+                
+                // await RefreshAsync(); // Uncomment when delete is implemented
             }
-            catch (Exception ex)
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error deleting hazard: {HazardCode}", hazard.Code);
+            
+            NotificationService.Notify(new NotificationMessage
             {
-                Logger.LogError(ex, "Error deleting hazard: {HazardCode}", hazard.Code);
-                ErrorMessage = $"Failed to delete hazard {hazard.Code}";
-            }
+                Severity = NotificationSeverity.Error,
+                Summary = "Delete Failed",
+                Detail = "Failed to delete the hazard. Please try again.",
+                Duration = 5000
+            });
         }
     }
 
     // Page Size Change Handler
     private async Task OnPageSizeChanged(object value)
     {
-        PageSize = (int)value;
-        Logger.LogInformation("Page size changed to: {PageSize}", PageSize);
-        
-        // Refresh the data list to apply new page size
-        if (hazardsDataList != null)
+        if (int.TryParse(value?.ToString(), out var pageSize))
         {
-            await hazardsDataList.Reload();
+            Logger.LogInformation("Page size changed from {OldSize} to {NewSize}", PageSize, pageSize);
+            PageSize = pageSize;
+            
+            // Clear expanded rows when changing page size
+            _expandedRows.Clear();
+            
+            // Refresh the data list to apply new page size
+            if (hazardsDataList != null)
+            {
+                await hazardsDataList.Reload();
+            }
+            
+            StateHasChanged();
+            
+            // Show notification
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Info,
+                Summary = "Page Size Changed",
+                Detail = $"Now showing {PageSize} hazards per page",
+                Duration = 2000
+            });
         }
-        
-        StateHasChanged();
     }
 
     // Row Expansion Methods (same pattern as Reports)
@@ -193,6 +303,8 @@ public partial class Hazards : ComponentBase
             "CLOSED" => BadgeStyle.Secondary,
             "INVESTIGATION" => BadgeStyle.Warning,
             "PENDING" => BadgeStyle.Info,
+            "UNDER_REVIEW" => BadgeStyle.Info,
+            "ESCALATED" => BadgeStyle.Warning,
             _ => BadgeStyle.Secondary
         };
     }

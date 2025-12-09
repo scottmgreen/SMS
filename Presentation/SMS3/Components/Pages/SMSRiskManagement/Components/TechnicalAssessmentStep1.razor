@@ -161,7 +161,7 @@
                     <RadzenStack Gap="1rem">
                         <!-- Show Current Selected Stakeholders -->
                         <RadzenCard>
-                            <RadzenCardContent>
+                            <RadzenCard>
                                 <RadzenText TextStyle="TextStyle.H6" Text="Selected Stakeholder Groups" Style="margin-bottom: 0.5rem;" />
                                 @if (Step1.SelectedStakeholderGroupIds.Any())
                                 {
@@ -178,12 +178,12 @@
                                 {
                                     <RadzenText TextStyle="TextStyle.Body2" Text="No stakeholder groups selected" Style="color: var(--rz-text-secondary-color);" />
                                 }
-                            </RadzenCardContent>
+                            </RadzenCard>
                         </RadzenCard>
 
                         <!-- Stakeholder Groups Selection -->
                         <RadzenCard>
-                            <RadzenCardContent>
+                            <RadzenCard>
                                 <RadzenText TextStyle="TextStyle.H6" Text="Available Stakeholder Groups" Style="margin-bottom: 0.5rem;" />
                                 <RadzenDataGrid Data="@StakeholderGroups" TItem="SMSStakeholderGroup" AllowFiltering="false" AllowPaging="false" Style="height: 300px;">
                                     <Columns>
@@ -205,7 +205,7 @@
                                         </RadzenDataGridColumn>
                                     </Columns>
                                 </RadzenDataGrid>
-                            </RadzenCardContent>
+                            </RadzenCard>
                         </RadzenCard>
                     </RadzenStack>
                 </RadzenFieldset>
@@ -215,7 +215,7 @@
         <!-- Debug Panel -->
         <RadzenColumn Size="12" SizeLG="4">
             <RadzenCard Style="position: sticky; top: 20px;">
-                <RadzenCardContent>
+                <RadzenCard>
                     <RadzenStack Gap="1rem">
                         <RadzenText TextStyle="TextStyle.H6" Text="Debug Info" Style="color: var(--rz-primary);" />
                         
@@ -230,7 +230,7 @@
                             <RadzenText TextStyle="TextStyle.Body2" Text="@($"System Description: {Step1.SystemDescription?.Length ?? 0} chars")" />
                         </RadzenFieldset>
                     </RadzenStack>
-                </RadzenCardContent>
+                </RadzenCard>
             </RadzenCard>
         </RadzenColumn>
     </RadzenRow>

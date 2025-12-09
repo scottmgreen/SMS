@@ -1,0 +1,56 @@
+@* 
+SMS Page Header Component
+Reusable component for consistent page headers across the SMS application
+*@
+
+<div class="sms-page-header mb-4">
+    <div class="row align-items-center">
+        <div class="col">
+            <h4 class="mb-1">
+                @if (!string.IsNullOrEmpty(Icon))
+                {
+                    <i class="@Icon me-2"></i>
+                }
+                @Title
+            </h4>
+            @if (!string.IsNullOrEmpty(Subtitle))
+            {
+                <p class="mb-0 text-white-50">
+                    @Subtitle
+                </p>
+            }
+        </div>
+        @if (AdditionalContent != null)
+        {
+            <div class="col-auto">
+                @AdditionalContent
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// The main title text for the page
+    /// </summary>
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Optional subtitle/description text
+    /// </summary>
+    [Parameter]
+    public string? Subtitle { get; set; }
+
+    /// <summary>
+    /// Optional FontAwesome icon class (e.g., "fas fa-exclamation-triangle")
+    /// </summary>
+    [Parameter]
+    public string? Icon { get; set; }
+
+    /// <summary>
+    /// Optional additional content to display on the right side of the header
+    /// </summary>
+    [Parameter]
+    public RenderFragment? AdditionalContent { get; set; }
+}

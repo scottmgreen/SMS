@@ -1,26 +1,32 @@
 @page "/SMSPolicy/SafetyPolicy"
 @using Radzen
 @using Radzen.Blazor
+@using SMS3.Components.Shared
 
 <PageTitle>Safety Policy - SMS3</PageTitle>
+
+<!-- SMS Page Header using reusable component -->
+<PageHeader Title="Safety Policy"
+           Subtitle="Organizational safety policy framework and management commitment to safety"
+           Icon="fas fa-shield-alt" />
 
 <div class="container-fluid">
     <!-- Policy Documents Section -->
     <RadzenRow Gap="1rem">
         <RadzenColumn Size="12" SizeLG="8">
             <RadzenCard Variant="Variant.Outlined">
-                <RadzenCardHeader>
+                <RadzenCard>
                     <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
                         <RadzenIcon Icon="picture_as_pdf" Style="margin-right: 0.5rem;" />
                         Safety Policy Documents
                     </RadzenText>
-                </RadzenCardHeader>
-                <RadzenCardContent>
+                </RadzenCard>
+                <RadzenCard>
                     <RadzenRow Gap="1rem">
                         <!-- SMS Policy Overview -->
                         <RadzenColumn Size="12" SizeMD="6" class="rz-mb-3">
                             <RadzenCard Variant="Variant.Outlined" Style="height: 100%; border-color: var(--rz-primary);">
-                                <RadzenCardContent>
+                                <RadzenCard>
                                     <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="1rem">
                                         <RadzenIcon Icon="picture_as_pdf" Style="font-size: 3rem; color: var(--rz-primary);" />
                                         <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; text-align: center;">SMS Policy Overview</RadzenText>
@@ -34,14 +40,14 @@
                                                         Click="@(() => DownloadDocument("policies/14 CFR Part 139.pdf"))" Size="ButtonSize.Small" Style="width: 100%;" />
                                         </RadzenStack>
                                     </RadzenStack>
-                                </RadzenCardContent>
+                                </RadzenCard>
                             </RadzenCard>
                         </RadzenColumn>
 
                         <!-- Regulatory Compliance -->
                         <RadzenColumn Size="12" SizeMD="6" class="rz-mb-3">
                             <RadzenCard Variant="Variant.Outlined" Style="height: 100%; border-color: var(--rz-info);">
-                                <RadzenCardContent>
+                                <RadzenCard>
                                     <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="1rem">
                                         <RadzenIcon Icon="picture_as_pdf" Style="font-size: 3rem; color: var(--rz-info);" />
                                         <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; text-align: center;">Regulatory Compliance</RadzenText>
@@ -55,14 +61,14 @@
                                                         Click="@(() => DownloadDocument("policies/FAA Final Rule.pdf"))" Size="ButtonSize.Small" Style="width: 100%;" />
                                         </RadzenStack>
                                     </RadzenStack>
-                                </RadzenCardContent>
+                                </RadzenCard>
                             </RadzenCard>
                         </RadzenColumn>
 
                         <!-- Emergency Procedures -->
                         <RadzenColumn Size="12" SizeMD="6" class="rz-mb-3">
                             <RadzenCard Variant="Variant.Outlined" Style="height: 100%; border-color: var(--rz-warning);">
-                                <RadzenCardContent>
+                                <RadzenCard>
                                     <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="1rem">
                                         <RadzenIcon Icon="picture_as_pdf" Style="font-size: 3rem; color: var(--rz-warning);" />
                                         <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; text-align: center;">Emergency Procedures</RadzenText>
@@ -76,14 +82,14 @@
                                                         Click="@(() => DownloadDocument("policies/emergency-procedures.pdf"))" Size="ButtonSize.Small" Style="width: 100%;" />
                                         </RadzenStack>
                                     </RadzenStack>
-                                </RadzenCardContent>
+                                </RadzenCard>
                             </RadzenCard>
                         </RadzenColumn>
 
                         <!-- Training Manual -->
                         <RadzenColumn Size="12" SizeMD="6" class="rz-mb-3">
                             <RadzenCard Variant="Variant.Outlined" Style="height: 100%; border-color: var(--rz-success);">
-                                <RadzenCardContent>
+                                <RadzenCard>
                                     <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="1rem">
                                         <RadzenIcon Icon="picture_as_pdf" Style="font-size: 3rem; color: var(--rz-success);" />
                                         <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; text-align: center;">Training Manual</RadzenText>
@@ -97,7 +103,7 @@
                                                         Click="@(() => DownloadDocument("manuals/safety-training-manual.pdf"))" Size="ButtonSize.Small" Style="width: 100%;" />
                                         </RadzenStack>
                                     </RadzenStack>
-                                </RadzenCardContent>
+                                </RadzenCard>
                             </RadzenCard>
                         </RadzenColumn>
                     </RadzenRow>
@@ -118,7 +124,7 @@
                             </RadzenList>
                         </RadzenStack>
                     </RadzenAlert>
-                </RadzenCardContent>
+                </RadzenCard>
             </RadzenCard>
         </RadzenColumn>
 
@@ -126,13 +132,13 @@
         <RadzenColumn Size="12" SizeLG="4">
             <!-- Document Viewer Features -->
             <RadzenCard Variant="Variant.Outlined" class="rz-mb-3">
-                <RadzenCardHeader>
+                <RadzenCard>
                     <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-primary);">
                         <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
                         Document Viewer Features
                     </RadzenText>
-                </RadzenCardHeader>
-                <RadzenCardContent>
+                </RadzenCard>
+                <RadzenCard>
                     <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                             <RadzenIcon Icon="check" Style="color: var(--rz-success);" />
@@ -155,18 +161,18 @@
                             <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Fallback for unsupported browsers</RadzenText>
                         </RadzenStack>
                     </RadzenStack>
-                </RadzenCardContent>
+                </RadzenCard>
             </RadzenCard>
 
             <!-- Document Categories -->
             <RadzenCard Variant="Variant.Outlined" class="rz-mb-3">
-                <RadzenCardHeader>
+                <RadzenCard>
                     <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-info);">
                         <RadzenIcon Icon="folder" Style="margin-right: 0.5rem;" />
                         Document Categories
                     </RadzenText>
-                </RadzenCardHeader>
-                <RadzenCardContent>
+                </RadzenCard>
+                <RadzenCard>
                     <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                             <RadzenIcon Icon="book" Style="color: var(--rz-primary);" />
@@ -185,18 +191,18 @@
                             <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Forms:</strong> Official documents</RadzenText>
                         </RadzenStack>
                     </RadzenStack>
-                </RadzenCardContent>
+                </RadzenCard>
             </RadzenCard>
 
             <!-- Quick Actions -->
             <RadzenCard Variant="Variant.Outlined">
-                <RadzenCardHeader>
+                <RadzenCard>
                     <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-secondary);">
                         <RadzenIcon Icon="settings" Style="margin-right: 0.5rem;" />
                         Quick Actions
                     </RadzenText>
-                </RadzenCardHeader>
-                <RadzenCardContent>
+                </RadzenCard>
+                <RadzenCard>
                     <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
                         <RadzenButton Text="Organizational Structure" Icon="account_tree" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Primary" 
                                     Click="@(() => NavigateToPage("/SMSPolicy/OrganizationalStructure"))" Size="ButtonSize.Small" Style="width: 100%;" />
@@ -209,7 +215,7 @@
                         <RadzenButton Text="System Administration" Icon="settings" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Secondary" 
                                     Click="@(() => NavigateToPage("/System"))" Size="ButtonSize.Small" Style="width: 100%;" />
                     </RadzenStack>
-                </RadzenCardContent>
+                </RadzenCard>
             </RadzenCard>
         </RadzenColumn>
     </RadzenRow>

@@ -2,15 +2,12 @@
 @using Microsoft.AspNetCore.Components.Web
 @using SMS_Application.Interfaces
 @using SMS_Domain.Enums
+@using SMS3.Components.Layout
 @using Radzen
 @using Radzen.Blazor
-@inject ISMSSessionService SessionService
 @inject IJSRuntime JSRuntime
 @inject ILogger<NavMenu> Logger
 @inject NavigationManager Navigation
-
-
-
 
 <!-- SMS Navigation with Radzen Components -->
 <nav class="navbar navbar-expand-lg sms-nav">
@@ -28,7 +25,7 @@
 
         <!-- Navigation Links -->
         <div class="collapse navbar-collapse" id="navbarNav">
-            @if (isAuthenticated)
+            @if (AuthState?.IsAuthenticated == true)
             {
                 <div class="navbar-nav me-auto d-flex flex-row align-items-center">
                     <!-- Dashboard -->
@@ -45,6 +42,25 @@
                                 <RadzenMenuItem Text="Reports" Path="/SMSRiskManagement/Reports" Icon="assignment"></RadzenMenuItem>
                                 <RadzenMenuItem Text="Report Processing" Path="/SMSRiskManagement/ReportProcessing" Icon="settings"></RadzenMenuItem>
                                 <RadzenMenuItem Text="Hazards" Path="/SMSRiskManagement/Hazards" Icon="warning"></RadzenMenuItem>
+                            </RadzenMenuItem>
+                        </RadzenMenu>
+                    </div>
+
+                    <!-- Listings Menu -->
+                    <div class="nav-item me-3">
+                        <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
+                            <RadzenMenuItem Text="Listings" Icon="list" class="sms-menu-item">
+                                <RadzenMenuItem Text="Reports" Path="/Listings/Reports" Icon="assignment"></RadzenMenuItem>
+                                <RadzenMenuItem Text="Airport Shared Data" Path="/Listings/AirportSharedDatasets" Icon="dataset"></RadzenMenuItem>
+                                <RadzenMenuItem Text="Hazards" Path="/Listings/Hazards" Icon="warning"></RadzenMenuItem>
+                                <RadzenMenuItem Text="Risk Assessments" Path="/Listings/RiskAssessments" Icon="assessment"></RadzenMenuItem>
+                                <RadzenMenuItem Text="Risk Analysis" Path="/Listings/RiskAnalysis" Icon="analytics"></RadzenMenuItem>
+                                <RadzenMenuItem Text="Mitigations" Path="/Listings/Mitigations" Icon="security"></RadzenMenuItem>
+                                <RadzenMenuItem Text="Report Validations" Path="/Listings/ReportValidations" Icon="fact_check"></RadzenMenuItem>
+                                <RadzenMenuItem Text="Scoring Panels" Path="/Listings/ScoringPanels" Icon="group"></RadzenMenuItem>
+                                <RadzenMenuItem Text="Investigations" Path="/Listings/Investigations" Icon="search"></RadzenMenuItem>
+                                <RadzenMenuItem Text="Hazard Locations" Path="/Listings/HazardLocations" Icon="place"></RadzenMenuItem>
+                                <RadzenMenuItem Text="Hazard Files" Path="/Listings/HazardFiles" Icon="attach_file"></RadzenMenuItem>
                             </RadzenMenuItem>
                         </RadzenMenu>
                     </div>
@@ -78,7 +94,7 @@
                     </div>
 
                     <!-- System Administration Menu -->
-                    @if (HasAdministrativeAccess())
+                    @if (AuthState.HasAdministrativeAccess())
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
@@ -114,26 +130,36 @@
                     </div>
                 </div>
 
-                <!-- User Info & Menu -->
+                <!-- User Profile Menu using RadzenProfileMenu -->
                 <div class="navbar-nav ms-auto">
                     <div class="nav-item">
-                        <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
-                            <RadzenMenuItem class="sms-user-menu-item">
-                                <Template>
-                                    <div class="d-flex align-items-center">
-                                        <div class="d-flex flex-column align-items-end me-2">
-                                            <small class="mb-0 sms-user-name">@currentUserDisplayName</small>
-                                            <small class="sms-user-type">@currentUserTypeName User</small>
-                                        </div>
-                                        <i class="fas fa-user-circle fs-4 sms-icon-accent"></i>
+                        <RadzenProfileMenu class="sms-profile-menu">
+                            <Template>
+                                <div class="d-flex align-items-center p-2">
+                                    @if (!string.IsNullOrEmpty(AuthState.Email))
+                                    {
+                                        <RadzenGravatar Email="@AuthState.Email" class="me-2" Size="32" />
+                                    }
+                                    else
+                                    {
+                                        <RadzenIcon Icon="account_circle" class="me-2 sms-icon-accent" Style="font-size: 32px;" />
+                                    }
+                                    <div class="d-flex flex-column align-items-start">
+                                        <small class="mb-0 sms-user-name fw-bold">@AuthState.DisplayName</small>
+                                        <small class="sms-user-type text-muted">@AuthState.UserType User</small>
                                     </div>
-                                    <RadzenMenuItem Text="Profile" Path="/Profile" Icon="person"></RadzenMenuItem>
-                                    <RadzenMenuItem Text="Settings" Path="/Settings" Icon="settings"></RadzenMenuItem>
-                                    <RadzenMenuItem Text="Logout" Path="logout" Icon="logout"></RadzenMenuItem>
-                                </Template>
-                                
-                            </RadzenMenuItem>
-                        </RadzenMenu>
+                                </div>
+                            </Template>
+                            <ChildContent>
+                                <RadzenProfileMenuItem Text="Profile" Path="/Profile" Icon="person" Click="@OnProfileItemClick" />
+                                <RadzenProfileMenuItem Text="My Dashboard" Path="/dashboard" Icon="dashboard" Click="@OnProfileItemClick" />
+                                <RadzenProfileMenuItem Text="Settings" Path="/Settings" Icon="settings" Click="@OnProfileItemClick" />
+                                <RadzenProfileMenuItem Text="Help" Path="/Help" Icon="help" Click="@OnProfileItemClick" />
+                                <RadzenProfileMenuItem Text="About" Path="/About" Icon="info" Click="@OnProfileItemClick" />
+                                <div class="rz-separator"></div>
+                                <RadzenProfileMenuItem Text="Logout" Icon="logout" Click="@OnLogoutClick" />
+                            </ChildContent>
+                        </RadzenProfileMenu>
                     </div>
                 </div>
             }
@@ -153,94 +179,11 @@
 </nav>
 
 @code {
-    private bool isAuthenticated = false;
-    private string? currentUserDisplayName = null;
-    private string? currentUserTypeName = null;
-    private SMSUserType? currentUserType = null;
-    private string lastCheckedTime = "Never";
-    private Timer? refreshTimer;
+    [CascadingParameter(Name = "AuthState")]
+    public AuthenticationState? AuthState { get; set; }
 
-    protected override async Task OnInitializedAsync()
-    {
-        await CheckAuthenticationState();
-        
-        // Set up a timer to periodically check authentication
-        refreshTimer = new Timer(async _ => {
-            await InvokeAsync(async () => {
-                await CheckAuthenticationState();
-                StateHasChanged();
-            });
-        }, null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(5));
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            // Multiple checks to catch session establishment
-            for (int i = 0; i < 5; i++)
-            {
-                await Task.Delay(500);
-                await CheckAuthenticationState();
-                StateHasChanged();
-                if (isAuthenticated) break;
-            }
-        }
-    }
-
-    private async Task CheckAuthenticationState()
-    {
-        try
-        {
-            isAuthenticated = SessionService.IsAuthenticated();
-            lastCheckedTime = DateTime.Now.ToString("HH:mm:ss");
-            
-            Logger.LogInformation("NavMenu checking auth: {IsAuth} at {Time}", isAuthenticated, lastCheckedTime);
-            
-            if (isAuthenticated)
-            {
-                currentUserDisplayName = SessionService.GetCurrentUserDisplayName();
-                var userTypeString = SessionService.GetCurrentUserType();
-                currentUserTypeName = userTypeString;
-                
-                // Convert to proper SMSUserType enum
-                currentUserType = userTypeString switch
-                {
-                    "APPLICATION" => SMSUserType.Application,
-                    "ORGANIZATIONAL" => SMSUserType.Organizational,
-                    "STAKEHOLDER" => SMSUserType.Stakeholder,
-                    _ => null
-                };
-                
-                Logger.LogInformation("NavMenu auth success: User={User}, Type={Type}, UserTypeEnum={TypeEnum}", 
-                    currentUserDisplayName, currentUserTypeName, currentUserType?.Value);
-            }
-            else
-            {
-                currentUserDisplayName = null;
-                currentUserTypeName = null;
-                currentUserType = null;
-                Logger.LogInformation("NavMenu: Not authenticated");
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error checking authentication in NavMenu");
-            isAuthenticated = false;
-            currentUserDisplayName = null;
-            currentUserTypeName = null;
-            currentUserType = null;
-        }
-    }
-
-    /// <summary>
-    /// Check if user has administrative access using proper SMSUserType enum
-    /// </summary>
-    private bool HasAdministrativeAccess()
-    {
-        return currentUserType != null && 
-               (currentUserType == SMSUserType.Application || currentUserType == SMSUserType.Organizational);
-    }
+    [Parameter]
+    public EventCallback OnLogoutRequested { get; set; }
 
     private async Task OnMenuClick(MenuItemEventArgs args)
     {
@@ -259,15 +202,66 @@
         }
     }
 
-    private async Task Logout()
+    private async Task OnProfileItemClick(MenuItemEventArgs args)
     {
-        await SessionService.ClearSMSSessionAsync();
-        await JSRuntime.InvokeVoidAsync("location.reload");
+        if (args.Value?.ToString() == "logout")
+        {
+            await Logout();
+        }
+        else if (!string.IsNullOrEmpty(args.Text))
+        {
+            // Handle navigation for profile menu items
+            string path = "";
+            switch (args.Text.ToLower())
+            {
+                case "profile":
+                    path = "/Profile";
+                    break;
+                case "my dashboard":
+                    path = "/dashboard";
+                    break;
+                case "settings":
+                    path = "/Settings";
+                    break;
+                case "help":
+                    path = "/Help";
+                    break;
+                case "about":
+                    path = "/About";
+                    break;
+            }
+            
+            if (!string.IsNullOrEmpty(path))
+            {
+                Navigation.NavigateTo(path);
+            }
+        }
     }
 
-    public void Dispose()
+    private void OnProfileMenuClick(MenuItemEventArgs args)
     {
-        refreshTimer?.Dispose();
+        if (!string.IsNullOrEmpty(args.Value?.ToString()))
+        {
+            var path = args.Value.ToString();
+            if (path.StartsWith("/"))
+            {
+                Navigation.NavigateTo(path);
+            }
+        }
+    }
+
+    private async Task OnLogoutClick(MenuItemEventArgs args)
+    {
+        await Logout();
+    }
+
+    private async Task Logout()
+    {
+        // Trigger logout callback to parent layout
+        await OnLogoutRequested.InvokeAsync();
+        
+        // Navigate to login
+        Navigation.NavigateTo("/login");
     }
 }
 

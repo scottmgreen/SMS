@@ -1,0 +1,45 @@
+@page "/Listings/HazardFiles"
+@using SMS_Domain.Entities
+@using SMS_Domain.ValueObjects
+@using SMS_Application.Messaging.Queries
+@using SMS_Application.Interfaces
+@using SMS_Shared.Common
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Hazard Files</PageTitle>
+
+<RadzenDataGrid @ref="filesGrid" 
+                Data="@files" 
+                Count="@totalCount" 
+                LoadData="@LoadData"
+                AllowPaging="true" 
+                AllowSorting="true" 
+                AllowFiltering="true"
+                PageSize="25"
+                PagerHorizontalAlign="HorizontalAlign.Left"
+                ShowPagingSummary="true"
+                FilterMode="FilterMode.Advanced"
+                SelectionMode="DataGridSelectionMode.Single"
+                Style="height: calc(100vh - 200px)">
+    
+    <Columns>
+        <RadzenDataGridColumn TItem="HazardFile" Property="Code" Title="Code" Width="150px" />
+        <RadzenDataGridColumn TItem="HazardFile" Property="HazardCode" Title="Hazard Code" Width="120px" />
+        <RadzenDataGridColumn TItem="HazardFile" Property="FileName" Title="File Name" Width="200px" />
+        <RadzenDataGridColumn TItem="HazardFile" Property="FileType" Title="Type" Width="120px" />
+        <RadzenDataGridColumn TItem="HazardFile" Property="FileSize" Title="Size" Width="100px" />
+        <RadzenDataGridColumn TItem="HazardFile" Property="Description" Title="Description" Width="300px" />
+        <RadzenDataGridColumn TItem="HazardFile" Property="UploadedBy" Title="Uploaded By" Width="150px" />
+        <RadzenDataGridColumn TItem="HazardFile" Property="UploadedDate" Title="Uploaded Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
+        <RadzenDataGridColumn TItem="HazardFile" Property="CreatedBy" Title="Created By" Width="150px" />
+        <RadzenDataGridColumn TItem="HazardFile" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
+        
+        <RadzenDataGridColumn TItem="HazardFile" Title="Actions" Width="100px" Sortable="false" Filterable="false">
+            <Template Context="file">
+                <RadzenButton Icon="more_vert" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
+                            Click="@(() => ShowActions(file))" Disabled="true" />
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>

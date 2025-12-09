@@ -6,7 +6,7 @@
 @using Radzen.Blazor
 
 <!-- Progress Summary -->
-<RadzenCard Style="margin-bottom: 1rem;">
+@* <RadzenCard Style="margin-bottom: 1rem;">
     <RadzenRow Gap="1rem" AlignItems="AlignItems.Center">
         <RadzenColumn Size="3">
             <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
@@ -37,7 +37,7 @@
             </RadzenStack>
         </RadzenColumn>
     </RadzenRow>
-</RadzenCard>
+</RadzenCard> *@
 
 <RadzenRow Gap="1rem">
     <!-- Main Content Column -->
@@ -92,36 +92,123 @@
             }
         </RadzenStack>
     </RadzenColumn>
-
-    <!-- Debug Panel -->
+    <!-- Help Panel -->
     <RadzenColumn Size="12" SizeLG="4">
-        <RadzenCard Style="position: sticky; top: 20px;">
-            <RadzenStack Gap="1rem">
-                <RadzenText TextStyle="TextStyle.H6" Text="Step 4 Debug Info" Style="color: var(--rz-primary);" />
-                
-                <RadzenFieldset Text="Scoring Progress">
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Total Hazards: {AvailableHazards?.Count ?? 0}")" />
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Panel Members: {GetTotalPanelMembers()}")" />
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Completed Scores: {GetCompletedScores()}")" />
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Progress: {GetScoringProgress()}%")" />
-                </RadzenFieldset>
+        <RadzenStack Gap="1rem">
+            <!-- Risk Matrix -->
+            <RadzenCard>
+                <RadzenStack Gap="1rem">
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-success); margin: 0;">
+                        <RadzenIcon Icon="help" Style="margin-right: 0.5rem;" />
+                        Assessment Guidelines
+                    </RadzenText>
 
-                <RadzenFieldset Text="Hazard Averages">
-                    @if (Step4.HazardAverageScores?.Any() == true)
-                    {
-                        @foreach (var hazardAvg in Step4.HazardAverageScores)
-                        {
-                            <RadzenText TextStyle="TextStyle.Body2" Text="@($"{hazardAvg.Key}: {hazardAvg.Value:F1}")" />
-                        }
-                    }
-                    else
-                    {
-                        <RadzenText TextStyle="TextStyle.Body2" Text="No averages calculated yet" />
-                    }
-                </RadzenFieldset>
-            </RadzenStack>
-        </RadzenCard>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Text="Risk Matrix" Style="margin: 0;" />
+                    <div style="overflow-x: auto;">
+                        <table class="table table-bordered table-sm text-center">
+                            <thead>
+                                <tr>
+                                    <th style="font-size: 0.75rem;"></th>
+                                    <th style="font-size: 0.75rem;">Negligible</th>
+                                    <th style="font-size: 0.75rem;">Minor</th>
+                                    <th style="font-size: 0.75rem;">Moderate</th>
+                                    <th style="font-size: 0.75rem;">Major</th>
+                                    <th style="font-size: 0.75rem;">Catastrophic</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th style="font-size: 0.75rem;">Very High</th>
+                                    <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                    <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                    <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">High</td>
+                                    <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">High</td>
+                                    <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">Critical</td>
+                                </tr>
+                                <tr>
+                                    <th style="font-size: 0.75rem;">High</th>
+                                    <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                    <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                    <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                    <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">High</td>
+                                    <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">High</td>
+                                </tr>
+                                <tr>
+                                    <th style="font-size: 0.75rem;">Medium</th>
+                                    <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                    <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                    <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                    <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                    <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">High</td>
+                                </tr>
+                                <tr>
+                                    <th style="font-size: 0.75rem;">Low</th>
+                                    <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                    <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                    <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                    <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                    <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                </tr>
+                                <tr>
+                                    <th style="font-size: 0.75rem;">Very Low</th>
+                                    <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                    <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                    <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                    <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                    <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Text="Control Hierarchy" Style="margin: 0;" />
+                    <ol style="font-size: 0.875rem;">
+                        <li><strong>Elimination:</strong> Remove the hazard</li>
+                        <li><strong>Substitution:</strong> Replace with safer alternative</li>
+                        <li><strong>Engineering:</strong> Physical safeguards</li>
+                        <li><strong>Administrative:</strong> Procedures and training</li>
+                        <li><strong>PPE:</strong> Personal protective equipment</li>
+                    </ol>
+
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Text="ALARP Principle" Style="margin: 0;" />
+                    <RadzenText TextStyle="TextStyle.Caption">
+                        Risks should be reduced to <strong>As Low As Reasonably Practicable</strong> (ALARP), considering cost-benefit and available technology.
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+
+            <RadzenColumn Size="12" SizeLG="4">
+                <RadzenCard Style="position: sticky; top: 20px;">
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H6" Text="Step 4 Debug Info" Style="color: var(--rz-primary);" />
+
+                        <RadzenFieldset Text="Scoring Progress">
+                            <RadzenText TextStyle="TextStyle.Body2" Text="@($"Total Hazards: {AvailableHazards?.Count ?? 0}")" />
+                            <RadzenText TextStyle="TextStyle.Body2" Text="@($"Panel Members: {GetTotalPanelMembers()}")" />
+                            <RadzenText TextStyle="TextStyle.Body2" Text="@($"Completed Scores: {GetCompletedScores()}")" />
+                            <RadzenText TextStyle="TextStyle.Body2" Text="@($"Progress: {GetScoringProgress()}%")" />
+                        </RadzenFieldset>
+
+                        <RadzenFieldset Text="Hazard Averages">
+                            @if (Step4.HazardAverageScores?.Any() == true)
+                            {
+                                @foreach (var hazardAvg in Step4.HazardAverageScores)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"{hazardAvg.Key}: {hazardAvg.Value:F1}")" />
+                                }
+                            }
+                            else
+                            {
+                                <RadzenText TextStyle="TextStyle.Body2" Text="No averages calculated yet" />
+                            }
+                        </RadzenFieldset>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenStack>
     </RadzenColumn>
+    <!-- Debug Panel -->
+    
 </RadzenRow>
 
 @code {

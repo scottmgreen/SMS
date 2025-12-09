@@ -434,10 +434,7 @@ public static partial class Mappers
         investigation.AssignedInvestigatorId = reader.GetValue<string>(FieldNames.fInvestigationAssignedInvestigatorId) ?? string.Empty;
         
         var statusValue = reader.GetValue<string>(FieldNames.fInvestigationStatus);
-        if (Enum.TryParse<InvestigationStatus>(statusValue, out var status))
-        {
-            investigation.Status = status;
-        }
+        investigation.Status = InvestigationStatus.FromValue(statusValue) ?? InvestigationStatus.InProgress;
         
         investigation.CompletedDate = reader.GetValue<DateTime?>(FieldNames.fInvestigationCompletedDate);
         investigation.InvestigationPlan = reader.GetValue<string>(FieldNames.fInvestigationPlan);
@@ -532,7 +529,7 @@ public static partial class Mappers
     }
 
     /// <summary>
-    /// Maps SqlDataReader to RiskAssessment entity - CLEAN VERSION WITHOUT REFLECTION
+    /// Maps SqlDataReader to RiskAssessment entity - UPDATED FOR SMARTENUM SUPPORT
     /// Following the preferred pattern: direct field mapping with GetValue<T>
     /// </summary>
     public static RiskAssessment MapToRiskAssessment(SqlDataReader reader)
@@ -548,18 +545,18 @@ public static partial class Mappers
         riskAssessment.HazardCode = reader.GetValue<string>(FieldNames.fRiskAssessmentHazardCode);
         riskAssessment.Code = code;
 
-        // ✅ Enum parsing for AssessmentType
-        var assessmentTypeValue = reader.GetValue<string>(FieldNames.fRiskAssessmentType);
-        if (!string.IsNullOrEmpty(assessmentTypeValue) && Enum.TryParse<RiskAssessmentType>(assessmentTypeValue, out var assessmentType))
+        // ✅ SmartEnum parsing for AssessmentType
+        var assessmentTypeValue = reader.GetValue<string>(FieldNames.fRiskAssessmentType)?.Trim();
+        if (!string.IsNullOrEmpty(assessmentTypeValue))
         {
-            riskAssessment.AssessmentType = assessmentType;
+            riskAssessment.AssessmentType = RiskAssessmentType.FromValue(assessmentTypeValue) ?? RiskAssessmentType.Initial;
         }
 
-        // ✅ Enum parsing for Status
-        var statusValue = reader.GetValue<string>(FieldNames.fRiskAssessmentStatus);
-        if (!string.IsNullOrEmpty(statusValue) && Enum.TryParse<RiskAssessmentStatus>(statusValue, out var status))
+        // ✅ SmartEnum parsing for Status
+        var statusValue = reader.GetValue<string>(FieldNames.fRiskAssessmentStatus)?.Trim();
+        if (!string.IsNullOrEmpty(statusValue))
         {
-            riskAssessment.Status = status;
+            riskAssessment.Status = RiskAssessmentStatus.FromValue(statusValue) ?? RiskAssessmentStatus.Created;
         }
 
         // ✅ Direct assignment for simple properties
@@ -567,11 +564,11 @@ public static partial class Mappers
         riskAssessment.LeadAssessorId = reader.GetValue<string>(FieldNames.fRiskAssessmentLeadAssessorId);
         riskAssessment.PrimaryHazardId = reader.GetValue<string>(FieldNames.fRiskAssessmentPrimaryHazardId);
 
-        // ✅ Enum parsing for Category
-        var categoryValue = reader.GetValue<string>(FieldNames.fRiskAssessmentCategory);
-        if (!string.IsNullOrEmpty(categoryValue) && Enum.TryParse<RiskAssessmentCategory>(categoryValue, out var category))
+        // ✅ SmartEnum parsing for Category
+        var categoryValue = reader.GetValue<string>(FieldNames.fRiskAssessmentCategory)?.Trim();
+        if (!string.IsNullOrEmpty(categoryValue))
         {
-            riskAssessment.RiskAssessmentCategory = category;
+            riskAssessment.RiskAssessmentCategory = RiskAssessmentCategory.FromValue(categoryValue) ?? RiskAssessmentCategory.Technical;
         }
 
         // ✅ Integer fields with null handling

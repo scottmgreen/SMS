@@ -1,0 +1,51 @@
+@page "/Listings/Hazards"
+@using SMS_Domain.Entities
+@using SMS_Domain.ValueObjects
+@using SMS_Application.Messaging.Queries
+@using SMS_Application.Interfaces
+@using SMS_Shared.Common
+@using Radzen
+@using Radzen.Blazor
+@using SMS3.Components.Shared
+
+<PageTitle>Hazard Listing - SMS3</PageTitle>
+
+<!-- SMS Page Header using reusable component -->
+<PageHeader Title="Hazard Listing"
+           Subtitle="Complete listing and management interface for all SMS hazards"
+           Icon="fas fa-list" />
+
+<RadzenDataGrid @ref="hazardsGrid" 
+                Data="@hazards" 
+                Count="@totalCount" 
+                LoadData="@LoadData"
+                AllowPaging="true" 
+                AllowSorting="true" 
+                AllowFiltering="true"
+                PageSize="25"
+                PagerHorizontalAlign="HorizontalAlign.Left"
+                ShowPagingSummary="true"
+                FilterMode="FilterMode.Advanced"
+                SelectionMode="DataGridSelectionMode.Single"
+                Style="height: calc(100vh - 200px)">
+    
+    <Columns>
+        <RadzenDataGridColumn TItem="Hazard" Property="Code" Title="Code" Width="120px" />
+        <RadzenDataGridColumn TItem="Hazard" Property="Name" Title="Name" Width="200px" />
+        <RadzenDataGridColumn TItem="Hazard" Property="HazardType" Title="Type" Width="150px" />
+        <RadzenDataGridColumn TItem="Hazard" Property="Description" Title="Description" Width="300px" />
+        <RadzenDataGridColumn TItem="Hazard" Property="Status" Title="Status" Width="120px" />
+        <RadzenDataGridColumn TItem="Hazard" Property="Priority" Title="Priority" Width="100px" />
+        <RadzenDataGridColumn TItem="Hazard" Property="ReportedBy" Title="Reported By" Width="150px" />
+        <RadzenDataGridColumn TItem="Hazard" Property="ReportedOn" Title="Reported On" Width="150px" FormatString="{0:MM/dd/yyyy}" />
+        <RadzenDataGridColumn TItem="Hazard" Property="LocationArea" Title="Location" Width="150px" />
+        <RadzenDataGridColumn TItem="Hazard" Property="ReportCode" Title="Report Code" Width="120px" />
+        
+        <RadzenDataGridColumn TItem="Hazard" Title="Actions" Width="100px" Sortable="false" Filterable="false">
+            <Template Context="hazard">
+                <RadzenButton Icon="more_vert" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
+                            Click="@(() => ShowActions(hazard))" Disabled="true" />
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
