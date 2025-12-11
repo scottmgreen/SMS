@@ -43,9 +43,9 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelCode, scoringPanel.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelHazardCode, scoringPanel.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelSMSUserCode, scoringPanel.SMSUserCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelLikelihood, scoringPanel.Likelihood));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelSeverity, scoringPanel.Severity));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelScore, scoringPanel.Score));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelLikelihood, scoringPanel.Likelihood ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelSeverity, scoringPanel.Severity ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelScore, scoringPanel.Score ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, scoringPanel.CreatedBy ?? "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
@@ -152,6 +152,47 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
         }
     }
 
+    public async Task<Result<List<ScoringPanel>>> GetScoringPanelsByHazardCodeAsync(string hazardCode, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(hazardCode))
+            {
+                return Result<List<ScoringPanel>>.Failure<List<ScoringPanel>>(DomainErrors.ScoringPanelError.NullOrEmpty);
+            }
+
+            _logger.LogInfrastructureGetItems($"{_logheader} {StoredProcs.pr_ScoringPanel_GetByHazardCode} HazardCode:{hazardCode}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_ScoringPanel_GetByHazardCode, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelHazardCode, hazardCode));
+
+            List<ScoringPanel> response = new();
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var scoringPanel = Mappers.MapToScoringPanel(reader);
+                    response.Add(scoringPanel);
+                }
+            }
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<List<ScoringPanel>>.Success(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemsError($"{_logheader} {ex.Message}", null);
+            return Result<List<ScoringPanel>>.Failure<List<ScoringPanel>>(DomainErrors.ScoringPanelError.NullOrEmpty);
+        }
+    }
+
     public async Task<Result<ScoringPanel>> UpdateScoringPanelAsync(ScoringPanel scoringPanel, CancellationToken ct = default)
     {
         try
@@ -173,9 +214,9 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelCode, scoringPanel.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelHazardCode, scoringPanel.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelSMSUserCode, scoringPanel.SMSUserCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelLikelihood, scoringPanel.Likelihood));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelSeverity, scoringPanel.Severity));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelScore, scoringPanel.Score));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelLikelihood, scoringPanel.Likelihood ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelSeverity, scoringPanel.Severity ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelScore, scoringPanel.Score ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, scoringPanel.UpdatedBy ?? "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 

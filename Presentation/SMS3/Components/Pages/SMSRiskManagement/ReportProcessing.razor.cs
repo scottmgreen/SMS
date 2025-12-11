@@ -40,8 +40,8 @@ public partial class ReportProcessing : ComponentBase
         {
             IsLoading = true;
 
-            // Load core entities using CQRS
-            var (reports, hazards) = await LoadCoreEntitiesAsync();
+            // Load core entities using CQRS - ENHANCED to include ReportValidations
+            var (reports, hazards, riskAssessments, reportValidations) = await LoadCoreEntitiesAsync();
 
             if (!reports.Any())
             {
@@ -50,8 +50,8 @@ public partial class ReportProcessing : ComponentBase
                 return;
             }
 
-            // Create report summaries and categorize
-            var reportSummaries = CreateReportSummaries(reports, hazards);
+            // Create report summaries and categorize - ENHANCED with report validations
+            var reportSummaries = CreateReportSummaries(reports, hazards, riskAssessments, reportValidations);
             CategorizeReports(reportSummaries);
 
             Logger.LogInformation("Report processing data loaded - V:{V}, RA:{RA}, I:{I}, M:{M}, C:{C}",
@@ -70,10 +70,12 @@ public partial class ReportProcessing : ComponentBase
         }
     }
 
-    private async Task<(List<Report> reports, List<Hazard> hazards)> LoadCoreEntitiesAsync()
+    private async Task<(List<Report> reports, List<Hazard> hazards, List<RiskAssessment> riskAssessments, List<SMS_Domain.Entities.ReportValidation> reportValidations)> LoadCoreEntitiesAsync()
     {
         var reports = new List<Report>();
         var hazards = new List<Hazard>();
+        var riskAssessments = new List<RiskAssessment>();
+        var reportValidations = new List<SMS_Domain.Entities.ReportValidation>();
 
         try
         {
@@ -100,22 +102,51 @@ public partial class ReportProcessing : ComponentBase
             {
                 Logger.LogError("Failed to retrieve hazards: {Error}", hazardsResult.Error?.Message);
             }
+
+            // Get all risk assessments
+            var riskAssessmentsQuery = new GetAllRiskAssessmentsQuery();
+            var riskAssessmentsResult = await Mediator.SendAsync(riskAssessmentsQuery, CancellationToken.None);
+            if (riskAssessmentsResult.IsSuccess)
+            {
+                riskAssessments = riskAssessmentsResult.Value ?? new List<RiskAssessment>();
+                Logger.LogInformation("Loaded {Count} risk assessments", riskAssessments.Count);
+            }
+            else
+            {
+                Logger.LogError("Failed to retrieve risk assessments: {Error}", riskAssessmentsResult.Error?.Message);
+            }
+
+            // CRITICAL: Get all report validations to determine which reports have been validated
+            var reportValidationsQuery = new GetAllReportValidationsQuery();
+            var reportValidationsResult = await Mediator.SendAsync(reportValidationsQuery, CancellationToken.None);
+            if (reportValidationsResult.IsSuccess && reportValidationsResult.Value != null)
+            {
+                reportValidations = reportValidationsResult.Value.ToList();
+                Logger.LogInformation("Loaded {Count} report validations", reportValidations.Count);
+            }
+            else
+            {
+                Logger.LogError("Failed to retrieve report validations: {Error}", reportValidationsResult.Error?.Message);
+            }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in core entities retrieval");
         }
 
-        return (reports, hazards);
+        return (reports, hazards, riskAssessments, reportValidations);
     }
 
     #endregion
 
     #region Report Processing
 
-    private List<ReportProcessingSummary> CreateReportSummaries(List<Report> reports, List<Hazard> hazards)
+    private List<ReportProcessingSummary> CreateReportSummaries(List<Report> reports, List<Hazard> hazards, List<RiskAssessment> riskAssessments, List<SMS_Domain.Entities.ReportValidation> reportValidations)
     {
         var summaries = new List<ReportProcessingSummary>();
+
+        Logger.LogInformation("Creating report summaries - Reports: {ReportCount}, Hazards: {HazardCount}, RiskAssessments: {AssessmentCount}, ReportValidations: {ValidationCount}", 
+            reports.Count, hazards.Count, riskAssessments.Count, reportValidations.Count);
 
         foreach (var report in reports)
         {
@@ -123,6 +154,15 @@ public partial class ReportProcessing : ComponentBase
             {
                 // Find matching hazard
                 var hazard = hazards.FirstOrDefault(h => h.ReportCode?.Trim() == report.Code?.Trim());
+                
+                // Find matching risk assessment
+                var riskAssessment = hazard != null ? 
+                    riskAssessments.FirstOrDefault(ra => ra.HazardCode?.Trim() == hazard.Code?.Trim() && 
+                                                        ra.AssessmentType == RiskAssessmentType.Initial) : 
+                    null;
+
+                // CRITICAL: Find matching report validation
+                var reportValidation = reportValidations.FirstOrDefault(rv => rv.ReportCode?.Trim() == report.Code?.Trim());
                 
                 var summary = new ReportProcessingSummary
                 {
@@ -135,16 +175,29 @@ public partial class ReportProcessing : ComponentBase
                     HazardId = hazard?.Code,
                     HazardType = hazard?.HazardType ?? "Unknown",
                     HazardDescription = hazard?.Description ?? report.Description ?? "No description",
-                    Location = hazard?.HazardLocation?.Description ?? "Not specified",
+                    Location = hazard?.HazardLocation?.Description ?? hazard?.LocationArea ?? "Not specified",
                     Priority = GetPriorityString(hazard?.Priority),
                     ReportedBy = hazard?.ReportedBy ?? report.CreatedBy ?? "Unknown",
                     ReportedDate = hazard?.ReportedOn ?? report.CreatedDate ?? DateTime.UtcNow,
                     IsConfidential = hazard?.IsConfidential ?? false,
                     
-                    StatusCategory = DetermineStatusCategory(report, hazard),
-                    DaysInStage = CalculateDaysInStage(report, hazard),
-                    AssignedTo = DetermineAssignedTo(report, hazard),
-                    ValidationUrl = GetValidationUrl(report, hazard)
+                    // Risk Assessment Information
+                    RiskAssessmentId = riskAssessment?.Code,
+                    CurrentAssessmentStep = riskAssessment?.CurrentStep ?? 0,
+                    RiskAssessmentStatus = riskAssessment?.Status?.ToString() ?? "",
+                    AssessmentStage = riskAssessment?.Stage ?? "",
+                    AssessmentType = riskAssessment?.RiskAssessmentCategory?.ToString() ?? "", // NEW: Technical vs Preliminary
+                    
+                    // Report Validation Information - NEW
+                    ReportValidationId = reportValidation?.Code,
+                    ValidationType = reportValidation?.ValidationType ?? "", // NEW: Key for smart routing
+                    ValidationDecision = reportValidation?.ValidationDecision ?? "",
+                    
+                    // Status determination
+                    StatusCategory = DetermineStatusCategory(report, hazard, riskAssessment, reportValidation),
+                    DaysInStage = CalculateDaysInStage(report, hazard, riskAssessment, reportValidation),
+                    AssignedTo = DetermineAssignedTo(report, hazard, riskAssessment, reportValidation),
+                    ValidationUrl = GetValidationUrl(report, hazard, reportValidation)
                 };
                 
                 summaries.Add(summary);
@@ -155,6 +208,7 @@ public partial class ReportProcessing : ComponentBase
             }
         }
 
+        Logger.LogInformation("Created {SummaryCount} report summaries", summaries.Count);
         return summaries;
     }
 
@@ -171,46 +225,121 @@ public partial class ReportProcessing : ComponentBase
 
     #region Helper Methods
 
-    private ProcessingStatusCategory DetermineStatusCategory(Report report, Hazard? hazard)
+    private ProcessingStatusCategory DetermineStatusCategory(Report report, Hazard? hazard, RiskAssessment? riskAssessment, SMS_Domain.Entities.ReportValidation? reportValidation)
     {
-        var effectiveStatus = hazard?.Status?.ToString() ?? report.Status ?? "New";
+        // CRITICAL DESIGN CONCEPT: 
+        // 1. If no ReportValidation exists -> VALIDATION tab (needs initial validation)
+        // 2. If ReportValidation exists but no RiskAssessment -> RISK ASSESSMENT tab (validated, needs risk assessment)  
+        // 3. If RiskAssessment exists and in progress -> RISK ASSESSMENT tab (assessment in progress)
+        // 4. If RiskAssessment complete -> MITIGATION tab
+        
+        // No validation record = needs validation
+        if (reportValidation == null)
+        {
+            Logger.LogDebug("Report {ReportId} -> VALIDATION (no validation record)", report.Code);
+            return ProcessingStatusCategory.Validation;
+        }
 
+        // Has validation but no risk assessment = validated, needs risk assessment
+        if (riskAssessment == null)
+        {
+            Logger.LogDebug("Report {ReportId} -> RISK ASSESSMENT (validated but no assessment)", report.Code);
+            return ProcessingStatusCategory.RiskAssessment;
+        }
+
+        // Has risk assessment - determine stage based on progress
+        if (riskAssessment.Status == RiskAssessmentStatus.Created || riskAssessment.Status == RiskAssessmentStatus.InProgress)
+        {
+            // Risk assessment in progress
+            var category = riskAssessment.CurrentStep switch
+            {
+                1 => ProcessingStatusCategory.RiskAssessment, // System Description
+                2 => ProcessingStatusCategory.RiskAssessment, // Hazard Identification  
+                3 => ProcessingStatusCategory.RiskAssessment, // Risk Analysis
+                4 => ProcessingStatusCategory.RiskAssessment, // Risk Assessment
+                5 => ProcessingStatusCategory.Mitigation,     // Risk Mitigation
+                _ => ProcessingStatusCategory.RiskAssessment
+            };
+            
+            Logger.LogDebug("Report {ReportId} -> {Category} (assessment step {Step})", 
+                report.Code, category, riskAssessment.CurrentStep);
+            return category;
+        }
+        else if (riskAssessment.Status == RiskAssessmentStatus.Completed)
+        {
+            Logger.LogDebug("Report {ReportId} -> MITIGATION (assessment complete)", report.Code);
+            return ProcessingStatusCategory.Mitigation;
+        }
+
+        // Fallback to hazard/report status for edge cases
+        var effectiveStatus = hazard?.Status?.ToString() ?? report.Status ?? "New";
+        
+        Logger.LogDebug("Report {ReportId} -> Fallback logic with status: {Status}", report.Code, effectiveStatus);
+        
         return effectiveStatus switch
         {
-            // ? FIXED: Added "Initial" and "Active" to match your actual data
-            "Initial" or "Active" or "New" or "Submitted" or "Under Review" or "ACTIVE" or "Pending" => ProcessingStatusCategory.Validation,
-            "SMS Risk Assessment - In Progress" or "Risk Assessment" or "Processing" or "UNDER_REVIEW" => ProcessingStatusCategory.RiskAssessment,
             "Under Investigation - Information Needed" or "Investigation Required" or "Pending Investigation" or "UNDER_INVESTIGATION" => ProcessingStatusCategory.Investigation,
             "Mitigation Planning" or "In Progress" or "Implementation" or "Tracking" => ProcessingStatusCategory.Mitigation,
             "Closed" or "Referred" or "Completed" or "Closed - Not SMS Risk" or "CLOSED" or "CANCELLED" => ProcessingStatusCategory.Closed,
-            _ => ProcessingStatusCategory.Validation
+            _ => ProcessingStatusCategory.RiskAssessment
         };
     }
 
     private string GetPriorityString(HazardPriority? priority) => priority?.ToString() ?? "Medium";
 
-    private int CalculateDaysInStage(Report report, Hazard? hazard)
+    private int CalculateDaysInStage(Report report, Hazard? hazard, RiskAssessment? riskAssessment, SMS_Domain.Entities.ReportValidation? reportValidation)
     {
-        var referenceDate = hazard?.UpdatedDate ?? hazard?.CreatedDate ?? 
+        // Use the most recent update date to calculate days in current stage
+        var referenceDate = riskAssessment?.UpdatedDate ?? 
+                           reportValidation?.UpdatedDate ??
+                           hazard?.UpdatedDate ?? hazard?.CreatedDate ?? 
                            report.UpdatedDate ?? report.CreatedDate ?? DateTime.UtcNow;
         return (DateTime.UtcNow - referenceDate).Days;
     }
 
-    private string? DetermineAssignedTo(Report report, Hazard? hazard)
+    private string? DetermineAssignedTo(Report report, Hazard? hazard, RiskAssessment? riskAssessment, SMS_Domain.Entities.ReportValidation? reportValidation)
     {
-        var category = DetermineStatusCategory(report, hazard);
+        // Use RiskAssessment lead assessor if available
+        if (riskAssessment != null && !string.IsNullOrEmpty(riskAssessment.LeadAssessorId))
+        {
+            return riskAssessment.LeadAssessorId;
+        }
+        
+        // Use ReportValidation validator if available
+        if (reportValidation != null && !string.IsNullOrEmpty(reportValidation.ValidatedBy))
+        {
+            return reportValidation.ValidatedBy;
+        }
+        
+        // Fallback to category-based assignment
+        var category = DetermineStatusCategory(report, hazard, riskAssessment, reportValidation);
         return category switch
         {
             ProcessingStatusCategory.Validation => "SMS Validation Team",
             ProcessingStatusCategory.RiskAssessment => "Risk Assessment Team",
-            ProcessingStatusCategory.Investigation => "Investigation Team", 
-            ProcessingStatusCategory.Mitigation => "Operations Team",
-            _ => null
+            ProcessingStatusCategory.Investigation => "Investigative Team",
+            ProcessingStatusCategory.Mitigation => "Mitigation Team",
+            ProcessingStatusCategory.Closed => "Closed Cases Team",
+            _ => "General Review Team"
         };
     }
 
-    private string GetValidationUrl(Report report, Hazard? hazard)
+    private string GetValidationUrl(Report report, Hazard? hazard, SMS_Domain.Entities.ReportValidation? reportValidation)
     {
+        // If no validation exists, go to report validation
+        if (reportValidation == null)
+        {
+            return $"/SMSRiskManagement/ReportValidation/{report.Code}";
+        }
+        
+        // If validation exists but no risk assessment, start risk assessment
+        // This would be for the risk assessment tab
+        if (!string.IsNullOrEmpty(hazard?.Code))
+        {
+            return $"/SMSRiskManagement/TechnicalAssessment/{report.Code}/{hazard.Code}/1";
+        }
+        
+        // Fallback
         return $"/SMSRiskManagement/ReportValidation/{report.Code}";
     }
 
@@ -272,7 +401,7 @@ public partial class ReportProcessing : ComponentBase
 
             if (!PendingRiskAssessment.Any())
             {
-                RenderEmptyState(builder, "assessment", "No reports pending risk assessment", "Validated SMS risks will appear here");
+                RenderEmptyState(builder, "assessment", "No reports pending risk assessment", "Validated reports will appear here for risk assessment");
                 return;
             }
 
@@ -283,7 +412,7 @@ public partial class ReportProcessing : ComponentBase
             builder.AddAttribute(4, "PageSize", 10);
             builder.AddAttribute(5, "Columns", (RenderFragment)(columnsBuilder =>
             {
-                RenderStandardColumns(columnsBuilder);
+                RenderRiskAssessmentColumns(columnsBuilder);
             }));
             builder.CloseComponent();
         };
@@ -413,7 +542,7 @@ public partial class ReportProcessing : ComponentBase
 
     private void RenderValidationColumns(RenderTreeBuilder builder)
     {
-        // Report ID Column with Validate button
+        // Report ID Column with VALIDATION action button - navigates to ReportValidation
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(0);
         builder.AddAttribute(1, "Property", "ReportId");
         builder.AddAttribute(2, "Title", "Report ID");
@@ -429,16 +558,34 @@ public partial class ReportProcessing : ComponentBase
                     stackBuilder.OpenComponent<RadzenText>(0);
                     stackBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
                     stackBuilder.AddAttribute(2, "Style", "font-weight: 600;");
-                    stackBuilder.AddAttribute(3, "Text", report.DisplayId);
+                    stackBuilder.AddAttribute(3, "Text", report.ReportId);
                     stackBuilder.CloseComponent();
                     
-                    stackBuilder.OpenComponent<RadzenButton>(4);
-                    stackBuilder.AddAttribute(5, "Text", "Validate");
-                    stackBuilder.AddAttribute(6, "Icon", "check_circle");
-                    stackBuilder.AddAttribute(7, "ButtonStyle", ButtonStyle.Success);
-                    stackBuilder.AddAttribute(8, "Size", ButtonSize.Small);
-                    // ? FIXED: Use EventCallback<MouseEventArgs> instead of EventCallback
-                    stackBuilder.AddAttribute(9, "Click", EventCallback.Factory.Create<MouseEventArgs>(this, (args) => Navigation.NavigateTo(report.ValidationUrl)));
+                    // Show associated Hazard ID as secondary info if available
+                    if (!string.IsNullOrEmpty(report.HazardId))
+                    {
+                        stackBuilder.OpenComponent<RadzenText>(10);
+                        stackBuilder.AddAttribute(11, "TextStyle", TextStyle.Caption);
+                        stackBuilder.AddAttribute(12, "Style", "color: var(--rz-text-disabled-color);");
+                        stackBuilder.AddAttribute(13, "Text", $"Hazard: {report.HazardId}");
+                        stackBuilder.CloseComponent();
+                    }
+                    
+                    // Validation tab: Show "Needs Validation" indicator
+                    stackBuilder.OpenComponent<RadzenText>(15);
+                    stackBuilder.AddAttribute(16, "TextStyle", TextStyle.Caption);
+                    stackBuilder.AddAttribute(17, "Style", "color: var(--rz-warning); font-weight: 500;");
+                    stackBuilder.AddAttribute(18, "Text", "Needs Initial Validation");
+                    stackBuilder.CloseComponent();
+                    
+                    // VALIDATION ACTION: Navigate to ReportValidation
+                    stackBuilder.OpenComponent<RadzenButton>(20);
+                    stackBuilder.AddAttribute(21, "Text", "Start Validation");
+                    stackBuilder.AddAttribute(22, "Icon", "check_circle");
+                    stackBuilder.AddAttribute(23, "ButtonStyle", ButtonStyle.Success);
+                    stackBuilder.AddAttribute(24, "Size", ButtonSize.Small);
+                    stackBuilder.AddAttribute(25, "Click", EventCallback.Factory.Create<MouseEventArgs>(this, 
+                        (args) => Navigation.NavigateTo($"/SMSRiskManagement/ReportValidation/{report.ReportId}")));
                     stackBuilder.CloseComponent();
                 }));
                 templateBuilder.CloseComponent();
@@ -450,11 +597,77 @@ public partial class ReportProcessing : ComponentBase
 
     private void RenderStandardColumns(RenderTreeBuilder builder, bool includeActions = true)
     {
+        // Report ID Column - Show actual Report ID for all tabs
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(5);
+        builder.AddAttribute(6, "Property", "ReportId");
+        builder.AddAttribute(7, "Title", "Report ID");
+        builder.AddAttribute(8, "Width", "150px");
+        builder.AddAttribute(9, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenStack>(0);
+                templateBuilder.AddAttribute(1, "Orientation", Orientation.Vertical);
+                templateBuilder.AddAttribute(2, "Gap", "0.25rem");
+                templateBuilder.AddAttribute(3, "ChildContent", (RenderFragment)(stackBuilder =>
+                {
+                    stackBuilder.OpenComponent<RadzenText>(0);
+                    stackBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
+                    stackBuilder.AddAttribute(2, "Style", "font-weight: 600;");
+                    stackBuilder.AddAttribute(3, "Text", report.ReportId);
+                    stackBuilder.CloseComponent();
+                    
+                    // Show associated Hazard ID as secondary info if available
+                    if (!string.IsNullOrEmpty(report.HazardId))
+                    {
+                        stackBuilder.OpenComponent<RadzenText>(10);
+                        stackBuilder.AddAttribute(11, "TextStyle", TextStyle.Caption);
+                        stackBuilder.AddAttribute(12, "Style", "color: var(--rz-text-disabled-color);");
+                        stackBuilder.AddAttribute(13, "Text", $"Hazard: {report.HazardId}");
+                        stackBuilder.CloseComponent();
+                    }
+                }));
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
         // Description Column
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(10);
         builder.AddAttribute(11, "Property", "HazardDescription");
         builder.AddAttribute(12, "Title", "Description");
         builder.AddAttribute(13, "Width", "300px");
+        builder.CloseComponent();
+
+        // Stage Column - Shows current processing stage with assessment type info
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(15);
+        builder.AddAttribute(16, "Property", "ReportStatus");
+        builder.AddAttribute(17, "Title", "Stage");
+        builder.AddAttribute(18, "Width", "150px");
+        builder.AddAttribute(19, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                var badgeStyle = report.StatusCategory switch
+                {
+                    ProcessingStatusCategory.Validation => BadgeStyle.Info,
+                    ProcessingStatusCategory.RiskAssessment => BadgeStyle.Primary,
+                    ProcessingStatusCategory.Investigation => BadgeStyle.Warning,
+                    ProcessingStatusCategory.Mitigation => BadgeStyle.Secondary,
+                    ProcessingStatusCategory.Closed => BadgeStyle.Success,
+                    _ => BadgeStyle.Light
+                };
+                
+                // Show stage with assessment type if available
+                var stageText = report.StatusCategory.ToString();
+                if (report.StatusCategory == ProcessingStatusCategory.RiskAssessment && !string.IsNullOrEmpty(report.ValidationType))
+                {
+                    stageText = $"{report.ValidationType} Assessment";
+                }
+                
+                templateBuilder.OpenComponent<RadzenBadge>(0);
+                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
+                templateBuilder.AddAttribute(2, "Text", stageText);
+                templateBuilder.AddAttribute(3, "Variant", Variant.Flat);
+                templateBuilder.CloseComponent();
+            })));
         builder.CloseComponent();
 
         // Priority Column
@@ -502,6 +715,112 @@ public partial class ReportProcessing : ComponentBase
         builder.CloseComponent();
     }
 
+    private void RenderRiskAssessmentColumns(RenderTreeBuilder builder)
+    {
+        // Report ID Column with RISK ASSESSMENT action button - navigates to correct assessment type
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(0);
+        builder.AddAttribute(1, "Property", "ReportId");
+        builder.AddAttribute(2, "Title", "Report ID");
+        builder.AddAttribute(3, "Width", "200px");
+        builder.AddAttribute(4, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenStack>(0);
+                templateBuilder.AddAttribute(1, "Orientation", Orientation.Vertical);
+                templateBuilder.AddAttribute(2, "Gap", "0.5rem");
+                templateBuilder.AddAttribute(3, "ChildContent", (RenderFragment)(stackBuilder =>
+                {
+                    stackBuilder.OpenComponent<RadzenText>(0);
+                    stackBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
+                    stackBuilder.AddAttribute(2, "Style", "font-weight: 600;");
+                    stackBuilder.AddAttribute(3, "Text", report.ReportId);
+                    stackBuilder.CloseComponent();
+                    
+                    // Show associated Hazard ID as secondary info if available
+                    if (!string.IsNullOrEmpty(report.HazardId))
+                    {
+                        stackBuilder.OpenComponent<RadzenText>(10);
+                        stackBuilder.AddAttribute(11, "TextStyle", TextStyle.Caption);
+                        stackBuilder.AddAttribute(12, "Style", "color: var(--rz-text-disabled-color);");
+                        stackBuilder.AddAttribute(13, "Text", $"Hazard: {report.HazardId}");
+                        stackBuilder.CloseComponent();
+                    }
+                    
+                    // NEW: Show Validation Type
+                    if (!string.IsNullOrEmpty(report.ValidationType))
+                    {
+                        stackBuilder.OpenComponent<RadzenText>(15);
+                        stackBuilder.AddAttribute(16, "TextStyle", TextStyle.Caption);
+                        stackBuilder.AddAttribute(17, "Style", "color: var(--rz-info); font-weight: 500;");
+                        stackBuilder.AddAttribute(18, "Text", $"Type: {report.ValidationType}");
+                        stackBuilder.CloseComponent();
+                    }
+                    
+                    // Risk Assessment tab: Show assessment progress if available
+                    if (report.HasRiskAssessment && report.CurrentAssessmentStep > 0)
+                    {
+                        if (report.ValidationType?.ToLower() == "technical")
+                        {
+                            stackBuilder.OpenComponent<RadzenText>(20);
+                            stackBuilder.AddAttribute(21, "TextStyle", TextStyle.Caption);
+                            stackBuilder.AddAttribute(22, "Style", "color: var(--rz-primary); font-weight: 500;");
+                            stackBuilder.AddAttribute(23, "Text", $"Technical Assessment Step: {report.CurrentAssessmentStep}/5");
+                            stackBuilder.CloseComponent();
+                        }
+                        else if (report.ValidationType?.ToLower() == "preliminary")
+                        {
+                            stackBuilder.OpenComponent<RadzenText>(20);
+                            stackBuilder.AddAttribute(21, "TextStyle", TextStyle.Caption);
+                            stackBuilder.AddAttribute(22, "Style", "color: var(--rz-success); font-weight: 500;");
+                            stackBuilder.AddAttribute(23, "Text", "Preliminary Assessment");
+                            stackBuilder.CloseComponent();
+                        }
+                    }
+                    else
+                    {
+                        stackBuilder.OpenComponent<RadzenText>(25);
+                        stackBuilder.AddAttribute(26, "TextStyle", TextStyle.Caption);
+                        stackBuilder.AddAttribute(27, "Style", "color: var(--rz-success); font-weight: 500;");
+                        stackBuilder.AddAttribute(28, "Text", "Validated - Ready for Assessment");
+                        stackBuilder.CloseComponent();
+                    }
+                    
+                    // ENHANCED SMART ACTION: Navigation based on ValidationType
+                    stackBuilder.OpenComponent<RadzenButton>(30);
+                    stackBuilder.AddAttribute(31, "Text", report.ActionButtonText);
+                    stackBuilder.AddAttribute(32, "Icon", GetAssessmentIcon(report));
+                    stackBuilder.AddAttribute(33, "ButtonStyle", GetAssessmentButtonStyle(report));
+                    stackBuilder.AddAttribute(34, "Size", ButtonSize.Small);
+                    stackBuilder.AddAttribute(35, "Click", EventCallback.Factory.Create<MouseEventArgs>(this, (args) => Navigation.NavigateTo(report.SmartValidationUrl)));
+                    stackBuilder.CloseComponent();
+                }));
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        RenderStandardColumns(builder, false); // No additional actions column
+    }
+
+    private string GetAssessmentIcon(ReportProcessingSummary report)
+    {
+        if (report.ValidationType?.ToLower() == "preliminary")
+            return "speed"; // Fast/quick assessment icon
+        else if (report.ValidationType?.ToLower() == "technical")
+            return report.HasRiskAssessment ? "edit" : "engineering"; // Technical assessment icon
+        else
+            return "assessment";
+    }
+
+    private ButtonStyle GetAssessmentButtonStyle(ReportProcessingSummary report)
+    {
+        if (report.ValidationType?.ToLower() == "preliminary")
+            return ButtonStyle.Success;
+        else if (report.ValidationType?.ToLower() == "technical")
+            return report.HasRiskAssessment ? ButtonStyle.Primary : ButtonStyle.Info;
+        else
+            return ButtonStyle.Secondary;
+    }
+    
     #endregion
 
     #region Models
@@ -532,12 +851,109 @@ public partial class ReportProcessing : ComponentBase
         public DateTime ReportedDate { get; set; }
         public bool IsConfidential { get; set; }
         
+        // ENHANCED: Risk Assessment Information
+        public string? RiskAssessmentId { get; set; }
+        public int CurrentAssessmentStep { get; set; } = 0;
+        public string RiskAssessmentStatus { get; set; } = string.Empty;
+        public string AssessmentStage { get; set; } = string.Empty;
+        public string AssessmentType { get; set; } = string.Empty; // NEW: Technical vs Preliminary
+        public bool HasRiskAssessment => !string.IsNullOrEmpty(RiskAssessmentId);
+        
+        // ENHANCED: Report Validation Information
+        public string? ReportValidationId { get; set; }
+        public string ValidationType { get; set; } = string.Empty; // NEW: Preliminary vs Technical
+        public string ValidationDecision { get; set; } = string.Empty;
+        public bool HasReportValidation => !string.IsNullOrEmpty(ReportValidationId);
+        
         public ProcessingStatusCategory StatusCategory { get; set; }
         public int DaysInStage { get; set; }
         public string? AssignedTo { get; set; }
         public string ValidationUrl { get; set; } = string.Empty;
         
         public string DisplayId => !string.IsNullOrEmpty(HazardId) ? HazardId : ReportId;
+        
+        // ENHANCED: Smart validation URL based on validation type and assessment progress
+        public string SmartValidationUrl
+        {
+            get
+            {
+                // VALIDATION TAB: Reports without ReportValidation record
+                if (StatusCategory == ProcessingStatusCategory.Validation)
+                {
+                    return $"/SMSRiskManagement/ReportValidation/{ReportId}";
+                }
+                
+                // RISK ASSESSMENT TAB: Reports with ReportValidation - route based on ValidationType
+                if (StatusCategory == ProcessingStatusCategory.RiskAssessment)
+                {
+                    // Determine assessment type from ValidationType
+                    if (ValidationType?.ToLower() == "preliminary")
+                    {
+                        // Preliminary Assessment - always single step
+                        return $"/SMSRiskManagement/PreliminaryRiskAssessment/{ReportId}";
+                    }
+                    else if (ValidationType?.ToLower() == "technical")
+                    {
+                        // Technical Assessment - multi-step, smart navigation
+                        if (HasRiskAssessment && CurrentAssessmentStep > 0)
+                        {
+                            // Continue to next step of existing assessment
+                            var nextStep = CurrentAssessmentStep < 5 ? CurrentAssessmentStep + 1 : CurrentAssessmentStep;
+                            return $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{HazardId}/{nextStep}";
+                        }
+                        else if (!string.IsNullOrEmpty(HazardId))
+                        {
+                            // Start new technical assessment
+                            return $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{HazardId}/1";
+                        }
+                    }
+                }
+                
+                // Fallback to report validation
+                return $"/SMSRiskManagement/ReportValidation/{ReportId}";
+            }
+        }
+        
+        // ENHANCED: Smart button text based on validation type and progress
+        public string ActionButtonText
+        {
+            get
+            {
+                return StatusCategory switch
+                {
+                    ProcessingStatusCategory.Validation => "Start Validation",
+                    ProcessingStatusCategory.RiskAssessment => GetRiskAssessmentButtonText(),
+                    ProcessingStatusCategory.Investigation => "View Investigation",
+                    ProcessingStatusCategory.Mitigation => "View Mitigation",
+                    ProcessingStatusCategory.Closed => "View Closed",
+                    _ => "Process"
+                };
+            }
+        }
+        
+        private string GetRiskAssessmentButtonText()
+        {
+            // Determine button text based on ValidationType
+            if (ValidationType?.ToLower() == "preliminary")
+            {
+                return "Start Preliminary Assessment";
+            }
+            else if (ValidationType?.ToLower() == "technical")
+            {
+                if (HasRiskAssessment && CurrentAssessmentStep > 0)
+                {
+                    return CurrentAssessmentStep < 5 ? $"Continue Step {CurrentAssessmentStep + 1}" : "Review Assessment";
+                }
+                else
+                {
+                    return "Start Technical Assessment";
+                }
+            }
+            else
+            {
+                return "Start Risk Assessment";
+            }
+        }
     }
 
     #endregion

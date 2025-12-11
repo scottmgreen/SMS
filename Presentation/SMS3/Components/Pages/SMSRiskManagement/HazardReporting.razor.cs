@@ -1,30 +1,36 @@
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.WebUtilities; // <-- Added using for WebUtilities
 using Microsoft.JSInterop;
+
+using Radzen;
+using Radzen.Blazor;
+
 using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
+
 using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
+
 using SMS_Shared.Common;
-using Radzen;
-using Radzen.Blazor;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
 /// <summary>
-/// Blazor version of the HazardReporting page - Full functionality with JavaScript mapping integration
-/// Converted from CSHTML to provide complete Blazor experience while maintaining all original features
+/// Hazard Reporting page - Full functionality with JavaScript mapping integration
+/// Clean, professional hazard reporting form with proper map integration and file handling
 /// </summary>
-public partial class HazardReportingBlazor : ComponentBase, IDisposable
+public partial class HazardReporting : ComponentBase, IDisposable
 {
     #region Dependencies
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ISMSSessionService SessionService { get; set; } = default!;
-    [Inject] private ILogger<HazardReportingBlazor> Logger { get; set; } = default!;
+    [Inject] private ILogger<HazardReporting> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
     #endregion
 
     #region Properties and Fields
@@ -154,13 +160,38 @@ public partial class HazardReportingBlazor : ComponentBase, IDisposable
         (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) &&
         DescriptionCharacterCount <= 2000;
 
+    /// <summary>
+    /// Edit mode flag - true when editing an existing report
+    /// </summary>
+    public bool IsEditMode { get; set; }
+
+    /// <summary>
+    /// Report code when in edit mode
+    /// </summary>
+    public string? EditReportCode { get; set; }
+
+    /// <summary>
+    /// Original report being edited (if in edit mode)
+    /// </summary>
+    public Report? EditingReport { get; set; }
+
+    /// <summary>
+    /// Page title based on mode
+    /// </summary>
+    public string PageTitle => IsEditMode ? $"Edit Report - {EditReportCode}" : "Submit Hazard Report";
+
+    /// <summary>
+    /// Page subtitle based on mode
+    /// </summary>
+    public string PageSubtitle => IsEditMode ? "Modify existing hazard report information" : "Report safety hazards and incidents for SMS processing and risk assessment";
+
     // Airport coordinates
     private double AirportCenterLatitude => 45.5898;
     private double AirportCenterLongitude => -122.5951;
     private int DefaultZoomLevel => 15;
 
     private IJSObjectReference? _mapModule;
-    private DotNetObjectReference<HazardReportingBlazor>? _dotNetRef;
+    private DotNetObjectReference<HazardReporting>? _dotNetRef;
 
     #endregion
 
@@ -169,7 +200,14 @@ public partial class HazardReportingBlazor : ComponentBase, IDisposable
     protected override async Task OnInitializedAsync()
     {
         InitializeDropdownOptions();
-        InitializeFormDefaults();
+        
+        // Check for edit mode parameters
+        await CheckForEditModeAsync();
+        
+        if (!IsEditMode)
+        {
+            InitializeFormDefaults();
+        }
         
         // Create DotNet reference for JavaScript callbacks
         _dotNetRef = DotNetObjectReference.Create(this);
@@ -199,6 +237,158 @@ public partial class HazardReportingBlazor : ComponentBase, IDisposable
     {
         _mapModule?.DisposeAsync();
         _dotNetRef?.Dispose();
+    }
+
+    #endregion
+
+    #region Edit Mode Methods
+
+    /// <summary>
+    /// Check if we're in edit mode based on query parameters
+    /// </summary>
+    private async Task CheckForEditModeAsync()
+    {
+        try
+        {
+            var uri = new Uri(Navigation.Uri);
+            var queryParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+
+            if (queryParams.TryGetValue("mode", out var mode) && mode == "edit" &&
+                queryParams.TryGetValue("reportCode", out var reportCode) && !string.IsNullOrEmpty(reportCode))
+            {
+                IsEditMode = true;
+                EditReportCode = reportCode;
+
+                Logger.LogInformation("Edit mode detected for report: {ReportCode}", reportCode);
+
+                // Load the existing report data
+                await LoadReportForEditingAsync(reportCode);
+            }
+            else
+            {
+                IsEditMode = false;
+                EditReportCode = null;
+                EditingReport = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error checking for edit mode");
+            IsEditMode = false;
+            
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Edit Mode Error",
+                Detail = "Unable to determine edit mode. Defaulting to create mode.",
+                Duration = 3000
+            });
+        }
+    }
+
+    /// <summary>
+    /// Load report data for editing
+    /// </summary>
+    private async Task LoadReportForEditingAsync(string reportCode)
+    {
+        try
+        {
+            IsLoading = true;
+            StateHasChanged();
+
+            // Get the report details
+            var reportQuery = new GetReportByIdQuery(new ReportID(reportCode));
+            var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
+
+            if (reportResult.IsFailure || reportResult.Value == null)
+            {
+                throw new InvalidOperationException($"Report {reportCode} not found");
+            }
+
+            EditingReport = reportResult.Value;
+
+            // Get associated hazards to populate the form
+            var hazardsQuery = new GetHazardsByReportCodeQuery(reportCode);
+            var hazardsResult = await Mediator.SendAsync(hazardsQuery, CancellationToken.None);
+
+            if (hazardsResult.IsSuccess && hazardsResult.Value?.Any() == true)
+            {
+                // Use the first hazard to populate the form (primary hazard)
+                var primaryHazard = hazardsResult.Value.OrderBy(h => h.ReportedOn).First();
+
+                // Populate form with hazard data
+                HazardReport = new HazardReportForm
+                {
+                    HazardType = primaryHazard.HazardType,
+                    Description = primaryHazard.Description,
+                    ReportedBy = primaryHazard.ReportedBy,
+                    ReportedOn = primaryHazard.ReportedOn,
+                    ReportingDepartment = primaryHazard.ReportingDepartment,
+                    IsConfidential = primaryHazard.IsConfidential,
+                    Location = primaryHazard.LocationArea
+                };
+
+                // Check if there's geographic location data
+                if (primaryHazard.HazardLocation != null)
+                {
+                    SelectedGeoLocation = new GeoLocationData
+                    {
+                        Latitude = primaryHazard.HazardLocation.Latitude ?? 0,
+                        Longitude = primaryHazard.HazardLocation.Longitude ?? 0,
+                        Description = primaryHazard.HazardLocation.Description,
+                        SelectedDateTime = DateTime.UtcNow
+                    };
+
+                    SelectedLatitude = SelectedGeoLocation.Latitude;
+                    SelectedLongitude = SelectedGeoLocation.Longitude;
+                    LocationDescription = SelectedGeoLocation.Description ?? "";
+
+                    HazardReport.Location = "MAP_LOCATION";
+                }
+
+                Logger.LogInformation("Loaded report {ReportCode} with primary hazard {HazardCode} for editing", 
+                    reportCode, primaryHazard.Code);
+            }
+            else
+            {
+                // No hazards found, use report data
+                HazardReport = new HazardReportForm
+                {
+                    HazardType = EditingReport.Name,
+                    Description = EditingReport.Description,
+                    ReportedBy = SessionService.GetCurrentUserDisplayName() ?? "Unknown User",
+                    ReportedOn = DateTime.Now
+                };
+            }
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Info,
+                Summary = "Report Loaded",
+                Detail = $"Loaded report {reportCode} for editing.",
+                Duration = 3000
+            });
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading report for editing: {ReportCode}", reportCode);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Load Failed",
+                Detail = "Failed to load report for editing. Redirecting to Reports page.",
+                Duration = 5000
+            });
+
+            // Redirect back to reports on failure
+            Navigation.NavigateTo("/SMSRiskManagement/Reports");
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
     }
 
     #endregion
@@ -582,9 +772,9 @@ public partial class HazardReportingBlazor : ComponentBase, IDisposable
 
         try
         {
-            // ???????????????????????????????????????????????????????????????????
+            // ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●
             // STEP 1: VALIDATION
-            // ???????????????????????????????????????????????????????????????????
+            // ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●
             if (!IsFormValidForSubmission)
             {
                 ShowSubmissionConfirmation = true;
@@ -606,9 +796,9 @@ public partial class HazardReportingBlazor : ComponentBase, IDisposable
 
             Logger.LogInformation("Starting hazard report submission for user: {User}", HazardReport.ReportedBy);
 
-            // ???????????????????????????????????????????????????????????????????
+            // ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●
             // STEP 2: CREATE INITIAL HAZARD OBJECT FROM FORM DATA
-            // ???????????????????????????????????????????????????????????????????
+            // ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●
             var hazardCode = "HZ-0000";
             var hazard = new Hazard(new HazardID(hazardCode))
             {
@@ -634,13 +824,16 @@ public partial class HazardReportingBlazor : ComponentBase, IDisposable
             Logger.LogInformation("Initial hazard object created - Name: '{Name}', Type: '{Type}', Category: '{Category}'",
                 hazard.Name, hazard.HazardType, hazard.Category);
 
-            // ???????????????????????????????????????????????????????????????????
+            // ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●
             // PHASE 1: CREATE PARENT REPORT
-            // ???????????????????????????????????????????????????????????????????
+            // ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●
             var report = new Report(new ReportID("RP-0000"))
             {
                 Code = "RP-0000",
                 Name = HazardReport.HazardType,
+                ReportedBy = HazardReport.ReportedBy,
+                ReportedOn = HazardReport.ReportedOn,
+                Department = HazardReport.ReportingDepartment,  
                 Description = hazard.Description,
                 Stage = "Initial",
                 Status = "Initial"
@@ -656,11 +849,16 @@ public partial class HazardReportingBlazor : ComponentBase, IDisposable
             var actualReportCode = reportResult.Value.Code;
             Logger.LogInformation("Report created with Code: {ReportCode}", actualReportCode);
 
-            // ???????????????????????????????????????????????????????????????????
+            // ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●
             // PHASE 2: CREATE HAZARD WITH REPORT LINKAGE
-            // ???????????????????????????????????????????????????????????????????
+            // ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●
+
+            hazard.ReportedBy = HazardReport.ReportedBy;
+            hazard.ReportedOn = HazardReport.ReportedOn;
+            hazard.ReportingDepartment = HazardReport.ReportingDepartment;
             hazard.ReportCode = actualReportCode;
             hazard.ScoringPanelCode = null;
+            hazard.HazardType = "Initial";
 
             var createHazardCommand = new CreateHazardCommand(hazard);
             var createdHazardResult = await Mediator.SendAsync(createHazardCommand, CancellationToken.None);
@@ -674,15 +872,15 @@ public partial class HazardReportingBlazor : ComponentBase, IDisposable
             Logger.LogInformation("Hazard created with Code: {HazardCode}, linked to Report: {ReportCode}", 
                 createdHazard.Code, actualReportCode);
 
-            // ???????????????????????????????????????????????????????????????????
+            // ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●
             // PHASE 3: CREATE SCORING PANEL FOR RISK ASSESSMENT -- NOW DONE WHEN HAZARD IS CREATED
-            // ???????????????????????????????????????????????????????????????????
+            // ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●
             // Scoring panel creation is now handled automatically when hazard is created
             Logger.LogInformation("Scoring panel creation handled automatically during hazard creation");
 
-            // ???????????????????????????????????????????????????????????????????
+            // ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●
             // PHASE 4: CREATE GEOGRAPHIC LOCATION (IF PROVIDED)
-            // ???????????????????????????????????????????????????????????????????
+            // ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●
             if (HasGeoLocation)
             {
                 try
@@ -730,14 +928,14 @@ public partial class HazardReportingBlazor : ComponentBase, IDisposable
                 }
             }
 
-            // ???????????????????????????????????????????????????????????????????
+            // ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●
             // PHASE 5: PROCESS FILES - CREATE HAZARDFILES FROM BLAZOR FILES
-            // ???????????????????????????????????????????????????????????????????
+            // ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●
             try
             {
                 if (SelectedFiles?.Any() == true)
                 {
-                    Logger.LogInformation("?? Processing {Count} files for Hazard: {HazardCode}", 
+                    Logger.LogInformation("📎 Processing {Count} files for Hazard: {HazardCode}", 
                         SelectedFiles.Count, createdHazard.Code);
 
                     var createdFileIds = new List<string>();
@@ -791,34 +989,34 @@ public partial class HazardReportingBlazor : ComponentBase, IDisposable
                                 // Add HazardFile ID to Hazard's collection
                                 createdHazard.AddHazardFile(new HazardFileID(createdFileId));
 
-                                Logger.LogInformation("? Created HazardFile: {FileName} with ID: {FileId} for Hazard: {HazardCode}", 
+                                Logger.LogInformation("✓ Created HazardFile: {FileName} with ID: {FileId} for Hazard: {HazardCode}", 
                                     browserFile.Name, createdFileId, createdHazard.Code);
                             }
                             else
                             {
-                                Logger.LogError("? Failed to create HazardFile: {FileName} for Hazard: {HazardCode}. Error: {Error}", 
+                                Logger.LogError("✗ Failed to create HazardFile: {FileName} for Hazard: {HazardCode}. Error: {Error}", 
                                     browserFile.Name, createdHazard.Code, hazardFileResult.Error?.Message);
                             }
                         }
                         catch (Exception fileEx)
                         {
-                            Logger.LogError(fileEx, "? Exception creating HazardFile: {FileName} for Hazard: {HazardCode}", 
+                            Logger.LogError(fileEx, "✗ Exception creating HazardFile: {FileName} for Hazard: {HazardCode}", 
                                 browserFile.Name, createdHazard.Code);
                         }
                     }
 
-                    Logger.LogInformation("? File processing completed: {CreatedCount} HazardFiles created for Hazard: {HazardCode}", 
+                    Logger.LogInformation("📎 File processing completed: {CreatedCount} HazardFiles created for Hazard: {HazardCode}", 
                         createdFileIds.Count, createdHazard.Code);
                 }
             }
             catch (Exception fileEx)
             {
-                Logger.LogError(fileEx, "? Error processing files, but continuing with hazard creation");
+                Logger.LogError(fileEx, "📎 Error processing files, but continuing with hazard creation");
             }
 
-            // ???????????????????????????????????????????????????????????????????
+            // ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●
             // PHASE 6: FINAL UPDATE
-            // ???????????????????????????????????????????????????????????????????
+            // ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●
             var updatedHazardResult = await Mediator.SendAsync(new UpdateHazardCommand(createdHazard), CancellationToken.None);
 
             if (updatedHazardResult.IsFailure)
@@ -826,9 +1024,9 @@ public partial class HazardReportingBlazor : ComponentBase, IDisposable
                 throw new Exception($"Failed to update hazard: {updatedHazardResult.Error?.Message}");
             }
 
-            // ???????????????????????????????????????????????????????????????????
+            // ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●
             // SUCCESS
-            // ???????????????????????????????????????????????????????????????????
+            // ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●
             var finalHazard = updatedHazardResult.Value;
             GeneratedHazardId = finalHazard.Code;
             GeneratedReportId = finalHazard.ReportCode;
@@ -836,7 +1034,7 @@ public partial class HazardReportingBlazor : ComponentBase, IDisposable
             ShowSubmissionConfirmation = false;
             ShowFinalSuccessConfirmation = true;
             
-            Logger.LogInformation("? Hazard report submission completed successfully - HazardCode: {HazardCode}, ReportCode: {ReportCode}", 
+            Logger.LogInformation("✅ Hazard report submission completed successfully - HazardCode: {HazardCode}, ReportCode: {ReportCode}", 
                 finalHazard.Code, finalHazard.ReportCode);
 
             NotificationService.Notify(new NotificationMessage
@@ -849,7 +1047,7 @@ public partial class HazardReportingBlazor : ComponentBase, IDisposable
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Error during hazard report submission");
+            Logger.LogError(ex, "❌ Error during hazard report submission");
             
             ShowSubmissionConfirmation = false;
             
@@ -877,20 +1075,31 @@ public partial class HazardReportingBlazor : ComponentBase, IDisposable
         // Hazard type options
         HazardTypeOptions = new List<DropdownOption>
         {
-            new DropdownOption("Fire", "Fire"),
-            new DropdownOption("Flood", "Flood"),
-            new DropdownOption("Earthquake", "Earthquake"),
-            new DropdownOption("Landslide", "Landslide"),
+            new DropdownOption("Aircraft Operations", "Aircraft Operations"),
+            new DropdownOption("Ground Operations", "Ground Operations"),
+            new DropdownOption("Security Operations", "Security Operations"),
+            new DropdownOption("Weather Related", "Weather Related"),
+            new DropdownOption("Equipment Failure", "Equipment Failure"),
+            new DropdownOption("Human Factors", "Human Factors"),
+            new DropdownOption("Environmental", "Environmental"),
+            new DropdownOption("Procedural", "Procedural"),
+            new DropdownOption("Communication", "Communication"),
+            new DropdownOption("Infrastructure", "Infrastructure"),
             new DropdownOption("Other", "Other")
         };
 
-        // Sample static department options
+        // Department options
         DepartmentOptions = new List<DropdownOption>
         {
-            new DropdownOption("HR", "HR"),
-            new DropdownOption("Finance", "Finance"),
-            new DropdownOption("IT", "IT"),
-            new DropdownOption("Operations", "Operations")
+            new DropdownOption("Operations", "Operations"),
+            new DropdownOption("Ground Support", "Ground Support"),
+            new DropdownOption("Security", "Security"),
+            new DropdownOption("Maintenance", "Maintenance"),
+            new DropdownOption("Air Traffic Control", "Air Traffic Control"),
+            new DropdownOption("Cargo", "Cargo"),
+            new DropdownOption("Terminal", "Terminal"),
+            new DropdownOption("Administration", "Administration"),
+            new DropdownOption("Other", "Other")
         };
     }
 

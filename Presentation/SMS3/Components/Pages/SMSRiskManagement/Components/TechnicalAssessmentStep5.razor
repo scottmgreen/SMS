@@ -1,6 +1,7 @@
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
 @using SMS3.Components.Pages.SMSRiskManagement
+@using SMS3.Components.Shared
 @using global::System.Text.Json
 @using Radzen
 @using Radzen.Blazor
@@ -88,30 +89,9 @@
         </RadzenStack>
     </RadzenColumn>
 
-    <!-- Progress Panel -->
+    <!-- Guidance Panel -->
     <RadzenColumn Size="12" SizeLG="4">
-        <RadzenCard Style="position: sticky; top: 20px;">
-            <RadzenStack Gap="1rem">
-                <RadzenText TextStyle="TextStyle.H6" Text="Step 5 Progress" Style="color: var(--rz-primary);" />
-                
-                <RadzenFieldset Text="Mitigation Progress">
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Total Hazards: {AvailableHazards?.Count ?? 0}")" />
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Need Mitigation: {GetHazardsNeedingMitigation()}")" />
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"With Strategies: {GetHazardsWithMitigations()}")" />
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Progress: {GetMitigationProgress()}%")" />
-                </RadzenFieldset>
-
-                <RadzenFieldset Text="Residual Risk Status">
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Residual Assessments: {GetResidualAssessments()}")" />
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Completed: {GetCompletedResidualAssessments()}")" />
-                </RadzenFieldset>
-
-                <RadzenFieldset Text="Implementation">
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Strategy: {Step5.ImplementationStrategy ?? "Not selected"}")" />
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Target Date: {Step5.OverallTargetDate?.ToString("yyyy-MM-dd") ?? "Not set"}")" />
-                </RadzenFieldset>
-            </RadzenStack>
-        </RadzenCard>
+        <TechnicalAssessmentGuidancePanel StepNumber="5" />
     </RadzenColumn>
 </RadzenRow>
 
@@ -203,4 +183,4 @@
         await Step5Changed.InvokeAsync(Step5);
         await InvokeAsync(StateHasChanged);
     }
-}}
+}

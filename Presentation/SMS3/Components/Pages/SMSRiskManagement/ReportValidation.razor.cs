@@ -219,15 +219,27 @@ public partial class ReportValidation : ComponentBase
                 return;
             }
 
-            if (SelectedValidationDecision?.ShouldProceedToAssessment == true)
+            // Create validation record first
+            await CreateValidationRecord();
+
+            // Navigate based on decision
+            switch (SelectedValidationDecision.Value)
             {
-                // This is an SMS Risk - proceed to assessment
-                await ProceedToAssessmentAsync();
-            }
-            else
-            {
-                // This is Not SMS Risk or Needs Investigation - submit validation
-                await SubmitValidationAsync();
+                case "SMS_RISK":
+                    await NavigateToRiskAssessment();
+                    break;
+                
+                case "NEEDS_INVESTIGATION":
+                    await NavigateToInvestigation();
+                    break;
+                
+                case "NOT_SMS_RISK":
+                    await HandleNotSmsRisk();
+                    break;
+                
+                default:
+                    ShowErrorNotification("Invalid validation decision");
+                    break;
             }
         }
         catch (Exception ex)
@@ -243,209 +255,44 @@ public partial class ReportValidation : ComponentBase
     }
 
     /// <summary>
-    /// Submit validation decision (for NOT_SMS_RISK and NEEDS_INVESTIGATION)
+    /// Create the validation record using CQRS
     /// </summary>
-    private async Task SubmitValidationAsync()
+    private async Task CreateValidationRecord()
     {
-        try
+        var validationId = new ReportValidationID($"RV-0000");
+        
+        var validation = new SMS_Domain.Entities.ReportValidation(validationId)
         {
-            Logger.LogInformation("Submitting validation decision for ReportId: {ReportId}", ReportId);
+            Code = validationId.Value,
+            ReportCode = ReportId,
+            ValidatedBy = GetCurrentUserCode(),
+            ValidationDecision = ValidationDecisionValue,
+            ValidationComments = ValidationComments,
+            ValidationType = ValidationType ?? "Technical",
+            Status = "Completed",
+            Stage = "Complete",
+            ValidatedDate = DateTime.UtcNow,
+            CreatedBy = GetCurrentUserCode(),
+            CreatedDate = DateTime.UtcNow
+        };
 
-            // Validate required fields
-            if (string.IsNullOrWhiteSpace(ValidationComments))
-            {
-                ShowErrorNotification("Validation comments are required");
-                return;
-            }
+        var createCommand = new CreateReportValidationCommand(validation);
+        var result = await Mediator.SendAsync(createCommand, CancellationToken.None);
 
-            if (SelectedValidationDecision == null)
-            {
-                ShowErrorNotification("Please select a validation decision");
-                return;
-            }
-
-            // Create validation record using proper domain entity
-            var validationId = new ReportValidationID($"RV-0000");
-            
-            var validation = new SMS_Domain.Entities.ReportValidation(validationId)
-            {
-                Code = validationId.Value,
-                ReportCode = ReportId,
-                ValidatedBy = GetCurrentUserCode(),
-                ValidationDecision = ValidationDecisionValue,
-                ValidationComments = ValidationComments,
-                ValidationType = ValidationType ?? "Standard",
-                Status = "Completed",
-                Stage = "Complete",
-                ValidatedDate = DateTime.UtcNow,
-                CreatedBy = GetCurrentUserCode(),
-                CreatedDate = DateTime.UtcNow
-            };
-
-            var createCommand = new CreateReportValidationCommand(validation);
-            var result = await Mediator.SendAsync(createCommand, CancellationToken.None);
-
-            if (result.IsSuccess)
-            {
-                // Check if this needs investigation
-                if (SelectedValidationDecision.Value == "NEEDS_INVESTIGATION")
-                {
-                    await CreateAndNavigateToInvestigation();
-                }
-                else
-                {
-                    ShowSuccessNotification($"Validation submitted successfully. Decision: {SelectedValidationDecision.Name}");
-                    
-                    // Navigate back to processing queue
-                    await Task.Delay(1500); // Give user time to see the success message
-                    Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
-                }
-            }
-            else
-            {
-                ShowErrorNotification($"Failed to submit validation: {result.Error?.Message}");
-            }
-        }
-        catch (Exception ex)
+        if (!result.IsSuccess)
         {
-            Logger.LogError(ex, "Error submitting validation for ReportId: {ReportId}", ReportId);
-            ShowErrorNotification("Error submitting validation. Please try again.");
+            throw new Exception($"Failed to create validation: {result.Error?.Message ?? DomainErrors.ReportValidationError.CreateFailed.Message}");
         }
+
+        ShowSuccessNotification($"Validation recorded successfully. Decision: {SelectedValidationDecision.Name}");
     }
 
     /// <summary>
-    /// Create investigation and navigate to Investigation page
+    /// Navigate to Risk Assessment (Preliminary or Technical)
     /// </summary>
-    private async Task CreateAndNavigateToInvestigation()
+    private async Task NavigateToRiskAssessment()
     {
-        try
-        {
-            if (ReportHazard == null)
-            {
-                ShowErrorNotification("Cannot create investigation - hazard information not found");
-                return;
-            }
-
-            // Create investigation for the hazard
-            var investigationResult = SMS_Domain.Entities.Investigation.CreateForHazard(
-                ReportHazard.Code, 
-                GetCurrentUserCode(), 
-                ReportId);
-
-            if (investigationResult.IsSuccess)
-            {
-                var investigation = investigationResult.Value;
-                investigation.InvestigationObjectives = $"Investigation required based on validation decision for hazard {ReportHazard.Code}";
-                investigation.InvestigationNotes = $"Investigation initiated from report validation. Validation comments: {ValidationComments}";
-
-                var createCommand = new CreateInvestigationCommand(investigation);
-                var result = await Mediator.SendAsync(createCommand, CancellationToken.None);
-
-                if (result.IsSuccess)
-                {
-                    ShowSuccessNotification($"Investigation {investigation.Code} created successfully. Proceeding to investigation...");
-                    
-                    // Navigate to investigation page
-                    await Task.Delay(1500);
-                    var navigationUrl = $"/SMSRiskManagement/Investigation/{investigation.Code}/{ReportHazard.Code}";
-                    
-                    Logger.LogInformation("Navigating to investigation: {Url}", navigationUrl);
-                    Navigation.NavigateTo(navigationUrl);
-                }
-                else
-                {
-                    ShowErrorNotification($"Failed to create investigation: {result.Error?.Message}");
-                }
-            }
-            else
-            {
-                ShowErrorNotification($"Failed to create investigation: {investigationResult.Error?.Message}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error creating investigation for ReportId: {ReportId}", ReportId);
-            ShowErrorNotification("Error creating investigation. Please try again.");
-        }
-    }
-
-    /// <summary>
-    /// Get current user code from HttpContext
-    /// </summary>
-    private string GetCurrentUserCode()
-    {
-        // Implement your user identification logic here
-        // For now, return a placeholder
-        return "SYSTEM_USER"; // Replace with actual user identification logic
-    }
-
-    /// <summary>
-    /// Proceed to risk assessment (for SMS_RISK decisions)
-    /// </summary>
-    private async Task ProceedToAssessmentAsync()
-    {
-        try
-        {
-            Logger.LogInformation("Proceeding to risk assessment for ReportId: {ReportId}", ReportId);
-
-            // Validate required fields
-            if (string.IsNullOrWhiteSpace(ValidationComments))
-            {
-                ShowErrorNotification("Validation comments are required");
-                return;
-            }
-
-            if (SelectedValidationDecision == null)
-            {
-                ShowErrorNotification("Please select a validation decision");
-                return;
-            }
-
-            // Create validation record
-            var validationId = new ReportValidationID($"RV-0000");
-            
-            var validation = new SMS_Domain.Entities.ReportValidation(validationId)
-            {
-                Code = validationId.Value,
-                ReportCode = ReportId,
-                ValidatedBy = GetCurrentUserCode(),
-                ValidationDecision = ValidationDecisionValue,
-                ValidationComments = ValidationComments,
-                ValidationType = ValidationType ?? "Technical",
-                Status = "Completed",
-                Stage = "Complete",
-                ValidatedDate = DateTime.UtcNow,
-                CreatedBy = GetCurrentUserCode(),
-                CreatedDate = DateTime.UtcNow
-            };
-
-            var createCommand = new CreateReportValidationCommand(validation);
-            var result = await Mediator.SendAsync(createCommand, CancellationToken.None);
-
-            if (result.IsSuccess)
-            {
-                ShowSuccessNotification($"Validation completed. Proceeding to {ValidationType} Assessment...");
-                
-                // Show Airport Shared Dataset dialog before proceeding to assessment
-                await ShowAirportSharedDatasetDialog();
-            }
-            else
-            {
-                ShowErrorNotification($"Failed to create validation: {result.Error?.Message}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error proceeding to assessment for ReportId: {ReportId}", ReportId);
-            ShowErrorNotification("Error proceeding to assessment. Please try again.");
-        }
-    }
-
-    /// <summary>
-    /// Show dialog asking if user wants to create an Airport Shared Dataset
-    /// </summary>
-    private async Task ShowAirportSharedDatasetDialog()
-    {
+        // Show Airport Shared Dataset dialog before proceeding to assessment
         var result = await DialogService.Confirm(
             message: "Do you want to create an Airport Shared Dataset for this SMS Risk assessment?",
             title: "Airport Shared Dataset", 
@@ -473,45 +320,183 @@ public partial class ReportValidation : ComponentBase
         {
             // User skipped dataset creation - proceed directly to assessment
             Logger.LogInformation("User skipped Airport Shared Dataset creation for Report: {ReportId}", ReportId);
-            await NavigateToAssessment();
+            
+            var assessmentType = ValidationType?.ToLower() switch
+            {
+                "technical" => "TechnicalAssessment",
+                "preliminary" => "PreliminaryRiskAssessment", 
+                _ => "TechnicalAssessment"
+            };
+
+            string navigationUrl;
+            if (ReportHazard != null)
+            {
+                navigationUrl = $"/SMSRiskManagement/{assessmentType}/{ReportId}/{ReportHazard.Code}/1";
+            }
+            else
+            {
+                navigationUrl = $"/SMSRiskManagement/{assessmentType}/{ReportId}/1";
+            }
+
+            Logger.LogInformation("Navigating to {AssessmentType}: {Url}", assessmentType, navigationUrl);
+            
+            await Task.Delay(1500);
+            Navigation.NavigateTo(navigationUrl);
         }
     }
 
     /// <summary>
-    /// Navigate to the appropriate risk assessment page
+    /// Navigate to Investigation (create investigation first if needed)
     /// </summary>
-    private async Task NavigateToAssessment()
+    private async Task NavigateToInvestigation()
     {
-        var assessmentType = ValidationType?.ToLower() switch
+        try
         {
-            "technical" => "TechnicalAssessment",
-            "preliminary" => "PreliminaryAssessment", 
-            _ => "TechnicalAssessment"
-        };
+            if (ReportHazard == null)
+            {
+                ShowErrorNotification("Cannot create investigation - hazard information not found");
+                return;
+            }
 
-        // Simple, reliable routing - use Report ID directly
-        string navigationUrl;
-        if (ReportHazard != null)
+            if (string.IsNullOrWhiteSpace(ReportHazard.Code))
+            {
+                ShowErrorNotification("Cannot create investigation - invalid hazard code");
+                return;
+            }
+
+            // Check for existing investigation first
+            var existingInvestigationQuery = new GetAllInvestigationsQuery();
+            var existingResult = await Mediator.SendAsync(existingInvestigationQuery, CancellationToken.None);
+
+            Investigation? existingInvestigation = null;
+            if (existingResult.IsSuccess && existingResult.Value != null)
+            {
+                existingInvestigation = existingResult.Value.FirstOrDefault(inv =>
+                    !string.IsNullOrWhiteSpace(inv.HazardCode) && inv.HazardCode.Equals(ReportHazard.Code, StringComparison.OrdinalIgnoreCase) ||
+                    !string.IsNullOrWhiteSpace(inv.ReportCode) && inv.ReportCode.Equals(ReportId, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (existingInvestigation != null)
+            {
+                // Navigate to existing investigation
+                ShowSuccessNotification($"Loading existing investigation {existingInvestigation.Code}");
+                var navigationUrl = $"/SMSRiskManagement/Investigation/{existingInvestigation.Code}/{ReportHazard.Code}";
+                Logger.LogInformation("Navigating to existing investigation: {Url}", navigationUrl);
+                await Task.Delay(1500);
+                Navigation.NavigateTo(navigationUrl);
+            }
+            else
+            {
+                // Create new investigation
+                var investigationCode = $"IN-0000";
+                var investigationId = new InvestigationID(investigationCode);
+                Investigation investigation = new Investigation(investigationId);
+                investigation.HazardCode = ReportHazard.Code;
+                investigation.CreatedBy = GetCurrentUserCode();
+                investigation.ReportCode = ReportId;
+                investigation.AssignedInvestigatorId = GetCurrentUserCode();
+                investigation.InvestigationObjectives = $"Investigation required based on validation decision for hazard {ReportHazard.Code}";
+                investigation.InvestigationNotes = $"Investigation initiated from report validation. Validation comments: {ValidationComments}";
+
+                CreateInvestigationCommand command = new CreateInvestigationCommand(investigation);
+                var createResult = await Mediator.SendAsync(command, CancellationToken.None);
+
+                if (createResult.IsSuccess)
+                {
+                    var newInvestigation = createResult.Value;
+                    ShowSuccessNotification($"Investigation {newInvestigation.Code} created successfully");
+                    var navigationUrl = $"/SMSRiskManagement/Investigation/{newInvestigation.Code}/{ReportHazard.Code}";
+                    Logger.LogInformation("Navigating to new investigation: {Url}", navigationUrl);
+                    await Task.Delay(1500);
+                    Navigation.NavigateTo(navigationUrl);
+                }
+                else
+                {
+                    throw new Exception($"Failed to create investigation: {createResult.Error?.Message ?? DomainErrors.InvestigationError.CreateFailed.Message}");
+                }
+            }
+        }
+        catch (Exception ex)
         {
-            // Pass Report ID as AssessmentId and Hazard ID as second parameter
-            // /SMSRiskManagement/PreliminaryAssessment/{AssessmentId}/{HazardId}
-            navigationUrl = $"/SMSRiskManagement/{assessmentType}/{ReportId}/{ReportHazard.Code}";
+            Logger.LogError(ex, "Error handling investigation for ReportId: {ReportId}", ReportId);
+            ShowErrorNotification("Error handling investigation. Please try again.");
+        }
+    }
+
+    /// <summary>
+    /// Handle NOT_SMS_RISK decision - prompt user and close report if confirmed
+    /// </summary>
+    private async Task HandleNotSmsRisk()
+    {
+        var confirmed = await DialogService.Confirm(
+            message: "This report has been determined to be NOT an SMS Risk. Do you want to close this report?",
+            title: "Close Report", 
+            options: new ConfirmOptions() 
+            { 
+                OkButtonText = "Yes, Close Report", 
+                CancelButtonText = "No, Keep Open",
+                Width = "500px"
+            });
+
+        if (confirmed == true)
+        {
+            await CloseReport();
         }
         else
         {
-            // Just Report ID if no hazard
-            // /SMSRiskManagement/PreliminaryAssessment/{AssessmentId}
-            navigationUrl = $"/SMSRiskManagement/{assessmentType}/{ReportId}";
+            ShowSuccessNotification("Validation completed. Report remains open for further review.");
+            await Task.Delay(1500);
+            Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
         }
-
-        // Add a slight delay to show the success message
-        await Task.Delay(1500);
-        
-        Logger.LogInformation("Navigating to assessment: {Url} (ReportId: {ReportId}, HazardId: {HazardId})", 
-            navigationUrl, ReportId, ReportHazard?.Code ?? "None");
-        Navigation.NavigateTo(navigationUrl);
     }
-    
+
+    /// <summary>
+    /// Close the report using CQRS mediator
+    /// </summary>
+    private async Task CloseReport()
+    {
+        try
+        {
+            if (ReportDetails == null)
+            {
+                throw new Exception("Report details not loaded");
+            }
+
+            // Update report status to Closed
+            ReportDetails.Status = "Closed";
+            ReportDetails.UpdatedBy = GetCurrentUserCode();
+            ReportDetails.UpdatedDate = DateTime.UtcNow;
+
+            var updateCommand = new UpdateReportCommand(ReportDetails);
+            var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+
+            if (result.IsSuccess)
+            {
+                ShowSuccessNotification("Report has been closed successfully");
+                Logger.LogInformation("Report {ReportId} closed due to NOT_SMS_RISK validation", ReportId);
+                await Task.Delay(1500);
+                Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
+            }
+            else
+            {
+                throw new Exception($"Failed to close report: {result.Error?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error closing report {ReportId}", ReportId);
+            ShowErrorNotification($"Error closing report: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Get current user code from HttpContext
+    /// </summary>
+    private string GetCurrentUserCode()
+    {
+        return "SYSTEM_USER"; // Replace with actual user identification logic
+    }
+
     #endregion
 
     #region Validation Entity Management
@@ -539,29 +524,6 @@ public partial class ReportValidation : ComponentBase
             validation.Status = "Completed";
             
             return validation;
-        }
-    }
-
-    private async Task<Result<SMS_Domain.Entities.ReportValidation>> SaveValidationAsync(SMS_Domain.Entities.ReportValidation validationEntity)
-    {
-        try
-        {
-            if (IsUpdate && ExistingValidation != null)
-            {
-                var updateCommand = new UpdateReportValidationCommand(validationEntity);
-                return await Mediator.SendAsync(updateCommand, CancellationToken.None);
-            }
-            else
-            {
-                var createCommand = new CreateReportValidationCommand(validationEntity);
-                return await Mediator.SendAsync(createCommand, CancellationToken.None);
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error saving validation entity");
-            return Result<SMS_Domain.Entities.ReportValidation>.Failure<SMS_Domain.Entities.ReportValidation>(
-                DomainErrors.ReportValidationError.CreateFailed);
         }
     }
 

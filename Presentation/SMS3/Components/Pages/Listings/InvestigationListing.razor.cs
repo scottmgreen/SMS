@@ -6,6 +6,7 @@ using SMS_Application.Interfaces;
 using SMS_Shared.Common;
 using Radzen;
 using Radzen.Blazor;
+using System.Linq.Expressions;
 
 namespace SMS3.Components.Pages.Listings;
 
@@ -14,6 +15,7 @@ public partial class InvestigationListing : ComponentBase
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<InvestigationListing> Logger { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
 
     private RadzenDataGrid<Investigation>? investigationsGrid;
     private IEnumerable<Investigation> investigations = new List<Investigation>();
@@ -105,6 +107,32 @@ public partial class InvestigationListing : ComponentBase
     private void ShowActions(Investigation investigation)
     {
         Logger.LogInformation("Actions requested for investigation: {Code}", investigation.Code);
+    }
+
+    private void ViewInvestigation(Investigation investigation)
+    {
+        if (investigation == null) return;
+        
+        // Navigate to Investigation with HazardCode if available
+        var navigationUrl = string.IsNullOrWhiteSpace(investigation.HazardCode) 
+            ? $"/SMSRiskManagement/Investigation/{investigation.Code}"
+            : $"/SMSRiskManagement/Investigation/{investigation.Code}/{investigation.HazardCode}";
+            
+        Logger.LogInformation("Navigating to investigation: {Code} with URL: {Url}", investigation.Code, navigationUrl);
+        Navigation.NavigateTo(navigationUrl);
+    }
+
+    private void EditInvestigation(Investigation investigation)
+    {
+        if (investigation == null) return;
+        
+        // Navigate to Investigation edit mode with HazardCode if available
+        var navigationUrl = string.IsNullOrWhiteSpace(investigation.HazardCode) 
+            ? $"/SMSRiskManagement/Investigation/{investigation.Code}"
+            : $"/SMSRiskManagement/Investigation/{investigation.Code}/{investigation.HazardCode}";
+            
+        Logger.LogInformation("Navigating to edit investigation: {Code} with URL: {Url}", investigation.Code, navigationUrl);
+        Navigation.NavigateTo(navigationUrl);
     }
 
     private void ShowErrorNotification(string message)

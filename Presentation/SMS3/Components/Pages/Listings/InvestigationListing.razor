@@ -36,10 +36,16 @@
         <RadzenDataGridColumn TItem="Investigation" Property="CreatedBy" Title="Created By" Width="150px" />
         <RadzenDataGridColumn TItem="Investigation" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
         
-        <RadzenDataGridColumn TItem="Investigation" Title="Actions" Width="100px" Sortable="false" Filterable="false">
+        <RadzenDataGridColumn TItem="Investigation" Title="Actions" Width="150px" Sortable="false" Filterable="false">
             <Template Context="investigation">
-                <RadzenButton Icon="more_vert" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
-                            Click="@(() => ShowActions(investigation))" Disabled="true" />
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                    <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" 
+                                Click="@(() => ViewInvestigation(investigation))" 
+                                Tooltip="View Investigation Details" />
+                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" 
+                                Click="@(() => EditInvestigation(investigation))" 
+                                Tooltip="Edit Investigation" />
+                </RadzenStack>
             </Template>
         </RadzenDataGridColumn>
     </Columns>

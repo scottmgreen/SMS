@@ -230,8 +230,8 @@
 </style>
 
 @code {
-    [Parameter] public EventCallback<SMS3.Components.Pages.SMSRiskManagement.Components.GeoLocationData> OnLocationSelected { get; set; }
-    [Parameter] public SMS3.Components.Pages.SMSRiskManagement.Components.GeoLocationData? InitialLocation { get; set; }
+    [Parameter] public EventCallback<SMS3.Components.Pages.SMSRiskManagement.GeoLocationData> OnLocationSelected { get; set; }
+    [Parameter] public SMS3.Components.Pages.SMSRiskManagement.GeoLocationData? InitialLocation { get; set; }
 
     // UI State
     public bool ShowLocationPanel { get; set; }
@@ -250,7 +250,7 @@
     public List<MapMarker> MapMarkers { get; set; } = new();
 
     // Selected Location
-    public SMS3.Components.Pages.SMSRiskManagement.Components.GeoLocationData SelectedLocation { get; set; } = new();
+    public SMS3.Components.Pages.SMSRiskManagement.GeoLocationData SelectedLocation { get; set; } = new();
 
     // Configuration
     public string GoogleMapsApiKey => "YOUR_GOOGLE_MAPS_API_KEY"; // TODO: Move to configuration
@@ -323,7 +323,7 @@
             MapMarkers.Add(newMarker);
 
             // Update selected location
-            SelectedLocation = new SMS3.Components.Pages.SMSRiskManagement.Components.GeoLocationData
+            SelectedLocation = new SMS3.Components.Pages.SMSRiskManagement.GeoLocationData
             {
                 Latitude = (decimal)args.Position.Lat,
                 Longitude = (decimal)args.Position.Lng,
@@ -379,7 +379,7 @@
             var lat = 45.5898M + (decimal)(random.NextDouble() - 0.5) * 0.01M;
             var lng = -122.5951M + (decimal)(random.NextDouble() - 0.5) * 0.01M;
 
-            SelectedLocation = new SMS3.Components.Pages.SMSRiskManagement.Components.GeoLocationData
+            SelectedLocation = new SMS3.Components.Pages.SMSRiskManagement.GeoLocationData
             {
                 Latitude = lat,
                 Longitude = lng,
@@ -426,7 +426,7 @@
     {
         if (!HasValidManualCoordinates) return;
 
-        SelectedLocation = new SMS3.Components.Pages.SMSRiskManagement.Components.GeoLocationData
+        SelectedLocation = new SMS3.Components.Pages.SMSRiskManagement.GeoLocationData
         {
             Latitude = ManualLatitude,
             Longitude = ManualLongitude,
@@ -461,7 +461,7 @@
     {
         if (string.IsNullOrWhiteSpace(LocationDescription)) return;
 
-        SelectedLocation = new SMS3.Components.Pages.SMSRiskManagement.Components.GeoLocationData
+        SelectedLocation = new SMS3.Components.Pages.SMSRiskManagement.GeoLocationData
         {
             Latitude = 0, // No coordinates, description only
             Longitude = 0,
@@ -502,7 +502,7 @@
 
     private void ClearSelection()
     {
-        SelectedLocation = new SMS3.Components.Pages.SMSRiskManagement.Components.GeoLocationData();
+        SelectedLocation = new SMS3.Components.Pages.SMSRiskManagement.GeoLocationData();
         ManualLatitude = 0;
         ManualLongitude = 0;
         ManualDescription = string.Empty;
@@ -531,7 +531,7 @@
             MapMarkers.Add(newMarker);
 
             // Update selected location
-            SelectedLocation = new SMS3.Components.Pages.SMSRiskManagement.Components.GeoLocationData
+            SelectedLocation = new SMS3.Components.Pages.SMSRiskManagement.GeoLocationData
             {
                 Latitude = (decimal)lat,
                 Longitude = (decimal)lng,
@@ -571,6 +571,6 @@
 
     public class GoogleMapClickEventArgs
     {
-        public GoogleMapPosition Position { get; set; } = new();
+        public Radzen.GoogleMapPosition Position { get; set; } = new();
     }
 }

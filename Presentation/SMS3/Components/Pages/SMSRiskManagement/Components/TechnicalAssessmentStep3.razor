@@ -1,6 +1,7 @@
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
 @using SMS3.Components.Pages.SMSRiskManagement
+@using SMS3.Components.Shared
 @using global::System.Text.Json
 @using Radzen
 @using Radzen.Blazor
@@ -25,25 +26,8 @@
                         </RadzenColumn>
                     </RadzenRow>
 
-                    <RadzenAlert AlertStyle="AlertStyle.Info" Icon="info" ShowIcon="true">
-                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-                            <RadzenStack Gap="0.5rem">
-                                <RadzenText TextStyle="TextStyle.Subtitle2" Text="Risk Analysis - SMS Risk Matrix" Style="margin: 0;" />
-                                <RadzenText TextStyle="TextStyle.Body2">
-                                    For each identified hazard, we need to determine the <strong>worst credible outcome</strong> 
-                                    and analyze the <strong>root causes</strong> that could lead to that outcome.
-                                </RadzenText>
-                            </RadzenStack>
-                            <RadzenStack Gap="0.25rem" Style="text-align: right;">
-                                <RadzenText TextStyle="TextStyle.Caption" Text="Method: SMS Risk Matrix" />
-                                <RadzenText TextStyle="TextStyle.Caption" Text="@($"Hazards: {AvailableHazards?.Count ?? 0}")" />
-                                <RadzenText TextStyle="TextStyle.Caption" Text="@($"Analyzed: {GetAnalyzedCount()}")" />
-                            </RadzenStack>
-                        </RadzenStack>
-                    </RadzenAlert>
-
                     <RadzenFormField Text="Risk Analysis Criteria" Variant="Variant.Outlined">
-                        <RadzenTextArea @bind-Value="@Step3.RiskCriteria" Rows="2" 
+                        <RadzenTextArea @bind-Value="@Step3.RiskCriteria" Rows="6" 
                                         Placeholder="Specify any specific criteria or assumptions for this risk analysis..." 
                                         Style="width: 100%;" />
                     </RadzenFormField>
@@ -78,11 +62,14 @@
                                     <RadzenRow AlignItems="AlignItems.Center">
                                         <RadzenColumn Size="10">
                                             <RadzenStack Gap="0.25rem">
-                                                <RadzenText TextStyle="TextStyle.Subtitle1" Text="@($"{hazard.Code}: {hazard.Description}")" Style="margin: 0;" />
-                                                @if (!string.IsNullOrEmpty(hazard.HazardType))
-                                                {
-                                                    <RadzenBadge Text="@hazard.HazardType" BadgeStyle="BadgeStyle.Info" />
-                                                }
+                                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                                    <RadzenText TextStyle="TextStyle.H6" Text="@hazard.Code" Style="margin: 0; font-weight: bold; color: var(--rz-primary);" />
+                                                    @if (!string.IsNullOrEmpty(hazard.HazardType))
+                                                    {
+                                                        <RadzenBadge Text="@hazard.HazardType" BadgeStyle="BadgeStyle.Info" />
+                                                    }
+                                                </RadzenStack>
+                                                <RadzenText TextStyle="TextStyle.Subtitle1" Text="@hazard.Description" Style="margin: 0;" />
                                             </RadzenStack>
                                         </RadzenColumn>
                                         <RadzenColumn Size="2">
@@ -102,7 +89,9 @@
                                         <RadzenColumn Size="12" SizeMD="6">
                                             <RadzenStack Gap="0.5rem">
                                                 <RadzenFormField Text="Worst Credible Outcome *" Variant="Variant.Outlined">
-                                                    <RadzenTextArea @bind-Value="@analysis.WorstCredibleOutcome" Rows="3"
+                                                    <RadzenTextArea @bind-Value="@analysis.WorstCredibleOutcome" 
+                                                                    @oninput="@((args) => OnAnalysisFieldChanged())"
+                                                                    Rows="3"
                                                                     Placeholder="Describe the worst reasonable outcome that could result from this hazard..."
                                                                     Style="width: 100%;" />
                                                 </RadzenFormField>
@@ -113,7 +102,9 @@
                                         <RadzenColumn Size="12" SizeMD="6">
                                             <RadzenStack Gap="0.5rem">
                                                 <RadzenFormField Text="Root Cause Analysis *" Variant="Variant.Outlined">
-                                                    <RadzenTextArea @bind-Value="@analysis.RootCauseAnalysis" Rows="3"
+                                                    <RadzenTextArea @bind-Value="@analysis.RootCauseAnalysis" 
+                                                                    @oninput="@((args) => OnAnalysisFieldChanged())"
+                                                                    Rows="3"
                                                                     Placeholder="Identify the underlying root causes that could lead to this hazard..."
                                                                     Style="width: 100%;" />
                                                 </RadzenFormField>
@@ -125,7 +116,9 @@
 
                                     <!-- Additional Comments -->
                                     <RadzenFormField Text="Additional Analysis Comments" Variant="Variant.Outlined">
-                                        <RadzenTextArea @bind-Value="@analysis.AdditionalComments" Rows="2"
+                                        <RadzenTextArea @bind-Value="@analysis.AdditionalComments" 
+                                                        @oninput="@((args) => OnAnalysisFieldChanged())"
+                                                        Rows="2"
                                                         Placeholder="Document any additional context, assumptions, or observations..."
                                                         Style="width: 100%;" />
                                     </RadzenFormField>
@@ -151,23 +144,9 @@
         </RadzenStack>
     </RadzenColumn>
 
-    <!-- Debug Panel -->
+    <!-- Guidance Panel -->
     <RadzenColumn Size="12" SizeLG="4">
-        <RadzenCard Style="position: sticky; top: 20px;">
-            <RadzenStack Gap="1rem">
-                <RadzenText TextStyle="TextStyle.H6" Text="Step 3 Debug Info" Style="color: var(--rz-primary);" />
-                
-                <RadzenFieldset Text="Analysis Progress">
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Total Hazards: {AvailableHazards?.Count ?? 0}")" />
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Analyzed: {GetAnalyzedCount()}")" />
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Progress: {GetAnalysisProgress()}%")" />
-                </RadzenFieldset>
-
-                <RadzenFieldset Text="Validation">
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@GetValidationSummary()" />
-                </RadzenFieldset>
-            </RadzenStack>
-        </RadzenCard>
+        <TechnicalAssessmentGuidancePanel StepNumber="3" />
     </RadzenColumn>
 </RadzenRow>
 
@@ -237,5 +216,14 @@
     {
         // Simple placeholder - in a real implementation this would navigate
         Console.WriteLine("Navigate to Step 2");
+    }
+
+    private async Task OnAnalysisFieldChanged()
+    {
+        // Trigger state update when analysis fields change
+        await InvokeAsync(StateHasChanged);
+        
+        // Also notify parent of changes
+        await Step3Changed.InvokeAsync(Step3);
     }
 }

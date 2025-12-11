@@ -1,0 +1,156 @@
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenCard Style="position: sticky; top: 20px;">
+    <RadzenStack Gap="1rem">
+        <!-- Header -->
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="8">
+                <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-warning); margin: 0;">
+                    <RadzenIcon Icon="help_outline" Style="margin-right: 0.5rem;" />
+                    Step @StepNumber Guidance
+                </RadzenText>
+            </RadzenColumn>
+            <RadzenColumn Size="4">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+                    <RadzenButton Icon="@(isExpanded ? "expand_less" : "expand_more")" 
+                                 ButtonStyle="ButtonStyle.Light" 
+                                 Size="ButtonSize.Small"
+                                 Click="@(() => isExpanded = !isExpanded)" 
+                                 title="@(isExpanded ? "Collapse" : "Expand")" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <!-- Content -->
+        @if (isExpanded)
+        {
+            <RadzenStack Gap="1rem">
+                @if (StepNumber == 1)
+                {
+                    <div>
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom: 0.5rem;">System Description Requirements:</RadzenText>
+                        <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.875rem;">
+                            <li>Define system boundaries clearly</li>
+                            <li>Document system purpose and objectives</li>
+                            <li>Complete 5M framework analysis</li>
+                            <li>Identify key stakeholder groups</li>
+                            <li>Consider operational context</li>
+                        </ul>
+                    </div>
+
+                    <!-- 5M Framework Quick Reference -->
+                    <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-50);">
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="5M Framework Quick Reference:" Style="margin-bottom: 0.5rem;" />
+                        <RadzenRow Gap="0.5rem">
+                            <RadzenColumn Size="6">
+                                <ul style="margin: 0; padding-left: 1rem; font-size: 0.75rem;">
+                                    <li><strong>Man:</strong> People, roles, training</li>
+                                    <li><strong>Machine:</strong> Equipment, systems</li>
+                                    <li><strong>Method:</strong> Procedures, processes</li>
+                                </ul>
+                            </RadzenColumn>
+                            <RadzenColumn Size="6">
+                                <ul style="margin: 0; padding-left: 1rem; font-size: 0.75rem;">
+                                    <li><strong>Material:</strong> Resources, supplies</li>
+                                    <li><strong>Milieu:</strong> Environment, culture</li>
+                                </ul>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenCard>
+                }
+                else if (StepNumber == 2)
+                {
+                    <div>
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom: 0.5rem;">Hazard Identification Tips:</RadzenText>
+                        <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.875rem;">
+                            <li>Review historical incidents</li>
+                            <li>Analyze operational data</li>
+                            <li>Conduct stakeholder interviews</li>
+                            <li>Perform system walkthroughs</li>
+                            <li>Use hazard taxonomies</li>
+                        </ul>
+                    </div>
+                }
+                else if (StepNumber == 3)
+                {
+                    <div>
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom: 0.5rem;">Risk Analysis Methods:</RadzenText>
+                        <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.875rem;">
+                            <li>Document assumptions and criteria</li>
+                            <li>Determine severity levels</li>
+                            <li>Review existing controls</li>
+                            <li>Position on risk matrix</li>
+                            <li>Analyze what-if scenarios</li>
+                        </ul>
+                    </div>
+                }
+                else if (StepNumber == 4)
+                {
+                    <div>
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom: 0.5rem;">Risk Assessment Criteria:</RadzenText>
+                        <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.875rem;">
+                            <li>Tolerability thresholds</li>
+                            <li>ALARP principles</li>
+                            <li>Regulatory requirements</li>
+                            <li>Industry standards</li>
+                            <li>Organizational policies</li>
+                        </ul>
+                    </div>
+
+                    <!-- Simple Risk Matrix Quick Reference -->
+                    <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-50);">
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="5x5 Risk Matrix:" Style="margin-bottom: 0.5rem;" />
+                        <div style="font-size: 0.75rem;">
+                            <RadzenText TextStyle="TextStyle.Caption" Style="font-weight: bold;">Severity:</RadzenText> Minor ? Moderate ? Serious ? Major ? Catastrophic<br/>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="font-weight: bold;">Likelihood:</RadzenText> Rare ? Unlikely ? Possible ? Likely ? Frequent<br/>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="font-weight: bold;">Result:</RadzenText> Very Low ? Low ? Medium ? High ? Very High
+                        </div>
+                    </RadzenCard>
+                }
+                else if (StepNumber == 5)
+                {
+                    <div>
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom: 0.5rem;">Mitigation Strategies:</RadzenText>
+                        <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.875rem;">
+                            <li>Engineering controls</li>
+                            <li>Administrative controls</li>
+                            <li>Training and competency</li>
+                            <li>Emergency procedures</li>
+                            <li>Monitoring systems</li>
+                        </ul>
+                    </div>
+
+                    <!-- Hierarchy of Controls -->
+                    <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-50);">
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="Hierarchy of Controls (Most to Least Effective):" Style="margin-bottom: 0.5rem;" />
+                        <ol style="margin: 0; padding-left: 1rem; font-size: 0.75rem;">
+                            <li><strong>Eliminate:</strong> Remove the hazard</li>
+                            <li><strong>Substitute:</strong> Replace with safer option</li>
+                            <li><strong>Engineering:</strong> Physical safeguards</li>
+                            <li><strong>Administrative:</strong> Procedures, training</li>
+                            <li><strong>PPE:</strong> Personal protective equipment</li>
+                        </ol>
+                    </RadzenCard>
+                }
+
+                <!-- General Progress Tips -->
+                <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-success-lighter);">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-success-darker);">
+                        <RadzenIcon Icon="lightbulb_outline" Style="margin-right: 0.25rem;" />
+                        <strong>Tip:</strong> Use the Save Draft button frequently to preserve your progress. 
+                        All fields are validated before moving to the next step.
+                    </RadzenText>
+                </RadzenCard>
+            </RadzenStack>
+        }
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    [Parameter] public int StepNumber { get; set; } = 1;
+
+    private bool isExpanded = true;
+}

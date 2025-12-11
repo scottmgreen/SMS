@@ -42,6 +42,9 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportCode, report.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportName, report.Name));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportedBy, report.ReportedBy));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportedOn, report.ReportedOn));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportedByDepartment, report.Department));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportDescription, report.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportStatus, report.Status));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportStage, report.Stage));

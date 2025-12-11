@@ -52,16 +52,21 @@ public class SMSInvestigationWorkflowService : ISMSInvestigationWorkflowService
             }
 
             // Generate investigation code
-            var investigationCode = $"INV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
+            var investigationCode = $"IN-0000";
             var investigationId = new InvestigationID(investigationCode);
 
-            // Create Investigation domain entity
+            // Create Investigation domain entity with proper HazardCode
             var investigation = new Investigation(investigationId)
             {
                 Code = investigationCode,
-                ReportCode = hazardCode, // Link to the hazard
-                InvestigationNotes = investigationNotes ?? string.Empty
+                HazardCode = hazardCode, // This is the critical field that cannot be null
+                AssignedInvestigatorId = assignedInvestigatorId,
+                InvestigationNotes = investigationNotes ?? string.Empty,
+                Status = "Assigned"
             };
+
+            _logger.LogInformation("Creating investigation with HazardCode: {HazardCode}, AssignedTo: {Investigator}", 
+                hazardCode, assignedInvestigatorId);
 
             // Use CQRS to create investigation
             var command = new CreateInvestigationCommand(investigation);

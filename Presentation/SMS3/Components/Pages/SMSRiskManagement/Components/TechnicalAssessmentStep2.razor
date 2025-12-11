@@ -1,6 +1,7 @@
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
 @using SMS3.Components.Pages.SMSRiskManagement
+@using SMS3.Components.Shared
 @using global::System.Text.Json
 @using Radzen
 @using Radzen.Blazor
@@ -53,9 +54,9 @@
                                     </Template>
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="Hazard" Property="Description" Title="Description" />
-                                <RadzenDataGridColumn TItem="Hazard" Property="HazardType" Title="Category">
+                                <RadzenDataGridColumn TItem="Hazard" Property="Category" Title="Category">
                                     <Template Context="hazard">
-                                        <RadzenBadge Text="@(hazard.HazardType ?? "Not specified")" BadgeStyle="BadgeStyle.Secondary" />
+                                        <RadzenBadge Text="@(hazard.Category ?? "Not specified")" BadgeStyle="BadgeStyle.Secondary" />
                                     </Template>
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="Hazard" Title="Actions">
@@ -82,6 +83,12 @@
                         <RadzenTextArea @bind-Value="@NewHazardDescription" Rows="3" 
                                         Placeholder="Describe the hazard clearly and specifically..." Style="width: 100%;" />
                     </RadzenFormField>
+                    @if (!string.IsNullOrWhiteSpace(NewHazardDescription) && NewHazardDescription.Trim().Length < 10)
+                    {
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger);">
+                            Description must be at least 10 characters (currently @(NewHazardDescription.Trim().Length))
+                        </RadzenText>
+                    }
                     
                     <RadzenRow Gap="1rem">
                         <RadzenColumn Size="12" SizeMD="6">
@@ -100,24 +107,16 @@
                     </RadzenRow>
                     
                     <RadzenButton Text="Add Hazard" Icon="add" ButtonStyle="ButtonStyle.Success" 
-                                  Click="@AddNewHazard" Disabled="@IsSaving" />
+                                  Click="@AddNewHazard" 
+                                  Disabled="@(IsSaving || !IsAddHazardFormValid)" />
                 </RadzenStack>
             </RadzenCard>
         </RadzenStack>
     </RadzenColumn>
 
-    <!-- Debug Panel -->
+    <!-- Guidance Panel -->
     <RadzenColumn Size="12" SizeLG="4">
-        <RadzenCard Style="position: sticky; top: 20px;">
-            <RadzenStack Gap="1rem">
-                <RadzenText TextStyle="TextStyle.H6" Text="Step 2 Debug Info" Style="color: var(--rz-primary);" />
-                
-                <RadzenFieldset Text="Data Counts">
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Available Hazards: {AvailableHazards?.Count ?? 0}")" />
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"New Hazard Desc: {NewHazardDescription?.Length ?? 0} chars")" />
-                </RadzenFieldset>
-            </RadzenStack>
-        </RadzenCard>
+        <TechnicalAssessmentGuidancePanel StepNumber="2" />
     </RadzenColumn>
 </RadzenRow>
 
@@ -128,13 +127,21 @@
     [Parameter] public List<Hazard> AvailableHazards { get; set; } = new();
     [Parameter] public EventCallback<Hazard> OnHazardAdded { get; set; }
     [Parameter] public EventCallback<Hazard> OnHazardUpdated { get; set; }
+    [Parameter] public string? ReportId { get; set; } // Add ReportId parameter
 
     private bool IsSaving { get; set; } = false;
-    
+
     // Simple properties for form binding
     private string NewHazardDescription { get; set; } = string.Empty;
     private string NewHazardCategory { get; set; } = string.Empty;
     private string NewHazardFiveM { get; set; } = string.Empty;
+
+    // VALIDATION: Check if form is ready for submission
+    private bool IsAddHazardFormValid => 
+        !string.IsNullOrWhiteSpace(NewHazardDescription?.Trim()) && 
+        NewHazardDescription.Trim().Length >= 10 &&
+        !string.IsNullOrWhiteSpace(NewHazardCategory) && 
+        !string.IsNullOrWhiteSpace(NewHazardFiveM);
 
     private List<string> HazardCategories = new()
     {
@@ -162,7 +169,7 @@
 
     private async Task AddNewHazard()
     {
-        if (string.IsNullOrWhiteSpace(NewHazardDescription))
+        if (!IsAddHazardFormValid)
             return;
 
         try
@@ -170,36 +177,39 @@
             IsSaving = true;
             StateHasChanged();
 
-            // Create hazard using the proper domain factory method
-            var hazardResult = Hazard.CreateComprehensive(
-                code: "HZ-0000", // Database will generate the actual code
-                description: NewHazardDescription,
-                category: NewHazardCategory ?? "Other",
-                reportedBy: "SYSTEM", // In a real app, this would be the current user
-                reportingDepartment: "Technical Assessment",
-                hazardType: NewHazardCategory,
-                fiveMComponent: GetFiveMComponent(NewHazardFiveM),
-                isConfidential: false,
-                isAnonymous: false
-            );
+            // Create hazard using the proper domain constructor
+            HazardID hazardID = new HazardID("HZ-0000");
+            Hazard hazard = new Hazard(hazardID);
 
-            if (hazardResult.IsFailure)
-            {
-                Console.WriteLine($"Error creating hazard: {hazardResult.Error?.Message}");
-                return;
-            }
+            // Set all the required properties properly
+            hazard.Code = "HZ-0000"; // Database will generate the actual code
+            hazard.Name = NewHazardDescription.Trim(); 
+            hazard.Description = NewHazardDescription.Trim();
+            hazard.Category = NewHazardCategory;
+            hazard.ReportCode = ReportId ?? ""; 
+            hazard.ReportedBy = "Technical Assessment User"; 
+            hazard.ReportingDepartment = "Technical Assessment";
+            hazard.HazardType = NewHazardCategory;
+            hazard.FiveMComponent = GetFiveMComponent(NewHazardFiveM);
+            hazard.IsConfidential = false;
+            hazard.IsAnonymous = false;
+            hazard.Status = HazardStatus.Active; 
+            hazard.Priority = HazardPriority.Medium; 
+            hazard.ReportedOn = DateTime.UtcNow;
 
-            var newHazard = hazardResult.Value;
-
-            // Use CQRS CreateHazardCommand through mediator
-            await OnHazardAdded.InvokeAsync(newHazard);
+            // Call the parent's AddHazard method
+            await OnHazardAdded.InvokeAsync(hazard);
             
-            // Reset form
+            // RESET FORM IMMEDIATELY - This ensures clean state
             NewHazardDescription = string.Empty;
             NewHazardCategory = string.Empty;
             NewHazardFiveM = string.Empty;
             
+            // Update Step2 model and notify parent
             await Step2Changed.InvokeAsync(Step2);
+            
+            // Force immediate UI refresh
+            StateHasChanged();
         }
         catch (Exception ex)
         {
@@ -231,6 +241,12 @@
             "MILIEU" => FiveMComponent.Milieu,
             _ => null
         };
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Force UI refresh when AvailableHazards parameter changes
+        await InvokeAsync(StateHasChanged);
     }
 
     public class FiveMOption

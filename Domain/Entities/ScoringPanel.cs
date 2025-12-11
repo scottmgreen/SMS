@@ -7,7 +7,7 @@ public sealed class ScoringPanel : BaseAuditableEntity
     public string? Code { get; set; }
     public string? HazardCode { get; set; }
     public string? SMSUserCode { get; set; }
-    public string? Likelihood { get; set; }
-    public string? Severity { get; set; }
-    public string? Score { get; set; }
+    public int? Likelihood { get; set; } = 0;
+    public int? Severity { get; set; } = 0;
+    public decimal? Score { get; set; }
 }

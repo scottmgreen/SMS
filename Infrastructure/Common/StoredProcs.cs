@@ -681,6 +681,9 @@
         private static readonly Lazy<string> _pr_ScoringPanel_GetAll = new Lazy<string>(() => "pr_ScoringPanel_GetAll");
         public static string pr_ScoringPanel_GetAll => _pr_ScoringPanel_GetAll.Value;
 
+        private static readonly Lazy<string> _pr_ScoringPanel_GetByHazardCode = new Lazy<string>(() => "pr_ScoringPanel_GetByHazardCode");
+        public static string pr_ScoringPanel_GetByHazardCode => _pr_ScoringPanel_GetByHazardCode.Value;
+
         private static readonly Lazy<string> _pr_ScoringPanel_Update = new Lazy<string>(() => "pr_ScoringPanel_Update");
         public static string pr_ScoringPanel_Update => _pr_ScoringPanel_Update.Value;
 

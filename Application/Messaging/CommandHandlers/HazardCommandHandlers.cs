@@ -86,16 +86,20 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
                 RiskAssessment initialRiskAssessment = new RiskAssessment(new RiskAssessmentID("RS-0000"));
                 initialRiskAssessment.HazardCode = hazard.Code;
                 initialRiskAssessment.AssessmentType = RiskAssessmentType.Initial;
+                initialRiskAssessment.CurrentStep = 0;
                 // BUSINESS RULE: Initial assessment MUST have PrimaryHazardId set to currentHazardId
                 initialRiskAssessment.PrimaryHazardId = hazard.Code;
                 // BUSINESS RULE: Default to Technical category unless specified otherwise
                 initialRiskAssessment.RiskAssessmentCategory = RiskAssessmentCategory.Technical;
+                initialRiskAssessment.Description = hazard.Description;
+                initialRiskAssessment.Name = $"Risk Assessment - {hazard.Name}";
                 var riskAssessmentResult = _riskAssessmentDataService.CreateRiskAssessmentAsync(initialRiskAssessment, ct);
                 
                 RiskAssessment residualRiskAssessment = new RiskAssessment(new RiskAssessmentID("RS-0000"));
                 residualRiskAssessment.HazardCode = hazard.Code;
                 residualRiskAssessment.AssessmentType = RiskAssessmentType.Residual;
                 // BUSINESS RULE: Residual assessments can have same PrimaryHazardId as initial
+                residualRiskAssessment.Name = $"Risk Assessment - {hazard.Name}";
                 residualRiskAssessment.PrimaryHazardId = hazard.Code;
                 residualRiskAssessment.RiskAssessmentCategory = RiskAssessmentCategory.Technical;
                 riskAssessmentResult = _riskAssessmentDataService.CreateRiskAssessmentAsync(residualRiskAssessment, ct);

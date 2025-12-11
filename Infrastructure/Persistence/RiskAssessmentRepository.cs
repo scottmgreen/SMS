@@ -151,11 +151,14 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             await sql.OpenAsync(cancellationToken).ConfigureAwait(false);
             using (SqlDataReader reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
             {
-                if (await reader.ReadAsync().ConfigureAwait(false))
+
+                while (await reader.ReadAsync().ConfigureAwait(false))
                 {
                     var riskAssessment = Mappers.MapToRiskAssessment(reader);
                     response.Add(riskAssessment);
                 }
+
+                
             }
             await sql.CloseAsync().ConfigureAwait(false);
 

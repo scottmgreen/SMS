@@ -66,6 +66,33 @@ public sealed class ScoringPanelService
         }
     }
 
+    public async Task<Result<List<ScoringPanel>>> GetScoringPanelsByHazardCodeAsync(string hazardCode, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving scoring panels for hazard code: {HazardCode}", hazardCode);
+            var result = await _dataService.GetScoringPanelsByHazardCodeAsync(hazardCode, ct).ConfigureAwait(false);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully retrieved {Count} scoring panels for hazard code: {HazardCode}", 
+                    result.Value?.Count ?? 0, hazardCode);
+            }
+            else
+            {
+                _logger.LogWarning("No scoring panels found for hazard code: {HazardCode}. Error: {Error}", 
+                    hazardCode, result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving scoring panels for hazard code: {HazardCode}", hazardCode);
+            return Result<List<ScoringPanel>>.Failure<List<ScoringPanel>>(DomainErrors.ScoringPanelError.NullOrEmpty);
+        }
+    }
+
     public async Task<Result<ScoringPanel>> UpdateScoringPanelAsync(ScoringPanel scoringPanel, CancellationToken ct = default)
     {
         try

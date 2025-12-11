@@ -58,7 +58,7 @@ else
                             <!-- Create New Report Button -->
                             <RadzenButton ButtonStyle="ButtonStyle.Success" 
                                         Text="Create New Report" 
-                                        Click="@ShowCreateReportDialog" 
+                                        Click="@NavigateToHazardReporting" 
                                         Size="ButtonSize.Medium" />
                             
                             <!-- Page Size Selector -->
@@ -88,7 +88,7 @@ else
                         <p class="text-muted">There are currently no reports in the system.</p>
                         <RadzenButton ButtonStyle="ButtonStyle.Success" 
                                     Text="Create Your First Report" 
-                                    Click="ShowCreateReportDialog" 
+                                    Click="NavigateToHazardReporting" 
                                     Size="ButtonSize.Large" />
                     </div>
                 }

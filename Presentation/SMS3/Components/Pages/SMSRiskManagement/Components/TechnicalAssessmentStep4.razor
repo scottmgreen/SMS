@@ -1,9 +1,12 @@
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
 @using SMS3.Components.Pages.SMSRiskManagement
+@using SMS3.Components.Shared
 @using global::System.Text.Json
 @using Radzen
 @using Radzen.Blazor
+@using SMS_Application.Interfaces
+@using SMS_Application.Messaging.Queries
 
 <!-- Progress Summary -->
 @* <RadzenCard Style="margin-bottom: 1rem;">
@@ -24,7 +27,7 @@
         </RadzenColumn>
         <RadzenColumn Size="3">
             <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
-                <RadzenIcon Icon="check_circle" Style="font-size: 2rem; color: var(--rz-info);" />
+                <RadzenIcon Icon="check_circle" Style="font-size: 2rem, color: var(--rz-info);" />
                 <RadzenText TextStyle="TextStyle.H4" Text="@GetCompletedScores()" Style="margin: 0; color: var(--rz-info);" />
                 <RadzenText TextStyle="TextStyle.Caption" Text="Completed Scores" Style="text-align: center;" />
             </RadzenStack>
@@ -74,8 +77,11 @@
                                        Step4="@Step4"
                                        AvailableStakeholders="@AvailableStakeholders"
                                        AvailableAssessors="@AvailableAssessors"
+                                       ExistingScoringPanels="@GetScoringPanelsForHazard(hazard.Code)"
+                                       PanelMemberData="@GetPanelMemberDataForHazard(hazard.Code)"
                                        OnPanelUpdated="@OnPanelUpdated" 
-                                       OnScoreSubmitted="@OnScoreSubmitted" />
+                                       OnScoreSubmitted="@OnScoreSubmitted"
+                                       OnPanelDataRefresh="@LoadAllScoringPanels" />
                 }
             }
             else
@@ -95,7 +101,7 @@
     <!-- Help Panel -->
     <RadzenColumn Size="12" SizeLG="4">
         <RadzenStack Gap="1rem">
-            <!-- Risk Matrix -->
+            <!-- Enhanced Risk Matrix with Highlighting -->
             <RadzenCard>
                 <RadzenStack Gap="1rem">
                     <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-success); margin: 0;">
@@ -103,60 +109,50 @@
                         Assessment Guidelines
                     </RadzenText>
 
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Text="Risk Matrix" Style="margin: 0;" />
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Text="5x5 Risk Matrix" Style="margin: 0;" />
+                    
+                    <!-- Interactive Risk Matrix -->
                     <div style="overflow-x: auto;">
-                        <table class="table table-bordered table-sm text-center">
+                        <table class="table table-bordered text-center risk-matrix-enhanced" style="margin: 0; font-size: 0.875rem;">
                             <thead>
                                 <tr>
-                                    <th style="font-size: 0.75rem;"></th>
-                                    <th style="font-size: 0.75rem;">Negligible</th>
-                                    <th style="font-size: 0.75rem;">Minor</th>
-                                    <th style="font-size: 0.75rem;">Moderate</th>
-                                    <th style="font-size: 0.75rem;">Major</th>
-                                    <th style="font-size: 0.75rem;">Catastrophic</th>
+                                    <th rowspan="2" style="vertical-align: middle; background-color: var(--rz-base-200);">
+                                        Severity ?<br/>? Likelihood
+                                    </th>
+                                    <th style="background-color: var(--rz-base-100);">1<br/>Minor</th>
+                                    <th style="background-color: var(--rz-base-100);">2<br/>Moderate</th>
+                                    <th style="background-color: var(--rz-base-100);">3<br/>Serious</th>
+                                    <th style="background-color: var(--rz-base-100);">4<br/>Major</th>
+                                    <th style="background-color: var(--rz-base-100);">5<br/>Catastrophic</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <th style="font-size: 0.75rem;">Very High</th>
-                                    <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
-                                    <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
-                                    <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">High</td>
-                                    <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">High</td>
-                                    <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">Critical</td>
-                                </tr>
-                                <tr>
-                                    <th style="font-size: 0.75rem;">High</th>
-                                    <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
-                                    <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
-                                    <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
-                                    <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">High</td>
-                                    <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">High</td>
-                                </tr>
-                                <tr>
-                                    <th style="font-size: 0.75rem;">Medium</th>
-                                    <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
-                                    <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
-                                    <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
-                                    <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
-                                    <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">High</td>
-                                </tr>
-                                <tr>
-                                    <th style="font-size: 0.75rem;">Low</th>
-                                    <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
-                                    <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
-                                    <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
-                                    <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
-                                    <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
-                                </tr>
-                                <tr>
-                                    <th style="font-size: 0.75rem;">Very Low</th>
-                                    <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
-                                    <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
-                                    <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
-                                    <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
-                                    <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
-                                </tr>
+                                @foreach (var row in GetRiskMatrixRows())
+                                {
+                                    <tr>
+                                        <th style="background-color: var(--rz-base-100);">@row.Label</th>
+                                        @foreach (var cell in row.Cells)
+                                        {
+                                            <td class="risk-cell @GetRiskCellClass(cell.RiskLevel)" 
+                                                style="position: relative; @GetCellStyle(cell)"
+                                                title="Severity: @cell.Severity, Likelihood: @cell.Likelihood, Risk: @cell.RiskLevel">
+                                                
+                                                @cell.CellLabel
+                                                
+                                                <!-- Show badges for average scores that fall in this cell -->
+                                                @foreach (var badge in GetBadgesForCell(cell.Severity, cell.Likelihood))
+                                                {
+                                                    <div style="position: absolute; top: 2px; right: 2px;">
+                                                        <RadzenBadge Text="@badge.Text" 
+                                                                    BadgeStyle="BadgeStyle.Dark" 
+                                                                    Style="font-size: 0.7rem; opacity: 0.9;" 
+                                                                    title="@badge.HazardDescription" />
+                                                    </div>
+                                                }
+                                            </td>
+                                        }
+                                    </tr>
+                                }
                             </tbody>
                         </table>
                     </div>
@@ -177,34 +173,8 @@
                 </RadzenStack>
             </RadzenCard>
 
-            <RadzenColumn Size="12" SizeLG="4">
-                <RadzenCard Style="position: sticky; top: 20px;">
-                    <RadzenStack Gap="1rem">
-                        <RadzenText TextStyle="TextStyle.H6" Text="Step 4 Debug Info" Style="color: var(--rz-primary);" />
-
-                        <RadzenFieldset Text="Scoring Progress">
-                            <RadzenText TextStyle="TextStyle.Body2" Text="@($"Total Hazards: {AvailableHazards?.Count ?? 0}")" />
-                            <RadzenText TextStyle="TextStyle.Body2" Text="@($"Panel Members: {GetTotalPanelMembers()}")" />
-                            <RadzenText TextStyle="TextStyle.Body2" Text="@($"Completed Scores: {GetCompletedScores()}")" />
-                            <RadzenText TextStyle="TextStyle.Body2" Text="@($"Progress: {GetScoringProgress()}%")" />
-                        </RadzenFieldset>
-
-                        <RadzenFieldset Text="Hazard Averages">
-                            @if (Step4.HazardAverageScores?.Any() == true)
-                            {
-                                @foreach (var hazardAvg in Step4.HazardAverageScores)
-                                {
-                                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"{hazardAvg.Key}: {hazardAvg.Value:F1}")" />
-                                }
-                            }
-                            else
-                            {
-                                <RadzenText TextStyle="TextStyle.Body2" Text="No averages calculated yet" />
-                            }
-                        </RadzenFieldset>
-                    </RadzenStack>
-                </RadzenCard>
-            </RadzenColumn>
+            <!-- Guidance Panel -->
+            <TechnicalAssessmentGuidancePanel StepNumber="4" />
         </RadzenStack>
     </RadzenColumn>
     <!-- Debug Panel -->
@@ -217,6 +187,121 @@
     [Parameter] public List<Hazard> AvailableHazards { get; set; } = new();
     [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
     [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
+
+    // Centralized scoring panel data for all hazards
+    private Dictionary<string, List<ScoringPanel>> AllScoringPanels = new();
+    private Dictionary<string, List<PanelMemberData>> AllPanelMemberData = new();
+
+    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private ILogger<TechnicalAssessmentStep4> Logger { get; set; } = default!;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Load scoring panels when hazards change
+        if (AvailableHazards?.Any() == true)
+        {
+            await LoadAllScoringPanels();
+        }
+    }
+
+    private async Task LoadAllScoringPanels()
+    {
+        AllScoringPanels.Clear();
+        AllPanelMemberData.Clear();
+
+        foreach (var hazard in AvailableHazards)
+        {
+            try
+            {
+                var query = new GetScoringPanelsByHazardCodeQuery(hazard.Code);
+                var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+                if (result.IsSuccess && result.Value != null)
+                {
+                    AllScoringPanels[hazard.Code] = result.Value.ToList();
+                    
+                    // Create stable PanelMemberData objects for this hazard
+                    var panelMembers = GetPanelMembersForHazard(hazard.Code);
+                    AllPanelMemberData[hazard.Code] = CreatePanelMemberData(hazard.Code, panelMembers);
+                }
+                else
+                {
+                    AllScoringPanels[hazard.Code] = new List<ScoringPanel>();
+                    AllPanelMemberData[hazard.Code] = new List<PanelMemberData>();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error loading scoring panels for hazard {HazardCode}", hazard.Code);
+                AllScoringPanels[hazard.Code] = new List<ScoringPanel>();
+                AllPanelMemberData[hazard.Code] = new List<PanelMemberData>();
+            }
+        }
+    }
+
+    private List<string> GetPanelMembersForHazard(string hazardCode)
+    {
+        return Step4.HazardPanelMembers.ContainsKey(hazardCode) 
+            ? Step4.HazardPanelMembers[hazardCode] 
+            : new List<string>();
+    }
+
+    private List<PanelMemberData> CreatePanelMemberData(string hazardCode, List<string> panelMembers)
+    {
+        var existingPanels = AllScoringPanels[hazardCode];
+        
+        Console.WriteLine($"?? CreatePanelMemberData for {hazardCode}:");
+        Console.WriteLine($"   Panel Members: {string.Join(", ", panelMembers)}");
+        Console.WriteLine($"   Existing Panels: {string.Join(", ", existingPanels.Select(p => $"[{p.Code}:{p.SMSUserCode}, S:{p.Severity}, L:{p.Likelihood}, Score:{p.Score}]"))}");
+        
+        return panelMembers.Select(memberId =>
+        {
+            var stakeholder = AvailableStakeholders.FirstOrDefault(s => s.Code == memberId);
+            var assessor = AvailableAssessors.FirstOrDefault(a => a.Id.Value == memberId);
+            
+            // CRITICAL FIX: Find existing panel by SMSUserCode, regardless of whether it has scores
+            var existingPanel = existingPanels.FirstOrDefault(p => p.SMSUserCode == memberId);
+            
+            Console.WriteLine($"   Member {memberId}: Found panel = {existingPanel?.Code ?? "NULL"}");
+            
+            var memberData = new PanelMemberData
+            {
+                MemberId = memberId,
+                Name = stakeholder?.DisplayName ?? assessor?.DisplayName ?? "Unknown",
+                Role = stakeholder?.StakeholderType ?? assessor?.UserRole.Name ?? "Unknown",
+                
+                // CRITICAL FIX: Use null-safe operators and preserve 0 as a valid unselected state
+                SeverityScore = existingPanel?.Severity ?? 0,
+                LikelihoodScore = existingPanel?.Likelihood ?? 0,
+                CalculatedScore = (double)(existingPanel?.Score ?? 0),
+                
+                // CRITICAL FIX: Panel is completed ONLY if it has actual scores AND they're not zero
+                // This ensures placeholder records with NULL values don't show as completed
+                IsCompleted = existingPanel != null && 
+                             existingPanel.Severity.HasValue && existingPanel.Severity.Value > 0 &&
+                             existingPanel.Likelihood.HasValue && existingPanel.Likelihood.Value > 0 &&
+                             existingPanel.Score.HasValue && existingPanel.Score.Value > 0
+            };
+            
+            Console.WriteLine($"   Result: S:{memberData.SeverityScore}, L:{memberData.LikelihoodScore}, Completed:{memberData.IsCompleted}, CanSubmit:{memberData.CanSubmit}");
+            
+            return memberData;
+        }).ToList();
+    }
+
+    public List<ScoringPanel> GetScoringPanelsForHazard(string hazardCode)
+    {
+        return AllScoringPanels.ContainsKey(hazardCode) 
+            ? AllScoringPanels[hazardCode] 
+            : new List<ScoringPanel>();
+    }
+
+    public List<PanelMemberData> GetPanelMemberDataForHazard(string hazardCode)
+    {
+        return AllPanelMemberData.ContainsKey(hazardCode) 
+            ? AllPanelMemberData[hazardCode] 
+            : new List<PanelMemberData>();
+    }
 
     private void GoToStep2()
     {
@@ -255,8 +340,175 @@
 
     private async Task OnScoreSubmitted(Step4Model.PanelMemberScoreData scoreData)
     {
+        Console.WriteLine($"?? Parent received score submission notification for {scoreData.MemberId}");
+        
+        // SMART UPDATE: Only update the Step4 model data for average calculations
+        // Do NOT reload all panel data from database as this would clear pending UI states
         Step4.AddPanelMemberScore(scoreData.HazardId, scoreData);
+        
+        // Recalculate averages for this hazard without full reload
+        Step4.RecalculateHazardAverage(scoreData.HazardId);
+        
+        Console.WriteLine($"? Parent updated averages without full panel reload - pending scores preserved");
+        
         await Step4Changed.InvokeAsync(Step4);
         await InvokeAsync(StateHasChanged);
+        
+        // CRITICAL: Do NOT call LoadAllScoringPanels() here as it would reload everything from database
     }
+
+    #region Risk Matrix Enhancement
+
+    private List<RiskMatrixRow> GetRiskMatrixRows()
+    {
+        return new List<RiskMatrixRow>
+        {
+            new() { Label = "A - Rare", LikelihoodValue = 1, Cells = GetRowCells(1) },
+            new() { Label = "B - Unlikely", LikelihoodValue = 2, Cells = GetRowCells(2) },
+            new() { Label = "C - Possible", LikelihoodValue = 3, Cells = GetRowCells(3) },
+            new() { Label = "D - Likely", LikelihoodValue = 4, Cells = GetRowCells(4) },
+            new() { Label = "E - Frequent", LikelihoodValue = 5, Cells = GetRowCells(5) }
+        };
+    }
+
+    private List<RiskMatrixCell> GetRowCells(int likelihood)
+    {
+        var cells = new List<RiskMatrixCell>();
+        for (int severity = 1; severity <= 5; severity++)
+        {
+            var riskLevel = GetRiskLevel(severity, likelihood);
+            var cellLabel = $"{severity}{(char)('A' + likelihood - 1)}\n{riskLevel}";
+            
+            cells.Add(new RiskMatrixCell
+            {
+                Severity = severity,
+                Likelihood = likelihood,
+                RiskLevel = riskLevel,
+                CellLabel = cellLabel
+            });
+        }
+        return cells;
+    }
+
+    private string GetRiskLevel(int severity, int likelihood)
+    {
+        var score = severity * likelihood;
+        return score switch
+        {
+            <= 4 => "Very Low",
+            <= 8 => "Low", 
+            <= 12 => "Medium",
+            <= 20 => "High",
+            _ => "Very High"
+        };
+    }
+
+    private string GetRiskCellClass(string riskLevel)
+    {
+        return riskLevel switch
+        {
+            "Very Low" => "risk-very-low",
+            "Low" => "risk-low",
+            "Medium" => "risk-medium", 
+            "High" => "risk-high",
+            "Very High" => "risk-very-high",
+            _ => ""
+        };
+    }
+
+    private string GetCellStyle(RiskMatrixCell cell)
+    {
+        var baseStyle = "";
+        
+        // Check if any hazard average scores fall in this cell
+        var hasScores = GetBadgesForCell(cell.Severity, cell.Likelihood).Any();
+        if (hasScores)
+        {
+            baseStyle += "border: 3px solid var(--rz-primary) !important; box-shadow: 0 0 10px rgba(0,123,255,0.5);";
+        }
+        
+        return baseStyle;
+    }
+
+    private List<CellBadge> GetBadgesForCell(int severity, int likelihood)
+    {
+        var badges = new List<CellBadge>();
+        
+        if (Step4.HazardAverageScores?.Any() == true)
+        {
+            foreach (var hazardScore in Step4.HazardAverageScores)
+            {
+                // Calculate which cell this average score falls into
+                var hazardSeverity = GetSeverityFromScore(hazardScore.Value);
+                var hazardLikelihood = GetLikelihoodFromScore(hazardScore.Value, hazardSeverity);
+                
+                if (Math.Abs(hazardSeverity - severity) < 0.5 && Math.Abs(hazardLikelihood - likelihood) < 0.5)
+                {
+                    var hazard = AvailableHazards?.FirstOrDefault(h => h.Code == hazardScore.Key);
+                    badges.Add(new CellBadge
+                    {
+                        Text = $"{hazardScore.Key}: {hazardScore.Value:F1}",
+                        HazardDescription = hazard?.Description ?? "Unknown hazard"
+                    });
+                }
+            }
+        }
+        
+        return badges;
+    }
+
+    private int GetSeverityFromScore(double averageScore)
+    {
+        // This is a simplified approach - in reality you'd want to store the actual severity/likelihood values
+        // For now, estimate based on common patterns in a 5x5 matrix
+        if (averageScore <= 5) return (int)Math.Ceiling(averageScore);
+        if (averageScore <= 10) return (int)Math.Ceiling(averageScore / 2);
+        if (averageScore <= 15) return (int)Math.Ceiling(averageScore / 3);
+        if (averageScore <= 20) return (int)Math.Ceiling(averageScore / 4);
+        return 5;
+    }
+
+    private int GetLikelihoodFromScore(double averageScore, int severity)
+    {
+        if (severity == 0) return 1;
+        return (int)Math.Ceiling(averageScore / severity);
+    }
+
+    public class RiskMatrixRow
+    {
+        public string Label { get; set; } = "";
+        public int LikelihoodValue { get; set; }
+        public List<RiskMatrixCell> Cells { get; set; } = new();
+    }
+
+    public class RiskMatrixCell
+    {
+        public int Severity { get; set; }
+        public int Likelihood { get; set; }
+        public string RiskLevel { get; set; } = "";
+        public string CellLabel { get; set; } = "";
+    }
+
+    public class CellBadge
+    {
+        public string Text { get; set; } = "";
+        public string HazardDescription { get; set; } = "";
+    }
+
+    // Shared PanelMemberData class for consistent object identity
+    public class PanelMemberData
+    {
+        public int SeverityScore { get; set; }
+        public int LikelihoodScore { get; set; }
+        public double CalculatedScore { get; set; }
+        public bool IsCompleted { get; set; }
+        public string MemberId { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+
+        public bool CanSubmit => SeverityScore > 0 && LikelihoodScore > 0 && !IsCompleted;
+        public double PreviewScore => SeverityScore > 0 && LikelihoodScore > 0 ? SeverityScore * LikelihoodScore : 0;
+    }
+
+    #endregion
 }

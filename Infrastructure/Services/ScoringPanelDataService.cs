@@ -44,6 +44,11 @@ public class ScoringPanelDataService : BaseDataService<ScoringPanelDataService>
         return _repo.GetAllScoringPanelsAsync(ct);
     }
 
+    public Task<Result<List<ScoringPanel>>> GetScoringPanelsByHazardCodeAsync(string hazardCode, CancellationToken ct = default)
+    {
+        return _repo.GetScoringPanelsByHazardCodeAsync(hazardCode, ct);
+    }
+
     public Task<Result<ScoringPanel>> UpdateScoringPanelAsync(ScoringPanel scoringPanel, CancellationToken ct = default)
     {
         return _repo.UpdateScoringPanelAsync(scoringPanel, ct);

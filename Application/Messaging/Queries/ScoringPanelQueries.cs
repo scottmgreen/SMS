@@ -20,3 +20,13 @@ public class GetAllScoringPanelsQuery : BaseQueryBundle, IRequest<Result<List<Sc
     {
     }
 }
+
+public class GetScoringPanelsByHazardCodeQuery : BaseQueryBundle, IRequest<Result<List<ScoringPanel>>>
+{
+    public string HazardCode { get; set; }
+
+    public GetScoringPanelsByHazardCodeQuery(string hazardCode)
+    {
+        HazardCode = hazardCode ?? throw new ArgumentNullException(nameof(hazardCode));
+    }
+}

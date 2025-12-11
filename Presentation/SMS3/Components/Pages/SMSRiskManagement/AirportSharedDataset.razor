@@ -43,8 +43,8 @@ else
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenFormField Text="Location *" Variant="Variant.Outlined">
-                            <RadzenDropDown @bind-Value="@Model.Location" Data="@LocationOptions" 
-                                          Placeholder="Select a Location" Style="width: 100%;"
+                            <RadzenDropDown @bind-Value="@Model.Location" Data="@LocationOptions"
+                                            Placeholder="Select a Location" Style="width: 100%;min-width: 100%;"
                                           Change="@OnLocationChange" />
                         </RadzenFormField>
                     </RadzenColumn>
@@ -56,8 +56,8 @@ else
                         <RadzenColumn Size="12">
                             <RadzenFormField Text="Other Location Details" Variant="Variant.Outlined">
                                 <RadzenTextBox @bind-Value="@Model.LocationOther" 
-                                             Placeholder="Please specify the location" 
-                                             Style="width: 100%;" />
+                                             Placeholder="Please specify the location"
+                                               Style="width: 100%;min-width: 100%;" />
                             </RadzenFormField>
                         </RadzenColumn>
                     </RadzenRow>
@@ -67,8 +67,8 @@ else
                     <RadzenColumn Size="12">
                         <RadzenFormField Text="Weather" Variant="Variant.Outlined">
                             <RadzenTextBox @bind-Value="@Model.Weather" 
-                                         Placeholder="Weather conditions at time of incident" 
-                                         Style="width: 100%;" />
+                                         Placeholder="Weather conditions at time of incident"
+                                           Style="width: 100%;min-width: 100%;" />
                         </RadzenFormField>
                     </RadzenColumn>
                 </RadzenRow>
@@ -86,9 +86,9 @@ else
                         <RadzenFormField Text="Shared Narrative" Variant="Variant.Outlined">
                             <RadzenTextArea @bind-Value="@Model.SharedNarrative" Rows="4"
                                           Placeholder="This text is displayed to all authorized users of ADAM"
-                                          Style="width: 100%;" />
+                                            Style="width: 100%;min-width: 100%;" />
                         </RadzenFormField>
-                        <RadzenText TextStyle="TextStyle.Caption" Text="This text is displayed to all authorized users of ADAM." />
+                        @* <RadzenText TextStyle="TextStyle.Caption" Text="This text is displayed to all authorized users of ADAM." /> *@
                         <RadzenText TextStyle="TextStyle.Caption" Text="Where needed to anonymize individuals, airlines, vendor names, etc., use [an identifier in square brackets]." />
                     </RadzenColumn>
                 </RadzenRow>

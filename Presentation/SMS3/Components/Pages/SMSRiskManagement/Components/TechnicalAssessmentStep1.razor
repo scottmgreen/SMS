@@ -1,13 +1,14 @@
 ﻿@using SMS_Domain.Entities
 @using SMS_Domain.Enums
 @using SMS3.Components.Pages.SMSRiskManagement
+@using SMS3.Components.Shared
 @using global::System.Text.Json
 @using Radzen
 @using Radzen.Blazor
 
 <RadzenStack Gap="1.5rem">
     <RadzenRow Gap="1rem">
-        <!-- Main Content Column -->
+        <!-- Main Content Column - 8 columns on large screens -->
         <RadzenColumn Size="12" SizeLG="8">
             <RadzenStack Gap="1.5rem">
                 <!-- System Overview Section -->
@@ -163,7 +164,7 @@
                         <RadzenCard>
                             <RadzenCard>
                                 <RadzenText TextStyle="TextStyle.H6" Text="Selected Stakeholder Groups" Style="margin-bottom: 0.5rem;" />
-                                @if (Step1.SelectedStakeholderGroupIds.Any())
+                                @if (Step1?.SelectedStakeholderGroupIds?.Any() == true)
                                 {
                                     @foreach (var groupId in Step1.SelectedStakeholderGroupIds)
                                     {
@@ -185,26 +186,33 @@
                         <RadzenCard>
                             <RadzenCard>
                                 <RadzenText TextStyle="TextStyle.H6" Text="Available Stakeholder Groups" Style="margin-bottom: 0.5rem;" />
-                                <RadzenDataGrid Data="@StakeholderGroups" TItem="SMSStakeholderGroup" AllowFiltering="false" AllowPaging="false" Style="height: 300px;">
-                                    <Columns>
-                                        <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="Name" Title="Group Name" />
-                                        <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="Description" Title="Description" />
-                                        <RadzenDataGridColumn TItem="SMSStakeholderGroup" Title="Action">
-                                            <Template Context="group">
-                                                @if (!Step1.SelectedStakeholderGroupIds.Contains(group.Code))
-                                                {
-                                                    <RadzenButton Text="Add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" 
-                                                                  Click="@(() => AddStakeholderGroup(group.Code))" />
-                                                }
-                                                else
-                                                {
-                                                    <RadzenButton Text="Remove" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
-                                                                  Click="@(() => RemoveStakeholderGroup(group.Code))" />
-                                                }
-                                            </Template>
-                                        </RadzenDataGridColumn>
-                                    </Columns>
-                                </RadzenDataGrid>
+                                @if (StakeholderGroups != null && StakeholderGroups.Any())
+                                {
+                                    <RadzenDataGrid Data="@StakeholderGroups" TItem="SMSStakeholderGroup" AllowFiltering="false" AllowPaging="false" Style="height: 300px;">
+                                        <Columns>
+                                            <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="Name" Title="Group Name" />
+                                            <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="Description" Title="Description" />
+                                            <RadzenDataGridColumn TItem="SMSStakeholderGroup" Title="Action">
+                                                <Template Context="group">
+                                                    @if (Step1.SelectedStakeholderGroupIds != null && !Step1.SelectedStakeholderGroupIds.Contains(group.Code))
+                                                    {
+                                                        <RadzenButton Text="Add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" 
+                                                                      Click="@(() => AddStakeholderGroup(group.Code))" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <RadzenButton Text="Remove" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
+                                                                      Click="@(() => RemoveStakeholderGroup(group.Code))" />
+                                                    }
+                                                </Template>
+                                            </RadzenDataGridColumn>
+                                        </Columns>
+                                    </RadzenDataGrid>
+                                }
+                                else
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body2" Text="No stakeholder groups available" Style="color: var(--rz-text-secondary-color);" />
+                                }
                             </RadzenCard>
                         </RadzenCard>
                     </RadzenStack>
@@ -212,26 +220,9 @@
             </RadzenStack>
         </RadzenColumn>
 
-        <!-- Debug Panel -->
+        <!-- Guidance Panel -->
         <RadzenColumn Size="12" SizeLG="4">
-            <RadzenCard Style="position: sticky; top: 20px;">
-                <RadzenCard>
-                    <RadzenStack Gap="1rem">
-                        <RadzenText TextStyle="TextStyle.H6" Text="Debug Info" Style="color: var(--rz-primary);" />
-                        
-                        <RadzenFieldset Text="Data Counts">
-                            <RadzenText TextStyle="TextStyle.Body2" Text="@($"StakeholderGroups: {StakeholderGroups?.Count ?? 0}")" />
-                            <RadzenText TextStyle="TextStyle.Body2" Text="@($"AvailableStakeholders: {AvailableStakeholders?.Count ?? 0}")" />
-                            <RadzenText TextStyle="TextStyle.Body2" Text="@($"Selected Groups: {Step1.SelectedStakeholderGroupIds?.Count ?? 0}")" />
-                        </RadzenFieldset>
-
-                        <RadzenFieldset Text="Step1 Data">
-                            <RadzenText TextStyle="TextStyle.Body2" Text="@($"Lead Assessor: {Step1.LeadAssessor}")" />
-                            <RadzenText TextStyle="TextStyle.Body2" Text="@($"System Description: {Step1.SystemDescription?.Length ?? 0} chars")" />
-                        </RadzenFieldset>
-                    </RadzenStack>
-                </RadzenCard>
-            </RadzenCard>
+            <TechnicalAssessmentGuidancePanel StepNumber="1" />
         </RadzenColumn>
     </RadzenRow>
 </RadzenStack>
@@ -296,10 +287,13 @@
 
     private void UpdateStakeholderGroupsString()
     {
-        var groupNames = Step1.SelectedStakeholderGroupIds
-            .Select(id => StakeholderGroups?.FirstOrDefault(g => g.Code == id)?.Name)
-            .Where(name => !string.IsNullOrEmpty(name));
-        
-        Step1.StakeholderGroups = string.Join(", ", groupNames!);
+        if (Step1?.SelectedStakeholderGroupIds != null && StakeholderGroups != null)
+        {
+            var groupNames = Step1.SelectedStakeholderGroupIds
+                .Select(id => StakeholderGroups?.FirstOrDefault(g => g.Code == id)?.Name)
+                .Where(name => !string.IsNullOrEmpty(name));
+            
+            Step1.StakeholderGroups = string.Join(", ", groupNames!);
+        }
     }
 }

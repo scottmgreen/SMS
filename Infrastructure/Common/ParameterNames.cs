@@ -715,6 +715,19 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmReportName = new Lazy<string>(() => "@pReportName");
     public static string pmReportName => _pmReportName.Value;
 
+    private static readonly Lazy<string> _pmReportedBy = new Lazy<string>(() => "@pReportedBy");
+    public static string pmReportedBy => _pmReportedBy.Value;
+
+    private static readonly Lazy<string> _pmReportedOn = new Lazy<string>(() => "@pReportedOn");
+    public static string pmReportedOn => _pmReportedOn.Value;
+
+
+    private static readonly Lazy<string> _pmReportedByDepartment = new Lazy<string>(() => "@pReportedByDepartment");
+    public static string pmReportedByDepartment => _pmReportedByDepartment.Value;
+
+
+
+
     private static readonly Lazy<string> _pmReportDescription = new Lazy<string>(() => "@pReportDescription");
     public static string pmReportDescription => _pmReportDescription.Value;
 

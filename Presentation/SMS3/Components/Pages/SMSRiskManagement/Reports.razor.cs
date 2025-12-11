@@ -229,95 +229,62 @@ public partial class Reports : ComponentBase
 
     #region CRUD Event Handlers
     /// <summary>
-    /// Show create new report dialog
+    /// Navigate to hazard reporting page instead of showing modal
     /// </summary>
-    public async Task ShowCreateReportDialog()
+    public void NavigateToHazardReporting()
     {
-        try
-        {
-            Logger.LogInformation("Opening create new report dialog");
-
-            var result = await DialogService.OpenAsync<SMS3.Components.Pages.SMSRiskManagement.Components.ReportCreate>(
-                "",
-                new Dictionary<string, object>()
-                {
-                    { "OnReportCreated", EventCallback.Factory.Create(this, OnReportCreatedCallback) }
-                },
-                new DialogOptions()
-                {
-                    Width = "95vw",
-                    Height = "80vh",
-                    Resizable = true,
-                    Draggable = true,
-                    CloseDialogOnEsc = true
-                });
-
-            if (result != null)
-            {
-                Logger.LogInformation("Create report dialog closed with result");
-            }
-            else
-            {
-                Logger.LogInformation("Create report dialog closed without result");
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error opening create report dialog");
-
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Dialog Error",
-                Detail = "Failed to open create report dialog. Please try again.",
-                Duration = 5000
-            });
-        }
+        Logger.LogInformation("Navigating to hazard reporting page");
+        Navigation.NavigateTo("/SMSRiskManagement/HazardReporting");
     }
 
     /// <summary>
-    /// Handle report created callback
+    /// Handle view report request - Show detailed report information
     /// </summary>
-    public async Task OnReportCreatedCallback()
-    {
-        Logger.LogInformation("Report created callback received, refreshing reports list");
-        
-        // Refresh the reports list to show the new report
-        await LoadReportsAsync();
-
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Report Created",
-            Detail = "New report has been successfully created and added to the list.",
-            Duration = 4000
-        });
-    }
-
-    /// <summary>
-    /// Handle view report request
-    /// </summary>
-    /// <param name="report">Selected report</param>
+    /// <param name="report">Report to view</param>
     public async Task OnViewReportAsync(Report report)
     {
         Logger.LogInformation("View report requested: {ReportCode}", report.Code);
 
         try
         {
-            // Show detailed report information dialog
-            var reportDetails = $@"Report Details:
+            // Get additional details from backend if needed
+            var query = new GetReportByIdQuery(new ReportID(report.Code));
+            var result = await Mediator.SendAsync(query, CancellationToken.None);
 
-            Code: {report.Code}
-            Name: {report.Name ?? "Not specified"}
-            Description: {report.Description ?? "Not specified"}
-            Status: {report.Status ?? "Not specified"}
-            Stage: {report.Stage ?? "Not specified"}
-            Created: {report.CreatedDate.Value:MM/dd/yyyy HH:mm}
-            Created By: {report.CreatedBy ?? "System"}
-            Updated: {(report.UpdatedDate.HasValue ? report.UpdatedDate.Value.ToString("MM/dd/yyyy HH:mm") : "Never")}
-            Updated By: {report.UpdatedBy ?? "N/A"}";
+            Report detailedReport = result.IsSuccess ? result.Value : report;
 
-            await DialogService.Alert(reportDetails, $"Report Information - {report.Code}");
+            // Build comprehensive report details
+            var reportDetails = $@"
+?? Report Information:
+
+• Report Code: {detailedReport.Code}
+• Name: {detailedReport.Name ?? "Not specified"}
+• Status: {detailedReport.Status ?? "Not specified"}
+• Stage: {detailedReport.Stage ?? "Not specified"}
+
+?? Description:
+{detailedReport.Description ?? "No description provided"}
+
+?? Timeline:
+• Created: {(detailedReport.CreatedDate?.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt") ?? "N/A")}
+• Created By: {detailedReport.CreatedBy ?? "System"}
+• Last Updated: {(detailedReport.UpdatedDate?.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt") ?? "Never")}
+• Updated By: {detailedReport.UpdatedBy ?? "N/A"}
+
+?? Associated Hazards:
+{(ReportHazards.ContainsKey(report.Code) && ReportHazards[report.Code].Any() ? 
+    string.Join("\n", ReportHazards[report.Code].Select(h => $"  • {h.Code} - {h.Name ?? "Unnamed Hazard"}")) : 
+    "No hazards associated with this report")}";
+
+            await DialogService.Alert(reportDetails, $"Report Details - {detailedReport.Code}");
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Info,
+                Summary = "Report Viewed",
+                Detail = $"Displayed details for report {report.Code}",
+                Duration = 2000
+            });
         }
         catch (Exception ex)
         {
@@ -327,153 +294,109 @@ public partial class Reports : ComponentBase
             {
                 Severity = NotificationSeverity.Error,
                 Summary = "View Error",
-                Detail = "Failed to display report details.",
+                Detail = "Failed to display report details. Please try again.",
                 Duration = 3000
             });
         }
     }
 
     /// <summary>
-    /// Handle edit report request
+    /// Handle edit report request - Navigate to HazardReporting page in edit mode
     /// </summary>
-    /// <param name="report">Selected report</param>
+    /// <param name="report">Report to edit</param>
     public async Task OnEditReportAsync(Report report)
     {
         Logger.LogInformation("Edit report requested: {ReportCode}", report.Code);
 
         try
         {
-            // Create edit form data
-            var editData = new EditReportData
-            {
-                Code = report.Code,
-                Name = report.Name ?? "",
-                Description = report.Description ?? "",
-                Status = report.Status ?? "",
-                Stage = report.Stage ?? ""
-            };
-
-            // Show edit dialog
-            var result = await DialogService.OpenAsync<SMS3.Components.Pages.SMSRiskManagement.Components.ReportEdit>("Edit Report",
-                new Dictionary<string, object>()
-                {
-                    { "ReportData", editData },
-                    { "OnSave", EventCallback.Factory.Create<EditReportData>(this, OnSaveEditedReport) }
-                },
-                new DialogOptions()
-                {
-                    Width = "600px",
-                    Height = "500px",
-                    Resizable = true,
-                    Draggable = true
+            // Show confirmation before navigating away
+            var confirmed = await DialogService.Confirm(
+                $"Edit report '{report.Code} - {report.Name}'?\n\nThis will navigate to the hazard reporting form in edit mode.", 
+                "Edit Report", 
+                new ConfirmOptions() 
+                { 
+                    OkButtonText = "Yes, Edit Report", 
+                    CancelButtonText = "Cancel" 
                 });
 
-            Logger.LogInformation("Edit report dialog closed for {ReportCode}", report.Code);
+            if (confirmed == true)
+            {
+                // Navigate to HazardReporting page with edit parameters
+                // The HazardReporting page will need to be enhanced to handle edit mode
+                Navigation.NavigateTo($"/SMSRiskManagement/HazardReporting?mode=edit&reportCode={report.Code}");
+
+                Logger.LogInformation("Navigating to edit report: {ReportCode}", report.Code);
+
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Info,
+                    Summary = "Navigating to Edit",
+                    Detail = $"Opening {report.Code} for editing...",
+                    Duration = 3000
+                });
+            }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error opening edit dialog for report {ReportCode}", report.Code);
+            Logger.LogError(ex, "Error navigating to edit report {ReportCode}", report.Code);
 
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
-                Summary = "Edit Error",
-                Detail = "Failed to open edit dialog. Please try again.",
+                Summary = "Navigation Error",
+                Detail = "Failed to navigate to edit form. Please try again.",
                 Duration = 3000
             });
         }
     }
 
     /// <summary>
-    /// Handle save edited report
+    /// Handle delete report request - Show confirmation and delete via CQRS
     /// </summary>
-    /// <param name="editData">Edited report data</param>
-    public async Task OnSaveEditedReport(EditReportData editData)
-    {
-        try
-        {
-            Logger.LogInformation("Saving edited report: {ReportCode}", editData.Code);
-
-            // Find the report to update
-            var reportToUpdate = AllReports.FirstOrDefault(r => r.Code == editData.Code);
-            if (reportToUpdate == null)
-            {
-                throw new InvalidOperationException($"Report {editData.Code} not found");
-            }
-
-            // Update report properties
-            reportToUpdate.Name = editData.Name;
-            reportToUpdate.Description = editData.Description;
-            reportToUpdate.Status = editData.Status;
-            reportToUpdate.Stage = editData.Stage;
-
-            // Execute update command
-            var updateCommand = new UpdateReportCommand(reportToUpdate);
-            var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
-
-            if (result.IsSuccess)
-            {
-                Logger.LogInformation("Successfully updated report: {ReportCode}", editData.Code);
-
-                // Update the local list with the updated report
-                var index = AllReports.ToList().FindIndex(r => r.Code == editData.Code);
-                if (index >= 0)
-                {
-                    AllReports[index] = result.Value;
-                }
-
-                StateHasChanged();
-
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Report Updated",
-                    Detail = $"Report {editData.Code} has been successfully updated.",
-                    Duration = 4000
-                });
-            }
-            else
-            {
-                throw new InvalidOperationException(result.Error?.Message ?? "Failed to update report");
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error saving edited report: {ReportCode}", editData.Code);
-
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Update Failed",
-                Detail = "Failed to update the report. Please try again.",
-                Duration = 5000
-            });
-        }
-    }
-
-    /// <summary>
-    /// Handle delete report request
-    /// </summary>
-    /// <param name="report">Selected report</param>
+    /// <param name="report">Report to delete</param>
     public async Task OnDeleteReportAsync(Report report)
     {
         Logger.LogInformation("Delete report requested: {ReportCode}", report.Code);
 
         try
         {
-            // Show confirmation dialog
+            // Get hazard count for this report to show in confirmation
+            var hazardCount = 0;
+            if (ReportHazards.ContainsKey(report.Code))
+            {
+                hazardCount = ReportHazards[report.Code].Count;
+            }
+            else
+            {
+                // Try to load hazards if not already cached
+                await LoadHazardsForReportAsync(report.Code);
+                hazardCount = ReportHazards.ContainsKey(report.Code) ? ReportHazards[report.Code].Count : 0;
+            }
+
+            // Build confirmation message with hazard warning
+            var confirmationMessage = $"Are you sure you want to delete report '{report.Code}'?\n\n" +
+                                    $"Report Details:\n" +
+                                    $"• Name: {report.Name ?? "Unnamed Report"}\n" +
+                                    $"• Status: {report.Status ?? "Unknown"}\n" +
+                                    $"• Associated Hazards: {hazardCount}\n\n" +
+                                    (hazardCount > 0 ? "??  WARNING: This report has associated hazards that may also be affected.\n\n" : "") +
+                                    "?? This action cannot be undone!";
+
+            // Show Radzen confirmation dialog
             var confirmed = await DialogService.Confirm(
-                $"Are you sure you want to delete report {report.Code}?\n\nThis action cannot be undone and will also remove all associated hazards and data.",
-                "Confirm Delete",
-                new ConfirmOptions()
-                {
-                    OkButtonText = "Yes, Delete",
-                    CancelButtonText = "Cancel"
+                confirmationMessage,
+                "Confirm Delete Report", 
+                new ConfirmOptions() 
+                { 
+                    OkButtonText = "Yes, Delete Report", 
+                    CancelButtonText = "Cancel",
+                    AutoFocusFirstElement = false // Focus Cancel by default for safety
                 });
 
             if (confirmed == true)
             {
-                // Execute delete command
+                // Execute delete command via CQRS
                 var deleteCommand = new DeleteReportCommand(new ReportID(report.Code));
                 var result = await Mediator.SendAsync(deleteCommand, CancellationToken.None);
 
@@ -486,11 +409,14 @@ public partial class Reports : ComponentBase
                     reportList.RemoveAll(r => r.Code == report.Code);
                     AllReports = reportList;
 
-                    // Collapse expanded row if it was the deleted report
-                    if (expandedReports.Contains(report.Code))
+                    // Clear any cached hazards for this report
+                    if (ReportHazards.ContainsKey(report.Code))
                     {
-                        expandedReports.Remove(report.Code);
+                        ReportHazards.Remove(report.Code);
                     }
+
+                    // Remove from expanded reports if it was expanded
+                    expandedReports.Remove(report.Code);
 
                     StateHasChanged();
 
@@ -506,6 +432,10 @@ public partial class Reports : ComponentBase
                 {
                     throw new InvalidOperationException(result.Error?.Message ?? "Failed to delete report");
                 }
+            }
+            else
+            {
+                Logger.LogInformation("Delete report cancelled by user: {ReportCode}", report.Code);
             }
         }
         catch (Exception ex)

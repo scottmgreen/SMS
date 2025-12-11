@@ -2,7 +2,11 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
+using SMS_Domain.ValueObjects;
 using SMS_Shared.Common;
+using SMS_Application.Messaging.Queries;
+using SMS_Application.Messaging.Commands;
+using SMS_Application.Interfaces;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -358,6 +362,90 @@ public class Step3Model
         assessment.CompleteStep(3);
     }
 
+    public async Task ApplyToAssessmentAsync(RiskAssessment assessment, IMediator mediator, List<Hazard> availableHazards)
+    {
+        // CRITICAL: Save RiskAnalysis data for each hazard with Step 3 analysis
+        await SaveRiskAnalysisDataAsync(mediator, availableHazards);
+        
+        // Apply to assessment
+        assessment.RiskAnalysisMethod = RiskAnalysisMethod;
+        assessment.RiskCriteria = RiskCriteria;
+        assessment.CompleteStep(3);
+    }
+
+    /// <summary>
+    /// Save the completed risk analysis data per hazard
+    /// </summary>
+    private async Task SaveRiskAnalysisDataAsync(IMediator mediator, List<Hazard> availableHazards)
+    {
+        if (mediator == null || availableHazards == null) return;
+
+        // Get all existing RiskAnalysis records
+        var getAllRiskAnalysisQuery = new GetAllRiskAnalysisQuery();
+        var allRiskAnalysisResult = await mediator.SendAsync(getAllRiskAnalysisQuery, CancellationToken.None);
+
+        var existingRiskAnalyses = allRiskAnalysisResult.IsSuccess ? allRiskAnalysisResult.Value : new List<RiskAnalysis>();
+
+        foreach (var hazard in availableHazards)
+        {
+            try
+            {
+                if (HazardAnalyses.ContainsKey(hazard.Code))
+                {
+                    var analysis = HazardAnalyses[hazard.Code];
+                    
+                    // Only save if analysis is complete
+                    if (analysis.IsComplete)
+                    {
+                        // Find existing RiskAnalysis using LINQ
+                        var existingAnalysis = existingRiskAnalyses?.FirstOrDefault(ra => ra.HazardCode.Trim() == hazard.Code);
+
+                        RiskAnalysis? riskAnalysis = null;
+
+                        if (existingAnalysis != null)
+                        {
+                            // Update existing RiskAnalysis
+                            riskAnalysis = existingAnalysis;
+                        }
+                        else
+                        {
+                            // Create new RiskAnalysis
+                            var riskAnalysisId = new RiskAnalysisID($"RA-{hazard.Code}");
+                            riskAnalysis = new RiskAnalysis(riskAnalysisId);
+                            riskAnalysis.Code = $"RA-{hazard.Code}";
+                            riskAnalysis.Name = $"Risk Analysis for {hazard.Code}";
+                            riskAnalysis.HazardCode = hazard.Code;
+                        }
+
+                        // Update RiskAnalysis with Step 3 analysis details
+                        riskAnalysis.Description = $"Risk Analysis completed for {hazard.Description}";
+                        riskAnalysis.WorstCredibleOutcome = analysis.WorstCredibleOutcome;
+                        riskAnalysis.RootCause = analysis.RootCauseAnalysis;
+                        riskAnalysis.Status = "Analysis Complete";
+                        riskAnalysis.Stage = "Step 3 Completed";
+
+                        // Save or update the RiskAnalysis
+                        if (existingAnalysis != null)
+                        {
+                            var updateCommand = new UpdateRiskAnalysisCommand(riskAnalysis);
+                            await mediator.SendAsync(updateCommand, CancellationToken.None);
+                        }
+                        else
+                        {
+                            var createCommand = new CreateRiskAnalysisCommand(riskAnalysis);
+                            await mediator.SendAsync(createCommand, CancellationToken.None);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but continue with other hazards
+                Console.WriteLine($"Error saving risk analysis for hazard {hazard.Code}: {ex.Message}");
+            }
+        }
+    }
+
     public void LoadFromAssessment(RiskAssessment assessment, List<Hazard> reportHazards)
     {
         if (assessment == null) return;
@@ -486,11 +574,101 @@ public class Step4Model
         return (true, "Step 4 validation passed");
     }
 
-    public void ApplyToAssessment(RiskAssessment assessment)
+    public async Task ApplyToAssessmentAsync(RiskAssessment assessment, IMediator mediator, List<Hazard> availableHazards)
     {
+        // CRITICAL: Save RiskAnalysis data for each hazard
+        await SaveRiskAnalysisDataAsync(mediator, availableHazards);
+        
+        // Apply to assessment
+        assessment.TolerabilityFramework = TolerabilityFramework;
+        assessment.RiskAcceptanceCriteria = RiskAcceptanceCriteria;
         assessment.CompleteStep(4);
     }
 
+    public void ApplyToAssessment(RiskAssessment assessment)
+    {
+        // Legacy method - still needed for synchronous calls
+        assessment.TolerabilityFramework = TolerabilityFramework;
+        assessment.RiskAcceptanceCriteria = RiskAcceptanceCriteria;
+        assessment.CompleteStep(4);
+    }
+
+    /// <summary>
+    /// Save the completed risk analysis and scoring data per hazard
+    /// </summary>
+    private async Task SaveRiskAnalysisDataAsync(IMediator mediator, List<Hazard> availableHazards)
+    {
+        if (mediator == null || availableHazards == null) return;
+
+        // Get all existing RiskAnalysis records
+        var getAllRiskAnalysisQuery = new GetAllRiskAnalysisQuery();
+        var allRiskAnalysisResult = await mediator.SendAsync(getAllRiskAnalysisQuery, CancellationToken.None);
+
+        var existingRiskAnalyses = allRiskAnalysisResult.IsSuccess ? allRiskAnalysisResult.Value : new List<RiskAnalysis>();
+
+        foreach (var hazard in availableHazards)
+        {
+            try
+            {
+                // Find existing RiskAnalysis using LINQ
+                var existingAnalysis = existingRiskAnalyses?.FirstOrDefault(ra => ra.HazardCode == hazard.Code);
+
+                RiskAnalysis? riskAnalysis = null;
+
+                if (existingAnalysis != null)
+                {
+                    // Update existing RiskAnalysis
+                    riskAnalysis = existingAnalysis;
+                }
+                else
+                {
+                    // Create new RiskAnalysis - this shouldn't happen if Step 3 was completed first
+                    var riskAnalysisId = new RiskAnalysisID($"RA-{hazard.Code}");
+                    riskAnalysis = new RiskAnalysis(riskAnalysisId);
+                    riskAnalysis.Code = $"RA-{hazard.Code}";
+                    riskAnalysis.Name = $"Risk Analysis for {hazard.Code}";
+                    riskAnalysis.Description = $"Technical risk analysis for hazard {hazard.Code}";
+                    riskAnalysis.HazardCode = hazard.Code;
+                    riskAnalysis.Status = "Created";
+                    riskAnalysis.Stage = "Risk Analysis Created";
+                }
+
+                // Update RiskAnalysis with Step 4 scoring results
+                if (HazardAverageScores.ContainsKey(hazard.Code))
+                {
+                    var averageScore = HazardAverageScores[hazard.Code];
+                    var riskLevel = HazardRiskLevels.ContainsKey(hazard.Code) ? HazardRiskLevels[hazard.Code] : "Unknown";
+                    
+                    // Append scoring results to existing description
+                    var baseDescription = string.IsNullOrEmpty(riskAnalysis.Description) 
+                        ? $"Risk Analysis for {hazard.Description}" 
+                        : riskAnalysis.Description;
+                        
+                    riskAnalysis.Description = $"{baseDescription}. Average Risk Score: {averageScore:F2}, Risk Level: {riskLevel}. Panel Assessment completed on {DateTime.UtcNow:yyyy-MM-dd}.";
+                    
+                    riskAnalysis.Status = "Risk Assessment Complete";
+                    riskAnalysis.Stage = "Step 4 Completed";
+                }
+
+                // Save or update the RiskAnalysis
+                if (existingAnalysis != null)
+                {
+                    var updateCommand = new UpdateRiskAnalysisCommand(riskAnalysis);
+                    await mediator.SendAsync(updateCommand, CancellationToken.None);
+                }
+                else
+                {
+                    var createCommand = new CreateRiskAnalysisCommand(riskAnalysis);
+                    await mediator.SendAsync(createCommand, CancellationToken.None);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but continue with other hazards
+                Console.WriteLine($"Error saving risk analysis for hazard {hazard.Code}: {ex.Message}");
+            }
+        }
+    }
     public void LoadFromAssessment(RiskAssessment assessment)
     {
         if (assessment == null) return;
@@ -498,6 +676,84 @@ public class Step4Model
         if (string.IsNullOrEmpty(TolerabilityFramework))
         {
             TolerabilityFramework = "PDX-SMS Default";
+        }
+    }
+
+    /// <summary>
+    /// Load existing scoring panels for all hazards using CQRS query
+    /// This should be called when Step 4 loads to populate scoring panel data
+    /// </summary>
+    public async Task LoadExistingScoringPanelsAsync(IMediator mediator, List<Hazard> availableHazards)
+    {
+        if (mediator == null || availableHazards == null) return;
+
+        foreach (var hazard in availableHazards)
+        {
+            try
+            {
+                var query = new GetScoringPanelsByHazardCodeQuery(hazard.Code);
+                var result = await mediator.SendAsync(query, CancellationToken.None);
+
+                if (result.IsSuccess && result.Value?.Any() == true)
+                {
+                    // Initialize collections if needed
+                    if (!PanelScores.ContainsKey(hazard.Code))
+                    {
+                        PanelScores[hazard.Code] = new List<PanelMemberScoreData>();
+                    }
+
+                    if (!HazardPanelMembers.ContainsKey(hazard.Code))
+                    {
+                        HazardPanelMembers[hazard.Code] = new List<string>();
+                    }
+
+                    // Process existing scoring panels
+                    foreach (var panel in result.Value)
+                    {
+                        // Add to panel members if not already there
+                        if (!HazardPanelMembers[hazard.Code].Contains(panel.SMSUserCode))
+                        {
+                            HazardPanelMembers[hazard.Code].Add(panel.SMSUserCode);
+                        }
+
+                        // Add/update score data if scores exist
+                        if (panel.Severity.HasValue && panel.Likelihood.HasValue && panel.Score.HasValue)
+                        {
+                            var existingScore = PanelScores[hazard.Code]
+                                .FirstOrDefault(s => s.MemberId == panel.SMSUserCode);
+
+                            if (existingScore != null)
+                            {
+                                // Update existing score
+                                existingScore.SeverityScore = panel.Severity.Value;
+                                existingScore.LikelihoodScore = panel.Likelihood.Value;
+                                existingScore.SubmittedDate = (panel.UpdatedDate ?? panel.CreatedDate) ?? DateTime.UtcNow;
+                            }
+                            else
+                            {
+                                // Add new score
+                                PanelScores[hazard.Code].Add(new PanelMemberScoreData
+                                {
+                                    HazardId = hazard.Code,
+                                    MemberId = panel.SMSUserCode,
+                                    MemberName = panel.SMSUserCode, // Will be resolved by UI
+                                    SeverityScore = panel.Severity.Value,
+                                    LikelihoodScore = panel.Likelihood.Value,
+                                    SubmittedDate = (panel.UpdatedDate ?? panel.CreatedDate) ?? DateTime.UtcNow
+                                });
+                            }
+                        }
+                    }
+
+                    // Recalculate averages for this hazard
+                    RecalculateHazardAverage(hazard.Code);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but continue with other hazards
+                Console.WriteLine($"Error loading scoring panels for hazard {hazard.Code}: {ex.Message}");
+            }
         }
     }
 
@@ -513,7 +769,7 @@ public class Step4Model
         RecalculateHazardAverage(hazardId);
     }
 
-    private void RecalculateHazardAverage(string hazardId)
+    public void RecalculateHazardAverage(string hazardId)
     {
         if (!PanelScores.ContainsKey(hazardId))
         {
@@ -548,7 +804,6 @@ public class Step4Model
     {
         HazardPanelMembers[hazardId] = memberIds.ToList();
     }
-
     #endregion
 
     #region Helper Classes

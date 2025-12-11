@@ -1,5 +1,8 @@
 @page "/SMSRiskManagement/TechnicalAssessment"
-@page "/SMSRiskManagement/TechnicalAssessment/{AssessmentId}"
+@page "/SMSRiskManagement/TechnicalAssessment/{ReportId}"
+@page "/SMSRiskManagement/TechnicalAssessment/{ReportId}/{HazardId}"
+@page "/SMSRiskManagement/TechnicalAssessment/{ReportId}/{HazardId}/{StepNumber}"
+@using SMS3.Components.Pages.SMSRiskManagement.Components
 @using SMS_Application.Messaging.Commands
 @using SMS_Application.Messaging.Queries
 @using SMS_Domain.Entities
@@ -54,8 +57,19 @@
                         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Style="margin-top: 0.5rem;">
                             @for (int step = 1; step <= 5; step++)
                             {
-                                var stepClass = step <= CurrentStep ? "text-primary fw-bold" : "text-muted";
-                                <RadzenText TextStyle="TextStyle.Caption" Style="@($"font-size: 0.75rem; {(step == CurrentStep ? "color: var(--rz-primary); font-weight: bold;" : "")}")" Text="@($"Step {step}")" />
+                                var stepNumber = step; // Capture for lambda
+                                var isCurrentStep = step == CurrentStep;
+                                var isCompleted = step < CurrentStep;
+                                var buttonStyle = isCurrentStep ? ButtonStyle.Primary : (isCompleted ? ButtonStyle.Success : ButtonStyle.Light);
+                                var icon = isCompleted ? "check_circle" : (isCurrentStep ? "edit" : "radio_button_unchecked");
+
+                                <RadzenButton Text="@($"Step {step}")" 
+                                            Icon="@icon"
+                                            ButtonStyle="@buttonStyle" 
+                                            Size="ButtonSize.ExtraSmall"
+                                            Click="@(() => NavigateToStep(stepNumber))"
+                                            Disabled="@IsSaving"
+                                            title="@($"Step {step}: {GetStepName(step)}")" />
                             }
                         </RadzenStack>
                     </RadzenColumn>
@@ -96,6 +110,7 @@
                                                      Step2="@Step2" 
                                                      Step2Changed="@UpdateStep2"
                                                      AvailableHazards="AvailableHazards"
+                                                     ReportId="@ReportId"
                                                      OnHazardAdded="@AddHazard"
                                                      OnHazardUpdated="@UpdateHazard" />
                             break;
