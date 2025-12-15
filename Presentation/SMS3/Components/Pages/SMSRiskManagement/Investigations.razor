@@ -56,10 +56,9 @@ else
             <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
                 <RadzenText TextStyle="TextStyle.Body2">
                     <strong>Debug Info:</strong><br/>
-                    InvestigationId Parameter: @(InvestigationId ?? "NULL")<br/>
-                    HazardId Parameter: @(HazardId ?? "NULL")<br/>
-                    Entity HazardCode: @(InvestigationEntity?.HazardCode ?? "NULL")<br/>
-                    Entity Status: @(InvestigationEntity?.Status ?? "NULL")
+                    Investigation: @(InvestigationId ?? "NULL")<br/>
+                    Hazard: @(InvestigationEntity?.HazardCode ?? "NULL")<br />
+                    Investigation Status: @(InvestigationEntity?.Status ?? "NULL")
                 </RadzenText>
             </RadzenAlert>
 

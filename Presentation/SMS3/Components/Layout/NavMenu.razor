@@ -40,9 +40,15 @@
                         <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
                             <RadzenMenuItem Text="SMS Risk Management" Icon="shield" class="sms-menu-item">
                                 <RadzenMenuItem Text="Create Hazard Report" Path="/SMSRiskManagement/HazardReporting" Icon="add_circle"></RadzenMenuItem>
-                                <RadzenMenuItem Text="Reports" Path="/SMSRiskManagement/Reports" Icon="assignment"></RadzenMenuItem>
+                               @*  <RadzenMenuItem Text="Reports" Path="/SMSRiskManagement/Reports" Icon="assignment"></RadzenMenuItem> *@
                                 <RadzenMenuItem Text="Report Processing" Path="/SMSRiskManagement/ReportProcessing" Icon="settings"></RadzenMenuItem>
-                                <RadzenMenuItem Text="Hazards" Path="/SMSRiskManagement/Hazards" Icon="warning"></RadzenMenuItem>
+                               @*  <RadzenMenuItem Text="Hazards" Path="/SMSRiskManagement/Hazards" Icon="warning"></RadzenMenuItem> *@
+                                <!-- Investigations -->
+                                <RadzenMenuItem Text="Investigate" Icon="search">
+                                    <RadzenMenuItem Text="Active Investigations" Path="" Icon="assignment"></RadzenMenuItem>
+                                    <RadzenMenuItem Text="Interview Calendar" Path="" Icon="diversity_3"></RadzenMenuItem>
+                                </RadzenMenuItem>
+
                             </RadzenMenuItem>
                         </RadzenMenu>
                     </div>
