@@ -323,8 +323,8 @@ public static class FieldNames
     private static readonly Lazy<string> _fHazardReportCode = new Lazy<string>(() => "fldv_ReportCode");
     public static string fHazardReportCode => _fHazardReportCode.Value;
 
-    private static readonly Lazy<string> _fHazardScoringPanelCode = new Lazy<string>(() => "fldv_ScoringPanelCode");
-    public static string fHazardScoringPanelCode => _fHazardScoringPanelCode.Value;
+    private static readonly Lazy<string> _fHazardScoringPanelRiskMatrixCode = new Lazy<string>(() => "fldv_RiskMatrixCode");
+    public static string fHazardScoringPanelRiskMatrixCode => _fHazardScoringPanelRiskMatrixCode.Value;
 
     private static readonly Lazy<string> _fHazardAverageScore = new Lazy<string>(() => "fldv_AverageScore");
     public static string fHazardAverageScore => _fHazardAverageScore.Value;

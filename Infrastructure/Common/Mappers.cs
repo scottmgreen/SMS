@@ -40,7 +40,7 @@ public static partial class Mappers
         return entity;
     }
 
-    private static void PopulateEntityFromReader<T>(this SqlDataReader reader, T entity)
+    private static void PopulateEntityFromReader<T>(this SqlDataReader reader, T entity) where T : new()
     {
         for (int i = 0; i < reader.FieldCount; i++)
         {
@@ -61,6 +61,18 @@ public static partial class Mappers
         return value == DBNull.Value ? default : (T)value;
     }
 
+    /// <summary>
+    /// Extension method to check if a column exists in the SqlDataReader
+    /// </summary>
+    public static bool HasColumn(this SqlDataReader reader, string columnName)
+    {
+        for (int i = 0; i < reader.FieldCount; i++)
+        {
+            if (reader.GetName(i).Equals(columnName, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
+    }
     #endregion
 
     #region SMS Entity Mappers
@@ -257,10 +269,10 @@ public static partial class Mappers
         // Core properties - Basic mapping from tbld_Hazards
         hazard.Code = reader.GetValue<string>(FieldNames.fHazardCode) ?? string.Empty;
         hazard.Name = reader.GetValue<string>(FieldNames.fHazardName);
-        hazard.Description = reader.GetValue<string>(FieldNames.fHazardDescription) ?? string.Empty;
-        hazard.Category = reader.GetValue<string>(FieldNames.fHazardCategory);
+        hazard.Description = reader.GetValue<string>(FieldNames.fHazardDescription).Trim() ?? string.Empty;
+        hazard.Category = reader.GetValue<string>(FieldNames.fHazardCategory).Trim();
         hazard.ReportCode = reader.GetValue<string>(FieldNames.fHazardReportCode) ?? string.Empty;
-        hazard.ScoringPanelCode = reader.GetValue<string>(FieldNames.fHazardScoringPanelCode);
+        hazard.RiskMatrixCode = reader.GetValue<string>(FieldNames.fHazardScoringPanelRiskMatrixCode);
         hazard.AverageScore = reader.GetValue<string>(FieldNames.fHazardAverageScore);
         
         // NOTE: HazardLocation is NOT populated here - it must be populated at the Application Service layer
@@ -691,7 +703,7 @@ public static partial class Mappers
 
         scoringPanel.Code = reader.GetValue<string>(FieldNames.fScoringPanelCode);
         scoringPanel.HazardCode = reader.GetValue<string>(FieldNames.fScoringPanelHazardCode);
-
+        scoringPanel.RiskAssessmentCode = reader.GetValue<string>(FieldNames.fScoringPanelRiskAssessmentCode);
         scoringPanel.SMSUserCode = reader.GetValue<string>(FieldNames.fScoringPanelSMSUserCode);
         scoringPanel.Likelihood = reader.GetValue<int?>(FieldNames.fScoringPanelLikelihood);
         scoringPanel.Severity = reader.GetValue<int?>(FieldNames.fScoringPanelSeverity);
@@ -803,17 +815,21 @@ public static partial class Mappers
             var code = reader.GetValue<string>(FieldNames.fSMSApplicationGroupCode) ?? string.Empty;
             SMSApplicationGroupID id = new SMSApplicationGroupID(code);
             SMSApplicationGroup applicationGroup = new SMSApplicationGroup(id);
+            
             applicationGroup.Code = code;
             applicationGroup.Name = reader.GetValue<string>(FieldNames.fSMSApplicationGroupName) ?? string.Empty;
+            applicationGroup.Description = reader.GetValue<string>(FieldNames.fSMSApplicationGroupDescription) ?? string.Empty;
+            applicationGroup.IsActive = reader.IsDBNull(FieldNames.fSMSApplicationGroupIsActive) ? true : reader.GetBoolean(FieldNames.fSMSApplicationGroupIsActive);
             applicationGroup.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
             applicationGroup.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
-            applicationGroup.Description = reader.GetValue<string>(FieldNames.fSMSApplicationGroupDescription) ?? string.Empty;
+            applicationGroup.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
+            applicationGroup.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fUpdatedDate);
 
             return applicationGroup;
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"Error mapping SqlDataReader to SMSStakeholderGroup: {ex.Message}", ex);
+            throw new InvalidOperationException($"Error mapping SqlDataReader to SMSApplicationGroup: {ex.Message}", ex);
         }
     }
 

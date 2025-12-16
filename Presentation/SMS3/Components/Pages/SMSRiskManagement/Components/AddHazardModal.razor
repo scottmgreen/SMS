@@ -76,10 +76,13 @@
                 </div>
                 <div class="modal-footer">
                     <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" 
-                                  Click="@CloseModal" />
-                    <RadzenButton Text="Add Hazard" Icon="add" ButtonStyle="ButtonStyle.Success" 
+                                  Click="@CloseModal" 
+                                  Disabled="@IsSubmitting" />
+                    <RadzenButton Text="@(IsSubmitting ? "Adding..." : "Add Hazard")" 
+                                  Icon="@(IsSubmitting ? "hourglass_empty" : "add")" 
+                                  ButtonStyle="ButtonStyle.Success" 
                                   Click="@AddHazard" 
-                                  Disabled="@(!IsFormValid)" />
+                                  Disabled="@(!IsFormValid || IsSubmitting)" />
                 </div>
             </div>
         </div>

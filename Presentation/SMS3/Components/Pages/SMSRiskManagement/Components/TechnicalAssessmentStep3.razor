@@ -223,7 +223,21 @@
         // Trigger state update when analysis fields change
         await InvokeAsync(StateHasChanged);
         
-        // Also notify parent of changes
-        await Step3Changed.InvokeAsync(Step3);
+        // Save Step 3 data and update hazards immediately when fields change
+        if (AvailableHazards?.Any() == true)
+        {
+            // Find parent component to get RiskAssessment and Mediator
+            // This would need to be passed down from parent or accessed via DI
+            // For now, just notify parent of changes
+            await Step3Changed.InvokeAsync(Step3);
+            
+            // TODO: Call Step3.ApplyToAssessmentAsync if we have access to assessment and mediator
+            // await Step3.ApplyToAssessmentAsync(assessment, mediator, AvailableHazards);
+        }
+        else
+        {
+            // Just notify parent of changes
+            await Step3Changed.InvokeAsync(Step3);
+        }
     }
 }

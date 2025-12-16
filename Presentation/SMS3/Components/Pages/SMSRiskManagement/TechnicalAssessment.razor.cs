@@ -489,7 +489,14 @@ public partial class TechnicalAssessment : ComponentBase
             if (smsUsersResult.IsSuccess)
             {
                 AvailableSMSUsers = smsUsersResult.Value?.Where(u => u.IsActive).ToList() ?? new List<SMSApplicationUser>();
-                AvailableAssessors = AvailableSMSUsers; // For now, assessors are SMS users
+                
+                // ENHANCED: Filter for Safety Team members only
+                AvailableAssessors = AvailableSMSUsers
+                    .Where(u => u.IsActive && IsSafetyTeamMember(u))
+                    .ToList();
+                    
+                Logger.LogInformation("Filtered to {SafetyTeamCount} Safety Team assessors from {TotalCount} total SMS users", 
+                    AvailableAssessors.Count, AvailableSMSUsers.Count);
             }
 
             // Load Stakeholder Users
@@ -508,13 +515,86 @@ public partial class TechnicalAssessment : ComponentBase
                 StakeholderGroups = groupsResult.Value?.ToList() ?? new List<SMSStakeholderGroup>();
             }
 
-            Logger.LogInformation("Reference data loaded - SMS Users: {SMS}, Stakeholders: {Stakeholders}, Groups: {Groups}",
-                AvailableSMSUsers.Count, AvailableStakeholders.Count, StakeholderGroups.Count);
+            Logger.LogInformation("Reference data loaded - SMS Users: {SMS}, Safety Team Assessors: {Assessors}, Stakeholders: {Stakeholders}, Groups: {Groups}",
+                AvailableSMSUsers.Count, AvailableAssessors.Count, AvailableStakeholders.Count, StakeholderGroups.Count);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading reference data");
         }
+    }
+
+    /// <summary>
+    /// Determine if a SMS Application User is a member of the Safety Team
+    /// This method checks various criteria to identify Safety Team members
+    /// </summary>
+    private bool IsSafetyTeamMember(SMSApplicationUser user)
+    {
+        if (user == null || !user.IsActive) return false;
+
+        // Check if user has Safety Team role
+        if (user.UserRole?.Name != null)
+        {
+            var roleName = user.UserRole.Name.ToLowerInvariant();
+            if (roleName.Contains("safety") || 
+                roleName.Contains("assessor") || 
+                roleName.Contains("risk") ||
+                roleName.Contains("sms") ||
+                roleName.Equals("safety team", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        // Check SMSUserType property
+        if (!string.IsNullOrEmpty(user.SMSUserType))
+        {
+            var userType = user.SMSUserType.ToLowerInvariant();
+            if (userType.Contains("safety") || 
+                userType.Contains("assessor") || 
+                userType.Contains("risk") ||
+                userType.Contains("sms"))
+            {
+                return true;
+            }
+        }
+
+        // Check user code patterns
+        if (!string.IsNullOrEmpty(user.Code))
+        {
+            var userCode = user.Code.ToLowerInvariant();
+            if (userCode.Contains("safety") || 
+                userCode.Contains("sms") ||
+                userCode.StartsWith("st-") || // Safety Team prefix
+                userCode.StartsWith("ra-"))   // Risk Assessor prefix
+            {
+                return true;
+            }
+        }
+
+        // Check username patterns
+        if (user.UserName?.Value != null)
+        {
+            var username = user.UserName.Value.ToLowerInvariant();
+            if (username.Contains("safety") || 
+                username.Contains("sms") ||
+                username.Contains("risk") ||
+                username.Contains("assessor"))
+            {
+                return true;
+            }
+        }
+
+        // Fallback: For development/demo purposes, if no specific roles are configured,
+        // allow any active user to be considered a potential assessor
+        // TODO: Remove this fallback once proper role configuration is in place
+        if (user.UserRole?.Name == null || string.IsNullOrEmpty(user.UserRole.Name))
+        {
+            Logger.LogWarning("User {UserCode} has no role assigned - including in assessors for development purposes", user.Code);
+            return true; // Temporarily allow users without roles
+        }
+
+        return false;
     }
 
     #endregion
@@ -1001,63 +1081,57 @@ public partial class TechnicalAssessment : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Adding new hazard: {Description}", newHazard.Description);
+            Logger.LogInformation("AddHazard method called with hazard: {Description} (Code: {Code})", newHazard.Description, newHazard.Code);
 
-            // Check if hazard already exists to prevent duplication
+            // CRITICAL: Check if hazard already exists to prevent duplication
             if (ReportHazards.Any(h => h.Code == newHazard.Code && h.Code != "HZ-0000"))
             {
-                Logger.LogWarning("Hazard {HazardCode} already exists, skipping duplication", newHazard.Code);
+                Logger.LogWarning("Hazard {HazardCode} already exists in ReportHazards collection, skipping duplication", newHazard.Code);
                 return;
             }
 
-            // Use proper CQRS CreateHazardCommand
-            var createCommand = new CreateHazardCommand(newHazard);
-            var result = await Mediator.SendAsync(createCommand, CancellationToken.None);
-
-            if (result.IsSuccess && result.Value != null)
+            // CRITICAL: Check if hazard with same description already exists (in case of rapid duplicate submissions)
+            if (ReportHazards.Any(h => h.Description?.Trim().Equals(newHazard.Description?.Trim(), StringComparison.OrdinalIgnoreCase) == true))
             {
-                // CRITICAL: Check again after database creation to prevent duplicates from DB-generated codes
-                var createdHazard = result.Value;
-                if (!ReportHazards.Any(h => h.Code == createdHazard.Code))
-                {
-                    // Add to collections
-                    ReportHazards.Add(createdHazard);
-                    
-                    // Create a completely new list to force parameter change detection
-                    AvailableHazards = ReportHazards.ToList();
-                    
-                    // Update Step2 model
-                    if (!Step2.HazardIds.Contains(createdHazard.Code))
-                    {
-                        Step2.HazardIds.Add(createdHazard.Code);
-                        Step2.HazardDescriptions.Add(createdHazard.Description);
-                        Step2.HazardCategories.Add(createdHazard.HazardType ?? string.Empty);
-                    }
+                Logger.LogWarning("Hazard with description '{Description}' already exists in ReportHazards collection, skipping duplication", newHazard.Description);
+                ShowErrorNotification("A hazard with this description already exists.");
+                return;
+            }
 
-                    // CRITICAL: Force complete UI refresh for parent and all children
-                    await InvokeAsync(() =>
-                    {
-                        StateHasChanged();
-                    });
+            // The hazard was already created in the modal - we just need to add it to our collections
+            Logger.LogInformation("Hazard {HazardCode} was successfully created in modal, adding to collections", newHazard.Code);
 
-                    ShowSuccessNotification($"Hazard {createdHazard.Code} added successfully");
-                    Logger.LogInformation("Successfully created hazard: {HazardCode} - Total hazards: {Count}", 
-                        createdHazard.Code, AvailableHazards.Count);
-                }
-                else
-                {
-                    Logger.LogInformation("Hazard {HazardCode} already exists in collection, skipping add", createdHazard.Code);
-                }
+            // Add to collections (no database call needed here - already done in modal)
+            ReportHazards.Add(newHazard);
+            
+            // Create a completely new list to force parameter change detection
+            AvailableHazards = ReportHazards.ToList();
+            
+            // Update Step2 model
+            if (!Step2.HazardIds.Contains(newHazard.Code))
+            {
+                Step2.HazardIds.Add(newHazard.Code);
+                Step2.HazardDescriptions.Add(newHazard.Description ?? string.Empty);
+                Step2.HazardCategories.Add(newHazard.HazardType ?? string.Empty);
             }
             else
             {
-                ShowErrorNotification($"Failed to add hazard: {result.Error?.Message}");
-                Logger.LogError("CreateHazardCommand failed: {Error}", result.Error?.Message);
+                Logger.LogWarning("Hazard {HazardCode} already exists in Step2 model, skipping Step2 update", newHazard.Code);
             }
+
+            // CRITICAL: Force complete UI refresh for parent and all children
+            await InvokeAsync(() =>
+            {
+                StateHasChanged();
+            });
+
+            ShowSuccessNotification($"Hazard {newHazard.Code} added successfully");
+            Logger.LogInformation("Successfully added hazard to collections: {HazardCode} - Total hazards: {Count}", 
+                newHazard.Code, AvailableHazards.Count);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error adding hazard");
+            Logger.LogError(ex, "Error in AddHazard method for hazard: {Description}", newHazard.Description);
             ShowErrorNotification("Error adding hazard");
         }
     }

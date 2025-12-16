@@ -13,7 +13,7 @@
             <!-- System Context from Step 1 -->
             <RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid var(--rz-info);">
                 <RadzenStack Gap="1rem">
-                    <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-info); margin: 0;">
+                    <RadzenText TextStyle="TextStyle.H6" Style="color: #212e61; margin: 0;">
                         <RadzenIcon Icon="map" Style="margin-right: 0.5rem;" />
                         System Context (From Step 1)
                     </RadzenText>
@@ -35,28 +35,38 @@
                 </RadzenStack>
             </RadzenCard>
 
-            <!-- Existing Hazards Display -->
-            @if (AvailableHazards?.Any() == true)
-            {
-                <RadzenCard>
-                    <RadzenStack Gap="1rem">
-                        <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
-                            <RadzenIcon Icon="list" Style="margin-right: 0.5rem;" />
-                            Identified Hazards
-                            <RadzenBadge Text="@AvailableHazards.Count.ToString()" BadgeStyle="BadgeStyle.Light" Style="margin-left: 0.5rem;" />
-                        </RadzenText>
-                        
+            <!-- Hazards Section - Always show, even if no hazards exist -->
+            <RadzenCard>
+                <RadzenStack Gap="1rem">
+                    <!-- Header Row with Button -->
+                    <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                        <RadzenColumn Size="8">
+                            <RadzenText TextStyle="TextStyle.H6" Style="color: #212e61; margin: 0;">
+                                <RadzenIcon Icon="list" Style="margin-right: 0.5rem;" />
+                                Identified Hazards
+                                <RadzenBadge Text="@AvailableHazards.Count.ToString()" BadgeStyle="BadgeStyle.Light" Style="margin-left: 0.5rem;" />
+                            </RadzenText>
+                        </RadzenColumn>
+                        <RadzenColumn Size="4" Style="text-align: right;">
+                            <RadzenButton Text="Add New Hazard" Icon="add" ButtonStyle="ButtonStyle.Success"
+                                          Click="@OpenAddHazardModal" />
+                        </RadzenColumn>
+                    </RadzenRow>
+                    
+                    <!-- Content: Either Data Grid or Empty State -->
+                    @if (AvailableHazards?.Any() == true)
+                    {
                         <RadzenDataGrid Data="@AvailableHazards" TItem="Hazard" AllowFiltering="true" AllowPaging="true" PageSize="10">
                             <Columns>
                                 <RadzenDataGridColumn TItem="Hazard" Property="Code" Title="Hazard ID">
                                     <Template Context="hazard">
-                                        <RadzenBadge Text="@hazard.Code" BadgeStyle="BadgeStyle.Primary" />
+                                        <RadzenBadge Text="@hazard.Code" BadgeStyle="BadgeStyle.Base" />
                                     </Template>
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="Hazard" Property="Description" Title="Description" />
                                 <RadzenDataGridColumn TItem="Hazard" Property="Category" Title="Category">
                                     <Template Context="hazard">
-                                        <RadzenBadge Text="@(hazard.Category ?? "Not specified")" BadgeStyle="BadgeStyle.Secondary" />
+                                        <RadzenBadge Text="@(hazard.Category ?? "Not specified")" BadgeStyle="BadgeStyle.Base" />
                                     </Template>
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="Hazard" Property="Location" Title="Location">
@@ -79,7 +89,7 @@
                                     <Template Context="hazard">
                                         @if (IsInitialHazard(hazard))
                                         {
-                                            <RadzenBadge Text="Initial Hazard" BadgeStyle="BadgeStyle.Info" />
+                                            <RadzenBadge Text="Initial Hazard" BadgeStyle="BadgeStyle.Base" />
                                         }
                                         else
                                         {
@@ -94,25 +104,16 @@
                                 </RadzenDataGridColumn>
                             </Columns>
                         </RadzenDataGrid>
-                    </RadzenStack>
-                </RadzenCard>
-            }
-
-            <!-- Add New Hazard Button -->
-            <RadzenCard>
-                <RadzenStack Gap="1rem" AlignItems="AlignItems.Center" Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-                    <RadzenStack Gap="0.5rem" AlignItems="AlignItems.Start">
-                        <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-success); margin: 0;">
-                            <RadzenIcon Icon="add_circle" Style="margin-right: 0.5rem;" />
-                            Add New Hazard
-                        </RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color); margin: 0;">
-                            Click to add a new hazard with location mapping
-                        </RadzenText>
-                    </RadzenStack>
-                    <RadzenButton Text="Add New Hazard" Icon="add" ButtonStyle="ButtonStyle.Success" 
-                                  Size="ButtonSize.Large"
-                                  Click="@OpenAddHazardModal" />
+                    }
+                    else
+                    {
+                        <!-- Empty State -->
+                        <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 2rem;">
+                            <RadzenIcon Icon="warning" Style="font-size: 3rem; color: var(--rz-warning);" />
+                            <RadzenText TextStyle="TextStyle.H6" Text="No hazards identified yet" Style="color: var(--rz-text-secondary-color);" />
+                            <RadzenText TextStyle="TextStyle.Body2" Text="Click 'Add New Hazard' above to identify potential hazards in this system" Style="color: var(--rz-text-secondary-color); text-align: center;" />
+                        </RadzenStack>
+                    }
                 </RadzenStack>
             </RadzenCard>
         </RadzenStack>

@@ -685,8 +685,8 @@ public partial class ReportProcessing : ComponentBase
     {
         // Report ID Column - Show actual Report ID for all tabs
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(5);
-        builder.AddAttribute(6, "Property", "ReportId");
-        builder.AddAttribute(7, "Title", "Report ID");
+        builder.AddAttribute(6, "Property", "HazardId");
+        builder.AddAttribute(7, "Title", "Hazard ID");
         builder.AddAttribute(8, "Width", "150px");
         builder.AddAttribute(9, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
             (templateBuilder =>
@@ -699,18 +699,18 @@ public partial class ReportProcessing : ComponentBase
                     stackBuilder.OpenComponent<RadzenText>(0);
                     stackBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
                     stackBuilder.AddAttribute(2, "Style", "font-weight: 600;");
-                    stackBuilder.AddAttribute(3, "Text", report.ReportId);
+                    stackBuilder.AddAttribute(3, "Text", report.HazardId);
                     stackBuilder.CloseComponent();
                     
                     // Show associated Hazard ID as secondary info if available
-                    if (!string.IsNullOrEmpty(report.HazardId))
-                    {
-                        stackBuilder.OpenComponent<RadzenText>(10);
-                        stackBuilder.AddAttribute(11, "TextStyle", TextStyle.Caption);
-                        stackBuilder.AddAttribute(12, "Style", "color: var(--rz-text-disabled-color);");
-                        stackBuilder.AddAttribute(13, "Text", $"Hazard: {report.HazardId}");
-                        stackBuilder.CloseComponent();
-                    }
+                    //if (!string.IsNullOrEmpty(report.HazardId))
+                    //{
+                    //    stackBuilder.OpenComponent<RadzenText>(10);
+                    //    stackBuilder.AddAttribute(11, "TextStyle", TextStyle.Caption);
+                    //    stackBuilder.AddAttribute(12, "Style", "color: var(--rz-text-disabled-color);");
+                    //    stackBuilder.AddAttribute(13, "Text", $"Hazard: {report.HazardId}");
+                    //    stackBuilder.CloseComponent();
+                    //}
                 }));
                 templateBuilder.CloseComponent();
             })));
@@ -803,7 +803,7 @@ public partial class ReportProcessing : ComponentBase
 
     private void RenderRiskAssessmentColumns(RenderTreeBuilder builder)
     {
-        // Report ID Column with RISK ASSESSMENT action button - navigates to correct assessment type
+        // Report ID Column - WITHOUT action button (moved to Actions column)
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(0);
         builder.AddAttribute(1, "Property", "ReportId");
         builder.AddAttribute(2, "Title", "Report ID");
@@ -823,68 +823,79 @@ public partial class ReportProcessing : ComponentBase
                     stackBuilder.CloseComponent();
                     
                     // Show associated Hazard ID as secondary info if available
-                    if (!string.IsNullOrEmpty(report.HazardId))
-                    {
-                        stackBuilder.OpenComponent<RadzenText>(10);
-                        stackBuilder.AddAttribute(11, "TextStyle", TextStyle.Caption);
-                        stackBuilder.AddAttribute(12, "Style", "color: var(--rz-text-disabled-color);");
-                        stackBuilder.AddAttribute(13, "Text", $"Hazard: {report.HazardId}");
-                        stackBuilder.CloseComponent();
-                    }
+                    //if (!string.IsNullOrEmpty(report.HazardId))
+                    //{
+                    //    stackBuilder.OpenComponent<RadzenText>(10);
+                    //    stackBuilder.AddAttribute(11, "TextStyle", TextStyle.Caption);
+                    //    stackBuilder.AddAttribute(12, "Style", "color: var(--rz-text-disabled-color);");
+                    //    stackBuilder.AddAttribute(13, "Text", $"Hazard: {report.HazardId}");
+                    //    stackBuilder.CloseComponent();
+                    //}
                     
-                    // NEW: Show Validation Type
-                    if (!string.IsNullOrEmpty(report.ValidationType))
-                    {
-                        stackBuilder.OpenComponent<RadzenText>(15);
-                        stackBuilder.AddAttribute(16, "TextStyle", TextStyle.Caption);
-                        stackBuilder.AddAttribute(17, "Style", "color: var(--rz-info); font-weight: 500;");
-                        stackBuilder.AddAttribute(18, "Text", $"Type: {report.ValidationType}");
-                        stackBuilder.CloseComponent();
-                    }
+                    //// NEW: Show Validation Type
+                    //if (!string.IsNullOrEmpty(report.ValidationType))
+                    //{
+                    //    stackBuilder.OpenComponent<RadzenText>(15);
+                    //    stackBuilder.AddAttribute(16, "TextStyle", TextStyle.Caption);
+                    //    stackBuilder.AddAttribute(17, "Style", "color: black; font-weight: 500;");
+                    //    stackBuilder.AddAttribute(18, "Text", $"Type: {report.ValidationType}");
+                    //    stackBuilder.CloseComponent();
+                    //}
                     
-                    // Risk Assessment tab: Show assessment progress if available
-                    if (report.HasRiskAssessment && report.CurrentAssessmentStep > 0)
-                    {
-                        if (report.ValidationType?.ToLower() == "technical")
-                        {
-                            stackBuilder.OpenComponent<RadzenText>(20);
-                            stackBuilder.AddAttribute(21, "TextStyle", TextStyle.Caption);
-                            stackBuilder.AddAttribute(22, "Style", "color: var(--rz-primary); font-weight: 500;");
-                            stackBuilder.AddAttribute(23, "Text", $"Technical Assessment Step: {report.CurrentAssessmentStep}/5");
-                            stackBuilder.CloseComponent();
-                        }
-                        else if (report.ValidationType?.ToLower() == "preliminary")
-                        {
-                            stackBuilder.OpenComponent<RadzenText>(20);
-                            stackBuilder.AddAttribute(21, "TextStyle", TextStyle.Caption);
-                            stackBuilder.AddAttribute(22, "Style", "color: var(--rz-success); font-weight: 500;");
-                            stackBuilder.AddAttribute(23, "Text", "Preliminary Assessment");
-                            stackBuilder.CloseComponent();
-                        }
-                    }
-                    else
-                    {
-                        stackBuilder.OpenComponent<RadzenText>(25);
-                        stackBuilder.AddAttribute(26, "TextStyle", TextStyle.Caption);
-                        stackBuilder.AddAttribute(27, "Style", "color: var(--rz-success); font-weight: 500;");
-                        stackBuilder.AddAttribute(28, "Text", "Validated - Ready for Assessment");
-                        stackBuilder.CloseComponent();
-                    }
-                    
-                    // ENHANCED SMART ACTION: Navigation based on ValidationType
-                    stackBuilder.OpenComponent<RadzenButton>(30);
-                    stackBuilder.AddAttribute(31, "Text", report.ActionButtonText);
-                    stackBuilder.AddAttribute(32, "Icon", GetAssessmentIcon(report));
-                    stackBuilder.AddAttribute(33, "ButtonStyle", GetAssessmentButtonStyle(report));
-                    stackBuilder.AddAttribute(34, "Size", ButtonSize.Small);
-                    stackBuilder.AddAttribute(35, "Click", EventCallback.Factory.Create<MouseEventArgs>(this, (args) => Navigation.NavigateTo(report.SmartValidationUrl)));
-                    stackBuilder.CloseComponent();
+                    //// Risk Assessment tab: Show assessment progress if available
+                    //if (report.HasRiskAssessment && report.CurrentAssessmentStep > 0)
+                    //{
+                    //    if (report.ValidationType?.ToLower() == "technical")
+                    //    {
+                    //        stackBuilder.OpenComponent<RadzenText>(20);
+                    //        stackBuilder.AddAttribute(21, "TextStyle", TextStyle.Caption);
+                    //        stackBuilder.AddAttribute(22, "Style", "color: var(--rz-primary); font-weight: 500;");
+                    //        stackBuilder.AddAttribute(23, "Text", $"Technical Assessment Step: {report.CurrentAssessmentStep}/5");
+                    //        stackBuilder.CloseComponent();
+                    //    }
+                    //    else if (report.ValidationType?.ToLower() == "preliminary")
+                    //    {
+                    //        stackBuilder.OpenComponent<RadzenText>(20);
+                    //        stackBuilder.AddAttribute(21, "TextStyle", TextStyle.Caption);
+                    //        stackBuilder.AddAttribute(22, "Style", "color: var(--rz-success); font-weight: 500;");
+                    //        stackBuilder.AddAttribute(23, "Text", "Preliminary Assessment");
+                    //        stackBuilder.CloseComponent();
+                    //    }
+                    //}
+                    //else
+                    //{
+                    //    stackBuilder.OpenComponent<RadzenText>(25);
+                    //    stackBuilder.AddAttribute(26, "TextStyle", TextStyle.Caption);
+                    //    stackBuilder.AddAttribute(27, "Style", "color: var(--rz-success); font-weight: 500;");
+                    //    stackBuilder.AddAttribute(28, "Text", "Validated - Ready for Assessment");
+                    //    stackBuilder.CloseComponent();
+                    //}
                 }));
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
 
-        RenderStandardColumns(builder, false); // No additional actions column
+        // Standard columns (Description, Stage, Priority, Reported By, Days in Stage)
+        RenderStandardColumns(builder, false); // No additional actions column in standard columns
+        
+        // Actions Column - NEW: Moved the action button to the far right
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(100);
+        builder.AddAttribute(101, "Title", "Actions");
+        builder.AddAttribute(102, "Width", "200px");
+        builder.AddAttribute(103, "Sortable", false);
+        builder.AddAttribute(104, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenButton>(0);
+                templateBuilder.AddAttribute(1, "Text", report.ActionButtonText);
+                templateBuilder.AddAttribute(2, "Icon", GetAssessmentIcon(report));
+                templateBuilder.AddAttribute(3, "ButtonStyle", GetAssessmentButtonStyle(report));
+                templateBuilder.AddAttribute(4, "Size", ButtonSize.Small);
+                templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this, 
+                    (args) => Navigation.NavigateTo(report.SmartValidationUrl)));
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
     }
 
     private string GetAssessmentIcon(ReportProcessingSummary report)

@@ -1,0 +1,499 @@
+@page "/System/UserGroups/StakeholderGroups"
+@page "/System/UserGroups/StakeholderGroups/Edit/{GroupCode}"
+@page "/System/UserGroups/StakeholderGroups/Members/{GroupCode}"
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using SMS3.Components.Shared
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Stakeholder Group Management - SMS3</PageTitle>
+
+<!-- SMS Page Header -->
+<PageHeader Title="Stakeholder Group Management"
+           Subtitle="Manage SMS Stakeholder User Groups for External Organizations"
+           Icon="fas fa-users">
+    <AdditionalContent>
+        <div class="d-flex gap-2">
+            <RadzenButton Text="Back to Dashboard" Icon="arrow_back" ButtonStyle="ButtonStyle.Light"
+                          Click="@(() => Navigation.NavigateTo("/System/UserManagement"))" />
+            @if (!IsEditMode && !IsManagingMembers)
+            {
+                <RadzenButton Text="Add Group" Icon="add" ButtonStyle="ButtonStyle.Primary"
+                              Click="@OpenCreateModal" />
+            }
+        </div>
+    </AdditionalContent>
+</PageHeader>
+
+<!-- Success/Error Messages -->
+@if (!string.IsNullOrEmpty(SuccessMessage))
+{
+    <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" class="mb-3">
+        <RadzenIcon Icon="check_circle" Style="margin-right: 0.5rem;" />
+        @SuccessMessage
+    </RadzenAlert>
+}
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" class="mb-3">
+        <RadzenIcon Icon="error" Style="margin-right: 0.5rem;" />
+        @ErrorMessage
+    </RadzenAlert>
+}
+
+<!-- Quick Setup for Empty State -->
+@if (!IsEditMode && !IsManagingMembers && !SMSStakeholderGroups.Any())
+{
+    <RadzenCard class="mb-4" Style="border-left: 4px solid var(--rz-primary);">
+        <RadzenCardHeader>
+            <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
+                <RadzenIcon Icon="auto_fix_high" Style="margin-right: 0.5rem;" />
+                Quick Setup
+            </RadzenText>
+        </RadzenCardHeader>
+        <RadzenCardContent>
+            <RadzenText class="mb-3">
+                Get started quickly by creating common stakeholder groups for airport operations.
+            </RadzenText>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                <RadzenButton Text="Create Default Groups" Icon="auto_fix_high" ButtonStyle="ButtonStyle.Success"
+                              Click="@CreateDefaultGroups" />
+                <RadzenButton Text="Create Custom Group" Icon="add" ButtonStyle="ButtonStyle.Primary"
+                              Click="@OpenCreateModal" />
+            </RadzenStack>
+        </RadzenCardContent>
+    </RadzenCard>
+}
+
+<!-- Edit Group Form -->
+@if (IsEditMode && CurrentGroup != null)
+{
+    <RadzenCard class="mb-4" Style="border-left: 4px solid var(--rz-warning);">
+        <RadzenCardHeader>
+            <RadzenText TextStyle="TextStyle.H5" Style="color: var(--rz-warning); margin: 0;">
+                <RadzenIcon Icon="edit" Style="margin-right: 0.5rem;" />
+                Edit Group: @CurrentGroup.Name
+            </RadzenText>
+        </RadzenCardHeader>
+        <RadzenCardContent>
+            <RadzenStack Gap="1rem">
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Group Name *" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="@EditGroupName" Placeholder="Enter group name" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Status" Variant="Variant.Outlined">
+                            <RadzenDropDown @bind-Value="@EditIsActive" Data="@StatusOptions" 
+                                            TextProperty="Text" ValueProperty="Value" 
+                                            Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+                
+                <RadzenFormField Text="Description" Variant="Variant.Outlined">
+                    <RadzenTextArea @bind-Value="@EditDescription" Rows="3" 
+                                    Placeholder="Optional description of the group's purpose or member organizations" 
+                                    Style="width: 100%;" />
+                </RadzenFormField>
+                
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                    <RadzenButton Text="Update Group" Icon="save" ButtonStyle="ButtonStyle.Warning"
+                                  Click="@UpdateGroup" Disabled="@IsSaving" />
+                    <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Secondary"
+                                  Click="@CancelEdit" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCardContent>
+    </RadzenCard>
+}
+
+<!-- Group Membership Management -->
+@if (IsManagingMembers && CurrentGroup != null)
+{
+    <RadzenCard class="mb-4" Style="border-left: 4px solid var(--rz-info);">
+        <RadzenCardHeader Style="background-color: var(--rz-info); color: white;">
+            <div class="d-flex justify-content-between align-items-center w-100">
+                <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
+                    <RadzenIcon Icon="people" Style="margin-right: 0.5rem;" />
+                    Manage Members: @CurrentGroup.Name
+                </RadzenText>
+                <div class="d-flex align-items-center gap-2">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: white;">
+                        Total: @(GroupMembers.Count + AvailableUsers.Count) users
+                    </RadzenText>
+                    <RadzenButton Text="Back to Groups" Icon="arrow_back" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                  Click="@(() => Navigation.NavigateTo("/System/UserGroups/StakeholderGroups"))" />
+                </div>
+            </div>
+            @if (!string.IsNullOrEmpty(CurrentGroup.Description))
+            {
+                <RadzenText TextStyle="TextStyle.Caption" Style="color: rgba(255,255,255,0.8); margin-top: 0.5rem;">
+                    @CurrentGroup.Description
+                </RadzenText>
+            }
+        </RadzenCardHeader>
+        <RadzenCardContent>
+            <RadzenRow Gap="1rem">
+                <!-- Current Members -->
+                <RadzenColumn Size="12" SizeMD="6">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <RadzenText TextStyle="TextStyle.H6">
+                            <RadzenIcon Icon="check_circle" Style="color: var(--rz-success); margin-right: 0.5rem;" />
+                            Current Members
+                        </RadzenText>
+                        <RadzenBadge Text="@GroupMembers.Count.ToString()" BadgeStyle="BadgeStyle.Success" />
+                    </div>
+                    
+                    @if (GroupMembers.Any())
+                    {
+                        <div style="max-height: 500px; overflow-y: auto;" class="member-list">
+                            @foreach (var member in GroupMembers)
+                            {
+                                <RadzenCard class="mb-2" Style="border: 1px solid var(--rz-border-color);">
+                                    <RadzenCardContent class="p-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    <div style="width: 40px; height: 40px; background-color: var(--rz-success); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                                        <RadzenIcon Icon="person" Style="color: white;" />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
+                                                        @member.FirstName.Value @member.LastName.Value
+                                                    </RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                                        @member.Organization
+                                                    </RadzenText>
+                                                    <br>
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                                        Type: @member.StakeholderType
+                                                    </RadzenText>
+                                                </div>
+                                            </div>
+                                            <RadzenButton Icon="person_remove" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                                          Click="@(() => RemoveUser(member.Code))"
+                                                          title="Remove from Group" />
+                                        </div>
+                                    </RadzenCardContent>
+                                </RadzenCard>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 2rem; border: 2px dashed var(--rz-border-color); border-radius: 8px; text-align: center;">
+                            <RadzenIcon Icon="people" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" />
+                            <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-text-disabled-color);">No members in this group yet</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">Add users from the available list to get started.</RadzenText>
+                        </RadzenStack>
+                    }
+                </RadzenColumn>
+                
+                <!-- Available Users -->
+                <RadzenColumn Size="12" SizeMD="6">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <RadzenText TextStyle="TextStyle.H6">
+                            <RadzenIcon Icon="person_add" Style="color: var(--rz-primary); margin-right: 0.5rem;" />
+                            Available Users
+                        </RadzenText>
+                        <RadzenBadge Text="@AvailableUsers.Count.ToString()" BadgeStyle="BadgeStyle.Primary" />
+                    </div>
+                    
+                    @if (AvailableUsers.Any())
+                    {
+                        <RadzenStack Gap="1rem">
+                            <!-- Bulk Actions -->
+                            <RadzenCard Style="background-color: var(--rz-base-100);">
+                                <RadzenCardContent class="p-3">
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.SpaceBetween">
+                                        <RadzenButton Text="@($"Add Selected ({SelectedUsers.Count})")" Icon="person_add" 
+                                                      ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                                                      Click="@AssignMultipleUsers" Disabled="@(!SelectedUsers.Any())" />
+                                        <RadzenButton Text="Select All" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                                      Click="@(() => SelectAll(true))" />
+                                        <RadzenButton Text="Clear All" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                                      Click="@(() => SelectAll(false))" />
+                                    </RadzenStack>
+                                </RadzenCardContent>
+                            </RadzenCard>
+                            
+                            <!-- User List -->
+                            <div style="max-height: 500px; overflow-y: auto;" class="member-list">
+                                @foreach (var user in AvailableUsers)
+                                {
+                                    <RadzenCard class="mb-2 user-card" Style="border: 1px solid var(--rz-border-color); cursor: pointer;"
+                                                @onclick="@(() => ToggleUserSelection(user.Code))">
+                                        <RadzenCardContent class="p-3">
+                                            <div class="d-flex align-items-center">
+                                                <RadzenCheckBox @bind-Value="@SelectedUsers[user.Code]" class="me-3" />
+                                                <div class="me-3">
+                                                    <div style="width: 35px; height: 35px; background-color: var(--rz-base-200); border: 1px solid var(--rz-border-color); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                                        <RadzenIcon Icon="person" Style="color: var(--rz-text-secondary-color);" />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
+                                                        @user.FirstName.Value @user.LastName.Value
+                                                    </RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-textsecondary-color);">
+                                                        @user.Organization
+                                                    </RadzenText>
+                                                    <br>
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-textsecondary-color);">
+                                                        Type: @user.StakeholderType
+                                                    </RadzenText>
+                                                </div>
+                                            </div>
+                                        </RadzenCardContent>
+                                    </RadzenCard>
+                                }
+                            </div>
+                            
+                            <!-- Quick Selection -->
+                            <RadzenCard Style="background-color: var(--rz-base-100);">
+                                <RadzenCardContent class="p-3">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" class="mb-2">
+                                        <RadzenIcon Icon="auto_fix_high" Style="color: var(--rz-info); margin-right: 0.5rem;" />
+                                        Quick Actions
+                                    </RadzenText>
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Wrap="FlexWrap.Wrap">
+                                        <RadzenButton Text="Select Airlines" Icon="flight" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                                      Click="@(() => SelectUsersByType("Airline"))" />
+                                        <RadzenButton Text="Select Ground Handlers" Icon="local_shipping" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                                      Click="@(() => SelectUsersByType("Ground Handler"))" />
+                                        <RadzenButton Text="Select Contractors" Icon="engineering" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                                      Click="@(() => SelectUsersByType("Contractor"))" />
+                                        <RadzenButton Text="Clear Selection" Icon="clear" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                                      Click="@(() => SelectAll(false))" />
+                                    </RadzenStack>
+                                </RadzenCardContent>
+                            </RadzenCard>
+                        </RadzenStack>
+                    }
+                    else
+                    {
+                        <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 2rem; border: 2px dashed var(--rz-border-color); border-radius: 8px; text-align: center;">
+                            <RadzenIcon Icon="check_circle" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" />
+                            <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-text-disabled-color);">All users are members</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                                All stakeholder users are already assigned to this group.
+                            </RadzenText>
+                        </RadzenStack>
+                    }
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenCardContent>
+    </RadzenCard>
+}
+
+<!-- Groups Display -->
+@if (!IsManagingMembers)
+{
+    <RadzenCard>
+        <RadzenCardHeader>
+            <div class="d-flex justify-content-between align-items-center w-100">
+                <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">
+                    <RadzenIcon Icon="list" Style="margin-right: 0.5rem;" />
+                    Stakeholder Groups (@SMSStakeholderGroups.Count)
+                </RadzenText>
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                    @if (SMSStakeholderGroups.Any())
+                    {
+                        <RadzenButton Text="Add Defaults" Icon="auto_fix_high" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                      Click="@CreateDefaultGroups" title="Add more default groups" />
+                    }
+                    <RadzenButton Text="Export" Icon="download" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" />
+                </RadzenStack>
+            </div>
+        </RadzenCardHeader>
+        <RadzenCardContent>
+            @if (SMSStakeholderGroups.Any())
+            {
+                <RadzenRow Gap="1rem">
+                    @foreach (var group in SMSStakeholderGroups)
+                    {
+                        <RadzenColumn Size="12" SizeMD="6" class="mb-3">
+                            <RadzenCard Style="@($"height: 100%; border-left: 4px solid var(--rz-secondary); {(group.Code == CurrentGroup?.Code ? "background-color: var(--rz-secondary-lighter);" : "")}")" 
+                                        class="group-card">
+                                <RadzenCardHeader Style="background-color: var(--rz-base-100);">
+                                    <div class="d-flex justify-content-between align-items-center w-100">
+                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
+                                            <RadzenIcon Icon="people" Style="color: var(--rz-secondary); margin-right: 0.5rem;" />
+                                            @group.Name
+                                        </RadzenText>
+                                        <RadzenBadge Text="@(group.IsActive ? "Active" : "Inactive")" 
+                                                     BadgeStyle="@(group.IsActive ? BadgeStyle.Success : BadgeStyle.Secondary)" />
+                                    </div>
+                                </RadzenCardHeader>
+                                <RadzenCardContent>
+                                    <RadzenStack Gap="0.5rem">
+                                        <RadzenText TextStyle="TextStyle.Body2">
+                                            @if (!string.IsNullOrEmpty(group.Description))
+                                            {
+                                                @group.Description
+                                            }
+                                            else
+                                            {
+                                                <em style="color: var(--rz-text-secondary-color);">No description provided</em>
+                                            }
+                                        </RadzenText>
+                                        
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                            Code: @group.Code
+                                        </RadzenText>
+                                        
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                            Created: @group.CreatedDate?.ToString("MM/dd/yyyy") by @group.CreatedBy
+                                        </RadzenText>
+                                        
+                                        @if (group.UpdatedDate.HasValue)
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-textsecondary-color);">
+                                                Modified: @group.UpdatedDate?.ToString("MM/dd/yyyy") by @group.UpdatedBy
+                                            </RadzenText>
+                                        }
+                                    </RadzenStack>
+                                </RadzenCardContent>
+                                <RadzenCardFooter Style="background-color: var(--rz-base-100);">
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.SpaceBetween">
+                                        <RadzenButton Text="Edit" Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                                                      Click="@(() => EditGroup(group.Code))" />
+                                        <RadzenButton Text="Members" Icon="people" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small"
+                                                      Click="@(() => ManageMembers(group.Code))" title="Manage Members" />
+                                        <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                                      Click="@(() => ConfirmDelete(group.Code, group.Name))" title="Delete Group" />
+                                    </RadzenStack>
+                                </RadzenCardFooter>
+                            </RadzenCard>
+                        </RadzenColumn>
+                    }
+                </RadzenRow>
+            }
+            else
+            {
+                <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 3rem;">
+                    <RadzenIcon Icon="people" Style="font-size: 4rem; color: var(--rz-text-disabled-color);" />
+                    <RadzenText TextStyle="TextStyle.H5" Style="color: var(--rz-text-disabled-color);">
+                        No Stakeholder Groups Found
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-disabled-color);">
+                        Create groups to organize external stakeholder users by organization type.
+                    </RadzenText>
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                        <RadzenButton Text="Create Default Groups" Icon="auto_fix_high" ButtonStyle="ButtonStyle.Success"
+                                      Click="@CreateDefaultGroups" />
+                        <RadzenButton Text="Create Custom Group" Icon="add" ButtonStyle="ButtonStyle.Secondary"
+                                      Click="@OpenCreateModal" />
+                    </RadzenStack>
+                </RadzenStack>
+            }
+        </RadzenCardContent>
+    </RadzenCard>
+}
+
+<!-- Create Group Modal -->
+@if (ShowCreateModal)
+{
+    <RadzenDialog>
+        <RadzenDialogTitle>
+            <RadzenIcon Icon="add" Style="margin-right: 0.5rem;" />
+            Create Stakeholder Group
+        </RadzenDialogTitle>
+        <RadzenDialogContent>
+            <RadzenStack Gap="1rem">
+                <RadzenFormField Text="Group Name *" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="@NewGroupName" 
+                                   Placeholder="Enter group name (e.g., Airlines, Ground Handlers)" 
+                                   Style="width: 100%;" />
+                </RadzenFormField>
+                
+                <RadzenFormField Text="Description" Variant="Variant.Outlined">
+                    <RadzenTextArea @bind-Value="@NewDescription" Rows="3"
+                                    Placeholder="Optional description of the group's purpose or member organizations"
+                                    Style="width: 100%;" />
+                </RadzenFormField>
+                
+                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+                    <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
+                    Stakeholder groups help organize external partners and organizations. 
+                    Groups can be used for targeted communications and access control.
+                </RadzenAlert>
+            </RadzenStack>
+        </RadzenDialogContent>
+        <RadzenDialogActions>
+            <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" Click="@CloseCreateModal" />
+            <RadzenButton Text="Create Group" Icon="save" ButtonStyle="ButtonStyle.Primary" 
+                          Click="@CreateGroup" Disabled="@(string.IsNullOrWhiteSpace(NewGroupName) || IsSaving)" />
+        </RadzenDialogActions>
+    </RadzenDialog>
+}
+
+<!-- Delete Confirmation Dialog -->
+@if (ShowDeleteModal)
+{
+    <RadzenDialog>
+        <RadzenDialogTitle>
+            <RadzenIcon Icon="delete" Style="margin-right: 0.5rem;" />
+            Confirm Delete
+        </RadzenDialogTitle>
+        <RadzenDialogContent>
+            <RadzenStack Gap="1rem">
+                <RadzenText>
+                    Are you sure you want to delete the group <strong>@DeleteGroupName</strong>?
+                </RadzenText>
+                <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
+                    <RadzenIcon Icon="warning" Style="margin-right: 0.5rem;" />
+                    This action cannot be undone and may affect users assigned to this group.
+                </RadzenAlert>
+            </RadzenStack>
+        </RadzenDialogContent>
+        <RadzenDialogActions>
+            <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" Click="@CloseDeleteModal" />
+            <RadzenButton Text="Delete Group" Icon="delete" ButtonStyle="ButtonStyle.Danger" 
+                          Click="@DeleteGroup" Disabled="@IsSaving" />
+        </RadzenDialogActions>
+    </RadzenDialog>
+}
+
+<style>
+.group-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.group-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.member-list {
+    scrollbar-width: thin;
+    scrollbar-color: #6c757d #f8f9fa;
+}
+
+.member-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.member-list::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 3px;
+}
+
+.member-list::-webkit-scrollbar-thumb {
+    background: #6c757d;
+    border-radius: 3px;
+}
+
+.member-list::-webkit-scrollbar-thumb:hover {
+    background: #495057;
+}
+
+.user-card:hover {
+    background-color: var(--rz-base-100) !important;
+}
+</style>

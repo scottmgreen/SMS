@@ -393,4 +393,65 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.ClearGroupsFailed);
         }
     }
+
+    /// <summary>
+    /// Gets all SMS application groups with their member information
+    /// </summary>
+    public async Task<Result<(IEnumerable<SMSApplicationGroup> Groups, Dictionary<string, List<SMSApplicationUser>> GroupMembers)>> GetAllWithMembersAsync(bool activeOnly = false, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInfrastructureGetItems($"{_logheader} {StoredProcs.pr_SMSApplicationGroup_GetAll} with members", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_SMSApplicationGroup_GetAll, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter("@pActiveOnly", activeOnly));
+            cmd.Parameters.Add(DataAccess.Parameter("@pRequestedBy", "SYSTEM"));
+
+            List<SMSApplicationGroup> groups = new();
+            Dictionary<string, List<SMSApplicationUser>> groupMembers = new();
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+
+            using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
+            {
+                // First dataset: Groups with member counts
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var group = Mappers.MapToSMSApplicationGroup(reader);
+                    groups.Add(group);
+                }
+
+                // Move to next dataset: Group members (if it exists)
+                if (await reader.NextResultAsync().ConfigureAwait(false))
+                {
+                    while (await reader.ReadAsync().ConfigureAwait(false))
+                    {
+                        var user = Mappers.MapToSMSApplicationUser(reader);
+                        var groupCode = reader.GetValue<string>("GroupCode") ?? string.Empty;
+
+                        if (!groupMembers.ContainsKey(groupCode))
+                        {
+                            groupMembers[groupCode] = new List<SMSApplicationUser>();
+                        }
+
+                        groupMembers[groupCode].Add(user);
+                    }
+                }
+            }
+
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<(IEnumerable<SMSApplicationGroup>, Dictionary<string, List<SMSApplicationUser>>)>.Success(((IEnumerable<SMSApplicationGroup>)groups, groupMembers));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemsError($"{_logheader} {ex.Message}", null);
+            return Result<(IEnumerable<SMSApplicationGroup>, Dictionary<string, List<SMSApplicationUser>>)>.Failure<(IEnumerable<SMSApplicationGroup>, Dictionary<string, List<SMSApplicationUser>>)>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
 }

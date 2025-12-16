@@ -88,7 +88,7 @@ public sealed class Hazard : BaseAuditableEntity
     #region Assessment and Risk Properties
 
     public string ReportCode { get; set; } = string.Empty;
-    public string? ScoringPanelCode { get; set; }
+    public string? RiskMatrixCode { get; set; }
     public string? AverageScore { get; set; }
     public string? RiskLevel { get; set; } // Very Low, Low, Medium, High, Very High
     public string? WorstCredibleOutcome { get; set; }

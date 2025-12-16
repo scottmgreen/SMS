@@ -5,6 +5,7 @@ using SMS_Domain.Enums;
 using SMS_Domain.ValueObjects;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
@@ -17,11 +18,15 @@ public partial class AddHazardModal : ComponentBase
 
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
     [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private ILogger<AddHazardModal>? Logger { get; set; } // ENHANCED: Add logger for debugging
 
     // Form properties
     private string NewHazardDescription { get; set; } = string.Empty;
     private string NewHazardCategory { get; set; } = string.Empty;
     private string NewHazardFiveM { get; set; } = string.Empty;
+
+    // ENHANCED: Add busy state to prevent double submissions
+    private bool IsSubmitting { get; set; } = false;
 
     // Location properties
     private bool ShowMapModal { get; set; } = false;
@@ -46,7 +51,8 @@ public partial class AddHazardModal : ComponentBase
         NewHazardDescription.Trim().Length >= 10 &&
         !string.IsNullOrWhiteSpace(NewHazardCategory) && 
         !string.IsNullOrWhiteSpace(NewHazardFiveM) &&
-        HasGeoLocation;
+        HasGeoLocation &&
+        !IsSubmitting; // ENHANCED: Prevent submission when already submitting
 
     private List<string> HazardCategories = new()
     {
@@ -81,10 +87,16 @@ public partial class AddHazardModal : ComponentBase
 
     private async Task AddHazard()
     {
-        if (!IsFormValid) return;
+        if (!IsFormValid || IsSubmitting) return;
 
         try
         {
+            // CRITICAL: Set submitting state to prevent duplicate submissions
+            IsSubmitting = true;
+            StateHasChanged();
+
+            Logger?.LogInformation("Starting hazard creation with description: {Description}", NewHazardDescription?.Trim());
+
             // Create hazard
             HazardID hazardID = new HazardID("HZ-0000");
             Hazard hazard = new Hazard(hazardID);
@@ -111,11 +123,12 @@ public partial class AddHazardModal : ComponentBase
 
             if (!hazardResult.IsSuccess)
             {
-                // Handle error silently for now
+                Logger?.LogError("Failed to create hazard: {Error}", hazardResult.Error?.Message);
                 return;
             }
 
             var createdHazard = hazardResult.Value;
+            Logger?.LogInformation("Successfully created hazard: {HazardCode}", createdHazard?.Code);
 
             // Now create and save the HazardLocation if we have location data
             if (HasGeoLocation && SelectedGeoLocation != null)
@@ -136,19 +149,29 @@ public partial class AddHazardModal : ComponentBase
                     // Don't update hazard references to avoid duplicate creation
                     createdHazard.LocationArea = LocationDisplayText;
                     
-                    // Note: We don't set createdHazard.HazardLocation or createdHazard.Location here
-                    // because that would trigger EF to create another HazardLocation entity.
-                    // The relationship is established via the HazardCode field in the HazardLocation.
+                    Logger?.LogInformation("Successfully created hazard location: {LocationCode}", createdLocation?.Code);
+                }
+                else
+                {
+                    Logger?.LogWarning("Failed to create hazard location: {Error}", locationResult.Error?.Message);
                 }
             }
 
             // Invoke callback with the created hazard
             await OnHazardAdded.InvokeAsync(createdHazard);
             await CloseModal();
+
+            Logger?.LogInformation("Hazard creation process completed for: {HazardCode}", createdHazard?.Code);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Handle error silently
+            Logger?.LogError(ex, "Exception during hazard creation");
+        }
+        finally
+        {
+            // CRITICAL: Always reset submitting state
+            IsSubmitting = false;
+            StateHasChanged();
         }
     }
 

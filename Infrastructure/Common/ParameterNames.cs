@@ -331,8 +331,8 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmHazardReportCode = new Lazy<string>(() => "@pHazardReportCode");
     public static string pmHazardReportCode => _pmHazardReportCode.Value;
 
-    private static readonly Lazy<string> _pmHazardScoringPanelCode = new Lazy<string>(() => "@pHazardScoringPanelCode");
-    public static string pmHazardScoringPanelCode => _pmHazardScoringPanelCode.Value;
+    private static readonly Lazy<string> _pmHazardScoringPanelRiskMatrixCode = new Lazy<string>(() => "@pHazardScoringPanelRiskMatrixCode");
+    public static string pmHazardScoringPanelRiskMatrixCode => _pmHazardScoringPanelRiskMatrixCode.Value;
 
     private static readonly Lazy<string> _pmHazardAverageScore = new Lazy<string>(() => "@pHazardAverageScore");
     public static string pmHazardAverageScore => _pmHazardAverageScore.Value;

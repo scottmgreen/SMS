@@ -48,7 +48,7 @@
                     @if (average.HasValue)
                     {
                         <span style="@GetAverageScoreStyle(average.Value)" class="risk-score-display">
-                            @GetHazardMatrixCode(average.Value)
+                            @GetHazardMatrixCodeFromPanels()
                         </span>
                     }
                     else if (totalCount > 0)
@@ -181,7 +181,7 @@
             @if (AllScoresComplete())
             {
                 <RadzenAlert AlertStyle="AlertStyle.Success" Icon="check_circle">
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"All panel members have scored this hazard. Average: {GetHazardMatrixCode(GetAverageScore()!.Value)}")" />
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"All panel members have scored this hazard. Average: {GetHazardMatrixCodeFromPanels()}")" />
                 </RadzenAlert>
             }
             else
@@ -216,6 +216,11 @@
     private bool _isDataLoaded = false;
     private string _lastHazardCode = string.Empty;
 
+    // Local properties to track calculated hazard scoring data (for future database update)
+    private double? CalculatedAverageScore = null;
+    private string CalculatedMatrixCode = string.Empty;
+    private string CalculatedRiskLevel = string.Empty;
+
     // Dropdown options - Updated to use A-E letter system
     private List<SeverityOption> SeverityOptions = new()
     {
@@ -234,6 +239,9 @@
         new(4, "D - Likely"),
         new(5, "E - Frequent")
     };
+
+    public record SeverityOption(int Value, string Text);
+    public record LikelihoodOption(int Value, string Text);
 
     protected override async Task OnInitializedAsync()
     {
@@ -278,17 +286,26 @@
             {
                 HazardScoringPanels = result.Value.ToList();
                 Logger.LogInformation("Loaded {Count} scoring panels for hazard {HazardCode}", HazardScoringPanels.Count, Hazard.Code);
+                
+                // Recalculate scoring data after loading panels
+                await RecalculateHazardScoringData();
             }
             else
             {
                 HazardScoringPanels = new List<ScoringPanel>();
                 Logger.LogInformation("No scoring panels found for hazard {HazardCode}", Hazard.Code);
+                
+                // Clear scoring data if no panels
+                await RecalculateHazardScoringData();
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading scoring panels for hazard {HazardCode}", Hazard.Code);
             HazardScoringPanels = new List<ScoringPanel>();
+            
+            // Clear scoring data on error
+            await RecalculateHazardScoringData();
         }
     }
 
@@ -351,7 +368,8 @@
                                          Disabled="@string.IsNullOrWhiteSpace(rationaleInput)" />
                         </RadzenStack>
                     </RadzenStack>
-                </div>, 
+                </div>
+    , 
                 new DialogOptions { Width = "700px", Height = "450px", Resizable = true });
 
             // If user cancelled or didn't provide rationale, don't submit
@@ -366,7 +384,7 @@
 
             // Calculate score
             panel.Score = panel.Severity * panel.Likelihood;
-
+            panel.RiskAssessmentCode = RiskAssessmentId;
             // Update via CQRS
             var updateCommand = new UpdateScoringPanelCommand(panel);
             var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
@@ -379,6 +397,9 @@
 
                 // Reload ONLY this component's data
                 await LoadHazardScoringPanelsInternal();
+
+                // CRITICAL: Recalculate the hazard average scoring data
+                await RecalculateHazardScoringData();
 
                 // Notify parent component to refresh matrix and step data
                 if (OnHazardScored.HasDelegate)
@@ -408,6 +429,7 @@
         panel.Likelihood = null;
         panel.Score = null;
         panel.Rationale = null; // Also clear rationale when editing
+        panel.RiskAssessmentCode = RiskAssessmentId;
         // Don't call StateHasChanged() here to prevent render loops
     }
 
@@ -519,7 +541,8 @@
                     SMSUserCode = stakeholderCode,
                     Severity = null,
                     Likelihood = null,
-                    Score = null
+                    Score = null,
+                    RiskAssessmentCode = RiskAssessmentId
                 };
 
                 var createCommand = new CreateScoringPanelCommand(newPanel);
@@ -565,9 +588,30 @@
 
     private string GetHazardMatrixCode(double averageScore)
     {
-        // Use the centralized calculator to reverse-engineer from average score
+        // DEPRECATED: This method calculates from score averages (incorrect for aviation standards)
+        // Use GetHazardMatrixCodeFromPanels() instead
         var bestMatch = GetBestSeverityLikelihoodMatch(averageScore);
         return AviationRiskMatrixCalculator.GetMatrixCode(bestMatch.severity, bestMatch.likelihood);
+    }
+
+    /// <summary>
+    /// Calculate hazard matrix code using CORRECT aviation methodology
+    /// This averages severity and likelihood separately, then determines matrix code
+    /// </summary>
+    private string GetHazardMatrixCodeFromPanels()
+    {
+        var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
+        if (!completedPanels.Any()) return "-";
+
+        // Aviation standard: Average severity and likelihood separately
+        var averageSeverity = completedPanels.Average(p => (double)p.Severity!.Value);
+        var averageLikelihood = completedPanels.Average(p => (double)p.Likelihood!.Value);
+        
+        Logger.LogInformation("Hazard {HazardCode} calculation: AvgSev={AvgSev:F2}, AvgLike={AvgLike:F2}", 
+            Hazard.Code, averageSeverity, averageLikelihood);
+        
+        // Use the authoritative calculator method
+        return AviationRiskMatrixCalculator.GetAverageMatrixCode(averageSeverity, averageLikelihood);
     }
 
     private string GetPanelMatrixCode(ScoringPanel panel)
@@ -598,8 +642,18 @@
 
     private string GetAverageScoreStyle(double averageScore)
     {
-        var bestMatch = GetBestSeverityLikelihoodMatch(averageScore);
-        var backgroundColor = AviationRiskMatrixCalculator.GetAviationMatrixColor(bestMatch.severity, bestMatch.likelihood);
+        // Get the correct aviation matrix code from panels, not from score average
+        var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
+        if (!completedPanels.Any())
+            return "background: #6c757d; color: white; padding: 6px 10px; border-radius: 4px; font-weight: bold; font-size: 1rem; display: inline-block; text-align: center; min-width: 35px; border: 1px solid rgba(0,0,0,0.2);";
+
+        // Use correct aviation calculation
+        var averageSeverity = completedPanels.Average(p => (double)p.Severity!.Value);
+        var averageLikelihood = completedPanels.Average(p => (double)p.Likelihood!.Value);
+        var roundedSeverity = (int)Math.Round(averageSeverity);
+        var roundedLikelihood = (int)Math.Round(averageLikelihood);
+        
+        var backgroundColor = AviationRiskMatrixCalculator.GetAviationMatrixColor(roundedSeverity, roundedLikelihood);
         var textColor = AviationRiskMatrixCalculator.IsLightColor(backgroundColor) ? "#000" : "#fff";
         
         return $"background: {backgroundColor}; color: {textColor}; padding: 6px 10px; border-radius: 4px; font-weight: bold; font-size: 1rem; display: inline-block; text-align: center; min-width: 35px; border: 1px solid rgba(0,0,0,0.2);";
@@ -643,15 +697,131 @@
         return HazardScoringPanels.Any() && HazardScoringPanels.All(HasScore);
     }
 
-    private async Task FinalizeHazardAssessment()
+    /// <summary>
+    /// Get the current calculated hazard scoring data (for debugging/inspection)
+    /// </summary>
+    public (double? AverageScore, string MatrixCode, string RiskLevel) GetCalculatedScoringData()
     {
-        // This could trigger additional workflow logic
-        if (OnHazardScored.HasDelegate)
+        return (CalculatedAverageScore, CalculatedMatrixCode, CalculatedRiskLevel);
+    }
+
+    /// <summary>
+    /// Debug method to show detailed calculation breakdown for hazard average
+    /// </summary>
+    public string GetCalculationDebugInfo()
+    {
+        var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
+        if (!completedPanels.Any()) return "No completed panels";
+
+        var info = $"=== HAZARD {Hazard.Code} CALCULATION DEBUG ===\n";
+        info += $"Panel Count: {completedPanels.Count}\n";
+        
+        foreach (var panel in completedPanels)
         {
-            await OnHazardScored.InvokeAsync();
+            var panelCode = GetPanelMatrixCode(panel);
+            info += $"  {GetMemberName(panel.SMSUserCode)}: Sev={panel.Severity}, Like={panel.Likelihood}, Score={panel.Score}, Code={panelCode}\n";
+        }
+        
+        var avgSeverity = completedPanels.Average(p => (double)p.Severity!.Value);
+        var avgLikelihood = completedPanels.Average(p => (double)p.Likelihood!.Value);
+        var avgScore = completedPanels.Average(p => (double)p.Score!.Value);
+        var roundedSev = (int)Math.Round(avgSeverity);
+        var roundedLike = (int)Math.Round(avgLikelihood);
+        var matrixCode = AviationRiskMatrixCalculator.GetMatrixCode(roundedSev, roundedLike);
+        
+        info += $"Averages: Sev={avgSeverity:F2}→{roundedSev}, Like={avgLikelihood:F2}→{roundedLike}, Score={avgScore:F2}\n";
+        info += $"CORRECT MATRIX CODE: {matrixCode}\n";
+        info += "=== END DEBUG ===";
+        
+        return info;
+    }
+
+    /// <summary>
+    /// Recalculate the hazard's average scoring data from all completed panels
+    /// This prepares the data for future database update (not saving yet)
+    /// </summary>
+    private async Task RecalculateHazardScoringData()
+    {
+        var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
+        
+        if (completedPanels.Any())
+        {
+            // Calculate averages separately for severity and likelihood (aviation standard)
+            var averageSeverity = completedPanels.Average(p => (double)p.Severity!.Value);
+            var averageLikelihood = completedPanels.Average(p => (double)p.Likelihood!.Value);
+            var averageScore = completedPanels.Average(p => (double)p.Score!.Value);
+            
+            // Use aviation standard calculation for matrix code
+            var matrixCode = AviationRiskMatrixCalculator.GetAverageMatrixCode(averageSeverity, averageLikelihood);
+            var roundedSeverity = (int)Math.Round(averageSeverity);
+            var roundedLikelihood = (int)Math.Round(averageLikelihood);
+            var riskLevel = AviationRiskMatrixCalculator.GetAviationRiskLevel(roundedSeverity, roundedLikelihood);
+
+            // Store calculated values locally
+            CalculatedAverageScore = averageScore;  // Keep score average for reporting
+            CalculatedMatrixCode = matrixCode;      // Use correct aviation matrix code
+            CalculatedRiskLevel = riskLevel;
+
+            Logger.LogInformation("Recalculated hazard {HazardCode} scoring data: AvgSev={Severity:F2}→{RoundedSev}, AvgLike={Likelihood:F2}→{RoundedLike}, Matrix={MatrixCode}, Risk={RiskLevel}", 
+                Hazard.Code, averageSeverity, roundedSeverity, averageLikelihood, roundedLikelihood, matrixCode, riskLevel);
+
+            // NEW: Update the Hazard entity and save to database
+            await UpdateHazardWithScoringData();
+        }
+        else
+        {
+            // Clear calculated values if no scores available
+            CalculatedAverageScore = null;
+            CalculatedMatrixCode = string.Empty;
+            CalculatedRiskLevel = string.Empty;
+
+            Logger.LogInformation("Cleared hazard {HazardCode} scoring data - no completed panel scores available", Hazard.Code);
+
+            // NEW: Clear hazard scoring data in database too
+            await UpdateHazardWithScoringData();
         }
     }
 
-    public record SeverityOption(int Value, string Text);
-    public record LikelihoodOption(int Value, string Text);
+    /// <summary>
+    /// Update the Hazard entity with calculated scoring data and save to database
+    /// </summary>
+    private async Task UpdateHazardWithScoringData()
+    {
+        try
+        {
+            // Validate we have a valid hazard to update
+            if (Hazard == null || string.IsNullOrEmpty(Hazard.Code) || Hazard.Code == "HZ-0000")
+            {
+                Logger.LogWarning("Skipping hazard update - invalid hazard data");
+                return;
+            }
+
+            Logger.LogInformation("Updating hazard {HazardCode} with calculated scoring data in database", Hazard.Code);
+
+            // Update the Hazard entity properties
+            Hazard.AverageScore = CalculatedAverageScore?.ToString("F2");
+            Hazard.RiskMatrixCode = CalculatedMatrixCode;  // Aviation matrix code (like "2B", "3D")
+            Hazard.RiskLevel = CalculatedRiskLevel;
+            Hazard.UpdatedDate = DateTime.UtcNow;
+            Hazard.UpdatedBy = "SYSTEM"; // Set updated by system for scoring updates
+
+            // Save via CQRS
+            var updateHazardCommand = new UpdateHazardCommand(Hazard);
+            var result = await Mediator.SendAsync(updateHazardCommand, CancellationToken.None);
+
+            if (result.IsSuccess)
+            {
+                Logger.LogInformation("Successfully updated hazard {HazardCode} in database: AverageScore={AverageScore}, RiskMatrixCode={RiskMatrixCode}, RiskLevel={RiskLevel}",
+                    Hazard.Code, Hazard.AverageScore ?? "null", Hazard.RiskMatrixCode ?? "null", Hazard.RiskLevel ?? "null");
+            }
+            else
+            {
+                Logger.LogError("Failed to update hazard {HazardCode} in database: {Error}", Hazard.Code, result.Error?.Message ?? "Unknown error");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error updating hazard {HazardCode} with scoring data in database", Hazard.Code);
+        }
+    }
 }

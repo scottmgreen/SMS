@@ -109,7 +109,7 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardCategory, hazard.Category));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFiveMComponent, hazard.FiveMComponent?.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardReportCode, hazard.ReportCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardScoringPanelCode, hazard.ScoringPanelCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardScoringPanelRiskMatrixCode, hazard.RiskMatrixCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardAverageScore, hazard.AverageScore));
             
             // 🔥 DEBUG: Log what we're about to send to the stored proc
@@ -298,7 +298,7 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardCategory, hazard.Category));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFiveMComponent, hazard.FiveMComponent?.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardReportCode, hazard.ReportCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardScoringPanelCode, hazard.ScoringPanelCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardScoringPanelRiskMatrixCode, hazard.RiskMatrixCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardAverageScore, hazard.AverageScore));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, hazard.UpdatedBy ?? "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));

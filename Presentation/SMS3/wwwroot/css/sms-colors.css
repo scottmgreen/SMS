@@ -49,9 +49,9 @@
   --sms-header-text:        white;
   
   /* BUTTONS */
-  --sms-btn-primary-bg:     var(--sms-blue-primary);
+  --sms-btn-primary-bg:     var(--sms-blue-dark-bold);  /* CHANGED: Now uses dark bold instead of primary */
   --sms-btn-primary-text:   white;
-  --sms-btn-primary-hover:  var(--sms-blue-dark-bold);
+  --sms-btn-primary-hover:  var(--sms-blue-primary);    /* CHANGED: Hover is slightly lighter */
   
   --sms-btn-success-bg:     var(--sms-green-primary);
   --sms-btn-success-text:   white;
@@ -106,12 +106,140 @@
 }
 
 /* =============================================================================
+   RADZEN COMPONENT OVERRIDES - FORCE SMS COLOR COMPLIANCE
+   ============================================================================= */
+
+/* RADZEN BUTTONS - FORCE SMS COLORS */
+.rz-button.rz-button-md.rz-variant-filled.rz-primary,
+.rz-button.rz-primary {
+  background-color: var(--sms-btn-primary-bg) !important;
+  border-color: var(--sms-btn-primary-bg) !important;
+  color: var(--sms-btn-primary-text) !important;
+}
+
+.rz-button.rz-button-md.rz-variant-filled.rz-primary:hover,
+.rz-button.rz-primary:hover,
+.rz-button.rz-button-md.rz-variant-filled.rz-primary:focus,
+.rz-button.rz-primary:focus {
+  background-color: var(--sms-btn-primary-hover) !important;
+  border-color: var(--sms-btn-primary-hover) !important;
+  color: white !important;
+}
+
+.rz-button.rz-button-md.rz-variant-filled.rz-success,
+.rz-button.rz-success {
+  background-color: var(--sms-btn-success-bg) !important;
+  border-color: var(--sms-btn-success-bg) !important;
+  color: var(--sms-btn-success-text) !important;
+}
+
+.rz-button.rz-button-md.rz-variant-filled.rz-success:hover,
+.rz-button.rz-success:hover {
+  background-color: var(--sms-btn-success-hover) !important;
+  border-color: var(--sms-btn-success-hover) !important;
+}
+
+.rz-button.rz-button-md.rz-variant-filled.rz-danger,
+.rz-button.rz-danger {
+  background-color: var(--sms-btn-danger-bg) !important;
+  border-color: var(--sms-btn-danger-bg) !important;
+  color: var(--sms-btn-danger-text) !important;
+}
+
+.rz-button.rz-button-md.rz-variant-filled.rz-danger:hover,
+.rz-button.rz-danger:hover {
+  background-color: var(--sms-btn-danger-hover) !important;
+  border-color: var(--sms-btn-danger-hover) !important;
+}
+
+.rz-button.rz-button-md.rz-variant-filled.rz-info,
+.rz-button.rz-info {
+  background-color: var(--sms-btn-info-bg) !important;
+  border-color: var(--sms-btn-info-bg) !important;
+  color: var(--sms-btn-info-text) !important;
+}
+
+.rz-button.rz-button-md.rz-variant-filled.rz-info:hover,
+.rz-button.rz-info:hover {
+  background-color: var(--sms-btn-info-hover) !important;
+  border-color: var(--sms-btn-info-hover) !important;
+}
+
+.rz-button.rz-button-md.rz-variant-filled.rz-warning,
+.rz-button.rz-warning {
+  background-color: var(--sms-btn-warning-bg) !important;
+  border-color: var(--sms-btn-warning-bg) !important;
+  color: var(--sms-btn-warning-text) !important;
+}
+
+.rz-button.rz-button-md.rz-variant-filled.rz-warning:hover,
+.rz-button.rz-warning:hover {
+  background-color: var(--sms-btn-warning-hover) !important;
+  border-color: var(--sms-btn-warning-hover) !important;
+  color: white !important;
+}
+
+/* RADZEN BADGES - FORCE SMS COLORS */
+.rz-badge.rz-badge-md.rz-variant-filled.rz-primary,
+.rz-badge.rz-primary {
+  background-color: var(--sms-btn-primary-bg) !important;
+  color: var(--sms-btn-primary-text) !important;
+}
+
+.rz-badge.rz-badge-md.rz-variant-filled.rz-success,
+.rz-badge.rz-success {
+  background-color: var(--sms-btn-success-bg) !important;
+  color: var(--sms-btn-success-text) !important;
+}
+
+.rz-badge.rz-badge-md.rz-variant-filled.rz-danger,
+.rz-badge.rz-danger {
+  background-color: var(--sms-btn-danger-bg) !important;
+  color: var(--sms-btn-danger-text) !important;
+}
+
+.rz-badge.rz-badge-md.rz-variant-filled.rz-info,
+.rz-badge.rz-info {
+  background-color: var(--sms-btn-info-bg) !important;
+  color: var(--sms-btn-info-text) !important;
+}
+
+.rz-badge.rz-badge-md.rz-variant-filled.rz-warning,
+.rz-badge.rz-warning {
+  background-color: var(--sms-btn-warning-bg) !important;
+  color: var(--sms-btn-warning-text) !important;
+}
+
+/* RADZEN CSS VARIABLE OVERRIDES */
+:root {
+  --rz-primary: var(--sms-blue-dark-bold) !important;
+  --rz-primary-light: var(--sms-blue-light) !important;
+  --rz-primary-lighter: var(--sms-blue-light) !important;
+  --rz-primary-dark: var(--sms-blue-primary) !important;
+  --rz-primary-darker: var(--sms-blue-dark-bold) !important;
+  
+  --rz-success: var(--sms-green-primary) !important;
+  --rz-success-light: var(--sms-green-light) !important;
+  --rz-success-dark: var(--sms-green-dark-bold) !important;
+  
+  --rz-danger: var(--sms-red-primary) !important;
+  --rz-danger-light: var(--sms-red-light) !important;
+  --rz-danger-dark: var(--sms-red-dark-bold) !important;
+  
+  --rz-info: var(--sms-teal-primary) !important;
+  --rz-info-light: var(--sms-teal-light) !important;
+  --rz-info-dark: var(--sms-teal-dark-bold) !important;
+  
+  --rz-warning: var(--sms-red-accent) !important;
+}
+
+/* =============================================================================
    BOOTSTRAP OVERRIDE CLASSES - CONSISTENT WITH SMS PALETTE
    ============================================================================= */
 
 /* PRIMARY COLORS */
-.bg-primary { background-color: var(--sms-blue-primary) !important; }
-.text-primary { color: var(--sms-blue-primary) !important; }
+.bg-primary { background-color: var(--sms-blue-dark-bold) !important; } /* CHANGED */
+.text-primary { color: var(--sms-blue-dark-bold) !important; } /* CHANGED */
 .btn-primary { 
   background-color: var(--sms-btn-primary-bg) !important;
   border-color: var(--sms-btn-primary-bg) !important;
@@ -235,7 +363,7 @@
 
 .sms-form-control:focus {
   border-color: var(--sms-form-focus) !important;
-  box-shadow: 0 0 0 0.2rem rgba(0, 106, 169, 0.25) !important;
+  box-shadow: 0 0 0 0.2rem rgba(33, 46, 97, 0.25) !important; /* CHANGED to match #212e61 */
 }
 
 /* Status Badges */

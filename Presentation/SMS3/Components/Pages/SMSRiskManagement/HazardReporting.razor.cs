@@ -857,7 +857,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             hazard.ReportedOn = HazardReport.ReportedOn;
             hazard.ReportingDepartment = HazardReport.ReportingDepartment;
             hazard.ReportCode = actualReportCode;
-            hazard.ScoringPanelCode = null;
+            hazard.RiskMatrixCode = null;
             hazard.HazardType = "Initial";
 
             var createHazardCommand = new CreateHazardCommand(hazard);

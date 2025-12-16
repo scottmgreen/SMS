@@ -1,0 +1,253 @@
+@page "/System/UserGroups/ApplicationGroups"
+@page "/System/UserGroups/ApplicationGroups/Edit/{GroupCode}"
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using SMS3.Components.Shared
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Application Group Management - SMS3</PageTitle>
+
+<!-- SMS Page Header -->
+<PageHeader Title="Application Group Management"
+           Subtitle="Manage SMS Application User Groups "
+           Icon="fas fa-users-cog">
+    <AdditionalContent>
+        <div class="d-flex gap-2">
+            <RadzenButton Text="Back to Dashboard" Icon="arrow_back" ButtonStyle="ButtonStyle.Light"
+                          Click="@(() => Navigation.NavigateTo("/System/UserManagement"))" />
+            @if (!IsEditMode)
+            {
+                <RadzenButton Text="Add Group" Icon="add" ButtonStyle="ButtonStyle.Success"
+                              Click="@OpenCreateModal" />
+            }
+        </div>
+    </AdditionalContent>
+</PageHeader>
+
+<!-- Success/Error Messages -->
+@if (!string.IsNullOrEmpty(SuccessMessage))
+{
+    <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" class="mb-3">
+        <RadzenIcon Icon="check_circle" Style="margin-right: 0.5rem;" />
+        @SuccessMessage
+    </RadzenAlert>
+}
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" class="mb-3">
+        <RadzenIcon Icon="error" Style="margin-right: 0.5rem;" />
+        @ErrorMessage
+    </RadzenAlert>
+}
+
+<!-- Edit Group Form -->
+@if (IsEditMode && CurrentGroup != null)
+{
+    <RadzenCard class="mb-4" Style="border-left: 4px solid var(--rz-warning);">
+        <RadzenCard>
+            <RadzenText TextStyle="TextStyle.H5" Style="color: var(--rz-warning); margin: 0;">
+                <RadzenIcon Icon="edit" Style="margin-right: 0.5rem;" />
+                Edit Group: @CurrentGroup.Name
+            </RadzenText>
+        </RadzenCard>
+        <RadzenCard>
+            <RadzenStack Gap="1rem">
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Group Name *" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="@EditGroupName" Placeholder="Enter group name" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Status" Variant="Variant.Outlined">
+                            <RadzenDropDown @bind-Value="@EditIsActive" Data="@StatusOptions" 
+                                            TextProperty="Text" ValueProperty="Value" 
+                                            Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+                
+                <RadzenFormField Text="Description" Variant="Variant.Outlined">
+                    <RadzenTextArea @bind-Value="@EditDescription" Rows="3" 
+                                    Placeholder="Optional description of the group's purpose or responsibilities" 
+                                    Style="width: 100%;" />
+                </RadzenFormField>
+                
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                    <RadzenButton Text="Update Group" Icon="save" ButtonStyle="ButtonStyle.Warning"
+                                  Click="@UpdateGroup" Disabled="@IsSaving" />
+                    <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Secondary"
+                                  Click="@CancelEdit" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenCard>
+}
+
+<!-- Groups Display -->
+<RadzenCard>
+    <RadzenCard>
+        <div class="d-flex justify-content-between align-items-center w-100">
+            <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">
+                <RadzenIcon Icon="list" Style="margin-right: 0.5rem;" />
+                Application Groups (@SMSApplicationGroups.Count)
+            </RadzenText>
+            <RadzenButton Text="Export" Icon="download" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" />
+        </div>
+    </RadzenCard>
+    <RadzenCard>
+        @if (SMSApplicationGroups.Any())
+        {
+            <RadzenRow Gap="1rem">
+                @foreach (var group in SMSApplicationGroups)
+                {
+                    <RadzenColumn Size="12" SizeMD="6" class="mb-3">
+                        <RadzenCard Style="@($"height: 100%; border-left: 4px solid var(--rz-warning); {(group.Code == CurrentGroup?.Code ? "background-color: var(--rz-warning-lighter);" : "")}")" 
+                                    class="group-card">
+                            <RadzenCard Style="background-color: var(--rz-base-100);">
+                                <div class="d-flex justify-content-between align-items-center w-100">
+                                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
+                                        <RadzenIcon Icon="groups" Style="color: var(--rz-warning); margin-right: 0.5rem;" />
+                                        @group.Name
+                                    </RadzenText>
+                                    <RadzenBadge Text="@(group.IsActive ? "Active" : "Inactive")" 
+                                                 BadgeStyle="@(group.IsActive ? BadgeStyle.Success : BadgeStyle.Secondary)" />
+                                </div>
+                            </RadzenCard>
+                            <RadzenCard>
+                                <RadzenStack Gap="0.5rem">
+                                    <RadzenText TextStyle="TextStyle.Body2">
+                                        @if (!string.IsNullOrEmpty(group.Description))
+                                        {
+                                            @group.Description
+                                        }
+                                        else
+                                        {
+                                            <em style="color: var(--rz-text-secondary-color);">No description provided</em>
+                                        }
+                                    </RadzenText>
+                                    
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                        Code: @group.Code
+                                    </RadzenText>
+                                    
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                        Created: @group.CreatedDate?.ToString("MM/dd/yyyy") by @group.CreatedBy
+                                    </RadzenText>
+                                    
+                                    @if (group.UpdatedDate.HasValue)
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                            Modified: @group.UpdatedDate?.ToString("MM/dd/yyyy") by @group.UpdatedBy
+                                        </RadzenText>
+                                    }
+                                </RadzenStack>
+                            </RadzenCard>
+                            <RadzenCard Style="background-color: var(--rz-base-100);">
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.SpaceBetween">
+                                    <RadzenButton Text="Edit" Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                                                  Click="@(() => EditGroup(group.Code))" />
+                                    <RadzenButton Text="Members" Icon="people" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small"
+                                                  title="Manage Members" />
+                                    <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                                  Click="@(() => ConfirmDelete(group.Code, group.Name))" title="Delete Group" />
+                                </RadzenStack>
+                            </RadzenCard>
+                        </RadzenCard>
+                    </RadzenColumn>
+                }
+            </RadzenRow>
+        }
+        else
+        {
+            <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 3rem;">
+                <RadzenIcon Icon="groups" Style="font-size: 4rem; color: var(--rz-text-disabled-color);" />
+                <RadzenText TextStyle="TextStyle.H5" Style="color: var(--rz-text-disabled-color);">
+                    No Application Groups Found
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-disabled-color);">
+                    Click "Add Group" to create your first application group.
+                </RadzenText>
+                <RadzenButton Text="Add First Group" Icon="add" ButtonStyle="ButtonStyle.Warning"
+                              Click="@OpenCreateModal" />
+            </RadzenStack>
+        }
+    </RadzenCard>
+</RadzenCard>
+
+<!-- Create Group Modal -->
+@if (ShowCreateModal)
+{
+    <RadzenDialog>
+        <RadzenDialog>
+            <RadzenIcon Icon="add" Style="margin-right: 0.5rem;" />
+            Create Application Group
+        </RadzenDialog>
+        <RadzenDialog>
+            <RadzenStack Gap="1rem">
+                <RadzenFormField Text="Group Name *" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="@NewGroupName" 
+                                   Placeholder="Enter group name (e.g., IT Administrators, Safety Team)" 
+                                   Style="width: 100%;" />
+                </RadzenFormField>
+                
+                <RadzenFormField Text="Description" Variant="Variant.Outlined">
+                    <RadzenTextArea @bind-Value="@NewDescription" Rows="3"
+                                    Placeholder="Optional description of the group's purpose or responsibilities"
+                                    Style="width: 100%;" />
+                </RadzenFormField>
+                
+                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+                    <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
+                    Application groups help organize internal users by department or function. 
+                    Groups can be used for access control and notifications.
+                </RadzenAlert>
+            </RadzenStack>
+        </RadzenDialog>
+        <RadzenDialog>
+            <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" Click="@CloseCreateModal" />
+            <RadzenButton Text="Create Group" Icon="save" ButtonStyle="ButtonStyle.Warning" 
+                          Click="@CreateGroup" Disabled="@(string.IsNullOrWhiteSpace(NewGroupName) || IsSaving)" />
+        </RadzenDialog>
+    </RadzenDialog>
+}
+
+<!-- Delete Confirmation Dialog -->
+@if (ShowDeleteModal)
+{
+    <RadzenDialog>
+        <RadzenDialogTitle>
+            <RadzenIcon Icon="delete" Style="margin-right: 0.5rem;" />
+            Confirm Delete
+        </RadzenDialogTitle>
+        <RadzenDialogContent>
+            <RadzenStack Gap="1rem">
+                <RadzenText>
+                    Are you sure you want to delete the group <strong>@DeleteGroupName</strong>?
+                </RadzenText>
+                <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
+                    <RadzenIcon Icon="warning" Style="margin-right: 0.5rem;" />
+                    This action cannot be undone and may affect users assigned to this group.
+                </RadzenAlert>
+            </RadzenStack>
+        </RadzenDialogContent>
+        <RadzenDialogActions>
+            <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" Click="@CloseDeleteModal" />
+            <RadzenButton Text="Delete Group" Icon="delete" ButtonStyle="ButtonStyle.Danger" 
+                          Click="@DeleteGroup" Disabled="@IsSaving" />
+        </RadzenDialogActions>
+    </RadzenDialog>
+}
+
+<style>
+.group-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.group-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+</style>

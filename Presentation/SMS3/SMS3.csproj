@@ -31,7 +31,6 @@
   <ItemGroup>
     <Folder Include="Components\Pages\SMSAssurance\" />
     <Folder Include="Components\Pages\SMSPromotion\" />
-    <Folder Include="Components\Pages\System\UserGroups\" />
   </ItemGroup>
 
 </Project>
