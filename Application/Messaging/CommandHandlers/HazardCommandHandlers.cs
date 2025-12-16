@@ -70,7 +70,8 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
                     HazardCode = hazard.Code
                     
                 };
-                var scoringpanel = await _scoringPanelDataService.CreateScoringPanelAsync(scoringPanel, ct);
+                
+                //var scoringpanel = await _scoringPanelDataService.CreateScoringPanelAsync(scoringPanel, ct);
 
                 var hazardLocation = new HazardLocation(new HazardLocationID("HL-0000"))
                 {

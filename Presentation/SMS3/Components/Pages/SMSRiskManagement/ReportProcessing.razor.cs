@@ -177,7 +177,7 @@ public partial class ReportProcessing : ComponentBase
                     HazardDescription = hazard?.Description ?? report.Description ?? "No description",
                     Location = hazard?.HazardLocation?.Description ?? hazard?.LocationArea ?? "Not specified",
                     Priority = GetPriorityString(hazard?.Priority),
-                    ReportedBy = hazard?.ReportedBy ?? report.CreatedBy ?? "Unknown",
+                    ReportedBy = hazard?.ReportedBy ?? report.CreatedBy ?? report.UpdatedBy ?? "Unknown", // ENHANCED: Added fallback to UpdatedBy
                     ReportedDate = hazard?.ReportedOn ?? report.CreatedDate ?? DateTime.UtcNow,
                     IsConfidential = hazard?.IsConfidential ?? false,
                     
@@ -542,17 +542,17 @@ public partial class ReportProcessing : ComponentBase
 
     private void RenderValidationColumns(RenderTreeBuilder builder)
     {
-        // Report ID Column with VALIDATION action button - navigates to ReportValidation
+        // Report ID Column
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(0);
         builder.AddAttribute(1, "Property", "ReportId");
         builder.AddAttribute(2, "Title", "Report ID");
-        builder.AddAttribute(3, "Width", "200px");
+        builder.AddAttribute(3, "Width", "150px");
         builder.AddAttribute(4, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenStack>(0);
                 templateBuilder.AddAttribute(1, "Orientation", Orientation.Vertical);
-                templateBuilder.AddAttribute(2, "Gap", "0.5rem");
+                templateBuilder.AddAttribute(2, "Gap", "0.25rem");
                 templateBuilder.AddAttribute(3, "ChildContent", (RenderFragment)(stackBuilder =>
                 {
                     stackBuilder.OpenComponent<RadzenText>(0);
@@ -561,38 +561,124 @@ public partial class ReportProcessing : ComponentBase
                     stackBuilder.AddAttribute(3, "Text", report.ReportId);
                     stackBuilder.CloseComponent();
                     
-                    // Show associated Hazard ID as secondary info if available
-                    if (!string.IsNullOrEmpty(report.HazardId))
-                    {
-                        stackBuilder.OpenComponent<RadzenText>(10);
-                        stackBuilder.AddAttribute(11, "TextStyle", TextStyle.Caption);
-                        stackBuilder.AddAttribute(12, "Style", "color: var(--rz-text-disabled-color);");
-                        stackBuilder.AddAttribute(13, "Text", $"Hazard: {report.HazardId}");
-                        stackBuilder.CloseComponent();
-                    }
-                    
-                    // Validation tab: Show "Needs Validation" indicator
-                    stackBuilder.OpenComponent<RadzenText>(15);
-                    stackBuilder.AddAttribute(16, "TextStyle", TextStyle.Caption);
-                    stackBuilder.AddAttribute(17, "Style", "color: var(--rz-warning); font-weight: 500;");
-                    stackBuilder.AddAttribute(18, "Text", "Needs Initial Validation");
-                    stackBuilder.CloseComponent();
-                    
-                    // VALIDATION ACTION: Navigate to ReportValidation
-                    stackBuilder.OpenComponent<RadzenButton>(20);
-                    stackBuilder.AddAttribute(21, "Text", "Start Validation");
-                    stackBuilder.AddAttribute(22, "Icon", "check_circle");
-                    stackBuilder.AddAttribute(23, "ButtonStyle", ButtonStyle.Success);
-                    stackBuilder.AddAttribute(24, "Size", ButtonSize.Small);
-                    stackBuilder.AddAttribute(25, "Click", EventCallback.Factory.Create<MouseEventArgs>(this, 
-                        (args) => Navigation.NavigateTo($"/SMSRiskManagement/ReportValidation/{report.ReportId}")));
+                    stackBuilder.OpenComponent<RadzenText>(5);
+                    stackBuilder.AddAttribute(6, "TextStyle", TextStyle.Caption);
+                    stackBuilder.AddAttribute(7, "Style", "color: var(--rz-warning); font-weight: 500;");
+                    stackBuilder.AddAttribute(8, "Text", "Needs Validation");
                     stackBuilder.CloseComponent();
                 }));
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
 
-        RenderStandardColumns(builder, false); // No additional actions column
+        // Hazard ID Column (FIXED: This was showing "Report ID" header)
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(10);
+        builder.AddAttribute(11, "Property", "HazardId");
+        builder.AddAttribute(12, "Title", "Hazard ID");
+        builder.AddAttribute(13, "Width", "150px");
+        builder.AddAttribute(14, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenText>(0);
+                templateBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
+                templateBuilder.AddAttribute(2, "Style", "font-weight: 600;");
+                templateBuilder.AddAttribute(3, "Text", !string.IsNullOrEmpty(report.HazardId) ? report.HazardId : "N/A");
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        // Description Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(20);
+        builder.AddAttribute(21, "Property", "HazardDescription");
+        builder.AddAttribute(22, "Title", "Description");
+        builder.AddAttribute(23, "Width", "300px");
+        builder.CloseComponent();
+
+        // Stage Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(30);
+        builder.AddAttribute(31, "Property", "ReportStatus");
+        builder.AddAttribute(32, "Title", "Stage");
+        builder.AddAttribute(33, "Width", "120px");
+        builder.AddAttribute(34, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenBadge>(0);
+                templateBuilder.AddAttribute(1, "BadgeStyle", BadgeStyle.Info);
+                templateBuilder.AddAttribute(2, "Text", "Validation");
+                templateBuilder.AddAttribute(3, "Variant", Variant.Flat);
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        // Priority Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(40);
+        builder.AddAttribute(41, "Property", "Priority");
+        builder.AddAttribute(42, "Title", "Priority");
+        builder.AddAttribute(43, "Width", "100px");
+        builder.AddAttribute(44, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                var badgeStyle = report.Priority switch
+                {
+                    "High" => BadgeStyle.Danger,
+                    "Medium" => BadgeStyle.Warning,
+                    _ => BadgeStyle.Info
+                };
+                templateBuilder.OpenComponent<RadzenBadge>(0);
+                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
+                templateBuilder.AddAttribute(2, "Text", report.Priority);
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        // Reported By Column (FIXED: Ensure proper data binding)
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(50);
+        builder.AddAttribute(51, "Property", "ReportedBy");
+        builder.AddAttribute(52, "Title", "Reported By");
+        builder.AddAttribute(53, "Width", "150px");
+        builder.AddAttribute(54, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenText>(0);
+                templateBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
+                templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.ReportedBy) ? report.ReportedBy : "Not Specified");
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        // Days in Stage Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(60);
+        builder.AddAttribute(61, "Property", "DaysInStage");
+        builder.AddAttribute(62, "Title", "Days in Stage");
+        builder.AddAttribute(63, "Width", "120px");
+        builder.AddAttribute(64, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                var badgeStyle = report.DaysInStage > 2 ? BadgeStyle.Warning : BadgeStyle.Secondary;
+                templateBuilder.OpenComponent<RadzenBadge>(0);
+                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
+                templateBuilder.AddAttribute(2, "Text", $"{report.DaysInStage} days");
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        // Actions Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(70);
+        builder.AddAttribute(71, "Title", "Actions");
+        builder.AddAttribute(72, "Width", "150px");
+        builder.AddAttribute(73, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenButton>(0);
+                templateBuilder.AddAttribute(1, "Text", "Start Validation");
+                templateBuilder.AddAttribute(2, "Icon", "check_circle");
+                templateBuilder.AddAttribute(3, "ButtonStyle", ButtonStyle.Success);
+                templateBuilder.AddAttribute(4, "Size", ButtonSize.Small);
+                templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this, 
+                    (args) => Navigation.NavigateTo($"/SMSRiskManagement/ReportValidation/{report.ReportId}")));
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
     }
 
     private void RenderStandardColumns(RenderTreeBuilder builder, bool includeActions = true)

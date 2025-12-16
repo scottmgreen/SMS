@@ -1,175 +1,252 @@
+﻿@using SMS3.Components.Shared
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
-@using SMS3.Components.Pages.SMSRiskManagement
-@using SMS3.Components.Shared
-@using global::System.Text.Json
+@using SMS3.Components.Pages.SMSRiskManagement.Components
+@using SMS_Application.Messaging.Queries
+@using SMS_Application.Interfaces
 @using Radzen
 @using Radzen.Blazor
-@using SMS_Application.Interfaces
-@using SMS_Application.Messaging.Queries
-
-<!-- Progress Summary -->
-@* <RadzenCard Style="margin-bottom: 1rem;">
-    <RadzenRow Gap="1rem" AlignItems="AlignItems.Center">
-        <RadzenColumn Size="3">
-            <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
-                <RadzenIcon Icon="assignment" Style="font-size: 2rem; color: var(--rz-info);" />
-                <RadzenText TextStyle="TextStyle.H4" Text="@($"{AvailableHazards?.Count ?? 0}")" Style="margin: 0; color: var(--rz-info);" />
-                <RadzenText TextStyle="TextStyle.Caption" Text="Hazards" Style="text-align: center;" />
-            </RadzenStack>
-        </RadzenColumn>
-        <RadzenColumn Size="3">
-            <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
-                <RadzenIcon Icon="people" Style="font-size: 2rem; color: var(--rz-info);" />
-                <RadzenText TextStyle="TextStyle.H4" Text="@GetTotalPanelMembers()" Style="margin: 0; color: var(--rz-info);" />
-                <RadzenText TextStyle="TextStyle.Caption" Text="Panel Members" Style="text-align: center;" />
-            </RadzenStack>
-        </RadzenColumn>
-        <RadzenColumn Size="3">
-            <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
-                <RadzenIcon Icon="check_circle" Style="font-size: 2rem, color: var(--rz-info);" />
-                <RadzenText TextStyle="TextStyle.H4" Text="@GetCompletedScores()" Style="margin: 0; color: var(--rz-info);" />
-                <RadzenText TextStyle="TextStyle.Caption" Text="Completed Scores" Style="text-align: center;" />
-            </RadzenStack>
-        </RadzenColumn>
-        <RadzenColumn Size="3">
-            <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
-                <RadzenIcon Icon="schedule" Style="font-size: 2rem; color: var(--rz-info);" />
-                <RadzenText TextStyle="TextStyle.H4" Text="@GetPendingScores()" Style="margin: 0; color: var(--rz-info);" />
-                <RadzenText TextStyle="TextStyle.Caption" Text="Pending Scores" Style="text-align: center;" />
-            </RadzenStack>
-        </RadzenColumn>
-    </RadzenRow>
-</RadzenCard> *@
 
 <RadzenRow Gap="1rem">
     <!-- Main Content Column -->
     <RadzenColumn Size="12" SizeLG="8">
         <RadzenStack Gap="1.5rem">
-            <!-- Header -->
+            
+            <!-- Step 4 Introduction -->
             <RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid var(--rz-primary);">
                 <RadzenStack Gap="1rem">
-                    <RadzenRow AlignItems="AlignItems.Center">
-                        <RadzenColumn Size="10">
-                            <RadzenText TextStyle="TextStyle.H5" Style="color: var(--rz-primary); margin: 0;">
-                                <RadzenIcon Icon="trending_up" Style="margin-right: 0.5rem;" />
-                                Step 4: Assess Risk Level & Tolerability
-                            </RadzenText>
+                    <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
+                        <RadzenIcon Icon="balance" Style="margin-right: 0.5rem;" />
+                        Step 4: Risk Assessment & Scoring Panel
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        Assemble stakeholder panels to score each identified hazard using severity and likelihood ratings. 
+                        Panel consensus will determine the overall risk level for each hazard.
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+
+            <!-- Risk Assessment Framework -->
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenStack Gap="1rem">
+                    <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-info); margin: 0;">
+                        <RadzenIcon Icon="settings" Style="margin-right: 0.5rem;" />
+                        Assessment Framework
+                    </RadzenText>
+                    
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenFormField Text="Tolerability Framework" Variant="Variant.Outlined">
+                                <RadzenTextBox @bind-Value="@Step4.TolerabilityFramework" 
+                                             Style="width: 100%;" />
+                            </RadzenFormField>
                         </RadzenColumn>
-                        <RadzenColumn Size="2">
-                            <RadzenBadge Text="@($"{AvailableHazards?.Count ?? 0} Hazards")" BadgeStyle="BadgeStyle.Light" />
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenFormField Text="Risk Acceptance Criteria" Variant="Variant.Outlined">
+                                <RadzenTextBox @bind-Value="@Step4.RiskAcceptanceCriteria" 
+                                             Placeholder="Define risk acceptance criteria..."
+                                             Style="width: 100%;" />
+                            </RadzenFormField>
                         </RadzenColumn>
                     </RadzenRow>
-                    
-                    <RadzenText TextStyle="TextStyle.Body2">
-                        Use the 5x5 risk matrix to assess each identified hazard. Each panel member scores independently using severity (impact) and likelihood (probability) 
-                        to determine their individual risk assessment. The system calculates average scores per hazard.
-                    </RadzenText>
                 </RadzenStack>
             </RadzenCard>
 
             <!-- Hazard Scoring Panels -->
             @if (AvailableHazards?.Any() == true)
             {
+                <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-success); margin: 0;">
+                    <RadzenIcon Icon="assignment" Style="margin-right: 0.5rem;" />
+                    Hazard Risk Scoring (@AvailableHazards.Count Hazards)
+                </RadzenText>
+
                 @foreach (var hazard in AvailableHazards)
                 {
-                    <HazardScoringPanel Hazard="@hazard" 
-                                       Step4="@Step4"
-                                       AvailableStakeholders="@AvailableStakeholders"
-                                       AvailableAssessors="@AvailableAssessors"
-                                       ExistingScoringPanels="@GetScoringPanelsForHazard(hazard.Code)"
-                                       PanelMemberData="@GetPanelMemberDataForHazard(hazard.Code)"
-                                       OnPanelUpdated="@OnPanelUpdated" 
-                                       OnScoreSubmitted="@OnScoreSubmitted"
-                                       OnPanelDataRefresh="@LoadAllScoringPanels" />
+                    <HazardScoringPanel @key="@($"panel-{hazard.Code}")" 
+                                        Hazard="@hazard" 
+                                        AvailableStakeholders="@AvailableStakeholders"
+                                        RiskAssessmentId="@RiskAssessmentId"
+                                        OnHazardScored="@(() => HandleHazardScored(hazard.Code))" />
                 }
+
+                <!-- Overall Progress Summary -->
+                @* @if (GetCompletedHazardCount() > 0)
+                {
+                    <RadzenCard Style="border-left: 4px solid var(--rz-success);">
+                        <RadzenStack Gap="1rem">
+                            <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-success); margin: 0;">
+                                <RadzenIcon Icon="analytics" Style="margin-right: 0.5rem;" />
+                                Assessment Progress: @GetCompletedHazardCount() / @AvailableHazards.Count Hazards Completed
+                            </RadzenText>
+                            
+                            <RadzenProgressBar Value="@((double)GetCompletedHazardCount() / AvailableHazards.Count * 100)" 
+                                             ShowValue="true" 
+                                             Text="@($"{GetCompletedHazardCount()}/{AvailableHazards.Count} Hazards")" />
+                            
+                            @if (GetCompletedHazardCount() == AvailableHazards.Count)
+                            {
+                                <RadzenAlert AlertStyle="AlertStyle.Success" Icon="check_circle">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" 
+                                                Text="🎉 All hazards have been assessed! Risk assessment is complete and ready for Step 5." />
+                                </RadzenAlert>
+                            }
+                        </RadzenStack>
+                    </RadzenCard>
+                } *@
             }
             else
             {
-                <RadzenCard Style="text-align: center; padding: 2rem;">
-                    <RadzenStack AlignItems="AlignItems.Center" Gap="1rem">
-                        <RadzenIcon Icon="warning" Style="font-size: 3rem; color: var(--rz-warning);" />
-                        <RadzenText TextStyle="TextStyle.H5" Text="No hazards identified yet" />
-                        <RadzenText TextStyle="TextStyle.Body2" Text="Please complete Step 2 (Identify Hazards) before proceeding with risk assessment." />
-                        <RadzenButton Text="Go to Step 2" Icon="arrow_back" ButtonStyle="ButtonStyle.Warning" 
-                                      Click="@GoToStep2" />
-                    </RadzenStack>
-                </RadzenCard>
+                <RadzenAlert AlertStyle="AlertStyle.Warning" Icon="warning" ShowIcon="true">
+                    <RadzenText TextStyle="TextStyle.Body2" Text="No hazards available for scoring. Please complete Step 2 (Hazard Identification) first." />
+                </RadzenAlert>
             }
         </RadzenStack>
     </RadzenColumn>
-    <!-- Help Panel -->
+
+    <!-- Guidance Panel -->
     <RadzenColumn Size="12" SizeLG="4">
         <RadzenStack Gap="1rem">
-            <!-- Enhanced Risk Matrix with Highlighting -->
-            <RadzenCard>
-                <RadzenStack Gap="1rem">
-                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-success); margin: 0;">
-                        <RadzenIcon Icon="help" Style="margin-right: 0.5rem;" />
-                        Assessment Guidelines
-                    </RadzenText>
-
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Text="5x5 Risk Matrix" Style="margin: 0;" />
-                    
-                    <!-- Interactive Risk Matrix -->
-                    <div style="overflow-x: auto;">
-                        <table class="table table-bordered text-center risk-matrix-enhanced" style="margin: 0; font-size: 0.875rem;">
-                            <thead>
-                                <tr>
-                                    <th rowspan="2" style="vertical-align: middle; background-color: var(--rz-base-200);">
-                                        Severity ?<br/>? Likelihood
-                                    </th>
-                                    <th style="background-color: var(--rz-base-100);">1<br/>Minor</th>
-                                    <th style="background-color: var(--rz-base-100);">2<br/>Moderate</th>
-                                    <th style="background-color: var(--rz-base-100);">3<br/>Serious</th>
-                                    <th style="background-color: var(--rz-base-100);">4<br/>Major</th>
-                                    <th style="background-color: var(--rz-base-100);">5<br/>Catastrophic</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var row in GetRiskMatrixRows())
+            <!-- 5x5 Risk Matrix Visualization -->
+            @if (AvailableHazards?.Any() == true && Step4.HazardAverageScores.Any())
+            {
+                <RadzenCard Variant="Variant.Outlined">
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
+                            <RadzenIcon Icon="grid_on" Style="margin-right: 0.5rem;" />
+                            Risk Assessment Matrix
+                        </RadzenText>
+                        
+                        <!-- Aviation Risk Matrix Grid -->
+                        <div style="display: grid; grid-template-columns: auto repeat(5, 1fr); gap: 1px; font-size: 0.8rem; border: 2px solid #000;">
+                            <!-- Header Row -->
+                            <div style="background: #f8f9fa; padding: 8px; border: 1px solid #000; font-weight: bold; text-align: center;">
+                                Severity ↓<br/>Likelihood →
+                            </div>
+                            <div style="text-align: center; font-weight: bold; padding: 8px; background: #f9f9fa; border: 1px solid #000;">
+                                <strong>A</strong><br/>RARE
+                            </div>
+                            <div style="text-align: center; font-weight: bold; padding: 8px; background: #f9f9fa; border: 1px solid #000;">
+                                <strong>B</strong><br/>UNLIKELY
+                            </div>
+                            <div style="text-align: center; font-weight: bold; padding: 8px; background: #f9f9fa; border: 1px solid #000;">
+                                <strong>C</strong><br/>POSSIBLE
+                            </div>
+                            <div style="text-align: center; font-weight: bold; padding: 8px; background: #f9f9fa; border: 1px solid #000;">
+                                <strong>D</strong><br/>LIKELY
+                            </div>
+                            <div style="text-align: center; font-weight: bold; padding: 8px; background: #f9f9fa; border: 1px solid #000;">
+                                <strong>E</strong><br/>FREQUENT
+                            </div>
+                            
+                            <!-- Matrix Rows (Severity 5 to 1) -->
+                            @for (int severity = 5; severity >= 1; severity--)
+                            {
+                                <!-- Row Header -->
+                                <div style="font-weight: bold; padding: 8px; background: #f9f9fa; border: 1px solid #000; text-align: center;">
+                                    <strong>@severity</strong><br/>@GetSeverityLabel(severity).ToUpper()
+                                </div>
+                                
+                                <!-- Matrix Cells -->
+                                @for (int likelihood = 1; likelihood <= 5; likelihood++)
                                 {
-                                    <tr>
-                                        <th style="background-color: var(--rz-base-100);">@row.Label</th>
-                                        @foreach (var cell in row.Cells)
+                                    var matrixCode = GetMatrixCode(severity, likelihood);
+                                    var cellStyle = GetAviationMatrixCellStyle(severity, likelihood);
+                                    var hazardsAtThisCode = GetHazardsAtMatrixCode(severity, likelihood);
+                                    
+                                    <div style="@cellStyle min-height: 60px; position: relative; border: 1px solid #000;" 
+                                         title="@($"{matrixCode} - {GetAviationRiskLevel(severity, likelihood)} Risk - {hazardsAtThisCode.Count} hazard(s)")">
+                                        <div style="position: absolute; top: 4px; left: 4px; font-size: 0.9rem; font-weight: bold; color: #000;">
+                                            @matrixCode
+                                        </div>
+                                        @if (hazardsAtThisCode.Any())
                                         {
-                                            <td class="risk-cell @GetRiskCellClass(cell.RiskLevel)" 
-                                                style="position: relative; @GetCellStyle(cell)"
-                                                title="Severity: @cell.Severity, Likelihood: @cell.Likelihood, Risk: @cell.RiskLevel">
-                                                
-                                                @cell.CellLabel
-                                                
-                                                <!-- Show badges for average scores that fall in this cell -->
-                                                @foreach (var badge in GetBadgesForCell(cell.Severity, cell.Likelihood))
+                                            <div style="position: absolute; bottom: 4px; right: 4px; display: flex; flex-wrap: wrap; gap: 2px; max-width: 80%;">
+                                                @foreach (var hazard in hazardsAtThisCode.Take(3))
                                                 {
-                                                    <div style="position: absolute; top: 2px; right: 2px;">
-                                                        <RadzenBadge Text="@badge.Text" 
-                                                                    BadgeStyle="BadgeStyle.Dark" 
-                                                                    Style="font-size: 0.7rem; opacity: 0.9;" 
-                                                                    title="@badge.HazardDescription" />
-                                                    </div>
+                                                    <span style="background: rgba(0,0,0,0.8); color: white; padding: 2px 4px; border-radius: 3px; font-size: 0.7rem; line-height: 1; font-weight: bold;">
+                                                        @hazard
+                                                    </span>
                                                 }
-                                            </td>
+                                                @if (hazardsAtThisCode.Count > 3)
+                                                {
+                                                    <span style="background: rgba(0,0,0,0.9); color: white; padding: 2px 4px; border-radius: 3px; font-size: 0.7rem; line-height: 1; font-weight: bold;">
+                                                        +@(hazardsAtThisCode.Count - 3)
+                                                    </span>
+                                                }
+                                            </div>
                                         }
-                                    </tr>
+                                    </div>
                                 }
-                            </tbody>
-                        </table>
-                    </div>
+                            }
+                        </div>
+                        
+                        <!-- Aviation Risk Matrix Legend -->
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.Subtitle2" Text="Risk Assessment Categories:" Style="margin: 0;" />
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <div style="width: 20px; height: 16px; background: #dc3545; border: 1px solid #000;"></div>
+                                    <RadzenText TextStyle="TextStyle.Caption" Text="High Risk" />
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <div style="width: 20px; height: 16px; background: #fd7e14; border: 1px solid #000;"></div>
+                                    <RadzenText TextStyle="TextStyle.Caption" Text="Medium Risk" />
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <div style="width: 20px; height: 16px; background: #ffc107; border: 1px solid #000;"></div>
+                                    <RadzenText TextStyle="TextStyle.Caption" Text="Low Risk" />
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <div style="width: 20px; height: 16px; background: #28a745; border: 1px solid #000;"></div>
+                                    <RadzenText TextStyle="TextStyle.Caption" Text="Acceptable Risk" />
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenStack>
+                        
+                       @*  @if (Step4.HazardAverageScores.Any())
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small">
+                                <RadzenText TextStyle="TextStyle.Caption" Text="@($"{Step4.HazardAverageScores.Count} of {AvailableHazards.Count} hazards assessed. Results shown as Severity-Likelihood codes (e.g., 3B, 5A).")" />
+                            </RadzenAlert>
+                        } *@
+                    </RadzenStack>
+                </RadzenCard>
+            }
 
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Text="Control Hierarchy" Style="margin: 0;" />
-                    <ol style="font-size: 0.875rem;">
-                        <li><strong>Elimination:</strong> Remove the hazard</li>
-                        <li><strong>Substitution:</strong> Replace with safer alternative</li>
-                        <li><strong>Engineering:</strong> Physical safeguards</li>
-                        <li><strong>Administrative:</strong> Procedures and training</li>
-                        <li><strong>PPE:</strong> Personal protective equipment</li>
-                    </ol>
-
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Text="ALARP Principle" Style="margin: 0;" />
-                    <RadzenText TextStyle="TextStyle.Caption">
-                        Risks should be reduced to <strong>As Low As Reasonably Practicable</strong> (ALARP), considering cost-benefit and available technology.
+            <!-- Risk Matrix Guide -->
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenStack Gap="1rem">
+                    <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-info); margin: 0;">
+                        <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
+                        Risk Scoring Guide
                     </RadzenText>
+                    
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="Severity Scale:" Style="margin: 0;" />
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                            • <strong>5 - Catastrophic:</strong> Multiple fatalities, total loss<br/>
+                            • <strong>4 - Major:</strong> Single fatality, major damage<br/>
+                            • <strong>3 - Serious:</strong> Serious injury, significant damage<br/>
+                            • <strong>2 - Moderate:</strong> Minor injury, minor damage<br/>
+                            • <strong>1 - Minor:</strong> No injury, negligible damage
+                        </RadzenText>
+                    </RadzenStack>
+                    
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="Likelihood Scale:" Style="margin: 0;" />
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                            • <strong>5 - Frequent:</strong> Will occur repeatedly<br/>
+                            • <strong>4 - Likely:</strong> Will occur several times<br/>
+                            • <strong>3 - Possible:</strong> Will occur sometimes<br/>
+                            • <strong>2 - Unlikely:</strong> Will occur rarely<br/>
+                            • <strong>1 - Rare:</strong> Will occur very rarely
+                        </RadzenText>
+                    </RadzenStack>
+                    
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small">
+                        <strong>Risk Score = Severity × Likelihood</strong><br/>
+                        Click on matrix cells to see which hazards fall into each risk category.
+                    </RadzenAlert>
                 </RadzenStack>
             </RadzenCard>
 
@@ -177,8 +254,6 @@
             <TechnicalAssessmentGuidancePanel StepNumber="4" />
         </RadzenStack>
     </RadzenColumn>
-    <!-- Debug Panel -->
-    
 </RadzenRow>
 
 @code {
@@ -187,328 +262,318 @@
     [Parameter] public List<Hazard> AvailableHazards { get; set; } = new();
     [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
     [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
-
-    // Centralized scoring panel data for all hazards
-    private Dictionary<string, List<ScoringPanel>> AllScoringPanels = new();
-    private Dictionary<string, List<PanelMemberData>> AllPanelMemberData = new();
+    [Parameter] public string RiskAssessmentId { get; set; } = string.Empty; // NEW: Pass assessment ID from parent
 
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<TechnicalAssessmentStep4> Logger { get; set; } = default!;
 
-    protected override async Task OnParametersSetAsync()
+    private bool _isInitialized = false;
+    private bool _isRefreshing = false;
+    private string _lastHazardListHash = string.Empty;
+
+    protected override async Task OnInitializedAsync()
     {
-        // Load scoring panels when hazards change
-        if (AvailableHazards?.Any() == true)
+        if (!_isInitialized)
         {
-            await LoadAllScoringPanels();
+            await InitializeStep4Data();
+            _isInitialized = true;
         }
     }
 
-    private async Task LoadAllScoringPanels()
+    protected override async Task OnParametersSetAsync()
     {
-        AllScoringPanels.Clear();
-        AllPanelMemberData.Clear();
-
-        foreach (var hazard in AvailableHazards)
+        var currentHazardListHash = GetHazardListHash();
+        if (currentHazardListHash != _lastHazardListHash && !_isRefreshing)
         {
-            try
+            _lastHazardListHash = currentHazardListHash;
+            await InitializeStep4Data();
+        }
+    }
+
+    private string GetHazardListHash()
+    {
+        if (AvailableHazards?.Any() != true) return "empty";
+        var codes = string.Join(",", AvailableHazards.Select(h => h.Code).OrderBy(c => c));
+        return $"{AvailableHazards.Count}:{codes.GetHashCode()}";
+    }
+
+    private async Task InitializeStep4Data()
+    {
+        if (_isRefreshing) return;
+        
+        try
+        {
+            _isRefreshing = true;
+            await LoadHazardAverages();
+            Logger.LogInformation("Initialized Step 4 data for {Count} hazards", AvailableHazards?.Count ?? 0);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error initializing Step 4 data");
+        }
+        finally
+        {
+            _isRefreshing = false;
+        }
+    }
+
+    private async Task HandleHazardScored(string hazardCode)
+    {
+        try
+        {
+            Logger.LogInformation("Handling hazard scored: {HazardCode}", hazardCode);
+            await LoadHazardAverages();
+            
+            // CRITICAL: Save Step 4 assessment data whenever hazard scores are updated
+            await SaveCurrentRiskAssessmentAsync();
+            
+            if (Step4Changed.HasDelegate)
+            {
+                await Step4Changed.InvokeAsync(Step4);
+            }
+            
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error handling hazard scored for {HazardCode}", hazardCode);
+        }
+    }
+
+    /// <summary>
+    /// Save the current risk assessment data when hazard scores are updated
+    /// </summary>
+    private async Task SaveCurrentRiskAssessmentAsync()
+    {
+        try
+        {
+            if (AvailableHazards?.Any() != true || !Step4.HazardAverageScores.Any())
+            {
+                Logger.LogInformation("Skipping risk assessment save - no completed hazard assessments");
+                return;
+            }
+
+            // Calculate overall final scores from all hazard averages
+            var (finalSeverity, finalLikelihood, finalRiskLevel, assessmentRationale) = CalculateOverallRiskAssessment();
+
+            // Get the risk assessment ID from the current context
+            var riskAssessmentId = GetCurrentRiskAssessmentId();
+            if (string.IsNullOrEmpty(riskAssessmentId))
+            {
+                Logger.LogWarning("Cannot save risk assessment - no assessment ID available");
+                return;
+            }
+
+            // Save Step 4 risk assessment data
+            var saveStep4Command = new SaveStep4Command(
+                riskAssessmentId,
+                Step4.TolerabilityFramework,
+                Step4.RiskAcceptanceCriteria,
+                finalSeverity,
+                finalLikelihood,
+                finalRiskLevel,
+                DetermineRiskTolerability(finalRiskLevel),
+                assessmentRationale);
+
+            var result = await Mediator.SendAsync(saveStep4Command, CancellationToken.None);
+
+            if (result.IsSuccess)
+            {
+                Logger.LogInformation("Successfully saved Step 4 risk assessment data after hazard score update");
+            }
+            else
+            {
+                Logger.LogError("Failed to save Step 4 risk assessment: {Error}", result.Error?.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving current risk assessment");
+        }
+    }
+
+    /// <summary>
+    /// Calculate overall risk assessment from all completed hazard assessments
+    /// </summary>
+    private (int? finalSeverity, int? finalLikelihood, string finalRiskLevel, string assessmentRationale) CalculateOverallRiskAssessment()
+    {
+        var completedHazards = Step4.HazardAverageScores.Keys.ToList();
+        
+        if (!completedHazards.Any())
+        {
+            return (null, null, "Unknown", "No hazard assessments completed yet.");
+        }
+
+        // Use highest risk approach for final severity/likelihood
+        var highestRiskHazard = Step4.HazardAverageScores.OrderByDescending(kvp => kvp.Value).First();
+        var highestRiskHazardCode = highestRiskHazard.Key;
+
+        // Get the matrix code for the highest risk hazard
+        var highestRiskMatrixCode = Step4.HazardMatrixCodes.GetValueOrDefault(highestRiskHazardCode, "Unknown");
+
+        // Parse matrix code back to severity/likelihood
+        var (severity, likelihood) = ParseMatrixCode(highestRiskMatrixCode);
+        
+        // Determine final risk level using the centralized calculator
+        var finalRiskLevel = severity.HasValue && likelihood.HasValue 
+            ? AviationRiskMatrixCalculator.GetAviationRiskLevel(severity.Value, likelihood.Value)
+            : "Unknown";
+
+        // Calculate summary statistics
+        var avgScores = Step4.HazardAverageScores.Values.ToList();
+        var avgScore = avgScores.Average();
+        var maxScore = avgScores.Max();
+
+        // Build comprehensive assessment rationale
+        var matrixCodesSummary = string.Join(", ", Step4.HazardMatrixCodes.Select(kvp => $"{kvp.Key}:{kvp.Value}"));
+        var riskLevelsSummary = string.Join(", ", Step4.HazardRiskLevels.Select(kvp => $"{kvp.Key}:{kvp.Value}"));
+
+        var rationale = $"Risk assessment based on {completedHazards.Count} hazard(s). " +
+                       $"Highest risk hazard: {highestRiskHazardCode} (Matrix: {highestRiskMatrixCode}, Risk Level: {Step4.HazardRiskLevels.GetValueOrDefault(highestRiskHazardCode, "Unknown")}). " +
+                       $"Score statistics: Average={avgScore:F2}, Maximum={maxScore:F2}. " +
+                       $"Matrix codes: {matrixCodesSummary}. " +
+                       $"Risk levels: {riskLevelsSummary}. " +
+                       $"Final assessment: {finalRiskLevel} risk based on worst-case scenario approach. " +
+                       $"Assessment completed on {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC.";
+
+        return (severity, likelihood, finalRiskLevel, rationale);
+    }
+
+    /// <summary>
+    /// Parse matrix code back to severity and likelihood values
+    /// </summary>
+    private (int? severity, int? likelihood) ParseMatrixCode(string matrixCode)
+    {
+        if (string.IsNullOrEmpty(matrixCode) || matrixCode.Length < 2) 
+            return (null, null);
+
+        // Extract severity (first part) and likelihood letter (last part)
+        var severityPart = matrixCode.Substring(0, matrixCode.Length - 1);
+        var likelihoodLetter = matrixCode.Substring(matrixCode.Length - 1);
+
+        if (!int.TryParse(severityPart, out int severity))
+            return (null, null);
+
+        var likelihood = likelihoodLetter.ToUpper() switch
+        {
+            "A" => 1, "B" => 2, "C" => 3, "D" => 4, "E" => 5, _ => (int?)null
+        };
+
+        return (severity, likelihood);
+    }
+
+    /// <summary>
+    /// Determine risk tolerability based on risk level
+    /// </summary>
+    private string DetermineRiskTolerability(string riskLevel)
+    {
+        return riskLevel switch
+        {
+            "High" => "Unacceptable",
+            "Medium" => "Tolerable",
+            "Low" => "Acceptable", 
+            "Acceptable" => "Acceptable",
+            _ => "Under Review"
+        };
+    }
+
+    /// <summary>
+    /// Get the current risk assessment ID from the parent context
+    /// </summary>
+    private string GetCurrentRiskAssessmentId()
+    {
+        if (!string.IsNullOrEmpty(RiskAssessmentId))
+        {
+            return RiskAssessmentId;
+        }
+        
+        // Fallback - this should not happen in normal operation
+        Logger.LogWarning("No RiskAssessmentId parameter provided to TechnicalAssessmentStep4");
+        return string.Empty;
+    }
+
+    private string GetSeverityLabel(int severity)
+    {
+        return severity switch
+        {
+            5 => "Catastrophic", 4 => "Major", 3 => "Serious", 2 => "Moderate", 1 => "Minor", _ => ""
+        };
+    }
+
+    private List<string> GetHazardsAtMatrixCode(int severity, int likelihood)
+    {
+        var targetMatrixCode = AviationRiskMatrixCalculator.GetMatrixCode(severity, likelihood);
+        return Step4.HazardMatrixCodes
+            .Where(kvp => kvp.Value == targetMatrixCode)
+            .Select(kvp => kvp.Key)
+            .OrderBy(h => h)
+            .ToList();
+    }
+
+    private string GetMatrixCode(int severity, int likelihood)
+    {
+        return AviationRiskMatrixCalculator.GetMatrixCode(severity, likelihood);
+    }
+    
+    private string GetAviationMatrixCellStyle(int severity, int likelihood)
+    {
+        return AviationRiskMatrixCalculator.GetMatrixCellStyle(severity, likelihood);
+    }
+    
+    private string GetAviationRiskLevel(int severity, int likelihood)
+    {
+        return AviationRiskMatrixCalculator.GetAviationRiskLevel(severity, likelihood);
+    }
+
+    private async Task LoadHazardAverages()
+    {
+        if (AvailableHazards?.Any() != true) return;
+        
+        try
+        {
+            Step4.HazardAverageScores.Clear();
+            Step4.HazardRiskLevels.Clear();
+            Step4.HazardMatrixCodes.Clear();
+
+            foreach (var hazard in AvailableHazards)
             {
                 var query = new GetScoringPanelsByHazardCodeQuery(hazard.Code);
                 var result = await Mediator.SendAsync(query, CancellationToken.None);
 
-                if (result.IsSuccess && result.Value != null)
+                if (result.IsSuccess && result.Value?.Any() == true)
                 {
-                    AllScoringPanels[hazard.Code] = result.Value.ToList();
-                    
-                    // Create stable PanelMemberData objects for this hazard
-                    var panelMembers = GetPanelMembersForHazard(hazard.Code);
-                    AllPanelMemberData[hazard.Code] = CreatePanelMemberData(hazard.Code, panelMembers);
-                }
-                else
-                {
-                    AllScoringPanels[hazard.Code] = new List<ScoringPanel>();
-                    AllPanelMemberData[hazard.Code] = new List<PanelMemberData>();
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Error loading scoring panels for hazard {HazardCode}", hazard.Code);
-                AllScoringPanels[hazard.Code] = new List<ScoringPanel>();
-                AllPanelMemberData[hazard.Code] = new List<PanelMemberData>();
-            }
-        }
-    }
+                    var completedPanels = result.Value
+                        .Where(p => p.Severity.HasValue && p.Likelihood.HasValue && p.Score.HasValue)
+                        .ToList();
 
-    private List<string> GetPanelMembersForHazard(string hazardCode)
-    {
-        return Step4.HazardPanelMembers.ContainsKey(hazardCode) 
-            ? Step4.HazardPanelMembers[hazardCode] 
-            : new List<string>();
-    }
-
-    private List<PanelMemberData> CreatePanelMemberData(string hazardCode, List<string> panelMembers)
-    {
-        var existingPanels = AllScoringPanels[hazardCode];
-        
-        Console.WriteLine($"?? CreatePanelMemberData for {hazardCode}:");
-        Console.WriteLine($"   Panel Members: {string.Join(", ", panelMembers)}");
-        Console.WriteLine($"   Existing Panels: {string.Join(", ", existingPanels.Select(p => $"[{p.Code}:{p.SMSUserCode}, S:{p.Severity}, L:{p.Likelihood}, Score:{p.Score}]"))}");
-        
-        return panelMembers.Select(memberId =>
-        {
-            var stakeholder = AvailableStakeholders.FirstOrDefault(s => s.Code == memberId);
-            var assessor = AvailableAssessors.FirstOrDefault(a => a.Id.Value == memberId);
-            
-            // CRITICAL FIX: Find existing panel by SMSUserCode, regardless of whether it has scores
-            var existingPanel = existingPanels.FirstOrDefault(p => p.SMSUserCode == memberId);
-            
-            Console.WriteLine($"   Member {memberId}: Found panel = {existingPanel?.Code ?? "NULL"}");
-            
-            var memberData = new PanelMemberData
-            {
-                MemberId = memberId,
-                Name = stakeholder?.DisplayName ?? assessor?.DisplayName ?? "Unknown",
-                Role = stakeholder?.StakeholderType ?? assessor?.UserRole.Name ?? "Unknown",
-                
-                // CRITICAL FIX: Use null-safe operators and preserve 0 as a valid unselected state
-                SeverityScore = existingPanel?.Severity ?? 0,
-                LikelihoodScore = existingPanel?.Likelihood ?? 0,
-                CalculatedScore = (double)(existingPanel?.Score ?? 0),
-                
-                // CRITICAL FIX: Panel is completed ONLY if it has actual scores AND they're not zero
-                // This ensures placeholder records with NULL values don't show as completed
-                IsCompleted = existingPanel != null && 
-                             existingPanel.Severity.HasValue && existingPanel.Severity.Value > 0 &&
-                             existingPanel.Likelihood.HasValue && existingPanel.Likelihood.Value > 0 &&
-                             existingPanel.Score.HasValue && existingPanel.Score.Value > 0
-            };
-            
-            Console.WriteLine($"   Result: S:{memberData.SeverityScore}, L:{memberData.LikelihoodScore}, Completed:{memberData.IsCompleted}, CanSubmit:{memberData.CanSubmit}");
-            
-            return memberData;
-        }).ToList();
-    }
-
-    public List<ScoringPanel> GetScoringPanelsForHazard(string hazardCode)
-    {
-        return AllScoringPanels.ContainsKey(hazardCode) 
-            ? AllScoringPanels[hazardCode] 
-            : new List<ScoringPanel>();
-    }
-
-    public List<PanelMemberData> GetPanelMemberDataForHazard(string hazardCode)
-    {
-        return AllPanelMemberData.ContainsKey(hazardCode) 
-            ? AllPanelMemberData[hazardCode] 
-            : new List<PanelMemberData>();
-    }
-
-    private void GoToStep2()
-    {
-        Console.WriteLine("Navigate to Step 2");
-    }
-
-    private string GetTotalPanelMembers()
-    {
-        return Step4.SelectedPanelMembers?.Count.ToString() ?? "0";
-    }
-
-    private string GetCompletedScores()
-    {
-        return Step4.CompletedScores?.Count.ToString() ?? "0";
-    }
-
-    private string GetPendingScores()
-    {
-        return Step4.PendingScores?.Count.ToString() ?? "0";
-    }
-
-    private int GetScoringProgress()
-    {
-        var totalRequired = (AvailableHazards?.Count ?? 0) * (Step4.SelectedPanelMembers?.Count ?? 0);
-        if (totalRequired == 0) return 0;
-        
-        var completed = Step4.CompletedScores?.Count ?? 0;
-        return (completed * 100) / totalRequired;
-    }
-
-    private async Task OnPanelUpdated(string hazardId)
-    {
-        await Step4Changed.InvokeAsync(Step4);
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task OnScoreSubmitted(Step4Model.PanelMemberScoreData scoreData)
-    {
-        Console.WriteLine($"?? Parent received score submission notification for {scoreData.MemberId}");
-        
-        // SMART UPDATE: Only update the Step4 model data for average calculations
-        // Do NOT reload all panel data from database as this would clear pending UI states
-        Step4.AddPanelMemberScore(scoreData.HazardId, scoreData);
-        
-        // Recalculate averages for this hazard without full reload
-        Step4.RecalculateHazardAverage(scoreData.HazardId);
-        
-        Console.WriteLine($"? Parent updated averages without full panel reload - pending scores preserved");
-        
-        await Step4Changed.InvokeAsync(Step4);
-        await InvokeAsync(StateHasChanged);
-        
-        // CRITICAL: Do NOT call LoadAllScoringPanels() here as it would reload everything from database
-    }
-
-    #region Risk Matrix Enhancement
-
-    private List<RiskMatrixRow> GetRiskMatrixRows()
-    {
-        return new List<RiskMatrixRow>
-        {
-            new() { Label = "A - Rare", LikelihoodValue = 1, Cells = GetRowCells(1) },
-            new() { Label = "B - Unlikely", LikelihoodValue = 2, Cells = GetRowCells(2) },
-            new() { Label = "C - Possible", LikelihoodValue = 3, Cells = GetRowCells(3) },
-            new() { Label = "D - Likely", LikelihoodValue = 4, Cells = GetRowCells(4) },
-            new() { Label = "E - Frequent", LikelihoodValue = 5, Cells = GetRowCells(5) }
-        };
-    }
-
-    private List<RiskMatrixCell> GetRowCells(int likelihood)
-    {
-        var cells = new List<RiskMatrixCell>();
-        for (int severity = 1; severity <= 5; severity++)
-        {
-            var riskLevel = GetRiskLevel(severity, likelihood);
-            var cellLabel = $"{severity}{(char)('A' + likelihood - 1)}\n{riskLevel}";
-            
-            cells.Add(new RiskMatrixCell
-            {
-                Severity = severity,
-                Likelihood = likelihood,
-                RiskLevel = riskLevel,
-                CellLabel = cellLabel
-            });
-        }
-        return cells;
-    }
-
-    private string GetRiskLevel(int severity, int likelihood)
-    {
-        var score = severity * likelihood;
-        return score switch
-        {
-            <= 4 => "Very Low",
-            <= 8 => "Low", 
-            <= 12 => "Medium",
-            <= 20 => "High",
-            _ => "Very High"
-        };
-    }
-
-    private string GetRiskCellClass(string riskLevel)
-    {
-        return riskLevel switch
-        {
-            "Very Low" => "risk-very-low",
-            "Low" => "risk-low",
-            "Medium" => "risk-medium", 
-            "High" => "risk-high",
-            "Very High" => "risk-very-high",
-            _ => ""
-        };
-    }
-
-    private string GetCellStyle(RiskMatrixCell cell)
-    {
-        var baseStyle = "";
-        
-        // Check if any hazard average scores fall in this cell
-        var hasScores = GetBadgesForCell(cell.Severity, cell.Likelihood).Any();
-        if (hasScores)
-        {
-            baseStyle += "border: 3px solid var(--rz-primary) !important; box-shadow: 0 0 10px rgba(0,123,255,0.5);";
-        }
-        
-        return baseStyle;
-    }
-
-    private List<CellBadge> GetBadgesForCell(int severity, int likelihood)
-    {
-        var badges = new List<CellBadge>();
-        
-        if (Step4.HazardAverageScores?.Any() == true)
-        {
-            foreach (var hazardScore in Step4.HazardAverageScores)
-            {
-                // Calculate which cell this average score falls into
-                var hazardSeverity = GetSeverityFromScore(hazardScore.Value);
-                var hazardLikelihood = GetLikelihoodFromScore(hazardScore.Value, hazardSeverity);
-                
-                if (Math.Abs(hazardSeverity - severity) < 0.5 && Math.Abs(hazardLikelihood - likelihood) < 0.5)
-                {
-                    var hazard = AvailableHazards?.FirstOrDefault(h => h.Code == hazardScore.Key);
-                    badges.Add(new CellBadge
+                    if (completedPanels.Any())
                     {
-                        Text = $"{hazardScore.Key}: {hazardScore.Value:F1}",
-                        HazardDescription = hazard?.Description ?? "Unknown hazard"
-                    });
+                        // Use centralized calculator for consistency
+                        var matrixCode = AviationRiskMatrixCalculator.CalculateHazardMatrixCodeWithDebug(
+                            hazard.Code, 
+                            completedPanels, 
+                            msg => Logger.LogInformation(msg));
+                        
+                        // Calculate other values using centralized methods
+                        var avgSeverity = completedPanels.Average(p => p.Severity!.Value);
+                        var avgLikelihood = completedPanels.Average(p => p.Likelihood!.Value);
+                        var avgScore = completedPanels.Average(p => (double)p.Score!.Value);
+                        
+                        var roundedSeverity = (int)Math.Round(avgSeverity);
+                        var roundedLikelihood = (int)Math.Round(avgLikelihood);
+                        
+                        Step4.HazardAverageScores[hazard.Code] = avgScore;
+                        Step4.HazardRiskLevels[hazard.Code] = AviationRiskMatrixCalculator.GetAviationRiskLevel(roundedSeverity, roundedLikelihood);
+                        Step4.HazardMatrixCodes[hazard.Code] = matrixCode;
+                    }
                 }
             }
+            
+            Logger.LogInformation("Loaded averages for {Count} hazards", Step4.HazardAverageScores.Count);
         }
-        
-        return badges;
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading hazard averages");
+        }
     }
-
-    private int GetSeverityFromScore(double averageScore)
-    {
-        // This is a simplified approach - in reality you'd want to store the actual severity/likelihood values
-        // For now, estimate based on common patterns in a 5x5 matrix
-        if (averageScore <= 5) return (int)Math.Ceiling(averageScore);
-        if (averageScore <= 10) return (int)Math.Ceiling(averageScore / 2);
-        if (averageScore <= 15) return (int)Math.Ceiling(averageScore / 3);
-        if (averageScore <= 20) return (int)Math.Ceiling(averageScore / 4);
-        return 5;
-    }
-
-    private int GetLikelihoodFromScore(double averageScore, int severity)
-    {
-        if (severity == 0) return 1;
-        return (int)Math.Ceiling(averageScore / severity);
-    }
-
-    public class RiskMatrixRow
-    {
-        public string Label { get; set; } = "";
-        public int LikelihoodValue { get; set; }
-        public List<RiskMatrixCell> Cells { get; set; } = new();
-    }
-
-    public class RiskMatrixCell
-    {
-        public int Severity { get; set; }
-        public int Likelihood { get; set; }
-        public string RiskLevel { get; set; } = "";
-        public string CellLabel { get; set; } = "";
-    }
-
-    public class CellBadge
-    {
-        public string Text { get; set; } = "";
-        public string HazardDescription { get; set; } = "";
-    }
-
-    // Shared PanelMemberData class for consistent object identity
-    public class PanelMemberData
-    {
-        public int SeverityScore { get; set; }
-        public int LikelihoodScore { get; set; }
-        public double CalculatedScore { get; set; }
-        public bool IsCompleted { get; set; }
-        public string MemberId { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string Role { get; set; } = string.Empty;
-
-        public bool CanSubmit => SeverityScore > 0 && LikelihoodScore > 0 && !IsCompleted;
-        public double PreviewScore => SeverityScore > 0 && LikelihoodScore > 0 ? SeverityScore * LikelihoodScore : 0;
-    }
-
-    #endregion
 }

@@ -1,11 +1,26 @@
-﻿@using SMS_Domain.Entities
+﻿<style>
+    .risk-score-display {
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    
+    .risk-score-display:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.16);
+    }
+</style>
+
+@using SMS_Domain.Entities
 @using SMS_Domain.Enums
-@using SMS3.Components.Pages.SMSRiskManagement
-@using global::System.Text.Json
+@using SMS_Domain.ValueObjects
+@using SMS_Application.Messaging.Commands
+@using SMS_Application.Messaging.Queries
+@using SMS_Application.Interfaces
+@using SMS3.Components.Shared
 @using Radzen
 @using Radzen.Blazor
 
-<RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid var(--rz-secondary);">
+<RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid var(--rz-secondary); margin-bottom: 1rem;">
     <RadzenStack Gap="1rem">
         <!-- Hazard Header -->
         <RadzenRow AlignItems="AlignItems.Center">
@@ -24,14 +39,21 @@
             <RadzenColumn Size="4">
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
                     <RadzenButton Text="Manage Panel" Icon="people" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
-                                  Click="@(() => ShowPanelDialog = true)" />
-                    @if (GetHazardAverage() != null)
-                    {
-                        <RadzenBadge Text="@($"Avg: {GetHazardAverage():F1}")" BadgeStyle="BadgeStyle.Success" Style="font-size: 1rem;" />
+                                  Click="@OpenPanelDialog" />
+                    @{
+                        var average = GetAverageScore();
+                        var completedCount = GetCompletedScoreCount();
+                        var totalCount = HazardScoringPanels.Count;
                     }
-                    else if (GetPanelMembers().Any())
+                    @if (average.HasValue)
                     {
-                        <RadzenBadge Text="@($"{GetCompletedCount()}/{GetPanelMembers().Count} Scored")" BadgeStyle="BadgeStyle.Warning" />
+                        <span style="@GetAverageScoreStyle(average.Value)" class="risk-score-display">
+                            @GetHazardMatrixCode(average.Value)
+                        </span>
+                    }
+                    else if (totalCount > 0)
+                    {
+                        <RadzenBadge Text="@($"{completedCount}/{totalCount} Scored")" BadgeStyle="BadgeStyle.Warning" />
                     }
                     else
                     {
@@ -41,337 +63,478 @@
             </RadzenColumn>
         </RadzenRow>
 
-        <!-- Scoring Panel using Cards instead of DataGrid -->
-        @if (GetPanelMembers().Any())
+        <!-- Scoring Panel -->
+        @if (HazardScoringPanels.Any())
         {
-            <!-- Column Headers -->
-            <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-100); border: 1px solid var(--rz-base-300);">
-                <RadzenRow AlignItems="AlignItems.Center" Style="font-weight: bold; padding: 0.5rem 0;">
-                    <RadzenColumn Size="3">
-                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="Panel Member" Style="margin: 0;" />
-                    </RadzenColumn>
-                    <RadzenColumn Size="2">
-                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="Severity (1-5)" Style="margin: 0; text-align: center;" />
-                    </RadzenColumn>
-                    <RadzenColumn Size="2">
-                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="Likelihood (1-5)" Style="margin: 0; text-align: center;" />
-                    </RadzenColumn>
-                    <RadzenColumn Size="2">
-                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="Score" Style="margin: 0; text-align: center;" />
-                    </RadzenColumn>
-                    <RadzenColumn Size="3">
-                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="Action" Style="margin: 0; text-align: center;" />
-                    </RadzenColumn>
-                </RadzenRow>
+            <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-100);">
+                <RadzenDataGrid @ref="ScoringGrid" Data="@HazardScoringPanels" TItem="ScoringPanel" AllowPaging="false" AllowSorting="false">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="ScoringPanel" Title="Panel Member" Width="200px">
+                            <Template Context="panel">
+                                <RadzenStack Gap="0.25rem">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Text="@GetMemberName(panel.SMSUserCode)" Style="margin: 0;" />
+                                    @if (HasScore(panel))
+                                    {
+                                        <RadzenBadge Text="Completed" BadgeStyle="BadgeStyle.Success" />
+                                    }
+                                    else
+                                    {
+                                        <RadzenBadge Text="Pending" BadgeStyle="BadgeStyle.Warning" />
+                                    }
+                                </RadzenStack>
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="ScoringPanel" Title="Severity (1-5)" Width="150px">
+                            <Template Context="panel">
+                                @if (HasScore(panel))
+                                {
+                                    <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                                        <RadzenBadge Text="@panel.Severity.ToString()" BadgeStyle="BadgeStyle.Primary" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Text="@GetSeverityLabel(panel.Severity.Value)" />
+                                    </RadzenStack>
+                                }
+                                else
+                                {
+                                    <RadzenDropDown @bind-Value="@panel.Severity" 
+                                                    Data="@SeverityOptions" 
+                                                    TextProperty="Text" 
+                                                    ValueProperty="Value"
+                                                    Placeholder="Select..."
+                                                    AllowClear="true"
+                                                    Style="width: 100%;" />
+                                }
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="ScoringPanel" Title="Likelihood (1-5)" Width="150px">
+                            <Template Context="panel">
+                                @if (HasScore(panel))
+                                {
+                                    <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                                        <RadzenBadge Text="@panel.Likelihood.ToString()" BadgeStyle="BadgeStyle.Primary" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Text="@GetLikelihoodLabel(panel.Likelihood.Value)" />
+                                    </RadzenStack>
+                                }
+                                else
+                                {
+                                    <RadzenDropDown @bind-Value="@panel.Likelihood" 
+                                                    Data="@LikelihoodOptions" 
+                                                    TextProperty="Text" 
+                                                    ValueProperty="Value"
+                                                    Placeholder="Select..."
+                                                    AllowClear="true"
+                                                    Style="width: 100%;" />
+                                }
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="ScoringPanel" Title="Score" Width="100px">
+                            <Template Context="panel">
+                                @if (HasScore(panel))
+                                {
+                                    <span style="@GetPanelScoreStyle(panel)" class="risk-score-display">
+                                        @GetPanelMatrixCode(panel)
+                                    </span>
+                                }
+                                else if (CanSubmitScore(panel))
+                                {
+                                    <span style="@GetPreviewScoreStyle(panel)" class="risk-score-display">
+                                        @GetPreviewMatrixCode(panel)
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span style="background: #6c757d; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9rem; display: inline-block; text-align: center; min-width: 30px;">
+                                        -
+                                    </span>
+                                }
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="ScoringPanel" Title="Action" Width="120px">
+                            <Template Context="panel">
+                                @if (HasScore(panel))
+                                {
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenButton Text="Edit" Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
+                                                      Click="@(() => EditScore(panel))" />
+                                        @if (!string.IsNullOrEmpty(panel.Rationale))
+                                        {
+                                            <RadzenButton Text="View Rationale" Icon="description" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.ExtraSmall"
+                                                          Click="@(() => ShowRationale(panel))" />
+                                        }
+                                    </RadzenStack>
+                                }
+                                else if (CanSubmitScore(panel))
+                                {
+                                    <RadzenButton Text="Submit Score" Icon="check" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.ExtraSmall"
+                                                  Click="@(() => SubmitScore(panel))" />
+                                }
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
             </RadzenCard>
 
-            <!-- Panel Member Rows - Each as its own Card -->
-            @foreach (var member in GetPanelMembersData())
+            <!-- Progress Alert -->
+            @if (AllScoresComplete())
             {
-                <RadzenCard @key="@($"panel-{Hazard.Code}-{member.MemberId}-{member.IsCompleted}")" Variant="Variant.Outlined" Style="border: 1px solid var(--rz-base-300); margin-bottom: 0.5rem;">
-                    <RadzenRow AlignItems="AlignItems.Center" Style="padding: 1rem 0;">
-                        <!-- Panel Member Info -->
-                        <RadzenColumn Size="3">
-                            <RadzenStack Gap="0.25rem">
-                                <RadzenText TextStyle="TextStyle.Subtitle2" Text="@member.Name" Style="margin: 0;" />
-                                <RadzenText TextStyle="TextStyle.Caption" Text="@member.Role" />
-                                @if (member.IsCompleted)
-                                {
-                                    <RadzenBadge Text="Scored" BadgeStyle="BadgeStyle.Success" />
-                                }
-                                else
-                                {
-                                    <RadzenBadge Text="Pending" BadgeStyle="BadgeStyle.Warning" />
-                                }
-                            </RadzenStack>
-                        </RadzenColumn>
-
-                        <!-- Severity Column -->
-                        <RadzenColumn Size="2">
-                            @if (member.IsCompleted)
-                            {
-                                <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
-                                    <RadzenBadge Text="@member.SeverityScore.ToString()" BadgeStyle="BadgeStyle.Primary" />
-                                    <RadzenText TextStyle="TextStyle.Caption" Text="@GetSeverityLabel(member.SeverityScore)" />
-                                </RadzenStack>
-                            }
-                            else
-                            {
-                                <RadzenFormField Text="" Variant="Variant.Outlined" Style="width: 100%;">
-                                    <RadzenDropDown @bind-Value="@member.SeverityScore" 
-                                                    Data="@SeverityDropdownOptions" 
-                                                    TextProperty="Text" 
-                                                    ValueProperty="Value"
-                                                    Placeholder="Select severity..."
-                                                    AllowClear="true"
-                                                    Style="width: 100%; min-width: 100%;"
-                                                    Change="@((object value) => OnSeverityChanged(member, value))" />
-                                </RadzenFormField>
-                            }
-                        </RadzenColumn>
-
-                        <!-- Likelihood Column -->
-                        <RadzenColumn Size="2">
-                            @if (member.IsCompleted)
-                            {
-                                <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
-                                    <RadzenBadge Text="@member.LikelihoodScore.ToString()" BadgeStyle="BadgeStyle.Primary" />
-                                    <RadzenText TextStyle="TextStyle.Caption" Text="@GetLikelihoodLabel(member.LikelihoodScore)" />
-                                </RadzenStack>
-                            }
-                            else
-                            {
-                                <RadzenFormField Text="" Variant="Variant.Outlined" Style="width: 100%;">
-                                    <RadzenDropDown @bind-Value="@member.LikelihoodScore" 
-                                                    Data="@LikelihoodDropdownOptions" 
-                                                    TextProperty="Text" 
-                                                    ValueProperty="Value"
-                                                    Placeholder="Select likelihood..."
-                                                    AllowClear="true"
-                                                    Style="width: 100%; min-width: 100%;"
-                                                    Change="@((object value) => OnLikelihoodChanged(member, value))" />
-                                </RadzenFormField>
-                            }
-                        </RadzenColumn>
-
-                        <!-- Score Column -->
-                        <RadzenColumn Size="2">
-                            <div style="text-align: center;">
-                                @if (member.IsCompleted && member.CalculatedScore > 0)
-                                {
-                                    <!-- Completed score -->
-                                    <RadzenBadge Text="@member.CalculatedScore.ToString("F1")" BadgeStyle="BadgeStyle.Success" Style="font-size: 1.2rem; padding: 0.5rem;" />
-                                }
-                                else if (member.CanSubmit)
-                                {
-                                    <!-- Preview score (not yet submitted) - More prominent -->
-                                    <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
-                                        <RadzenBadge Text="@member.PreviewScore.ToString("F0")" BadgeStyle="BadgeStyle.Primary" Style="font-size: 1.1rem; padding: 0.4rem; font-weight: bold;" />
-                                        <RadzenText TextStyle="TextStyle.Caption" Text="Ready" Style="color: var(--rz-primary); font-weight: bold;" />
-                                    </RadzenStack>
-                                }
-                                else
-                                {
-                                    <RadzenBadge Text="-" BadgeStyle="BadgeStyle.Secondary" />
-                                }
-                            </div>
-                        </RadzenColumn>
-
-                        <!-- Action Column -->
-                        <RadzenColumn Size="3">
-                            <div style="text-align: center;">
-                                <!-- DEBUG: Show current state -->
-                                <div style="font-size: 0.6rem; color: gray; margin-bottom: 0.25rem;">
-                                    S:@(member.SeverityScore) L:@(member.LikelihoodScore) C:@(member.IsCompleted ? "Y" : "N") CS:@(member.CanSubmit ? "Y" : "N")
-                                </div>
-                                
-                                @if (member.IsCompleted)
-                                {
-                                    <RadzenButton Text="Edit" Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
-                                                  Click="@(() => EditScore(member))" />
-                                }
-                                else if (member.CanSubmit)
-                                {
-                                    <!-- Ready to submit - Enhanced display -->
-                                    <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
-                                        <RadzenButton Text="Submit Score" Icon="save" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Medium"
-                                                      Click="@(() => SubmitScore(member))" 
-                                                      title="@($"Submit: {member.SeverityScore} × {member.LikelihoodScore} = {member.PreviewScore}")" />
-                                        <RadzenBadge Text="@($"{member.SeverityScore} × {member.LikelihoodScore} = {member.PreviewScore:F0}")" 
-                                                     BadgeStyle="BadgeStyle.Success" 
-                                                     Style="font-size: 0.75rem; font-weight: bold;" />
-                                    </RadzenStack>
-                                }
-                                else
-                                {
-                                    <!-- Not ready - Show current status -->
-                                    <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
-                                        <RadzenButton Text="Submit" Icon="save" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Disabled="true" />
-                                        @if (member.SeverityScore > 0 || member.LikelihoodScore > 0)
-                                        {
-                                            <RadzenText TextStyle="TextStyle.Caption" 
-                                                        Text="@($"Severity: {(member.SeverityScore > 0 ? member.SeverityScore : "?")} | Likelihood: {(member.LikelihoodScore > 0 ? member.LikelihoodScore : "?")}")" 
-                                                        Style="color: var(--rz-warning); font-size: 0.65rem;" />
-                                        }
-                                        else
-                                        {
-                                            <RadzenText TextStyle="TextStyle.Caption" Text="Select both values" Style="color: var(--rz-text-secondary-color); font-size: 0.7rem;" />
-                                        }
-                                    </RadzenStack>
-                                }
-                            </div>
-                        </RadzenColumn>
-                    </RadzenRow>
-                </RadzenCard>
-            }
-
-            <!-- Panel Summary -->
-            @if (GetHazardAverage() != null)
-            {
-                <RadzenAlert AlertStyle="AlertStyle.Success" Icon="check_circle" ShowIcon="true">
-                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="@($"Panel Consensus for {Hazard.Code}")" Style="margin: 0;" />
-                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="@($"Average Score: {GetHazardAverage():F1} (from {GetCompletedCount()} scores)")" Style="margin: 0;" />
-                    </RadzenStack>
+                <RadzenAlert AlertStyle="AlertStyle.Success" Icon="check_circle">
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"All panel members have scored this hazard. Average: {GetHazardMatrixCode(GetAverageScore()!.Value)}")" />
                 </RadzenAlert>
             }
-            else if (GetPanelMembers().Any())
+            else
             {
-                <RadzenAlert AlertStyle="AlertStyle.Info" Icon="schedule" ShowIcon="true">
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Scoring in Progress: {GetCompletedCount()} of {GetPanelMembers().Count} panel members have scored this hazard.")" />
+                <RadzenAlert AlertStyle="AlertStyle.Info" Icon="schedule">
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Scoring Progress: {GetCompletedScoreCount()} of {HazardScoringPanels.Count} panel members completed.")" />
                 </RadzenAlert>
             }
         }
         else
         {
-            <RadzenAlert AlertStyle="AlertStyle.Warning" Icon="warning" ShowIcon="true">
-                <RadzenText TextStyle="TextStyle.Body2" Text="@($"No Scoring Panel for {Hazard.Code}: Click 'Manage Panel' to assign stakeholders for scoring.")" />
+            <RadzenAlert AlertStyle="AlertStyle.Warning" Icon="warning">
+                <RadzenText TextStyle="TextStyle.Body2" Text="No scoring panel assigned. Click 'Manage Panel' to select stakeholders." />
             </RadzenAlert>
         }
     </RadzenStack>
 </RadzenCard>
 
-<!-- Panel Management Dialog -->
-@if (ShowPanelDialog)
-{
-    <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
-        <RadzenCard Style="width: 800px; max-width: 90vw; max-height: 80vh; overflow-y: auto;">
-            <RadzenStack Gap="1rem">
-                <RadzenRow AlignItems="AlignItems.Center">
-                    <RadzenColumn Size="10">
-                        <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
-                            <RadzenIcon Icon="people" Style="margin-right: 0.5rem;" />
-                            Select Panel Members for @Hazard.Code
-                        </RadzenText>
-                    </RadzenColumn>
-                    <RadzenColumn Size="2">
-                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
-                                      Click="@(() => ShowPanelDialog = false)" />
-                    </RadzenColumn>
-                </RadzenRow>
-
-                <RadzenAlert AlertStyle="AlertStyle.Primary" Icon="info" ShowIcon="true">
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Configuring scoring panel for: {Hazard.Code} - {Hazard.Description}")" />
-                </RadzenAlert>
-
-                <!-- Available Stakeholders -->
-                <RadzenDataGrid Data="@GetAvailableStakeholdersForSelection()" TItem="StakeholderSelectionItem" AllowPaging="false">
-                    <Columns>
-                        <RadzenDataGridColumn TItem="StakeholderSelectionItem" Title="Select">
-                            <Template Context="stakeholder">
-                                <RadzenCheckBox @bind-Value="@stakeholder.IsSelected" />
-                            </Template>
-                        </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="StakeholderSelectionItem" Property="Name" Title="Name" />
-                        <RadzenDataGridColumn TItem="StakeholderSelectionItem" Property="Organization" Title="Organization" />
-                        <RadzenDataGridColumn TItem="StakeholderSelectionItem" Property="Role" Title="Role" />
-                    </Columns>
-                </RadzenDataGrid>
-
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
-                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@(() => ShowPanelDialog = false)" />
-                    <RadzenButton Text="Update Panel" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="@UpdatePanel" />
-                </RadzenStack>
-            </RadzenStack>
-        </RadzenCard>
-    </div>
-}
-
 @code {
     [Parameter] public Hazard Hazard { get; set; } = new(new HazardID("HZ-0000"));
-    [Parameter] public Step4Model Step4 { get; set; } = new();
     [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
-    [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
-    [Parameter] public EventCallback<string> OnPanelUpdated { get; set; }
-    [Parameter] public EventCallback<Step4Model.PanelMemberScoreData> OnScoreSubmitted { get; set; }
-    
-    // New parameters for centralized data
-    [Parameter] public List<ScoringPanel> ExistingScoringPanels { get; set; } = new();
-    [Parameter] public List<TechnicalAssessmentStep4.PanelMemberData> PanelMemberData { get; set; } = new();
-    [Parameter] public EventCallback OnPanelDataRefresh { get; set; }
+    [Parameter] public EventCallback OnHazardScored { get; set; }
+    [Parameter] public string RiskAssessmentId { get; set; } = string.Empty; // NEW: Pass assessment ID to link scoring panels
 
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<HazardScoringPanel> Logger { get; set; } = default!;
+    [Inject] private DialogService DialogService { get; set; } = default!;
 
-    private bool ShowPanelDialog { get; set; } = false;
-    private List<StakeholderSelectionItem> StakeholderSelectionItems { get; set; } = new();
-    // Clean dropdown options using exact pattern from working HazardReportingBlazor
-    private List<DropdownOption> SeverityDropdownOptions = new()
+    private RadzenDataGrid<ScoringPanel>? ScoringGrid;
+    private List<ScoringPanel> HazardScoringPanels = new();
+    private bool IsSubmitting = false;
+    private bool _isDataLoaded = false;
+    private string _lastHazardCode = string.Empty;
+
+    // Dropdown options - Updated to use A-E letter system
+    private List<SeverityOption> SeverityOptions = new()
     {
         new(1, "1 - Minor"),
-        new(2, "2 - Moderate"),
+        new(2, "2 - Moderate"), 
         new(3, "3 - Serious"),
         new(4, "4 - Major"),
         new(5, "5 - Catastrophic")
     };
 
-    private List<DropdownOption> LikelihoodDropdownOptions = new()
+    private List<LikelihoodOption> LikelihoodOptions = new()
     {
-        new(1, "1 - Rare"),
-        new(2, "2 - Unlikely"),
-        new(3, "3 - Possible"),
-        new(4, "4 - Likely"),
-        new(5, "5 - Frequent")
+        new(1, "A - Rare"),
+        new(2, "B - Unlikely"),
+        new(3, "C - Possible"),
+        new(4, "D - Likely"),
+        new(5, "E - Frequent")
     };
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        InitializeStakeholderSelection();
-    }
-
-    private void InitializeStakeholderSelection()
-    {
-        var currentPanelMembers = GetPanelMembers();
-
-        StakeholderSelectionItems = AvailableStakeholders.Select(s => new StakeholderSelectionItem
+        if (!string.IsNullOrEmpty(Hazard?.Code) && Hazard.Code != "HZ-0000")
         {
-            Id = s.Code,
-            Name = s.DisplayName,
-            Organization = s.Organization,
-            Role = s.StakeholderType,
-            IsSelected = currentPanelMembers.Contains(s.Code)
-        }).ToList();
-
-        // Nope STAKEHOLDERS ONLY
-        // StakeholderSelectionItems.AddRange(AvailableAssessors.Select(a => new StakeholderSelectionItem
-        // {
-        //     Id = a.Id.Value,
-        //     Name = a.DisplayName ?? a.UserName.Value,
-        //     Organization = "SMS Team",
-        //     Role = a.UserRole.Name,
-        //     IsSelected = currentPanelMembers.Contains(a.Id.Value)
-        // }));
+            await LoadHazardScoringPanelsInternal();
+            _lastHazardCode = Hazard.Code;
+            _isDataLoaded = true;
+        }
     }
 
-    private List<string> GetPanelMembers()
+    protected override async Task OnParametersSetAsync()
     {
-        return Step4.HazardPanelMembers.ContainsKey(Hazard.Code) 
-            ? Step4.HazardPanelMembers[Hazard.Code] 
-            : new List<string>();
+        // Only reload if hazard actually changed (prevent infinite loops)
+        if (!string.IsNullOrEmpty(Hazard?.Code) && 
+            Hazard.Code != "HZ-0000" && 
+            Hazard.Code != _lastHazardCode && 
+            !IsSubmitting)
+        {
+            await LoadHazardScoringPanelsInternal();
+            _lastHazardCode = Hazard.Code;
+            _isDataLoaded = true;
+        }
     }
 
-    private List<TechnicalAssessmentStep4.PanelMemberData> GetPanelMembersData()
+    private async Task LoadHazardScoringPanelsInternal()
     {
-        // Return the stable objects passed from the parent component
-        return PanelMemberData ?? new List<TechnicalAssessmentStep4.PanelMemberData>();
+        if (string.IsNullOrEmpty(Hazard?.Code) || Hazard.Code == "HZ-0000")
+        {
+            HazardScoringPanels = new List<ScoringPanel>();
+            return;
+        }
+
+        try
+        {
+            Logger.LogInformation("Loading scoring panels for hazard {HazardCode}", Hazard.Code);
+            
+            var query = new GetScoringPanelsByHazardCodeQuery(Hazard.Code);
+            var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+            if (result.IsSuccess && result.Value != null)
+            {
+                HazardScoringPanels = result.Value.ToList();
+                Logger.LogInformation("Loaded {Count} scoring panels for hazard {HazardCode}", HazardScoringPanels.Count, Hazard.Code);
+            }
+            else
+            {
+                HazardScoringPanels = new List<ScoringPanel>();
+                Logger.LogInformation("No scoring panels found for hazard {HazardCode}", Hazard.Code);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading scoring panels for hazard {HazardCode}", Hazard.Code);
+            HazardScoringPanels = new List<ScoringPanel>();
+        }
     }
 
-    private List<StakeholderSelectionItem> GetAvailableStakeholdersForSelection()
+    private string GetMemberName(string? userCode)
     {
-        return StakeholderSelectionItems;
+        var stakeholder = AvailableStakeholders.FirstOrDefault(s => s.Code.Trim() == userCode.Trim());
+        return stakeholder?.DisplayName ?? userCode ?? "Unknown";
     }
 
-    private double? GetHazardAverage()
+    private bool HasScore(ScoringPanel panel)
     {
-        return Step4.HazardAverageScores.ContainsKey(Hazard.Code) 
-            ? Step4.HazardAverageScores[Hazard.Code] 
-            : null;
+        return panel.Severity.HasValue && panel.Likelihood.HasValue && panel.Score.HasValue;
     }
 
-    private int GetCompletedCount()
+    private bool CanSubmitScore(ScoringPanel panel)
     {
-        if (!Step4.PanelScores.ContainsKey(Hazard.Code)) return 0;
-        return Step4.PanelScores[Hazard.Code].Count(s => s.IsComplete);
+        return !HasScore(panel) && panel.Severity.HasValue && panel.Likelihood.HasValue && 
+               panel.Severity.Value > 0 && panel.Likelihood.Value > 0;
+    }
+
+    private async Task SubmitScore(ScoringPanel panel)
+    {
+        if (!CanSubmitScore(panel) || IsSubmitting) return;
+
+        try
+        {
+            // Local variable to track rationale input with reactive updates
+            string rationaleInput = panel.Rationale ?? string.Empty;
+
+            // Show rationale dialog before submitting
+            var rationaleResult = await DialogService.OpenAsync("Score Rationale", 
+                ds => @<div>
+                    <RadzenStack Gap="1rem">
+                        <!-- Custom styled header matching PageHeader design -->
+                        <div style="background-color: #212e61 !important;
+                                   color: white; padding: 1rem 1.25rem; margin: -1rem -1rem 0 -1rem; 
+                                   border-radius: 8px 8px 0 0;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <i class="fas fa-comment-dots" style="font-size: 1.25rem; opacity: 0.9;"></i>
+                                <div>
+                                    <h5 style="margin: 0; font-weight: 600; font-size: 1.1rem;">
+                                        Please provide @GetMemberName(panel.SMSUserCode) rationale for scoring @Hazard.Code as @GetPreviewMatrixCode(panel)
+                                    </h5>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <RadzenFormField Text="Rationale" Variant="Variant.Outlined">
+                            <RadzenTextArea Value="@rationaleInput"
+                                           ValueChanged="@((string value) => { rationaleInput = value; ds.Refresh(); })"
+                                           Rows="6" 
+                                           Style="width: 100%;" 
+                                           Placeholder="Enter your rationale for this risk assessment score...&#10;&#10;Consider:&#10;• Why this severity level is appropriate&#10;• Why this likelihood level is justified&#10;• Any supporting evidence or experience" />
+                        </RadzenFormField>
+                        
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                            <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@(() => ds.Close(false))" />
+                            <RadzenButton Text="Submit Score" Icon="save" ButtonStyle="ButtonStyle.Success" 
+                                         Click="@(() => { panel.Rationale = rationaleInput; ds.Close(!string.IsNullOrWhiteSpace(rationaleInput)); })" 
+                                         Disabled="@string.IsNullOrWhiteSpace(rationaleInput)" />
+                        </RadzenStack>
+                    </RadzenStack>
+                </div>, 
+                new DialogOptions { Width = "700px", Height = "450px", Resizable = true });
+
+            // If user cancelled or didn't provide rationale, don't submit
+            if (rationaleResult != true || string.IsNullOrWhiteSpace(panel.Rationale))
+            {
+                return;
+            }
+
+            IsSubmitting = true;
+            Logger.LogInformation("Submitting score for panel {PanelCode} on hazard {HazardCode}: {Severity} x {Likelihood} with rationale", 
+                panel.Code, Hazard.Code, panel.Severity, panel.Likelihood);
+
+            // Calculate score
+            panel.Score = panel.Severity * panel.Likelihood;
+
+            // Update via CQRS
+            var updateCommand = new UpdateScoringPanelCommand(panel);
+            var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+
+            if (result.IsSuccess)
+            {
+                Logger.LogInformation("Score submitted for panel {PanelCode}: {Severity} x {Likelihood} = {Score} with rationale: {Rationale}", 
+                    panel.Code, panel.Severity, panel.Likelihood, panel.Score, 
+                    string.IsNullOrEmpty(panel.Rationale) ? "" : panel.Rationale.Substring(0, Math.Min(50, panel.Rationale.Length)));
+
+                // Reload ONLY this component's data
+                await LoadHazardScoringPanelsInternal();
+
+                // Notify parent component to refresh matrix and step data
+                if (OnHazardScored.HasDelegate)
+                {
+                    await OnHazardScored.InvokeAsync();
+                }
+            }
+            else
+            {
+                Logger.LogError("Failed to submit score for panel {PanelCode}: {Error}", panel.Code, result.Error?.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error submitting score for panel {PanelCode}", panel.Code);
+        }
+        finally
+        {
+            IsSubmitting = false;
+            StateHasChanged(); // Only trigger UI update after the operation is complete
+        }
+    }
+
+    private void EditScore(ScoringPanel panel)
+    {
+        panel.Severity = null;
+        panel.Likelihood = null;
+        panel.Score = null;
+        panel.Rationale = null; // Also clear rationale when editing
+        // Don't call StateHasChanged() here to prevent render loops
+    }
+
+    private async Task ShowRationale(ScoringPanel panel)
+    {
+        if (string.IsNullOrEmpty(panel.Rationale)) return;
+
+        await DialogService.OpenAsync($"Score by  {GetMemberName(panel.SMSUserCode)} Rationale ",
+            ds => @<div>
+                <RadzenStack Gap="1rem">
+                    <!-- Custom styled header matching PageHeader design -->
+                <div style="background-color: #212e61 !important; 
+                               color: white; padding: 1rem 1.25rem; margin: -1rem -1rem 0 -1rem; 
+                               border-radius: 8px 8px 0 0;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <i class="fas fa-user-check" style="font-size: 1.25rem; opacity: 0.9;"></i>
+                            <div>
+                                <h5 style="margin: 0; font-weight: 600; font-size: 1.1rem;">
+                                Rationale for @Hazard.Code risk assessment {GetPanelMatrixCode(panel)} score
+                                </h5>
+                                
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <RadzenFormField Text="Rationale" Variant="Variant.Outlined">
+                        <RadzenTextArea Value="@panel.Rationale" 
+                                       ReadOnly="true"
+                                       Rows="8" 
+                                       Style="width: 100%; background-color: #f8f9fa; border: 2px solid #e9ecef;" />
+                    </RadzenFormField>
+                    
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+                        <RadzenButton Text="Close" Icon="close" ButtonStyle="ButtonStyle.Primary" Click="@(() => ds.Close())" />
+                    </RadzenStack>
+                </RadzenStack>
+            </div>, 
+            new DialogOptions { Width = "700px", Height = "450px", Resizable = true });
+    }
+
+    private double? GetAverageScore()
+    {
+        var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
+        if (!completedPanels.Any()) return null;
+
+        return completedPanels.Average(p => (double)p.Score!.Value);
+    }
+
+    private int GetCompletedScoreCount()
+    {
+        return HazardScoringPanels.Count(HasScore);
+    }
+
+    private async Task OpenPanelDialog()
+    {
+        // Get currently selected stakeholder codes from existing panels
+        var selectedCodes = HazardScoringPanels.Select(p => p.SMSUserCode!).ToList();
+        
+        // Debug logging to see what we're passing
+        Logger.LogInformation("Opening panel dialog for hazard {HazardCode} with {Count} existing panel members: {Members}", 
+            Hazard.Code, selectedCodes.Count, string.Join(", ", selectedCodes));
+
+        var result = await DialogService.OpenAsync<PanelManagementDialog>($"Manage Panel for {Hazard.Code}",
+            new Dictionary<string, object>
+            {
+                { "HazardCode", Hazard.Code },
+                { "HazardDescription", Hazard.Description },
+                { "AvailableStakeholders", AvailableStakeholders },
+                { "SelectedStakeholderCodes", selectedCodes }
+            },
+            new DialogOptions { Width = "700px", Height = "600px" });
+
+        if (result is List<string> newSelectedCodes)
+        {
+            Logger.LogInformation("Panel dialog returned {Count} selected codes: {Members}", 
+                newSelectedCodes.Count, string.Join(", ", newSelectedCodes));
+            await SavePanelChanges(newSelectedCodes);
+        }
+        else
+        {
+            Logger.LogInformation("Panel dialog was cancelled or returned null");
+        }
+    }
+
+    private async Task SavePanelChanges(List<string> selectedStakeholderCodes)
+    {
+        try
+        {
+            Logger.LogInformation("Updating panel for hazard {HazardCode} with {Count} members", Hazard.Code, selectedStakeholderCodes.Count);
+
+            // Remove panels for unselected stakeholders
+            var panelsToRemove = HazardScoringPanels.Where(p => !selectedStakeholderCodes.Contains(p.SMSUserCode!)).ToList();
+            foreach (var panel in panelsToRemove)
+            {
+                var deleteCommand = new DeleteScoringPanelCommand(new ScoringPanelID(panel.Id.Value));
+                await Mediator.SendAsync(deleteCommand, CancellationToken.None);
+            }
+
+            // Add panels for newly selected stakeholders
+            var existingCodes = HazardScoringPanels.Select(p => p.SMSUserCode).ToList();
+            var newStakeholderCodes = selectedStakeholderCodes.Except(existingCodes).ToList();
+            
+            foreach (var stakeholderCode in newStakeholderCodes)
+            {
+                var newPanel = new ScoringPanel(new ScoringPanelID("SP-0000"))
+                {
+                    Code = "SP-0000", // Will be generated by database
+                    HazardCode = Hazard.Code,
+                    SMSUserCode = stakeholderCode,
+                    Severity = null,
+                    Likelihood = null,
+                    Score = null
+                };
+
+                var createCommand = new CreateScoringPanelCommand(newPanel);
+                await Mediator.SendAsync(createCommand, CancellationToken.None);
+            }
+
+            // Reload the panels
+            await LoadHazardScoringPanelsInternal();
+            
+            Logger.LogInformation("Panel updated successfully for hazard {HazardCode}", Hazard.Code);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error updating panel for hazard {HazardCode}", Hazard.Code);
+        }
     }
 
     private string GetSeverityLabel(int severity)
@@ -380,7 +543,7 @@
         {
             1 => "Minor",
             2 => "Moderate",
-            3 => "Serious",
+            3 => "Serious", 
             4 => "Major",
             5 => "Catastrophic",
             _ => ""
@@ -394,286 +557,101 @@
             1 => "Rare",
             2 => "Unlikely",
             3 => "Possible",
-            4 => "Likely",
+            4 => "Likely", 
             5 => "Frequent",
             _ => ""
         };
     }
 
-    private async Task SubmitScore(TechnicalAssessmentStep4.PanelMemberData member)
+    private string GetHazardMatrixCode(double averageScore)
     {
-        Console.WriteLine($"🎯 Submitting score for {member.Name} (ID: {member.MemberId})");
-        Console.WriteLine($"   Severity: {member.SeverityScore}, Likelihood: {member.LikelihoodScore}");
-        Console.WriteLine($"   CanSubmit: {member.CanSubmit}, IsCompleted: {member.IsCompleted}");
-
-        // Calculate score explicitly on submit
-        if (member.SeverityScore > 0 && member.LikelihoodScore > 0)
-        {
-            try
-            {
-                // CRITICAL: Preserve the current state of ALL members before any operations
-                var allMembersCurrentState = GetPanelMembersData().ToDictionary(m => m.MemberId, m => new
-                {
-                    SeverityScore = m.SeverityScore,
-                    LikelihoodScore = m.LikelihoodScore,
-                    IsCompleted = m.IsCompleted
-                });
-
-                member.CalculatedScore = member.SeverityScore * member.LikelihoodScore;
-                Console.WriteLine($"   ✅ Final Calculated Score: {member.SeverityScore} × {member.LikelihoodScore} = {member.CalculatedScore}");
-
-                // Find existing scoring panel for this hazard + user combination
-                var existingPanel = ExistingScoringPanels.FirstOrDefault(p => 
-                    p.HazardCode?.Trim() == Hazard.Code?.Trim() && p.SMSUserCode?.Trim() == member.MemberId?.Trim());
-
-                Console.WriteLine($"🔍 Looking for existing panel: HazardCode='{Hazard.Code}', SMSUserCode='{member.MemberId}'");
-
-                if (existingPanel != null)
-                {
-                    Console.WriteLine($"📝 FOUND existing panel to UPDATE: {existingPanel.Code} (ID: {existingPanel.Id?.Value})");
-
-                    // Update the domain entity properties
-                    existingPanel.Severity = member.SeverityScore;
-                    existingPanel.Likelihood = member.LikelihoodScore;
-                    existingPanel.Score = (decimal)member.CalculatedScore;
-
-                    var updateCommand = new UpdateScoringPanelCommand(existingPanel);
-                    var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
-
-                    if (updateResult.IsSuccess)
-                    {
-                        Console.WriteLine($"✅ Successfully UPDATED ScoringPanel: {existingPanel.Code}");
-                        
-                        // CRITICAL: Update only this member's completion status without affecting others
-                        member.IsCompleted = true;
-                        member.CalculatedScore = member.SeverityScore * member.LikelihoodScore;
-
-                        // SMART PRESERVATION: Restore the state of other members
-                        var currentMembers = GetPanelMembersData();
-                        foreach (var otherMember in currentMembers.Where(m => m.MemberId != member.MemberId))
-                        {
-                            if (allMembersCurrentState.ContainsKey(otherMember.MemberId))
-                            {
-                                var savedState = allMembersCurrentState[otherMember.MemberId];
-                                if (!savedState.IsCompleted) // Only restore if they weren't completed before
-                                {
-                                    otherMember.SeverityScore = savedState.SeverityScore;
-                                    otherMember.LikelihoodScore = savedState.LikelihoodScore;
-                                    otherMember.IsCompleted = savedState.IsCompleted;
-                                }
-                            }
-                        }
-                        
-                        Console.WriteLine($"✅ Member states preserved during submission");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"❌ Failed to UPDATE ScoringPanel: {updateResult.Error?.Message}");
-                        return;
-                    }
-                }
-                else
-                {
-                    Console.WriteLine($"❌ CRITICAL ERROR: No existing ScoringPanel found for {member.MemberId} on hazard {Hazard.Code}!");
-                    return;
-                }
-
-                Console.WriteLine($"✅ Score submission completed for {member.Name}");
-
-                // Notify parent for scoring recalculation
-                if (OnScoreSubmitted.HasDelegate)
-                {
-                    var scoreData = new Step4Model.PanelMemberScoreData
-                    {
-                        HazardId = Hazard.Code,
-                        MemberId = member.MemberId,
-                        SeverityScore = member.SeverityScore,
-                        LikelihoodScore = member.LikelihoodScore,
-                        SubmittedDate = DateTime.UtcNow
-                    };
-
-                    await OnScoreSubmitted.InvokeAsync(scoreData);
-                }
-
-                // CONTROLLED UI UPDATE: Only refresh this component, preserve member states
-                await InvokeAsync(StateHasChanged);
-                
-                Console.WriteLine($"✅ Score submitted with preserved state for other panelists");
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, $"❌ Error submitting score for {member.Name}");
-                Console.WriteLine($"❌ Exception submitting score: {ex.Message}");
-            }
-        }
-        else
-        {
-            Console.WriteLine($"❌ Cannot submit - missing values. Severity: {member.SeverityScore}, Likelihood: {member.LikelihoodScore}");
-        }
+        // Use the centralized calculator to reverse-engineer from average score
+        var bestMatch = GetBestSeverityLikelihoodMatch(averageScore);
+        return AviationRiskMatrixCalculator.GetMatrixCode(bestMatch.severity, bestMatch.likelihood);
     }
 
-    private void OnSeverityChanged(TechnicalAssessmentStep4.PanelMemberData member, object value)
+    private string GetPanelMatrixCode(ScoringPanel panel)
     {
-        if (value is int severityScore)
-        {
-            member.SeverityScore = severityScore;
-            Console.WriteLine($"🔄 Severity changed for {member.Name}: {severityScore}");
-            
-            // Only update the UI for this specific change - no full component refresh
-            StateHasChanged();
-        }
+        return AviationRiskMatrixCalculator.GetPanelMatrixCode(panel);
     }
 
-    private void OnLikelihoodChanged(TechnicalAssessmentStep4.PanelMemberData member, object value)
+    private string GetPreviewMatrixCode(ScoringPanel panel)
     {
-        if (value is int likelihoodScore)
-        {
-            member.LikelihoodScore = likelihoodScore;
-            Console.WriteLine($"🔄 Likelihood changed for {member.Name}: {likelihoodScore}");
-            
-            // Only update the UI for this specific change - no full component refresh
-            StateHasChanged();
-        }
+        return AviationRiskMatrixCalculator.GetPanelMatrixCode(panel);
     }
 
-    private void EditScore(TechnicalAssessmentStep4.PanelMemberData member)
+    private string GetPanelScoreStyle(ScoringPanel panel)
     {
-        Console.WriteLine($"✏️ Editing score for {member.Name} - resetting to non-completed state");
-        member.IsCompleted = false;
-        member.SeverityScore = 0;
-        member.LikelihoodScore = 0;
-        member.CalculatedScore = 0;
-        StateHasChanged();
-    }
-
-    private async Task UpdatePanel()
-    {
-        try
-        {
-            Console.WriteLine($"🎯 Updating scoring panel for hazard: {Hazard.Code}");
-
-            var selectedMembers = StakeholderSelectionItems.Where(s => s.IsSelected).Select(s => s.Id).ToList();
-
-            Console.WriteLine($"🔍 Selected members: {string.Join(", ", selectedMembers)}");
-            Console.WriteLine($"🔍 Existing panels: {ExistingScoringPanels.Count}");
-            Console.WriteLine($"🔍 Current ExistingScoringPanels: {string.Join(", ", ExistingScoringPanels.Select(p => $"[{p.Code}: H={p.HazardCode}, U={p.SMSUserCode}]"))}");
-
-            // Update the Step4 model first
-            Step4.HazardPanelMembers[Hazard.Code] = selectedMembers;
-
-            // CREATE ScoringPanel entries for newly selected members who don't already have them
-            foreach (var memberId in selectedMembers)
-            {
-                // Check if this member already has a scoring panel entry for this hazard
-                var existingPanel = ExistingScoringPanels.FirstOrDefault(p => 
-                    p.HazardCode == Hazard.Code && p.SMSUserCode == memberId);
-
-                if (existingPanel == null)
-                {
-                    // Create new scoring panel entry for this member
-                    var stakeholder = AvailableStakeholders.FirstOrDefault(s => s.Code == memberId);
-                    var memberName = stakeholder?.DisplayName ?? "Unknown";
-
-                    Console.WriteLine($"💾 Creating new ScoringPanel placeholder for {memberName} ({memberId}) on hazard {Hazard.Code}");
-
-                    var newPanel = new ScoringPanel(new ScoringPanelID("SP-0000"))
-                    {
-                        Code = "SP-0000", // Will be generated by the stored procedure
-                        HazardCode = Hazard.Code,
-                        SMSUserCode = memberId,
-                        Severity = null, // Will be filled when user scores
-                        Likelihood = null, // Will be filled when user scores
-                        Score = null // Will be calculated when user submits both values
-                    };
-
-                    var createCommand = new CreateScoringPanelCommand(newPanel);
-                    var createResult = await Mediator.SendAsync(createCommand, CancellationToken.None);
-
-                    if (createResult.IsSuccess && createResult.Value != null)
-                    {
-                        Console.WriteLine($"✅ Successfully created ScoringPanel placeholder: {createResult.Value.Code} for {memberName}");
-                        Console.WriteLine($"   Details: HazardCode='{createResult.Value.HazardCode}', SMSUserCode='{createResult.Value.SMSUserCode}'");
-                        
-                        // CRITICAL: Add to local collection for immediate availability
-                        ExistingScoringPanels.Add(createResult.Value);
-                    }
-                    else
-                    {
-                        Logger.LogError($"❌ Failed to create ScoringPanel for {memberName}: {createResult.Error?.Message}");
-                        Console.WriteLine($"❌ Failed to create ScoringPanel for {memberName}: {createResult.Error?.Message}");
-                    }
-                }
-                else
-                {
-                    Console.WriteLine($"✅ ScoringPanel already exists for member {memberId}: {existingPanel.Code}");
-                    Console.WriteLine($"   Details: HazardCode='{existingPanel.HazardCode}', SMSUserCode='{existingPanel.SMSUserCode}'");
-                    Console.WriteLine($"   Current scores: Severity={existingPanel.Severity}, Likelihood={existingPanel.Likelihood}, Score={existingPanel.Score}");
-                }
-            }
-
-            // REMOVE ScoringPanel entries for members who are no longer selected
-            var membersToRemove = ExistingScoringPanels
-                .Where(p => p.HazardCode == Hazard.Code && !selectedMembers.Contains(p.SMSUserCode))
-                .ToList();
-
-            foreach (var panelToRemove in membersToRemove)
-            {
-                Console.WriteLine($"🗑️ Removing ScoringPanel: {panelToRemove.Code} for user {panelToRemove.SMSUserCode}");
-
-                var deleteCommand = new DeleteScoringPanelCommand(new ScoringPanelID(panelToRemove.Id.Value));
-                var deleteResult = await Mediator.SendAsync(deleteCommand, CancellationToken.None);
-
-                if (deleteResult.IsSuccess)
-                {
-                    Console.WriteLine($"✅ Successfully deleted ScoringPanel: {panelToRemove.Code}");
-                    ExistingScoringPanels.Remove(panelToRemove);
-                }
-                else
-                {
-                    Logger.LogError($"❌ Failed to delete ScoringPanel {panelToRemove.Code}: {deleteResult.Error?.Message}");
-                    Console.WriteLine($"❌ Failed to delete ScoringPanel {panelToRemove.Code}: {deleteResult.Error?.Message}");
-                }
-            }
-
-            Console.WriteLine($"✅ Panel update complete. Total panel members: {selectedMembers.Count}");
-            Console.WriteLine($"✅ Total scoring panels for {Hazard.Code}: {ExistingScoringPanels.Count(p => p.HazardCode == Hazard.Code)}");
-            Console.WriteLine($"🔍 Final ExistingScoringPanels: {string.Join(", ", ExistingScoringPanels.Where(p => p.HazardCode == Hazard.Code).Select(p => $"[{p.Code}: U={p.SMSUserCode}]"))}");
-
-            ShowPanelDialog = false;
-            await OnPanelUpdated.InvokeAsync(Hazard.Code);
-            
-            // Refresh the parent data after panel update
-            await OnPanelDataRefresh.InvokeAsync();
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, $"❌ Error updating scoring panel for hazard {Hazard.Code}");
-            Console.WriteLine($"❌ Exception updating panel: {ex.Message}");
-        }
-    }
-    
-    // Remove the local PanelMemberData class - using the one from TechnicalAssessmentStep4
-
-    public class StakeholderSelectionItem
-    {
-        public string Id { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string Organization { get; set; } = string.Empty;
-        public string Role { get; set; } = string.Empty;
-        public bool IsSelected { get; set; }
-    }
-
-    // Exact DropdownOption class from working HazardReportingBlazor
-    public class DropdownOption
-    {
-        public int Value { get; set; } 
-        public string Text { get; set; } = string.Empty;
+        if (!panel.Severity.HasValue || !panel.Likelihood.HasValue) 
+            return "background: #6c757d; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9rem; display: inline-block; text-align: center; min-width: 30px;";
         
-        public DropdownOption() { }
-        public DropdownOption(int value, string text)
+        return AviationRiskMatrixCalculator.GetScoreDisplayStyle(panel.Severity.Value, panel.Likelihood.Value, false);
+    }
+
+    private string GetPreviewScoreStyle(ScoringPanel panel)
+    {
+        if (!panel.Severity.HasValue || !panel.Likelihood.HasValue) 
+            return "background: #6c757d; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9rem; display: inline-block; text-align: center; min-width: 30px;";
+        
+        return AviationRiskMatrixCalculator.GetScoreDisplayStyle(panel.Severity.Value, panel.Likelihood.Value, true);
+    }
+
+    private string GetAverageScoreStyle(double averageScore)
+    {
+        var bestMatch = GetBestSeverityLikelihoodMatch(averageScore);
+        var backgroundColor = AviationRiskMatrixCalculator.GetAviationMatrixColor(bestMatch.severity, bestMatch.likelihood);
+        var textColor = AviationRiskMatrixCalculator.IsLightColor(backgroundColor) ? "#000" : "#fff";
+        
+        return $"background: {backgroundColor}; color: {textColor}; padding: 6px 10px; border-radius: 4px; font-weight: bold; font-size: 1rem; display: inline-block; text-align: center; min-width: 35px; border: 1px solid rgba(0,0,0,0.2);";
+    }
+
+    private string GetAviationMatrixColor(int severity, int likelihood)
+    {
+        return AviationRiskMatrixCalculator.GetAviationMatrixColor(severity, likelihood);
+    }
+
+    private bool IsLightColor(string hexColor)
+    {
+        return AviationRiskMatrixCalculator.IsLightColor(hexColor);
+    }
+
+    private (int severity, int likelihood) GetBestSeverityLikelihoodMatch(double score)
+    {
+        var bestMatch = (severity: 1, likelihood: 1);
+        var bestDistance = double.MaxValue;
+        
+        for (int severity = 1; severity <= 5; severity++)
         {
-            Value = value;
-            Text = text;
+            for (int likelihood = 1; likelihood <= 5; likelihood++)
+            {
+                var calculatedScore = severity * likelihood;
+                var distance = Math.Abs(calculatedScore - score);
+                
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    bestMatch = (severity, likelihood);
+                }
+            }
+        }
+        
+        return bestMatch;
+    }
+
+    private bool AllScoresComplete()
+    {
+        return HazardScoringPanels.Any() && HazardScoringPanels.All(HasScore);
+    }
+
+    private async Task FinalizeHazardAssessment()
+    {
+        // This could trigger additional workflow logic
+        if (OnHazardScored.HasDelegate)
+        {
+            await OnHazardScored.InvokeAsync();
         }
     }
+
+    public record SeverityOption(int Value, string Text);
+    public record LikelihoodOption(int Value, string Text);
 }

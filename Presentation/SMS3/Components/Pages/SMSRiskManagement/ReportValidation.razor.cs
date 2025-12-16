@@ -151,7 +151,7 @@ public partial class ReportValidation : ComponentBase
                 // Build dropdown options
                 ValidatedByOptions = new List<DropdownOption>
                 {
-                    new DropdownOption { Value = "", Text = "Auto-assign based on workload" }
+                    new DropdownOption { Value = "", Text = "" }
                 };
                 
                 foreach (var assessor in AvailableAssessors)
@@ -169,7 +169,7 @@ public partial class ReportValidation : ComponentBase
             Logger.LogWarning(ex, "Could not load available assessors");
             ValidatedByOptions = new List<DropdownOption>
             {
-                new DropdownOption { Value = "", Text = "Auto-assign based on workload" }
+                new DropdownOption { Value = "", Text = "" }
             };
         }
     }
@@ -533,8 +533,9 @@ public partial class ReportValidation : ComponentBase
 
     private string GetValidationCardStyle(string decisionValue)
     {
-        var baseStyle = "border: 2px solid var(--rz-border-color);";
-        
+        //var baseStyle = "border: 2px solid var(--rz-border-color);";
+        var baseStyle = "border: 2px solid; color:black;";
+
         if (SelectedValidationDecision?.Value == decisionValue)
         {
             return decisionValue switch

@@ -878,6 +878,9 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmScoringPanelCode = new Lazy<string>(() => "@pScoringPanelCode");
     public static string pmScoringPanelCode => _pmScoringPanelCode.Value;
 
+    private static readonly Lazy<string> _pmScoringPanelRiskAssessmentCode = new Lazy<string>(() => "@pScoringPanelRiskAssessmentCode");
+    public static string pmScoringPanelRiskAssessmentCode => _pmScoringPanelRiskAssessmentCode.Value;
+
     private static readonly Lazy<string> _pmScoringPanelHazardCode = new Lazy<string>(() => "@pScoringPanelHazardCode");
     public static string pmScoringPanelHazardCode => _pmScoringPanelHazardCode.Value;
 
@@ -892,6 +895,9 @@ public static class ParameterNames
 
     private static readonly Lazy<string> _pmScoringPanelScore = new Lazy<string>(() => "@pScoringPanelScore");
     public static string pmScoringPanelScore => _pmScoringPanelScore.Value;
+
+    private static readonly Lazy<string> _pmScoringPanelRationale = new Lazy<string>(() => "@pScoringPanelRationale");
+    public static string pmScoringPanelRationale => _pmScoringPanelRationale.Value;
 
     /// <summary>
     /// Report Validation parameters (restored from accidental removal)

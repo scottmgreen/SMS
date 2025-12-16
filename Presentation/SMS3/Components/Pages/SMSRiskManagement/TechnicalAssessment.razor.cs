@@ -1001,7 +1001,14 @@ public partial class TechnicalAssessment : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Adding new hazard via CQRS: {Description}", newHazard.Description);
+            Logger.LogInformation("Adding new hazard: {Description}", newHazard.Description);
+
+            // Check if hazard already exists to prevent duplication
+            if (ReportHazards.Any(h => h.Code == newHazard.Code && h.Code != "HZ-0000"))
+            {
+                Logger.LogWarning("Hazard {HazardCode} already exists, skipping duplication", newHazard.Code);
+                return;
+            }
 
             // Use proper CQRS CreateHazardCommand
             var createCommand = new CreateHazardCommand(newHazard);
@@ -1009,39 +1016,48 @@ public partial class TechnicalAssessment : ComponentBase
 
             if (result.IsSuccess && result.Value != null)
             {
-                // CRITICAL: Update both collections with the new hazard
-                ReportHazards.Add(result.Value);
-                
-                // Create a completely new list to force parameter change detection
-                AvailableHazards = ReportHazards.ToList();
-                
-                // Update Step2 model
-                Step2.HazardIds.Add(result.Value.Code);
-                Step2.HazardDescriptions.Add(result.Value.Description);
-                Step2.HazardCategories.Add(result.Value.HazardType ?? string.Empty);
-
-                // ALTERNATIVE APPROACH: Reload hazards from database to ensure consistency
-                await LoadReportHazardsAsync();
-
-                // CRITICAL: Force complete UI refresh for parent and all children
-                await InvokeAsync(() =>
+                // CRITICAL: Check again after database creation to prevent duplicates from DB-generated codes
+                var createdHazard = result.Value;
+                if (!ReportHazards.Any(h => h.Code == createdHazard.Code))
                 {
-                    StateHasChanged();
-                });
+                    // Add to collections
+                    ReportHazards.Add(createdHazard);
+                    
+                    // Create a completely new list to force parameter change detection
+                    AvailableHazards = ReportHazards.ToList();
+                    
+                    // Update Step2 model
+                    if (!Step2.HazardIds.Contains(createdHazard.Code))
+                    {
+                        Step2.HazardIds.Add(createdHazard.Code);
+                        Step2.HazardDescriptions.Add(createdHazard.Description);
+                        Step2.HazardCategories.Add(createdHazard.HazardType ?? string.Empty);
+                    }
 
-                ShowSuccessNotification($"Hazard {result.Value.Code} added successfully");
-                Logger.LogInformation("Successfully created hazard via CQRS: {HazardCode} - Total hazards: {Count}", 
-                    result.Value.Code, AvailableHazards.Count);
+                    // CRITICAL: Force complete UI refresh for parent and all children
+                    await InvokeAsync(() =>
+                    {
+                        StateHasChanged();
+                    });
+
+                    ShowSuccessNotification($"Hazard {createdHazard.Code} added successfully");
+                    Logger.LogInformation("Successfully created hazard: {HazardCode} - Total hazards: {Count}", 
+                        createdHazard.Code, AvailableHazards.Count);
+                }
+                else
+                {
+                    Logger.LogInformation("Hazard {HazardCode} already exists in collection, skipping add", createdHazard.Code);
+                }
             }
             else
             {
                 ShowErrorNotification($"Failed to add hazard: {result.Error?.Message}");
-                Logger.LogError("CQRS CreateHazardCommand failed: {Error}", result.Error?.Message);
+                Logger.LogError("CreateHazardCommand failed: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error adding hazard via CQRS");
+            Logger.LogError(ex, "Error adding hazard");
             ShowErrorNotification("Error adding hazard");
         }
     }
@@ -1078,6 +1094,60 @@ public partial class TechnicalAssessment : ComponentBase
         {
             Logger.LogError(ex, "Error updating hazard via CQRS");
             ShowErrorNotification("Error updating hazard");
+        }
+    }
+
+    private async Task DeleteHazard(Hazard hazardToDelete)
+    {
+        try
+        {
+            Logger.LogInformation("Deleting hazard: {HazardCode}", hazardToDelete.Code);
+
+            // Check if this is the initial hazard - should not be deleted
+            if (hazardToDelete.Code == HazardId)
+            {
+                ShowErrorNotification("Cannot delete the initial hazard from the report");
+                return;
+            }
+
+            // Use proper CQRS DeleteHazardCommand
+            var deleteCommand = new DeleteHazardCommand(new HazardID(hazardToDelete.Code));
+            var result = await Mediator.SendAsync(deleteCommand, CancellationToken.None);
+
+            if (result.IsSuccess)
+            {
+                // Remove from local collections
+                ReportHazards.RemoveAll(h => h.Code == hazardToDelete.Code);
+                AvailableHazards = ReportHazards.ToList();
+                
+                // Update Step2 model
+                var indexToRemove = Step2.HazardIds.IndexOf(hazardToDelete.Code);
+                if (indexToRemove >= 0)
+                {
+                    Step2.HazardIds.RemoveAt(indexToRemove);
+                    if (indexToRemove < Step2.HazardDescriptions.Count)
+                        Step2.HazardDescriptions.RemoveAt(indexToRemove);
+                    if (indexToRemove < Step2.HazardCategories.Count)
+                        Step2.HazardCategories.RemoveAt(indexToRemove);
+                }
+
+                // Force UI refresh
+                await InvokeAsync(StateHasChanged);
+
+                ShowSuccessNotification($"Hazard {hazardToDelete.Code} deleted successfully");
+                Logger.LogInformation("Successfully deleted hazard: {HazardCode} - Remaining hazards: {Count}", 
+                    hazardToDelete.Code, AvailableHazards.Count);
+            }
+            else
+            {
+                ShowErrorNotification($"Failed to delete hazard: {result.Error?.Message}");
+                Logger.LogError("DeleteHazardCommand failed: {Error}", result.Error?.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error deleting hazard");
+            ShowErrorNotification("Error deleting hazard");
         }
     }
 

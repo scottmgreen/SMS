@@ -364,86 +364,10 @@ public class Step3Model
 
     public async Task ApplyToAssessmentAsync(RiskAssessment assessment, IMediator mediator, List<Hazard> availableHazards)
     {
-        // CRITICAL: Save RiskAnalysis data for each hazard with Step 3 analysis
-        await SaveRiskAnalysisDataAsync(mediator, availableHazards);
-        
         // Apply to assessment
         assessment.RiskAnalysisMethod = RiskAnalysisMethod;
         assessment.RiskCriteria = RiskCriteria;
         assessment.CompleteStep(3);
-    }
-
-    /// <summary>
-    /// Save the completed risk analysis data per hazard
-    /// </summary>
-    private async Task SaveRiskAnalysisDataAsync(IMediator mediator, List<Hazard> availableHazards)
-    {
-        if (mediator == null || availableHazards == null) return;
-
-        // Get all existing RiskAnalysis records
-        var getAllRiskAnalysisQuery = new GetAllRiskAnalysisQuery();
-        var allRiskAnalysisResult = await mediator.SendAsync(getAllRiskAnalysisQuery, CancellationToken.None);
-
-        var existingRiskAnalyses = allRiskAnalysisResult.IsSuccess ? allRiskAnalysisResult.Value : new List<RiskAnalysis>();
-
-        foreach (var hazard in availableHazards)
-        {
-            try
-            {
-                if (HazardAnalyses.ContainsKey(hazard.Code))
-                {
-                    var analysis = HazardAnalyses[hazard.Code];
-                    
-                    // Only save if analysis is complete
-                    if (analysis.IsComplete)
-                    {
-                        // Find existing RiskAnalysis using LINQ
-                        var existingAnalysis = existingRiskAnalyses?.FirstOrDefault(ra => ra.HazardCode.Trim() == hazard.Code);
-
-                        RiskAnalysis? riskAnalysis = null;
-
-                        if (existingAnalysis != null)
-                        {
-                            // Update existing RiskAnalysis
-                            riskAnalysis = existingAnalysis;
-                        }
-                        else
-                        {
-                            // Create new RiskAnalysis
-                            var riskAnalysisId = new RiskAnalysisID($"RA-{hazard.Code}");
-                            riskAnalysis = new RiskAnalysis(riskAnalysisId);
-                            riskAnalysis.Code = $"RA-{hazard.Code}";
-                            riskAnalysis.Name = $"Risk Analysis for {hazard.Code}";
-                            riskAnalysis.HazardCode = hazard.Code;
-                        }
-
-                        // Update RiskAnalysis with Step 3 analysis details
-                        riskAnalysis.Description = $"Risk Analysis completed for {hazard.Description}";
-                        riskAnalysis.WorstCredibleOutcome = analysis.WorstCredibleOutcome;
-                        riskAnalysis.RootCause = analysis.RootCauseAnalysis;
-                        riskAnalysis.Status = "Analysis Complete";
-                        riskAnalysis.Stage = "Step 3 Completed";
-
-                        // Save or update the RiskAnalysis
-                        if (existingAnalysis != null)
-                        {
-                            var updateCommand = new UpdateRiskAnalysisCommand(riskAnalysis);
-                            await mediator.SendAsync(updateCommand, CancellationToken.None);
-                        }
-                        else
-                        {
-                            var createCommand = new CreateRiskAnalysisCommand(riskAnalysis);
-                            await mediator.SendAsync(createCommand, CancellationToken.None);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log error but continue with other hazards
-                Console.WriteLine($"Error saving risk analysis for hazard {hazard.Code}: {ex.Message}");
-            }
-        }
     }
 
     public void LoadFromAssessment(RiskAssessment assessment, List<Hazard> reportHazards)
@@ -511,6 +435,7 @@ public class Step4Model
     public Dictionary<string, List<PanelMemberScoreData>> PanelScores { get; set; } = new();
     public Dictionary<string, double> HazardAverageScores { get; set; } = new();
     public Dictionary<string, string> HazardRiskLevels { get; set; } = new();
+    public Dictionary<string, string> HazardMatrixCodes { get; set; } = new(); // NEW: Store matrix codes like "3B", "5A"
 
     #endregion
 
@@ -576,8 +501,8 @@ public class Step4Model
 
     public async Task ApplyToAssessmentAsync(RiskAssessment assessment, IMediator mediator, List<Hazard> availableHazards)
     {
-        // CRITICAL: Save RiskAnalysis data for each hazard
-        await SaveRiskAnalysisDataAsync(mediator, availableHazards);
+        // CRITICAL: Save Step 4 Risk Assessment data with calculated scores
+        await SaveStep4RiskAssessmentAsync(assessment, mediator, availableHazards);
         
         // Apply to assessment
         assessment.TolerabilityFramework = TolerabilityFramework;
@@ -594,80 +519,139 @@ public class Step4Model
     }
 
     /// <summary>
-    /// Save the completed risk analysis and scoring data per hazard
+    /// Save the overall risk assessment with calculated final scores from panel consensus
     /// </summary>
-    private async Task SaveRiskAnalysisDataAsync(IMediator mediator, List<Hazard> availableHazards)
+    private async Task SaveStep4RiskAssessmentAsync(RiskAssessment assessment, IMediator mediator, List<Hazard> availableHazards)
     {
-        if (mediator == null || availableHazards == null) return;
+        if (mediator == null || assessment == null || availableHazards == null) return;
 
-        // Get all existing RiskAnalysis records
-        var getAllRiskAnalysisQuery = new GetAllRiskAnalysisQuery();
-        var allRiskAnalysisResult = await mediator.SendAsync(getAllRiskAnalysisQuery, CancellationToken.None);
-
-        var existingRiskAnalyses = allRiskAnalysisResult.IsSuccess ? allRiskAnalysisResult.Value : new List<RiskAnalysis>();
-
-        foreach (var hazard in availableHazards)
+        try
         {
-            try
+            // Calculate overall final scores from all hazard averages
+            var (finalSeverity, finalLikelihood, finalRiskLevel, assessmentRationale) = CalculateOverallRiskAssessment(availableHazards);
+
+            // Use the existing SaveStep4Command to save risk assessment data
+            var saveStep4Command = new SaveStep4Command(
+                assessment.Code,
+                TolerabilityFramework,
+                RiskAcceptanceCriteria,
+                finalSeverity,
+                finalLikelihood,
+                finalRiskLevel,
+                "Acceptable", // Default tolerability - can be enhanced
+                assessmentRationale);
+
+            var result = await mediator.SendAsync(saveStep4Command, CancellationToken.None);
+
+            if (result.IsSuccess)
             {
-                // Find existing RiskAnalysis using LINQ
-                var existingAnalysis = existingRiskAnalyses?.FirstOrDefault(ra => ra.HazardCode == hazard.Code);
-
-                RiskAnalysis? riskAnalysis = null;
-
-                if (existingAnalysis != null)
-                {
-                    // Update existing RiskAnalysis
-                    riskAnalysis = existingAnalysis;
-                }
-                else
-                {
-                    // Create new RiskAnalysis - this shouldn't happen if Step 3 was completed first
-                    var riskAnalysisId = new RiskAnalysisID($"RA-{hazard.Code}");
-                    riskAnalysis = new RiskAnalysis(riskAnalysisId);
-                    riskAnalysis.Code = $"RA-{hazard.Code}";
-                    riskAnalysis.Name = $"Risk Analysis for {hazard.Code}";
-                    riskAnalysis.Description = $"Technical risk analysis for hazard {hazard.Code}";
-                    riskAnalysis.HazardCode = hazard.Code;
-                    riskAnalysis.Status = "Created";
-                    riskAnalysis.Stage = "Risk Analysis Created";
-                }
-
-                // Update RiskAnalysis with Step 4 scoring results
-                if (HazardAverageScores.ContainsKey(hazard.Code))
-                {
-                    var averageScore = HazardAverageScores[hazard.Code];
-                    var riskLevel = HazardRiskLevels.ContainsKey(hazard.Code) ? HazardRiskLevels[hazard.Code] : "Unknown";
-                    
-                    // Append scoring results to existing description
-                    var baseDescription = string.IsNullOrEmpty(riskAnalysis.Description) 
-                        ? $"Risk Analysis for {hazard.Description}" 
-                        : riskAnalysis.Description;
-                        
-                    riskAnalysis.Description = $"{baseDescription}. Average Risk Score: {averageScore:F2}, Risk Level: {riskLevel}. Panel Assessment completed on {DateTime.UtcNow:yyyy-MM-dd}.";
-                    
-                    riskAnalysis.Status = "Risk Assessment Complete";
-                    riskAnalysis.Stage = "Step 4 Completed";
-                }
-
-                // Save or update the RiskAnalysis
-                if (existingAnalysis != null)
-                {
-                    var updateCommand = new UpdateRiskAnalysisCommand(riskAnalysis);
-                    await mediator.SendAsync(updateCommand, CancellationToken.None);
-                }
-                else
-                {
-                    var createCommand = new CreateRiskAnalysisCommand(riskAnalysis);
-                    await mediator.SendAsync(createCommand, CancellationToken.None);
-                }
+                Console.WriteLine($"Successfully saved Step 4 risk assessment data for {assessment.Code}");
             }
-            catch (Exception ex)
+            else
             {
-                // Log error but continue with other hazards
-                Console.WriteLine($"Error saving risk analysis for hazard {hazard.Code}: {ex.Message}");
+                Console.WriteLine($"Failed to save Step 4 risk assessment: {result.Error?.Message}");
             }
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving Step 4 risk assessment: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Calculate overall risk assessment from all completed hazard assessments
+    /// </summary>
+    private (int? finalSeverity, int? finalLikelihood, string finalRiskLevel, string assessmentRationale) CalculateOverallRiskAssessment(List<Hazard> availableHazards)
+    {
+        var completedHazards = HazardAverageScores.Keys.ToList();
+        
+        if (!completedHazards.Any())
+        {
+            return (null, null, "Unknown", "No hazard assessments completed yet.");
+        }
+
+        // Calculate weighted average or take highest risk approach
+        var avgScores = HazardAverageScores.Values.ToList();
+        var maxScore = avgScores.Max();
+        var avgScore = avgScores.Average();
+
+        // Use highest risk approach for final severity/likelihood
+        var highestRiskHazard = HazardAverageScores.OrderByDescending(kvp => kvp.Value).First();
+        var highestRiskHazardCode = highestRiskHazard.Key;
+
+        // Get the matrix code for the highest risk hazard
+        var highestRiskMatrixCode = HazardMatrixCodes.ContainsKey(highestRiskHazardCode) 
+            ? HazardMatrixCodes[highestRiskHazardCode] 
+            : "Unknown";
+
+        // Parse matrix code back to severity/likelihood
+        var (severity, likelihood) = ParseMatrixCode(highestRiskMatrixCode);
+        
+        // Determine final risk level
+        var finalRiskLevel = severity.HasValue && likelihood.HasValue 
+            ? GetAviationRiskLevel(severity.Value, likelihood.Value)
+            : "Unknown";
+
+        // Build assessment rationale
+        var rationale = $"Risk assessment based on {completedHazards.Count} hazard(s). " +
+                       $"Highest risk: {highestRiskHazardCode} ({highestRiskMatrixCode}, Risk Level: {HazardRiskLevels.GetValueOrDefault(highestRiskHazardCode, "Unknown")}). " +
+                       $"Average risk score: {avgScore:F2}. " +
+                       $"Matrix codes assessed: {string.Join(", ", HazardMatrixCodes.Select(kvp => $"{kvp.Key}:{kvp.Value}"))}. " +
+                       $"Assessment completed on {DateTime.UtcNow:yyyy-MM-dd HH:mm}.";
+
+        return (severity, likelihood, finalRiskLevel, rationale);
+    }
+
+    /// <summary>
+    /// Parse matrix code back to severity and likelihood values
+    /// </summary>
+    private (int? severity, int? likelihood) ParseMatrixCode(string matrixCode)
+    {
+        if (string.IsNullOrEmpty(matrixCode) || matrixCode.Length < 2) 
+            return (null, null);
+
+        // Extract severity (first part) and likelihood letter (last part)
+        var severityPart = matrixCode.Substring(0, matrixCode.Length - 1);
+        var likelihoodLetter = matrixCode.Substring(matrixCode.Length - 1);
+
+        if (!int.TryParse(severityPart, out int severity))
+            return (null, null);
+
+        var likelihood = likelihoodLetter.ToUpper() switch
+        {
+            "A" => 1,
+            "B" => 2, 
+            "C" => 3,
+            "D" => 4,
+            "E" => 5,
+            _ => (int?)null
+        };
+
+        return (severity, likelihood);
+    }
+
+    /// <summary>
+    /// Get aviation risk level from severity and likelihood
+    /// </summary>
+    private string GetAviationRiskLevel(int severity, int likelihood)
+    {
+        return (severity, likelihood) switch
+        {
+            (5, 3) or (5, 4) or (5, 5) or (4, 4) or (4, 5) or (3, 5) => "High",
+            (5, 2) or (4, 3) or (3, 4) or (2, 5) => "Medium",
+            (5, 1) or (4, 2) or (3, 2) or (3, 3) or (2, 3) or (2, 4) or (1, 5) => "Low",
+            (4, 1) or (3, 1) or (2, 1) or (2, 2) or (1, 1) or (1, 2) or (1, 3) or (1, 4) => "Acceptable",
+            _ => "Unknown"
+        };
+    }
+    public async Task SaveToAssessment(RiskAssessment assessment, IMediator mediator, List<Hazard> availableHazards)
+    {
+        // Save the tolerability framework and risk acceptance criteria
+        assessment.TolerabilityFramework = TolerabilityFramework;
+        assessment.RiskAcceptanceCriteria = RiskAcceptanceCriteria;
+
+        // Complete the step
+        assessment.CompleteStep(4);
     }
     public void LoadFromAssessment(RiskAssessment assessment)
     {

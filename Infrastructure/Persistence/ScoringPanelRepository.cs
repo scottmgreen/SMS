@@ -213,10 +213,12 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, scoringPanel.Id.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelCode, scoringPanel.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelHazardCode, scoringPanel.HazardCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelRiskAssessmentCode, scoringPanel.RiskAssessmentCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelSMSUserCode, scoringPanel.SMSUserCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelLikelihood, scoringPanel.Likelihood ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelSeverity, scoringPanel.Severity ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelScore, scoringPanel.Score ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelRationale, scoringPanel.Rationale));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, scoringPanel.UpdatedBy ?? "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 

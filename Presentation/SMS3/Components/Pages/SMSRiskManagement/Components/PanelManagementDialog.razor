@@ -1,0 +1,108 @@
+@using SMS_Domain.Entities
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenStack Gap="1rem">
+    <RadzenAlert AlertStyle="AlertStyle.Info" Icon="info">
+        <RadzenText Text="@($"Select stakeholders to score: {HazardDescription}")" />
+        <RadzenText TextStyle="TextStyle.Caption" Text="@($"Currently selected: {WorkingSelectedCodes.Count} member(s)")" />
+    </RadzenAlert>
+
+    <!-- Debug info (remove in production) -->
+    <RadzenCard Variant="Variant.Text" Style="background-color: #f8f9fa; padding: 0.5rem;">
+        <RadzenText TextStyle="TextStyle.Caption" Text="@($"Debug: Received {SelectedStakeholderCodes.Count} pre-selected codes: {string.Join(", ", SelectedStakeholderCodes)}")" />
+        <RadzenText TextStyle="TextStyle.Caption" Text="@($"Debug: Working with {WorkingSelectedCodes.Count} codes: {string.Join(", ", WorkingSelectedCodes)}")" />
+    </RadzenCard>
+
+    <RadzenDataGrid Data="@AvailableStakeholders" TItem="SMSStakeholderUser" AllowPaging="false">
+        <Columns>
+            <RadzenDataGridColumn TItem="SMSStakeholderUser" Title="Select" Width="80px">
+                <Template Context="stakeholder">
+                    <RadzenCheckBox Value="@IsStakeholderSelected(stakeholder.Code)" 
+                                    ValueChanged="@((bool value) => ToggleStakeholder(stakeholder.Code, value))"
+                                    Name="@($"stakeholder_{stakeholder.Code}")" />
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="DisplayName" Title="Name" />
+            <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="Organization" Title="Organization" />
+            <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="StakeholderType" Title="Role" />
+            <RadzenDataGridColumn TItem="SMSStakeholderUser" Title="Status" Width="100px">
+                <Template Context="stakeholder">
+                    @if (IsStakeholderSelected(stakeholder.Code))
+                    {
+                        <RadzenBadge Text="Selected" BadgeStyle="BadgeStyle.Success" />
+                    }
+                    else
+                    {
+                        <RadzenBadge Text="Available" BadgeStyle="BadgeStyle.Light" />
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
+        <RadzenText TextStyle="TextStyle.Body2" Text="@($"Selected: {WorkingSelectedCodes.Count} stakeholder(s)")" />
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+            <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@(() => DialogService.Close())" />
+            <RadzenButton Text="Update Panel" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="@SaveChanges" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public string HazardCode { get; set; } = string.Empty;
+    [Parameter] public string HazardDescription { get; set; } = string.Empty;
+    [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
+    [Parameter] public List<string> SelectedStakeholderCodes { get; set; } = new();
+
+    [Inject] private DialogService DialogService { get; set; } = default!;
+
+    private List<string> WorkingSelectedCodes = new();
+
+    protected override void OnInitialized()
+    {
+        // Create a copy of the selected codes to work with
+        WorkingSelectedCodes = SelectedStakeholderCodes?.ToList() ?? new List<string>();
+        
+        // Debug logging
+        Console.WriteLine($"PanelManagementDialog initialized with {SelectedStakeholderCodes?.Count ?? 0} pre-selected codes");
+        Console.WriteLine($"Working codes: {string.Join(", ", WorkingSelectedCodes)}");
+    }
+
+    private bool IsStakeholderSelected(string stakeholderCode)
+    {
+        var isSelected = WorkingSelectedCodes.Any(code => 
+            string.Equals(code?.Trim(), stakeholderCode?.Trim(), StringComparison.OrdinalIgnoreCase));
+        Console.WriteLine($"Checking if {stakeholderCode} is selected: {isSelected}");
+        return isSelected;
+    }
+
+    private void ToggleStakeholder(string stakeholderCode, bool isSelected)
+    {
+        Console.WriteLine($"Toggling {stakeholderCode} to {isSelected}");
+        
+        // Use case-insensitive comparison and trim whitespace
+        var existingCode = WorkingSelectedCodes.FirstOrDefault(code => 
+            string.Equals(code?.Trim(), stakeholderCode?.Trim(), StringComparison.OrdinalIgnoreCase));
+        
+        if (isSelected && existingCode == null)
+        {
+            WorkingSelectedCodes.Add(stakeholderCode?.Trim() ?? string.Empty);
+            Console.WriteLine($"Added {stakeholderCode}. Working codes now: {string.Join(", ", WorkingSelectedCodes)}");
+        }
+        else if (!isSelected && existingCode != null)
+        {
+            WorkingSelectedCodes.Remove(existingCode);
+            Console.WriteLine($"Removed {stakeholderCode}. Working codes now: {string.Join(", ", WorkingSelectedCodes)}");
+        }
+        
+        StateHasChanged(); // Force UI refresh
+    }
+
+    private void SaveChanges()
+    {
+        Console.WriteLine($"Saving changes with {WorkingSelectedCodes.Count} selected codes: {string.Join(", ", WorkingSelectedCodes)}");
+        DialogService.Close(WorkingSelectedCodes);
+    }
+}

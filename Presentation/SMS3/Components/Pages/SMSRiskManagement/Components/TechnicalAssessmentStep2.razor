@@ -59,10 +59,37 @@
                                         <RadzenBadge Text="@(hazard.Category ?? "Not specified")" BadgeStyle="BadgeStyle.Secondary" />
                                     </Template>
                                 </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="Hazard" Property="Location" Title="Location">
+                                    <Template Context="hazard">
+                                        @if (hazard.HazardLocation?.Description != null)
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Caption" Text="@hazard.HazardLocation.Description" />
+                                        }
+                                        else if (!string.IsNullOrEmpty(hazard.LocationArea))
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Caption" Text="@hazard.LocationArea" />
+                                        }
+                                        else
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Caption" Text="No location specified" Style="color: var(--rz-text-secondary-color);" />
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="Hazard" Title="Actions">
                                     <Template Context="hazard">
-                                        <RadzenButton Text="Edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" 
-                                                      Click="@(() => EditHazard(hazard))" />
+                                        @if (IsInitialHazard(hazard))
+                                        {
+                                            <RadzenBadge Text="Initial Hazard" BadgeStyle="BadgeStyle.Info" />
+                                        }
+                                        else
+                                        {
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                                <RadzenButton Text="Edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" 
+                                                              Click="@(() => EditHazard(hazard))" />
+                                                <RadzenButton Text="Delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
+                                                              Click="@(() => DeleteHazard(hazard))" />
+                                            </RadzenStack>
+                                        }
                                     </Template>
                                 </RadzenDataGridColumn>
                             </Columns>
@@ -71,44 +98,21 @@
                 </RadzenCard>
             }
 
-            <!-- Add New Hazard Form -->
+            <!-- Add New Hazard Button -->
             <RadzenCard>
-                <RadzenStack Gap="1rem">
-                    <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-success); margin: 0;">
-                        <RadzenIcon Icon="add_circle" Style="margin-right: 0.5rem;" />
-                        Add New Hazard
-                    </RadzenText>
-                    
-                    <RadzenFormField Text="Hazard Description *" Variant="Variant.Outlined">
-                        <RadzenTextArea @bind-Value="@NewHazardDescription" Rows="3" 
-                                        Placeholder="Describe the hazard clearly and specifically..." Style="width: 100%;" />
-                    </RadzenFormField>
-                    @if (!string.IsNullOrWhiteSpace(NewHazardDescription) && NewHazardDescription.Trim().Length < 10)
-                    {
-                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger);">
-                            Description must be at least 10 characters (currently @(NewHazardDescription.Trim().Length))
+                <RadzenStack Gap="1rem" AlignItems="AlignItems.Center" Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenStack Gap="0.5rem" AlignItems="AlignItems.Start">
+                        <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-success); margin: 0;">
+                            <RadzenIcon Icon="add_circle" Style="margin-right: 0.5rem;" />
+                            Add New Hazard
                         </RadzenText>
-                    }
-                    
-                    <RadzenRow Gap="1rem">
-                        <RadzenColumn Size="12" SizeMD="6">
-                            <RadzenFormField Text="Hazard Category" Variant="Variant.Outlined">
-                                <RadzenDropDown @bind-Value="@NewHazardCategory" Data="@HazardCategories" 
-                                                Placeholder="Select category..." Style="width: 100%;" />
-                            </RadzenFormField>
-                        </RadzenColumn>
-                        <RadzenColumn Size="12" SizeMD="6">
-                            <RadzenFormField Text="5M Framework Component" Variant="Variant.Outlined">
-                                <RadzenDropDown @bind-Value="@NewHazardFiveM" Data="@FiveMOptions" 
-                                                ValueProperty="Value" TextProperty="Text"
-                                                Placeholder="Select 5M component..." Style="width: 100%;" />
-                            </RadzenFormField>
-                        </RadzenColumn>
-                    </RadzenRow>
-                    
-                    <RadzenButton Text="Add Hazard" Icon="add" ButtonStyle="ButtonStyle.Success" 
-                                  Click="@AddNewHazard" 
-                                  Disabled="@(IsSaving || !IsAddHazardFormValid)" />
+                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color); margin: 0;">
+                            Click to add a new hazard with location mapping
+                        </RadzenText>
+                    </RadzenStack>
+                    <RadzenButton Text="Add New Hazard" Icon="add" ButtonStyle="ButtonStyle.Success" 
+                                  Size="ButtonSize.Large"
+                                  Click="@OpenAddHazardModal" />
                 </RadzenStack>
             </RadzenCard>
         </RadzenStack>
@@ -120,6 +124,12 @@
     </RadzenColumn>
 </RadzenRow>
 
+<!-- Add Hazard Modal -->
+<AddHazardModal IsVisible="@ShowAddHazardModal" 
+                IsVisibleChanged="@OnModalVisibilityChanged"
+                OnHazardAdded="@OnHazardAdded"
+                ReportId="@ReportId" />
+
 @code {
     [Parameter] public Step1Model Step1 { get; set; } = new();
     [Parameter] public Step2Model Step2 { get; set; } = new();
@@ -127,131 +137,77 @@
     [Parameter] public List<Hazard> AvailableHazards { get; set; } = new();
     [Parameter] public EventCallback<Hazard> OnHazardAdded { get; set; }
     [Parameter] public EventCallback<Hazard> OnHazardUpdated { get; set; }
-    [Parameter] public string? ReportId { get; set; } // Add ReportId parameter
+    [Parameter] public EventCallback<Hazard> OnHazardDeleted { get; set; }
+    [Parameter] public string? ReportId { get; set; }
+    [Parameter] public string? InitialHazardId { get; set; }
 
-    private bool IsSaving { get; set; } = false;
+    private bool ShowAddHazardModal { get; set; } = false;
 
-    // Simple properties for form binding
-    private string NewHazardDescription { get; set; } = string.Empty;
-    private string NewHazardCategory { get; set; } = string.Empty;
-    private string NewHazardFiveM { get; set; } = string.Empty;
-
-    // VALIDATION: Check if form is ready for submission
-    private bool IsAddHazardFormValid => 
-        !string.IsNullOrWhiteSpace(NewHazardDescription?.Trim()) && 
-        NewHazardDescription.Trim().Length >= 10 &&
-        !string.IsNullOrWhiteSpace(NewHazardCategory) && 
-        !string.IsNullOrWhiteSpace(NewHazardFiveM);
-
-    private List<string> HazardCategories = new()
+    private void OpenAddHazardModal()
     {
-        "Aircraft Operations",
-        "Ground Operations", 
-        "Security Operations",
-        "Weather Related",
-        "Equipment Failure",
-        "Human Factors",
-        "Environmental",
-        "Procedural",
-        "Communication",
-        "Infrastructure",
-        "Other"
-    };
+        ShowAddHazardModal = true;
+    }
 
-    private List<FiveMOption> FiveMOptions = new()
+    private async Task OnModalVisibilityChanged(bool isVisible)
     {
-        new() { Value = "MAN", Text = "Man (Human)" },
-        new() { Value = "MACHINE", Text = "Machine (Equipment)" },
-        new() { Value = "METHOD", Text = "Method (Procedures)" },
-        new() { Value = "MATERIAL", Text = "Material (Resources)" },
-        new() { Value = "MILIEU", Text = "Milieu (Environment)" }
-    };
+        ShowAddHazardModal = isVisible;
+        await InvokeAsync(StateHasChanged);
+    }
 
-    private async Task AddNewHazard()
+    /// <summary>
+    /// Determine if a hazard is the initial hazard that should not be deleted
+    /// </summary>
+    private bool IsInitialHazard(Hazard hazard)
     {
-        if (!IsAddHazardFormValid)
-            return;
+        // Check if this is the initial hazard based on:
+        // 1. HazardId parameter match
+        // 2. If it's the first/primary hazard
+        // 3. If it has special indicators
 
-        try
+        if (!string.IsNullOrEmpty(InitialHazardId) && hazard.Code == InitialHazardId)
         {
-            IsSaving = true;
-            StateHasChanged();
-
-            // Create hazard using the proper domain constructor
-            HazardID hazardID = new HazardID("HZ-0000");
-            Hazard hazard = new Hazard(hazardID);
-
-            // Set all the required properties properly
-            hazard.Code = "HZ-0000"; // Database will generate the actual code
-            hazard.Name = NewHazardDescription.Trim(); 
-            hazard.Description = NewHazardDescription.Trim();
-            hazard.Category = NewHazardCategory;
-            hazard.ReportCode = ReportId ?? ""; 
-            hazard.ReportedBy = "Technical Assessment User"; 
-            hazard.ReportingDepartment = "Technical Assessment";
-            hazard.HazardType = NewHazardCategory;
-            hazard.FiveMComponent = GetFiveMComponent(NewHazardFiveM);
-            hazard.IsConfidential = false;
-            hazard.IsAnonymous = false;
-            hazard.Status = HazardStatus.Active; 
-            hazard.Priority = HazardPriority.Medium; 
-            hazard.ReportedOn = DateTime.UtcNow;
-
-            // Call the parent's AddHazard method
-            await OnHazardAdded.InvokeAsync(hazard);
-            
-            // RESET FORM IMMEDIATELY - This ensures clean state
-            NewHazardDescription = string.Empty;
-            NewHazardCategory = string.Empty;
-            NewHazardFiveM = string.Empty;
-            
-            // Update Step2 model and notify parent
-            await Step2Changed.InvokeAsync(Step2);
-            
-            // Force immediate UI refresh
-            StateHasChanged();
+            return true;
         }
-        catch (Exception ex)
+
+        // Alternative check: If this hazard's ReportedBy indicates it's from the original report
+        if (hazard.ReportedBy != "Technical Assessment User")
         {
-            Console.WriteLine($"Error adding hazard: {ex.Message}");
+            return true;
         }
-        finally
-        {
-            IsSaving = false;
-            StateHasChanged();
-        }
+
+        // Alternative check: If the hazard was created before the assessment started
+        // (newly added hazards will have "Technical Assessment User" as ReportedBy)
+        return false;
     }
 
     private void EditHazard(Hazard hazard)
     {
-        // Simple edit - for now just log
+        // TODO: Implement edit functionality via modal
         Console.WriteLine($"Edit hazard: {hazard.Code}");
     }
 
-    private FiveMComponent? GetFiveMComponent(string? value)
+    private async Task DeleteHazard(Hazard hazard)
     {
-        if (string.IsNullOrEmpty(value)) return null;
-        
-        return value switch
+        if (IsInitialHazard(hazard))
         {
-            "MAN" => FiveMComponent.Man,
-            "MACHINE" => FiveMComponent.Machine,
-            "METHOD" => FiveMComponent.Method,
-            "MATERIAL" => FiveMComponent.Material,
-            "MILIEU" => FiveMComponent.Milieu,
-            _ => null
-        };
+            // Should not reach here due to UI logic, but safety check
+            return;
+        }
+
+        try
+        {
+            // Invoke the parent's delete callback
+            await OnHazardDeleted.InvokeAsync(hazard);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting hazard {hazard.Code}: {ex.Message}");
+        }
     }
 
     protected override async Task OnParametersSetAsync()
     {
         // Force UI refresh when AvailableHazards parameter changes
         await InvokeAsync(StateHasChanged);
-    }
-
-    public class FiveMOption
-    {
-        public string Value { get; set; } = string.Empty;
-        public string Text { get; set; } = string.Empty;
     }
 }

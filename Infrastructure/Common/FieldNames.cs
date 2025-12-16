@@ -823,6 +823,9 @@ public static class FieldNames
     private static readonly Lazy<string> _fScoringPanelHazardCode = new Lazy<string>(() => "fldv_HazardCode");
     public static string fScoringPanelHazardCode => _fScoringPanelHazardCode.Value;
 
+    private static readonly Lazy<string> _fScoringPanelRiskAssessmentCode = new Lazy<string>(() => "fldv_RiskAssessmentCode");
+    public static string fScoringPanelRiskAssessmentCode => _fScoringPanelRiskAssessmentCode.Value;
+
     private static readonly Lazy<string> _fScoringPanelSMSUserCode = new Lazy<string>(() => "fldv_SMSUserCode");
     public static string fScoringPanelSMSUserCode => _fScoringPanelSMSUserCode.Value;
 
@@ -834,6 +837,9 @@ public static class FieldNames
 
     private static readonly Lazy<string> _fScoringPanelScore = new Lazy<string>(() => "fldv_Score");
     public static string fScoringPanelScore => _fScoringPanelScore.Value;
+
+    private static readonly Lazy<string> _fScoringPanelRationale = new Lazy<string>(() => "fldv_ScoreRationale");
+    public static string fScoringPanelRationale => _fScoringPanelRationale.Value;
 
     /// <summary>
     /// SMS User Role table (tbld_SMSUserRoles)

@@ -691,10 +691,12 @@ public static partial class Mappers
 
         scoringPanel.Code = reader.GetValue<string>(FieldNames.fScoringPanelCode);
         scoringPanel.HazardCode = reader.GetValue<string>(FieldNames.fScoringPanelHazardCode);
+
         scoringPanel.SMSUserCode = reader.GetValue<string>(FieldNames.fScoringPanelSMSUserCode);
         scoringPanel.Likelihood = reader.GetValue<int?>(FieldNames.fScoringPanelLikelihood);
         scoringPanel.Severity = reader.GetValue<int?>(FieldNames.fScoringPanelSeverity);
         scoringPanel.Score = reader.GetValue<decimal?>(FieldNames.fScoringPanelScore);
+        scoringPanel.Rationale = reader.GetValue<string>(FieldNames.fScoringPanelRationale);
 
         return scoringPanel;
     }

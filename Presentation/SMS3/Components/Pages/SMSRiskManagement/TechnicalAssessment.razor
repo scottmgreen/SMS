@@ -111,8 +111,10 @@
                                                      Step2Changed="@UpdateStep2"
                                                      AvailableHazards="AvailableHazards"
                                                      ReportId="@ReportId"
+                                                     InitialHazardId="@HazardId"
                                                      OnHazardAdded="@AddHazard"
-                                                     OnHazardUpdated="@UpdateHazard" />
+                                                     OnHazardUpdated="@UpdateHazard"
+                                                     OnHazardDeleted="@DeleteHazard" />
                             break;
                         case 3:
                             <TechnicalAssessmentStep3 Step1="@Step1"
@@ -125,7 +127,8 @@
                                                      Step4Changed="@UpdateStep4"
                                                      AvailableHazards="AvailableHazards"
                                                      AvailableStakeholders="AvailableStakeholders"
-                                                     AvailableAssessors="AvailableAssessors" />
+                                                     AvailableAssessors="AvailableAssessors"
+                                                     RiskAssessmentId="@(InitialRiskAssessment?.Code ?? string.Empty)" />
                             break;
                         case 5:
                             <TechnicalAssessmentStep5 Step4="@Step4"
