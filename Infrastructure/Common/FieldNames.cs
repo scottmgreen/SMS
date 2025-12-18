@@ -392,7 +392,7 @@ public static class FieldNames
     private static readonly Lazy<string> _fHazardRiskLevel = new Lazy<string>(() => "fldv_RiskLevel");
     public static string fHazardRiskLevel => _fHazardRiskLevel.Value;
 
-    private static readonly Lazy<string> _fHazardWorstCredibleOutcome = new Lazy<string>(() => "fldc_WorstCredibleOutcome");
+    private static readonly Lazy<string> _fHazardWorstCredibleOutcome = new Lazy<string>(() => "fldv_WorstCredibleOutcome");
     public static string fHazardWorstCredibleOutcome => _fHazardWorstCredibleOutcome.Value;
 
     private static readonly Lazy<string> _fHazardRootCause = new Lazy<string>(() => "fldc_RootCause");
@@ -419,7 +419,7 @@ public static class FieldNames
     private static readonly Lazy<string> _fHazardInvestigationNotes = new Lazy<string>(() => "fldc_InvestigationNotes");
     public static string fHazardInvestigationNotes => _fHazardInvestigationNotes.Value;
 
-    private static readonly Lazy<string> _fHazardAdditionalComments = new Lazy<string>(() => "fldc_AdditionalComments");
+    private static readonly Lazy<string> _fHazardAdditionalComments = new Lazy<string>(() => "fldv_AdditionalComments");
     public static string fHazardAdditionalComments => _fHazardAdditionalComments.Value;
 
     private static readonly Lazy<string> _fHazardLocation = new Lazy<string>(() => "fldv_Location");
@@ -801,20 +801,14 @@ public static class FieldNames
     private static readonly Lazy<string> _fRiskAnalysisCode = new Lazy<string>(() => "fldv_Code");
     public static string fRiskAnalysisCode => _fRiskAnalysisCode.Value;
 
-    private static readonly Lazy<string> _fRiskAnalysisName = new Lazy<string>(() => "fldv_Name");
-    public static string fRiskAnalysisName => _fRiskAnalysisName.Value;
-
-    private static readonly Lazy<string> _fRiskAnalysisDescription = new Lazy<string>(() => "fldv_Description");
-    public static string fRiskAnalysisDescription => _fRiskAnalysisDescription.Value;
-
     private static readonly Lazy<string> _fRiskAnalysisHazardCode = new Lazy<string>(() => "fldv_HazardCode");
     public static string fRiskAnalysisHazardCode => _fRiskAnalysisHazardCode.Value;
 
-    private static readonly Lazy<string> _fRiskAnalysisStatus = new Lazy<string>(() => "fldv_Status");
-    public static string fRiskAnalysisStatus => _fRiskAnalysisStatus.Value;
+    private static readonly Lazy<string> _fRiskAnalysisRiskAssessmentCode = new Lazy<string>(() => "fldv_RiskAssessmentCode");
+    public static string fRiskAnalysisRiskAssessmentCode => _fRiskAnalysisRiskAssessmentCode.Value;
 
-    private static readonly Lazy<string> _fRiskAnalysisStage = new Lazy<string>(() => "fldv_Stage");
-    public static string fRiskAnalysisStage => _fRiskAnalysisStage.Value;
+    private static readonly Lazy<string> _fRiskAnalysisAdditionalComments = new Lazy<string>(() => "fldv_AdditionalComments");
+    public static string fRiskAnalysisAdditionalComments => _fRiskAnalysisAdditionalComments.Value;
 
     private static readonly Lazy<string> _fRiskAnalysisWorstCredibleOutcome = new Lazy<string>(() => "fldv_WorstCredibleOutcome");
     public static string fRiskAnalysisWorstCredibleOutcome => _fRiskAnalysisWorstCredibleOutcome.Value;

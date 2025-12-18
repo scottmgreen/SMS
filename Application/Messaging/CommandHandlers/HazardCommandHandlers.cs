@@ -95,7 +95,8 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
                 initialRiskAssessment.Description = hazard.Description;
                 initialRiskAssessment.Name = $"Risk Assessment - {hazard.Name}";
                 var riskAssessmentResult = _riskAssessmentDataService.CreateRiskAssessmentAsync(initialRiskAssessment, ct);
-                
+                var initialRiskAccessmentCode = riskAssessmentResult.Result.Value.Code;
+
                 RiskAssessment residualRiskAssessment = new RiskAssessment(new RiskAssessmentID("RS-0000"));
                 residualRiskAssessment.HazardCode = hazard.Code;
                 residualRiskAssessment.AssessmentType = RiskAssessmentType.Residual;
@@ -106,8 +107,8 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
                 riskAssessmentResult = _riskAssessmentDataService.CreateRiskAssessmentAsync(residualRiskAssessment, ct);
 
                 RiskAnalysis riskanalysis = new RiskAnalysis(new RiskAnalysisID("RA-0000"));
-                riskanalysis.HazardCode= hazard.Code;   
-                riskanalysis.Name = $"Risk Analysis - {hazard.Name}";
+                riskanalysis.HazardCode= hazard.Code;
+                riskanalysis.RiskAssessmentCode = initialRiskAccessmentCode;
                 var riskanalysisresult  = _riskAnalysisDataService.CreateRiskAnalysisAsync(riskanalysis, ct); 
 
             }

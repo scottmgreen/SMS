@@ -34,7 +34,10 @@ public class RiskAnalysisDataService : BaseDataService<RiskAnalysisDataService>
     {
         return _repo.GetRiskAnalysisByIdAsync(id, ct);
     }
-
+    public Task<Result<RiskAnalysis>> GetRiskAnalysisByHazardIdAsync(HazardID id, CancellationToken ct = default)
+    {
+        return _repo.GetRiskAnalysisByHazardIdAsync(id, ct);
+    }
     public Task<Result<List<RiskAnalysis>>> GetAllRiskAnalysisAsync(CancellationToken ct = default)
     {
         return _repo.GetAllRiskAnalysisAsync(ct);

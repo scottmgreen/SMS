@@ -542,6 +542,12 @@
         private static readonly Lazy<string> _pr_RiskAnalysis_GetById = new Lazy<string>(() => "pr_RiskAnalysis_GetById");
         public static string pr_RiskAnalysis_GetById => _pr_RiskAnalysis_GetById.Value;
 
+
+        private static readonly Lazy<string> _pr_RiskAnalysis_GetByHazardId = new Lazy<string>(() => "pr_RiskAnalysis_GetByHazardId");
+        public static string pr_RiskAnalysis_GetByHazardId => _pr_RiskAnalysis_GetByHazardId.Value;
+
+
+
         private static readonly Lazy<string> _pr_RiskAnalysis_GetAll = new Lazy<string>(() => "pr_RiskAnalysis_GetAll");
         public static string pr_RiskAnalysis_GetAll => _pr_RiskAnalysis_GetAll.Value;
 

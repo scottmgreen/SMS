@@ -104,8 +104,7 @@ public static partial class Mappers
             SMSOrganizationalUserID userId = reader.GetString(FieldNames.fSMSOrganizationalUserCode);
             SMSOrganizationalUser orgUser = new SMSOrganizationalUser(userId);
             var createdDate = reader.GetDateTime(FieldNames.fCreatedDate);
-            // Extract database values
-            // Create value objects
+            orgUser.Code = reader.GetString(FieldNames.fSMSOrganizationalUserCode);
             orgUser.FirstName = FirstName.Create(reader.GetString(FieldNames.fSMSOrganizationalUserFirstName)).Value;
             orgUser.LastName = LastName.Create(reader.GetString(FieldNames.fSMSOrganizationalUserLastName)).Value;
             orgUser.UserName = UserName.Create(reader.GetString(FieldNames.fSMSOrganizationalUserUserName)).Value;
@@ -532,13 +531,11 @@ public static partial class Mappers
         RiskAnalysis riskAnalysis = new(riskAnalysisID);
 
         riskAnalysis.Code = reader.GetValue<string>(FieldNames.fRiskAnalysisCode);
-        riskAnalysis.Name = reader.GetValue<string>(FieldNames.fRiskAnalysisName);
-        riskAnalysis.Description = reader.GetValue<string>(FieldNames.fRiskAnalysisDescription);
         riskAnalysis.HazardCode = reader.GetValue<string>(FieldNames.fRiskAnalysisHazardCode);
-        riskAnalysis.Status = reader.GetValue<string>(FieldNames.fRiskAnalysisStatus);
-        riskAnalysis.Stage = reader.GetValue<string>(FieldNames.fRiskAnalysisStage);
+        riskAnalysis.RiskAssessmentCode = reader.GetValue<string>(FieldNames.fRiskAnalysisRiskAssessmentCode);
         riskAnalysis.WorstCredibleOutcome = reader.GetValue<string>(FieldNames.fRiskAnalysisWorstCredibleOutcome);
         riskAnalysis.RootCause = reader.GetValue<string>(FieldNames.fRiskAnalysisRootCause);
+        riskAnalysis.AdditionalComments = reader.GetValue<string>(FieldNames.fRiskAnalysisAdditionalComments);
 
         return riskAnalysis;
     }

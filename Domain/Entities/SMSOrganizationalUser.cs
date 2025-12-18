@@ -10,7 +10,7 @@ public sealed class SMSOrganizationalUser : BaseUser
 {
     public SMSOrganizationalUser(SMSOrganizationalUserID id) : base(id, "SYSTEM", DateTime.UtcNow)
     {
-
+        OrganizationalUserId = id;
     }
     public SMSOrganizationalUserID OrganizationalUserId { get; private set; }
     public string Department { get; set; } = string.Empty;

@@ -51,7 +51,19 @@ public sealed class RiskAnalysisService
             return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NotFound);
         }
     }
-
+    public async Task<Result<RiskAnalysis>> GetRiskAnalysisByHazardIdAsync(HazardID id, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving risk analysis with ID: {Id}", id);
+            return await _dataService.GetRiskAnalysisByHazardIdAsync(id, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving risk analysis with ID: {Id}", id);
+            return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NotFound);
+        }
+    }
     public async Task<Result<List<RiskAnalysis>>> GetAllRiskAnalysisAsync(CancellationToken ct = default)
     {
         try

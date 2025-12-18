@@ -34,6 +34,38 @@ public class GetRiskAnalysisByIdQueryHandler : BaseQueryBundle, IRequestHandler<
     }
 }
 
+public class GetRiskAnalysisByHazardIdQueryHandler : BaseQueryBundle, IRequestHandler<GetRiskAnalysisByHazardIdQuery, Result<RiskAnalysis>>
+{
+    private readonly RiskAnalysisDataService _riskAnalysisDataService;
+    private readonly ILogger<GetRiskAnalysisByHazardIdQueryHandler> _logger;
+
+    public GetRiskAnalysisByHazardIdQueryHandler(RiskAnalysisDataService riskAnalysisDataService, ILogger<GetRiskAnalysisByHazardIdQueryHandler> logger)
+    {
+        _riskAnalysisDataService = riskAnalysisDataService ?? throw new ArgumentNullException(nameof(riskAnalysisDataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<RiskAnalysis>> HandleAsync(GetRiskAnalysisByHazardIdQuery request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing GetRiskAnalysisByIdQuery for ID: {Id}", request.HazardId);
+            var result = await _riskAnalysisDataService.GetRiskAnalysisByHazardIdAsync(request.HazardId, ct).ConfigureAwait(false);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing GetRiskAnalysisByIdQuery for ID: {Id}", request.HazardId);
+            return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NotFound);
+        }
+    }
+}
+
+
+
+
+
+
 public class GetAllRiskAnalysisQueryHandler : BaseQueryBundle, IRequestHandler<GetAllRiskAnalysisQuery, Result<List<RiskAnalysis>>>
 {
     private readonly RiskAnalysisDataService _riskAnalysisDataService;

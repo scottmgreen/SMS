@@ -16,14 +16,14 @@ namespace SMS_Infrastructure.Services;
 /// </summary>
 public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrganizationalUserDataService>
 {
-    private readonly ISMSOrganizationalUserRepository _repository;
+    private readonly SMSOrganizationalUserRepository _repository;
     private readonly ILogger<SMSOrganizationalUserDataService> _logger;
 
     public SMSOrganizationalUserDataService(
         ILogger<SMSOrganizationalUserDataService> logger,
         IServiceScopeFactory serviceScopeFactory,
         IConfiguration configuration,
-        ISMSOrganizationalUserRepository repository)
+        SMSOrganizationalUserRepository repository)
         : base(logger, serviceScopeFactory, configuration)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -80,8 +80,9 @@ public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrgani
     {
         try
         {
+            SMSOrganizationalUserID orgid = new SMSOrganizationalUserID(id);
             _logger.LogInformation("Retrieving SMS Organizational User with ID: {Id}", id);
-            return await _repository.GetByIdAsync(id);
+            return await _repository.GetByIdAsync(orgid);
         }
         catch (Exception ex)
         {
@@ -215,7 +216,7 @@ public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrgani
             }
 
             // Return the updated user
-            return await _repository.GetByIdAsync(user.UserId.Value);
+            return await _repository.GetByIdAsync(new (user.Code));
         }
         catch (Exception ex)
         {

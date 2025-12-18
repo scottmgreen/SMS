@@ -14,7 +14,7 @@ namespace SMS_Infrastructure.Persistence;
 /// <summary>
 /// Repository implementation for SMS Organizational User operations
 /// </summary>
-public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganizationalUserRepository, SMSOrganizationalUser>, ISMSOrganizationalUserRepository
+public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganizationalUserRepository, SMSOrganizationalUser>,ISMSOrganizationalUserRepository
 {
     private readonly ILogger<SMSOrganizationalUserRepository> _logger;
     private readonly string _logHeader;
@@ -259,7 +259,6 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, user.UserId.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserCode, user.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserFirstName, user.FirstName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserLastName, user.LastName.Value));
@@ -268,7 +267,6 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserPosition, user.Position));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserOrganizationLevel, user.OrganizationLevel));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserIsActive, user.IsActive));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserLastLoginDate, user.LastLoginDate));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, user.UpdatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
@@ -365,7 +363,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
         }
     }
 
-    public async Task<Result<bool>> DeleteAsync(BaseUserID userId)
+    public async Task<Result<bool>> DeleteAsync(SMSOrganizationalUserID userId)
     {
         try
         {
@@ -382,7 +380,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, userId));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserCode, userId.Value));
 
             await sql.OpenAsync().ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
@@ -636,8 +634,5 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
         }
     }
 
-    public Task<Result<SMSOrganizationalUser>> GetByIdAsync(BaseUserID id)
-    {
-        throw new NotImplementedException();
-    }
+    
 }

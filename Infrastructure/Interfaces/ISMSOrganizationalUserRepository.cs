@@ -4,11 +4,11 @@ namespace Infrastructure.Interfaces;
 public interface ISMSOrganizationalUserRepository
 {
     Task<Result<SMSOrganizationalUser>> AddAsync(SMSOrganizationalUser user);
-    Task<Result<bool>> DeleteAsync(BaseUserID userId);
+    Task<Result<bool>> DeleteAsync(SMSOrganizationalUserID userId);
     Task<Result<IEnumerable<SMSOrganizationalUser>>> GetActiveUsersAsync();
     Task<Result<IEnumerable<SMSOrganizationalUser>>> GetAllAsync();
     Task<Result<IEnumerable<SMSOrganizationalUser>>> GetByDepartmentAsync(string department);
-    Task<Result<SMSOrganizationalUser>> GetByIdAsync(BaseUserID id);
+    Task<Result<SMSOrganizationalUser>> GetByIdAsync(SMSOrganizationalUserID id);
     Task<Result<IEnumerable<SMSOrganizationalUser>>> GetByPositionAsync(string position);
     Task<Result<IEnumerable<SMSOrganizationalUser>>> GetBySMSOrganizationalUserLevelAsync(string organizationLevel);
     Task<Result<SMSOrganizationalUser>> GetByUserNameAsync(string userName);
