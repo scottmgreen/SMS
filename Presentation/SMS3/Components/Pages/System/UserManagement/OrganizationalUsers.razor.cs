@@ -8,39 +8,157 @@ using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
 using SMS_Domain.Enums;
 using SMS_Shared.Common;
-using SMS3.Components.Pages.System.Components;
 
 namespace SMS3.Components.Pages.System.UserManagement;
 
 public partial class OrganizationalUsers : ComponentBase
 {
+    #region Dependency Injection
+
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<OrganizationalUsers> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private DialogService DialogService { get; set; } = default!;
 
-    // Data Properties
+    #endregion
+
+    #region Properties
+
     private List<SMSOrganizationalUser> OrganizationalUsersList { get; set; } = new();
-    private string? SuccessMessage { get; set; }
-    private string? ErrorMessage { get; set; }
+    private SMSOrganizationalUser? CurrentUser { get; set; }
+    private bool IsSaving { get; set; } = false;
 
-    // Predefined departments
-    private static readonly string[] Departments = 
+    // Grid reference
+    private RadzenDataGrid<SMSOrganizationalUser>? usersGrid;
+
+    private string SuccessMessage { get; set; } = string.Empty;
+    private string ErrorMessage { get; set; } = string.Empty;
+
+    #endregion
+
+    #region Modal Properties
+
+    private bool ShowCreateModal { get; set; } = false;
+    private bool ShowEditModal { get; set; } = false;
+    private bool ShowPasswordModal { get; set; } = false;
+    private bool ShowDeleteModal { get; set; } = false;
+
+    // Create form fields
+    private string NewFirstName { get; set; } = string.Empty;
+    private string NewLastName { get; set; } = string.Empty;
+    private string NewUserName { get; set; } = string.Empty;
+    private string NewPassword { get; set; } = string.Empty;
+    private string NewDepartment { get; set; } = string.Empty;
+    private string NewPosition { get; set; } = string.Empty;
+    private string NewOrganizationLevel { get; set; } = string.Empty;
+    private string NewSMSRole { get; set; } = string.Empty;
+
+    // Edit form fields
+    private string EditFirstName { get; set; } = string.Empty;
+    private string EditLastName { get; set; } = string.Empty;
+    private string EditDepartment { get; set; } = string.Empty;
+    private string EditPosition { get; set; } = string.Empty;
+    private string EditOrganizationLevel { get; set; } = string.Empty;
+    private bool EditIsActive { get; set; } = true;
+
+    // Password change fields
+    private string PasswordUserId { get; set; } = string.Empty;
+    private string PasswordUserDisplayName { get; set; } = string.Empty;
+    private string ConfirmPassword { get; set; } = string.Empty;
+    private string PasswordValidationMessage { get; set; } = string.Empty;
+
+    // Delete confirmation fields
+    private string DeleteUserId { get; set; } = string.Empty;
+    private string DeleteUserDisplayName { get; set; } = string.Empty;
+
+    #endregion
+
+    #region Dropdown Options
+
+    private readonly List<StatusOption> StatusOptions = new()
     {
-        "Operations", "Safety", "Security", "Maintenance", "Administration",
-        "Finance", "IT", "Human Resources", "Facilities", "Emergency Response",
-        "Quality Assurance", "Training", "Communications", "Environmental",
-        "Legal", "Planning", "Engineering", "Customer Service", "Ground Services", "Management"
+        new() { Text = "Active", Value = true },
+        new() { Text = "Inactive", Value = false }
     };
 
-    // Component References
-    private RadzenDataGrid<SMSOrganizationalUser>? usersGrid;
+    private readonly List<DropdownOption> DepartmentOptions = new()
+    {
+        new() { Text = "Operations", Value = "Operations" },
+        new() { Text = "Safety", Value = "Safety" },
+        new() { Text = "Security", Value = "Security" },
+        new() { Text = "Maintenance", Value = "Maintenance" },
+        new() { Text = "Administration", Value = "Administration" },
+        new() { Text = "Finance", Value = "Finance" },
+        new() { Text = "IT", Value = "IT" },
+        new() { Text = "Human Resources", Value = "Human Resources" },
+        new() { Text = "Facilities", Value = "Facilities" },
+        new() { Text = "Emergency Response", Value = "Emergency Response" },
+        new() { Text = "Quality Assurance", Value = "Quality Assurance" },
+        new() { Text = "Training", Value = "Training" },
+        new() { Text = "Communications", Value = "Communications" },
+        new() { Text = "Environmental", Value = "Environmental" },
+        new() { Text = "Legal", Value = "Legal" },
+        new() { Text = "Planning", Value = "Planning" },
+        new() { Text = "Engineering", Value = "Engineering" },
+        new() { Text = "Customer Service", Value = "Customer Service" },
+        new() { Text = "Ground Services", Value = "Ground Services" },
+        new() { Text = "Management", Value = "Management" }
+    };
+
+    private readonly List<DropdownOption> OrganizationLevelOptions = new()
+    {
+        new() { Text = "Staff", Value = "Staff" },
+        new() { Text = "Supervisor", Value = "Supervisor" },
+        new() { Text = "Manager", Value = "Manager" },
+        new() { Text = "Director", Value = "Director" },
+        new() { Text = "Executive", Value = "Executive" }
+    };
+
+    private readonly List<DropdownOption> SMSRoleOptions = new()
+    {
+        new() { Text = "SMS Manager", Value = "SMS Manager" },
+        new() { Text = "Safety Manager", Value = "Safety Manager" },
+        new() { Text = "Quality Assurance Manager", Value = "Quality Assurance Manager" },
+        new() { Text = "Operations Manager", Value = "Operations Manager" },
+        new() { Text = "SMS Coordinator", Value = "SMS Coordinator" },
+        new() { Text = "Safety Officer", Value = "Safety Officer" },
+        new() { Text = "Investigator", Value = "Investigator" },
+        new() { Text = "Analyst", Value = "Analyst" }
+    };
+
+    #endregion
+
+    #region Form Validation Properties
+
+    private bool IsCreateFormValid => 
+        !string.IsNullOrWhiteSpace(NewFirstName) &&
+        !string.IsNullOrWhiteSpace(NewLastName) &&
+        !string.IsNullOrWhiteSpace(NewUserName) &&
+        !string.IsNullOrWhiteSpace(NewPassword) &&
+        !string.IsNullOrWhiteSpace(NewDepartment);
+
+    private bool IsEditFormValid => 
+        !string.IsNullOrWhiteSpace(EditFirstName) &&
+        !string.IsNullOrWhiteSpace(EditLastName) &&
+        !string.IsNullOrWhiteSpace(EditDepartment);
+
+    private bool IsPasswordFormValid => 
+        !string.IsNullOrWhiteSpace(NewPassword) &&
+        !string.IsNullOrWhiteSpace(ConfirmPassword) &&
+        NewPassword == ConfirmPassword &&
+        NewPassword.Length >= 8;
+
+    #endregion
+
+    #region Lifecycle Methods
 
     protected override async Task OnInitializedAsync()
     {
         await LoadDataAsync();
     }
+
+    #endregion
 
     #region Data Loading
 
@@ -68,43 +186,61 @@ public partial class OrganizationalUsers : ComponentBase
 
     #endregion
 
-    #region CRUD Operations
+    #region Create Operations
 
-    private async Task ShowCreateDialog()
+    private void OpenCreateModal()
     {
-        var createUser = new CreateOrganizationalUserModel();
-        
-        var result = await DialogService.OpenAsync<CreateOrganizationalUserDialog>("Create Organizational User",
-            new Dictionary<string, object>
-            {
-                { "Model", createUser },
-                { "Departments", Departments },
-                { "OrganizationLevels", GetOrganizationLevels() }
-            },
-            new DialogOptions { Width = "800px", Height = "600px", Resizable = true, Draggable = true });
-
-        if (result is CreateOrganizationalUserModel model && model != null)
-        {
-            await CreateUser(model);
-        }
+        NewFirstName = string.Empty;
+        NewLastName = string.Empty;
+        NewUserName = string.Empty;
+        NewPassword = string.Empty;
+        NewDepartment = string.Empty;
+        NewPosition = string.Empty;
+        NewOrganizationLevel = string.Empty;
+        NewSMSRole = string.Empty;
+        ShowCreateModal = true;
     }
 
-    private async Task CreateUser(CreateOrganizationalUserModel model)
+    private void CloseCreateModal()
     {
+        ShowCreateModal = false;
+        NewFirstName = string.Empty;
+        NewLastName = string.Empty;
+        NewUserName = string.Empty;
+        NewPassword = string.Empty;
+        NewDepartment = string.Empty;
+        NewPosition = string.Empty;
+        NewOrganizationLevel = string.Empty;
+        NewSMSRole = string.Empty;
+    }
+
+    private async Task CreateUser()
+    {
+        if (!IsCreateFormValid)
+        {
+            ShowErrorNotification("Please fill in all required fields.");
+            return;
+        }
+
         try
         {
+            IsSaving = true;
+            StateHasChanged();
+
             // Create user entity
-            var userId = new SMSOrganizationalUserID($"OU-0000");
+            var userCode = $"OU-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
+            var userId = new SMSOrganizationalUserID(userCode);
             var user = new SMSOrganizationalUser(userId)
             {
-                Code = userId.Value,
-                FirstName = FirstName.Create(model.FirstName).Value,
-                LastName = LastName.Create(model.LastName).Value,
-                UserName = UserName.Create(model.UserName).Value,
-                Password = Password.Create(model.Password).Value,
-                Department = model.Department,
-                Position = model.Position,
-                OrganizationLevel = model.OrganizationLevel,
+                Code = userCode,
+                FirstName = FirstName.Create(NewFirstName).Value,
+                LastName = LastName.Create(NewLastName).Value,
+                UserName = UserName.Create(NewUserName).Value,
+                Password = Password.Create(NewPassword).Value,
+                Department = NewDepartment,
+                Position = NewPosition,
+                OrganizationLevel = NewOrganizationLevel,
+                SMSRole = NewSMSRole,
                 IsActive = true
             };
 
@@ -113,8 +249,10 @@ public partial class OrganizationalUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification($"Organizational user '{model.FirstName} {model.LastName}' created successfully.");
+                ShowSuccessNotification($"Organizational user '{NewFirstName} {NewLastName}' created successfully.");
+                CloseCreateModal();
                 await LoadDataAsync();
+                await usersGrid?.Reload();
             }
             else
             {
@@ -126,41 +264,28 @@ public partial class OrganizationalUsers : ComponentBase
             Logger.LogError(ex, "Error creating organizational user");
             ShowErrorNotification("Error creating organizational user. Please try again.");
         }
-    }
-
-    private async Task ShowEditDialog(SMSOrganizationalUser user)
-    {
-        var editUser = new EditOrganizationalUserModel
+        finally
         {
-            UserId = user.Code,
-            FirstName = user.FirstName?.Value ?? "",
-            LastName = user.LastName?.Value ?? "",
-            Department = user.Department,
-            Position = user.Position,
-            OrganizationLevel = user.OrganizationLevel,
-            IsActive = user.IsActive
-        };
-        
-        var result = await DialogService.OpenAsync<EditOrganizationalUserDialog>("Edit Organizational User",
-            new Dictionary<string, object>
-            {
-                { "Model", editUser },
-                { "Departments", Departments },
-                { "OrganizationLevels", GetOrganizationLevels() }
-            },
-            new DialogOptions { Width = "800px", Height = "600px", Resizable = true, Draggable = true });
-
-        if (result is EditOrganizationalUserModel model && model != null)
-        {
-            await UpdateUser(model);
+            IsSaving = false;
+            StateHasChanged();
         }
     }
 
-    private async Task UpdateUser(EditOrganizationalUserModel model)
+    #endregion
+
+    #region Edit Operations
+
+    private async Task EditUser(string userId)
     {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            ShowErrorNotification("User ID is required.");
+            return;
+        }
+
         try
         {
-            var getUserQuery = new GetSMSOrganizationalUserByIdQuery(model.UserId);
+            var getUserQuery = new GetSMSOrganizationalUserByIdQuery(userId);
             var userResult = await Mediator.SendAsync(getUserQuery, CancellationToken.None);
             
             if (userResult.IsFailure)
@@ -169,21 +294,68 @@ public partial class OrganizationalUsers : ComponentBase
                 return;
             }
 
-            var user = userResult.Value;
-            user.FirstName = FirstName.Create(model.FirstName).Value;
-            user.LastName = LastName.Create(model.LastName).Value;
-            user.Department = model.Department;
-            user.Position = model.Position;
-            user.OrganizationLevel = model.OrganizationLevel;
-            user.IsActive = model.IsActive;
+            CurrentUser = userResult.Value;
+            
+            // Set edit form values
+            EditFirstName = CurrentUser.FirstName?.Value ?? string.Empty;
+            EditLastName = CurrentUser.LastName?.Value ?? string.Empty;
+            EditDepartment = CurrentUser.Department ?? string.Empty;
+            EditPosition = CurrentUser.Position ?? string.Empty;
+            EditOrganizationLevel = CurrentUser.OrganizationLevel ?? string.Empty;
+            EditIsActive = CurrentUser.IsActive;
+            
+            // Open edit modal
+            ShowEditModal = true;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading user for edit: {UserId}", userId);
+            ShowErrorNotification("Error loading user. Please try again.");
+        }
+    }
 
-            var updateCommand = new UpdateSMSOrganizationalUserCommand(user);
+    private void CloseEditModal()
+    {
+        ShowEditModal = false;
+        CurrentUser = null;
+        EditFirstName = string.Empty;
+        EditLastName = string.Empty;
+        EditDepartment = string.Empty;
+        EditPosition = string.Empty;
+        EditOrganizationLevel = string.Empty;
+        EditIsActive = true;
+    }
+
+    private async Task UpdateUser()
+    {
+        if (CurrentUser == null || !IsEditFormValid)
+        {
+            ShowErrorNotification("Please fill in all required fields.");
+            return;
+        }
+
+        try
+        {
+            IsSaving = true;
+            StateHasChanged();
+
+            // Update user properties
+            CurrentUser.FirstName = FirstName.Create(EditFirstName).Value;
+            CurrentUser.LastName = LastName.Create(EditLastName).Value;
+            CurrentUser.Department = EditDepartment;
+            CurrentUser.Position = EditPosition;
+            CurrentUser.OrganizationLevel = EditOrganizationLevel;
+            CurrentUser.IsActive = EditIsActive;
+
+            var updateCommand = new UpdateSMSOrganizationalUserCommand(CurrentUser);
             var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification($"Organizational user '{model.FirstName} {model.LastName}' updated successfully.");
+                ShowSuccessNotification($"Organizational user '{EditFirstName} {EditLastName}' updated successfully.");
+                CloseEditModal();
                 await LoadDataAsync();
+                await usersGrid?.Reload();
             }
             else
             {
@@ -192,50 +364,13 @@ public partial class OrganizationalUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error updating organizational user: {UserId}", model.UserId);
+            Logger.LogError(ex, "Error updating organizational user: {UserId}", CurrentUser.Code);
             ShowErrorNotification("Error updating organizational user. Please try again.");
         }
-    }
-
-    private async Task ShowDeleteDialog(string userId, string displayName)
-    {
-        var result = await DialogService.Confirm($"Are you sure you want to delete the user '{displayName}'?", 
-            "Confirm Delete", 
-            new ConfirmOptions 
-            { 
-                OkButtonText = "Delete", 
-                CancelButtonText = "Cancel",
-                AutoFocusFirstElement = true
-            });
-
-        if (result == true)
+        finally
         {
-            await DeleteUser(userId);
-        }
-    }
-
-    private async Task DeleteUser(string userId)
-    {
-        try
-        {
-            var organizationalUserId = new SMSOrganizationalUserID(userId);
-            var command = new DeleteSMSOrganizationalUserCommand(organizationalUserId);
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
-
-            if (result.IsSuccess)
-            {
-                ShowSuccessNotification("Organizational user deleted successfully.");
-                await LoadDataAsync();
-            }
-            else
-            {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to delete organizational user.");
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error deleting organizational user: {UserId}", userId);
-            ShowErrorNotification("Error deleting organizational user. Please try again.");
+            IsSaving = false;
+            StateHasChanged();
         }
     }
 
@@ -243,32 +378,59 @@ public partial class OrganizationalUsers : ComponentBase
 
     #region Password Management
 
-    private async Task ShowPasswordDialog(string userId, string displayName)
+    private void OpenPasswordModal(string userId, string displayName)
     {
-        var result = await DialogService.OpenAsync<ChangePasswordDialog>("Change Password",
-            new Dictionary<string, object>
-            {
-                { "UserId", userId },
-                { "DisplayName", displayName }
-            },
-            new DialogOptions { Width = "400px", Height = "300px", Resizable = true, Draggable = true });
-
-        if (result is string newPassword && !string.IsNullOrWhiteSpace(newPassword))
-        {
-            await UpdatePassword(userId, newPassword);
-        }
+        PasswordUserId = userId;
+        PasswordUserDisplayName = displayName;
+        NewPassword = string.Empty;
+        ConfirmPassword = string.Empty;
+        PasswordValidationMessage = string.Empty;
+        ShowPasswordModal = true;
     }
 
-    private async Task UpdatePassword(string userId, string newPassword)
+    private void ClosePasswordModal()
     {
+        ShowPasswordModal = false;
+        PasswordUserId = string.Empty;
+        PasswordUserDisplayName = string.Empty;
+        NewPassword = string.Empty;
+        ConfirmPassword = string.Empty;
+        PasswordValidationMessage = string.Empty;
+    }
+
+    private async Task UpdatePassword()
+    {
+        // Validate passwords
+        if (string.IsNullOrWhiteSpace(NewPassword) || string.IsNullOrWhiteSpace(ConfirmPassword))
+        {
+            PasswordValidationMessage = "Both password fields are required.";
+            return;
+        }
+
+        if (NewPassword != ConfirmPassword)
+        {
+            PasswordValidationMessage = "Passwords do not match.";
+            return;
+        }
+
+        if (NewPassword.Length < 8)
+        {
+            PasswordValidationMessage = "Password must be at least 8 characters long.";
+            return;
+        }
+
         try
         {
-            var command = new UpdateSMSOrganizationalUserPasswordCommand(userId, newPassword);
+            IsSaving = true;
+            StateHasChanged();
+
+            var command = new UpdateSMSOrganizationalUserPasswordCommand(PasswordUserId, NewPassword);
             var result = await Mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
                 ShowSuccessNotification("Password updated successfully.");
+                ClosePasswordModal();
             }
             else
             {
@@ -277,14 +439,88 @@ public partial class OrganizationalUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error updating password: {UserId}", userId);
+            Logger.LogError(ex, "Error updating password: {UserId}", PasswordUserId);
             ShowErrorNotification("Error updating password. Please try again.");
+        }
+        finally
+        {
+            IsSaving = false;
+            StateHasChanged();
         }
     }
 
     #endregion
 
-    #region UI Helper Methods
+    #region Delete Operations
+
+    private void ConfirmDelete(string userId, string displayName)
+    {
+        DeleteUserId = userId;
+        DeleteUserDisplayName = displayName;
+        ShowDeleteModal = true;
+    }
+
+    private void CloseDeleteModal()
+    {
+        ShowDeleteModal = false;
+        DeleteUserId = string.Empty;
+        DeleteUserDisplayName = string.Empty;
+    }
+
+    private async Task DeleteUser()
+    {
+        if (string.IsNullOrWhiteSpace(DeleteUserId))
+        {
+            ShowErrorNotification("User ID is required for deletion.");
+            return;
+        }
+
+        try
+        {
+            IsSaving = true;
+            StateHasChanged();
+
+            var organizationalUserId = new SMSOrganizationalUserID(DeleteUserId);
+            var command = new DeleteSMSOrganizationalUserCommand(organizationalUserId);
+            var result = await Mediator.SendAsync(command, CancellationToken.None);
+
+            if (result.IsSuccess)
+            {
+                ShowSuccessNotification("Organizational user deleted successfully.");
+                CloseDeleteModal();
+                await LoadDataAsync();
+                await usersGrid?.Reload();
+            }
+            else
+            {
+                ShowErrorNotification(result.Error?.Message ?? "Failed to delete organizational user.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error deleting organizational user: {UserId}", DeleteUserId);
+            ShowErrorNotification("Error deleting organizational user. Please try again.");
+        }
+        finally
+        {
+            IsSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    #endregion
+
+    #region Group Management (Placeholder)
+
+    private async Task ManageGroups(string userId, string displayName)
+    {
+        // TODO: Implement group management modal
+        ShowInfoNotification($"Group management for {displayName} will be implemented soon.");
+    }
+
+    #endregion
+
+    #region Utility Methods
 
     private async Task ExportUsers()
     {
@@ -304,38 +540,9 @@ public partial class OrganizationalUsers : ComponentBase
         };
     }
 
-    private string GetOrganizationalRoleDisplay(SMSUserRole role)
-    {
-        return role.ToString().Replace("_", " ");
-    }
-
-    private string GetOrganizationLevelDisplay(string level)
-    {
-        return level?.Replace("_", " ") ?? "No Level";
-    }
-
-    private List<string> GetOrganizationLevels()
-    {
-        return new List<string>
-        {
-            "Staff", "Supervisor", "Manager", "Director", "Executive"
-        };
-    }
-
     #endregion
 
-    #region Notifications
-
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
-    }
+    #region Notification Methods
 
     private void ShowErrorNotification(string message)
     {
@@ -345,6 +552,17 @@ public partial class OrganizationalUsers : ComponentBase
             Summary = "Error",
             Detail = message,
             Duration = 6000
+        });
+    }
+
+    private void ShowSuccessNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Success",
+            Detail = message,
+            Duration = 4000
         });
     }
 
@@ -361,28 +579,18 @@ public partial class OrganizationalUsers : ComponentBase
 
     #endregion
 
-    #region Models
+    #region Helper Classes
 
-    public class CreateOrganizationalUserModel
+    public class StatusOption
     {
-        public string FirstName { get; set; } = "";
-        public string LastName { get; set; } = "";
-        public string UserName { get; set; } = "";
-        public string Password { get; set; } = "";
-        public string Department { get; set; } = "";
-        public string Position { get; set; } = "";
-        public string OrganizationLevel { get; set; } = "";
+        public string Text { get; set; } = string.Empty;
+        public bool Value { get; set; }
     }
 
-    public class EditOrganizationalUserModel
+    public class DropdownOption
     {
-        public string UserId { get; set; } = "";
-        public string FirstName { get; set; } = "";
-        public string LastName { get; set; } = "";
-        public string Department { get; set; } = "";
-        public string Position { get; set; } = "";
-        public string OrganizationLevel { get; set; } = "";
-        public bool IsActive { get; set; } = true;
+        public string Text { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
     }
 
     #endregion

@@ -89,12 +89,13 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, applicationGroup.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, applicationGroup.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupName, applicationGroup.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupDescription, applicationGroup.Description ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupIsActive, applicationGroup.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, applicationGroup.UpdatedBy ?? "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, applicationGroup.UpdatedDate ?? DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter("@pRowsAffected",0, null));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -129,8 +130,9 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, groupCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, groupCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter("@pRowsAffected", 0,null));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -300,7 +302,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserCode, userCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupUserCode, userCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupCode, groupCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedBy, assignedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedDate, DateTime.UtcNow));
@@ -341,9 +343,10 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserCode, userCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupUserCode, userCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupCode, groupCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter("@pRemovedBy", "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter("@pRowsAffected", 0,null));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -378,8 +381,8 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserCode, userCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupUserCode, userCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupClearedBy, "SYSTEM"));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -452,6 +455,115 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
         {
             _logger.LogInfrastructureGetItemsError($"{_logheader} {ex.Message}", null);
             return Result<(IEnumerable<SMSApplicationGroup>, Dictionary<string, List<SMSApplicationUser>>)>.Failure<(IEnumerable<SMSApplicationGroup>, Dictionary<string, List<SMSApplicationUser>>)>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+
+    /// <summary>
+    /// Gets users by application group code
+    /// </summary>
+    public async Task<Result<IEnumerable<SMSApplicationUser>>> GetUsersByGroupCodeAsync(string groupCode, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(groupCode))
+            {
+                return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.SMSApplicationGroupError.CodeRequired);
+            }
+
+            _logger.LogInfrastructureGetItems($"{_logheader} {StoredProcs.pr_SMSApplicationUserGroup_GetUsersByGroup} GroupCode:{groupCode}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_SMSApplicationUserGroup_GetUsersByGroup, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupCode, groupCode));
+
+            List<SMSApplicationUser> users = new();
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var user = Mappers.MapToSMSApplicationUser(reader);
+                    users.Add(user);
+                }
+            }
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<IEnumerable<SMSApplicationUser>>.Success((IEnumerable<SMSApplicationUser>)users);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemsError($"{_logheader} {ex.Message}", null);
+            return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.SMSApplicationGroupError.NotFound);
+        }
+    }
+
+    /// <summary>
+    /// Gets an SMS application group by code with its members
+    /// </summary>
+    public async Task<Result<(SMSApplicationGroup Group, List<SMSApplicationUser> Members)>> GetByCodeWithMembersAsync(string groupCode, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(groupCode))
+            {
+                return Result<(SMSApplicationGroup, List<SMSApplicationUser>)>.Failure<(SMSApplicationGroup, List<SMSApplicationUser>)>(DomainErrors.SMSApplicationGroupError.CodeRequired);
+            }
+
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_SMSApplicationGroup_GetByCode} with members Code:{groupCode}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_SMSApplicationGroup_GetByCode, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, groupCode));
+            //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, "SYSTEM"));
+
+            SMSApplicationGroup? group = null;
+            List<SMSApplicationUser> members = new();
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            
+            using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
+            {
+                // First dataset: Group details
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    group = Mappers.MapToSMSApplicationGroup(reader);
+                }
+
+                // Move to second dataset: Group members using existing mapper - NO CHANGES NEEDED!
+                if (await reader.NextResultAsync().ConfigureAwait(false))
+                {
+                    while (await reader.ReadAsync().ConfigureAwait(false))
+                    {
+                        var user = Mappers.MapToSMSApplicationUser(reader);
+                        members.Add(user);
+                    }
+                }
+            }
+            
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            if (group is not null)
+            {
+                return Result<(SMSApplicationGroup, List<SMSApplicationUser>)>.Success((group, members));
+            }
+            else
+            {
+                return Result<(SMSApplicationGroup, List<SMSApplicationUser>)>.Failure<(SMSApplicationGroup, List<SMSApplicationUser>)>(DomainErrors.SMSApplicationGroupError.NotFound);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemError($"{_logheader} {ex.Message}", null);
+            return Result<(SMSApplicationGroup, List<SMSApplicationUser>)>.Failure<(SMSApplicationGroup, List<SMSApplicationUser>)>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 }

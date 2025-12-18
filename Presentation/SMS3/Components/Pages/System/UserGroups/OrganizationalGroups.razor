@@ -1,25 +1,33 @@
-@page "/System/UserGroups/StakeholderGroups"
+@page "/System/UserGroups/OrganizationalGroups"
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
 @using SMS3.Components.Shared
 @using Radzen
 @using Radzen.Blazor
 
-<PageTitle>Stakeholder Group Management - SMS3</PageTitle>
+<PageTitle>Organizational Group Management - SMS3</PageTitle>
 
 <!-- SMS Page Header -->
-<PageHeader Title="Stakeholder Group Management"
-           Subtitle="Manage SMS Stakeholder User Groups "
+<PageHeader Title="Organizational Group Management"
+           Subtitle="Manage SMS Organizational User Groups "
            Icon="fas fa-users-cog">
+    @* <AdditionalContent>
+        <div class="d-flex gap-2">
+            <RadzenButton Text="Back to Dashboard" Icon="arrow_back" ButtonStyle="ButtonStyle.Light"
+                          Click="@(() => Navigation.NavigateTo("/System/UserManagement"))" />
+            <RadzenButton Text="Add Group" Icon="add" ButtonStyle="ButtonStyle.Success"
+                          Click="@OpenCreateModal" />
+        </div>
+    </AdditionalContent> *@
 </PageHeader>
 
 <!-- Success/Error Messages -->
 @if (!string.IsNullOrEmpty(SuccessMessage))
 {
-    <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" class="mb-3">
+    @* <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" class="mb-3">
         <RadzenIcon Icon="check_circle" Style="margin-right: 0.5rem;" />
         @SuccessMessage
-    </RadzenAlert>
+    </RadzenAlert> *@
 }
 
 @if (!string.IsNullOrEmpty(ErrorMessage))
@@ -29,6 +37,112 @@
         @ErrorMessage
     </RadzenAlert>
 }
+
+<!-- Groups Display -->
+<RadzenCard>
+    <RadzenCard>
+        <div class="d-flex justify-content-between align-items-center w-100">
+            <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">
+                <RadzenIcon Icon="list" Style="margin-right: 0.5rem;" />
+                Organizational Groups (@SMSOrganizationalGroups.Count)
+            </RadzenText>
+            <div class="d-flex gap-2">
+                <RadzenButton Text="Export" Icon="download" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" />
+                <RadzenButton Text="Add Group" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                              Click="@OpenCreateModal" />
+            </div>
+        </div>
+    </RadzenCard>
+    <RadzenCard>
+        @if (SMSOrganizationalGroups.Any())
+        {
+            <RadzenDataGrid @ref="groupsGrid" Data="@SMSOrganizationalGroups" TItem="SMSOrganizationalGroup" 
+                            AllowFiltering="true" AllowColumnResize="true" AllowSorting="true" 
+                            PageSize="10" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" 
+                            ShowPagingSummary="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                
+                <Columns>
+                    <RadzenDataGridColumn TItem="SMSOrganizationalGroup" Property="Code" Title="Code" Width="200px" Sortable="true" Filterable="true">
+                        <Template Context="group">
+                            <div class="d-flex align-items-center">
+                           
+                                <strong> @group.Code </strong>
+                           
+                            </div>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="SMSOrganizationalGroup" Property="Name" Title="Group Name" Width="200px" Sortable="true" Filterable="true">
+                        <Template Context="group">
+                            <div class="d-flex align-items-center">
+                                
+                                <strong>@group.Name</strong>
+
+                            </div>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="SMSOrganizationalGroup" Property="Description" Title="Description" Sortable="true" Filterable="true">
+                        <Template Context="group">
+                            @if (!string.IsNullOrEmpty(group.Description))
+                            {
+                                <span>@group.Description</span>
+                            }
+                            else
+                            {
+                                <em style="color: var(--rz-text-secondary-color);">No description</em>
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    
+
+                    <RadzenDataGridColumn TItem="SMSOrganizationalGroup" Property="IsActive" Title="Status" Width="150px" Sortable="true" Filterable="true">
+                        <Template Context="group">
+                            <RadzenBadge Text="@(group.IsActive ? "Active" : "Inactive")" 
+                                         BadgeStyle="@(group.IsActive ? BadgeStyle.Success : BadgeStyle.Secondary)" />
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="SMSOrganizationalGroup" Property="CreatedDate" Title="Created" Width="140px" Sortable="true">
+                        <Template Context="group">
+                            <div style="font-size: 0.9em;">
+                                <div>@group.CreatedDate?.ToString("MM/dd/yyyy")</div>
+                                
+                            </div>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="SMSOrganizationalGroup" Title="Actions" Width="180px" Sortable="false" Filterable="false">
+                        <Template Context="group">
+                            <div class="d-flex gap-1">
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall"
+                                              Click="@(() => EditGroup(group.Code))" title="Edit Group" />
+                                <RadzenButton Icon="people" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.ExtraSmall"
+                                              Click="@(() => ManageMembers(group.Code))" title="Manage Members" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
+                                              Click="@(() => ConfirmDelete(group.Code, group.Name))" title="Delete Group" />
+                            </div>
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        }
+        else
+        {
+            <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 3rem;">
+                <RadzenIcon Icon="groups" Style="font-size: 4rem; color: var(--rz-text-disabled-color);" />
+                <RadzenText TextStyle="TextStyle.H5" Style="color: var(--rz-text-disabled-color);">
+                    No Organizational Groups Found
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-disabled-color);">
+                    Click "Add Group" to create your first organizational group.
+                </RadzenText>
+                <RadzenButton Text="Add First Group" Icon="add" ButtonStyle="ButtonStyle.Success"
+                              Click="@OpenCreateModal" />
+            </RadzenStack>
+        }
+    </RadzenCard>
+</RadzenCard>
 
 <!-- Create Group Modal -->
 @if (ShowCreateModal)
@@ -40,7 +154,7 @@
                 <div class="modal-header" style="background-color: #212e61; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
                     <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
                         <RadzenIcon Icon="add" Style="margin-right: 0.5rem;" />
-                        Create Stakeholder Group
+                        Create Organizational Group
                     </RadzenText>
                 </div>
                 
@@ -48,7 +162,7 @@
                 <RadzenStack Gap="1rem">
                     <RadzenFormField Text="Group Name *" Variant="Variant.Outlined">
                         <RadzenTextBox @bind-Value="@NewGroupName" 
-                                       Placeholder="Enter group name (e.g., Airlines, Ground Handlers)" 
+                                       Placeholder="Enter group name (e.g., Executive Leadership, SMS Core Team)" 
                                        Style="width: 100%;" />
                     </RadzenFormField>
                     
@@ -57,11 +171,23 @@
                                         Placeholder="Optional description of the group's purpose or responsibilities"
                                         Style="width: 100%;" />
                     </RadzenFormField>
+
+                    <RadzenFormField Text="Group Type" Variant="Variant.Outlined">
+                        <RadzenDropDown @bind-Value="@NewGroupType" Data="@GroupTypeOptions" 
+                                        TextProperty="Text" ValueProperty="Value" 
+                                        Style="width: 100%;" Placeholder="Select group type"/>
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Authority Level" Variant="Variant.Outlined">
+                        <RadzenDropDown @bind-Value="@NewAuthorityLevel" Data="@AuthorityLevelOptions" 
+                                        TextProperty="Text" ValueProperty="Value" 
+                                        Style="width: 100%;" Placeholder="Select authority level"/>
+                    </RadzenFormField>
                     
                     <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
                         <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
-                        Stakeholder groups help organize external users by organization or function. 
-                        Groups can be used for access control and notifications.
+                        Organizational groups help structure internal users by department, SMS role, or committee function. 
+                        Groups define authority levels and approval workflows.
                     </RadzenAlert>
                 </RadzenStack>
                 
@@ -87,7 +213,7 @@
                 <div class="modal-header" style="background-color: #212e61; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
                     <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
                         <RadzenIcon Icon="edit" Style="margin-right: 0.5rem;" />
-                        Edit Stakeholder Group
+                        Edit Organizational Group
                     </RadzenText>
                 </div>
                 
@@ -109,6 +235,18 @@
                                         Placeholder="Optional description of the group's purpose or responsibilities"
                                         Style="width: 100%;" />
                     </RadzenFormField>
+
+                    <RadzenFormField Text="Group Type" Variant="Variant.Outlined">
+                        <RadzenDropDown @bind-Value="@EditGroupType" Data="@GroupTypeOptions" 
+                                        TextProperty="Text" ValueProperty="Value" 
+                                        Style="width: 100%;" />
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Authority Level" Variant="Variant.Outlined">
+                        <RadzenDropDown @bind-Value="@EditAuthorityLevel" Data="@AuthorityLevelOptions" 
+                                        TextProperty="Text" ValueProperty="Value" 
+                                        Style="width: 100%;" />
+                    </RadzenFormField>
                     
                     <RadzenFormField Text="Status" Variant="Variant.Outlined">
                         <RadzenDropDown @bind-Value="@EditIsActive" Data="@StatusOptions" 
@@ -126,7 +264,7 @@
                 </RadzenStack>
                 
                 <!-- Modal Footer -->
-                <div class="d-flex justify-content-end gap="2 mt-3">
+                <div class="d-flex justify-content-end gap-2 mt-3">
                     <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseEditModal" />
                     <RadzenButton Text="Update Group" Icon="save" ButtonStyle="ButtonStyle.Primary" 
                                   Click="@UpdateGroup" Disabled="@(string.IsNullOrWhiteSpace(EditGroupName) || IsSaving)"
@@ -174,7 +312,7 @@
                                                         @member.FirstName.Value @member.LastName.Value
                                                     </RadzenText>
                                                     <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
-                                                        @member.UserName.Value (@member.Code)
+                                                        @member.Position (@member.Code)
                                                     </RadzenText>
                                                 </div>
                                                 <RadzenButton Icon="person_remove" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
@@ -220,8 +358,8 @@
                                                         <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0;">
                                                             @user.FirstName.Value @user.LastName.Value
                                                         </RadzenText>
-                                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-textsecondary-color);">
-                                                            @user.UserName.Value (@user.Code)
+                                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                                            @user.Position (@user.Code)
                                                         </RadzenText>
                                                     </div>
                                                 </div>
@@ -287,112 +425,6 @@
         </div>
     </div>
 }
-
-<!-- Groups Display -->
-<RadzenCard>
-    <RadzenCard>
-        <div class="d-flex justify-content-between align-items-center w-100">
-            <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">
-                <RadzenIcon Icon="list" Style="margin-right: 0.5rem;" />
-                Stakeholder Groups (@SMSStakeholderGroups.Count)
-            </RadzenText>
-            <div class="d-flex gap-2">
-                <RadzenButton Text="Export" Icon="download" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" />
-                <RadzenButton Text="Add Group" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
-                              Click="@OpenCreateModal" />
-            </div>
-        </div>
-    </RadzenCard>
-    <RadzenCard>
-        @if (SMSStakeholderGroups.Any())
-        {
-            <RadzenDataGrid @ref="groupsGrid" Data="@SMSStakeholderGroups" TItem="SMSStakeholderGroup" 
-                            AllowFiltering="true" AllowColumnResize="true" AllowSorting="true" 
-                            PageSize="10" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" 
-                            ShowPagingSummary="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
-                
-                <Columns>
-                    <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="Code" Title="Code" Width="200px" Sortable="true" Filterable="true">
-                        <Template Context="group">
-                            <div class="d-flex align-items-center">
-                           
-                                <strong> @group.Code </strong>
-                           
-                            </div>
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="Name" Title="Group Name" Width="200px" Sortable="true" Filterable="true">
-                        <Template Context="group">
-                            <div class="d-flex align-items-center">
-                                
-                                <strong>@group.Name</strong>
-
-                            </div>
-                        </Template>
-                    </RadzenDataGridColumn>
-
-                    <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="Description" Title="Description" Sortable="true" Filterable="true">
-                        <Template Context="group">
-                            @if (!string.IsNullOrEmpty(group.Description))
-                            {
-                                <span>@group.Description</span>
-                            }
-                            else
-                            {
-                                <em style="color: var(--rz-text-secondary-color);">No description</em>
-                            }
-                        </Template>
-                    </RadzenDataGridColumn>
-
-                    
-
-                    <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="IsActive" Title="Status" Width="150px" Sortable="true" Filterable="true">
-                        <Template Context="group">
-                            <RadzenBadge Text="@(group.IsActive ? "Active" : "Inactive")" 
-                                         BadgeStyle="@(group.IsActive ? BadgeStyle.Success : BadgeStyle.Secondary)" />
-                        </Template>
-                    </RadzenDataGridColumn>
-
-                    <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="CreatedDate" Title="Created" Width="140px" Sortable="true">
-                        <Template Context="group">
-                            <div style="font-size: 0.9em;">
-                                <div>@group.CreatedDate?.ToString("MM/dd/yyyy")</div>
-                                
-                            </div>
-                        </Template>
-                    </RadzenDataGridColumn>
-
-                    <RadzenDataGridColumn TItem="SMSStakeholderGroup" Title="Actions" Width="180px" Sortable="false" Filterable="false">
-                        <Template Context="group">
-                            <div class="d-flex gap-1">
-                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall"
-                                              Click="@(() => EditGroup(group.Code))" title="Edit Group" />
-                                <RadzenButton Icon="people" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.ExtraSmall"
-                                              Click="@(() => ManageMembers(group.Code))" title="Manage Members" />
-                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
-                                              Click="@(() => ConfirmDelete(group.Code, group.Name))" title="Delete Group" />
-                            </div>
-                        </Template>
-                    </RadzenDataGridColumn>
-                </Columns>
-            </RadzenDataGrid>
-        }
-        else
-        {
-            <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 3rem;">
-                <RadzenIcon Icon="groups" Style="font-size: 4rem; color: var(--rz-text-disabled-color);" />
-                <RadzenText TextStyle="TextStyle.H5" Style="color: var(--rz-text-disabled-color);">
-                    No Stakeholder Groups Found
-                </RadzenText>
-                <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-disabled-color);">
-                    Click "Add Group" to create your first stakeholder group.
-                </RadzenText>
-                <RadzenButton Text="Add First Group" Icon="add" ButtonStyle="ButtonStyle.Success"
-                              Click="@OpenCreateModal" />
-            </RadzenStack>
-        }
-    </RadzenCard>
-</RadzenCard>
 
 <style>
 .group-card {

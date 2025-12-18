@@ -124,10 +124,6 @@ public static class DomainErrors
         public static Error MinMembersRequired => new Error("SMSApplicationGroup.MinMembersRequired", "The stakeholder group must have at least one member.");
     }
 
-
-
-
-
     /// <summary>
     /// Contains SMS organizational user errors.
     /// </summary>
@@ -691,6 +687,7 @@ public static class DomainErrors
     {
         public static Error UnProcessableRequest => new Error("General.UnProcessableRequest", "The server could not process the request.");
         public static Error ServerError => new Error("General.ServerError", "The server encountered an unrecoverable error.");
+        public static Error InvalidParameters => new Error("General.InvalidParameters", "One or more parameters are invalid or missing.");
     }
 
     /// <summary>
@@ -764,5 +761,66 @@ public static class DomainErrors
         public static Error AlreadyExists => new Error("ReportValidation.AlreadyExists", "A validation for this report already exists.");
         public static Error StatusUpdateFailed => new Error("ReportValidation.StatusUpdateFailed", "Failed to update the validation status.");
         public static Error WorkflowViolation => new Error("ReportValidation.WorkflowViolation", "The validation operation violates workflow rules.");
+    }
+
+    /// <summary>
+    /// Contains SMS organizational group errors.
+    /// </summary>
+    public static class SMSOrganizationalGroupError
+    {
+        public static Error NullOrEmpty => new Error("SMSOrganizationalGroup.NullOrEmpty", "The SMS Organizational Group is required.");
+        public static Error CodeRequired => new Error("SMSOrganizationalGroup.CodeRequired", "The SMS Organizational Group Code is required.");
+        public static Error GroupNameRequired => new Error("SMSOrganizationalGroup.GroupNameRequired", "The Group Name is required.");
+        public static Error CreatedByRequired => new Error("SMSOrganizationalGroup.CreatedByRequired", "The Created By field is required.");
+        public static Error InvalidCode => new Error("SMSOrganizationalGroup.InvalidCode", "The SMS Organizational Group Code is invalid.");
+        public static Error InvalidGroupName => new Error("SMSOrganizationalGroup.InvalidGroupName", "The Group Name is invalid or too short.");
+        public static Error InvalidDescription => new Error("SMSOrganizationalGroup.InvalidDescription", "The Description exceeds maximum length.");
+        public static Error GroupNameTooLong => new Error("SMSOrganizationalGroup.GroupNameTooLong", "The Group Name cannot exceed 255 characters.");
+        public static Error DescriptionTooLong => new Error("SMSOrganizationalGroup.DescriptionTooLong", "The Description cannot exceed 1000 characters.");
+        public static Error InvalidGroupType => new Error("SMSOrganizationalGroup.InvalidGroupType", "The Group Type is invalid.");
+        public static Error InvalidAuthorityLevel => new Error("SMSOrganizationalGroup.InvalidAuthorityLevel", "The Authority Level is invalid.");
+        public static Error NotFound => new Error("SMSOrganizationalGroup.NotFound", "The SMS Organizational Group was not found.");
+        public static Error CreateFailed => new Error("SMSOrganizationalGroup.CreateFailed", "Failed to create the SMS Organizational Group.");
+        public static Error UpdateFailed => new Error("SMSOrganizationalGroup.UpdateFailed", "Failed to update the SMS Organizational Group.");
+        public static Error DeleteFailed => new Error("SMSOrganizationalGroup.DeleteFailed", "Failed to delete the SMS Organizational Group.");
+        public static Error ActivationFailed => new Error("SMSOrganizationalGroup.ActivationFailed", "Failed to activate the SMS Organizational Group.");
+        public static Error DeactivationFailed => new Error("SMSOrganizationalGroup.DeactivationFailed", "Failed to deactivate the SMS Organizational Group.");
+        public static Error AlreadyActive => new Error("SMSOrganizationalGroup.AlreadyActive", "The SMS Organizational Group is already active.");
+        public static Error AlreadyInactive => new Error("SMSOrganizationalGroup.AlreadyInactive", "The SMS Organizational Group is already inactive.");
+        public static Error CannotDeleteActiveGroup => new Error("SMSOrganizationalGroup.CannotDeleteActiveGroup", "Cannot delete an active organizational group. Deactivate it first.");
+        public static Error GroupHasMembers => new Error("SMSOrganizationalGroup.GroupHasMembers", "Cannot delete a group that has assigned members.");
+        public static Error DuplicateGroupName => new Error("SMSOrganizationalGroup.DuplicateGroupName", "An organizational group with this name already exists.");
+        public static Error DuplicateCode => new Error("SMSOrganizationalGroup.DuplicateCode", "An organizational group with this code already exists.");
+        
+        // User-Group Assignment Errors
+        public static Error UserCodeRequired => new Error("SMSOrganizationalGroup.UserCodeRequired", "The User Code is required for group assignment.");
+        public static Error AssignedByRequired => new Error("SMSOrganizationalGroup.AssignedByRequired", "The Assigned By field is required.");
+        public static Error UserNotFound => new Error("SMSOrganizationalGroup.UserNotFound", "The specified user was not found.");
+        public static Error UserAlreadyInGroup => new Error("SMSOrganizationalGroup.UserAlreadyInGroup", "The user is already assigned to this group.");
+        public static Error UserNotInGroup => new Error("SMSOrganizationalGroup.UserNotInGroup", "The user is not assigned to this group.");
+        public static Error AssignmentFailed => new Error("SMSOrganizationalGroup.AssignmentFailed", "Failed to assign user to the organizational group.");
+        public static Error RemovalFailed => new Error("SMSOrganizationalGroup.RemovalFailed", "Failed to remove user from the organizational group.");
+        public static Error ClearGroupsFailed => new Error("SMSOrganizationalGroup.ClearGroupsFailed", "Failed to clear all group memberships for the user.");
+        public static Error CannotAssignToInactiveGroup => new Error("SMSOrganizationalGroup.CannotAssignToInactiveGroup", "Cannot assign users to an inactive organizational group.");
+        public static Error InvalidUserType => new Error("SMSOrganizationalGroup.InvalidUserType", "Only organizational users can be assigned to organizational groups.");
+        public static Error MaxMembersExceeded => new Error("SMSOrganizationalGroup.MaxMembersExceeded", "The organizational group has reached its maximum member limit.");
+        public static Error MinMembersRequired => new Error("SMSOrganizationalGroup.MinMembersRequired", "The organizational group must have at least one member.");
+        
+        // Enhanced SMS Role-specific Errors
+        public static Error InvalidSMSRole => new Error("SMSOrganizationalGroup.InvalidSMSRole", "The SMS Role assignment is invalid.");
+        public static Error InvalidRoleAuthorityLevel => new Error("SMSOrganizationalGroup.InvalidRoleAuthorityLevel", "The role authority level is invalid.");
+        public static Error InvalidRiskApprovalAuthority => new Error("SMSOrganizationalGroup.InvalidRiskApprovalAuthority", "The risk approval authority level is invalid.");
+        public static Error InsufficientAuthority => new Error("SMSOrganizationalGroup.InsufficientAuthority", "User does not have sufficient authority for this operation.");
+        public static Error ConflictingRoleAssignment => new Error("SMSOrganizationalGroup.ConflictingRoleAssignment", "The SMS role assignment conflicts with existing group assignments.");
+        public static Error RoleAssignmentFailed => new Error("SMSOrganizationalGroup.RoleAssignmentFailed", "Failed to assign SMS role to the organizational group member.");
+        public static Error RoleRemovalFailed => new Error("SMSOrganizationalGroup.RoleRemovalFailed", "Failed to remove SMS role from the organizational group member.");
+        public static Error GroupTypeAuthorityMismatch => new Error("SMSOrganizationalGroup.GroupTypeAuthorityMismatch", "The group type does not match the required authority level.");
+        
+        // Department and Organization Hierarchy Errors
+        public static Error InvalidDepartmentAssignment => new Error("SMSOrganizationalGroup.InvalidDepartmentAssignment", "The department assignment is invalid for this group type.");
+        public static Error OrganizationLevelMismatch => new Error("SMSOrganizationalGroup.OrganizationLevelMismatch", "The organization level does not match the group's authority level.");
+        public static Error HierarchyViolation => new Error("SMSOrganizationalGroup.HierarchyViolation", "The assignment violates organizational hierarchy rules.");
+        public static Error DepartmentNotFound => new Error("SMSOrganizationalGroup.DepartmentNotFound", "The specified department was not found.");
+        public static Error PositionNotAuthorized => new Error("SMSOrganizationalGroup.PositionNotAuthorized", "The position is not authorized for this group type.");
     }
 }

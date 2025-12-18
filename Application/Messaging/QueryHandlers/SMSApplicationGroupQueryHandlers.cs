@@ -154,7 +154,6 @@ public class GetSMSApplicationGroupsByUserCodeQueryHandler : BaseQueryBundle, IR
 
 /// <summary>
 /// Query handler for getting users by application group code
-/// Note: This would require additional stored procedure or repository method
 /// </summary>
 public class GetUsersByApplicationGroupCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetUsersByApplicationGroupCodeQuery, Result<IEnumerable<SMSApplicationUser>>>
 {
@@ -175,16 +174,23 @@ public class GetUsersByApplicationGroupCodeQueryHandler : BaseQueryBundle, IRequ
         {
             _logger.LogInformation("Processing GetUsersByApplicationGroupCodeQuery for group: {GroupCode}", request.GroupCode);
 
-            // This would require implementing GetUsersByGroupCodeAsync in the repository
-            // For now, return an empty list as a placeholder
-            _logger.LogWarning("GetUsersByApplicationGroupCodeQuery not fully implemented yet for group: {GroupCode}", request.GroupCode);
+            // Use the new GetByCodeWithMembersAsync method to get both group and members
+            var result = await _applicationGroupDataService.GetByCodeWithMembersAsync(request.GroupCode);
 
-            await Task.CompletedTask; // Placeholder to make async
-            return Result<IEnumerable<SMSApplicationUser>>.Success<IEnumerable<SMSApplicationUser>>(new List<SMSApplicationUser>());
-
-            // Future implementation:
-            // var result = await _applicationUserDataService.GetByGroupCodeAsync(request.GroupCode);
-            // return result;
+            if (result.IsSuccess)
+            {
+                var members = result.Value.Members;
+                _logger.LogInformation("Successfully retrieved {Count} users for application group: {GroupCode}",
+                    members?.Count ?? 0, request.GroupCode);
+                
+                return Result<IEnumerable<SMSApplicationUser>>.Success((IEnumerable<SMSApplicationUser>)members);
+            }
+            else
+            {
+                _logger.LogError("Failed to retrieve users for application group {GroupCode}: {Error}",
+                    request.GroupCode, result.Error?.Message);
+                return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(result.Error);
+            }
         }
         catch (OperationCanceledException)
         {

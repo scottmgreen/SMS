@@ -45,6 +45,7 @@ internal static class ServiceCollectionExtensions
         services.AddScoped<ScoringPanelRepository>();
         services.AddScoped<SMSApplicationUserRepository>();
         services.AddScoped<SMSApplicationGroupRepository>();
+        services.AddScoped<SMSOrganizationalGroupRepository>();
         services.AddScoped<SMSStakeholderGroupRepository>();
         services.AddScoped<SMSStakeholderUserRepository>();
         services.AddScoped<SMSUserRoleRepository>();
@@ -54,6 +55,7 @@ internal static class ServiceCollectionExtensions
         services.AddScoped<SMSOrganizationalUserDataService>();
         services.AddScoped<SMSStakeholderUserDataService>();
         services.AddScoped<SMSApplicationGroupDataService>();
+        services.AddScoped<SMSOrganizationalGroupDataService>();
         services.AddScoped<SMSStakeholderGroupDataService>();
         services.AddScoped<SMSUserRoleDataService>();
 

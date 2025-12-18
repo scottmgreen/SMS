@@ -153,6 +153,15 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmSMSOrganizationalUserOrganizationLevel = new Lazy<string>(() => "@pOrganizationLevel");
     public static string pmSMSOrganizationalUserOrganizationLevel => _pmSMSOrganizationalUserOrganizationLevel.Value;
 
+    private static readonly Lazy<string> _pmSMSOrganizationalUserSMSRole = new Lazy<string>(() => "@pSMSRole");
+    public static string pmSMSOrganizationalUserSMSRole => _pmSMSOrganizationalUserSMSRole.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalUserAuthorityLevel = new Lazy<string>(() => "@pAuthorityLevel");
+    public static string pmSMSOrganizationalUserAuthorityLevel => _pmSMSOrganizationalUserAuthorityLevel.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalUserRiskApprovalAuthority = new Lazy<string>(() => "@pRiskApprovalAuthority");
+    public static string pmSMSOrganizationalUserRiskApprovalAuthority => _pmSMSOrganizationalUserRiskApprovalAuthority.Value;
+
     private static readonly Lazy<string> _pmSMSOrganizationalUserIsActive = new Lazy<string>(() => "@pIsActive");
     public static string pmSMSOrganizationalUserIsActive => _pmSMSOrganizationalUserIsActive.Value;
 
@@ -1093,8 +1102,12 @@ public static class ParameterNames
 
     /// <summary>
     /// SMS Application Groups table parameters
+
     /// </summary>
-    private static readonly Lazy<string> _pmSMSApplicationGroupCode = new Lazy<string>(() => "@pCode");
+    private static readonly Lazy<string> _pmSMSApplicationGroupUserCode = new Lazy<string>(() => "@pUserCode");
+    public static string pmSMSApplicationGroupUserCode => _pmSMSApplicationGroupUserCode.Value;
+
+    private static readonly Lazy<string> _pmSMSApplicationGroupCode = new Lazy<string>(() => "@pGroupCode");
     public static string pmSMSApplicationGroupCode => _pmSMSApplicationGroupCode.Value;
 
     private static readonly Lazy<string> _pmSMSApplicationGroupName = new Lazy<string>(() => "@pName");
@@ -1105,6 +1118,45 @@ public static class ParameterNames
 
     private static readonly Lazy<string> _pmSMSApplicationGroupIsActive = new Lazy<string>(() => "@pIsActive");
     public static string pmSMSApplicationGroupIsActive => _pmSMSApplicationGroupIsActive.Value;
+    
+    private static readonly Lazy<string> _pmSMSApplicationGroupClearedBy = new Lazy<string>(() => "@pClearedBy");
+    public static string pmSMSApplicationGroupClearedBy => _pmSMSApplicationGroupClearedBy.Value;
+    #endregion
+
+    #region SMS Organizational Groups Parameters
+
+    /// <summary>
+    /// SMS Organizational Groups table parameters
+    /// </summary>
+    private static readonly Lazy<string> _pmSMSOrganizationalGroupCode = new Lazy<string>(() => "@pCode");
+    public static string pmSMSOrganizationalGroupCode => _pmSMSOrganizationalGroupCode.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalGroupName = new Lazy<string>(() => "@pName");
+    public static string pmSMSOrganizationalGroupName => _pmSMSOrganizationalGroupName.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalGroupDescription = new Lazy<string>(() => "@pDescription");
+    public static string pmSMSOrganizationalGroupDescription => _pmSMSOrganizationalGroupDescription.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalGroupGroupType = new Lazy<string>(() => "@pGroupType");
+    public static string pmSMSOrganizationalGroupGroupType => _pmSMSOrganizationalGroupGroupType.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalGroupAuthorityLevel = new Lazy<string>(() => "@pAuthorityLevel");
+    public static string pmSMSOrganizationalGroupAuthorityLevel => _pmSMSOrganizationalGroupAuthorityLevel.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalGroupIsActive = new Lazy<string>(() => "@pIsActive");
+    public static string pmSMSOrganizationalGroupIsActive => _pmSMSOrganizationalGroupIsActive.Value;
+
+    /// <summary>
+    /// SMS Organizational User Group Assignment parameters
+    /// </summary>
+    private static readonly Lazy<string> _pmSMSOrganizationalGroupUserCode = new Lazy<string>(() => "@pUserCode");
+    public static string pmSMSOrganizationalGroupUserCode => _pmSMSOrganizationalGroupUserCode.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalGroupCodeForAssignment = new Lazy<string>(() => "@pGroupCode");
+    public static string pmSMSOrganizationalGroupCodeForAssignment => _pmSMSOrganizationalGroupCodeForAssignment.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalGroupClearedBy = new Lazy<string>(() => "@pClearedBy");
+    public static string pmSMSOrganizationalGroupClearedBy => _pmSMSOrganizationalGroupClearedBy.Value;
 
     #endregion
 

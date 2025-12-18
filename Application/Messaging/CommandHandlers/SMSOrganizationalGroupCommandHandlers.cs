@@ -1,0 +1,304 @@
+using SMS_Application.Common;
+using SMS_Application.Messaging.Commands;
+using SMS_Application.Messaging;
+using SMS_Shared.Common;
+using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
+using SMS_Infrastructure.Services;
+using Microsoft.Extensions.Logging;
+
+namespace SMS_Application.Messaging.CommandHandlers;
+
+/// <summary>
+/// Command handler for creating SMS organizational groups
+/// </summary>
+public class CreateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRequestHandler<CreateSMSOrganizationalGroupCommand, Result<SMSOrganizationalGroup>>
+{
+    private readonly SMSOrganizationalGroupDataService _organizationalGroupDataService;
+    private readonly ILogger<CreateSMSOrganizationalGroupCommandHandler> _logger;
+
+    public CreateSMSOrganizationalGroupCommandHandler(
+        SMSOrganizationalGroupDataService organizationalGroupDataService,
+        ILogger<CreateSMSOrganizationalGroupCommandHandler> logger)
+    {
+        _organizationalGroupDataService = organizationalGroupDataService ?? throw new ArgumentNullException(nameof(organizationalGroupDataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SMSOrganizationalGroup>> HandleAsync(CreateSMSOrganizationalGroupCommand request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing CreateSMSOrganizationalGroupCommand for group: {GroupName}", request.OrganizationalGroup?.Name);
+
+            var result = await _organizationalGroupDataService.CreateAsync(request.OrganizationalGroup, ct);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully created SMS organizational group: {GroupCode}", result.Value?.Code);
+            }
+            else
+            {
+                _logger.LogError("Failed to create SMS organizational group: {Error}", result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("CreateSMSOrganizationalGroupCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing CreateSMSOrganizationalGroupCommand");
+            return Result<SMSOrganizationalGroup>.Failure<SMSOrganizationalGroup>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+}
+
+/// <summary>
+/// Command handler for updating SMS organizational groups
+/// </summary>
+public class UpdateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSOrganizationalGroupCommand, Result<SMSOrganizationalGroup>>
+{
+    private readonly SMSOrganizationalGroupDataService _organizationalGroupDataService;
+    private readonly ILogger<UpdateSMSOrganizationalGroupCommandHandler> _logger;
+
+    public UpdateSMSOrganizationalGroupCommandHandler(
+        SMSOrganizationalGroupDataService organizationalGroupDataService,
+        ILogger<UpdateSMSOrganizationalGroupCommandHandler> logger)
+    {
+        _organizationalGroupDataService = organizationalGroupDataService ?? throw new ArgumentNullException(nameof(organizationalGroupDataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SMSOrganizationalGroup>> HandleAsync(UpdateSMSOrganizationalGroupCommand request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing UpdateSMSOrganizationalGroupCommand for group: {GroupCode}", request.OrganizationalGroup?.Code);
+
+            var result = await _organizationalGroupDataService.UpdateAsync(request.OrganizationalGroup, ct);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully updated SMS organizational group: {GroupCode}", request.OrganizationalGroup?.Code);
+            }
+            else
+            {
+                _logger.LogError("Failed to update SMS organizational group: {Error}", result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("UpdateSMSOrganizationalGroupCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing UpdateSMSOrganizationalGroupCommand for group: {GroupCode}", request.OrganizationalGroup?.Code);
+            return Result<SMSOrganizationalGroup>.Failure<SMSOrganizationalGroup>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+}
+
+/// <summary>
+/// Command handler for deleting SMS organizational groups
+/// </summary>
+public class DeleteSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSOrganizationalGroupCommand, Result<bool>>
+{
+    private readonly SMSOrganizationalGroupDataService _organizationalGroupDataService;
+    private readonly ILogger<DeleteSMSOrganizationalGroupCommandHandler> _logger;
+
+    public DeleteSMSOrganizationalGroupCommandHandler(
+        SMSOrganizationalGroupDataService organizationalGroupDataService,
+        ILogger<DeleteSMSOrganizationalGroupCommandHandler> logger)
+    {
+        _organizationalGroupDataService = organizationalGroupDataService ?? throw new ArgumentNullException(nameof(organizationalGroupDataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<bool>> HandleAsync(DeleteSMSOrganizationalGroupCommand request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing DeleteSMSOrganizationalGroupCommand for group: {GroupCode}", request.OrganizationalGroup?.Code);
+
+            var result = await _organizationalGroupDataService.DeleteAsync(request.OrganizationalGroup.Code, ct);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully deleted SMS organizational group: {GroupCode}", request.OrganizationalGroup?.Code);
+            }
+            else
+            {
+                _logger.LogError("Failed to delete SMS organizational group: {Error}", result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("DeleteSMSOrganizationalGroupCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing DeleteSMSOrganizationalGroupCommand for group: {GroupCode}", request.OrganizationalGroup?.Code);
+            return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+}
+
+/// <summary>
+/// Command handler for assigning users to organizational groups
+/// </summary>
+public class AssignUserToOrganizationalGroupCommandHandler : BaseCommandBundle, IRequestHandler<AssignUserToOrganizationalGroupCommand, Result<bool>>
+{
+    private readonly SMSOrganizationalGroupDataService _organizationalGroupDataService;
+    private readonly ILogger<AssignUserToOrganizationalGroupCommandHandler> _logger;
+
+    public AssignUserToOrganizationalGroupCommandHandler(
+        SMSOrganizationalGroupDataService organizationalGroupDataService,
+        ILogger<AssignUserToOrganizationalGroupCommandHandler> logger)
+    {
+        _organizationalGroupDataService = organizationalGroupDataService ?? throw new ArgumentNullException(nameof(organizationalGroupDataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<bool>> HandleAsync(AssignUserToOrganizationalGroupCommand request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing AssignUserToOrganizationalGroupCommand for user: {UserCode} to group: {GroupId}", 
+                request.UserCode, request.GroupId.Value);
+
+            var result = await _organizationalGroupDataService.AssignUserToGroupAsync(request.UserCode, request.GroupId.Value, request.AssignedBy, ct);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully assigned user {UserCode} to organizational group {GroupId}", 
+                    request.UserCode, request.GroupId.Value);
+            }
+            else
+            {
+                _logger.LogError("Failed to assign user to organizational group: {Error}", result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("AssignUserToOrganizationalGroupCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing AssignUserToOrganizationalGroupCommand for user: {UserCode} to group: {GroupId}", 
+                request.UserCode, request.GroupId?.Value);
+            return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+}
+
+/// <summary>
+/// Command handler for removing users from organizational groups
+/// </summary>
+public class RemoveUserFromOrganizationalGroupCommandHandler : BaseCommandBundle, IRequestHandler<RemoveUserFromOrganizationalGroupCommand, Result<bool>>
+{
+    private readonly SMSOrganizationalGroupDataService _organizationalGroupDataService;
+    private readonly ILogger<RemoveUserFromOrganizationalGroupCommandHandler> _logger;
+
+    public RemoveUserFromOrganizationalGroupCommandHandler(
+        SMSOrganizationalGroupDataService organizationalGroupDataService,
+        ILogger<RemoveUserFromOrganizationalGroupCommandHandler> logger)
+    {
+        _organizationalGroupDataService = organizationalGroupDataService ?? throw new ArgumentNullException(nameof(organizationalGroupDataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<bool>> HandleAsync(RemoveUserFromOrganizationalGroupCommand request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing RemoveUserFromOrganizationalGroupCommand for user: {UserCode} from group: {GroupId}", 
+                request.UserCode, request.GroupId.Value);
+
+            var result = await _organizationalGroupDataService.RemoveUserFromGroupAsync(request.UserCode, request.GroupId.Value, ct);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully removed user {UserCode} from organizational group {GroupId}", 
+                    request.UserCode, request.GroupId.Value);
+            }
+            else
+            {
+                _logger.LogError("Failed to remove user from organizational group: {Error}", result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("RemoveUserFromOrganizationalGroupCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing RemoveUserFromOrganizationalGroupCommand for user: {UserCode} from group: {GroupId}", 
+                request.UserCode, request.GroupId?.Value);
+            return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+}
+
+/// <summary>
+/// Command handler for clearing user organizational group memberships
+/// </summary>
+public class ClearUserOrganizationalGroupsCommandHandler : BaseCommandBundle, IRequestHandler<ClearUserOrganizationalGroupsCommand, Result<bool>>
+{
+    private readonly SMSOrganizationalGroupDataService _organizationalGroupDataService;
+    private readonly ILogger<ClearUserOrganizationalGroupsCommandHandler> _logger;
+
+    public ClearUserOrganizationalGroupsCommandHandler(
+        SMSOrganizationalGroupDataService organizationalGroupDataService,
+        ILogger<ClearUserOrganizationalGroupsCommandHandler> logger)
+    {
+        _organizationalGroupDataService = organizationalGroupDataService ?? throw new ArgumentNullException(nameof(organizationalGroupDataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<bool>> HandleAsync(ClearUserOrganizationalGroupsCommand request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing ClearUserOrganizationalGroupsCommand for user: {UserCode}", request.UserCode);
+
+            var result = await _organizationalGroupDataService.ClearUserGroupsAsync(request.UserCode, ct);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully cleared organizational group memberships for user {UserCode}", request.UserCode);
+            }
+            else
+            {
+                _logger.LogError("Failed to clear user organizational group memberships: {Error}", result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("ClearUserOrganizationalGroupsCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing ClearUserOrganizationalGroupsCommand for user: {UserCode}", request.UserCode);
+            return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+}

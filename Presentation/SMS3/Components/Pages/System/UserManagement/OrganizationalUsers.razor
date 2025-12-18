@@ -1,174 +1,496 @@
 @page "/System/UserManagement/OrganizationalUsers"
-@using SMS_Application.Messaging.Commands
-@using SMS_Application.Messaging.Queries
 @using SMS_Domain.Entities
-@using SMS_Domain.ValueObjects
 @using SMS_Domain.Enums
+@using SMS3.Components.Shared
 @using Radzen
 @using Radzen.Blazor
 
 <PageTitle>Organizational User Management - SMS3</PageTitle>
 
-<div class="container-fluid">
-    <!-- Messages -->
-    @if (!string.IsNullOrEmpty(SuccessMessage))
-    {
-        <RadzenRow Gap="1rem" class="rz-mb-3">
-            <RadzenColumn Size="12">
-                <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter">
-                    <RadzenIcon Icon="check_circle" Style="margin-right: 0.5rem;" />
-                    @SuccessMessage
-                </RadzenAlert>
-            </RadzenColumn>
-        </RadzenRow>
-    }
+<!-- SMS Page Header -->
+<PageHeader Title="Organizational User Management"
+           Subtitle="Manage SMS Organizational Users"
+           Icon="fas fa-user-tie">
+</PageHeader>
 
-    @if (!string.IsNullOrEmpty(ErrorMessage))
-    {
-        <RadzenRow Gap="1rem" class="rz-mb-3">
-            <RadzenColumn Size="12">
-                <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
-                    <RadzenIcon Icon="error" Style="margin-right: 0.5rem;" />
-                    @ErrorMessage
-                </RadzenAlert>
-            </RadzenColumn>
-        </RadzenRow>
-    }
+<!-- Success/Error Messages -->
+@if (!string.IsNullOrEmpty(SuccessMessage))
+{
+    <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" class="mb-3">
+        <RadzenIcon Icon="check_circle" Style="margin-right: 0.5rem;" />
+        @SuccessMessage
+    </RadzenAlert>
+}
 
-    <!-- Users DataGrid -->
-    <RadzenRow Gap="1rem">
-        <RadzenColumn Size="12">
-            <RadzenCard Variant="Variant.Outlined">
-                <RadzenCard>
-                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
-                            <RadzenIcon Icon="corporate_fare" Style="margin-right: 0.5rem;" />
-                            Organizational Users (@OrganizationalUsersList.Count())
-                        </RadzenText>
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                            <RadzenButton Text="Export" Icon="download" Variant="Variant.Outlined" Size="ButtonSize.Small" 
-                                        Click="@ExportUsers" />
-                            <RadzenButton Text="Add User" Icon="add" ButtonStyle="ButtonStyle.Primary" 
-                                        Click="@ShowCreateDialog" />
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" class="mb-3">
+        <RadzenIcon Icon="error" Style="margin-right: 0.5rem;" />
+        @ErrorMessage
+    </RadzenAlert>
+}
+
+<!-- Users Display -->
+<RadzenCard>
+    <RadzenCard>
+        <div class="d-flex justify-content-between align-items-center w-100">
+            <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">
+                <RadzenIcon Icon="corporate_fare" Style="margin-right: 0.5rem;" />
+                Organizational Users (@OrganizationalUsersList.Count)
+            </RadzenText>
+            <div class="d-flex gap-2">
+                <RadzenButton Text="Export" Icon="download" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
+                              Click="@ExportUsers" />
+                <RadzenButton Text="Add User" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                              Click="@OpenCreateModal" />
+            </div>
+        </div>
+    </RadzenCard>
+    <RadzenCard>
+        @if (OrganizationalUsersList.Any())
+        {
+            <RadzenDataGrid @ref="usersGrid" Data="@OrganizationalUsersList" TItem="SMSOrganizationalUser" 
+                            AllowFiltering="true" AllowColumnResize="true" AllowSorting="true" 
+                            PageSize="10" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" 
+                            ShowPagingSummary="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                
+                <Columns>
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="Code" Title="Code" Width="120px" Sortable="true" Filterable="true">
+                        <Template Context="user">
+                            <div class="d-flex align-items-center">
+                                <strong>@user.Code</strong>
+                            </div>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="DisplayName" Title="User" Width="250px" Sortable="true" Filterable="true">
+                        <Template Context="user">
+                            <div class="d-flex align-items-center">
+                                <RadzenGravatar Email="@($"{user.FirstName?.Value?.ToLower()}.{user.LastName?.Value?.ToLower()}@organization.com")" 
+                                              Size="35" class="me-2" />
+                                <div>
+                                    <div><strong>@user.DisplayName</strong></div>
+                                    <small style="color: var(--rz-text-secondary-color);">@user.UserName?.Value</small>
+                                </div>
+                            </div>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="Department" Title="Department" Width="150px" Sortable="true" Filterable="true">
+                        <Template Context="user">
+                            <RadzenBadge Text="@user.Department" 
+                                         BadgeStyle="@GetDepartmentBadgeStyle(user.Department)" />
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="Position" Title="Position" Width="150px" Sortable="true" Filterable="true">
+                        <Template Context="user">
+                            @if (!string.IsNullOrEmpty(user.Position))
+                            {
+                                <span>@user.Position</span>
+                            }
+                            else
+                            {
+                                <em style="color: var(--rz-text-secondary-color);">No position</em>
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="OrganizationLevel" Title="Level" Width="120px" Sortable="true" Filterable="true">
+                        <Template Context="user">
+                            @if (!string.IsNullOrEmpty(user.OrganizationLevel))
+                            {
+                                <RadzenBadge Text="@user.OrganizationLevel" BadgeStyle="BadgeStyle.Info" />
+                            }
+                            else
+                            {
+                                <em style="color: var(--rz-text-secondary-color);">No level</em>
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="IsActive" Title="Status" Width="100px" Sortable="true" Filterable="true">
+                        <Template Context="user">
+                            <RadzenBadge Text="@(user.IsActive ? "Active" : "Inactive")" 
+                                         BadgeStyle="@(user.IsActive ? BadgeStyle.Success : BadgeStyle.Secondary)" />
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="LastLoginDate" Title="Last Login" Width="140px" Sortable="true">
+                        <Template Context="user">
+                            @if (user.LastLoginDate.HasValue)
+                            {
+                                <div style="font-size: 0.9em;">
+                                    <div>@user.LastLoginDate.Value.ToString("MM/dd/yyyy")</div>
+                                    <small style="color: var(--rz-text-secondary-color);">@user.LastLoginDate.Value.ToString("HH:mm")</small>
+                                </div>
+                            }
+                            else
+                            {
+                                <em style="color: var(--rz-text-secondary-color);">Never</em>
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="CreatedDate" Title="Created" Width="120px" Sortable="true">
+                        <Template Context="user">
+                            <div style="font-size: 0.9em;">
+                                <div>@user.CreatedDate?.ToString("MM/dd/yyyy")</div>
+                                <small style="color: var(--rz-text-secondary-color);">by @user.CreatedBy</small>
+                            </div>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Title="Actions" Width="200px" Sortable="false" Filterable="false">
+                        <Template Context="user">
+                            <div class="d-flex gap-1">
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall"
+                                              Click="@(() => EditUser(user.Code))" title="Edit User" />
+                                <RadzenButton Icon="vpn_key" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.ExtraSmall"
+                                              Click="@(() => OpenPasswordModal(user.Code, user.DisplayName))" title="Change Password" />
+                                <RadzenButton Icon="group" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.ExtraSmall"
+                                              Click="@(() => ManageGroups(user.Code, user.DisplayName))" title="Manage Groups" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
+                                              Click="@(() => ConfirmDelete(user.Code, user.DisplayName))" title="Delete User" />
+                            </div>
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        }
+        else
+        {
+            <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 3rem;">
+                <RadzenIcon Icon="corporate_fare" Style="font-size: 4rem; color: var(--rz-text-disabled-color);" />
+                <RadzenText TextStyle="TextStyle.H5" Style="color: var(--rz-text-disabled-color);">
+                    No Organizational Users Found
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-disabled-color);">
+                    Click "Add User" to create your first organizational user.
+                </RadzenText>
+                <RadzenButton Text="Add First User" Icon="add" ButtonStyle="ButtonStyle.Success"
+                              Click="@OpenCreateModal" />
+            </RadzenStack>
+        }
+    </RadzenCard>
+</RadzenCard>
+
+<!-- Create User Modal -->
+@if (ShowCreateModal)
+{
+    <div class="modal-backdrop">
+        <div class="modal-dialog modal-lg">
+            <RadzenCard class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header" style="background-color: #212e61; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
+                    <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
+                        <RadzenIcon Icon="person_add" Style="margin-right: 0.5rem;" />
+                        Create Organizational User
+                    </RadzenText>
+                </div>
+                
+                <!-- Modal Body -->
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="1rem">
+                            <RadzenFormField Text="First Name *" Variant="Variant.Outlined">
+                                <RadzenTextBox @bind-Value="@NewFirstName" 
+                                               Placeholder="Enter first name" 
+                                               Style="width: 100%;" />
+                            </RadzenFormField>
+                            
+                            <RadzenFormField Text="Last Name *" Variant="Variant.Outlined">
+                                <RadzenTextBox @bind-Value="@NewLastName" 
+                                               Placeholder="Enter last name" 
+                                               Style="width: 100%;" />
+                            </RadzenFormField>
+                            
+                            <RadzenFormField Text="Username *" Variant="Variant.Outlined">
+                                <RadzenTextBox @bind-Value="@NewUserName" 
+                                               Placeholder="Enter username" 
+                                               Style="width: 100%;" />
+                            </RadzenFormField>
+                            
+                            <RadzenFormField Text="Password *" Variant="Variant.Outlined">
+                                <RadzenPassword @bind-Value="@NewPassword" 
+                                               Placeholder="Enter password" 
+                                               Style="width: 100%;" />
+                            </RadzenFormField>
                         </RadzenStack>
-                    </RadzenStack>
-                </RadzenCard>
-                <RadzenCard>
-                    @if (OrganizationalUsersList.Any())
-                    {
-                        <RadzenDataGrid @ref="usersGrid" Data="@OrganizationalUsersList" TItem="SMSOrganizationalUser" 
-                                      AllowFiltering="true" AllowSorting="true" AllowPaging="true" 
-                                      PageSize="10" ShowPagingSummary="true" 
-                                      FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
-                            <Columns>
-                                <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="DisplayName" Title="User" Width="200px">
-                                    <Template Context="user">
-                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                            <RadzenGravatar Email="@($"{user.FirstName?.Value?.ToLower()}.{user.LastName?.Value?.ToLower()}@organization.com")" 
-                                                          Size="35" />
-                                            <RadzenStack Orientation="Orientation.Vertical" Gap="0">
-                                                <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; font-weight: 600;">
-                                                    @user.DisplayName
-                                                </RadzenText>
-                                                <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                                    @user.Code
-                                                </RadzenText>
-                                            </RadzenStack>
-                                        </RadzenStack>
-                                    </Template>
-                                </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="UserName.Value" Title="Username" Width="120px" />
-                                <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="Department" Title="Department" Width="150px">
-                                    <Template Context="user">
-                                        <RadzenBadge Variant="Variant.Filled" 
-                                                   BadgeStyle="@GetDepartmentBadgeStyle(user.Department)"
-                                                   Text="@user.Department" />
-                                    </Template>
-                                </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="Position" Title="Position" Width="150px" />
-                                <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="OrganizationLevel" Title="Organization Level" Width="140px">
-                                    <Template Context="user">
-                                        @if (!string.IsNullOrEmpty(user.OrganizationLevel))
-                                        {
-                                            <RadzenBadge Variant="Variant.Filled" BadgeStyle="BadgeStyle.Info" Text="@user.OrganizationLevel" />
-                                        }
-                                        else
-                                        {
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-disabled-color);">
-                                                No Level Assigned
-                                            </RadzenText>
-                                        }
-                                    </Template>
-                                </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="IsActive" Title="Status" Width="80px">
-                                    <Template Context="user">
-                                        <RadzenBadge Variant="Variant.Filled" 
-                                                   BadgeStyle="@(user.IsActive ? BadgeStyle.Success : BadgeStyle.Danger)"
-                                                   Text="@(user.IsActive ? "Active" : "Inactive")" />
-                                    </Template>
-                                </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="LastLoginDate" Title="Last Login" Width="120px">
-                                    <Template Context="user">
-                                        @if (user.LastLoginDate.HasValue)
-                                        {
-                                            <RadzenText TextStyle="TextStyle.Body2">
-                                                @user.LastLoginDate.Value.ToString("MM/dd/yyyy HH:mm")
-                                            </RadzenText>
-                                        }
-                                        else
-                                        {
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-disabled-color);">
-                                                Never
-                                            </RadzenText>
-                                        }
-                                    </Template>
-                                </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="CreatedDate" Title="Created" Width="120px">
-                                    <Template Context="user">
-                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0">
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
-                                                @(user.CreatedDate?.ToString("MM/dd/yyyy") ?? "N/A")
-                                            </RadzenText>
-                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                                by @user.CreatedBy
-                                            </RadzenText>
-                                        </RadzenStack>
-                                    </Template>
-                                </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="SMSOrganizationalUser" Title="Actions" Width="200px" Sortable="false" Filterable="false">
-                                    <Template Context="user">
-                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
-                                                        Click="@(() => ShowEditDialog(user))" 
-                                                        title="Edit User" />
-                                            <RadzenButton Icon="vpn_key" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small" 
-                                                        Click="@(() => ShowPasswordDialog(user.Code, user.DisplayName))" 
-                                                        title="Change Password" />
-                                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
-                                                        Click="@(() => ShowDeleteDialog(user.Code, user.DisplayName))" 
-                                                        title="Delete User" />
-                                        </RadzenStack>
-                                    </Template>
-                                </RadzenDataGridColumn>
-                            </Columns>
-                        </RadzenDataGrid>
-                    }
-                    else
-                    {
-                        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 3rem;">
-                            <RadzenIcon Icon="corporate_fare" Style="font-size: 4rem; color: var(--rz-text-disabled-color);" />
-                            <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-text-disabled-color);">
-                                No Organizational Users Found
-                            </RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-disabled-color);">
-                                Click "Add User" to create your first organizational user.
-                            </RadzenText>
-                            <RadzenButton Text="Add First User" Icon="add" ButtonStyle="ButtonStyle.Primary" 
-                                        Click="@ShowCreateDialog" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="1rem">
+                            <RadzenFormField Text="Department *" Variant="Variant.Outlined">
+                                <RadzenDropDown @bind-Value="@NewDepartment" Data="@DepartmentOptions" 
+                                                TextProperty="Text" ValueProperty="Value" 
+                                                Style="width: 100%;" Placeholder="Select department"/>
+                            </RadzenFormField>
+                            
+                            <RadzenFormField Text="Position" Variant="Variant.Outlined">
+                                <RadzenTextBox @bind-Value="@NewPosition" 
+                                               Placeholder="Enter position/title" 
+                                               Style="width: 100%;" />
+                            </RadzenFormField>
+                            
+                            <RadzenFormField Text="Organization Level" Variant="Variant.Outlined">
+                                <RadzenDropDown @bind-Value="@NewOrganizationLevel" Data="@OrganizationLevelOptions" 
+                                                TextProperty="Text" ValueProperty="Value" 
+                                                Style="width: 100%;" Placeholder="Select organization level"/>
+                            </RadzenFormField>
+                            
+                            <RadzenFormField Text="SMS Role" Variant="Variant.Outlined">
+                                <RadzenDropDown @bind-Value="@NewSMSRole" Data="@SMSRoleOptions" 
+                                                TextProperty="Text" ValueProperty="Value" 
+                                                Style="width: 100%;" Placeholder="Select SMS role (optional)"/>
+                            </RadzenFormField>
                         </RadzenStack>
-                    }
-                </RadzenCard>
+                    </RadzenColumn>
+                </RadzenRow>
+                
+                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" class="mt-3">
+                    <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
+                    Organizational users are internal staff members with SMS responsibilities. All fields marked with * are required.
+                </RadzenAlert>
+                
+                <!-- Modal Footer -->
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseCreateModal" />
+                    <RadzenButton Text="Create User" Icon="save" ButtonStyle="ButtonStyle.Primary" 
+                                  Click="@CreateUser" Disabled="@(!IsCreateFormValid || IsSaving)"
+                                  Style="background-color: #212e61; border-color: #212e61;" />
+                </div>
             </RadzenCard>
-        </RadzenColumn>
-    </RadzenRow>
-</div>
+        </div>
+    </div>
+}
+
+<!-- Edit User Modal -->
+@if (ShowEditModal && CurrentUser != null)
+{
+    <div class="modal-backdrop">
+        <div class="modal-dialog modal-lg">
+            <RadzenCard class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header" style="background-color: #212e61; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
+                    <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
+                        <RadzenIcon Icon="edit" Style="margin-right: 0.5rem;" />
+                        Edit Organizational User
+                    </RadzenText>
+                </div>
+                
+                <!-- Modal Body -->
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="1rem">
+                            <RadzenFormField Text="User Code" Variant="Variant.Outlined">
+                                <RadzenTextBox Value="@CurrentUser.Code" ReadOnly="true" 
+                                               Style="width: 100%; background-color: #f8f9fa;" />
+                            </RadzenFormField>
+                            
+                            <RadzenFormField Text="First Name *" Variant="Variant.Outlined">
+                                <RadzenTextBox @bind-Value="@EditFirstName" 
+                                               Placeholder="Enter first name" 
+                                               Style="width: 100%;" />
+                            </RadzenFormField>
+                            
+                            <RadzenFormField Text="Last Name *" Variant="Variant.Outlined">
+                                <RadzenTextBox @bind-Value="@EditLastName" 
+                                               Placeholder="Enter last name" 
+                                               Style="width: 100%;" />
+                            </RadzenFormField>
+                            
+                            <RadzenFormField Text="Username" Variant="Variant.Outlined">
+                                <RadzenTextBox Value="@CurrentUser.UserName?.Value" ReadOnly="true" 
+                                               Style="width: 100%; background-color: #f8f9fa;" />
+                            </RadzenFormField>
+                        </RadzenStack>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="1rem">
+                            <RadzenFormField Text="Department *" Variant="Variant.Outlined">
+                                <RadzenDropDown @bind-Value="@EditDepartment" Data="@DepartmentOptions" 
+                                                TextProperty="Text" ValueProperty="Value" 
+                                                Style="width: 100%;" />
+                            </RadzenFormField>
+                            
+                            <RadzenFormField Text="Position" Variant="Variant.Outlined">
+                                <RadzenTextBox @bind-Value="@EditPosition" 
+                                               Placeholder="Enter position/title" 
+                                               Style="width: 100%;" />
+                            </RadzenFormField>
+                            
+                            <RadzenFormField Text="Organization Level" Variant="Variant.Outlined">
+                                <RadzenDropDown @bind-Value="@EditOrganizationLevel" Data="@OrganizationLevelOptions" 
+                                                TextProperty="Text" ValueProperty="Value" 
+                                                Style="width: 100%;" />
+                            </RadzenFormField>
+                            
+                            <RadzenFormField Text="Status" Variant="Variant.Outlined">
+                                <RadzenDropDown @bind-Value="@EditIsActive" Data="@StatusOptions" 
+                                                TextProperty="Text" ValueProperty="Value" 
+                                                Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+                
+                @if (CurrentUser.UpdatedDate.HasValue)
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" class="mt-3">
+                        <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
+                        Last updated: @CurrentUser.UpdatedDate?.ToString("MM/dd/yyyy HH:mm") by @CurrentUser.UpdatedBy
+                    </RadzenAlert>
+                }
+                
+                <!-- Modal Footer -->
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseEditModal" />
+                    <RadzenButton Text="Update User" Icon="save" ButtonStyle="ButtonStyle.Primary" 
+                                  Click="@UpdateUser" Disabled="@(!IsEditFormValid || IsSaving)"
+                                  Style="background-color: #212e61; border-color: #212e61;" />
+                </div>
+            </RadzenCard>
+        </div>
+    </div>
+}
+
+<!-- Password Change Modal -->
+@if (ShowPasswordModal)
+{
+    <div class="modal-backdrop">
+        <div class="modal-dialog">
+            <RadzenCard class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header" style="background-color: #17a2b8; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
+                    <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
+                        <RadzenIcon Icon="vpn_key" Style="margin-right: 0.5rem;" />
+                        Change Password
+                    </RadzenText>
+                </div>
+                
+                <!-- Modal Body -->
+                <RadzenStack Gap="1rem">
+                    <RadzenText>
+                        Changing password for: <strong>@PasswordUserDisplayName</strong>
+                    </RadzenText>
+                    
+                    <RadzenFormField Text="New Password *" Variant="Variant.Outlined">
+                        <RadzenPassword @bind-Value="@NewPassword" 
+                                       Placeholder="Enter new password" 
+                                       Style="width: 100%;" />
+                    </RadzenFormField>
+                    
+                    <RadzenFormField Text="Confirm Password *" Variant="Variant.Outlined">
+                        <RadzenPassword @bind-Value="@ConfirmPassword" 
+                                       Placeholder="Confirm new password" 
+                                       Style="width: 100%;" />
+                    </RadzenFormField>
+                    
+                    @if (!string.IsNullOrEmpty(PasswordValidationMessage))
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
+                            <RadzenIcon Icon="warning" Style="margin-right: 0.5rem;" />
+                            @PasswordValidationMessage
+                        </RadzenAlert>
+                    }
+                </RadzenStack>
+                
+                <!-- Modal Footer -->
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@ClosePasswordModal" />
+                    <RadzenButton Text="Update Password" Icon="save" ButtonStyle="ButtonStyle.Primary" 
+                                  Click="@UpdatePassword" Disabled="@(!IsPasswordFormValid || IsSaving)" />
+                </div>
+            </RadzenCard>
+        </div>
+    </div>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (ShowDeleteModal)
+{
+    <div class="modal-backdrop">
+        <div class="modal-dialog" style="max-width: 400px;">
+            <RadzenCard class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header" style="background-color: #dc3545; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
+                    <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
+                        <RadzenIcon Icon="delete" Style="margin-right: 0.5rem;" />
+                        Confirm Delete
+                    </RadzenText>
+                </div>
+                
+                <!-- Modal Body -->
+                <RadzenStack Gap="1rem">
+                    <RadzenText>
+                        Are you sure you want to delete the user <strong>@DeleteUserDisplayName</strong>?
+                    </RadzenText>
+                    <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
+                        <RadzenIcon Icon="warning" Style="margin-right: 0.5rem;" />
+                        This action cannot be undone and will remove all user permissions and group memberships.
+                    </RadzenAlert>
+                </RadzenStack>
+                
+                <!-- Modal Footer -->
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseDeleteModal" />
+                    <RadzenButton Text="Delete User" Icon="delete" ButtonStyle="ButtonStyle.Danger" 
+                                  Click="@DeleteUser" Disabled="@IsSaving" />
+                </div>
+            </RadzenCard>
+        </div>
+    </div>
+}
+
+<style>
+.user-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.user-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Modal Styles */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-dialog {
+    width: 90%;
+    max-width: 500px;
+    margin: 2rem;
+}
+
+.modal-dialog.modal-lg {
+    max-width: 800px;
+    width: 95%;
+}
+
+.modal-dialog.modal-xl {
+    max-width: 1200px;
+    width: 95%;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    border-radius: 6px 6px 0 0;
+}
+</style>

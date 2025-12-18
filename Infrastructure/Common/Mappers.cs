@@ -1,11 +1,10 @@
 ﻿using System.Reflection;
-
 using SMS_Domain.Entities;
-
-using Microsoft.AspNetCore.Mvc.Formatters;
+using SMS_Domain.Errors;
+using SMS_Infrastructure.Common;
 using Microsoft.Data.SqlClient;
+using System.Data;
 
-using SMS_Domain.Entities;
 using SMS_Domain.Enums;
 using SMS_Domain.Models;
 using SMS_Domain.ValueObjects;
@@ -59,19 +58,6 @@ public static partial class Mappers
     {
         object value = reader[columnName];
         return value == DBNull.Value ? default : (T)value;
-    }
-
-    /// <summary>
-    /// Extension method to check if a column exists in the SqlDataReader
-    /// </summary>
-    public static bool HasColumn(this SqlDataReader reader, string columnName)
-    {
-        for (int i = 0; i < reader.FieldCount; i++)
-        {
-            if (reader.GetName(i).Equals(columnName, StringComparison.OrdinalIgnoreCase))
-                return true;
-        }
-        return false;
     }
     #endregion
 
@@ -128,6 +114,23 @@ public static partial class Mappers
             orgUser.Department = reader.GetString(FieldNames.fSMSOrganizationalUserDepartment);
             orgUser.Position = reader.GetString(FieldNames.fSMSOrganizationalUserPosition);
             orgUser.OrganizationLevel = reader.GetString(FieldNames.fSMSOrganizationalUserOrganizationLevel);
+            
+            // New SMS role fields - with null checking for backward compatibility
+            if (reader.HasColumn(FieldNames.fSMSOrganizationalUserSMSRole))
+            {
+                orgUser.SMSRole = reader.GetValue<string>(FieldNames.fSMSOrganizationalUserSMSRole);
+            }
+            
+            if (reader.HasColumn(FieldNames.fSMSOrganizationalUserAuthorityLevel))
+            {
+                orgUser.AuthorityLevel = reader.GetValue<string>(FieldNames.fSMSOrganizationalUserAuthorityLevel);
+            }
+            
+            if (reader.HasColumn(FieldNames.fSMSOrganizationalUserRiskApprovalAuthority))
+            {
+                orgUser.RiskApprovalAuthority = reader.GetValue<string>(FieldNames.fSMSOrganizationalUserRiskApprovalAuthority);
+            }
+            
             orgUser.IsActive = reader.GetBoolean(FieldNames.fSMSOrganizationalUserIsActive);
             orgUser.LastLoginDate = reader.IsDBNull(FieldNames.fSMSOrganizationalUserLastLoginDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSOrganizationalUserLastLoginDate);
             orgUser.CreatedBy = reader.GetString(FieldNames.fCreatedBy);
@@ -770,9 +773,9 @@ public static partial class Mappers
     //        }
 
     //        // Set audit fields using reflection since they might be private setters
-    //        var baseEntityType = typeof(BaseAuditableEntity);
-    //        baseEntityType.GetProperty("CreatedBy")?.SetValue(userRole, createdBy);
-    //        baseEntityType.GetProperty("CreatedDate")?.SetValue(userRole, createdDate);
+    //        var baseEntity = typeof(BaseAuditableEntity);
+    //        baseEntity.GetProperty("CreatedBy")?.SetValue(userRole, createdBy);
+    //        baseEntity.GetProperty("CreatedDate")?.SetValue(userRole, createdDate);
 
     //        return userRole;
     //    }
@@ -799,7 +802,9 @@ public static partial class Mappers
             stakeholderGroup.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
             stakeholderGroup.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
             stakeholderGroup.Description = reader.GetValue<string>(FieldNames.fSMSStakeholderGroupDescription) ?? string.Empty;
-            
+            stakeholderGroup.IsActive = reader.IsDBNull(FieldNames.fSMSStakeholderGroupIsActive) ? true : reader.GetBoolean(FieldNames.fSMSStakeholderGroupIsActive);
+
+
             return stakeholderGroup;
         }
         catch (Exception ex)
@@ -830,6 +835,36 @@ public static partial class Mappers
         catch (Exception ex)
         {
             throw new InvalidOperationException($"Error mapping SqlDataReader to SMSApplicationGroup: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Maps SqlDataReader to SMSOrganizationalGroup entity
+    /// </summary>
+    public static SMSOrganizationalGroup MapToSMSOrganizationalGroup(SqlDataReader reader)
+    {
+        try
+        {
+            var code = reader.GetValue<string>(FieldNames.fSMSOrganizationalGroupCode) ?? string.Empty;
+            SMSOrganizationalGroupID id = new SMSOrganizationalGroupID(code);
+            SMSOrganizationalGroup organizationalGroup = new SMSOrganizationalGroup(id);
+            
+            organizationalGroup.Code = code;
+            organizationalGroup.Name = reader.GetValue<string>(FieldNames.fSMSOrganizationalGroupName) ?? string.Empty;
+            organizationalGroup.Description = reader.GetValue<string>(FieldNames.fSMSOrganizationalGroupDescription) ?? string.Empty;
+            organizationalGroup.GroupType = reader.GetValue<string>(FieldNames.fSMSOrganizationalGroupGroupType) ?? "Department";
+            organizationalGroup.AuthorityLevel = reader.GetValue<string>(FieldNames.fSMSOrganizationalGroupAuthorityLevel) ?? "Standard";
+            organizationalGroup.IsActive = reader.IsDBNull(FieldNames.fSMSOrganizationalGroupIsActive) ? true : reader.GetBoolean(FieldNames.fSMSOrganizationalGroupIsActive);
+            organizationalGroup.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
+            organizationalGroup.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+            organizationalGroup.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
+            organizationalGroup.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fUpdatedDate);
+
+            return organizationalGroup;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Error mapping SqlDataReader to SMSOrganizationalGroup: {ex.Message}", ex);
         }
     }
 

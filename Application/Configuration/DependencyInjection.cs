@@ -44,6 +44,10 @@ namespace SMS_Application.Configuration
             services.AddScoped<ISMSOrganizationalUserService, SMSOrganizationalUserService>();
             services.AddScoped<ISMSStakeholderUserService, SMSStakeholderUserService>();
             
+            // SMS Group Application Services - INTERFACE BINDINGS ONLY
+            services.AddScoped<ISMSOrganizationalGroupService, SMSOrganizationalGroupService>();
+            services.AddScoped<ISMSApplicationGroupService, SMSApplicationGroupService>();
+            
             // SMS Workflow Services - SINGLE REGISTRATION ONLY
             services.AddScoped<ISMSRiskAssessmentWorkflowService, SMSRiskAssessmentWorkflowService>();
             services.AddScoped<ISMSInvestigationWorkflowService, SMSInvestigationWorkflowService>();

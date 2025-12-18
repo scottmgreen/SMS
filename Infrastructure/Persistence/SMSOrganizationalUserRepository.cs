@@ -63,7 +63,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
         }
     }
 
-    public async Task<Result<SMSOrganizationalUser>> GetByIdAsync(BaseUserID id)
+    public async Task<Result<SMSOrganizationalUser>> GetByIdAsync(SMSOrganizationalUserID id)
     {
         try
         {
@@ -80,7 +80,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, id.Value));
 
             SMSOrganizationalUser? user = null;
 
@@ -218,12 +218,12 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserPosition, user.Position));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserOrganizationLevel, user.OrganizationLevel));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserIsActive, user.IsActive));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserLastLoginDate, user.LastLoginDate));
+            //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserLastLoginDate, user.LastLoginDate));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, user.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
-            var newCode = new SqlParameter("@pNewSMSOrganizationalUserCode", SqlDbType.VarChar, 60) { Direction = ParameterDirection.Output };
+            var newCode = new SqlParameter("@pNewUserCode", SqlDbType.VarChar, 60) { Direction = ParameterDirection.Output };
             cmd.Parameters.Add(newID);
             cmd.Parameters.Add(newCode);
 
@@ -634,5 +634,10 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             _logger.LogInfrastructureGetItemsError($"{_logHeader} {ex.Message}", null);
             return Result<Dictionary<string, int>>.Failure<Dictionary<string, int>>(DomainErrors.GeneralError.UnProcessableRequest);
         }
+    }
+
+    public Task<Result<SMSOrganizationalUser>> GetByIdAsync(BaseUserID id)
+    {
+        throw new NotImplementedException();
     }
 }

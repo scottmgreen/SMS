@@ -7,7 +7,6 @@ using SMS_Application.Interfaces;
 using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
 using SMS_Shared.Common;
-using SMS3.Components.Pages.System.Components;
 
 namespace SMS3.Components.Pages.System.UserManagement;
 
@@ -130,6 +129,10 @@ public partial class ApplicationUsers : ComponentBase
 
     private async Task ShowCreateDialog()
     {
+        // TODO: Implement create modal instead of dialog
+        ShowInfoNotification("Create user functionality will be implemented with modal interface soon.");
+        
+        /*
         createUser = new CreateUserModel();
         
         var result = await DialogService.OpenAsync<CreateApplicationUserDialog>("Create Application User",
@@ -143,6 +146,7 @@ public partial class ApplicationUsers : ComponentBase
         {
             await CreateUser(model);
         }
+        */
     }
 
     private async Task CreateUser(CreateUserModel model)
@@ -269,6 +273,10 @@ public partial class ApplicationUsers : ComponentBase
 
     private async Task ShowPasswordDialog(string userId, string displayName)
     {
+        // TODO: Implement password change modal instead of dialog
+        ShowInfoNotification($"Password change for {displayName} will be implemented with modal interface soon.");
+        
+        /*
         var result = await DialogService.OpenAsync<ChangePasswordDialog>("Change Password",
             new Dictionary<string, object>
             {
@@ -281,6 +289,7 @@ public partial class ApplicationUsers : ComponentBase
         {
             await UpdatePassword(userId, newPassword);
         }
+        */
     }
 
     private async Task UpdatePassword(string userId, string newPassword)

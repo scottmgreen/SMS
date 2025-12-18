@@ -89,6 +89,29 @@ public sealed class SMSApplicationGroupDataService : BaseDataService<SMSApplicat
     }
 
     /// <summary>
+    /// Gets SMS Application Group by code with its members
+    /// </summary>
+    public async Task<Result<(SMSApplicationGroup Group, List<SMSApplicationUser> Members)>> GetByCodeWithMembersAsync(string groupCode, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(groupCode))
+            {
+                _logger.LogError("GetSMSApplicationGroupByCodeWithMembersAsync received null or empty group code");
+                return Result<(SMSApplicationGroup, List<SMSApplicationUser>)>.Failure<(SMSApplicationGroup, List<SMSApplicationUser>)>(DomainErrors.SMSApplicationGroupError.CodeRequired);
+            }
+
+            _logger.LogInformation("Retrieving SMS Application Group with members for code: {Code}", groupCode);
+            return await _repository.GetByCodeWithMembersAsync(groupCode, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving SMS Application Group with members for code: {Code}", groupCode);
+            return Result<(SMSApplicationGroup, List<SMSApplicationUser>)>.Failure<(SMSApplicationGroup, List<SMSApplicationUser>)>(DomainErrors.SMSApplicationGroupError.NotFound);
+        }
+    }
+
+    /// <summary>
     /// Gets all SMS Application Groups
     /// </summary>
     public async Task<Result<IEnumerable<SMSApplicationGroup>>> GetAllAsync(CancellationToken ct = default)
@@ -265,6 +288,30 @@ public sealed class SMSApplicationGroupDataService : BaseDataService<SMSApplicat
         {
             _logger.LogError(ex, "Unexpected error removing user {UserCode} from group {GroupCode}", userCode, groupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.RemovalFailed);
+        }
+    }
+
+    /// <summary>
+    /// Gets users by application group code
+    /// </summary>
+    public async Task<Result<IEnumerable<SMSApplicationUser>>> GetUsersByGroupCodeAsync(string groupCode, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(groupCode))
+            {
+                _logger.LogError("GetUsersByGroupCodeAsync received null or empty group code");
+                return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.SMSApplicationGroupError.CodeRequired);
+            }
+
+            _logger.LogInformation("Retrieving users for SMS Application Group: {GroupCode}", groupCode);
+            
+            return await _repository.GetUsersByGroupCodeAsync(groupCode, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving users for SMS Application Group: {GroupCode}", groupCode);
+            return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.SMSApplicationGroupError.NotFound);
         }
     }
 

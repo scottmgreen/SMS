@@ -121,6 +121,15 @@ public static class FieldNames
     private static readonly Lazy<string> _fSMSOrganizationalUserOrganizationLevel = new Lazy<string>(() => "fldv_OrganizationLevel");
     public static string fSMSOrganizationalUserOrganizationLevel => _fSMSOrganizationalUserOrganizationLevel.Value;
 
+    private static readonly Lazy<string> _fSMSOrganizationalUserSMSRole = new Lazy<string>(() => "fldv_SMSRole");
+    public static string fSMSOrganizationalUserSMSRole => _fSMSOrganizationalUserSMSRole.Value;
+
+    private static readonly Lazy<string> _fSMSOrganizationalUserAuthorityLevel = new Lazy<string>(() => "fldv_AuthorityLevel");
+    public static string fSMSOrganizationalUserAuthorityLevel => _fSMSOrganizationalUserAuthorityLevel.Value;
+
+    private static readonly Lazy<string> _fSMSOrganizationalUserRiskApprovalAuthority = new Lazy<string>(() => "fldv_RiskApprovalAuthority");
+    public static string fSMSOrganizationalUserRiskApprovalAuthority => _fSMSOrganizationalUserRiskApprovalAuthority.Value;
+
     private static readonly Lazy<string> _fSMSOrganizationalUserIsActive = new Lazy<string>(() => "fldb_IsActive");
     public static string fSMSOrganizationalUserIsActive => _fSMSOrganizationalUserIsActive.Value;
 
@@ -187,21 +196,41 @@ public static class FieldNames
     private static readonly Lazy<string> _fSMSApplicationGroupIsActive = new Lazy<string>(() => "fldb_IsActive");
     public static string fSMSApplicationGroupIsActive => _fSMSApplicationGroupIsActive.Value;
 
+    /// <summary>
+    /// SMS Organizational Groups table (tbld_SMSOrganizationalGroups)
+    /// </summary>
+    private static readonly Lazy<string> _fSMSOrganizationalGroupCode = new Lazy<string>(() => "fldv_Code");
+    public static string fSMSOrganizationalGroupCode => _fSMSOrganizationalGroupCode.Value;
+
+    private static readonly Lazy<string> _fSMSOrganizationalGroupName = new Lazy<string>(() => "fldv_GroupName");
+    public static string fSMSOrganizationalGroupName => _fSMSOrganizationalGroupName.Value;
+
+    private static readonly Lazy<string> _fSMSOrganizationalGroupDescription = new Lazy<string>(() => "fldv_Description");
+    public static string fSMSOrganizationalGroupDescription => _fSMSOrganizationalGroupDescription.Value;
+
+    private static readonly Lazy<string> _fSMSOrganizationalGroupGroupType = new Lazy<string>(() => "fldv_GroupType");
+    public static string fSMSOrganizationalGroupGroupType => _fSMSOrganizationalGroupGroupType.Value;
+
+    private static readonly Lazy<string> _fSMSOrganizationalGroupAuthorityLevel = new Lazy<string>(() => "fldv_AuthorityLevel");
+    public static string fSMSOrganizationalGroupAuthorityLevel => _fSMSOrganizationalGroupAuthorityLevel.Value;
+
+    private static readonly Lazy<string> _fSMSOrganizationalGroupIsActive = new Lazy<string>(() => "fldb_IsActive");
+    public static string fSMSOrganizationalGroupIsActive => _fSMSOrganizationalGroupIsActive.Value;
 
     /// <summary>
-    /// SMS Stakeholder User Group Memberships table (tbld_SMSStakeholderUserGroups) - Junction table
+    /// SMS Application User Group Memberships table (tbld_SMSApplicationUserGroups) - Junction table
     /// </summary>
-    private static readonly Lazy<string> _fSMSStakeholderUserGroupUserCode = new Lazy<string>(() => "fldv_UserCode");
-    public static string fSMSStakeholderUserGroupUserCode => _fSMSStakeholderUserGroupUserCode.Value;
+    private static readonly Lazy<string> _fSMSApplicationUserGroupUserCode = new Lazy<string>(() => "fldv_UserCode");
+    public static string fSMSApplicationUserGroupUserCode => _fSMSApplicationUserGroupUserCode.Value;
 
-    private static readonly Lazy<string> _fSMSStakeholderUserGroupGroupCode = new Lazy<string>(() => "fldv_GroupCode");
-    public static string fSMSStakeholderUserGroupGroupCode => _fSMSStakeholderUserGroupGroupCode.Value;
+    private static readonly Lazy<string> _fSMSApplicationUserGroupGroupCode = new Lazy<string>(() => "fldv_GroupCode");
+    public static string fSMSApplicationUserGroupGroupCode => _fSMSApplicationUserGroupGroupCode.Value;
 
-    private static readonly Lazy<string> _fSMSStakeholderUserGroupAssignedDate = new Lazy<string>(() => "fldd_AssignedDate");
-    public static string fSMSStakeholderUserGroupAssignedDate => _fSMSStakeholderUserGroupAssignedDate.Value;
+    private static readonly Lazy<string> _fSMSApplicationUserGroupAssignedDate = new Lazy<string>(() => "fldd_AssignedDate");
+    public static string fSMSApplicationUserGroupAssignedDate => _fSMSApplicationUserGroupAssignedDate.Value;
 
-    private static readonly Lazy<string> _fSMSStakeholderUserGroupAssignedBy = new Lazy<string>(() => "fldv_AssignedBy");
-    public static string fSMSStakeholderUserGroupAssignedBy => _fSMSStakeholderUserGroupAssignedBy.Value;
+    private static readonly Lazy<string> _fSMSApplicationUserGroupAssignedBy = new Lazy<string>(() => "fldv_AssignedBy");
+    public static string fSMSApplicationUserGroupAssignedBy => _fSMSApplicationUserGroupAssignedBy.Value;
 
     /// <summary>
     /// Airport Shared Dataset field names - Using "fldv_", "fldd_", "fldi_" conventions
@@ -1010,4 +1039,34 @@ public static class FieldNames
 
     private static readonly Lazy<string> _fRiskAssessmentCompletionPercentage = new Lazy<string>(() => "fldi_CompletionPercentage");
     public static string fRiskAssessmentCompletionPercentage => _fRiskAssessmentCompletionPercentage.Value;
+
+    /// <summary>
+    /// SMS Stakeholder User Group Memberships table (tbld_SMSStakeholderUserGroups) - Junction table
+    /// </summary>
+    private static readonly Lazy<string> _fSMSStakeholderUserGroupUserCode = new Lazy<string>(() => "fldv_UserCode");
+    public static string fSMSStakeholderUserGroupUserCode => _fSMSStakeholderUserGroupUserCode.Value;
+
+    private static readonly Lazy<string> _fSMSStakeholderUserGroupGroupCode = new Lazy<string>(() => "fldv_GroupCode");
+    public static string fSMSStakeholderUserGroupGroupCode => _fSMSStakeholderUserGroupGroupCode.Value;
+
+    private static readonly Lazy<string> _fSMSStakeholderUserGroupAssignedDate = new Lazy<string>(() => "fldd_AssignedDate");
+    public static string fSMSStakeholderUserGroupAssignedDate => _fSMSStakeholderUserGroupAssignedDate.Value;
+
+    private static readonly Lazy<string> _fSMSStakeholderUserGroupAssignedBy = new Lazy<string>(() => "fldv_AssignedBy");
+    public static string fSMSStakeholderUserGroupAssignedBy => _fSMSStakeholderUserGroupAssignedBy.Value;
+
+    /// <summary>
+    /// SMS Organizational User Group Memberships table (tbld_SMSOrganizationalUserGroups) - Junction table
+    /// </summary>
+    private static readonly Lazy<string> _fSMSOrganizationalUserGroupUserCode = new Lazy<string>(() => "fldv_UserCode");
+    public static string fSMSOrganizationalUserGroupUserCode => _fSMSOrganizationalUserGroupUserCode.Value;
+
+    private static readonly Lazy<string> _fSMSOrganizationalUserGroupGroupCode = new Lazy<string>(() => "fldv_GroupCode");
+    public static string fSMSOrganizationalUserGroupGroupCode => _fSMSOrganizationalUserGroupGroupCode.Value;
+
+    private static readonly Lazy<string> _fSMSOrganizationalUserGroupAssignedDate = new Lazy<string>(() => "fldd_AssignedDate");
+    public static string fSMSOrganizationalUserGroupAssignedDate => _fSMSOrganizationalUserGroupAssignedDate.Value;
+
+    private static readonly Lazy<string> _fSMSOrganizationalUserGroupAssignedBy = new Lazy<string>(() => "fldv_AssignedBy");
+    public static string fSMSOrganizationalUserGroupAssignedBy => _fSMSOrganizationalUserGroupAssignedBy.Value;
 }

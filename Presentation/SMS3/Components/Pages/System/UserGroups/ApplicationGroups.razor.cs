@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Radzen;
+using Radzen.Blazor;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
 using SMS_Application.Interfaces;
@@ -25,6 +26,7 @@ public partial class ApplicationGroups : ComponentBase
     #region Parameters
 
     [Parameter] public string? GroupCode { get; set; }
+    [Parameter] public string? Action { get; set; } // For handling different actions like "members"
 
     #endregion
 
@@ -32,8 +34,18 @@ public partial class ApplicationGroups : ComponentBase
 
     private List<SMSApplicationGroup> SMSApplicationGroups { get; set; } = new();
     private List<SMSApplicationUser> SMSApplicationUsers { get; set; } = new();
+    private List<SMSApplicationUser> GroupMembers { get; set; } = new();
+    private List<SMSApplicationUser> AvailableUsers { get; set; } = new();
     private SMSApplicationGroup? CurrentGroup { get; set; }
     private bool IsEditMode { get; set; }
+    private bool IsManagingMembers { get; set; }
+    private string? CurrentGroupCode { get; set; }
+
+    // Grid reference
+    private RadzenDataGrid<SMSApplicationGroup>? groupsGrid;
+
+    // Selection tracking for member management
+    private Dictionary<string, bool> SelectedUsers { get; set; } = new();
 
     private string SuccessMessage { get; set; } = string.Empty;
     private string ErrorMessage { get; set; } = string.Empty;
@@ -44,6 +56,8 @@ public partial class ApplicationGroups : ComponentBase
     #region Modal Properties
 
     private bool ShowCreateModal { get; set; } = false;
+    private bool ShowEditModal { get; set; } = false;
+    private bool ShowMembersModal { get; set; } = false;
     private bool ShowDeleteModal { get; set; } = false;
     private string NewGroupName { get; set; } = string.Empty;
     private string NewDescription { get; set; } = string.Empty;
@@ -70,23 +84,12 @@ public partial class ApplicationGroups : ComponentBase
     protected override async Task OnInitializedAsync()
     {
         await LoadDataAsync();
-        
-        if (!string.IsNullOrEmpty(GroupCode))
-        {
-            await EditGroup(GroupCode);
-        }
     }
 
     protected override async Task OnParametersSetAsync()
     {
-        if (!string.IsNullOrEmpty(GroupCode) && CurrentGroup?.Code != GroupCode)
-        {
-            await EditGroup(GroupCode);
-        }
-        else if (string.IsNullOrEmpty(GroupCode) && IsEditMode)
-        {
-            CancelEdit();
-        }
+        // No longer need route parameter handling since we use modals
+        await Task.CompletedTask;
     }
 
     #endregion
@@ -141,23 +144,18 @@ public partial class ApplicationGroups : ComponentBase
             if (groupResult.IsFailure)
             {
                 ShowErrorNotification("Group not found.");
-                Navigation.NavigateTo("/System/UserGroups/ApplicationGroups");
                 return;
             }
 
             CurrentGroup = groupResult.Value;
-            IsEditMode = true;
             
             // Set edit form values
             EditGroupName = CurrentGroup.Name ?? string.Empty;
             EditDescription = CurrentGroup.Description ?? string.Empty;
             EditIsActive = CurrentGroup.IsActive;
             
-            // Update URL
-            if (GroupCode != groupCode)
-            {
-                Navigation.NavigateTo($"/System/UserGroups/ApplicationGroups/Edit/{groupCode}");
-            }
+            // Open edit modal
+            ShowEditModal = true;
         }
         catch (Exception ex)
         {
@@ -174,6 +172,15 @@ public partial class ApplicationGroups : ComponentBase
         EditDescription = string.Empty;
         EditIsActive = true;
         Navigation.NavigateTo("/System/UserGroups/ApplicationGroups");
+    }
+
+    private void CloseEditModal()
+    {
+        ShowEditModal = false;
+        CurrentGroup = null;
+        EditGroupName = string.Empty;
+        EditDescription = string.Empty;
+        EditIsActive = true;
     }
 
     #endregion
@@ -194,7 +201,7 @@ public partial class ApplicationGroups : ComponentBase
             StateHasChanged();
 
             // Create group entity
-            var groupCode = $"AG-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
+            var groupCode = $"AG-0000";
             var groupId = new SMSApplicationGroupID(groupCode);
             var group = new SMSApplicationGroup(groupId)
             {
@@ -212,6 +219,7 @@ public partial class ApplicationGroups : ComponentBase
                 ShowSuccessNotification($"Application group '{NewGroupName}' created successfully.");
                 CloseCreateModal();
                 await LoadDataAsync();
+                await groupsGrid?.Reload();
             }
             else
             {
@@ -254,8 +262,9 @@ public partial class ApplicationGroups : ComponentBase
             if (result.IsSuccess)
             {
                 ShowSuccessNotification($"Application group '{EditGroupName}' updated successfully.");
-                CancelEdit();
+                CloseEditModal();
                 await LoadDataAsync();
+                await groupsGrid?.Reload();
             }
             else
             {
@@ -295,6 +304,7 @@ public partial class ApplicationGroups : ComponentBase
                 ShowSuccessNotification("Application group deleted successfully.");
                 CloseDeleteModal();
                 await LoadDataAsync();
+                await groupsGrid?.Reload();
                 
                 // If we're editing the deleted group, cancel edit mode
                 if (CurrentGroup?.Code == DeleteGroupCode)
@@ -373,6 +383,217 @@ public partial class ApplicationGroups : ComponentBase
             Summary = "Success",
             Detail = message
         });
+    }
+
+    #endregion
+
+    #region Member Management Operations
+
+    private async Task ManageMembers(string groupCode)
+    {
+        if (string.IsNullOrWhiteSpace(groupCode))
+        {
+            ShowErrorNotification("Group code is required to manage members.");
+            return;
+        }
+
+        try
+        {
+            CurrentGroupCode = groupCode;
+            IsManagingMembers = true;
+
+            // Find the current group
+            CurrentGroup = SMSApplicationGroups.FirstOrDefault(g => g.Code == groupCode);
+
+            await LoadGroupMembersAsync(groupCode);
+            
+            // Show modal instead of navigating
+            ShowMembersModal = true;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error entering manage members mode for group: {GroupCode}", groupCode);
+            ShowErrorNotification("Error entering manage members mode. Please try again.");
+        }
+    }
+
+    private async Task LoadGroupMembersAsync(string groupCode)
+    {
+        try
+        {
+            // Get users in this group using the enhanced repository method
+            var groupMembersQuery = new GetUsersByApplicationGroupCodeQuery(groupCode);
+            var membersResult = await Mediator.SendAsync(groupMembersQuery, CancellationToken.None);
+            GroupMembers = membersResult.IsSuccess ? 
+                membersResult.Value?.ToList() ?? new List<SMSApplicationUser>() : 
+                new List<SMSApplicationUser>();
+
+            // Load available users (users not in this group)
+            if (!SMSApplicationUsers.Any())
+            {
+                await LoadDataAsync();
+            }
+
+            var memberCodes = GroupMembers.Select(m => m.Code).ToHashSet();
+            AvailableUsers = SMSApplicationUsers.Where(u => !memberCodes.Contains(u.Code)).ToList();
+
+            // Initialize selection tracking
+            SelectedUsers.Clear();
+            foreach (var user in AvailableUsers)
+            {
+                SelectedUsers[user.Code] = false;
+            }
+
+            Logger.LogInformation("Loaded {MemberCount} group members and {AvailableCount} available users for group {GroupCode}",
+                GroupMembers.Count, AvailableUsers.Count, groupCode);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading group members for group: {GroupCode}", groupCode);
+            
+            // For now, if the query fails, just load empty collections
+            GroupMembers = new List<SMSApplicationUser>();
+            AvailableUsers = SMSApplicationUsers?.ToList() ?? new List<SMSApplicationUser>();
+        }
+    }
+
+    private void ExitMemberManagement()
+    {
+        IsManagingMembers = false;
+        CurrentGroupCode = null;
+        CurrentGroup = null;
+        GroupMembers.Clear();
+        AvailableUsers.Clear();
+        SelectedUsers.Clear();
+        Navigation.NavigateTo("/System/UserGroups/ApplicationGroups");
+    }
+
+    private void CloseMembersModal()
+    {
+        ShowMembersModal = false;
+        IsManagingMembers = false;
+        CurrentGroupCode = null;
+        CurrentGroup = null;
+        GroupMembers.Clear();
+        AvailableUsers.Clear();
+        SelectedUsers.Clear();
+    }
+
+    private async Task RemoveUser(string userCode)
+    {
+        if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(CurrentGroupCode))
+        {
+            ShowErrorNotification("User code and group code are required.");
+            return;
+        }
+
+        try
+        {
+            var command = new RemoveUserFromApplicationGroupCommand(userCode, CurrentGroupCode);
+            var result = await Mediator.SendAsync(command, CancellationToken.None);
+
+            if (result.IsSuccess)
+            {
+                ShowSuccessNotification("User removed from group successfully.");
+                await LoadGroupMembersAsync(CurrentGroupCode);
+                StateHasChanged(); // Refresh the modal
+            }
+            else
+            {
+                ShowErrorNotification(result.Error?.Message ?? "Failed to remove user from group.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", userCode, CurrentGroupCode);
+            ShowErrorNotification("Error removing user from group. Please try again.");
+        }
+    }
+
+    private async Task AssignMultipleUsers()
+    {
+        if (string.IsNullOrWhiteSpace(CurrentGroupCode) || !SelectedUsers.Any(s => s.Value))
+        {
+            ShowErrorNotification("Group code and at least one user must be selected.");
+            return;
+        }
+
+        try
+        {
+            var selectedUserCodes = SelectedUsers.Where(s => s.Value).Select(s => s.Key).ToArray();
+            int successCount = 0;
+            int failureCount = 0;
+
+            foreach (var userCode in selectedUserCodes)
+            {
+                try
+                {
+                    var command = new AssignUserToApplicationGroupCommand(userCode, CurrentGroupCode);
+                    var result = await Mediator.SendAsync(command, CancellationToken.None);
+
+                    if (result.IsSuccess)
+                        successCount++;
+                    else
+                        failureCount++;
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, CurrentGroupCode);
+                    failureCount++;
+                }
+            }
+
+            if (successCount > 0)
+            {
+                var message = $"Successfully assigned {successCount} user(s) to group.";
+                if (failureCount > 0)
+                    message += $" {failureCount} assignment(s) failed.";
+                ShowSuccessNotification(message);
+                
+                await LoadGroupMembersAsync(CurrentGroupCode);
+                StateHasChanged(); // Refresh the modal
+            }
+            else
+            {
+                ShowErrorNotification("Failed to assign users to group.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error assigning multiple users to group {GroupCode}", CurrentGroupCode);
+            ShowErrorNotification("Error assigning users to group. Please try again.");
+        }
+    }
+
+    private async Task AssignSingleUser(string userCode)
+    {
+        if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(CurrentGroupCode))
+        {
+            ShowErrorNotification("User code and group code are required.");
+            return;
+        }
+
+        try
+        {
+            var command = new AssignUserToApplicationGroupCommand(userCode, CurrentGroupCode);
+            var result = await Mediator.SendAsync(command, CancellationToken.None);
+
+            if (result.IsSuccess)
+            {
+                ShowSuccessNotification("User assigned to group successfully.");
+                await LoadGroupMembersAsync(CurrentGroupCode);
+                StateHasChanged(); // Refresh the modal
+            }
+            else
+            {
+                ShowErrorNotification(result.Error?.Message ?? "Failed to assign user to group.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, CurrentGroupCode);
+            ShowErrorNotification("Error assigning user to group. Please try again.");
+        }
     }
 
     #endregion
