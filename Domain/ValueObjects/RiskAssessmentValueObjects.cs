@@ -67,7 +67,7 @@ public sealed class MonitoringRequirement
     {
         if (string.IsNullOrWhiteSpace(frequency))
         {
-            return Result<MonitoringRequirement>.Failure<MonitoringRequirement>(DomainErrors.RiskAssessmentError.InvalidMonitoringRequirement);
+            return Result<MonitoringRequirement>.Failure<MonitoringRequirement>(DomainErrors.RiskAssessmentError.InvalidAssessmentType);
         }
 
         return Result<MonitoringRequirement>.Success(new MonitoringRequirement(

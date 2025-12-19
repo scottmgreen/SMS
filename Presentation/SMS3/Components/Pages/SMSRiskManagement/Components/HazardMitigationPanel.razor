@@ -1,9 +1,18 @@
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
+@using SMS_Domain.ValueObjects
 @using SMS3.Components.Pages.SMSRiskManagement
+@using SMS_Application.Messaging.Commands
+@using SMS_Application.Messaging.Queries
+@using SMS_Application.Interfaces
+@using SMS_Shared.Common
 @using global::System.Text.Json
 @using Radzen
 @using Radzen.Blazor
+
+@inject IMediator Mediator
+@inject ILogger<HazardMitigationPanel> Logger
+@inject NotificationService NotificationService
 
 @{
     var cardColorClass = NeedsMitigation ? (HasMitigations() ? "var(--rz-info)" : "var(--rz-warning)") : "var(--rz-success)";
@@ -39,7 +48,7 @@
                         @if (HasMitigations())
                         {
                             <RadzenText TextStyle="TextStyle.Subtitle2" Text="Mitigation Strategies Defined" Style="margin: 0; color: var(--rz-info);" />
-                            <RadzenText TextStyle="TextStyle.Caption" Text="@($"{GetMitigationCount()} strategies loaded")" />
+                            <RadzenText TextStyle="TextStyle.Caption" Text="@($"{GetMitigationCount()} strategies implemented")" />
                         }
                         else
                         {
@@ -65,68 +74,84 @@
                         </RadzenColumn>
                         <RadzenColumn Size="4">
                             <RadzenButton Text="Add Strategy" Icon="add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
-                                          Click="@AddMitigationStrategy" Style="float: right;" />
+                                          Click="@AddMitigationStrategy" Style="float: right;" Disabled="@IsLoading" />
                         </RadzenColumn>
                     </RadzenRow>
 
                     <!-- Mitigation Strategies List -->
-                    @if (GetMitigationStrategies().Any())
+                    @if (IsLoading)
                     {
-                        @for (int i = 0; i < GetMitigationStrategies().Count; i++)
+                        <RadzenAlert AlertStyle="AlertStyle.Info" Icon="hourglass_empty" ShowIcon="true">
+                            <RadzenText TextStyle="TextStyle.Body2" Text="Loading mitigation strategies..." />
+                        </RadzenAlert>
+                    }
+                    else if (LoadedMitigations.Any())
+                    {
+                        @foreach (var mitigation in LoadedMitigations.OrderBy(m => m.Priority).ThenBy(m => m.TargetDate))
                         {
-                            var strategy = GetMitigationStrategies()[i];
-                            var strategyIndex = i;
-                            
                             <RadzenCard Style="background-color: #fff8e1; border-left: 4px solid #ff9800;">
                                 <RadzenStack Gap="1rem">
                                     <RadzenRow AlignItems="AlignItems.Center">
-                                        <RadzenColumn Size="10">
-                                            <RadzenText TextStyle="TextStyle.Subtitle2" Text="@($"Strategy {strategyIndex + 1}")" Style="margin: 0; color: var(--rz-primary);" />
+                                        <RadzenColumn Size="9">
+                                            <RadzenStack Gap="0.25rem">
+                                                <RadzenText TextStyle="TextStyle.Subtitle2" Text="@($"{mitigation.Name}")" Style="margin: 0; color: var(--rz-primary);" />
+                                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                                    <RadzenBadge Text="@mitigation.Status" BadgeStyle="@GetStatusBadgeStyle(mitigation.Status)" />
+                                                    <RadzenBadge Text="@mitigation.Priority" BadgeStyle="@GetPriorityBadgeStyle(mitigation.Priority)" />
+                                                    @if (mitigation.Progress > 0)
+                                                    {
+                                                        <RadzenBadge Text="@($"{mitigation.Progress}% Complete")" BadgeStyle="BadgeStyle.Info" />
+                                                    }
+                                                </RadzenStack>
+                                            </RadzenStack>
                                         </RadzenColumn>
-                                        <RadzenColumn Size="2">
-                                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
-                                                          Click="@(() => RemoveMitigationStrategy(strategyIndex))" />
-                                        </RadzenColumn>
-                                    </RadzenRow>
-
-                                    <RadzenFormField Text="Strategy Description" Variant="Variant.Outlined">
-                                        <RadzenTextArea @bind-Value="@strategy.Description" Rows="2"
-                                                        Placeholder="Describe the mitigation strategy..." Style="width: 100%;" />
-                                    </RadzenFormField>
-
-                                    <RadzenRow Gap="1rem">
-                                        <RadzenColumn Size="12" SizeMD="4">
-                                            <RadzenFormField Text="Control Type" Variant="Variant.Outlined">
-                                                <RadzenDropDown @bind-Value="@strategy.ControlType" Data="@ControlTypes"
-                                                                Placeholder="Select type..." Style="width: 100%;" />
-                                            </RadzenFormField>
-                                        </RadzenColumn>
-                                        <RadzenColumn Size="12" SizeMD="4">
-                                            <RadzenFormField Text="Priority" Variant="Variant.Outlined">
-                                                <RadzenDropDown @bind-Value="@strategy.Priority" Data="@PriorityLevels"
-                                                                Placeholder="Select priority..." Style="width: 100%;" />
-                                            </RadzenFormField>
-                                        </RadzenColumn>
-                                        <RadzenColumn Size="12" SizeMD="4">
-                                            <RadzenFormField Text="Target Date" Variant="Variant.Outlined">
-                                                <RadzenDatePicker @bind-Value="@strategy.TargetDate" DateFormat="yyyy-MM-dd" Style="width: 100%;" />
-                                            </RadzenFormField>
+                                        <RadzenColumn Size="3">
+                                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.25rem">
+                                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small"
+                                                              Click="@(() => EditMitigation(mitigation))" Disabled="@IsLoading" />
+                                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                                              Click="@(() => DeleteMitigation(mitigation))" Disabled="@IsLoading" />
+                                            </RadzenStack>
                                         </RadzenColumn>
                                     </RadzenRow>
 
-                                    <RadzenRow Gap="1rem">
-                                        <RadzenColumn Size="12" SizeMD="6">
-                                            <RadzenFormField Text="Responsible Department" Variant="Variant.Outlined">
-                                                <RadzenDropDown @bind-Value="@strategy.ResponsibleDepartment" Data="@Departments"
-                                                                Placeholder="Select department..." Style="width: 100%;" />
-                                            </RadzenFormField>
-                                        </RadzenColumn>
-                                        <RadzenColumn Size="12" SizeMD="6">
-                                            <RadzenFormField Text="Estimated Cost" Variant="Variant.Outlined">
-                                                <RadzenNumeric @bind-Value="@strategy.EstimatedCost" Format="c" Style="width: 100%;" />
-                                            </RadzenFormField>
-                                        </RadzenColumn>
-                                    </RadzenRow>
+                                    <RadzenText TextStyle="TextStyle.Body2" Text="@mitigation.Description" />
+
+                                    @if (mitigation.TargetDate.HasValue || !string.IsNullOrEmpty(mitigation.AssignedDepartment))
+                                    {
+                                        <RadzenRow Gap="1rem">
+                                            @if (mitigation.TargetDate.HasValue)
+                                            {
+                                                <RadzenColumn Size="6">
+                                                    <RadzenText TextStyle="TextStyle.Caption" Text="@($"Target: {mitigation.TargetDate.Value:MMM dd, yyyy}")" />
+                                                </RadzenColumn>
+                                            }
+                                            @if (!string.IsNullOrEmpty(mitigation.AssignedDepartment))
+                                            {
+                                                <RadzenColumn Size="6">
+                                                    <RadzenText TextStyle="TextStyle.Caption" Text="@($"Department: {mitigation.AssignedDepartment}")" />
+                                                </RadzenColumn>
+                                            }
+                                        </RadzenRow>
+                                    }
+
+                                    @if (mitigation.EstimatedCost.HasValue || mitigation.ActualCost.HasValue)
+                                    {
+                                        <RadzenRow Gap="1rem">
+                                            @if (mitigation.EstimatedCost.HasValue)
+                                            {
+                                                <RadzenColumn Size="6">
+                                                    <RadzenText TextStyle="TextStyle.Caption" Text="@($"Est. Cost: {mitigation.EstimatedCost.Value:C}")" />
+                                                </RadzenColumn>
+                                            }
+                                            @if (mitigation.ActualCost.HasValue)
+                                            {
+                                                <RadzenColumn Size="6">
+                                                    <RadzenText TextStyle="TextStyle.Caption" Text="@($"Actual Cost: {mitigation.ActualCost.Value:C}")" />
+                                                </RadzenColumn>
+                                            }
+                                        </RadzenRow>
+                                    }
                                 </RadzenStack>
                             </RadzenCard>
                         }
@@ -164,105 +189,6 @@
                             <RadzenAlert AlertStyle="AlertStyle.Success" Icon="people" ShowIcon="true">
                                 <RadzenText TextStyle="TextStyle.Body2" Text="@($"Residual Risk Panel Assigned: {GetResidualPanelMembers().Count} panel members ready to assess residual risk after mitigation.")" />
                             </RadzenAlert>
-
-                            <!-- Residual Risk Scoring Table -->
-                            <RadzenDataGrid Data="@GetResidualPanelMembersData()" TItem="ResidualPanelMemberData" AllowPaging="false" AllowSorting="false">
-                                <Columns>
-                                    <RadzenDataGridColumn TItem="ResidualPanelMemberData" Property="Name" Title="Panel Member">
-                                        <Template Context="member">
-                                            <RadzenStack Gap="0.25rem">
-                                                <RadzenText TextStyle="TextStyle.Subtitle2" Text="@member.Name" Style="margin: 0;" />
-                                                <RadzenText TextStyle="TextStyle.Caption" Text="@member.Role" />
-                                                @if (member.IsCompleted)
-                                                {
-                                                    <RadzenBadge Text="Scored" BadgeStyle="BadgeStyle.Success" />
-                                                }
-                                                else
-                                                {
-                                                    <RadzenBadge Text="Pending" BadgeStyle="BadgeStyle.Warning" />
-                                                }
-                                            </RadzenStack>
-                                        </Template>
-                                    </RadzenDataGridColumn>
-                                    <RadzenDataGridColumn TItem="ResidualPanelMemberData" Title="Residual Severity">
-                                        <Template Context="member">
-                                            @if (member.IsCompleted)
-                                            {
-                                                <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
-                                                    <RadzenBadge Text="@member.SeverityScore.ToString()" BadgeStyle="BadgeStyle.Info" />
-                                                    <RadzenText TextStyle="TextStyle.Caption" Text="@GetSeverityLabel(member.SeverityScore)" />
-                                                </RadzenStack>
-                                            }
-                                            else
-                                            {
-                                                <RadzenDropDown @bind-Value="@member.SeverityScore" Data="@SeverityOptions" 
-                                                                ValueProperty="Value" TextProperty="Text"
-                                                                Placeholder="Select..." Style="width: 100%;" 
-                                                                Change="@(() => CalculateResidualScore(member))" />
-                                            }
-                                        </Template>
-                                    </RadzenDataGridColumn>
-                                    <RadzenDataGridColumn TItem="ResidualPanelMemberData" Title="Residual Likelihood">
-                                        <Template Context="member">
-                                            @if (member.IsCompleted)
-                                            {
-                                                <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
-                                                    <RadzenBadge Text="@member.LikelihoodScore.ToString()" BadgeStyle="BadgeStyle.Info" />
-                                                    <RadzenText TextStyle="TextStyle.Caption" Text="@GetLikelihoodLabel(member.LikelihoodScore)" />
-                                                </RadzenStack>
-                                            }
-                                            else
-                                            {
-                                                <RadzenDropDown @bind-Value="@member.LikelihoodScore" Data="@LikelihoodOptions" 
-                                                                ValueProperty="Value" TextProperty="Text"
-                                                                Placeholder="Select..." Style="width: 100%;" 
-                                                                Change="@(() => CalculateResidualScore(member))" />
-                                            }
-                                        </Template>
-                                    </RadzenDataGridColumn>
-                                    <RadzenDataGridColumn TItem="ResidualPanelMemberData" Title="Residual Score">
-                                        <Template Context="member">
-                                            @if (member.CalculatedScore > 0)
-                                            {
-                                                <RadzenBadge Text="@member.CalculatedScore.ToString("F1")" BadgeStyle="BadgeStyle.Success" Style="font-size: 1rem;" />
-                                            }
-                                            else
-                                            {
-                                                <RadzenText TextStyle="TextStyle.Caption" Text="-" />
-                                            }
-                                        </Template>
-                                    </RadzenDataGridColumn>
-                                    <RadzenDataGridColumn TItem="ResidualPanelMemberData" Title="Action">
-                                        <Template Context="member">
-                                            @if (member.IsCompleted)
-                                            {
-                                                <RadzenButton Text="Edit" Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
-                                                              Click="@(() => EditResidualScore(member))" />
-                                            }
-                                            else if (member.SeverityScore > 0 && member.LikelihoodScore > 0)
-                                            {
-                                                <RadzenButton Text="Submit" Icon="save" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
-                                                              Click="@(() => SubmitResidualScore(member))" />
-                                            }
-                                            else
-                                            {
-                                                <RadzenButton Text="Submit" Icon="save" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" Disabled="true" />
-                                            }
-                                        </Template>
-                                    </RadzenDataGridColumn>
-                                </Columns>
-                            </RadzenDataGrid>
-
-                            <!-- Residual Risk Summary -->
-                            @if (GetResidualAverage() != null)
-                            {
-                                <RadzenAlert AlertStyle="AlertStyle.Success" Icon="check_circle" ShowIcon="true">
-                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-                                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="Residual Risk Assessment Complete" Style="margin: 0;" />
-                                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="@($"Average Residual Score: {GetResidualAverage():F1} (from {GetCompletedResidualCount()} scores)")" Style="margin: 0;" />
-                                    </RadzenStack>
-                                </RadzenAlert>
-                            }
                         }
                         else
                         {
@@ -303,6 +229,131 @@
         }
     </RadzenStack>
 </RadzenCard>
+
+<!-- Mitigation Edit/Add Dialog -->
+@if (ShowMitigationDialog)
+{
+    <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+        <RadzenCard Style="width: 900px; max-width: 90vw; max-height: 90vh; overflow-y: auto;">
+            <RadzenStack Gap="1rem">
+                <RadzenRow AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="10">
+                        <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
+                            <RadzenIcon Icon="@(IsEditMode ? "edit" : "add")" Style="margin-right: 0.5rem;" />
+                            @(IsEditMode ? $"Edit Mitigation: {CurrentMitigation?.Name}" : $"Add New Mitigation for {Hazard.Code}")
+                        </RadzenText>
+                    </RadzenColumn>
+                    <RadzenColumn Size="2">
+                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
+                                      Click="@CloseMitigationDialog" />
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenFieldset Text="Basic Information">
+                    <RadzenStack Gap="1rem">
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="8">
+                                <RadzenFormField Text="Mitigation Name" Variant="Variant.Outlined">
+                                    <RadzenTextBox @bind-Value="@CurrentMitigation.Name" Placeholder="Enter mitigation name..." Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenFormField Text="Type" Variant="Variant.Outlined">
+                                    <RadzenDropDown @bind-Value="@CurrentMitigation.Type" Data="@ControlTypes"
+                                                    Placeholder="Select type..." Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenFormField Text="Description" Variant="Variant.Outlined">
+                            <RadzenTextArea @bind-Value="@CurrentMitigation.Description" Rows="3"
+                                            Placeholder="Describe the mitigation strategy in detail..." Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenStack>
+                </RadzenFieldset>
+
+                <RadzenFieldset Text="Priority & Timeline">
+                    <RadzenStack Gap="1rem">
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenFormField Text="Priority" Variant="Variant.Outlined">
+                                    <RadzenDropDown @bind-Value="@CurrentMitigation.Priority" Data="@PriorityLevels"
+                                                    Placeholder="Select priority..." Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenFormField Text="Status" Variant="Variant.Outlined">
+                                    <RadzenDropDown @bind-Value="@CurrentMitigation.Status" Data="@StatusLevels"
+                                                    Placeholder="Select status..." Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenFormField Text="Progress %" Variant="Variant.Outlined">
+                                    <RadzenNumeric @bind-Value="@CurrentMitigation.Progress" Min="0" Max="100" Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Target Date" Variant="Variant.Outlined">
+                                    <RadzenDatePicker @bind-Value="@CurrentMitigation.TargetDate" DateFormat="yyyy-MM-dd" Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Implementation Date" Variant="Variant.Outlined">
+                                    <RadzenDatePicker @bind-Value="@CurrentMitigation.ImplementationDate" DateFormat="yyyy-MM-dd" Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenStack>
+                </RadzenFieldset>
+
+                <RadzenFieldset Text="Assignment & Resources">
+                    <RadzenStack Gap="1rem">
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Assigned Department" Variant="Variant.Outlined">
+                                    <RadzenDropDown @bind-Value="@CurrentMitigation.AssignedDepartment" Data="@Departments"
+                                                    Placeholder="Select department..." Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Assigned To" Variant="Variant.Outlined">
+                                    <RadzenTextBox @bind-Value="@CurrentMitigation.AssignedTo" Placeholder="Person responsible..." Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Estimated Cost" Variant="Variant.Outlined">
+                                    <RadzenNumeric @bind-Value="@CurrentMitigation.EstimatedCost" Format="c" Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Estimated Hours" Variant="Variant.Outlined">
+                                    <RadzenNumeric @bind-Value="@CurrentMitigation.EstimatedHours" Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenFormField Text="Resource Requirements" Variant="Variant.Outlined">
+                            <RadzenTextArea @bind-Value="@CurrentMitigation.ResourceRequirements" Rows="2"
+                                            Placeholder="Describe required resources..." Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenStack>
+                </RadzenFieldset>
+
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseMitigationDialog" />
+                    <RadzenButton Text="@(IsEditMode ? "Update" : "Create")" Icon="@(IsEditMode ? "save" : "add")" 
+                                  ButtonStyle="ButtonStyle.Primary" Click="@SaveMitigation" Disabled="@IsSaving" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+    </div>
+}
 
 <!-- Residual Panel Management Dialog -->
 @if (ShowResidualPanelDialog)
@@ -357,10 +408,19 @@
     [Parameter] public bool NeedsMitigation { get; set; }
     [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
     [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
+    [Parameter] public RiskAssessment? InitialRiskAssessment { get; set; }
     [Parameter] public EventCallback<string> OnMitigationUpdated { get; set; }
-    [Parameter] public EventCallback<Step5Model.ResidualRiskScoreData> OnResidualScoreSubmitted { get; set; }
 
+    // State properties
+    private bool IsLoading { get; set; } = true;
+    private bool IsSaving { get; set; } = false;
+    private bool ShowMitigationDialog { get; set; } = false;
     private bool ShowResidualPanelDialog { get; set; } = false;
+    private bool IsEditMode { get; set; } = false;
+
+    // Data properties
+    private List<Mitigation> LoadedMitigations { get; set; } = new();
+    private Mitigation CurrentMitigation { get; set; } = new(new MitigationID(Guid.NewGuid().ToString()));
     private List<ResidualStakeholderSelectionItem> ResidualStakeholderSelectionItems { get; set; } = new();
 
     // Monitoring properties for acceptable risks
@@ -378,6 +438,11 @@
         "Critical", "High", "Medium", "Low"
     };
 
+    private List<string> StatusLevels = new()
+    {
+        "Proposed", "Approved", "InProgress", "Completed", "Cancelled", "OnHold"
+    };
+
     private List<string> Departments = new()
     {
         "Airport Operations", "Safety Management", "Maintenance & Engineering", 
@@ -390,53 +455,262 @@
         "Continuous", "Daily", "Weekly", "Monthly", "Quarterly", "Annually"
     };
 
-    private List<ScoreOption> SeverityOptions = new()
+    protected override async Task OnInitializedAsync()
     {
-        new() { Value = 1, Text = "1 - Minor" },
-        new() { Value = 2, Text = "2 - Moderate" },
-        new() { Value = 3, Text = "3 - Serious" },
-        new() { Value = 4, Text = "4 - Major" },
-        new() { Value = 5, Text = "5 - Catastrophic" }
-    };
-
-    private List<ScoreOption> LikelihoodOptions = new()
-    {
-        new() { Value = 1, Text = "1 - Rare" },
-        new() { Value = 2, Text = "2 - Unlikely" },
-        new() { Value = 3, Text = "3 - Possible" },
-        new() { Value = 4, Text = "4 - Likely" },
-        new() { Value = 5, Text = "5 - Frequent" }
-    };
-
-    protected override void OnInitialized()
-    {
+        await LoadMitigationsForHazard();
         InitializeResidualStakeholderSelection();
-        EnsureHazardInitialized();
     }
 
-    private void EnsureHazardInitialized()
+    /// <summary>
+    /// Load existing mitigations for this hazard using CQRS
+    /// </summary>
+    private async Task LoadMitigationsForHazard()
     {
-        if (!Step5.HazardMitigations.ContainsKey(Hazard.Code))
+        try
         {
-            Step5.HazardMitigations[Hazard.Code] = new List<MitigationStrategy>();
+            IsLoading = true;
+            StateHasChanged();
+
+            Logger.LogInformation("Loading mitigations for hazard: {HazardCode}", Hazard.Code);
+
+            var query = new GetMitigationsByHazardCodeQuery(Hazard.Code);
+            var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+            if (result.IsSuccess && result.Value != null)
+            {
+                LoadedMitigations = result.Value;
+                Logger.LogInformation("Loaded {Count} mitigations for hazard {HazardCode}", LoadedMitigations.Count, Hazard.Code);
+            }
+            else
+            {
+                LoadedMitigations = new List<Mitigation>();
+                Logger.LogInformation("No existing mitigations found for hazard {HazardCode}", Hazard.Code);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading mitigations for hazard {HazardCode}", Hazard.Code);
+            LoadedMitigations = new List<Mitigation>();
+            ShowErrorNotification("Failed to load existing mitigations");
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
         }
     }
 
-    private List<MitigationStrategy> GetMitigationStrategies()
+    /// <summary>
+    /// Add new mitigation strategy using proper CQRS commands
+    /// </summary>
+    private async Task AddMitigationStrategy()
     {
-        return Step5.HazardMitigations.ContainsKey(Hazard.Code) 
-            ? Step5.HazardMitigations[Hazard.Code] 
-            : new List<MitigationStrategy>();
+        try
+        {
+            // ?? DEBUG: Log the InitialRiskAssessment details
+            Logger.LogInformation("DEBUG - AddMitigationStrategy: InitialRiskAssessment is null: {IsNull}", InitialRiskAssessment == null);
+            if (InitialRiskAssessment != null)
+            {
+                Logger.LogInformation("DEBUG - AddMitigationStrategy: InitialRiskAssessment.Code: '{Code}'", InitialRiskAssessment.Code ?? "NULL");
+                Logger.LogInformation("DEBUG - AddMitigationStrategy: InitialRiskAssessment.HazardCode: '{HazardCode}'", InitialRiskAssessment.HazardCode ?? "NULL");
+            }
+
+            // Create new mitigation entity with proper HazardCode and RiskAssessmentCode
+            var newMitigationResult = Mitigation.Create(
+                code: $"MIT-{DateTime.Now:yyyyMMdd}-{Random.Shared.Next(1000, 9999)}",
+                hazardCode: Hazard.Code,
+                name: "New Mitigation Strategy",
+                description: "Enter mitigation description..."
+            );
+
+            if (newMitigationResult.IsSuccess)
+            {
+                CurrentMitigation = newMitigationResult.Value;
+                
+                // CRITICAL: Assign the RiskAssessmentCode from the current assessment
+                CurrentMitigation.RiskAssessmentCode = InitialRiskAssessment?.Code ?? string.Empty;
+                
+                // ?? DEBUG: Log what we're setting
+                Logger.LogInformation("DEBUG - AddMitigationStrategy: Setting RiskAssessmentCode to: '{RiskAssessmentCode}'", CurrentMitigation.RiskAssessmentCode);
+                Logger.LogInformation("DEBUG - AddMitigationStrategy: HazardCode: '{HazardCode}'", CurrentMitigation.HazardCode);
+                
+                // Set defaults
+                CurrentMitigation.Status = "Proposed";
+                CurrentMitigation.Priority = "Medium";
+                CurrentMitigation.Type = "Administrative Control";
+                CurrentMitigation.Progress = 0;
+                CurrentMitigation.TargetDate = DateTime.Now.AddMonths(3);
+
+                IsEditMode = false;
+                ShowMitigationDialog = true;
+                StateHasChanged();
+            }
+            else
+            {
+                ShowErrorNotification($"Failed to create mitigation: {newMitigationResult.Error?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error creating new mitigation");
+            ShowErrorNotification("Error creating new mitigation");
+        }
+    }
+
+    /// <summary>
+    /// Edit existing mitigation
+    /// </summary>
+    private void EditMitigation(Mitigation mitigation)
+    {
+        CurrentMitigation = mitigation;
+        IsEditMode = true;
+        ShowMitigationDialog = true;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Save mitigation using CQRS commands
+    /// </summary>
+    private async Task SaveMitigation()
+    {
+        try
+        {
+            IsSaving = true;
+            StateHasChanged();
+
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(CurrentMitigation.Name))
+            {
+                ShowErrorNotification("Mitigation name is required");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(CurrentMitigation.Description))
+            {
+                ShowErrorNotification("Mitigation description is required");
+                return;
+            }
+
+            // Ensure critical fields are set
+            CurrentMitigation.HazardCode = Hazard.Code;
+            CurrentMitigation.RiskAssessmentCode = InitialRiskAssessment?.Code ?? string.Empty;
+
+            // ?? DEBUG: Log what we're about to save
+            Logger.LogInformation("DEBUG - SaveMitigation: About to save mitigation");
+            Logger.LogInformation("DEBUG - SaveMitigation: RiskAssessmentCode: '{RiskAssessmentCode}'", CurrentMitigation.RiskAssessmentCode);
+            Logger.LogInformation("DEBUG - SaveMitigation: HazardCode: '{HazardCode}'", CurrentMitigation.HazardCode);
+            Logger.LogInformation("DEBUG - SaveMitigation: Name: '{Name}'", CurrentMitigation.Name);
+            Logger.LogInformation("DEBUG - SaveMitigation: IsEditMode: {IsEditMode}", IsEditMode);
+
+            Result<Mitigation> result;
+
+            if (IsEditMode)
+            {
+                // Update existing mitigation
+                var updateCommand = new UpdateMitigationCommand(CurrentMitigation);
+                result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+                
+                if (result.IsSuccess)
+                {
+                    // Update local collection
+                    var index = LoadedMitigations.FindIndex(m => m.Id.Value == CurrentMitigation.Id.Value);
+                    if (index >= 0)
+                    {
+                        LoadedMitigations[index] = result.Value;
+                    }
+                    
+                    ShowSuccessNotification("Mitigation updated successfully");
+                    Logger.LogInformation("Updated mitigation {MitigationCode} for hazard {HazardCode}", CurrentMitigation.Code, Hazard.Code);
+                }
+            }
+            else
+            {
+                // Create new mitigation
+                var createCommand = new CreateMitigationCommand(CurrentMitigation);
+                result = await Mediator.SendAsync(createCommand, CancellationToken.None);
+                
+                if (result.IsSuccess)
+                {
+                    // Add to local collection
+                    LoadedMitigations.Add(result.Value);
+                    ShowSuccessNotification("Mitigation created successfully");
+                    Logger.LogInformation("Created mitigation {MitigationCode} for hazard {HazardCode}", CurrentMitigation.Code, Hazard.Code);
+                }
+            }
+
+            if (result.IsSuccess)
+            {
+                CloseMitigationDialog();
+                await OnMitigationUpdated.InvokeAsync(Hazard.Code);
+                StateHasChanged();
+            }
+            else
+            {
+                ShowErrorNotification($"Failed to save mitigation: {result.Error?.Message}");
+                Logger.LogError("Failed to save mitigation: {Error}", result.Error?.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving mitigation");
+            ShowErrorNotification("Error saving mitigation");
+        }
+        finally
+        {
+            IsSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Delete mitigation using CQRS commands
+    /// </summary>
+    private async Task DeleteMitigation(Mitigation mitigation)
+    {
+        try
+        {
+            var deleteCommand = new DeleteMitigationCommand(new MitigationID(mitigation.Id.Value));
+            var result = await Mediator.SendAsync(deleteCommand, CancellationToken.None);
+
+            if (result.IsSuccess)
+            {
+                // Remove from local collection
+                LoadedMitigations.RemoveAll(m => m.Id.Value == mitigation.Id.Value);
+                ShowSuccessNotification("Mitigation deleted successfully");
+                Logger.LogInformation("Deleted mitigation {MitigationCode} for hazard {HazardCode}", mitigation.Code, Hazard.Code);
+                
+                await OnMitigationUpdated.InvokeAsync(Hazard.Code);
+                StateHasChanged();
+            }
+            else
+            {
+                ShowErrorNotification($"Failed to delete mitigation: {result.Error?.Message}");
+                Logger.LogError("Failed to delete mitigation: {Error}", result.Error?.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error deleting mitigation");
+            ShowErrorNotification("Error deleting mitigation");
+        }
+    }
+
+    private void CloseMitigationDialog()
+    {
+        ShowMitigationDialog = false;
+        CurrentMitigation = new(new MitigationID(Guid.NewGuid().ToString()));
+        IsEditMode = false;
+        StateHasChanged();
     }
 
     private bool HasMitigations()
     {
-        return GetMitigationStrategies().Any();
+        return LoadedMitigations?.Any() == true;
     }
 
     private int GetMitigationCount()
     {
-        return GetMitigationStrategies().Count;
+        return LoadedMitigations?.Count ?? 0;
     }
 
     private string GetInitialRiskLevel()
@@ -479,34 +753,29 @@
         };
     }
 
-    private void AddMitigationStrategy()
+    private BadgeStyle GetStatusBadgeStyle(string status)
     {
-        // Use the domain factory method to create a proper MitigationStrategy
-        var strategyResult = MitigationStrategy.Create("New mitigation strategy", Hazard.Code);
-        
-        if (strategyResult.IsSuccess)
+        return status switch
         {
-            var strategy = strategyResult.Value;
-            // Set some defaults for UI
-            strategy.ControlType = "Administrative";
-            strategy.Priority = "Medium";
-            strategy.TargetDate = DateTime.Now.AddMonths(3);
-            
-            var strategies = GetMitigationStrategies();
-            strategies.Add(strategy);
-            
-            OnMitigationUpdated.InvokeAsync(Hazard.Code);
-        }
+            "Completed" => BadgeStyle.Success,
+            "InProgress" => BadgeStyle.Info,
+            "Approved" => BadgeStyle.Primary,
+            "OnHold" => BadgeStyle.Warning,
+            "Cancelled" => BadgeStyle.Danger,
+            _ => BadgeStyle.Secondary
+        };
     }
 
-    private void RemoveMitigationStrategy(int index)
+    private BadgeStyle GetPriorityBadgeStyle(string priority)
     {
-        var strategies = GetMitigationStrategies();
-        if (index >= 0 && index < strategies.Count)
+        return priority switch
         {
-            strategies.RemoveAt(index);
-            OnMitigationUpdated.InvokeAsync(Hazard.Code);
-        }
+            "Critical" => BadgeStyle.Danger,
+            "High" => BadgeStyle.Warning,
+            "Medium" => BadgeStyle.Info,
+            "Low" => BadgeStyle.Success,
+            _ => BadgeStyle.Secondary
+        };
     }
 
     private List<string> GetResidualPanelMembers()
@@ -514,32 +783,6 @@
         return Step5.ResidualRiskPanels.ContainsKey(Hazard.Code)
             ? Step5.ResidualRiskPanels[Hazard.Code]
             : new List<string>();
-    }
-
-    private List<ResidualPanelMemberData> GetResidualPanelMembersData()
-    {
-        var panelMembers = GetResidualPanelMembers();
-        var scores = Step5.ResidualRiskScores.ContainsKey(Hazard.Code)
-            ? Step5.ResidualRiskScores[Hazard.Code]
-            : new List<Step5Model.ResidualRiskScoreData>();
-
-        return panelMembers.Select(memberId =>
-        {
-            var stakeholder = AvailableStakeholders.FirstOrDefault(s => s.Code == memberId);
-            var assessor = AvailableAssessors.FirstOrDefault(a => a.Id.Value == memberId);
-            var score = scores.FirstOrDefault(s => s.MemberId == memberId);
-
-            return new ResidualPanelMemberData
-            {
-                MemberId = memberId,
-                Name = stakeholder?.DisplayName ?? stakeholder?.DisplayName ?? "Unknown",
-                Role = stakeholder?.StakeholderType ?? stakeholder?.UserRole.Name ?? "Unknown",
-                SeverityScore = score?.SeverityScore ?? 0,
-                LikelihoodScore = score?.LikelihoodScore ?? 0,
-                CalculatedScore = score?.CalculatedScore ?? 0,
-                IsCompleted = score?.IsComplete ?? false
-            };
-        }).ToList();
     }
 
     private void InitializeResidualStakeholderSelection()
@@ -570,85 +813,6 @@
         return ResidualStakeholderSelectionItems;
     }
 
-    private double? GetResidualAverage()
-    {
-        if (!Step5.ResidualRiskScores.ContainsKey(Hazard.Code)) return null;
-        
-        var completedScores = Step5.ResidualRiskScores[Hazard.Code]
-            .Where(s => s.IsComplete)
-            .Select(s => s.CalculatedScore)
-            .ToList();
-        
-        return completedScores.Any() ? completedScores.Average() : null;
-    }
-
-    private int GetCompletedResidualCount()
-    {
-        return Step5.ResidualRiskScores.ContainsKey(Hazard.Code)
-            ? Step5.ResidualRiskScores[Hazard.Code].Count(s => s.IsComplete)
-            : 0;
-    }
-
-    private string GetSeverityLabel(int severity)
-    {
-        return severity switch
-        {
-            1 => "Minor",
-            2 => "Moderate",
-            3 => "Serious", 
-            4 => "Major",
-            5 => "Catastrophic",
-            _ => ""
-        };
-    }
-
-    private string GetLikelihoodLabel(int likelihood)
-    {
-        return likelihood switch
-        {
-            1 => "Rare",
-            2 => "Unlikely", 
-            3 => "Possible",
-            4 => "Likely",
-            5 => "Frequent",
-            _ => ""
-        };
-    }
-
-    private void CalculateResidualScore(ResidualPanelMemberData member)
-    {
-        if (member.SeverityScore > 0 && member.LikelihoodScore > 0)
-        {
-            member.CalculatedScore = member.SeverityScore * member.LikelihoodScore;
-        }
-        else
-        {
-            member.CalculatedScore = 0;
-        }
-    }
-
-    private async Task SubmitResidualScore(ResidualPanelMemberData member)
-    {
-        var scoreData = new Step5Model.ResidualRiskScoreData
-        {
-            HazardId = Hazard.Code,
-            MemberId = member.MemberId,
-            SeverityScore = member.SeverityScore,
-            LikelihoodScore = member.LikelihoodScore,
-            CalculatedScore = member.CalculatedScore,
-            IsComplete = true,
-            SubmittedDate = DateTime.UtcNow
-        };
-
-        await OnResidualScoreSubmitted.InvokeAsync(scoreData);
-        member.IsCompleted = true;
-    }
-
-    private void EditResidualScore(ResidualPanelMemberData member)
-    {
-        member.IsCompleted = false;
-    }
-
     private async Task UpdateResidualPanel()
     {
         var selectedMembers = ResidualStakeholderSelectionItems.Where(s => s.IsSelected).Select(s => s.Id).ToList();
@@ -658,30 +822,26 @@
         await OnMitigationUpdated.InvokeAsync(Hazard.Code);
     }
 
-    private void UpdateStrategyDescription(MitigationStrategy strategy, string newDescription)
+    private void ShowErrorNotification(string message)
     {
-        strategy.UpdateDetails(newDescription, strategy.ControlType, strategy.Priority);
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Error,
+            Summary = "Error",
+            Detail = message,
+            Duration = 5000
+        });
     }
 
-    private void UpdateStrategyDetails(MitigationStrategy strategy)
+    private void ShowSuccessNotification(string message)
     {
-        strategy.UpdateDetails(strategy.Description, strategy.ControlType, strategy.Priority);
-    }
-
-    private void UpdateStrategyImplementation(MitigationStrategy strategy)
-    {
-        strategy.UpdateImplementation(strategy.TargetDate, strategy.EstimatedCost, strategy.ResponsibleDepartment, strategy.ResponsiblePerson);
-    }
-
-    public class ResidualPanelMemberData
-    {
-        public string MemberId { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string Role { get; set; } = string.Empty;
-        public int SeverityScore { get; set; }
-        public int LikelihoodScore { get; set; }
-        public double CalculatedScore { get; set; }
-        public bool IsCompleted { get; set; }
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Success",
+            Detail = message,
+            Duration = 3000
+        });
     }
 
     public class ResidualStakeholderSelectionItem
@@ -691,11 +851,5 @@
         public string Organization { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
         public bool IsSelected { get; set; }
-    }
-
-    public class ScoreOption
-    {
-        public int Value { get; set; }
-        public string Text { get; set; } = string.Empty;
     }
 }

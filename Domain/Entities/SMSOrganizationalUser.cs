@@ -15,11 +15,12 @@ public sealed class SMSOrganizationalUser : BaseUser
     public SMSOrganizationalUserID OrganizationalUserId { get; private set; }
     public string Department { get; set; } = string.Empty;
     public string Position { get; set; } = string.Empty;
+    /// <summary>
+    /// OrganizationLevel (AE, RE, RM, SMS Manager, SMS Coordinator, SMS Team)
+    /// </summary>
     public string OrganizationLevel { get; set; } = string.Empty;
 
-    /// <summary>
-    /// SMS-specific role (AE, RE, RM, SMS Manager, SMS Coordinator, SMS Team)
-    /// </summary>
+    
     public string? SMSRole { get; set; }
 
     /// <summary>

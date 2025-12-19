@@ -106,14 +106,46 @@ public partial class OrganizationalUsers : ComponentBase
         new() { Text = "Management", Value = "Management" }
     };
 
-    private readonly List<DropdownOption> OrganizationLevelOptions = new()
+    // Updated to use SMSOrganizationalLevel enum with category grouping
+    private List<DropdownOption> OrganizationLevelOptions
     {
-        new() { Text = "Staff", Value = "Staff" },
-        new() { Text = "Supervisor", Value = "Supervisor" },
-        new() { Text = "Manager", Value = "Manager" },
-        new() { Text = "Director", Value = "Director" },
-        new() { Text = "Executive", Value = "Executive" }
-    };
+        get
+        {
+            var options = new List<DropdownOption>();
+            
+            // Group by category and show them in order of authority
+            var categories = new[] { "Executive", "Management", "Operational", "Committee", "External" };
+            
+            foreach (var category in categories)
+            {
+                var categoryRoles = SMSOrganizationalLevel.GetLevelsByCategory(category)
+                    .OrderByDescending(level => level.AuthorityLevel);
+                
+                if (categoryRoles.Any())
+                {
+                    // Add category header (disabled option)
+                    options.Add(new DropdownOption 
+                    { 
+                        Text = $"--- {category} Roles ---", 
+                        Value = "", 
+                        IsDisabled = true 
+                    });
+                    
+                    // Add roles in category
+                    foreach (var level in categoryRoles)
+                    {
+                        options.Add(new DropdownOption
+                        {
+                            Text = $"  {level.Name} (Authority {level.AuthorityLevel})",
+                            Value = level.Name
+                        });
+                    }
+                }
+            }
+            
+            return options;
+        }
+    }
 
     private readonly List<DropdownOption> SMSRoleOptions = new()
     {
@@ -136,18 +168,29 @@ public partial class OrganizationalUsers : ComponentBase
         !string.IsNullOrWhiteSpace(NewLastName) &&
         !string.IsNullOrWhiteSpace(NewUserName) &&
         !string.IsNullOrWhiteSpace(NewPassword) &&
-        !string.IsNullOrWhiteSpace(NewDepartment);
+        !string.IsNullOrWhiteSpace(NewDepartment) &&
+        IsValidOrganizationLevel(NewOrganizationLevel);
 
     private bool IsEditFormValid => 
         !string.IsNullOrWhiteSpace(EditFirstName) &&
         !string.IsNullOrWhiteSpace(EditLastName) &&
-        !string.IsNullOrWhiteSpace(EditDepartment);
+        !string.IsNullOrWhiteSpace(EditDepartment) &&
+        IsValidOrganizationLevel(EditOrganizationLevel);
 
     private bool IsPasswordFormValid => 
         !string.IsNullOrWhiteSpace(NewPassword) &&
         !string.IsNullOrWhiteSpace(ConfirmPassword) &&
         NewPassword == ConfirmPassword &&
         NewPassword.Length >= 8;
+
+    // Helper method to validate organization level
+    private bool IsValidOrganizationLevel(string organizationLevel)
+    {
+        if (string.IsNullOrWhiteSpace(organizationLevel)) return true; // Optional field
+        
+        return SMSOrganizationalLevel.GetAllValues()
+            .Any(level => level.Name.Equals(organizationLevel, StringComparison.OrdinalIgnoreCase));
+    }
 
     #endregion
 
@@ -540,6 +583,36 @@ public partial class OrganizationalUsers : ComponentBase
         };
     }
 
+    // Add method to get organization level badge style
+    private BadgeStyle GetOrganizationLevelBadgeStyle(string organizationLevel)
+    {
+        var level = SMSOrganizationalLevel.GetAllValues()
+            .FirstOrDefault(l => l.Name.Equals(organizationLevel, StringComparison.OrdinalIgnoreCase));
+        
+        if (level == null) return BadgeStyle.Secondary;
+
+        return level.AuthorityLevel switch
+        {
+            >= 9 => BadgeStyle.Danger,    // Accountable/Responsible Executive
+            8 => BadgeStyle.Warning,      // Responsible Manager
+            7 => BadgeStyle.Primary,      // SMS Manager
+            6 => BadgeStyle.Info,         // SMS Coordinator
+            5 => BadgeStyle.Success,      // SMS Team Member
+            _ => BadgeStyle.Secondary
+        };
+    }
+
+    // Add method to get organization level display text with hierarchy info
+    private string GetOrganizationLevelDisplayText(string organizationLevel)
+    {
+        var level = SMSOrganizationalLevel.GetAllValues()
+            .FirstOrDefault(l => l.Name.Equals(organizationLevel, StringComparison.OrdinalIgnoreCase));
+        
+        if (level == null) return organizationLevel;
+
+        return $"{level.Name} - {level.Category} (Authority Level {level.AuthorityLevel})";
+    }
+
     #endregion
 
     #region Notification Methods
@@ -591,6 +664,7 @@ public partial class OrganizationalUsers : ComponentBase
     {
         public string Text { get; set; } = string.Empty;
         public string Value { get; set; } = string.Empty;
+        public bool IsDisabled { get; set; } = false; // Add IsDisabled property
     }
 
     #endregion

@@ -395,7 +395,7 @@ public static class FieldNames
     private static readonly Lazy<string> _fHazardWorstCredibleOutcome = new Lazy<string>(() => "fldv_WorstCredibleOutcome");
     public static string fHazardWorstCredibleOutcome => _fHazardWorstCredibleOutcome.Value;
 
-    private static readonly Lazy<string> _fHazardRootCause = new Lazy<string>(() => "fldc_RootCause");
+    private static readonly Lazy<string> _fHazardRootCause = new Lazy<string>(() => "fldv_RootCause");
     public static string fHazardRootCause => _fHazardRootCause.Value;
 
     private static readonly Lazy<string> _fHazardCurrentMitigations = new Lazy<string>(() => "fldc_CurrentMitigations");
@@ -1050,17 +1050,155 @@ public static class FieldNames
     public static string fSMSStakeholderUserGroupAssignedBy => _fSMSStakeholderUserGroupAssignedBy.Value;
 
     /// <summary>
-    /// SMS Organizational User Group Memberships table (tbld_SMSOrganizationalUserGroups) - Junction table
+    /// MISSING MITIGATION FIELDS FROM TBLD_MITIGATIONS SCHEMA - ADDED TO BOTTOM
     /// </summary>
-    private static readonly Lazy<string> _fSMSOrganizationalUserGroupUserCode = new Lazy<string>(() => "fldv_UserCode");
-    public static string fSMSOrganizationalUserGroupUserCode => _fSMSOrganizationalUserGroupUserCode.Value;
+    private static readonly Lazy<string> _fMitigationName = new Lazy<string>(() => "fldv_Name");
+    public static string fMitigationName => _fMitigationName.Value;
 
-    private static readonly Lazy<string> _fSMSOrganizationalUserGroupGroupCode = new Lazy<string>(() => "fldv_GroupCode");
-    public static string fSMSOrganizationalUserGroupGroupCode => _fSMSOrganizationalUserGroupGroupCode.Value;
+    private static readonly Lazy<string> _fMitigationDescription = new Lazy<string>(() => "fldc_Description");
+    public static string fMitigationDescription => _fMitigationDescription.Value;
 
-    private static readonly Lazy<string> _fSMSOrganizationalUserGroupAssignedDate = new Lazy<string>(() => "fldd_AssignedDate");
-    public static string fSMSOrganizationalUserGroupAssignedDate => _fSMSOrganizationalUserGroupAssignedDate.Value;
+    private static readonly Lazy<string> _fMitigationType = new Lazy<string>(() => "fldv_Type");
+    public static string fMitigationType => _fMitigationType.Value;
 
-    private static readonly Lazy<string> _fSMSOrganizationalUserGroupAssignedBy = new Lazy<string>(() => "fldv_AssignedBy");
-    public static string fSMSOrganizationalUserGroupAssignedBy => _fSMSOrganizationalUserGroupAssignedBy.Value;
+    private static readonly Lazy<string> _fMitigationStatus = new Lazy<string>(() => "fldv_Status");
+    public static string fMitigationStatus => _fMitigationStatus.Value;
+
+    private static readonly Lazy<string> _fMitigationPriority = new Lazy<string>(() => "fldv_Priority");
+    public static string fMitigationPriority => _fMitigationPriority.Value;
+
+    private static readonly Lazy<string> _fMitigationRiskAssessmentCode = new Lazy<string>(() => "fldv_RiskAssessmentCode");
+    public static string fMitigationRiskAssessmentCode => _fMitigationRiskAssessmentCode.Value;
+
+    private static readonly Lazy<string> _fMitigationTargetDate = new Lazy<string>(() => "fldd_TargetDate");
+    public static string fMitigationTargetDate => _fMitigationTargetDate.Value;
+
+    private static readonly Lazy<string> _fMitigationImplementationDate = new Lazy<string>(() => "fldd_ImplementationDate");
+    public static string fMitigationImplementationDate => _fMitigationImplementationDate.Value;
+
+    private static readonly Lazy<string> _fMitigationCompletionDate = new Lazy<string>(() => "fldd_CompletionDate");
+    public static string fMitigationCompletionDate => _fMitigationCompletionDate.Value;
+
+    private static readonly Lazy<string> _fMitigationAssignedDepartment = new Lazy<string>(() => "fldv_AssignedDepartment");
+    public static string fMitigationAssignedDepartment => _fMitigationAssignedDepartment.Value;
+
+    private static readonly Lazy<string> _fMitigationAssignedTo = new Lazy<string>(() => "fldv_AssignedTo");
+    public static string fMitigationAssignedTo => _fMitigationAssignedTo.Value;
+
+    private static readonly Lazy<string> _fMitigationApprovedBy = new Lazy<string>(() => "fldv_ApprovedBy");
+    public static string fMitigationApprovedBy => _fMitigationApprovedBy.Value;
+
+    private static readonly Lazy<string> _fMitigationApprovedDate = new Lazy<string>(() => "fldd_ApprovedDate");
+    public static string fMitigationApprovedDate => _fMitigationApprovedDate.Value;
+
+    private static readonly Lazy<string> _fMitigationProgress = new Lazy<string>(() => "fldi_Progress");
+    public static string fMitigationProgress => _fMitigationProgress.Value;
+
+    private static readonly Lazy<string> _fMitigationProgressNotes = new Lazy<string>(() => "fldv_ProgressNotes");
+    public static string fMitigationProgressNotes => _fMitigationProgressNotes.Value;
+
+    private static readonly Lazy<string> _fMitigationLastProgressUpdate = new Lazy<string>(() => "fldd_LastProgressUpdate");
+    public static string fMitigationLastProgressUpdate => _fMitigationLastProgressUpdate.Value;
+
+    private static readonly Lazy<string> _fMitigationProgressUpdatedBy = new Lazy<string>(() => "fldv_ProgressUpdatedBy");
+    public static string fMitigationProgressUpdatedBy => _fMitigationProgressUpdatedBy.Value;
+
+    private static readonly Lazy<string> _fMitigationEstimatedCost = new Lazy<string>(() => "fldd_EstimatedCost");
+    public static string fMitigationEstimatedCost => _fMitigationEstimatedCost.Value;
+
+    private static readonly Lazy<string> _fMitigationActualCost = new Lazy<string>(() => "fldd_ActualCost");
+    public static string fMitigationActualCost => _fMitigationActualCost.Value;
+
+    private static readonly Lazy<string> _fMitigationResourceRequirements = new Lazy<string>(() => "fldv_ResourceRequirements");
+    public static string fMitigationResourceRequirements => _fMitigationResourceRequirements.Value;
+
+    private static readonly Lazy<string> _fMitigationEstimatedHours = new Lazy<string>(() => "fldi_EstimatedHours");
+    public static string fMitigationEstimatedHours => _fMitigationEstimatedHours.Value;
+
+    private static readonly Lazy<string> _fMitigationActualHours = new Lazy<string>(() => "fldi_ActualHours");
+    public static string fMitigationActualHours => _fMitigationActualHours.Value;
+
+    private static readonly Lazy<string> _fMitigationEffectivenessRating = new Lazy<string>(() => "fldv_EffectivenessRating");
+    public static string fMitigationEffectivenessRating => _fMitigationEffectivenessRating.Value;
+
+    private static readonly Lazy<string> _fMitigationEffectivenessNotes = new Lazy<string>(() => "fldc_EffectivenessNotes");
+    public static string fMitigationEffectivenessNotes => _fMitigationEffectivenessNotes.Value;
+
+    private static readonly Lazy<string> _fMitigationEffectivenessReviewDate = new Lazy<string>(() => "fldd_EffectivenessReviewDate");
+    public static string fMitigationEffectivenessReviewDate => _fMitigationEffectivenessReviewDate.Value;
+
+    private static readonly Lazy<string> _fMitigationEffectivenessReviewedBy = new Lazy<string>(() => "fldv_EffectivenessReviewedBy");
+    public static string fMitigationEffectivenessReviewedBy => _fMitigationEffectivenessReviewedBy.Value;
+
+    private static readonly Lazy<string> _fMitigationMonitoringRequirements = new Lazy<string>(() => "fldc_MonitoringRequirements");
+    public static string fMitigationMonitoringRequirements => _fMitigationMonitoringRequirements.Value;
+
+    private static readonly Lazy<string> _fMitigationMonitoringFrequency = new Lazy<string>(() => "fldv_MonitoringFrequency");
+    public static string fMitigationMonitoringFrequency => _fMitigationMonitoringFrequency.Value;
+
+    private static readonly Lazy<string> _fMitigationExpectedSeverityReduction = new Lazy<string>(() => "fldi_ExpectedSeverityReduction");
+    public static string fMitigationExpectedSeverityReduction => _fMitigationExpectedSeverityReduction.Value;
+
+    private static readonly Lazy<string> _fMitigationExpectedLikelihoodReduction = new Lazy<string>(() => "fldi_ExpectedLikelihoodReduction");
+    public static string fMitigationExpectedLikelihoodReduction => _fMitigationExpectedLikelihoodReduction.Value;
+
+    private static readonly Lazy<string> _fMitigationActualSeverityReduction = new Lazy<string>(() => "fldi_ActualSeverityReduction");
+    public static string fMitigationActualSeverityReduction => _fMitigationActualSeverityReduction.Value;
+
+    private static readonly Lazy<string> _fMitigationActualLikelihoodReduction = new Lazy<string>(() => "fldi_ActualLikelihoodReduction");
+    public static string fMitigationActualLikelihoodReduction => _fMitigationActualLikelihoodReduction.Value;
+
+    private static readonly Lazy<string> _fMitigationResidualRiskLevel = new Lazy<string>(() => "fldv_ResidualRiskLevel");
+    public static string fMitigationResidualRiskLevel => _fMitigationResidualRiskLevel.Value;
+
+    private static readonly Lazy<string> _fMitigationPrerequisites = new Lazy<string>(() => "fldv_Prerequisites");
+    public static string fMitigationPrerequisites => _fMitigationPrerequisites.Value;
+
+    private static readonly Lazy<string> _fMitigationDependencies = new Lazy<string>(() => "fldv_Dependencies");
+    public static string fMitigationDependencies => _fMitigationDependencies.Value;
+
+    private static readonly Lazy<string> _fMitigationHasDependencies = new Lazy<string>(() => "fldb_HasDependencies");
+    public static string fMitigationHasDependencies => _fMitigationHasDependencies.Value;
+
+    private static readonly Lazy<string> _fMitigationIsPrerequisite = new Lazy<string>(() => "fldb_IsPrerequisite");
+    public static string fMitigationIsPrerequisite => _fMitigationIsPrerequisite.Value;
+
+    private static readonly Lazy<string> _fMitigationImplementationPlan = new Lazy<string>(() => "fldc_ImplementationPlan");
+    public static string fMitigationImplementationPlan => _fMitigationImplementationPlan.Value;
+
+    private static readonly Lazy<string> _fMitigationCommunicationPlan = new Lazy<string>(() => "fldc_CommunicationPlan");
+    public static string fMitigationCommunicationPlan => _fMitigationCommunicationPlan.Value;
+
+    private static readonly Lazy<string> _fMitigationTrainingRequirements = new Lazy<string>(() => "fldc_TrainingRequirements");
+    public static string fMitigationTrainingRequirements => _fMitigationTrainingRequirements.Value;
+
+    private static readonly Lazy<string> _fMitigationDocumentationUpdates = new Lazy<string>(() => "fldc_DocumentationUpdates");
+    public static string fMitigationDocumentationUpdates => _fMitigationDocumentationUpdates.Value;
+
+    private static readonly Lazy<string> _fMitigationTestingProcedure = new Lazy<string>(() => "fldc_TestingProcedure");
+    public static string fMitigationTestingProcedure => _fMitigationTestingProcedure.Value;
+
+    private static readonly Lazy<string> _fMitigationTestingCompletedDate = new Lazy<string>(() => "fldd_TestingCompletedDate");
+    public static string fMitigationTestingCompletedDate => _fMitigationTestingCompletedDate.Value;
+
+    private static readonly Lazy<string> _fMitigationTestingResults = new Lazy<string>(() => "fldv_TestingResults");
+    public static string fMitigationTestingResults => _fMitigationTestingResults.Value;
+
+    private static readonly Lazy<string> _fMitigationValidationRequired = new Lazy<string>(() => "fldb_ValidationRequired");
+    public static string fMitigationValidationRequired => _fMitigationValidationRequired.Value;
+
+    private static readonly Lazy<string> _fMitigationValidationDate = new Lazy<string>(() => "fldd_ValidationDate");
+    public static string fMitigationValidationDate => _fMitigationValidationDate.Value;
+
+    private static readonly Lazy<string> _fMitigationValidatedBy = new Lazy<string>(() => "fldv_ValidatedBy");
+    public static string fMitigationValidatedBy => _fMitigationValidatedBy.Value;
+
+    private static readonly Lazy<string> _fMitigationNotes = new Lazy<string>(() => "fldc_Notes");
+    public static string fMitigationNotes => _fMitigationNotes.Value;
+
+    private static readonly Lazy<string> _fMitigationLessonsLearned = new Lazy<string>(() => "fldc_LessonsLearned");
+    public static string fMitigationLessonsLearned => _fMitigationLessonsLearned.Value;
+
+    private static readonly Lazy<string> _fMitigationRecommendationsForFuture = new Lazy<string>(() => "fldc_RecommendationsForFuture");
+    public static string fMitigationRecommendationsForFuture => _fMitigationRecommendationsForFuture.Value;
 }

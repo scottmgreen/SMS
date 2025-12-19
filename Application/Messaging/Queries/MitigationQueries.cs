@@ -20,3 +20,16 @@ public class GetAllMitigationsQuery : BaseQueryBundle, IRequest<Result<List<Miti
     {
     }
 }
+
+/// <summary>
+/// NEW: Query to get all mitigations for a specific hazard
+/// </summary>
+public class GetMitigationsByHazardCodeQuery : BaseQueryBundle, IRequest<Result<List<Mitigation>>>
+{
+    public string HazardCode { get; set; }
+
+    public GetMitigationsByHazardCodeQuery(string hazardCode)
+    {
+        HazardCode = hazardCode ?? throw new ArgumentNullException(nameof(hazardCode));
+    }
+}

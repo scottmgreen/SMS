@@ -1,6 +1,7 @@
 @page "/SMSPolicy/OrganizationalStructure"
 @using SMS_Application.Messaging.Queries
 @using SMS_Domain.Entities
+@using SMS_Domain.Enums
 @using Radzen
 @using Radzen.Blazor
 @using SMS3.Components.Shared
@@ -10,173 +11,441 @@
 <!-- SMS Page Header using reusable component -->
 <PageHeader Title="Organizational Structure"
            Subtitle="SMS organizational framework, roles, responsibilities and accountabilities"
-           Icon="fas fa-sitemap" />
+           Icon="fas fa-sitemap">
+    <AdditionalContent>
+        <RadzenButton Text="Manage Users" Icon="people" ButtonStyle="ButtonStyle.Light" 
+                     Click="@(() => Navigation.NavigateTo("/System/UserManagement/OrganizationalUsers"))" 
+                     Size="ButtonSize.Medium" />
+    </AdditionalContent>
+</PageHeader>
 
 <div class="container-fluid">
-    <!-- Header -->
-    <RadzenRow Gap="1rem" class="rz-mb-4">
-        <RadzenColumn Size="12">
-            <RadzenCard Variant="Variant.Filled" Style="background: linear-gradient(135deg, var(--rz-primary) 0%, var(--rz-primary-dark) 100%); color: white;">
-                <RadzenCard>
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
-                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-                            <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; color: white;">
+    <!-- Main Content Row -->
+    <RadzenRow Gap="1rem">
+        <!-- Main Content Column - 8 columns on large screens -->
+        <RadzenColumn Size="12" SizeLG="8">
+            <RadzenStack Gap="1rem">
+                
+
+                @if (GetVacantRoles() > 0)
+                {
+                    <!-- Alert for vacant positions -->
+                   @*  <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <RadzenIcon Icon="warning" />
+                                <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; font-weight: 600;">
+                                    Assignment Required: @GetVacantRoles() SMS role types have no assigned personnel to ensure complete organizational coverage.
+                                </RadzenText>
+                            </RadzenStack>
+                            <RadzenButton Text="Assign Personnel" Icon="person_add" ButtonStyle="ButtonStyle.Warning" 
+                                        Click="@(() => Navigation.NavigateTo("/System/UserManagement/OrganizationalUsers"))" />
+                        </RadzenStack>
+                    </RadzenAlert> *@
+                }
+
+                <!-- Category Summary (Collapsible) -->
+                <RadzenCard Variant="Variant.Outlined">
+                    <RadzenCard>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
+                                <RadzenIcon Icon="category" Style="margin-right: 0.5rem;" />
+                                SMS Role Categories Summary
+                            </RadzenText>
+                            <RadzenButton Icon="@(showCategorySummary ? "expand_less" : "expand_more")" 
+                                         ButtonStyle="ButtonStyle.Light" 
+                                         Size="ButtonSize.Small"
+                                         Click="@(() => showCategorySummary = !showCategorySummary)" 
+                                         title="@(showCategorySummary ? "Collapse" : "Expand")" />
+                        </RadzenStack>
+                    </RadzenCard>
+                    @if (showCategorySummary)
+                    {
+                        <!-- Statistics Cards -->
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenCard Variant="Variant.Outlined" Style="text-align: center;">
+                                    <RadzenCard>
+                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-primary);">@GetTotalRoles()</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">SMS Role Types</RadzenText>
+                                    </RadzenCard>
+                                </RadzenCard>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenCard Variant="Variant.Outlined" Style="text-align: center;">
+                                    <RadzenCard>
+                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-success);">@GetTotalAssignedUsers()</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Assigned Personnel</RadzenText>
+                                    </RadzenCard>
+                                </RadzenCard>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenCard Variant="Variant.Outlined" Style="text-align: center;">
+                                    <RadzenCard>
+                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-warning);">@GetVacantRoles()</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Vacant Role Types</RadzenText>
+                                    </RadzenCard>
+                                </RadzenCard>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenCard Variant="Variant.Outlined" Style="text-align: center;">
+                                    <RadzenCard>
+                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-info);">@GetCompliancePercentage()%</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Role Coverage</RadzenText>
+                                    </RadzenCard>
+                                </RadzenCard>
+                            </RadzenColumn>
+                        </RadzenRow>
+                        <RadzenCard>
+                            @if (!IsLoading)
+                            {
+                                <RadzenRow Gap="1rem">
+                                    @foreach (var category in GetCategorySummary())
+                                    {
+                                        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                                            <RadzenCard Variant="Variant.Filled" Style="height: 100%;">
+                                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                                                        <RadzenBadge Text="@category.CategoryName" 
+                                                                   BadgeStyle="@GetCategoryBadgeStyle(category.CategoryName)"
+                                                                   Variant="Variant.Filled" />
+                                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                                                            Authority @category.AuthorityRange
+                                                        </RadzenText>
+                                                    </RadzenStack>
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color);">
+                                                        @category.Description
+                                                    </RadzenText>
+                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="rz-mt-2">
+                                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                                                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-primary);">
+                                                                @category.AssignedPersonnel
+                                                            </RadzenText>
+                                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">Personnel</RadzenText>
+                                                        </RadzenStack>
+                                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                                                            <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; font-weight: 600;">
+                                                                @category.FilledRoles/@category.TotalRoles
+                                                            </RadzenText>
+                                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">Roles Filled</RadzenText>
+                                                        </RadzenStack>
+                                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                                                            <RadzenText TextStyle="TextStyle.Body1" Style="@($"margin: 0; font-weight: 600; color: {GetCoverageColor(category.FillPercentage)};")">
+                                                                @($"{category.FillPercentage:F0}%")
+                                                            </RadzenText>
+                                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">Coverage</RadzenText>
+                                                        </RadzenStack>
+                                                    </RadzenStack>
+                                                </RadzenStack>
+                                            </RadzenCard>
+                                        </RadzenColumn>
+                                    }
+                                </RadzenRow>
+                            }
+                        </RadzenCard>
+                    }
+                </RadzenCard>
+
+                <!-- Organizational Hierarchy -->
+                <RadzenCard Variant="Variant.Outlined">
+                    <RadzenCard>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
                                 <RadzenIcon Icon="account_tree" Style="margin-right: 0.5rem;" />
-                                SMS Organizational Structure
+                                SMS Organizational Hierarchy & Personnel Assignments
                             </RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; color: white; opacity: 0.9;">
-                                PDX SMS organizational hierarchy, roles, and responsibilities per 14 CFR Part 139 Subpart E
-                            </RadzenText>
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <div style="width: 12px; height: 12px; background: var(--rz-success); border-radius: 2px;"></div>
+                                    <RadzenText TextStyle="TextStyle.Caption">Assigned</RadzenText>
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <div style="width: 12px; height: 12px; background: var(--rz-warning); border-radius: 2px;"></div>
+                                    <RadzenText TextStyle="TextStyle.Caption">Vacant</RadzenText>
+                                </RadzenStack>
+                                <RadzenButton Icon="@(showOrganizationalHierarchy ? "expand_less" : "expand_more")" 
+                                             ButtonStyle="ButtonStyle.Light" 
+                                             Size="ButtonSize.Small"
+                                             Click="@(() => showOrganizationalHierarchy = !showOrganizationalHierarchy)" 
+                                             title="@(showOrganizationalHierarchy ? "Collapse" : "Expand")" />
+                            </RadzenStack>
                         </RadzenStack>
-                        <RadzenButton Text="Manage Users" Icon="people" ButtonStyle="ButtonStyle.Light" 
-                                    Click="@(() => Navigation.NavigateTo("/System/UserManagement/OrganizationalUsers"))" />
-                    </RadzenStack>
+                    </RadzenCard>
+                    @if (showOrganizationalHierarchy)
+                    {
+                        <RadzenCard>
+                            @if (IsLoading)
+                            {
+                                <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 2rem;">
+                                    <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium" />
+                                    <RadzenText TextStyle="TextStyle.Body1">Loading organizational structure...</RadzenText>
+                                </RadzenStack>
+                            }
+                            else
+                            {
+                                <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                                    @foreach (var roleInfo in GetSMSRoles())
+                                    {
+                                        @RenderRoleCard(roleInfo)
+                                    }
+                                </RadzenStack>
+                            }
+                        </RadzenCard>
+                    }
                 </RadzenCard>
-            </RadzenCard>
+
+                <!-- Role Assignment Matrix -->
+                <RadzenCard Variant="Variant.Outlined">
+                    <RadzenCard>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                                <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
+                                    <RadzenIcon Icon="assignment_ind" Style="margin-right: 0.5rem;" />
+                                    SMS Role Assignment Matrix
+                                </RadzenText>
+                                @if (UnassignedUsers.Any())
+                                {
+                                    <RadzenBadge Text="@($"{UnassignedUsers.Count} Unassigned Users")" 
+                                               BadgeStyle="BadgeStyle.Warning" 
+                                               Variant="Variant.Filled" />
+                                }
+                            </RadzenStack>
+                            <RadzenButton Icon="@(showAssignmentMatrix ? "expand_less" : "expand_more")" 
+                                         ButtonStyle="ButtonStyle.Light" 
+                                         Size="ButtonSize.Small"
+                                         Click="@(() => showAssignmentMatrix = !showAssignmentMatrix)" 
+                                         title="@(showAssignmentMatrix ? "Collapse" : "Expand")" />
+                        </RadzenStack>
+                    </RadzenCard>
+                    @if (showAssignmentMatrix)
+                    {
+                        <RadzenCard>
+                            @if (!IsLoading)
+                            {
+                                <RadzenDataGrid Data="@GetSMSRoles()" TItem="SMSOrganizationalLevelInfo" AllowPaging="false" AllowSorting="false">
+                                    <Columns>
+                                        <RadzenDataGridColumn TItem="SMSOrganizationalLevelInfo" Title="SMS Role" Width="300px">
+                                            <Template Context="roleInfo">
+                                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                        <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; font-weight: 600;">@roleInfo.Level.Name</RadzenText>
+                                                        <RadzenBadge Text="@($"Authority {roleInfo.Level.AuthorityLevel}")" 
+                                                                   BadgeStyle="@GetAuthorityLevelBadgeStyle(roleInfo.Level.AuthorityLevel)"
+                                                                   Variant="Variant.Text" />
+                                                    </RadzenStack>
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color);">
+                                                        @roleInfo.Level.Category - @roleInfo.Level.Description
+                                                    </RadzenText>
+                                                </RadzenStack>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="SMSOrganizationalLevelInfo" Title="Assigned Personnel" Width="400px">
+                                            <Template Context="roleInfo">
+                                                @if (roleInfo.AssignedUsers.Any())
+                                                {
+                                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                                                        @foreach (var user in roleInfo.AssignedUsers.Take(2))
+                                                        {
+                                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                                <RadzenGravatar Email="@($"{user.FirstName?.Value?.ToLower()}.{user.LastName?.Value?.ToLower()}@organization.com")" Size="24" />
+                                                                <RadzenStack Orientation="Orientation.Vertical" Gap="0" Style="flex: 1;">
+                                                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-weight: 500;">@user.DisplayName</RadzenText>
+                                                                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color);">@user.Department @(!string.IsNullOrEmpty(user.Position) ? $"- {user.Position}" : "")</RadzenText>
+                                                                </RadzenStack>
+                                                                <RadzenBadge Text="Active" BadgeStyle="BadgeStyle.Success" Variant="Variant.Text" />
+                                                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
+                                                                            Click="@((args) => UnassignUserFromLevel(user))" 
+                                                                            title="Remove from role" 
+                                                                            Disabled="@IsSaving" />
+                                                            </RadzenStack>
+                                                        }
+                                                        @if (roleInfo.AssignedUsers.Count > 2)
+                                                        {
+                                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color); font-style: italic;">
+                                                                +@(roleInfo.AssignedUsers.Count - 2) more assigned
+                                                            </RadzenText>
+                                                        }
+                                                    </RadzenStack>
+                                                }
+                                                else
+                                                {
+                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                        <RadzenIcon Icon="person_off" Style="color: var(--rz-text-disabled-color);" />
+                                                        <RadzenBadge Text="No Assignment" BadgeStyle="BadgeStyle.Warning" Variant="Variant.Text" />
+                                                    </RadzenStack>
+                                                }
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="SMSOrganizationalLevelInfo" Title="Actions" Width="200px">
+                                            <Template Context="roleInfo">
+                                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                                    @if (roleInfo.AssignedUsers.Any())
+                                                    {
+                                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                                            <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" />
+                                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-weight: 600; color: var(--rz-success);">
+                                                                @roleInfo.AssignedUsers.Count Assigned
+                                                            </RadzenText>
+                                                        </RadzenStack>
+                                                    }
+                                                    else
+                                                    {
+                                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                                            <RadzenIcon Icon="warning" Style="color: var(--rz-warning);" />
+                                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-weight: 600; color: var(--rz-warning);">
+                                                                Vacant
+                                                            </RadzenText>
+                                                        </RadzenStack>
+                                                    }
+                                                    @if (roleInfo.EligibleUsers.Any())
+                                                    {
+                                                        <RadzenButton Text="Assign" Icon="person_add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                                                                    Click="@((args) => OpenAssignmentModal(roleInfo.Level))" 
+                                                                    Disabled="@IsSaving" />
+                                                    }
+                                                </RadzenStack>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                    </Columns>
+                                </RadzenDataGrid>
+
+                                @if (UnassignedUsers.Any())
+                                {
+                                    <RadzenCard class="rz-mt-3">
+                                        <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom: 0.5rem;">
+                                            <RadzenIcon Icon="people_outline" Style="margin-right: 0.5rem;" />
+                                            Unassigned Active Users (@UnassignedUsers.Count)
+                                        </RadzenText>
+                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Wrap="FlexWrap.Wrap">
+                                            @foreach (var user in UnassignedUsers)
+                                            {
+                                                <RadzenCard Variant="Variant.Outlined" Style="padding: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                                                    <RadzenGravatar Email="@($"{user.FirstName?.Value?.ToLower()}.{user.LastName?.Value?.ToLower()}@organization.com")" Size="24" />
+                                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-weight: 500;">@user.DisplayName</RadzenText>
+                                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color);">@user.Department</RadzenText>
+                                                    </RadzenStack>
+                                                </RadzenCard>
+                                            }
+                                        </RadzenStack>
+                                    </RadzenCard>
+                                }
+                            }
+                        </RadzenCard>
+                    }
+                </RadzenCard>
+            </RadzenStack>
+        </RadzenColumn>
+
+        <!-- Guidance Panel -->
+        <RadzenColumn Size="12" SizeLG="4">
+            <OrganizationalStructureGuidancePanel />
         </RadzenColumn>
     </RadzenRow>
 
-    <!-- Statistics Cards -->
-    <RadzenRow Gap="1rem" class="rz-mb-4">
-        <RadzenColumn Size="12" SizeMD="3">
-            <RadzenCard Variant="Variant.Outlined" Style="text-align: center;">
-                <RadzenCard>
-                    <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; color: var(--rz-primary);">@GetTotalRoles()</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Total SMS Roles</RadzenText>
-                </RadzenCard>
-            </RadzenCard>
-        </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="3">
-            <RadzenCard Variant="Variant.Outlined" Style="text-align: center;">
-                <RadzenCard>
-                    <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; color: var(--rz-success);">@GetFilledRoles()</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Filled Positions</RadzenText>
-                </RadzenCard>
-            </RadzenCard>
-        </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="3">
-            <RadzenCard Variant="Variant.Outlined" Style="text-align: center;">
-                <RadzenCard>
-                    <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; color: var(--rz-warning);">@GetVacantRoles()</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Vacant Positions</RadzenText>
-                </RadzenCard>
-            </RadzenCard>
-        </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="3">
-            <RadzenCard Variant="Variant.Outlined" Style="text-align: center;">
-                <RadzenCard>
-                    <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; color: var(--rz-info);">@GetCompliancePercentage()%</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Staffing Level</RadzenText>
-                </RadzenCard>
-            </RadzenCard>
-        </RadzenColumn>
-    </RadzenRow>
-
-    @if (GetVacantRoles() > 0)
+    <!-- User Assignment Modal -->
+    @if (ShowAssignmentModal && SelectedLevelForAssignment != null)
     {
-        <!-- Alert for vacant positions -->
-        <RadzenRow Gap="1rem" class="rz-mb-4">
-            <RadzenColumn Size="12">
-                <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
-                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                            <RadzenIcon Icon="warning" />
-                            <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; font-weight: 600;">
-                                Assignment Required: @GetVacantRoles() SMS roles need to be filled to ensure complete organizational coverage.
-                            </RadzenText>
-                        </RadzenStack>
-                        <RadzenButton Text="Assign Personnel" Icon="person_add" ButtonStyle="ButtonStyle.Warning" 
-                                    Click="@(() => Navigation.NavigateTo("/System/UserManagement/OrganizationalUsers"))" />
-                    </RadzenStack>
-                </RadzenAlert>
-            </RadzenColumn>
-        </RadzenRow>
-    }
+        <div class="modal-backdrop">
+            <div class="modal-dialog modal-lg">
+                <RadzenCard class="modal-content">
+                    <!-- Modal Header -->
+                    <div class="modal-header" style="background-color: #28a745; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
+                        <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
+                            <RadzenIcon Icon="person_add" Style="margin-right: 0.5rem;" />
+                            Assign User to @SelectedLevelForAssignment.Name
+                        </RadzenText>
+                    </div>
+                    
+                    <!-- Modal Body -->
+                    <RadzenStack Gap="1rem">
+                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+                            <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
+                            <strong>@SelectedLevelForAssignment.Category Level:</strong> @SelectedLevelForAssignment.Description
+                            <br><small><strong>Authority Level:</strong> @SelectedLevelForAssignment.AuthorityLevel</small>
+                        </RadzenAlert>
 
-    <!-- Organizational Hierarchy -->
-    <RadzenRow Gap="1rem" class="rz-mb-4">
-        <RadzenColumn Size="12">
-            <RadzenCard Variant="Variant.Outlined">
-                <RadzenCard>
-                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
-                        <RadzenIcon Icon="account_tree" Style="margin-right: 0.5rem;" />
-                        SMS Organizational Hierarchy
-                    </RadzenText>
-                </RadzenCard>
-                <RadzenCard>
-                    <!-- Executive Level -->
-                    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
-                        @foreach (var role in GetSMSRoles().OrderBy(r => r.Level))
+                        <RadzenFormField Text="Select User to Assign" Variant="Variant.Outlined">
+                            <RadzenDropDown @bind-Value="@SelectedUserForAssignment" 
+                                          Data="@GetEligibleUsersForLevel(SelectedLevelForAssignment)" 
+                                          TextProperty="DisplayName" 
+                                          ValueProperty="Code"
+                                          Style="width: 100%;" 
+                                          Placeholder="Choose a user to assign to this role"
+                                          AllowClear="true">
+                                <Template Context="user">
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                        <RadzenGravatar Email="@($"{user.FirstName?.Value?.ToLower()}.{user.LastName?.Value?.ToLower()}@organization.com")" Size="32" />
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                                            <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; font-weight: 600;">@user.DisplayName</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color);">
+                                                @user.Department @(!string.IsNullOrEmpty(user.Position) ? $"- {user.Position}" : "")
+                                            </RadzenText>
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                </Template>
+                            </RadzenDropDown>
+                        </RadzenFormField>
+
+                        @if (!GetEligibleUsersForLevel(SelectedLevelForAssignment).Any())
                         {
-                            <div style="margin-left: @((role.Level - 1) * 40)px;">
-                                @RenderRoleCard(role)
-                            </div>
+                            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
+                                <RadzenIcon Icon="warning" Style="margin-right: 0.5rem;" />
+                                No eligible users available for assignment. All active users may already be assigned to roles.
+                            </RadzenAlert>
                         }
                     </RadzenStack>
+                    
+                    <!-- Modal Footer -->
+                    <div class="d-flex justify-content-end gap-2 mt-3">
+                        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseAssignmentModal" 
+                                    Disabled="@IsSaving" />
+                        <RadzenButton Text="Assign User" Icon="save" ButtonStyle="ButtonStyle.Success" 
+                                    Click="@AssignUserToLevel" 
+                                    Disabled="@(string.IsNullOrEmpty(SelectedUserForAssignment) || IsSaving)"
+                                    Style="background-color: #28a745; border-color: #28a745;" />
+                    </div>
                 </RadzenCard>
-            </RadzenCard>
-        </RadzenColumn>
-    </RadzenRow>
-
-    <!-- Risk Approval Authority Matrix -->
-    <RadzenRow Gap="1rem">
-        <RadzenColumn Size="12">
-            <RadzenCard Variant="Variant.Outlined">
-                <RadzenCard>
-                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
-                        <RadzenIcon Icon="gavel" Style="margin-right: 0.5rem;" />
-                        Risk Approval Authority Matrix
-                    </RadzenText>
-                </RadzenCard>
-                <RadzenCard>
-                    <RadzenDataGrid Data="@GetSMSRoles()" TItem="SMSRole" AllowPaging="false">
-                        <Columns>
-                            <RadzenDataGridColumn TItem="SMSRole" Property="Title" Title="Role" Width="250px">
-                                <Template Context="role">
-                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0">
-                                        <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; font-weight: 600;">@role.Title</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">@role.Description</RadzenText>
-                                    </RadzenStack>
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="SMSRole" Title="Assignment" Width="200px">
-                                <Template Context="role">
-                                    @{
-                                        var assignedUser = GetAssignedUser(role.Code);
-                                    }
-                                    @if (assignedUser != null)
-                                    {
-                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                            <RadzenGravatar Email="@($"{assignedUser.FirstName?.Value?.ToLower()}.{assignedUser.LastName?.Value?.ToLower()}@organization.com")" Size="30" />
-                                            <RadzenStack Orientation="Orientation.Vertical" Gap="0">
-                                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-weight: 600;">@assignedUser.DisplayName</RadzenText>
-                                                <RadzenBadge Variant="Variant.Filled" BadgeStyle="BadgeStyle.Success" Text="Assigned" />
-                                            </RadzenStack>
-                                        </RadzenStack>
-                                    }
-                                    else
-                                    {
-                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                            <RadzenIcon Icon="person_off" Style="color: var(--rz-text-disabled-color);" />
-                                            <RadzenBadge Variant="Variant.Filled" BadgeStyle="BadgeStyle.Warning" Text="Vacant" />
-                                        </RadzenStack>
-                                    }
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="SMSRole" Property="RiskApprovalLevels" Title="Risk Approval Authority" Width="300px">
-                                <Template Context="role">
-                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" Wrap="FlexWrap.Wrap">
-                                        @foreach (var level in role.RiskApprovalLevels)
-                                        {
-                                            <RadzenBadge Variant="Variant.Filled" BadgeStyle="@GetRiskLevelBadgeStyle(level)" Text="@level" />
-                                        }
-                                    </RadzenStack>
-                                </Template>
-                            </RadzenDataGridColumn>
-                        </Columns>
-                    </RadzenDataGrid>
-                </RadzenCard>
-            </RadzenCard>
-        </RadzenColumn>
-    </RadzenRow>
+            </div>
+        </div>
+    }
 </div>
+
+<style>
+/* Modal Styles */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-dialog {
+    width: 90%;
+    max-width: 500px;
+    margin: 2rem;
+}
+
+.modal-dialog.modal-lg {
+    max-width: 800px;
+    width: 95%;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    border-radius: 6px 6px 0 0;
+}
+</style>

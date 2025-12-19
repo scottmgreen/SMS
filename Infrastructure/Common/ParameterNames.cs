@@ -1172,4 +1172,194 @@ public static class ParameterNames
 
     private static readonly Lazy<string> _pmUserId = new Lazy<string>(() => "@pUserID");
     public static string pmUserId => _pmUserId.Value;
+
+    // ✅ ADDITIONAL MISSING PARAMETERS - ADDED TO ALIGN WITH STORED PROCEDURES 
+
+    /// <summary>
+    /// NEW: Missing output parameters used in Mitigation stored procedures
+    /// </summary>
+    private static readonly Lazy<string> _pmNewID = new Lazy<string>(() => "@pNewID");
+    public static string pmNewID => _pmNewID.Value;
+
+    private static readonly Lazy<string> _pmNewMitigationCode = new Lazy<string>(() => "@pNewMitigationCode");
+    public static string pmNewMitigationCode => _pmNewMitigationCode.Value;
+
+    private static readonly Lazy<string> _pmNewMitigationAssignmentCode = new Lazy<string>(() => "@pNewMitigationAssignmentCode");
+    public static string pmNewMitigationAssignmentCode => _pmNewMitigationAssignmentCode.Value;
+
+    /// <summary>
+    /// NEW: Corrected Mitigation parameter IDs to match stored procedures (@pID not @pMitigationID)
+    /// </summary>
+    private static readonly Lazy<string> _pmMitigationIdCorrected = new Lazy<string>(() => "@pID");
+    public static string pmMitigationIdCorrected => _pmMitigationIdCorrected.Value;
+
+    private static readonly Lazy<string> _pmMitigationAssignmentIdCorrected = new Lazy<string>(() => "@pID");
+    public static string pmMitigationAssignmentIdCorrected => _pmMitigationAssignmentIdCorrected.Value;
+
+    /// <summary>
+    /// ENHANCED MITIGATION PARAMETERS - All comprehensive mitigation fields
+    /// </summary>
+    
+    // Core Mitigation Fields
+    private static readonly Lazy<string> _pmMitigationName = new Lazy<string>(() => "@pMitigationName");
+    public static string pmMitigationName => _pmMitigationName.Value;
+
+    private static readonly Lazy<string> _pmMitigationDescription = new Lazy<string>(() => "@pMitigationDescription");
+    public static string pmMitigationDescription => _pmMitigationDescription.Value;
+
+    private static readonly Lazy<string> _pmMitigationType = new Lazy<string>(() => "@pMitigationType");
+    public static string pmMitigationType => _pmMitigationType.Value;
+
+    private static readonly Lazy<string> _pmMitigationStatus = new Lazy<string>(() => "@pMitigationStatus");
+    public static string pmMitigationStatus => _pmMitigationStatus.Value;
+
+    private static readonly Lazy<string> _pmMitigationPriority = new Lazy<string>(() => "@pMitigationPriority");
+    public static string pmMitigationPriority => _pmMitigationPriority.Value;
+
+    private static readonly Lazy<string> _pmMitigationRiskAssessmentCode = new Lazy<string>(() => "@pMitigationRiskAssessmentCode");
+    public static string pmMitigationRiskAssessmentCode => _pmMitigationRiskAssessmentCode.Value;
+
+    // Timeline Fields
+    private static readonly Lazy<string> _pmMitigationTargetDate = new Lazy<string>(() => "@pMitigationTargetDate");
+    public static string pmMitigationTargetDate => _pmMitigationTargetDate.Value;
+
+    private static readonly Lazy<string> _pmMitigationImplementationDate = new Lazy<string>(() => "@pMitigationImplementationDate");
+    public static string pmMitigationImplementationDate => _pmMitigationImplementationDate.Value;
+
+    private static readonly Lazy<string> _pmMitigationCompletionDate = new Lazy<string>(() => "@pMitigationCompletionDate");
+    public static string pmMitigationCompletionDate => _pmMitigationCompletionDate.Value;
+
+    // Assignment Fields
+    private static readonly Lazy<string> _pmMitigationAssignedDepartment = new Lazy<string>(() => "@pMitigationAssignedDepartment");
+    public static string pmMitigationAssignedDepartment => _pmMitigationAssignedDepartment.Value;
+
+    private static readonly Lazy<string> _pmMitigationAssignedTo = new Lazy<string>(() => "@pMitigationAssignedTo");
+    public static string pmMitigationAssignedTo => _pmMitigationAssignedTo.Value;
+
+    private static readonly Lazy<string> _pmMitigationApprovedBy = new Lazy<string>(() => "@pMitigationApprovedBy");
+    public static string pmMitigationApprovedBy => _pmMitigationApprovedBy.Value;
+
+    private static readonly Lazy<string> _pmMitigationApprovedDate = new Lazy<string>(() => "@pMitigationApprovedDate");
+    public static string pmMitigationApprovedDate => _pmMitigationApprovedDate.Value;
+
+    // Progress Fields
+    private static readonly Lazy<string> _pmMitigationProgress = new Lazy<string>(() => "@pMitigationProgress");
+    public static string pmMitigationProgress => _pmMitigationProgress.Value;
+
+    private static readonly Lazy<string> _pmMitigationProgressNotes = new Lazy<string>(() => "@pMitigationProgressNotes");
+    public static string pmMitigationProgressNotes => _pmMitigationProgressNotes.Value;
+
+    private static readonly Lazy<string> _pmMitigationLastProgressUpdate = new Lazy<string>(() => "@pMitigationLastProgressUpdate");
+    public static string pmMitigationLastProgressUpdate => _pmMitigationLastProgressUpdate.Value;
+
+    private static readonly Lazy<string> _pmMitigationProgressUpdatedBy = new Lazy<string>(() => "@pMitigationProgressUpdatedBy");
+    public static string pmMitigationProgressUpdatedBy => _pmMitigationProgressUpdatedBy.Value;
+
+    // Cost and Resource Fields
+    private static readonly Lazy<string> _pmMitigationEstimatedCost = new Lazy<string>(() => "@pMitigationEstimatedCost");
+    public static string pmMitigationEstimatedCost => _pmMitigationEstimatedCost.Value;
+
+    private static readonly Lazy<string> _pmMitigationActualCost = new Lazy<string>(() => "@pMitigationActualCost");
+    public static string pmMitigationActualCost => _pmMitigationActualCost.Value;
+
+    private static readonly Lazy<string> _pmMitigationResourceRequirements = new Lazy<string>(() => "@pMitigationResourceRequirements");
+    public static string pmMitigationResourceRequirements => _pmMitigationResourceRequirements.Value;
+
+    private static readonly Lazy<string> _pmMitigationEstimatedHours = new Lazy<string>(() => "@pMitigationEstimatedHours");
+    public static string pmMitigationEstimatedHours => _pmMitigationEstimatedHours.Value;
+
+    private static readonly Lazy<string> _pmMitigationActualHours = new Lazy<string>(() => "@pMitigationActualHours");
+    public static string pmMitigationActualHours => _pmMitigationActualHours.Value;
+
+    // Effectiveness Fields
+    private static readonly Lazy<string> _pmMitigationEffectivenessRating = new Lazy<string>(() => "@pMitigationEffectivenessRating");
+    public static string pmMitigationEffectivenessRating => _pmMitigationEffectivenessRating.Value;
+
+    private static readonly Lazy<string> _pmMitigationEffectivenessNotes = new Lazy<string>(() => "@pMitigationEffectivenessNotes");
+    public static string pmMitigationEffectivenessNotes => _pmMitigationEffectivenessNotes.Value;
+
+    private static readonly Lazy<string> _pmMitigationEffectivenessReviewDate = new Lazy<string>(() => "@pMitigationEffectivenessReviewDate");
+    public static string pmMitigationEffectivenessReviewDate => _pmMitigationEffectivenessReviewDate.Value;
+
+    private static readonly Lazy<string> _pmMitigationEffectivenessReviewedBy = new Lazy<string>(() => "@pMitigationEffectivenessReviewedBy");
+    public static string pmMitigationEffectivenessReviewedBy => _pmMitigationEffectivenessReviewedBy.Value;
+
+    // Monitoring Fields
+    private static readonly Lazy<string> _pmMitigationMonitoringRequirements = new Lazy<string>(() => "@pMitigationMonitoringRequirements");
+    public static string pmMitigationMonitoringRequirements => _pmMitigationMonitoringRequirements.Value;
+
+    private static readonly Lazy<string> _pmMitigationMonitoringFrequency = new Lazy<string>(() => "@pMitigationMonitoringFrequency");
+    public static string pmMitigationMonitoringFrequency => _pmMitigationMonitoringFrequency.Value;
+
+    // Risk Reduction Fields
+    private static readonly Lazy<string> _pmMitigationExpectedSeverityReduction = new Lazy<string>(() => "@pMitigationExpectedSeverityReduction");
+    public static string pmMitigationExpectedSeverityReduction => _pmMitigationExpectedSeverityReduction.Value;
+
+    private static readonly Lazy<string> _pmMitigationExpectedLikelihoodReduction = new Lazy<string>(() => "@pMitigationExpectedLikelihoodReduction");
+    public static string pmMitigationExpectedLikelihoodReduction => _pmMitigationExpectedLikelihoodReduction.Value;
+
+    private static readonly Lazy<string> _pmMitigationActualSeverityReduction = new Lazy<string>(() => "@pMitigationActualSeverityReduction");
+    public static string pmMitigationActualSeverityReduction => _pmMitigationActualSeverityReduction.Value;
+
+    private static readonly Lazy<string> _pmMitigationActualLikelihoodReduction = new Lazy<string>(() => "@pMitigationActualLikelihoodReduction");
+    public static string pmMitigationActualLikelihoodReduction => _pmMitigationActualLikelihoodReduction.Value;
+
+    private static readonly Lazy<string> _pmMitigationResidualRiskLevel = new Lazy<string>(() => "@pMitigationResidualRiskLevel");
+    public static string pmMitigationResidualRiskLevel => _pmMitigationResidualRiskLevel.Value;
+
+    // Dependency Fields
+    private static readonly Lazy<string> _pmMitigationPrerequisites = new Lazy<string>(() => "@pMitigationPrerequisites");
+    public static string pmMitigationPrerequisites => _pmMitigationPrerequisites.Value;
+
+    private static readonly Lazy<string> _pmMitigationDependencies = new Lazy<string>(() => "@pMitigationDependencies");
+    public static string pmMitigationDependencies => _pmMitigationDependencies.Value;
+
+    private static readonly Lazy<string> _pmMitigationHasDependencies = new Lazy<string>(() => "@pMitigationHasDependencies");
+    public static string pmMitigationHasDependencies => _pmMitigationHasDependencies.Value;
+
+    private static readonly Lazy<string> _pmMitigationIsPrerequisite = new Lazy<string>(() => "@pMitigationIsPrerequisite");
+    public static string pmMitigationIsPrerequisite => _pmMitigationIsPrerequisite.Value;
+
+    // Planning Fields
+    private static readonly Lazy<string> _pmMitigationImplementationPlan = new Lazy<string>(() => "@pMitigationImplementationPlan");
+    public static string pmMitigationImplementationPlan => _pmMitigationImplementationPlan.Value;
+
+    private static readonly Lazy<string> _pmMitigationCommunicationPlan = new Lazy<string>(() => "@pMitigationCommunicationPlan");
+    public static string pmMitigationCommunicationPlan => _pmMitigationCommunicationPlan.Value;
+
+    private static readonly Lazy<string> _pmMitigationTrainingRequirements = new Lazy<string>(() => "@pMitigationTrainingRequirements");
+    public static string pmMitigationTrainingRequirements => _pmMitigationTrainingRequirements.Value;
+
+    private static readonly Lazy<string> _pmMitigationDocumentationUpdates = new Lazy<string>(() => "@pMitigationDocumentationUpdates");
+    public static string pmMitigationDocumentationUpdates => _pmMitigationDocumentationUpdates.Value;
+
+    // Testing Fields
+    private static readonly Lazy<string> _pmMitigationTestingProcedure = new Lazy<string>(() => "@pMitigationTestingProcedure");
+    public static string pmMitigationTestingProcedure => _pmMitigationTestingProcedure.Value;
+
+    private static readonly Lazy<string> _pmMitigationTestingCompletedDate = new Lazy<string>(() => "@pMitigationTestingCompletedDate");
+    public static string pmMitigationTestingCompletedDate => _pmMitigationTestingCompletedDate.Value;
+
+    private static readonly Lazy<string> _pmMitigationTestingResults = new Lazy<string>(() => "@pMitigationTestingResults");
+    public static string pmMitigationTestingResults => _pmMitigationTestingResults.Value;
+
+    // Validation Fields
+    private static readonly Lazy<string> _pmMitigationValidationRequired = new Lazy<string>(() => "@pMitigationValidationRequired");
+    public static string pmMitigationValidationRequired => _pmMitigationValidationRequired.Value;
+
+    private static readonly Lazy<string> _pmMitigationValidationDate = new Lazy<string>(() => "@pMitigationValidationDate");
+    public static string pmMitigationValidationDate => _pmMitigationValidationDate.Value;
+
+    private static readonly Lazy<string> _pmMitigationValidatedBy = new Lazy<string>(() => "@pMitigationValidatedBy");
+    public static string pmMitigationValidatedBy => _pmMitigationValidatedBy.Value;
+
+    // Additional Fields
+    private static readonly Lazy<string> _pmMitigationNotes = new Lazy<string>(() => "@pMitigationNotes");
+    public static string pmMitigationNotes => _pmMitigationNotes.Value;
+
+    private static readonly Lazy<string> _pmMitigationLessonsLearned = new Lazy<string>(() => "@pMitigationLessonsLearned");
+    public static string pmMitigationLessonsLearned => _pmMitigationLessonsLearned.Value;
+
+    private static readonly Lazy<string> _pmMitigationRecommendationsForFuture = new Lazy<string>(() => "@pMitigationRecommendationsForFuture");
+    public static string pmMitigationRecommendationsForFuture => _pmMitigationRecommendationsForFuture.Value;
 }

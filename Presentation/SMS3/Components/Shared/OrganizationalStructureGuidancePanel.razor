@@ -1,0 +1,129 @@
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenCard Style="position: sticky; top: 20px;">
+    <RadzenStack Gap="1rem">
+        <!-- Header -->
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="8">
+                <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
+                    <RadzenIcon Icon="help_outline" Style="margin-right: 0.5rem;" />
+                    Organization Guidance
+                </RadzenText>
+            </RadzenColumn>
+            <RadzenColumn Size="4">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+                    <RadzenButton Icon="@(isExpanded ? "expand_less" : "expand_more")" 
+                                 ButtonStyle="ButtonStyle.Light" 
+                                 Size="ButtonSize.Small"
+                                 Click="@(() => isExpanded = !isExpanded)" 
+                                 title="@(isExpanded ? "Collapse" : "Expand")" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <!-- Content -->
+        @if (isExpanded)
+        {
+            <RadzenStack Gap="1rem">
+                <!-- SMS Organizational Structure Overview -->
+                <div>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom: 0.5rem;">SMS Organizational Requirements:</RadzenText>
+                    <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.875rem;">
+                        <li>Comply with 14 CFR Part 139 Subpart E</li>
+                        <li>Establish clear lines of authority</li>
+                        <li>Define roles and responsibilities</li>
+                        <li>Ensure adequate staffing levels</li>
+                        <li>Maintain competency requirements</li>
+                    </ul>
+                </div>
+
+                <!-- Authority Levels Quick Reference -->
+                <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-50);">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Text="Authority Level Structure:" Style="margin-bottom: 0.5rem;" />
+                    <RadzenStack Gap="0.25rem">
+                        <div style="font-size: 0.75rem;">
+                            <RadzenBadge Text="Executive (10-9)" BadgeStyle="BadgeStyle.Danger" Variant="Variant.Text" Style="margin-right: 0.5rem;" />
+                            Strategic decision making, ultimate accountability
+                        </div>
+                        <div style="font-size: 0.75rem;">
+                            <RadzenBadge Text="Management (8-7)" BadgeStyle="BadgeStyle.Warning" Variant="Variant.Text" Style="margin-right: 0.5rem;" />
+                            Operational oversight, resource allocation
+                        </div>
+                        <div style="font-size: 0.75rem;">
+                            <RadzenBadge Text="Operational (6-5)" BadgeStyle="BadgeStyle.Info" Variant="Variant.Text" Style="margin-right: 0.5rem;" />
+                            Subject matter expertise, implementation
+                        </div>
+                    </RadzenStack>
+                </RadzenCard>
+
+                <!-- Assignment Best Practices -->
+                <div>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom: 0.5rem;">Assignment Best Practices:</RadzenText>
+                    <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.875rem;">
+                        <li>Match experience to authority level</li>
+                        <li>Consider departmental representation</li>
+                        <li>Ensure adequate succession planning</li>
+                        <li>Maintain training records</li>
+                        <li>Review assignments regularly</li>
+                    </ul>
+                </div>
+
+                <!-- Role Categories -->
+                <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-50);">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Text="SMS Role Categories:" Style="margin-bottom: 0.5rem;" />
+                    <RadzenStack Gap="0.25rem">
+                        <div style="font-size: 0.75rem;">
+                            <RadzenBadge Text="Executive" BadgeStyle="BadgeStyle.Danger" Variant="Variant.Filled" Style="margin-right: 0.5rem;" />
+                            Accountable Executive, Responsible Executive
+                        </div>
+                        <div style="font-size: 0.75rem;">
+                            <RadzenBadge Text="Management" BadgeStyle="BadgeStyle.Warning" Variant="Variant.Filled" Style="margin-right: 0.5rem;" />
+                            SMS Manager, SMS Coordinator
+                        </div>
+                        <div style="font-size: 0.75rem;">
+                            <RadzenBadge Text="Operational" BadgeStyle="BadgeStyle.Info" Variant="Variant.Filled" Style="margin-right: 0.5rem;" />
+                            SMS Team Members, Subject Matter Experts
+                        </div>
+                    </RadzenStack>
+                </RadzenCard>
+
+                <!-- Compliance Monitoring -->
+                <div>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom: 0.5rem;">Compliance Monitoring:</RadzenText>
+                    <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.875rem;">
+                        <li>Track role coverage percentages</li>
+                        <li>Monitor vacant positions</li>
+                        <li>Document training completion</li>
+                        <li>Review authority delegation</li>
+                        <li>Assess organizational effectiveness</li>
+                    </ul>
+                </div>
+
+                <!-- Tips Section -->
+                <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-success-lighter);">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-success-darker);">
+                        <RadzenIcon Icon="lightbulb_outline" Style="margin-right: 0.25rem;" />
+                        <strong>Tip:</strong> Use the "Assign User" button on role cards to quickly assign personnel. 
+                        Only active users are available for assignment.
+                    </RadzenText>
+                </RadzenCard>
+
+                <!-- Regulatory Reference -->
+                <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-info-lighter);">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-info-darker);">
+                        <RadzenIcon Icon="gavel" Style="margin-right: 0.25rem;" />
+                        <strong>Regulatory:</strong> 14 CFR §139.103 requires airports to establish and maintain 
+                        an SMS with clearly defined organizational structure and authority levels.
+                    </RadzenText>
+                </RadzenCard>
+            </RadzenStack>
+        }
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    private bool isExpanded = true;
+}

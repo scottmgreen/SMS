@@ -100,6 +100,7 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
                 RiskAssessment residualRiskAssessment = new RiskAssessment(new RiskAssessmentID("RS-0000"));
                 residualRiskAssessment.HazardCode = hazard.Code;
                 residualRiskAssessment.AssessmentType = RiskAssessmentType.Residual;
+                residualRiskAssessment.Description = hazard.Description;
                 // BUSINESS RULE: Residual assessments can have same PrimaryHazardId as initial
                 residualRiskAssessment.Name = $"Risk Assessment - {hazard.Name}";
                 residualRiskAssessment.PrimaryHazardId = hazard.Code;

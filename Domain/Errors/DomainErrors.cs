@@ -463,6 +463,8 @@ public static class DomainErrors
         public static Error NullOrEmpty => new Error("Mitigation.NullOrEmpty", "The Mitigation is required.");
         public static Error CodeRequired => new Error("Mitigation.CodeRequired", "The Mitigation Code is required.");
         public static Error InvalidCode => new Error("Mitigation.InvalidCode", "The Mitigation Code is invalid.");
+        public static Error InvalidName => new Error("Mitigation.InvalidName", "The Mitigation Name is required.");
+        public static Error InvalidHazardCode => new Error("Mitigation.InvalidHazardCode", "The Hazard Code is required.");
         public static Error NotFound => new Error("Mitigation.NotFound", "The Mitigation was not found.");
         public static Error CreateFailed => new Error("Mitigation.CreateFailed", "Failed to create the Mitigation.");
         public static Error UpdateFailed => new Error("Mitigation.UpdateFailed", "Failed to update the Mitigation.");
@@ -472,8 +474,25 @@ public static class DomainErrors
         public static Error InvalidAssignment => new Error("Mitigation.InvalidAssignment", "The Mitigation assignment is invalid.");
         public static Error InvalidDueDate => new Error("Mitigation.InvalidDueDate", "The Mitigation due date is invalid.");
         public static Error InvalidProgress => new Error("Mitigation.InvalidProgress", "The progress percentage must be between 0 and 100.");
+        public static Error InvalidApprover => new Error("Mitigation.InvalidApprover", "The approver is required.");
+        public static Error InvalidCancellationReason => new Error("Mitigation.InvalidCancellationReason", "A cancellation reason is required.");
         public static Error AlreadyCompleted => new Error("Mitigation.AlreadyCompleted", "The Mitigation is already completed.");
         public static Error CannotModifyCompleted => new Error("Mitigation.CannotModifyCompleted", "Cannot modify a completed Mitigation.");
+        
+        // Enhanced validation errors for comprehensive schema
+        public static Error InvalidTargetDate => new Error("Mitigation.InvalidTargetDate", "The target date cannot be in the past.");
+        public static Error InvalidEstimatedCost => new Error("Mitigation.InvalidEstimatedCost", "The estimated cost must be greater than or equal to 0.");
+        public static Error InvalidActualCost => new Error("Mitigation.InvalidActualCost", "The actual cost must be greater than or equal to 0.");
+        public static Error InvalidEstimatedHours => new Error("Mitigation.InvalidEstimatedHours", "The estimated hours must be greater than 0.");
+        public static Error InvalidActualHours => new Error("Mitigation.InvalidActualHours", "The actual hours must be greater than or equal to 0.");
+        public static Error InvalidSeverityReduction => new Error("Mitigation.InvalidSeverityReduction", "Severity reduction must be between 1 and 5.");
+        public static Error InvalidLikelihoodReduction => new Error("Mitigation.InvalidLikelihoodReduction", "Likelihood reduction must be between 1 and 5.");
+        public static Error InvalidEffectivenessRating => new Error("Mitigation.InvalidEffectivenessRating", "The effectiveness rating is invalid.");
+        public static Error InvalidMonitoringFrequency => new Error("Mitigation.InvalidMonitoringFrequency", "The monitoring frequency is invalid.");
+        public static Error ValidationRequiredWithoutValidator => new Error("Mitigation.ValidationRequiredWithoutValidator", "Validation is required but no validator is assigned.");
+        public static Error CannotValidateWithoutTesting => new Error("Mitigation.CannotValidateWithoutTesting", "Cannot validate mitigation without completed testing.");
+        public static Error DependenciesNotMet => new Error("Mitigation.DependenciesNotMet", "Cannot proceed - required dependencies are not completed.");
+        public static Error PrerequisitesNotMet => new Error("Mitigation.PrerequisitesNotMet", "Cannot proceed - required prerequisites are not satisfied.");
     }
 
     /// <summary>
@@ -616,7 +635,6 @@ public static class DomainErrors
         // Mitigation and Assessment Errors
         public static Error InvalidMitigationStrategy => new Error("RiskAssessment.InvalidMitigationStrategy", "The mitigation strategy is invalid or empty.");
         public static Error InvalidAssignment => new Error("RiskAssessment.InvalidAssignment", "The mitigation assignment is invalid - department is required.");
-        public static Error InvalidMonitoringRequirement => new Error("RiskAssessment.InvalidMonitoringRequirement", "The monitoring requirement is invalid - frequency is required.");
         
         // Legacy Support (for existing RiskAssessmentError references)
         public static Error HazardCodeRequired => new Error("RiskAssessment.HazardCodeRequired", "The Hazard Code is required.");

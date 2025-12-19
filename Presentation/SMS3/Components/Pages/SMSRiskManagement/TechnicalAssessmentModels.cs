@@ -285,20 +285,24 @@ public class Step3Model
 
             if (HazardAnalyses.TryGetValue(hazardCode, out var analysis))
             {
-                var worstOutcomeValid = !string.IsNullOrWhiteSpace(analysis.WorstCredibleOutcome) && analysis.WorstCredibleOutcome.Length >= 10;
-                var rootCauseValid = !string.IsNullOrWhiteSpace(analysis.RootCauseAnalysis) && analysis.RootCauseAnalysis.Length >= 10;
-
-                if (!worstOutcomeValid && !rootCauseValid)
+                var worstOutcomeValid = !string.IsNullOrWhiteSpace(hazard.WorstCredibleOutcome) && hazard.WorstCredibleOutcome.Length >= 10;
+                var rootCauseValid = !string.IsNullOrWhiteSpace(hazard.RootCause) && hazard.RootCause.Length >= 10;
+                var additionalCommentsValid = !string.IsNullOrWhiteSpace(hazard.AdditionalComments) && hazard.AdditionalComments.Length >= 10;
+                if (!worstOutcomeValid && !rootCauseValid && !additionalCommentsValid)
                 {
                     incompleteHazards.Add($"{hazardCode} (missing both worst outcome and root cause analysis)");
                 }
                 else if (!worstOutcomeValid)
                 {
-                    incompleteHazards.Add($"{hazardCode} (worst credible outcome incomplete)");
+                    incompleteHazards.Add($"{hazardCode} (Worst Credible Outcome incomplete)");
                 }
                 else if (!rootCauseValid)
                 {
-                    incompleteHazards.Add($"{hazardCode} (root cause analysis incomplete)");
+                    incompleteHazards.Add($"{hazardCode} (Root Cause analysis incomplete)");
+                }
+                else if (!rootCauseValid)
+                {
+                    incompleteHazards.Add($"{hazardCode} (Additional Comments incomplete)");
                 }
                 else
                 {

@@ -96,15 +96,17 @@
                         </Template>
                     </RadzenDataGridColumn>
 
-                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="OrganizationLevel" Title="Level" Width="120px" Sortable="true" Filterable="true">
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="OrganizationLevel" Title="SMS Role" Width="140px" Sortable="true" Filterable="true">
                         <Template Context="user">
                             @if (!string.IsNullOrEmpty(user.OrganizationLevel))
                             {
-                                <RadzenBadge Text="@user.OrganizationLevel" BadgeStyle="BadgeStyle.Info" />
+                                <RadzenBadge Text="@user.OrganizationLevel" 
+                                           BadgeStyle="@GetOrganizationLevelBadgeStyle(user.OrganizationLevel)"
+                                           title="@GetOrganizationLevelDisplayText(user.OrganizationLevel)" />
                             }
                             else
                             {
-                                <em style="color: var(--rz-text-secondary-color);">No level</em>
+                                <em style="color: var(--rz-text-secondary-color);">No SMS role</em>
                             }
                         </Template>
                     </RadzenDataGridColumn>
@@ -235,7 +237,8 @@
                             <RadzenFormField Text="Organization Level" Variant="Variant.Outlined">
                                 <RadzenDropDown @bind-Value="@NewOrganizationLevel" Data="@OrganizationLevelOptions" 
                                                 TextProperty="Text" ValueProperty="Value" 
-                                                Style="width: 100%;" Placeholder="Select organization level"/>
+                                                Style="width: 100%;" Placeholder="Select SMS organizational role"
+                                                title="Select the SMS role that determines authority and approval permissions" />
                             </RadzenFormField>
                             
                             <RadzenFormField Text="SMS Role" Variant="Variant.Outlined">
@@ -250,6 +253,7 @@
                 <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" class="mt-3">
                     <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
                     Organizational users are internal staff members with SMS responsibilities. All fields marked with * are required.
+                    <br><small><strong>Organization Level:</strong> SMS role that determines authority level and approval permissions within the Safety Management System.</small>
                 </RadzenAlert>
                 
                 <!-- Modal Footer -->
@@ -322,7 +326,8 @@
                             <RadzenFormField Text="Organization Level" Variant="Variant.Outlined">
                                 <RadzenDropDown @bind-Value="@EditOrganizationLevel" Data="@OrganizationLevelOptions" 
                                                 TextProperty="Text" ValueProperty="Value" 
-                                                Style="width: 100%;" />
+                                                Style="width: 100%;"
+                                                title="Select the SMS role that determines authority and approval permissions" />
                             </RadzenFormField>
                             
                             <RadzenFormField Text="Status" Variant="Variant.Outlined">
