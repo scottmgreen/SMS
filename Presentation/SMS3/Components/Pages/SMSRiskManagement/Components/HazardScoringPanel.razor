@@ -26,14 +26,11 @@
         <RadzenRow AlignItems="AlignItems.Center">
             <RadzenColumn Size="8">
                 <RadzenStack Gap="0.25rem">
-                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
-                        <RadzenIcon Icon="warning" Style="color: var(--rz-warning); margin-right: 0.5rem;" />
-                        @($"{Hazard.Code}: {Hazard.Description}")
+                    <RadzenText TextStyle="TextStyle.H6" Style="color: #212e61; margin: 0;">
+                        <RadzenIcon Icon="list" Style="margin-right: 0.5rem;" />
+                        @* @(IsResidualRiskAssessment() ? "Residual Risk" : "Initial Risk") Assessment Panel *@
+                        <RadzenBadge Text="1" BadgeStyle="BadgeStyle.Light" Style="margin-left: 0.5rem;" />
                     </RadzenText>
-                    @if (!string.IsNullOrEmpty(Hazard.HazardType))
-                    {
-                        <RadzenBadge Text="@Hazard.HazardType" BadgeStyle="BadgeStyle.Info" />
-                    }
                 </RadzenStack>
             </RadzenColumn>
             <RadzenColumn Size="4">
@@ -492,7 +489,7 @@
         Logger.LogInformation("Opening panel dialog for hazard {HazardCode} with {Count} existing panel members: {Members}", 
             Hazard.Code, selectedCodes.Count, string.Join(", ", selectedCodes));
 
-        var result = await DialogService.OpenAsync<PanelManagementDialog>($"Manage Panel for {Hazard.Code}",
+        var result = await DialogService.OpenAsync<PanelManagementDialog>($"Manage  Panel for {Hazard.Code}",
             new Dictionary<string, object>
             {
                 { "HazardCode", Hazard.Code },
@@ -798,8 +795,8 @@
 
             Logger.LogInformation("Updating hazard {HazardCode} with calculated scoring data in database", Hazard.Code);
 
-            // Update the Hazard entity properties
-            Hazard.AverageScore = CalculatedAverageScore?.ToString("F2");
+            // Update the Hazard entity properties - ✅ FIXED: Keep as decimal, don't convert to string
+            Hazard.AverageScore = (decimal?)CalculatedAverageScore;
             Hazard.RiskMatrixCode = CalculatedMatrixCode;  // Aviation matrix code (like "2B", "3D")
             Hazard.RiskLevel = CalculatedRiskLevel;
             Hazard.UpdatedDate = DateTime.UtcNow;
@@ -812,7 +809,7 @@
             if (result.IsSuccess)
             {
                 Logger.LogInformation("Successfully updated hazard {HazardCode} in database: AverageScore={AverageScore}, RiskMatrixCode={RiskMatrixCode}, RiskLevel={RiskLevel}",
-                    Hazard.Code, Hazard.AverageScore ?? "null", Hazard.RiskMatrixCode ?? "null", Hazard.RiskLevel ?? "null");
+                    Hazard.Code, Hazard.AverageScore?.ToString("F2") ?? "null", Hazard.RiskMatrixCode ?? "null", Hazard.RiskLevel ?? "null");
             }
             else
             {

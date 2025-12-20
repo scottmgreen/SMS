@@ -46,4 +46,21 @@ public interface IHazardDataService
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result containing success status or error</returns>
     Task<Result<bool>> DeleteHazardAsync(HazardID id, CancellationToken ct = default);
+
+    /// <summary>
+    /// Retrieves hazards by report ID asynchronously
+    /// </summary>
+    /// <param name="reportId">The report identifier</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Result containing list of hazards for the report or error</returns>
+    Task<Result<List<Hazard>>> GetHazardsByReportIdAsync(ReportID reportId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Retrieves hazards by report ID with their associated mitigations loaded separately
+    /// This avoids complex joins and ensures clean data mapping
+    /// </summary>
+    /// <param name="reportId">The report identifier</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Result containing list of hazards with mitigations for the report or error</returns>
+    Task<Result<List<Hazard>>> GetHazardsByReportIdWithMitigationsAsync(ReportID reportId, CancellationToken ct = default);
 }

@@ -2,9 +2,16 @@
 @using SMS_Domain.Enums
 @using SMS3.Components.Pages.SMSRiskManagement
 @using SMS3.Components.Shared
+@using SMS3.Components.Pages.SMSRiskManagement.Components
+@using SMS_Application.Messaging.Commands
+@using SMS_Application.Messaging.Queries
+@using SMS_Application.Interfaces
 @using global::System.Text.Json
 @using Radzen
 @using Radzen.Blazor
+
+@inject IMediator Mediator
+@inject ILogger<TechnicalAssessmentStep5> Logger
 
 <RadzenRow Gap="1rem">
     <!-- Main Content Column -->
@@ -53,21 +60,199 @@
                 </RadzenStack>
             </RadzenCard>
 
-            <!-- Hazard Mitigation Panels -->
+            <!-- ? ENHANCED: Per-Hazard Comprehensive Assessment -->
             @if (AvailableHazards?.Any() == true)
             {
                 @foreach (var hazard in AvailableHazards)
                 {
                     var needsMitigation = DetermineIfNeedsMitigation(hazard);
+                    var hasMitigations = HasMitigations(hazard);
                     
-                    <HazardMitigationPanel Hazard="@hazard"
-                                          Step4="@Step4"
-                                          Step5="@Step5"
-                                          NeedsMitigation="@needsMitigation"
-                                          AvailableStakeholders="@AvailableStakeholders"
-                                          AvailableAssessors="@AvailableAssessors"
-                                          InitialRiskAssessment="@InitialRiskAssessment"
-                                          OnMitigationUpdated="@OnMitigationUpdated" />
+                    <RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid var(--rz-info); margin-bottom: 1rem;">
+                        <RadzenStack Gap="1.5rem">
+                            <!-- Hazard Header -->
+                            <RadzenRow AlignItems="AlignItems.Center">
+                                <RadzenColumn Size="10">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-primary);">
+                                            <RadzenIcon Icon="warning" Style="margin-right: 0.5rem;" />
+                                            @hazard.Code: @hazard.Description
+                                        </RadzenText>
+                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                            @if (!string.IsNullOrEmpty(hazard.HazardType))
+                                            {
+                                                <RadzenBadge Text="@hazard.HazardType" BadgeStyle="BadgeStyle.Info" />
+                                            }
+                                            @if (GetInitialRiskLevel(hazard) != "Unknown")
+                                            {
+                                                <RadzenBadge Text="@($"Initial Risk: {GetInitialRiskLevel(hazard)}")" BadgeStyle="@GetRiskLevelBadgeStyle(GetInitialRiskLevel(hazard))" />
+                                            }
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                </RadzenColumn>
+                                <RadzenColumn Size="2">
+                                    @if (needsMitigation)
+                                    {
+                                        @if (hasMitigations)
+                                        {
+                                            <RadzenBadge Text="Mitigated" BadgeStyle="BadgeStyle.Success" />
+                                        }
+                                        else
+                                        {
+                                            <RadzenBadge Text="Needs Mitigation" BadgeStyle="BadgeStyle.Warning" />
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <RadzenBadge Text="Monitor Only" BadgeStyle="BadgeStyle.Success" />
+                                    }
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            <!-- ? SECTION 1: Mitigation Strategies -->
+                            @if (needsMitigation)
+                            {
+                                <RadzenCard Variant="Variant.Text" Style="background-color: #fff3cd; border: 1px solid #ffeaa7;">
+                                    <RadzenStack Gap="1rem">
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; color: #856404;">
+                                            <RadzenIcon Icon="build" Style="margin-right: 0.5rem;" />
+                                            Mitigation Strategies
+                                        </RadzenText>
+                                        
+                                        <HazardMitigationPanel Hazard="@hazard"
+                                                              Step4="@Step4"
+                                                              Step5="@Step5"
+                                                              NeedsMitigation="@needsMitigation"
+                                                              AvailableStakeholders="@AvailableStakeholders"
+                                                              AvailableAssessors="@AvailableAssessors"
+                                                              InitialRiskAssessment="@InitialRiskAssessment"
+                                                              OnMitigationUpdated="@OnMitigationUpdated" />
+                                    </RadzenStack>
+                                </RadzenCard>
+                            }
+
+                            <!-- ? SECTION 2: Residual Risk Analysis (only show if mitigations exist) -->
+                            @if (hasMitigations && ResidualRiskAssessment != null)
+                            {
+                                <RadzenCard Variant="Variant.Text" Style="background-color: #e3f2fd; border: 1px solid #90caf9;">
+                                    <RadzenStack Gap="1rem">
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; color: #1565c0;">
+                                            <RadzenIcon Icon="analytics" Style="margin-right: 0.5rem;" />
+                                            Residual Risk Analysis
+                                        </RadzenText>
+                                        
+                                        <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small">
+                                            <RadzenText TextStyle="TextStyle.Body2" 
+                                                        Text="Analyze the remaining risk after mitigation implementation. Consider how effective the mitigation strategies will be." />
+                                        </RadzenAlert>
+
+                                        <!-- Risk Analysis Fields for Residual Risk -->
+                                        <RadzenRow Gap="1rem">
+                                            <RadzenColumn Size="12" SizeMD="6">
+                                                <RadzenStack Gap="0.5rem">
+                                                    <RadzenFormField Text="Residual Worst Credible Outcome *" Variant="Variant.Outlined">
+                                                        <RadzenTextArea Value="@GetResidualWorstOutcome(hazard)"
+                                                                        ValueChanged="@((string value) => OnResidualAnalysisFieldChanged(hazard, "WorstOutcome", value))"
+                                                                        Rows="3"
+                                                                        Placeholder="After mitigation implementation, what is the worst outcome that could still occur..."
+                                                                        Style="width: 100%;" />
+                                                    </RadzenFormField>
+                                                    <RadzenText TextStyle="TextStyle.Caption" Text="Consider the effectiveness of planned mitigation strategies" />
+                                                </RadzenStack>
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="12" SizeMD="6">
+                                                <RadzenStack Gap="0.5rem">
+                                                    <RadzenFormField Text="Residual Root Cause Analysis *" Variant="Variant.Outlined">
+                                                        <RadzenTextArea Value="@GetResidualRootCause(hazard)"
+                                                                        ValueChanged="@((string value) => OnResidualAnalysisFieldChanged(hazard, "RootCause", value))"
+                                                                        Rows="3"
+                                                                        Placeholder="What root causes remain after mitigation implementation..."
+                                                                        Style="width: 100%;" />
+                                                    </RadzenFormField>
+                                                    <RadzenText TextStyle="TextStyle.Caption" Text="Identify root causes that mitigation strategies do not fully address" />
+                                                </RadzenStack>
+                                            </RadzenColumn>
+                                        </RadzenRow>
+
+                                        <RadzenFormField Text="Additional Residual Analysis Comments" Variant="Variant.Outlined">
+                                            <RadzenTextArea Value="@GetResidualAdditionalComments(hazard)"
+                                                            ValueChanged="@((string value) => OnResidualAnalysisFieldChanged(hazard, "AdditionalComments", value))"
+                                                            Rows="2"
+                                                            Placeholder="Document assumptions about mitigation effectiveness, residual vulnerabilities, or monitoring requirements..."
+                                                            Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenStack>
+                                </RadzenCard>
+                            }
+
+                            <!-- ? SECTION 3: Residual Risk Scoring Panel (only show if mitigations and analysis exist) -->
+                            @if (hasMitigations && HasResidualAnalysis(hazard) && ResidualRiskAssessment != null)
+                            {
+                                <RadzenCard Variant="Variant.Text" Style="background-color: #f3e5f5; border: 1px solid #ce93d8;">
+                                    <RadzenStack Gap="1rem">
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; color: #7b1fa2;">
+                                            <RadzenIcon Icon="people" Style="margin-right: 0.5rem;" />
+                                            Residual Risk Scoring Panel
+                                        </RadzenText>
+                                        
+                                        <RadzenAlert AlertStyle="AlertStyle.Success" Size="AlertSize.Small">
+                                            <RadzenText TextStyle="TextStyle.Body2" 
+                                                        Text="@($"Mitigation strategies and residual risk analysis complete for {hazard.Code}. Stakeholder panel can now assess the remaining risk level.")" />
+                                        </RadzenAlert>
+
+                                        <!-- ? REUSE: HazardScoringPanel with ResidualRiskAssessment.Code -->
+                                        <HazardScoringPanel @key="@($"residual-panel-{hazard.Code}")" 
+                                                            Hazard="@hazard" 
+                                                            AvailableStakeholders="@AvailableStakeholders"
+                                                            RiskAssessmentId="@ResidualRiskAssessment.Code"
+                                                            OnHazardScored="@(() => HandleResidualHazardScored(hazard.Code))" />
+                                    </RadzenStack>
+                                </RadzenCard>
+                            }
+
+                            <!-- Monitoring for Acceptable Risks -->
+                            @if (!needsMitigation)
+                            {
+                                <RadzenCard Variant="Variant.Text" Style="background-color: #e8f5e8; border: 1px solid #a5d6a7;">
+                                    <RadzenStack Gap="1rem">
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; color: #2e7d32;">
+                                            <RadzenIcon Icon="visibility" Style="margin-right: 0.5rem;" />
+                                            Monitoring & Review Requirements
+                                        </RadzenText>
+                                        
+                                        <RadzenRow Gap="1rem">
+                                            <RadzenColumn Size="12" SizeMD="4">
+                                                <RadzenFormField Text="Monitoring Frequency" Variant="Variant.Outlined">
+                                                    <RadzenDropDown Value="@GetMonitoringFrequency(hazard)" 
+                                                                    Data="@MonitoringFrequencyOptions"
+                                                                    Placeholder="Select frequency..." 
+                                                                    Style="width: 100%;" 
+                                                                    ValueChanged="@((string value) => SetMonitoringFrequency(hazard, value))" />
+                                                </RadzenFormField>
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="12" SizeMD="4">
+                                                <RadzenFormField Text="Responsible Department" Variant="Variant.Outlined">
+                                                    <RadzenDropDown Value="@GetMonitoringDepartment(hazard)" 
+                                                                    Data="@Departments"
+                                                                    Placeholder="Select department..." 
+                                                                    Style="width: 100%;" 
+                                                                    ValueChanged="@((string value) => SetMonitoringDepartment(hazard, value))" />
+                                                </RadzenFormField>
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="12" SizeMD="4">
+                                                <RadzenFormField Text="Review Trigger" Variant="Variant.Outlined">
+                                                    <RadzenTextBox Value="@GetReviewTrigger(hazard)" 
+                                                                   Placeholder="What triggers a review?" 
+                                                                   Style="width: 100%;" 
+                                                                   ValueChanged="@((string value) => SetReviewTrigger(hazard, value))" />
+                                                </RadzenFormField>
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                    </RadzenStack>
+                                </RadzenCard>
+                            }
+                        </RadzenStack>
+                    </RadzenCard>
                 }
             }
             else
@@ -102,7 +287,16 @@
     [Parameter] public List<Hazard> AvailableHazards { get; set; } = new();
     [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
     [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
-    [Parameter] public RiskAssessment? InitialRiskAssessment { get; set; } // ? NEW: Required for mitigation creation
+    [Parameter] public RiskAssessment? InitialRiskAssessment { get; set; } // For mitigation creation
+    [Parameter] public RiskAssessment? ResidualRiskAssessment { get; set; } // ? For residual risk scoring and analysis
+
+    // ? NEW: Store residual risk analysis data per hazard
+    private Dictionary<string, string> ResidualWorstOutcomes { get; set; } = new();
+    private Dictionary<string, string> ResidualRootCauses { get; set; } = new();
+    private Dictionary<string, string> ResidualAdditionalComments { get; set; } = new();
+    private Dictionary<string, string> MonitoringFrequencies { get; set; } = new();
+    private Dictionary<string, string> MonitoringDepartments { get; set; } = new();
+    private Dictionary<string, string> ReviewTriggers { get; set; } = new();
 
     private List<string> ImplementationStrategies = new()
     {
@@ -112,12 +306,57 @@
         "Resource-Based Priority"
     };
 
-    protected override void OnInitialized()
+    private List<string> MonitoringFrequencyOptions = new()
+    {
+        "Continuous", "Daily", "Weekly", "Monthly", "Quarterly", "Annually"
+    };
+
+    private List<string> Departments = new()
+    {
+        "Airport Operations", "Safety Management", "Maintenance & Engineering", 
+        "Aircraft Rescue & Firefighting", "Airport Security", "Air Traffic Control", 
+        "Ground Handling Services", "Cargo Operations", "External Contractor"
+    };
+
+    protected override async Task OnInitializedAsync()
     {
         // Set default values if not already set
         if (Step5.OverallTargetDate == null)
         {
             Step5.OverallTargetDate = DateTime.Now.AddMonths(6);
+        }
+
+        // ? Load existing residual risk analysis data if available
+        await LoadExistingResidualAnalysisData();
+    }
+
+    /// <summary>
+    /// ? Load existing residual risk analysis data from RiskAnalysis entities linked to ResidualRiskAssessment
+    /// </summary>
+    private async Task LoadExistingResidualAnalysisData()
+    {
+        if (ResidualRiskAssessment == null || AvailableHazards?.Any() != true) return;
+
+        try
+        {
+            // TODO: Implement proper RiskAnalysis CQRS queries
+            // For now, just initialize empty data
+            Logger.LogInformation("Loading residual risk analysis data for {Count} hazards linked to ResidualRiskAssessment {AssessmentCode}", 
+                AvailableHazards.Count, ResidualRiskAssessment.Code);
+
+            // PLACEHOLDER: In a real implementation, this would load via CQRS
+            // foreach (var hazard in AvailableHazards)
+            // {
+            //     var query = new GetRiskAnalysisByHazardIdQuery(new HazardID(hazard.Code));
+            //     var result = await Mediator.SendAsync(query, CancellationToken.None);
+            //     ... load existing data if linked to ResidualRiskAssessment.Code
+            // }
+
+            await Task.CompletedTask; // Placeholder
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading existing residual risk analysis data");
         }
     }
 
@@ -140,36 +379,155 @@
         return true;
     }
 
+    private bool HasMitigations(Hazard hazard)
+    {
+        // Check if Step5 model has mitigation strategies for this hazard
+        return Step5.HazardMitigations?.ContainsKey(hazard.Code) == true && 
+               Step5.HazardMitigations[hazard.Code]?.Any() == true;
+    }
+
+    /// <summary>
+    /// ? Check if hazard has residual risk analysis completed
+    /// </summary>
+    private bool HasResidualAnalysis(Hazard hazard)
+    {
+        var hasWorstOutcome = !string.IsNullOrWhiteSpace(GetResidualWorstOutcome(hazard)) && GetResidualWorstOutcome(hazard).Length >= 10;
+        var hasRootCause = !string.IsNullOrWhiteSpace(GetResidualRootCause(hazard)) && GetResidualRootCause(hazard).Length >= 10;
+        
+        return hasWorstOutcome && hasRootCause;
+    }
+
+    private string GetInitialRiskLevel(Hazard hazard)
+    {
+        if (Step4.HazardRiskLevels.ContainsKey(hazard.Code))
+        {
+            return Step4.HazardRiskLevels[hazard.Code];
+        }
+        return "Unknown";
+    }
+
+    private BadgeStyle GetRiskLevelBadgeStyle(string riskLevel)
+    {
+        return riskLevel switch
+        {
+            "High" => BadgeStyle.Danger,
+            "Medium" => BadgeStyle.Warning,
+            "Low" => BadgeStyle.Info,
+            "Acceptable" => BadgeStyle.Success,
+            _ => BadgeStyle.Secondary
+        };
+    }
+
+    #region ? Residual Risk Analysis Methods
+
+    private string GetResidualWorstOutcome(Hazard hazard)
+    {
+        return ResidualWorstOutcomes.GetValueOrDefault(hazard.Code, string.Empty);
+    }
+
+    private string GetResidualRootCause(Hazard hazard)
+    {
+        return ResidualRootCauses.GetValueOrDefault(hazard.Code, string.Empty);
+    }
+
+    private string GetResidualAdditionalComments(Hazard hazard)
+    {
+        return ResidualAdditionalComments.GetValueOrDefault(hazard.Code, string.Empty);
+    }
+
+    /// <summary>
+    /// ? Handle residual risk analysis field changes and save to database
+    /// </summary>
+    private async Task OnResidualAnalysisFieldChanged(Hazard hazard, string fieldName, string? value)
+    {
+        try
+        {
+            // Update local dictionary
+            switch (fieldName)
+            {
+                case "WorstOutcome":
+                    ResidualWorstOutcomes[hazard.Code] = value ?? string.Empty;
+                    break;
+                case "RootCause":
+                    ResidualRootCauses[hazard.Code] = value ?? string.Empty;
+                    break;
+                case "AdditionalComments":
+                    ResidualAdditionalComments[hazard.Code] = value ?? string.Empty;
+                    break;
+            }
+
+            // Save to database via RiskAnalysis entity linked to ResidualRiskAssessment
+            await SaveResidualAnalysisToDatabase(hazard);
+            
+            // Trigger UI update
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error updating residual analysis field {FieldName} for hazard {HazardCode}", fieldName, hazard.Code);
+        }
+    }
+
+    /// <summary>
+    /// ? Save residual risk analysis to database using ResidualRiskAssessment.Code
+    /// </summary>
+    private async Task SaveResidualAnalysisToDatabase(Hazard hazard)
+    {
+        if (ResidualRiskAssessment == null) return;
+
+        try
+        {
+            // TODO: Implement proper RiskAnalysis CQRS commands
+            // For now, just log the save operation
+            Logger.LogInformation("Saving residual risk analysis for hazard {HazardCode} to ResidualRiskAssessment {AssessmentCode}: " +
+                "WorstOutcome('{WorstOutcome}'), RootCause('{RootCause}'), Comments('{Comments}')" , 
+                hazard.Code, ResidualRiskAssessment.Code,
+                GetResidualWorstOutcome(hazard), GetResidualRootCause(hazard), GetResidualAdditionalComments(hazard));
+
+            // PLACEHOLDER: In a real implementation, this would save via CQRS
+            // var query = new GetRiskAnalysisByHazardIdQuery(new HazardID(hazard.Code));
+            // var result = await Mediator.SendAsync(query, CancellationToken.None);
+            // ... create or update RiskAnalysis entity with ResidualRiskAssessment.Code
+            
+            await Task.CompletedTask; // Placeholder
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving residual risk analysis for hazard {HazardCode}", hazard.Code);
+        }
+    }
+
+    #endregion
+
+    #region Monitoring Methods
+
+    private string GetMonitoringFrequency(Hazard hazard) => MonitoringFrequencies.GetValueOrDefault(hazard.Code, string.Empty);
+    private string GetMonitoringDepartment(Hazard hazard) => MonitoringDepartments.GetValueOrDefault(hazard.Code, string.Empty);
+    private string GetReviewTrigger(Hazard hazard) => ReviewTriggers.GetValueOrDefault(hazard.Code, string.Empty);
+
+    private async Task SetMonitoringFrequency(Hazard hazard, string value)
+    {
+        MonitoringFrequencies[hazard.Code] = value ?? string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SetMonitoringDepartment(Hazard hazard, string value)
+    {
+        MonitoringDepartments[hazard.Code] = value ?? string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SetReviewTrigger(Hazard hazard, string value)
+    {
+        ReviewTriggers[hazard.Code] = value ?? string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    #endregion
+
     private int GetHazardsNeedingMitigation()
     {
         return AvailableHazards?.Count(h => DetermineIfNeedsMitigation(h)) ?? 0;
-    }
-
-    private int GetHazardsWithMitigations()
-    {
-        return Step5.HazardMitigations?.Count(kvp => kvp.Value?.Any() == true) ?? 0;
-    }
-
-    private int GetMitigationProgress()
-    {
-        var needingMitigation = GetHazardsNeedingMitigation();
-        if (needingMitigation == 0) return 100;
-        
-        var withMitigations = GetHazardsWithMitigations();
-        return (withMitigations * 100) / needingMitigation;
-    }
-
-    private int GetResidualAssessments()
-    {
-        // Count hazards that have both mitigations and residual risk panels assigned
-        return Step5.HazardMitigations?.Count(kvp => 
-            kvp.Value?.Any() == true && 
-            Step5.ResidualRiskPanels.ContainsKey(kvp.Key)) ?? 0;
-    }
-
-    private int GetCompletedResidualAssessments()
-    {
-        return Step5.ResidualRiskScores?.Count(kvp => kvp.Value?.Any(s => s.IsComplete) == true) ?? 0;
     }
 
     private async Task OnMitigationUpdated(string hazardId)
@@ -178,10 +536,24 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task OnResidualScoreSubmitted(Step5Model.ResidualRiskScoreData scoreData)
+    /// <summary>
+    /// ? Handle when residual risk assessment is completed for a hazard
+    /// </summary>
+    private async Task HandleResidualHazardScored(string hazardCode)
     {
-        Step5.AddResidualRiskScore(scoreData.HazardId, scoreData);
-        await Step5Changed.InvokeAsync(Step5);
-        await InvokeAsync(StateHasChanged);
+        try
+        {
+            Logger.LogInformation("Residual risk assessment completed for hazard: {HazardCode}", hazardCode);
+            
+            // Trigger Step5 model update
+            await Step5Changed.InvokeAsync(Step5);
+            
+            // Refresh UI
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error handling residual hazard scored for {HazardCode}", hazardCode);
+        }
     }
-}}
+}

@@ -238,13 +238,48 @@ public class Step2Model
     {
         if (assessment == null) return;
 
-        HazardIds = assessment.IdentifiedHazardIds.ToList();
-        HazardDescriptions = assessment.IdentifiedHazardIds.Select(id => $"Hazard {id}").ToList();
-        HazardCategories = assessment.IdentifiedHazardIds.Select(_ => string.Empty).ToList();
+        // ? FIXED: Properly load hazard IDs from assessment
+        if (assessment.IdentifiedHazardIds?.Any() == true)
+        {
+            HazardIds = assessment.IdentifiedHazardIds.ToList();
+            
+            // Initialize descriptions and categories lists to match hazard IDs count
+            HazardDescriptions = new List<string>(new string[HazardIds.Count]);
+            HazardCategories = new List<string>(new string[HazardIds.Count]);
+            
+            // Fill with placeholder data - actual hazard data will be loaded separately
+            for (int i = 0; i < HazardIds.Count; i++)
+            {
+                HazardDescriptions[i] = $"Hazard {HazardIds[i]}";
+                HazardCategories[i] = "General";
+            }
+        }
+        else
+        {
+            // Initialize empty lists if no hazards in assessment
+            HazardIds = new List<string>();
+            HazardDescriptions = new List<string>();
+            HazardCategories = new List<string>();
+        }
     }
 
     public void ApplyToAssessment(RiskAssessment assessment)
     {
+        // ? FIXED: Update assessment with all identified hazards
+        assessment.ClearIdentifiedHazards(); // Clear existing hazards first
+        
+        foreach (var hazardId in HazardIds)
+        {
+            if (!string.IsNullOrEmpty(hazardId))
+            {
+                var hazardDescription = HazardDescriptions.Count > HazardIds.IndexOf(hazardId) 
+                    ? HazardDescriptions[HazardIds.IndexOf(hazardId)] 
+                    : $"Hazard {hazardId}";
+                    
+                assessment.AddIdentifiedHazard(hazardId, hazardDescription);
+            }
+        }
+        
         assessment.CompleteStep(2);
     }
 }
@@ -405,9 +440,9 @@ public class Step3Model
                             RiskAnalysis ra = result.Value;
                             ra.HazardCode = hazard.Code;
                             ra.RiskAssessmentCode = assessment.Code;
-                            ra.RootCause = analysis.RootCauseAnalysis;
-                            ra.WorstCredibleOutcome = analysis.WorstCredibleOutcome;
-                            ra.AdditionalComments = analysis.AdditionalComments;
+                            ra.RootCause = hazard.RootCause;
+                            ra.WorstCredibleOutcome = hazard.WorstCredibleOutcome;
+                            ra.AdditionalComments = hazard.AdditionalComments;
                             var updateRa = new UpdateRiskAnalysisCommand(ra);
                             result = await mediator.SendAsync(updateRa, CancellationToken.None);
                         }

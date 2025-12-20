@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Radzen;
 using SMS_Application.Messaging.Queries;
@@ -169,8 +169,8 @@ public partial class TechnicalAssessment : ComponentBase
                 CurrentStep, ReportId, HazardId);
 
             await LoadCoreAssessmentDataAsync();
-            await LoadReportHazardsAsync();
-            await LoadStepDataFromAssessment();
+            await LoadReportHazardsAsync(); // ✅ FIXED: Load hazards BEFORE loading step data
+            await LoadStepDataFromAssessment(); // Step models need ReportHazards to be populated
             await LoadReferenceDataAsync();
 
             Logger.LogInformation("Successfully loaded Technical Assessment data");
@@ -403,7 +403,7 @@ public partial class TechnicalAssessment : ComponentBase
             // Load additional hazards from report
             if (!string.IsNullOrEmpty(ReportId))
             {
-                var reportHazardQuery = new GetHazardsByReportIdQuery(new ReportID(ReportId));
+                var reportHazardQuery = new GetHazardsByReportIdQuery(new ReportID(ReportId.Trim()));
                 var reportHazardResult = await Mediator.SendAsync(reportHazardQuery, CancellationToken.None);
                 
                 if (reportHazardResult.IsSuccess && reportHazardResult.Value?.Any() == true)
@@ -565,8 +565,8 @@ public partial class TechnicalAssessment : ComponentBase
             var userCode = user.Code.ToLowerInvariant();
             if (userCode.Contains("safety") || 
                 userCode.Contains("sms") ||
-                userCode.StartsWith("st-") || // Safety Team prefix
-                userCode.StartsWith("ra-"))   // Risk Assessor prefix
+                userCode.StartsWith("st-") // Safety Team prefix
+                || userCode.StartsWith("ra-"))   // Risk Assessor prefix
             {
                 return true;
             }
@@ -1119,6 +1119,13 @@ public partial class TechnicalAssessment : ComponentBase
                 Logger.LogWarning("Hazard {HazardCode} already exists in Step2 model, skipping Step2 update", newHazard.Code);
             }
 
+            // ✅ FIXED: Also update the assessment's IdentifiedHazardIds list
+            if (InitialRiskAssessment != null && !InitialRiskAssessment.IdentifiedHazardIds.Contains(newHazard.Code))
+            {
+                InitialRiskAssessment.AddIdentifiedHazard(newHazard.Code, newHazard.Description ?? string.Empty);
+                Logger.LogInformation("Added hazard {HazardCode} to assessment's IdentifiedHazardIds", newHazard.Code);
+            }
+
             // CRITICAL: Force complete UI refresh for parent and all children
             await InvokeAsync(() =>
             {
@@ -1203,6 +1210,22 @@ public partial class TechnicalAssessment : ComponentBase
                         Step2.HazardDescriptions.RemoveAt(indexToRemove);
                     if (indexToRemove < Step2.HazardCategories.Count)
                         Step2.HazardCategories.RemoveAt(indexToRemove);
+                }
+
+                // ✅ FIXED: Also remove from assessment's IdentifiedHazardIds
+                if (InitialRiskAssessment != null)
+                {
+                    // Clear and re-add all remaining hazards
+                    InitialRiskAssessment.ClearIdentifiedHazards();
+                    foreach (var remainingHazardId in Step2.HazardIds)
+                    {
+                        var hazardIndex = Step2.HazardIds.IndexOf(remainingHazardId);
+                        var hazardDescription = hazardIndex < Step2.HazardDescriptions.Count 
+                            ? Step2.HazardDescriptions[hazardIndex] 
+                            : $"Hazard {remainingHazardId}";
+                        InitialRiskAssessment.AddIdentifiedHazard(remainingHazardId, hazardDescription);
+                    }
+                    Logger.LogInformation("Removed hazard {HazardCode} from assessment's IdentifiedHazardIds", hazardToDelete.Code);
                 }
 
                 // Force UI refresh

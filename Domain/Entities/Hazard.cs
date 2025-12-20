@@ -89,7 +89,7 @@ public sealed class Hazard : BaseAuditableEntity
 
     public string ReportCode { get; set; } = string.Empty;
     public string? RiskMatrixCode { get; set; }
-    public string? AverageScore { get; set; }
+    public decimal? AverageScore { get; set; }
     public string? RiskLevel { get; set; } // Very Low, Low, Medium, High, Very High
     public string? WorstCredibleOutcome { get; set; }
     public string? RootCause { get; set; }

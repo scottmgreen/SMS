@@ -143,6 +143,8 @@ public class GetHazardsByReportCodeQueryHandler : BaseQueryBundle, IRequestHandl
             
             // Convert report code to ReportID and use existing method
             var reportId = new ReportID(request.ReportCode);
+            
+            // ? FIXED: Use the clean method that doesn't include complex mitigation joins
             var result = await _hazardDataService.GetHazardsByReportIdAsync(reportId, ct).ConfigureAwait(false);
             
             if (result.IsFailure || result.Value == null)
@@ -150,7 +152,7 @@ public class GetHazardsByReportCodeQueryHandler : BaseQueryBundle, IRequestHandl
                 return result;
             }
 
-            // Enhance hazards with location data
+            // Enhance hazards with location data (if needed)
             List<Hazard> hazards = new();
             foreach (Hazard hz in result.Value)
             {
@@ -162,6 +164,9 @@ public class GetHazardsByReportCodeQueryHandler : BaseQueryBundle, IRequestHandl
                 }
                 hazards.Add(hz);
             }
+
+            // ? PERFORMANCE NOTE: If you need mitigations, load them separately:
+            // var hazardsWithMitigations = await _hazardDataService.GetHazardsByReportIdWithMitigationsAsync(reportId, ct);
 
             return Result<List<Hazard>>.Success(hazards);
         }

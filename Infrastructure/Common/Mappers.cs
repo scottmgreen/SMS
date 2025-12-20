@@ -278,7 +278,7 @@ public static partial class Mappers
         
         // ✅ FIXED: HazardAverageScore is actually a decimal in database, not string
         var averageScore = reader.IsDBNull(FieldNames.fHazardAverageScore) ? (decimal?)null : reader.GetDecimal(FieldNames.fHazardAverageScore);
-        hazard.AverageScore = averageScore?.ToString() ?? string.Empty;
+        hazard.AverageScore = averageScore ?? 0;
         
         // NOTE: HazardLocation is NOT populated here - it must be populated at the Application Service layer
         // to maintain proper separation of concerns and avoid circular dependencies

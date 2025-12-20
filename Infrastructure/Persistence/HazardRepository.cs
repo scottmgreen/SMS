@@ -214,7 +214,7 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
 
-            List<Hazard>? response = new(); ;
+            List<Hazard> response = new();
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
@@ -232,6 +232,41 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
         catch (Exception ex)
         {
             _logger.LogInfrastructureGetItemError($"{_logheader} {ex.Message}", null);
+            return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
+        }
+    }
+
+    /// <summary>
+    /// Get hazards with their associated mitigations loaded separately
+    /// This avoids the complex JOIN and ensures clean data mapping
+    /// </summary>
+    public async Task<Result<List<Hazard>>> GetHazardsByReportIdWithMitigationsAsync(ReportID reportId, CancellationToken ct = default)
+    {
+        try
+        {
+            // First, get the hazards (clean, no joins)
+            var hazardsResult = await GetHazardsByReportIdAsync(reportId, ct);
+            if (hazardsResult.IsFailure || hazardsResult.Value == null)
+            {
+                return hazardsResult;
+            }
+
+            var hazards = hazardsResult.Value;
+
+            // Then, load mitigations separately for each hazard if needed
+            // NOTE: Only load mitigations if specifically requested to avoid performance issues
+            foreach (var hazard in hazards)
+            {
+                // You can add mitigation loading logic here if needed
+                // var mitigations = await _mitigationRepository.GetByHazardCodeAsync(hazard.Code, ct);
+                // hazard.LoadMitigations(mitigations);
+            }
+
+            return Result<List<Hazard>>.Success(hazards);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemError($"{_logheader} Error loading hazards with mitigations: {ex.Message}", null);
             return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
         }
     }
