@@ -24,19 +24,8 @@
     <RadzenStack Gap="1rem">
         <!-- Hazard Header -->
         <RadzenRow AlignItems="AlignItems.Center">
-            <RadzenColumn Size="8">
+            <RadzenColumn Size="2">
                 <RadzenStack Gap="0.25rem">
-                    <RadzenText TextStyle="TextStyle.H6" Style="color: #212e61; margin: 0;">
-                        <RadzenIcon Icon="list" Style="margin-right: 0.5rem;" />
-                        @* @(IsResidualRiskAssessment() ? "Residual Risk" : "Initial Risk") Assessment Panel *@
-                        <RadzenBadge Text="1" BadgeStyle="BadgeStyle.Light" Style="margin-left: 0.5rem;" />
-                    </RadzenText>
-                </RadzenStack>
-            </RadzenColumn>
-            <RadzenColumn Size="4">
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
-                    <RadzenButton Text="Manage Panel" Icon="people" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
-                                  Click="@OpenPanelDialog" />
                     @{
                         var average = GetAverageScore();
                         var completedCount = GetCompletedScoreCount();
@@ -56,6 +45,13 @@
                     {
                         <RadzenBadge Text="No Panel" BadgeStyle="BadgeStyle.Secondary" />
                     }
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="10">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Text="Manage Panel" Icon="people" ButtonStyle="ButtonStyle.Dark" Size="ButtonSize.Small"
+                                  Click="@OpenPanelDialog" />
+                   
                 </RadzenStack>
             </RadzenColumn>
         </RadzenRow>
@@ -199,7 +195,11 @@
 
 @code {
     [Parameter] public Hazard Hazard { get; set; } = new(new HazardID("HZ-0000"));
+    [Parameter] public Step4Model Step4 { get; set; } = new();
+    [Parameter] public Step5Model Step5 { get; set; } = new();
     [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
+    [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
+    [Parameter] public RiskAssessment? RiskAssessment { get; set; }
     [Parameter] public EventCallback OnHazardScored { get; set; }
     [Parameter] public string RiskAssessmentId { get; set; } = string.Empty; // NEW: Pass assessment ID to link scoring panels
 

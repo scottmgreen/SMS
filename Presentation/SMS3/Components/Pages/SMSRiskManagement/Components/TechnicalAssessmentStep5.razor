@@ -48,11 +48,11 @@
     <RadzenColumn Size="12" SizeLG="8">
         <RadzenStack Gap="1.5rem">
             <!-- Header with Implementation Planning -->
-            <RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid var(--rz-primary);">
+            <RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid #212e61;">
                 <RadzenStack Gap="1rem">
                     <RadzenRow AlignItems="AlignItems.Center">
                         <RadzenColumn Size="10">
-                            <RadzenText TextStyle="TextStyle.H5" Style="color: var(--rz-primary); margin: 0;">
+                            <RadzenText TextStyle="TextStyle.H5" Style="color: #212e61; margin: 0;">
                                 <RadzenIcon Icon="security" Style="margin-right: 0.5rem;" />
                                 Step 5: Risk Mitigation & Residual Assessment
                             </RadzenText>
@@ -81,12 +81,13 @@
                             <RadzenText TextStyle="TextStyle.Caption" Text="Target completion for all mitigation strategies" />
                         </RadzenColumn>
                     </RadzenRow>
-
+                    <RadzenColumn Size="12" SizeMD="6">
                     <RadzenFormField Text="Implementation Notes" Variant="Variant.Outlined">
                         <RadzenTextArea @bind-Value="@Step5.ImplementationNotes" Rows="2"
                                         Placeholder="Document overall implementation approach, resource requirements, and coordination notes..."
                                         Style="width: 100%;" />
                     </RadzenFormField>
+                    </RadzenColumn>
                 </RadzenStack>
             </RadzenCard>
 
@@ -97,14 +98,14 @@
                 {
                     var needsMitigation = DetermineIfNeedsMitigation(hazard);
                     var hasMitigations = HasMitigations(hazard);
-                    
-                    <RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid var(--rz-info); margin-bottom: 1rem;">
+
+                    <RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid #212e61; margin-bottom: 1rem;">
                         <RadzenStack Gap="1.5rem">
                             <!-- Hazard Header -->
                             <RadzenRow AlignItems="AlignItems.Center">
                                 <RadzenColumn Size="8">
                                     <RadzenStack Gap="0.25rem">
-                                        <RadzenText TextStyle="TextStyle.H6" Style="background-color:var(--sms-blue-dark-bold); margin: 0; color: var(--rz-primary);">
+                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: color:#212e61;">
                                             <RadzenIcon Icon="warning" Style="margin-right: 0.5rem;" />
                                             @hazard.Code: @hazard.Description
                                         </RadzenText>
@@ -160,7 +161,7 @@
                                                    style="cursor: pointer; padding: 0.5rem; margin: -0.5rem;" 
                                                    @onclick="@(() => ToggleSectionCollapse(hazard.Code, "mitigation"))">
                                             <RadzenColumn Size="10">
-                                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; color: #856404;">
+                                                <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color:#212e61;">
                                                     <RadzenIcon Icon="build" Style="margin-right: 0.5rem;" />
                                                     Mitigation Strategies
                                                 </RadzenText>
@@ -201,7 +202,130 @@
                                 </RadzenCard>
                             }
 
-                            <!-- ✅ NOTE: Residual Risk Analysis and Scoring Panel are now included in HazardMitigationPanel above -->
+
+
+                            <!-- ✅ SECTION 2: Hazard Scoring Panel (Collapsible) -->
+                            @if (hasMitigations)
+                            {
+                                <RadzenCard Variant="Variant.Text" Style="background-color: #f3e5f5; border: 1px solid #ce93d8;">
+                                    <RadzenStack Gap="1rem">
+                                        <!-- ✅ Collapsible Header -->
+                                        <RadzenRow AlignItems="AlignItems.Center" 
+                                                   class="collapsible-header"
+                                                   style="cursor: pointer; padding: 0.5rem; margin: -0.5rem;" 
+                                                   @onclick="@(() => ToggleSectionCollapse(hazard.Code, "scoring"))">
+                                            <RadzenColumn Size="10">
+                                                <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: #212e61;">
+                                                    <RadzenIcon Icon="people" Style="margin-right: 0.5rem;" />
+                                                    Hazard Scoring Panel
+                                                </RadzenText>
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="2">
+                                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+                                                    <RadzenButton Icon="@GetCollapseIcon(hazard.Code, "scoring")" 
+                                                                  ButtonStyle="ButtonStyle.Light" 
+                                                                  Size="ButtonSize.Small"
+                                                                  class="collapse-button"
+                                                                  Title="@GetCollapseTooltip(hazard.Code, "scoring")"
+                                                                  Click="@((args) => ToggleSectionCollapse(hazard.Code, "scoring"))" />
+                                                </RadzenStack>
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                        
+                                        <!-- ✅ Collapsible Content -->
+                                        @if (!IsSectionCollapsed(hazard.Code, "scoring"))
+                                        {
+                                            <div class="collapsible-content">
+                                                <HazardScoringPanel Hazard="@hazard"
+                                                                   Step4="@Step4"
+                                                                   Step5="@Step5"
+                                                                   AvailableStakeholders="@AvailableStakeholders"
+                                                                   AvailableAssessors="@AvailableAssessors"
+                                                                   RiskAssessment="@ResidualRiskAssessment"
+                                                                   OnHazardScored="@HandleResidualHazardScored" />
+                                            </div>
+                                        }
+                                    </RadzenStack>
+                                </RadzenCard>
+                            }
+
+                            <!-- ✅ SECTION 3: Residual Risk Analysis (Collapsible) -->
+                            @if (hasMitigations && ResidualRiskAssessment != null)
+                            {
+                                <RadzenCard Variant="Variant.Text" Style="background-color: #e3f2fd; border: 1px solid #90caf9;">
+                                    <RadzenStack Gap="1rem">
+                                        <!-- ✅ Collapsible Header -->
+                                        <RadzenRow AlignItems="AlignItems.Center" 
+                                                   class="collapsible-header"
+                                                   style="cursor: pointer; padding: 0.5rem; margin: -0.5rem;" 
+                                                   @onclick="@(() => ToggleSectionCollapse(hazard.Code, "analysis"))">
+                                            <RadzenColumn Size="10">
+                                                <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color:#212e61;">
+                                                    <RadzenIcon Icon="analytics" Style="margin-right: 0.5rem;" />
+                                                    Residual Risk Analysis
+                                                </RadzenText>
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="2">
+                                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+                                                    <RadzenButton Icon="@GetCollapseIcon(hazard.Code, "analysis")" 
+                                                                  ButtonStyle="ButtonStyle.Light" 
+                                                                  Size="ButtonSize.Small"
+                                                                  class="collapse-button"
+                                                                  Title="@GetCollapseTooltip(hazard.Code, "analysis")"
+                                                                  Click="@((args) => ToggleSectionCollapse(hazard.Code, "analysis"))" />
+                                                </RadzenStack>
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                        
+                                        <!-- ✅ Collapsible Content -->
+                                        @if (!IsSectionCollapsed(hazard.Code, "analysis"))
+                                        {
+                                            <div class="collapsible-content">
+                                                @* <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small">
+                                                    <RadzenText TextStyle="TextStyle.Body2" 
+                                                                Text="Analyze the remaining risk after mitigation implementation. Consider how effective the mitigation strategies will be." />
+                                                </RadzenAlert> *@
+
+                                                <!-- Risk Analysis Fields for Residual Risk -->
+                                                <RadzenRow Gap="1rem">
+                                                    <RadzenColumn Size="12" SizeMD="6">
+                                                        <RadzenStack Gap="0.5rem">
+                                                            <RadzenFormField Text="Residual Worst Credible Outcome *" Variant="Variant.Outlined">
+                                                                <RadzenTextArea Value="@GetResidualWorstOutcome(hazard)"
+                                                                                ValueChanged="@((string value) => OnResidualAnalysisFieldChanged(hazard, "WorstOutcome", value))"
+                                                                                Rows="3"
+                                                                                Placeholder="After mitigation implementation, what is the worst outcome that could still occur..."
+                                                                                Style="width: 100%;" />
+                                                            </RadzenFormField>
+                                                            <RadzenText TextStyle="TextStyle.Caption" Text="Consider the effectiveness of planned mitigation strategies" />
+                                                        </RadzenStack>
+                                                    </RadzenColumn>
+                                                    <RadzenColumn Size="12" SizeMD="6">
+                                                        <RadzenStack Gap="0.5rem">
+                                                            <RadzenFormField Text="Residual Root Cause Analysis *" Variant="Variant.Outlined">
+                                                                <RadzenTextArea Value="@GetResidualRootCause(hazard)"
+                                                                                ValueChanged="@((string value) => OnResidualAnalysisFieldChanged(hazard, "RootCause", value))"
+                                                                                Rows="3"
+                                                                                Placeholder="What root causes remain after mitigation implementation..."
+                                                                                Style="width: 100%;" />
+                                                            </RadzenFormField>
+                                                            <RadzenText TextStyle="TextStyle.Caption" Text="Identify root causes that mitigation strategies do not fully address" />
+                                                        </RadzenStack>
+                                                    </RadzenColumn>
+                                                </RadzenRow>
+
+                                                <RadzenFormField Text="Additional Residual Analysis Comments" Variant="Variant.Outlined">
+                                                    <RadzenTextArea Value="@GetResidualAdditionalComments(hazard)"
+                                                                    ValueChanged="@((string value) => OnResidualAnalysisFieldChanged(hazard, "AdditionalComments", value))"
+                                                                    Rows="2"
+                                                                    Placeholder="Document assumptions about mitigation effectiveness, residual vulnerabilities, or monitoring requirements..."
+                                                                    Style="width: 100%;" />
+                                                </RadzenFormField>
+                                            </div>
+                                        }
+                                    </RadzenStack>
+                                </RadzenCard>
+                            }
 
                             <!-- Monitoring for Acceptable Risks -->
                             @if (!needsMitigation)
@@ -293,7 +417,9 @@
 
     // ✅ NEW: Collapsible state tracking per hazard and section
     private Dictionary<string, bool> MitigationSectionsCollapsed { get; set; } = new();
-    // Note: Analysis is now managed inside HazardMitigationPanel
+    private Dictionary<string, bool> ScoringPanelSectionsCollapsed { get; set; } = new();
+    private Dictionary<string, bool> AnalysisSectionsCollapsed { get; set; } = new();
+    // Note: Analysis is now back in TechnicalAssessmentStep5
 
     private List<string> ImplementationStrategies = new()
     {
@@ -620,11 +746,11 @@
     /// <summary>
     /// ✅ Handle when residual risk assessment is completed for a hazard
     /// </summary>
-    private async Task HandleResidualHazardScored(string hazardCode)
+    private async Task HandleResidualHazardScored()
     {
         try
         {
-            Logger.LogInformation("Residual risk assessment completed for hazard: {HazardCode}", hazardCode);
+            Logger.LogInformation("Residual risk assessment completed for current hazard scoring session");
             
             // Trigger Step5 model update
             await Step5Changed.InvokeAsync(Step5);
@@ -634,7 +760,7 @@
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error handling residual hazard scored for {HazardCode}", hazardCode);
+            Logger.LogError(ex, "Error handling residual hazard scored");
         }
     }
 
@@ -648,7 +774,8 @@
         return sectionType switch
         {
             "mitigation" => MitigationSectionsCollapsed.GetValueOrDefault(hazardCode, false),
-            // Note: "analysis" now managed inside HazardMitigationPanel
+            "scoring" => ScoringPanelSectionsCollapsed.GetValueOrDefault(hazardCode, false),
+            "analysis" => AnalysisSectionsCollapsed.GetValueOrDefault(hazardCode, false),
             _ => false
         };
     }
@@ -665,7 +792,12 @@
                 case "mitigation":
                     MitigationSectionsCollapsed[hazardCode] = !MitigationSectionsCollapsed.GetValueOrDefault(hazardCode, false);
                     break;
-                // Note: "analysis" case removed since it's now managed inside HazardMitigationPanel
+                case "scoring":
+                    ScoringPanelSectionsCollapsed[hazardCode] = !ScoringPanelSectionsCollapsed.GetValueOrDefault(hazardCode, false);
+                    break;
+                case "analysis":
+                    AnalysisSectionsCollapsed[hazardCode] = !AnalysisSectionsCollapsed.GetValueOrDefault(hazardCode, false);
+                    break;
             }
 
             await InvokeAsync(StateHasChanged);
@@ -700,9 +832,10 @@
     private bool AreAllSectionsCollapsed(string hazardCode)
     {
         var mitigationCollapsed = MitigationSectionsCollapsed.GetValueOrDefault(hazardCode, false);
-        // Note: Only checking mitigation since analysis is now inside HazardMitigationPanel
+        var scoringCollapsed = ScoringPanelSectionsCollapsed.GetValueOrDefault(hazardCode, false);
+        var analysisCollapsed = AnalysisSectionsCollapsed.GetValueOrDefault(hazardCode, false);
         
-        return mitigationCollapsed;
+        return mitigationCollapsed && scoringCollapsed && analysisCollapsed;
     }
 
     /// <summary>
@@ -717,7 +850,8 @@
 
             // Set all sections to the same state
             MitigationSectionsCollapsed[hazardCode] = shouldCollapseAll;
-            // Note: Analysis section collapse is managed inside HazardMitigationPanel
+            ScoringPanelSectionsCollapsed[hazardCode] = shouldCollapseAll;
+            AnalysisSectionsCollapsed[hazardCode] = shouldCollapseAll;
 
             await InvokeAsync(StateHasChanged);
             
