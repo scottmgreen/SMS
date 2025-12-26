@@ -1,0 +1,868 @@
+﻿@page "/SMSRiskManagement/ConfidentialReporting"
+@layout SMS3.Components.Layout.AnonymousLayout
+
+@using SMS3.Components.Shared
+@using SMS_Application.Messaging.Commands
+@using SMS_Application.Messaging.Queries
+@using SMS_Domain.Entities
+@using SMS_Domain.ValueObjects
+@using Microsoft.AspNetCore.Components.Forms
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Submit Confidential Report - SMS3</PageTitle>
+
+<!-- SMS Page Header using reusable component -->
+<PageHeader Title="@PageTitle"
+           Subtitle="@PageSubtitle"
+           Icon="fas fa-user-secret" />
+
+@if (IsLoading)
+{
+    <!-- Loading State -->
+    <div class="text-center py-5">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+        <p class="mt-3 text-muted">Processing your confidential report...</p>
+    </div>
+}
+else if (ShowFinalSuccessConfirmation)
+{
+    <!-- Final Success Modal -->
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-lg">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-success">
+                    <h5 class="sms-modal-title">
+                        <i class="fas fa-check-circle"></i> Confidential Report Successfully Submitted!
+                    </h5>
+                </div>
+                <div class="sms-modal-body">
+                    <!-- Success Message -->
+                    @* <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Class="mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-shield-alt fa-2x me-3"></i>
+                            <div>
+                                <h6 class="mb-1">Confidential Report Successfully Submitted!</h6>
+                                <p class="mb-1"><strong>Your Tracking ID:</strong></p>
+                                <h5 class="text-success mb-0">
+                                    <i class="fas fa-id-badge"></i> @GeneratedTrackingId
+                                </h5>
+                            </div>
+                        </div>
+                    </RadzenAlert> *@
+
+                    <!-- Report Details -->
+                    <RadzenCard Variant="Variant.Outlined" Class="mb-3">
+                        <div class="p-3">
+                            <h6 class="text-primary mb-2">
+                                <i class="fas fa-info-circle"></i> Report Summary
+                            </h6>
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <strong>Tracking ID:</strong> @GeneratedTrackingId<br>
+                                    <strong>Report Type:</strong> @ConfidentialReport.ReportType<br>
+                                    <strong>Status:</strong> <RadzenBadge Text="Submitted" BadgeStyle="BadgeStyle.Success" />
+                                </div>
+                                <div class="col-sm-6">
+                                    <strong>Submitted:</strong> @SubmissionDateTime?.ToString("MM/dd/yyyy HH:mm")<br>
+                                    <strong>Priority:</strong> @ConfidentialReport.Priority
+                                </div>
+                            </div>
+                        </div>
+                    </RadzenCard>
+
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mb-3">
+                        <h6 class="mb-1">
+                            <i class="fas fa-shield-alt"></i> Your Identity is Protected
+                        </h6>
+                        <p class="mb-0">Your confidential report has been submitted anonymously and will be reviewed by authorized SMS personnel only. Save your tracking ID for future reference.</p>
+                    </RadzenAlert>
+
+                    <div class="text-center">
+                        <RadzenButton ButtonStyle="ButtonStyle.Primary" 
+                                    Click="CloseFinalConfirmation" 
+                                    Text="Continue & Clear Form" 
+                                    Icon="check"
+                                    Size="ButtonSize.Medium" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Main Content - 9/3 Layout -->
+    <RadzenRow Gap="1rem">
+        <!-- Form Column - 9 columns -->
+        <RadzenColumn Size="9">
+            <RadzenCard>
+                <RadzenStack Gap="1rem" Class="rz-p-3">
+                    @* <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Class="rz-mb-3 rz-pb-2 rz-border-bottom-1">
+                        <RadzenIcon Icon="shield" Style="color: var(--rz-primary); font-size: 1.2rem;" />
+                        <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">Confidential Safety Report</RadzenText>
+                    </RadzenStack> *@
+
+                    <!-- Confidentiality Notice -->
+                    <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
+                        <h5> Confidentiality Assurance</h5>
+                        <ul class="mb-0">
+                            <li>Your identity will not be recorded or disclosed</li>
+                            <li>Reports are processed by designated SMS personnel only</li>
+                            <li>Information is protected from retaliation</li>
+                            <li>Anonymous tracking allows you to follow up securely</li>
+                        </ul>
+                    </RadzenAlert>
+
+                    <RadzenTemplateForm Data="@ConfidentialReport" Submit="@HandleFormSubmit" TItem="ConfidentialReportForm">
+                        <!-- Row 1: Report Type (3 columns) and Priority (2 columns) -->
+                        <RadzenRow Gap="6rem" Class="rz-mb-3">
+                            <RadzenColumn Size="4" >
+                                <RadzenFormField Text="Report Type *" Variant="Variant.Outlined">
+                                    <RadzenDropDown @bind-Value="@ConfidentialReport.ReportType" 
+                                                  Data="@ReportTypeOptions" 
+                                                  TextProperty="Text" 
+                                                  ValueProperty="Value"
+                                                  Placeholder="Select report type..."
+                                                  Name="ReportType"
+                                                  Style="width: 100%; min-width: 500px;" />
+                                </RadzenFormField>
+                                <RadzenRequiredValidator Component="ReportType" Text="Report type is required" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="4">
+                                <RadzenFormField Text="Urgency Level" Variant="Variant.Outlined">
+                                    <RadzenDropDown @bind-Value="@ConfidentialReport.Priority" 
+                                                  Data="@PriorityOptions" 
+                                                  TextProperty="Text" 
+                                                  ValueProperty="Value"
+                                                  Style="width: 100%; min-width: 500px;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        </RadzenRow>
+                        <br />
+                        <!-- Row 2: Special Circumstances (Full Width - 9 columns) -->
+                        <RadzenRow Gap="1rem" Class="rz-mb-3">
+                            <RadzenColumn Size="12">
+                                <RadzenFormField Text="Special Circumstances (Check all that apply)" Variant="Variant.Outlined">
+                                    <RadzenStack Gap="0.75rem" Orientation="Orientation.Vertical" Style="width: 100%; min-width: 900px; padding-left: 1rem;padding-top: 1rem;padding-bottom: 1rem;">
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.5rem" Style="width: 100%;">
+                                            <RadzenCheckBox @bind-Value="@ConfidentialReport.IsRetaliation" Name="IsRetaliation" />
+                                            <RadzenLabel Text="Retaliation Concern: Fear of retaliation for reporting this issue" Component="IsRetaliation" Style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" />
+                                        </RadzenStack>
+                                        
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.5rem" Style="width: 100%;">
+                                            <RadzenCheckBox @bind-Value="@ConfidentialReport.IsPersonnelIssue" Name="IsPersonnelIssue" />
+                                            <RadzenLabel Text="Personnel Issue: Involves specific individuals or management" Component="IsPersonnelIssue" Style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" />
+                                        </RadzenStack>
+                                        
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.5rem" Style="width: 100%;">
+                                            <RadzenCheckBox @bind-Value="@ConfidentialReport.IsComplianceViolation" Name="IsComplianceViolation" />
+                                            <RadzenLabel Text="Compliance Violation: Potential regulatory or policy violation" Component="IsComplianceViolation" Style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" />
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <!-- Row 3: Location (Full Width - 9 columns) -->
+                        <RadzenRow Gap="1rem" Class="rz-mb-3">
+                            <RadzenColumn Size="12">
+                                <RadzenFormField Text="Location *" Variant="Variant.Outlined">
+                                    <RadzenTextBox @bind-Value="@ConfidentialReport.Location" 
+                                                 Placeholder="General area or facility (avoid specific identifying details)"
+                                                 Name="Location"
+                                                 Style="width: 100%;" />
+                                </RadzenFormField>
+                                <RadzenRequiredValidator Component="Location" Text="Location is required" />
+                                <div class="form-text">Provide general location information. Avoid details that might identify you.</div>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <!-- Row 4: Detailed Description (Full Width - 9 columns) -->
+                        <RadzenRow Gap="1rem" Class="rz-mb-3">
+                            <RadzenColumn Size="12">
+                                <RadzenFormField Text="Detailed Description *" Variant="Variant.Outlined">
+                                    <RadzenTextArea @bind-Value="@ConfidentialReport.Description" 
+                                                  Rows="6"
+                                                  Name="Description"
+                                                  Placeholder="Describe the safety concern, incident, or issue in detail. Include what happened, when it occurred, and why it's a safety concern. Avoid information that could identify you personally."
+                                                  Style="width: 100%;" />
+                                </RadzenFormField>
+                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Class="rz-mt-1">
+                                    <RadzenRequiredValidator Component="Description" Text="Description is required" />
+                                    <RadzenText TextStyle="TextStyle.Caption" 
+                                              Class="@(DescriptionCharacterCount > 1950 ? "rz-color-danger" : DescriptionCharacterCount > 1800 ? "rz-color-warning" : "rz-color-base-500")">
+                                        @DescriptionCharacterCount/2000 characters
+                                    </RadzenText>
+                                </RadzenStack>
+                                <div class="form-text">Be thorough but avoid personal identifying information</div>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <!-- Row 5: Additional Protection (Full Width - 9 columns) -->
+                        <RadzenRow Gap="1rem" Class="rz-mb-3">
+                            <RadzenColumn Size="12">
+                                <RadzenFormField Text="Additional Protection Needed" Variant="Variant.Outlined">
+                                    <RadzenTextArea @bind-Value="@ConfidentialReport.AdditionalProtection" 
+                                                  Rows="3"
+                                                  Placeholder="Describe any specific protection concerns or special handling requirements..."
+                                                  Style="width: 100%;" />
+                                </RadzenFormField>
+                                <div class="form-text">Optional: Any special considerations for handling this report</div>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <!-- Row 6: Supporting Documents -->
+                        <RadzenRow Gap="1rem" Class="rz-mb-3">
+                            <RadzenColumn Size="8">
+                                <RadzenFormField Text="Supporting Documents (Optional)" Variant="Variant.Outlined">
+                                    <RadzenFileInput @bind-Value="@SelectedFiles" 
+                                                   Multiple="true"
+                                                   Accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                                                   MaxFileSize="10485760"
+                                                   Style="width: 100%;" />
+                                </RadzenFormField>
+                                <RadzenAlert AlertStyle="AlertStyle.Warning" Size="AlertSize.Small" Variant="Variant.Flat" Class="rz-mt-2">
+                                    <strong>Warning:</strong> Ensure attachments do not contain identifying information about you<br>
+                                    Supported formats: JPG, PNG, PDF, DOC, DOCX (Max 10MB per file)
+                                </RadzenAlert>
+                                @if (AttachedFiles.Any())
+                                {
+                                    <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small" Variant="Variant.Flat" Class="rz-mt-2">
+                                        <strong>Selected files:</strong>
+                                        <ul class="rz-mb-0 rz-mt-1">
+                                            @foreach (var file in AttachedFiles)
+                                            {
+                                                <li>@file.FileName (@file.SizeDisplay)</li>
+                                            }
+                                        </ul>
+                                    </RadzenAlert>
+                                }
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <!-- Legal Notice -->
+                        <RadzenRow Gap="1rem" Class="rz-mb-3">
+                            <RadzenColumn Size="12">
+                                <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat">
+                                    <h6><i class="fas fa-gavel"></i> Legal Protection Notice</h6>
+                                    <p class="mb-2">Your confidential report is protected under:</p>
+                                    <ul class="mb-0">
+                                        <li>Federal Aviation Regulations (14 CFR Part 139)</li>
+                                        <li>Whistleblower Protection provisions</li>
+                                        <li>PDX Safety Management System policies</li>
+                                        <li>Employee protection against retaliation</li>
+                                    </ul>
+                                </RadzenAlert>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <!-- Form Actions -->
+                        <RadzenRow Gap="1rem" Class="rz-border-top-1 rz-pt-3">
+                            <RadzenColumn Size="6">
+                                <RadzenButton ButtonStyle="ButtonStyle.Info" 
+                                            Variant="Variant.Outlined"
+                                            Icon="preview"
+                                            Text="Preview Report"
+                                            Size="ButtonSize.Medium"
+                                            Click="ShowPreviewModal"
+                                            Disabled="@(!IsFormValidForPreview)" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="6">
+                                @if (!ShowSubmissionConfirmation && !ShowFinalSuccessConfirmation)
+                                {
+                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                                        <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
+                                                    Icon="clear"
+                                                    Text="Clear Form"
+                                                    Size="ButtonSize.Medium"
+                                                    Click="ClearForm" />
+                                        <RadzenButton ButtonStyle="ButtonStyle.Danger" 
+                                                    Icon="send"
+                                                    Text="Submit Confidential Report"
+                                                    Size="ButtonSize.Medium"
+                                                    Click="ShowSubmissionConfirmationDialog"
+                                                    Disabled="@(!IsFormValidForSubmission)" />
+                                    </RadzenStack>
+                                }
+                                else
+                                {
+                                    <!-- Placeholder when buttons are hidden -->
+                                    <div class="text-muted text-end">
+                                        <small><em>Complete modal action to continue...</em></small>
+                                    </div>
+                                }
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenTemplateForm>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <!-- Guidance Panel - 3 columns -->
+        <RadzenColumn Size="3">
+            <!-- Confidentiality Information -->
+            <RadzenCard Variant="Variant.Outlined" Class="sms-guidance-panel mb-3">
+                <RadzenStack Gap="1rem" Class="rz-p-3">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Class="rz-mb-3 rz-pb-2 rz-border-bottom-1">
+                        <RadzenIcon Icon="shield" Style="color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">How We Protect You</RadzenText>
+                    </RadzenStack>
+
+                    <RadzenStack Gap="1rem">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-primary); margin: 0;">Technical Protection:</RadzenText>
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="check" Style="color: var(--rz-success); font-size: 0.9rem;" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Encrypted transmission</RadzenText>
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="check" Style="color: var(--rz-success); font-size: 0.9rem;" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Anonymous processing</RadzenText>
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="check" Style="color: var(--rz-success); font-size: 0.9rem;" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Secure storage</RadzenText>
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="check" Style="color: var(--rz-success); font-size: 0.9rem;" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Limited access</RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenStack>
+
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-primary); margin: 0;">Legal Protection:</RadzenText>
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="check" Style="color: var(--rz-success); font-size: 0.9rem;" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Anti-retaliation policies</RadzenText>
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="check" Style="color: var(--rz-success); font-size: 0.9rem;" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Whistleblower protection</RadzenText>
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="check" Style="color: var(--rz-success); font-size: 0.9rem;" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Regulatory compliance</RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+
+            <!-- When to Use Confidential Reporting -->
+            <RadzenCard Variant="Variant.Outlined" Class="sms-guidance-panel mb-3">
+                <RadzenStack Gap="1rem" Class="rz-p-3">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Class="rz-mb-3 rz-pb-2 rz-border-bottom-1">
+                        <RadzenIcon Icon="help" Style="color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">When to Use This</RadzenText>
+                    </RadzenStack>
+
+                    <RadzenStack Gap="1rem">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Use confidential reporting when:</RadzenText>
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="warning" Style="color: var(--rz-warning); font-size: 0.9rem;" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Fear of retaliation</RadzenText>
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="warning" Style="color: var(--rz-warning); font-size: 0.9rem;" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Management involvement</RadzenText>
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="warning" Style="color: var(--rz-warning); font-size: 0.9rem;" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Personnel conflicts</RadzenText>
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="warning" Style="color: var(--rz-warning); font-size: 0.9rem;" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Regulatory violations</RadzenText>
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="warning" Style="color: var(--rz-warning); font-size: 0.9rem;" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Attempted cover-ups</RadzenText>
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="warning" Style="color: var(--rz-warning); font-size: 0.9rem;" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Sensitive information</RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+
+            <!-- Contact Information -->
+            <RadzenCard Variant="Variant.Outlined" Class="sms-guidance-panel">
+                <RadzenStack Gap="1rem" Class="rz-p-3">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Class="rz-mb-3 rz-pb-2 rz-border-bottom-1">
+                        <RadzenIcon Icon="phone" Style="color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Need Help?</RadzenText>
+                    </RadzenStack>
+
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small" Variant="Variant.Flat">
+                        <RadzenStack Gap="0.5rem" AlignItems="AlignItems.Center">
+                            <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">SMS Confidential Hotline</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; text-align: center;">(503) 555-0199</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; text-align: center;">confidential@flypdx.com</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; text-align: center;">24/7 Available</RadzenText>
+                        </RadzenStack>
+                    </RadzenAlert>
+
+                    <RadzenAlert AlertStyle="AlertStyle.Light" Size="AlertSize.Small" Variant="Variant.Flat">
+                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; text-align: center;">
+                            <RadzenIcon Icon="info" Style="margin-right: 0.25rem;" />
+                            Hotline calls are not recorded and handled by independent SMS personnel.
+                        </RadzenText>
+                    </RadzenAlert>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+}
+
+<!-- Submission Confirmation Modal -->
+@if (ShowSubmissionConfirmation)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-lg">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-warning">
+                    <h5 class="sms-modal-title">
+                        <i class="fas fa-shield-alt"></i> Confirm Confidential Report Submission
+                    </h5>
+                </div>
+                <div class="sms-modal-body">
+                    <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
+                        <h6 class="mb-1">Are you sure you want to submit this confidential report?</h6>
+                        <p class="mb-0 small">Once submitted, this report will be processed anonymously by authorized SMS personnel.</p>
+                    </RadzenAlert>
+
+                    <!-- Report Summary -->
+                    <div class="mb-3">
+                        <h6 class="text-primary mb-2">Report Summary:</h6>
+                        <div class="small">
+                            <p class="mb-1"><strong>Type:</strong> @ConfidentialReport.ReportType</p>
+                            <p class="mb-1"><strong>Location:</strong> @ConfidentialReport.Location</p>
+                            <p class="mb-1"><strong>Priority:</strong> @ConfidentialReport.Priority</p>
+                            <p class="mb-0"><strong>Special Circumstances:</strong> @GetSpecialCircumstancesText()</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-center gap-3">
+                        <RadzenButton ButtonStyle="ButtonStyle.Warning"
+                                      Text="No, Continue Editing"
+                                      Icon="edit"
+                                      Click="CancelSubmission"
+                                      Size="ButtonSize.Medium"
+                                       />
+                        <RadzenButton ButtonStyle="ButtonStyle.Success" 
+                                    Text="Yes, Submit Report" 
+                                    Icon="check"
+                                    Click="SubmitReportConfirmed"
+                                    Size="ButtonSize.Medium" />
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Preview Modal -->
+@if (ShowPreview)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-xl">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-primary">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <h5 class="sms-modal-title mb-0">
+                            <i class="fas fa-eye"></i> Confidential Report Preview
+                        </h5>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                    Variant="Variant.Text"
+                                    Icon="close"
+                                    Size="ButtonSize.Small"
+                                    Click="HidePreview" />
+                    </div>
+                </div>
+                <div class="sms-modal-body">
+                    <!-- Preview Content -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="25%" class="text-primary">Field</th>
+                                    <th class="text-primary">Details</th>
+                                    <th width="10%" class="text-center text-primary">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th class="bg-light">
+                                        <i class="fas fa-shield-alt text-primary"></i> Report Type
+                                    </th>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(ConfidentialReport.ReportType))
+                                        {
+                                            <span class="fw-bold">@ConfidentialReport.ReportType</span>
+                                        }
+                                        else
+                                        {
+                                            <em class="text-muted">Not selected - Please select a report type</em>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (!string.IsNullOrEmpty(ConfidentialReport.ReportType))
+                                        {
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-times-circle text-danger"></i>
+                                        }
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">
+                                        <i class="fas fa-map-marker-alt text-primary"></i> Location
+                                    </th>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(ConfidentialReport.Location))
+                                        {
+                                            <span class="fw-bold">@ConfidentialReport.Location</span>
+                                        }
+                                        else
+                                        {
+                                            <em class="text-muted">Not specified - Please enter a location</em>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (!string.IsNullOrEmpty(ConfidentialReport.Location))
+                                        {
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-times-circle text-danger"></i>
+                                        }
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">
+                                        <i class="fas fa-file-alt text-success"></i> Description
+                                    </th>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(ConfidentialReport.Description))
+                                        {
+                                            <div class="description-preview">
+                                                <div style="white-space: pre-wrap; max-height: 150px; overflow-y: auto; border: 1px solid #dee2e6; padding: 0.5rem; border-radius: 0.25rem; background-color: #f8f9fa;">@ConfidentialReport.Description</div>
+                                                <small class="text-muted mt-1 d-block">
+                                                    <i class="fas fa-chart-bar"></i> 
+                                                    Character count: @DescriptionCharacterCount/2000
+                                                </small>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <em class="text-muted">No description provided - Please describe the issue</em>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (!string.IsNullOrEmpty(ConfidentialReport.Description))
+                                        {
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-times-circle text-danger"></i>
+                                        }
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">
+                                        <i class="fas fa-paperclip text-secondary"></i> Attachments
+                                    </th>
+                                    <td>
+                                        @if (AttachedFiles.Any())
+                                        {
+                                            <div class="attachment-preview">
+                                                <span class="fw-bold text-success">@AttachedFiles.Count file(s) attached:</span>
+                                                <ul class="mb-0 mt-1">
+                                                    @foreach (var file in AttachedFiles)
+                                                    {
+                                                        <li>
+                                                            <i class="fas fa-file"></i> 
+                                                            <strong>@file.FileName</strong> 
+                                                            <small class="text-muted">(@file.SizeDisplay)</small>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <em class="text-muted">No files attached (Optional)</em>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <i class="fas fa-info-circle text-info" title="Optional field"></i>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Validation Summary -->
+                    @if (!IsFormValidForSubmission)
+                    {
+                        <div class="mt-3">
+                            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat">
+                                <h6><i class="fas fa-exclamation-triangle"></i> Required Fields Missing</h6>
+                                <p class="mb-2">The following required fields need to be completed before submission:</p>
+                                <ul class="mb-0">
+                                    @if (string.IsNullOrEmpty(ConfidentialReport.ReportType))
+                                    {
+                                        <li><strong>Report Type</strong> - Please select the type of report</li>
+                                    }
+                                    @if (string.IsNullOrEmpty(ConfidentialReport.Location))
+                                    {
+                                        <li><strong>Location</strong> - Please specify where the issue occurred</li>
+                                    }
+                                    @if (string.IsNullOrEmpty(ConfidentialReport.Description))
+                                    {
+                                        <li><strong>Description</strong> - Please provide details about the issue</li>
+                                    }
+                                </ul>
+                            </RadzenAlert>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mt-3">
+                            <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat">
+                                <h6><i class="fas fa-check-circle"></i> Report Ready for Submission</h6>
+                                <p class="mb-0">All required fields have been completed. Your confidential report is ready to be submitted to the SMS system.</p>
+                            </RadzenAlert>
+                        </div>
+                    }
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end gap-2">
+                        <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
+                                    Text="Continue Editing" 
+                                    Icon="edit"
+                                    Click="HidePreview"
+                                    Size="ButtonSize.Medium" />
+                        @if (IsFormValidForSubmission)
+                        {
+                            <RadzenButton ButtonStyle="ButtonStyle.Success" 
+                                        Text="Submit Report" 
+                                        Icon="send"
+                                        Click="ShowSubmissionConfirmationDialog"
+                                        Size="ButtonSize.Medium" />
+                        }
+                        else
+                        {
+                            <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
+                                        Text="Complete Required Fields" 
+                                        Icon="exclamation-triangle"
+                                        Disabled="true"
+                                        Size="ButtonSize.Medium" />
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+/* =============================================================================
+   SMS CONFIDENTIAL REPORTING - ENHANCED 9-3 LAYOUT STYLING
+   ============================================================================= */
+
+/* Modal Overlay and Dialog */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+    padding: 1rem;
+}
+
+.sms-modal-dialog {
+    position: relative;
+    margin: 0 auto;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+}
+
+.sms-modal-lg {
+    max-width: 900px;
+    width: 100%;
+}
+
+.sms-modal-xl {
+    max-width: 1200px;
+    width: 100%;
+}
+
+.sms-modal-content {
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+}
+
+.sms-modal-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.sms-header-success {
+    background-color: #0d8944; /* SMS Green Primary */
+    color: white;
+}
+
+.sms-header-warning {
+    background-color: #fa9a46; /* SMS Orange Accent */
+    color: #212e61; /* SMS Blue Dark Bold */
+}
+
+.sms-header-primary {
+    background-color: #212e61; /* SMS Blue Dark Bold */
+    color: white;
+}
+
+.sms-modal-title {
+    margin: 0;
+    font-weight: 600;
+}
+
+.sms-modal-body {
+    padding: 1.5rem;
+}
+
+.sms-modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e9ecef;
+    border-radius: 0 0 0.5rem 0.5rem;
+}
+
+/* Guidance Panel - Consistent with other SMS pages */
+.sms-guidance-panel {
+    background: linear-gradient(135deg, rgba(201, 227, 237, 0.05) 0%, rgba(205, 235, 241, 0.05) 100%);
+    border-color: #c9e3ed !important; /* SMS Blue Light */
+}
+
+.sms-guidance-panel .text-primary {
+    color: #212e61 !important; /* SMS Blue Dark Bold */
+}
+
+.sms-guidance-panel .text-success {
+    color: #0d8944 !important; /* SMS Green Primary */
+}
+
+.sms-guidance-panel .text-info {
+    color: #006AA9 !important; /* SMS Blue Primary */
+}
+
+/* Character count styling */
+.text-warning {
+    color: #fa9a46 !important; /* SMS Orange Accent */
+}
+
+.text-danger {
+    color: #d91e3e !important; /* SMS Red Primary */
+}
+
+/* Enhanced dropdown and input sizing for better layout */
+::deep .rz-textbox,
+::deep .rz-textarea,
+::deep .rz-fileinput {
+    width: 100% !important;
+    min-width: 100% !important;
+}
+
+/* Report Type dropdown - wider to prevent wrapping */
+::deep .rz-dropdown {
+    width: 100% !important;
+    min-width: 250px !important;
+}
+
+/* Special handling for wide dropdown content */
+::deep .rz-dropdown .rz-dropdown-label {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    width: calc(100% - 32px) !important;
+}
+
+::deep .rz-dropdown-panel {
+    min-width: 250px !important;
+    max-width: 400px !important;
+}
+
+/* Ensure FormField containers take full width */
+::deep .rz-formfield {
+    width: 100% !important;
+}
+
+/* Form helper text styling */
+.form-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+/* Checkbox and label alignment */
+::deep .rz-checkbox {
+    margin-right: 0.5rem;
+}
+
+/* Better spacing for stacked elements */
+::deep .rz-stack-horizontal {
+    align-items: flex-start;
+}
+
+/* Responsive adjustments for 9-3 layout */
+@@media (max-width: 992px) {
+    /* Stack columns on smaller screens */
+    .modal-overlay .container-fluid {
+        flex-direction: column;
+    }
+    
+    /* Adjust dropdown minimum widths for mobile */
+    ::deep .rz-dropdown {
+        min-width: 200px !important;
+    }
+}
+
+@@media (max-width: 768px) {
+    /* Further mobile adjustments */
+    ::deep .rz-dropdown {
+        min-width: 150px !important;
+    }
+    
+    /* Ensure form elements remain readable */
+    ::deep .rz-dropdown-panel {
+        min-width: 200px !important;
+        max-width: 90vw !important;
+    }
+}
+
+/* =============================================================================
+   END SMS CONFIDENTIAL REPORTING STYLING
+   ============================================================================= */
+</style>

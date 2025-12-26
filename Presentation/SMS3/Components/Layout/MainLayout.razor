@@ -3,6 +3,7 @@
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
 @inject AuthenticationService AuthService
+@inject NavigationManager Navigation
 
 <div class="d-flex flex-column min-vh-100 sms-main-layout">
     <!-- Cascading Authentication State to all child components -->
@@ -51,7 +52,9 @@
     public void HandleLogout()
     {
         AuthService.ClearAuthentication();
-        // StateHasChanged will be called automatically by the auth service callback
+        
+        // Navigate to login after clearing authentication
+        Navigation.NavigateTo("/Login", forceLoad: true);
     }
 
     public void Dispose()
@@ -64,11 +67,10 @@
 
 <style>
 /* =============================================================================
-   SMS MAIN LAYOUT - EXACT COLOR COMPLIANCE
+   SMS MAIN LAYOUT - SIMPLE AND CLEAN
    ============================================================================= */
 
 .sms-main-layout {
-    background-color: #f8f9fa;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -76,18 +78,19 @@
     position: sticky;
     top: 0;
     z-index: 1030;
-    box-shadow: 0 0.125rem 0.25rem rgba(33, 46, 97, 0.15);
+    background-color: #212e61 !important;
+    color: white !important; /* Only header should have white text */
 }
 
 .sms-main-content {
-    background: linear-gradient(135deg, rgba(201, 227, 237, 0.1) 0%, rgba(205, 235, 241, 0.1) 100%);
     min-height: calc(100vh - 70px);
+    /* Remove: color: white !important; - let content be natural black text */
 }
 
 /* Error UI Styling */
 .sms-error-ui {
-    background: var(--sms-red-primary);
-    color: white;
+    background: #212e61 !important;
+    color: white !important;
     padding: 1rem;
     position: fixed;
     bottom: 0;
@@ -95,7 +98,7 @@
     right: 0;
     z-index: 9999;
     display: none;
-    border-top: 2px solid var(--sms-red-dark-bold);
+    border-top: 2px solid white !important;
 }
 
 .sms-error-content {
@@ -106,21 +109,22 @@
 }
 
 .sms-error-reload {
-    color: white;
+    color: white !important;
     text-decoration: underline;
     margin-left: 1rem;
     font-weight: 600;
 }
 
 .sms-error-reload:hover {
-    color: var(--sms-blue-light);
+    color: white !important;
+    opacity: 0.8;
 }
 
 .sms-error-dismiss {
     margin-left: 1rem;
     background: none;
     border: none;
-    color: white;
+    color: white !important;
     font-size: 1.2rem;
     cursor: pointer;
     padding: 0 0.5rem;
@@ -139,6 +143,6 @@
 }
 
 /* =============================================================================
-   END SMS MAIN LAYOUT STYLING
+   END SMS MAIN LAYOUT
    ============================================================================= */
 </style>

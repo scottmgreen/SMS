@@ -35,20 +35,7 @@ else if (ShowFinalSuccessConfirmation)
                     </h5>
                 </div>
                 <div class="sms-modal-body">
-                    <!-- Success Message -->
-                    <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Class="mb-3">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-clipboard-check fa-2x me-3"></i>
-                            <div>
-                                <h6 class="mb-1">Report Successfully Submitted!</h6>
-                                <p class="mb-1"><strong>Your Hazard Report ID:</strong></p>
-                                <h5 class="text-success mb-0">
-                                    <i class="fas fa-id-badge"></i> @GeneratedHazardId
-                                </h5>
-                            </div>
-                        </div>
-                    </RadzenAlert>
-
+                    
                     <!-- Report Details -->
                     <RadzenCard Variant="Variant.Outlined" Class="mb-3">
                         <div class="p-3">
@@ -57,13 +44,13 @@ else if (ShowFinalSuccessConfirmation)
                             </h6>
                             <div class="row">
                                 <div class="col-sm-6">
-                                    <small><strong>Hazard ID:</strong> @GeneratedHazardId</small><br>
-                                    <small><strong>Report ID:</strong> @GeneratedReportId</small><br>
-                                    <small><strong>Status:</strong> <RadzenBadge Text="Submitted" BadgeStyle="BadgeStyle.Success" /></small>
+                                    <strong>Hazard ID:</strong> @GeneratedHazardId<br>
+                                    <strong>Report ID:</strong> @GeneratedReportId<br>
+                                    <strong>Status:</strong> <RadzenBadge Text="Submitted" BadgeStyle="BadgeStyle.Success" />
                                 </div>
                                 <div class="col-sm-6">
-                                    <small><strong>Submitted:</strong> @SubmissionDateTime?.ToString("MM/dd/yyyy HH:mm")</small><br>
-                                    <small><strong>Confidential:</strong> @(HazardReport.IsConfidential ? "Yes" : "No")</small>
+                                    <strong>Submitted:</strong> @SubmissionDateTime?.ToString("MM/dd/yyyy HH:mm")<br>
+                                    <strong>Confidential:</strong> @(HazardReport.IsConfidential ? "Yes" : "No")
                                 </div>
                             </div>
                         </div>
@@ -253,19 +240,29 @@ else
                                             Disabled="@(!IsFormValidForPreview)" />
                             </RadzenColumn>
                             <RadzenColumn>
-                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
-                                    <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
-                                                Icon="clear"
-                                                Text="Clear Form"
-                                                Size="ButtonSize.Medium"
-                                                Click="ClearForm" />
-                                    <RadzenButton ButtonStyle="ButtonStyle.Danger" 
-                                                Icon="send"
-                                                Text="@(IsEditMode ? "Update Report" : "Submit Report")"
-                                                Size="ButtonSize.Medium"
-                                                Click="ShowSubmissionConfirmationDialog"
-                                                Disabled="@(!IsFormValidForSubmission)" />
-                                </RadzenStack>
+                                @if (!ShowSubmissionConfirmation && !ShowFinalSuccessConfirmation)
+                                {
+                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                                        <RadzenButton ButtonStyle="ButtonStyle.Warning" 
+                                                    Icon="clear"
+                                                    Text="Clear Form"
+                                                    Size="ButtonSize.Medium"
+                                                    Click="ClearForm" />
+                                        <RadzenButton ButtonStyle="ButtonStyle.Success" 
+                                                    Icon="send"
+                                                    Text="@(IsEditMode ? "Update Report" : "Submit Report")"
+                                                    Size="ButtonSize.Medium"
+                                                    Click="ShowSubmissionConfirmationDialog"
+                                                    Disabled="@(!IsFormValidForSubmission)" />
+                                    </RadzenStack>
+                                }
+                                else
+                                {
+                                    <!-- Placeholder when buttons are hidden -->
+                                    <div class="text-muted text-end">
+                                        <small><em>Complete modal action to continue...</em></small>
+                                    </div>
+                                }
                             </RadzenColumn>
                         </RadzenRow>
                     </RadzenTemplateForm>
@@ -468,10 +465,10 @@ else
                     </h5>
                 </div>
                 <div class="sms-modal-body">
-                    <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
+                    @* <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
                         <h6 class="mb-1">@(IsEditMode ? "Are you sure you want to update this report?" : "Are you sure you want to submit this hazard report?")</h6>
                         <p class="mb-0 small">@(IsEditMode ? "The existing report will be updated with your changes." : "Once submitted, this report will enter the SMS workflow for processing.")</p>
-                    </RadzenAlert>
+                    </RadzenAlert> *@
 
                     <!-- Report Summary -->
                     <div class="mb-3">
@@ -486,17 +483,19 @@ else
                     </div>
                     
                     <div class="d-flex justify-content-center gap-3">
+                        <RadzenButton ButtonStyle="ButtonStyle.Warning"
+                                      Text="No, Continue Editing"
+                                      Icon="edit"
+                                      Click="CancelSubmission"
+                                      Size="ButtonSize.Medium"
+                                       />
+
                         <RadzenButton ButtonStyle="ButtonStyle.Success" 
                                     Text="@(IsEditMode ? "Yes, Update Report" : "Yes, Submit Report")" 
                                     Icon="check"
                                     Click="SubmitReportConfirmed"
                                     Size="ButtonSize.Medium" />
-                        <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
-                                    Text="No, Continue Editing" 
-                                    Icon="edit"
-                                    Click="CancelSubmission"
-                                    Size="ButtonSize.Medium"
-                                    Variant="Variant.Outlined" />
+                        
                     </div>
                 </div>
             </div>
@@ -813,6 +812,7 @@ else
 
 .sms-modal-body {
     padding: 1.5rem;
+    /* Color will now be natural black since we removed global white text */
 }
 
 .sms-modal-footer {

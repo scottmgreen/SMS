@@ -1,0 +1,572 @@
+@page "/SMSRiskManagement/HybridRiskAssessment"
+@page "/SMSRiskManagement/HybridRiskAssessment/{AssessmentId}"
+@page "/SMSRiskManagement/HybridRiskAssessment/{AssessmentId}/{HazardId}"
+@using SMS_Application.Messaging.Commands
+@using SMS_Application.Messaging.Queries
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using SMS_Domain.ValueObjects
+@using Radzen
+@using Radzen.Blazor
+@using SMS3.Components.Shared
+@using SMS3.Components.Pages.SMSRiskManagement.Components
+
+<PageTitle>Hybrid Risk Assessment - SMS3</PageTitle>
+
+<!-- SMS Page Header using reusable component -->
+<PageHeader Title="Hybrid Risk Assessment"
+           Subtitle="Streamlined assessment with optional advanced technical capabilities"
+           Icon="fas fa-layer-group" />
+
+@if (IsLoading)
+{
+    <RadzenCard>
+        <RadzenStack AlignItems="AlignItems.Center" Gap="1rem">
+            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <RadzenText TextStyle="TextStyle.H6" Text="Loading assessment..." />
+        </RadzenStack>
+    </RadzenCard>
+}
+else
+{
+    <RadzenRow Gap="1rem">
+        <!-- Main Assessment Tabs -->
+        <RadzenColumn Size="12" SizeLG="8">
+            <RadzenCard>
+                <RadzenStack Gap="1rem">
+                    <!-- Assessment Header -->
+                    <RadzenText TextStyle="TextStyle.H5" Style="color: var(--rz-success); margin: 0;">
+                        <RadzenIcon Icon="assignment" Style="margin-right: 0.5rem;" />
+                        @if (!string.IsNullOrWhiteSpace(HazardId) && Hazard != null)
+                        {
+                            <text>Hybrid Risk Assessment - Report @(Hazard.ReportCode) - Hazard @HazardId</text>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(HazardId))
+                        {
+                            <text>Hybrid Risk Assessment - Hazard @HazardId</text>
+                        }
+                        else
+                        {
+                            <text>Hybrid Risk Assessment</text>
+                        }
+                    </RadzenText>
+
+                    <!-- Assessment Mode Toggle -->
+                    <RadzenRow AlignItems="AlignItems.Center" Gap="1rem">
+                        <RadzenColumn Size="6">
+                            <RadzenFormField Text="Assessment Mode" Variant="Variant.Outlined">
+                                <RadzenDropDown @bind-Value="@AssessmentMode" Data="@AssessmentModeOptions" 
+                                                TextProperty="Text" ValueProperty="Value"
+                                                Change="@OnAssessmentModeChanged"
+                                                Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                        <RadzenColumn Size="6">
+                            <RadzenAlert AlertStyle="@GetModeAlertStyle()" Size="AlertSize.Small">
+                                <RadzenText TextStyle="TextStyle.Caption" Text="@GetModeDescription()" />
+                            </RadzenAlert>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <!-- Hazard Summary - Collapsible -->
+                    @if (Hazard != null)
+                    {
+                        <RadzenAccordion>
+                            <Items>
+                                <RadzenAccordionItem Text="Hazard Summary" Icon="warning" IconColor="@Colors.Warning">
+                                    <RadzenCard Variant="Variant.Text" Style="background-color: #f8f9fa; margin: 0;">
+                                        <RadzenStack Gap="0.5rem">
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Type:</strong> @Hazard.HazardType</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Location:</strong> @Hazard.Location</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Description:</strong> @Hazard.Description</RadzenText>
+                                            @if (!string.IsNullOrWhiteSpace(Hazard.ReportedBy))
+                                            {
+                                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Reported By:</strong> @Hazard.ReportedBy</RadzenText>
+                                            }
+                                            @if (Hazard.ReportedOn != default)
+                                            {
+                                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Reported On:</strong> @Hazard.ReportedOn.ToString("MM/dd/yyyy HH:mm")</RadzenText>
+                                            }
+                                        </RadzenStack>
+                                    </RadzenCard>
+                                </RadzenAccordionItem>
+                            </Items>
+                        </RadzenAccordion>
+                    }
+
+                    <!-- Main Assessment Tabs -->
+                    <RadzenTabs @bind-SelectedIndex="@ActiveTabIndex" TabPosition="TabPosition.Top">
+                        <Tabs>
+                            <!-- Tab 1: System & Hazard Description -->
+                            <RadzenTabsItem Text="System & Hazards">
+                                <RadzenStack Gap="1.5rem" Style="padding: 1rem;">
+                                    
+                                    <!-- Basic System Description -->
+                                    <RadzenFieldset Text="System Information">
+                                        <RadzenStack Gap="1rem">
+                                            <RadzenFormField Text="System Purpose" Variant="Variant.Outlined">
+                                                <RadzenTextArea @bind-Value="@Step1Data.SystemPurpose" Rows="2"
+                                                                Placeholder="Briefly describe what this system does..."
+                                                                Style="width: 100%;" />
+                                            </RadzenFormField>
+                                            <RadzenFormField Text="System Boundaries" Variant="Variant.Outlined">
+                                                <RadzenTextArea @bind-Value="@Step1Data.SystemBoundaries" Rows="2"
+                                                                Placeholder="Define what is included and excluded..."
+                                                                Style="width: 100%;" />
+                                            </RadzenFormField>
+                                        </RadzenStack>
+                                    </RadzenFieldset>
+
+                                    <!-- Advanced Technical Section (Collapsible) -->
+                                    @if (AssessmentMode == "Technical" || ShowAdvancedSections)
+                                    {
+                                        <RadzenCard Style="background-color: #f8f9fa; border: 1px solid #dee2e6;">
+                                            <RadzenStack Gap="1rem">
+                                                <RadzenRow AlignItems="AlignItems.Center" style="cursor: pointer;" @onclick="@(() => ToggleAdvancedSection(1))">
+                                                    <RadzenColumn Size="10">
+                                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; color: #6f42c1;">
+                                                            <RadzenIcon Icon="@(AdvancedSectionsExpanded[1] ? "expand_less" : "expand_more")" Style="margin-right: 0.5rem;" />
+                                                            Advanced: 5M Framework Analysis
+                                                        </RadzenText>
+                                                    </RadzenColumn>
+                                                    <RadzenColumn Size="2">
+                                                        <RadzenBadge Text="Optional" BadgeStyle="BadgeStyle.Info" />
+                                                    </RadzenColumn>
+                                                </RadzenRow>
+                                                
+                                                @if (AdvancedSectionsExpanded[1])
+                                                {
+                                                    <TechnicalAssessmentStep1 Step1="@Step1Data" Step1Changed="@UpdateStep1Data"
+                                                                              AvailableAssessors="@AvailableAssessors"
+                                                                              StakeholderGroups="@StakeholderGroups"
+                                                                              AvailableStakeholders="@AvailableStakeholders" />
+                                                }
+                                            </RadzenStack>
+                                        </RadzenCard>
+                                    }
+                                </RadzenStack>
+                            </RadzenTabsItem>
+
+                            <!-- Tab 2: Risk Analysis -->
+                            <RadzenTabsItem Text="Risk Analysis">
+                                <RadzenStack Gap="1.5rem" Style="padding: 1rem;">
+                                    
+                                    <!-- Basic Risk Assessment (Preliminary Style) -->
+                                    <RadzenFieldset Text="Immediate Risk Level Assessment">
+                                        <RadzenRow Gap="1rem">
+                                            <RadzenColumn Size="12" SizeMD="6">
+                                                <RadzenFormField Text="Likelihood of Occurrence *" Variant="Variant.Outlined">
+                                                    <RadzenDropDown @bind-Value="@PreliminaryModel.Likelihood" Data="@LikelihoodOptions" 
+                                                                    Placeholder="Select likelihood..." Style="width: 100%;" />
+                                                </RadzenFormField>
+                                                <RadzenText TextStyle="TextStyle.Caption" Text="Probability this hazard will occur" />
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="12" SizeMD="6">
+                                                <RadzenFormField Text="Severity of Consequences *" Variant="Variant.Outlined">
+                                                    <RadzenDropDown @bind-Value="@PreliminaryModel.Severity" Data="@SeverityOptions" 
+                                                                    Placeholder="Select severity..." Style="width: 100%;" />
+                                                </RadzenFormField>
+                                                <RadzenText TextStyle="TextStyle.Caption" Text="Impact if this hazard occurs" />
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                    </RadzenFieldset>
+
+                                    <!-- Advanced Risk Analysis (Collapsible) -->
+                                    @if (AssessmentMode == "Technical" || ShowAdvancedSections)
+                                    {
+                                        <RadzenCard Style="background-color: #f8f9fa; border: 1px solid #dee2e6;">
+                                            <RadzenStack Gap="1rem">
+                                                <RadzenRow AlignItems="AlignItems.Center" style="cursor: pointer;" @onclick="@(() => ToggleAdvancedSection(2))">
+                                                    <RadzenColumn Size="10">
+                                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; color: #6f42c1;">
+                                                            <RadzenIcon Icon="@(AdvancedSectionsExpanded[2] ? "expand_less" : "expand_more")" Style="margin-right: 0.5rem;" />
+                                                            Advanced: Detailed Risk Analysis
+                                                        </RadzenText>
+                                                    </RadzenColumn>
+                                                    <RadzenColumn Size="2">
+                                                        <RadzenBadge Text="Optional" BadgeStyle="BadgeStyle.Info" />
+                                                    </RadzenColumn>
+                                                </RadzenRow>
+                                                
+                                                @if (AdvancedSectionsExpanded[2])
+                                                {
+                                                    <TechnicalAssessmentStep3 Step1="@Step1Data" Step3="@Step3Data" 
+                                                                              Step3Changed="@UpdateStep3Data"
+                                                                              AvailableHazards="@AvailableHazards" />
+                                                }
+                                            </RadzenStack>
+                                        </RadzenCard>
+                                    }
+                                </RadzenStack>
+                            </RadzenTabsItem>
+
+                            <!-- Tab 3: Risk Assessment & Scoring -->
+                            <RadzenTabsItem Text="Risk Assessment">
+                                <RadzenStack Gap="1.5rem" Style="padding: 1rem;">
+                                    
+                                    <!-- Basic Control Assessment (Preliminary Style) -->
+                                    <RadzenFieldset Text="Current Risk Controls">
+                                        <RadzenStack Gap="1rem">
+                                            <RadzenFormField Text="Existing Safety Measures" Variant="Variant.Outlined">
+                                                <RadzenTextArea @bind-Value="@PreliminaryModel.ExistingControls" Rows="3"
+                                                                Placeholder="List current safety controls, procedures, or barriers in place..."
+                                                                Style="width: 100%;" />
+                                            </RadzenFormField>
+
+                                            <RadzenRow Gap="1rem">
+                                                <RadzenColumn Size="12" SizeMD="6">
+                                                    <RadzenFormField Text="Control Effectiveness" Variant="Variant.Outlined">
+                                                        <RadzenDropDown @bind-Value="@PreliminaryModel.ControlEffectiveness" Data="@EffectivenessOptions"
+                                                                        Placeholder="Select effectiveness..." Style="width: 100%;" />
+                                                    </RadzenFormField>
+                                                </RadzenColumn>
+                                                <RadzenColumn Size="12" SizeMD="6">
+                                                    <RadzenFormField Text="Overall Risk Level *" Variant="Variant.Outlined">
+                                                        <RadzenDropDown @bind-Value="@PreliminaryModel.ResidualRisk" Data="@ResidualRiskOptions"
+                                                                        Placeholder="Select risk level..." Style="width: 100%;" />
+                                                    </RadzenFormField>
+                                                </RadzenColumn>
+                                            </RadzenRow>
+                                        </RadzenStack>
+                                    </RadzenFieldset>
+
+                                    <!-- Advanced Scoring Panel (Collapsible) -->
+                                    @if (AssessmentMode == "Technical" || ShowAdvancedSections)
+                                    {
+                                        <RadzenCard Style="background-color: #f8f9fa; border: 1px solid #dee2e6;">
+                                            <RadzenStack Gap="1rem">
+                                                <RadzenRow AlignItems="AlignItems.Center" style="cursor: pointer;" @onclick="@(() => ToggleAdvancedSection(3))">
+                                                    <RadzenColumn Size="10">
+                                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; color: #6f42c1;">
+                                                            <RadzenIcon Icon="@(AdvancedSectionsExpanded[3] ? "expand_less" : "expand_more")" Style="margin-right: 0.5rem;" />
+                                                            Advanced: Stakeholder Scoring Panel
+                                                        </RadzenText>
+                                                    </RadzenColumn>
+                                                    <RadzenColumn Size="2">
+                                                        <RadzenBadge Text="Optional" BadgeStyle="BadgeStyle.Info" />
+                                                    </RadzenColumn>
+                                                </RadzenRow>
+                                                
+                                                @if (AdvancedSectionsExpanded[3])
+                                                {
+                                                    <TechnicalAssessmentStep4 Step4="@Step4Data" Step4Changed="@UpdateStep4Data"
+                                                                              AvailableHazards="@AvailableHazards"
+                                                                              AvailableStakeholders="@AvailableStakeholders"
+                                                                              AvailableAssessors="@AvailableAssessors"
+                                                                              InitialRiskAssessment="@InitialRiskAssessment"
+                                                                              ResidualRiskAssessment="@ResidualRiskAssessment"
+                                                                              RiskAssessmentId="@(InitialRiskAssessment?.Code ?? string.Empty)" />
+                                                }
+                                            </RadzenStack>
+                                        </RadzenCard>
+                                    }
+                                </RadzenStack>
+                            </RadzenTabsItem>
+
+                            <!-- Tab 4: Mitigation & Actions -->
+                            <RadzenTabsItem Text="Mitigation">
+                                <RadzenStack Gap="1.5rem" Style="padding: 1rem;">
+                                    
+                                    <!-- Basic Mitigation (Preliminary Style) -->
+                                    <RadzenFieldset Text="Recommended Risk Mitigation">
+                                        <RadzenStack Gap="1rem">
+                                            <RadzenFormField Text="Recommended Actions *" Variant="Variant.Outlined">
+                                                <RadzenTextArea @bind-Value="@PreliminaryModel.RecommendedActions" Rows="4"
+                                                                Placeholder="Describe specific actions to reduce or eliminate the risk..."
+                                                                Style="width: 100%;" />
+                                            </RadzenFormField>
+
+                                            <RadzenRow Gap="1rem">
+                                                <RadzenColumn Size="12" SizeMD="6">
+                                                    <RadzenFormField Text="Implementation Priority *" Variant="Variant.Outlined">
+                                                        <RadzenDropDown @bind-Value="@PreliminaryModel.Priority" Data="@PriorityOptions"
+                                                                        Placeholder="Select priority..." Style="width: 100%;" />
+                                                    </RadzenFormField>
+                                                </RadzenColumn>
+                                                <RadzenColumn Size="12" SizeMD="6">
+                                                    <RadzenFormField Text="Estimated Cost" Variant="Variant.Outlined">
+                                                        <RadzenDropDown @bind-Value="@PreliminaryModel.EstimatedCost" Data="@CostOptions"
+                                                                        Placeholder="Select cost range..." Style="width: 100%;" />
+                                                    </RadzenFormField>
+                                                </RadzenColumn>
+                                            </RadzenRow>
+                                        </RadzenStack>
+                                    </RadzenFieldset>
+
+                                    <!-- Advanced Mitigation Management (Collapsible) -->
+                                    @if (AssessmentMode == "Technical" || ShowAdvancedSections)
+                                    {
+                                        <RadzenCard Style="background-color: #f8f9fa; border: 1px solid #dee2e6;">
+                                            <RadzenStack Gap="1rem">
+                                                <RadzenRow AlignItems="AlignItems.Center" style="cursor: pointer;" @onclick="@(() => ToggleAdvancedSection(4))">
+                                                    <RadzenColumn Size="10">
+                                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; color: #6f42c1;">
+                                                            <RadzenIcon Icon="@(AdvancedSectionsExpanded[4] ? "expand_less" : "expand_more")" Style="margin-right: 0.5rem;" />
+                                                            Advanced: Detailed Mitigation Planning
+                                                        </RadzenText>
+                                                    </RadzenColumn>
+                                                    <RadzenColumn Size="2">
+                                                        <RadzenBadge Text="Optional" BadgeStyle="BadgeStyle.Info" />
+                                                    </RadzenColumn>
+                                                </RadzenRow>
+                                                
+                                                @if (AdvancedSectionsExpanded[4] && AvailableHazards?.Any() == true)
+                                                {
+                                                    @foreach (var hazard in AvailableHazards)
+                                                    {
+                                                        <HazardMitigationPanel Hazard="@hazard"
+                                                                              Step4="@Step4Data"
+                                                                              Step5="@Step5Data"
+                                                                              NeedsMitigation="true"
+                                                                              AvailableStakeholders="@AvailableStakeholders"
+                                                                              AvailableAssessors="@AvailableAssessors"
+                                                                              InitialRiskAssessment="@InitialRiskAssessment"
+                                                                              ResidualRiskAssessment="@ResidualRiskAssessment"
+                                                                              OnMitigationUpdated="@OnMitigationUpdated"
+                                                                              OnResidualHazardScored="@OnResidualHazardScored"
+                                                                              OnResidualAnalysisFieldChanged="@OnResidualAnalysisFieldChanged"
+                                                                              GetResidualWorstOutcome="@GetResidualWorstOutcome"
+                                                                              GetResidualRootCause="@GetResidualRootCause"
+                                                                              GetResidualAdditionalComments="@GetResidualAdditionalComments" />
+                                                    }
+                                                }
+                                            </RadzenStack>
+                                        </RadzenCard>
+                                    }
+                                </RadzenStack>
+                            </RadzenTabsItem>
+
+                            <!-- Tab 5: Assessment Summary -->
+                            <RadzenTabsItem Text="Summary">
+                                <RadzenStack Gap="1.5rem" Style="padding: 1rem;">
+                                    
+                                    <!-- Assessment Summary -->
+                                    <RadzenFieldset Text="Assessment Summary">
+                                        <RadzenStack Gap="1rem">
+                                            <RadzenFormField Text="Assessor Comments" Variant="Variant.Outlined">
+                                                <RadzenTextArea @bind-Value="@PreliminaryModel.AssessorComments" Rows="3"
+                                                                Placeholder="Additional observations, concerns, or recommendations..."
+                                                                Style="width: 100%;" />
+                                            </RadzenFormField>
+
+                                            <RadzenRow Gap="1rem">
+                                                <RadzenColumn Size="12" SizeMD="6">
+                                                    <RadzenFormField Text="Assessment Confidence" Variant="Variant.Outlined">
+                                                        <RadzenDropDown @bind-Value="@PreliminaryModel.AssessmentConfidence" Data="@ConfidenceOptions"
+                                                                        Placeholder="Select confidence level..." Style="width: 100%;" />
+                                                    </RadzenFormField>
+                                                </RadzenColumn>
+                                                <RadzenColumn Size="12" SizeMD="6">
+                                                    <RadzenFormField Text="Follow-up Required" Variant="Variant.Outlined">
+                                                        <RadzenDropDown @bind-Value="@PreliminaryModel.RequiresFollowUp" Data="@FollowUpOptions"
+                                                                        Placeholder="Select follow-up..." Style="width: 100%;" />
+                                                    </RadzenFormField>
+                                                </RadzenColumn>
+                                            </RadzenRow>
+                                        </RadzenStack>
+                                    </RadzenFieldset>
+
+                                    <!-- Advanced Residual Risk Assessment (Collapsible) -->
+                                    @if (AssessmentMode == "Technical" || ShowAdvancedSections)
+                                    {
+                                        <RadzenCard Style="background-color: #f8f9fa; border: 1px solid #dee2e6;">
+                                            <RadzenStack Gap="1rem">
+                                                <RadzenRow AlignItems="AlignItems.Center" style="cursor: pointer;" @onclick="@(() => ToggleAdvancedSection(5))">
+                                                    <RadzenColumn Size="10">
+                                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; color: #6f42c1;">
+                                                            <RadzenIcon Icon="@(AdvancedSectionsExpanded[5] ? "expand_less" : "expand_more")" Style="margin-right: 0.5rem;" />
+                                                            Advanced: Residual Risk Assessment
+                                                        </RadzenText>
+                                                    </RadzenColumn>
+                                                    <RadzenColumn Size="2">
+                                                        <RadzenBadge Text="Optional" BadgeStyle="BadgeStyle.Info" />
+                                                    </RadzenColumn>
+                                                </RadzenRow>
+                                                
+                                                @if (AdvancedSectionsExpanded[5] && AvailableHazards?.Any() == true)
+                                                {
+                                                    @foreach (var hazard in AvailableHazards)
+                                                    {
+                                                        <HazardScoringPanel Hazard="@hazard"
+                                                                           Step4="@Step4Data"
+                                                                           Step5="@Step5Data"
+                                                                           AvailableStakeholders="@AvailableStakeholders"
+                                                                           AvailableAssessors="@AvailableAssessors"
+                                                                           CurrentRiskAssessment="@ResidualRiskAssessment"
+                                                                           InitialRiskAssessment="@InitialRiskAssessment"
+                                                                           ResidualRiskAssessment="@ResidualRiskAssessment"
+                                                                           OnHazardScored="@OnResidualHazardScored" />
+                                                    }
+                                                }
+                                            </RadzenStack>
+                                        </RadzenCard>
+                                    }
+
+                                    <!-- Final Assessment Display -->
+                                    @if (!string.IsNullOrEmpty(GetOverallRiskAssessment()))
+                                    {
+                                        <RadzenCard Style="background-color: #e8f5e8; border: 1px solid #a5d6a7;">
+                                            <RadzenStack Gap="1rem">
+                                                <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: #2e7d32;">
+                                                    <RadzenIcon Icon="assessment" Style="margin-right: 0.5rem;" />
+                                                    Overall Risk Assessment: @GetOverallRiskAssessment()
+                                                </RadzenText>
+                                                <RadzenText TextStyle="TextStyle.Body2" Text="@GetRecommendedNextAction()" />
+                                            </RadzenStack>
+                                        </RadzenCard>
+                                    }
+                                </RadzenStack>
+                            </RadzenTabsItem>
+                        </Tabs>
+                    </RadzenTabs>
+
+                    <!-- Action Buttons -->
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Style="border-top: 1px solid #ddd; padding-top: 1rem;">
+                        <RadzenButton Text="Back to Processing Queue" Icon="arrow_back" ButtonStyle="ButtonStyle.Light"
+                                      Click="@(() => Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing"))" />
+                        
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                            <RadzenButton Text="Save as Draft" Icon="save" ButtonStyle="ButtonStyle.Secondary"
+                                          Click="@SaveDraft" Disabled="@IsSaving" />
+                            <RadzenButton Text="Complete Assessment" Icon="check_circle" ButtonStyle="ButtonStyle.Success"
+                                          Size="ButtonSize.Large" Click="@CompleteAssessment" Disabled="@IsSaving" />
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <!-- Help Panel (same as PreliminaryRiskAssessment) -->
+        <RadzenColumn Size="12" SizeLG="4">
+            <RadzenStack Gap="1rem">
+                <!-- Mode Guide -->
+                <RadzenCard>
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-primary); margin: 0;">
+                            <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
+                            Assessment Modes
+                        </RadzenText>
+                        
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Subtitle2" Text="Preliminary (Streamlined)" Style="margin: 0;" />
+                            <RadzenText TextStyle="TextStyle.Caption" Text="Quick assessment with essential fields only. Best for straightforward hazards." />
+                        </div>
+                        
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Subtitle2" Text="Technical (Comprehensive)" Style="margin: 0;" />
+                            <RadzenText TextStyle="TextStyle.Caption" Text="Full 5-step SMS methodology with stakeholder panels, detailed analysis, and mitigation planning." />
+                        </div>
+
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Subtitle2" Text="Hybrid (Flexible)" Style="margin: 0;" />
+                            <RadzenText TextStyle="TextStyle.Caption" Text="Start simple, expand advanced sections as needed. Perfect for uncertain complexity." />
+                        </div>
+                    </RadzenStack>
+                </RadzenCard>
+
+                <!-- Risk Matrix (same as original) -->
+                <RadzenCard>
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-success); margin: 0;">
+                            <RadzenIcon Icon="help" Style="margin-right: 0.5rem;" />
+                            Assessment Guidelines
+                        </RadzenText>
+
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="Risk Matrix" Style="margin: 0;" />
+                        <div style="overflow-x: auto;">
+                            <table class="table table-bordered table-sm text-center">
+                                <thead>
+                                    <tr>
+                                        <th style="font-size: 0.75rem;"></th>
+                                        <th style="font-size: 0.75rem;">Negligible</th>
+                                        <th style="font-size: 0.75rem;">Minor</th>
+                                        <th style="font-size: 0.75rem;">Moderate</th>
+                                        <th style="font-size: 0.75rem;">Major</th>
+                                        <th style="font-size: 0.75rem;">Catastrophic</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th style="font-size: 0.75rem;">Very High</th>
+                                        <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                        <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                        <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">High</td>
+                                        <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">High</td>
+                                        <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">Critical</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="font-size: 0.75rem;">High</th>
+                                        <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                        <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                        <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                        <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">High</td>
+                                        <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">High</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="font-size: 0.75rem;">Medium</th>
+                                        <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                        <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                        <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                        <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                        <td style="background-color: #dc3545; color: white; font-size: 0.75rem;">High</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="font-size: 0.75rem;">Low</th>
+                                        <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                        <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                        <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                        <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                        <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="font-size: 0.75rem;">Very Low</th>
+                                        <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                        <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                        <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                        <td style="background-color: #28a745; color: white; font-size: 0.75rem;">Low</td>
+                                        <td style="background-color: #ffc107; font-size: 0.75rem;">Medium</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="Control Hierarchy" Style="margin: 0;" />
+                        <ol style="font-size: 0.875rem;">
+                            <li><strong>Elimination:</strong> Remove the hazard</li>
+                            <li><strong>Substitution:</strong> Replace with safer alternative</li>
+                            <li><strong>Engineering:</strong> Physical safeguards</li>
+                            <li><strong>Administrative:</strong> Procedures and training</li>
+                            <li><strong>PPE:</strong> Personal protective equipment</li>
+                        </ol>
+
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="ALARP Principle" Style="margin: 0;" />
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            Risks should be reduced to <strong>As Low As Reasonably Practicable</strong> (ALARP), considering cost-benefit and available technology.
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+
+                <!-- Assessment Progress -->
+                <RadzenCard>
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-primary); margin: 0;">
+                            <RadzenIcon Icon="analytics" Style="margin-right: 0.5rem;" />
+                            Assessment Progress
+                        </RadzenText>
+
+                        <RadzenStack Gap="0.5rem">
+                            <div>
+                                <RadzenText TextStyle="TextStyle.Caption" Text="@($"Tab {ActiveTabIndex + 1}: {GetTabName(ActiveTabIndex)}")" Style="margin: 0;" />
+                                <RadzenProgressBar Value="@GetTabProgress(ActiveTabIndex)" Style="width: 100%;" />
+                            </div>
+                            <div>
+                                <RadzenText TextStyle="TextStyle.Caption" Text="Overall Assessment" Style="margin: 0;" />
+                                <RadzenProgressBar Value="@GetOverallProgress()" Style="width: 100%;" />
+                            </div>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+}

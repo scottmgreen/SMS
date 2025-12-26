@@ -65,7 +65,11 @@
                     <HazardScoringPanel @key="@($"panel-{hazard.Code}")" 
                                         Hazard="@hazard" 
                                         AvailableStakeholders="@AvailableStakeholders"
-                                        RiskAssessmentId="@RiskAssessmentId"
+                                        AvailableAssessors="@AvailableAssessors"
+                                        CurrentRiskAssessment="@InitialRiskAssessment"
+                                        InitialRiskAssessment="@InitialRiskAssessment"
+                                        ResidualRiskAssessment="@ResidualRiskAssessment"
+                                        RiskAssessmentId="@(InitialRiskAssessment?.Code ?? RiskAssessmentId)"
                                         OnHazardScored="@(() => HandleHazardScored(hazard.Code))" />
                 }
 
@@ -262,7 +266,9 @@
     [Parameter] public List<Hazard> AvailableHazards { get; set; } = new();
     [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
     [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
-    [Parameter] public string RiskAssessmentId { get; set; } = string.Empty; // NEW: Pass assessment ID from parent
+    [Parameter] public RiskAssessment? InitialRiskAssessment { get; set; } // 🚀 NEW: For Step 4 scoring
+    [Parameter] public RiskAssessment? ResidualRiskAssessment { get; set; } // 🚀 NEW: For creating Step 5 panels  
+    [Parameter] public string RiskAssessmentId { get; set; } = string.Empty; // Pass assessment ID from parent
 
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<TechnicalAssessmentStep4> Logger { get; set; } = default!;

@@ -9,33 +9,71 @@
     <!-- Bootstrap CSS from CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
+    <!-- Font Awesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
     <link rel="stylesheet" href="app.css" />
     <link rel="stylesheet" href="SMS3.styles.css" />
+    <link rel="stylesheet" href="css/sms-colors.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
-    
-    <!-- OpenLayers CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@7.4.0/ol.css" />
     
     <RadzenTheme Theme="material" />
     <HeadOutlet />
 </head>
 
 <body>
-    <Routes @rendermode="InteractiveServer" />
+    <!-- Blazor error UI -->
+    <div id="blazor-error-ui" style="display: none;">
+        <div class="alert alert-danger">
+            An unhandled error has occurred.
+            <button class="btn btn-sm btn-outline-secondary" onclick="location.reload()">Reload</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('blazor-error-ui').style.display='none'">✕</button>
+        </div>
+    </div>
+
+    <!-- Main app container -->
+    <div id="app">
+        <Routes @rendermode="InteractiveServer" />
+    </div>
     
-    <!-- Scripts -->
+    <!-- Scripts loaded in proper order for Blazor Server -->
+    <script src="_framework/blazor.web.js" autostart="false"></script>
+    
     <!-- Bootstrap JS from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- Radzen Blazor Components -->
     <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
     
-    <!-- OpenLayers JavaScript Library -->
-    <script src="https://cdn.jsdelivr.net/npm/ol@7.4.0/dist/ol.js"></script>
+    <!-- Custom Blazor startup to prevent component registration conflicts -->
+    <script>
+        window.addEventListener('DOMContentLoaded', function () {
+            // Start Blazor manually to avoid auto-start conflicts
+            Blazor.start().then(function () {
+                console.log('SMS3 Blazor Server started successfully');
+            }).catch(function (error) {
+                console.error('SMS3 Blazor Server startup failed:', error);
+                // Show error UI
+                document.getElementById('blazor-error-ui').style.display = 'block';
+            });
+        });
+    </script>
     
-    <!-- Our OpenLayers Integration Script -->
-    <script src="js/openlayers-integration.js"></script>
-    
-    <script src="_framework/blazor.web.js"></script>
+    <style>
+        #blazor-error-ui {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 9999;
+            padding: 1rem;
+        }
+        
+        #blazor-error-ui .alert {
+            margin: 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </body>
 
 </html>

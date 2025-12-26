@@ -692,7 +692,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
         ShowSubmissionConfirmation = true;
         ShowPreview = false;
-        StateHasChanged();
+        StateHasChanged(); // Force UI update to hide buttons
     }
 
     /// <summary>
@@ -701,7 +701,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     public void CancelSubmission()
     {
         ShowSubmissionConfirmation = false;
-        StateHasChanged();
+        StateHasChanged(); // Force UI update to show buttons again
         
         NotificationService.Notify(new NotificationMessage
         {
@@ -740,7 +740,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         SelectedLongitude = 0;
         LocationDescription = string.Empty;
         
-        // Reset all UI state flags
+        // Reset all UI state flags - this will show buttons again
         ShowPreview = false;
         ShowConfidentialInfo = false;
         ShowMapModal = false;
@@ -748,7 +748,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         ShowFinalSuccessConfirmation = false;
         
         InitializeFormDefaults();
-        StateHasChanged();
+        StateHasChanged(); // Force UI update to show buttons again
         
         NotificationService.Notify(new NotificationMessage
         {

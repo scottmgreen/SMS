@@ -71,7 +71,7 @@
                         <RadzenColumn Size="12" SizeMD="6">
                             <RadzenFormField Text="Implementation Strategy" Variant="Variant.Outlined">
                                 <RadzenDropDown @bind-Value="@Step5.ImplementationStrategy" Data="@ImplementationStrategies"
-                                                Placeholder="Select strategy..." Style="width: 100%;" />
+                                                Placeholder="Select strategy..." Style="width: 100%" />
                             </RadzenFormField>
                         </RadzenColumn>
                         <RadzenColumn Size="12" SizeMD="6">
@@ -149,7 +149,47 @@
                                     </RadzenStack>
                                 </RadzenColumn>
                             </RadzenRow>
+                            <!-- Monitoring for Acceptable Risks -->
+                            @if (!needsMitigation)
+                            {
+                                <RadzenCard Variant="Variant.Text" Style="background-color: #e8f5e8; border: 1px solid #a5d6a7;">
+                                    <RadzenStack Gap="1rem">
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; color: #2e7d32;">
+                                            <RadzenIcon Icon="visibility" Style="margin-right: 0.5rem;" />
+                                            Monitoring & Review Requirements
+                                        </RadzenText>
 
+                                        <RadzenRow Gap="1rem">
+                                            <RadzenColumn Size="12" SizeMD="4">
+                                                <RadzenFormField Text="Monitoring Frequency" Variant="Variant.Outlined">
+                                                    <RadzenDropDown Value="@GetMonitoringFrequency(hazard)"
+                                                                    Data="@MonitoringFrequencyOptions"
+                                                                    Placeholder="Select frequency..."
+                                                                    Style="width: 100%;"
+                                                                    ValueChanged="@((string value) => SetMonitoringFrequency(hazard, value))" />
+                                                </RadzenFormField>
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="12" SizeMD="4">
+                                                <RadzenFormField Text="Responsible Department" Variant="Variant.Outlined">
+                                                    <RadzenDropDown Value="@GetMonitoringDepartment(hazard)"
+                                                                    Data="@Departments"
+                                                                    Placeholder="Select department..."
+                                                                    Style="width: 100%;"
+                                                                    ValueChanged="@((string value) => SetMonitoringDepartment(hazard, value))" />
+                                                </RadzenFormField>
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="12" SizeMD="4">
+                                                <RadzenFormField Text="Review Trigger" Variant="Variant.Outlined">
+                                                    <RadzenTextBox Value="@GetReviewTrigger(hazard)"
+                                                                   Placeholder="What triggers a review?"
+                                                                   Style="width: 100%;"
+                                                                   ValueChanged="@((string value) => SetReviewTrigger(hazard, value))" />
+                                                </RadzenFormField>
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                    </RadzenStack>
+                                </RadzenCard>
+                            }
                             <!-- ✅ SECTION 1: Mitigation Strategies (Collapsible) -->
                             @if (needsMitigation)
                             {
@@ -241,7 +281,9 @@
                                                                    Step5="@Step5"
                                                                    AvailableStakeholders="@AvailableStakeholders"
                                                                    AvailableAssessors="@AvailableAssessors"
-                                                                   RiskAssessment="@ResidualRiskAssessment"
+                                                                   CurrentRiskAssessment="@ResidualRiskAssessment"
+                                                                   InitialRiskAssessment="@InitialRiskAssessment"
+                                                                   ResidualRiskAssessment="@ResidualRiskAssessment"
                                                                    OnHazardScored="@HandleResidualHazardScored" />
                                             </div>
                                         }
@@ -327,47 +369,7 @@
                                 </RadzenCard>
                             }
 
-                            <!-- Monitoring for Acceptable Risks -->
-                            @if (!needsMitigation)
-                            {
-                                <RadzenCard Variant="Variant.Text" Style="background-color: #e8f5e8; border: 1px solid #a5d6a7;">
-                                    <RadzenStack Gap="1rem">
-                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; color: #2e7d32;">
-                                            <RadzenIcon Icon="visibility" Style="margin-right: 0.5rem;" />
-                                            Monitoring & Review Requirements
-                                        </RadzenText>
-                                        
-                                        <RadzenRow Gap="1rem">
-                                            <RadzenColumn Size="12" SizeMD="4">
-                                                <RadzenFormField Text="Monitoring Frequency" Variant="Variant.Outlined">
-                                                    <RadzenDropDown Value="@GetMonitoringFrequency(hazard)" 
-                                                                    Data="@MonitoringFrequencyOptions"
-                                                                    Placeholder="Select frequency..." 
-                                                                    Style="width: 100%;" 
-                                                                    ValueChanged="@((string value) => SetMonitoringFrequency(hazard, value))" />
-                                                </RadzenFormField>
-                                            </RadzenColumn>
-                                            <RadzenColumn Size="12" SizeMD="4">
-                                                <RadzenFormField Text="Responsible Department" Variant="Variant.Outlined">
-                                                    <RadzenDropDown Value="@GetMonitoringDepartment(hazard)" 
-                                                                    Data="@Departments"
-                                                                    Placeholder="Select department..." 
-                                                                    Style="width: 100%;" 
-                                                                    ValueChanged="@((string value) => SetMonitoringDepartment(hazard, value))" />
-                                                </RadzenFormField>
-                                            </RadzenColumn>
-                                            <RadzenColumn Size="12" SizeMD="4">
-                                                <RadzenFormField Text="Review Trigger" Variant="Variant.Outlined">
-                                                    <RadzenTextBox Value="@GetReviewTrigger(hazard)" 
-                                                                   Placeholder="What triggers a review?" 
-                                                                   Style="width: 100%;" 
-                                                                   ValueChanged="@((string value) => SetReviewTrigger(hazard, value))" />
-                                                </RadzenFormField>
-                                            </RadzenColumn>
-                                        </RadzenRow>
-                                    </RadzenStack>
-                                </RadzenCard>
-                            }
+                            
                         </RadzenStack>
                     </RadzenCard>
                 }

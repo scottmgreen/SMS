@@ -133,7 +133,7 @@
                     <!-- Analytics -->
                     <div class="nav-item me-3">
                         <a class="nav-link sms-nav-link" href="/Reports">
-                            <i class="fas fa-chart-bar me-1 sms-icon-teal"></i> Analytics
+                            <i class="fas fa-chart-bar me-1"></i> Analytics
                         </a>
                     </div>
                 </div>
@@ -150,22 +150,28 @@
                                     }
                                     else
                                     {
-                                        <RadzenIcon Icon="account_circle" class="me-2 sms-icon-accent" Style="font-size: 32px;" />
+                                        <RadzenIcon Icon="account_circle" class="me-2" Style="font-size: 32px; color: white;" />
                                     }
                                     <div class="d-flex flex-column align-items-start">
-                                        <small class="mb-0 sms-user-name fw-bold">@AuthState.DisplayName</small>
-                                        <small class="sms-user-type text-muted">@AuthState.UserType User</small>
+                                        <small class="mb-0 fw-bold" style="color: white;">@AuthState.DisplayName</small>
+                                        <small style="color: white; opacity: 0.7;">@AuthState.UserType User</small>
                                     </div>
                                 </div>
                             </Template>
                             <ChildContent>
-                                <RadzenProfileMenuItem Text="Profile" Path="/Profile" Icon="person" Click="@OnProfileItemClick" />
-                                <RadzenProfileMenuItem Text="My Dashboard" Path="/dashboard" Icon="dashboard" Click="@OnProfileItemClick" />
-                                <RadzenProfileMenuItem Text="Settings" Path="/Settings" Icon="settings" Click="@OnProfileItemClick" />
-                                <RadzenProfileMenuItem Text="Help" Path="/Help" Icon="help" Click="@OnProfileItemClick" />
-                                <RadzenProfileMenuItem Text="About" Path="/About" Icon="info" Click="@OnProfileItemClick" />
+                                <RadzenProfileMenuItem Text="Profile" Path="/Profile" Icon="person" />
+                                <RadzenProfileMenuItem Text="My Dashboard" Path="/dashboard" Icon="dashboard" />
+                                <RadzenProfileMenuItem Text="Settings" Path="/Settings" Icon="settings" />
+                                <RadzenProfileMenuItem Text="Help" Path="/Help" Icon="help" />
+                                <RadzenProfileMenuItem Text="About" Path="/About" Icon="info" />
                                 <div class="rz-separator"></div>
-                                <RadzenProfileMenuItem Text="Logout" Icon="logout" Click="@OnLogoutClick" />
+                                <!-- Custom Logout using Radzen structure -->
+                                <div class="rz-menuitem">
+                                    <a class="logout-menuitem-link " href="javascript:void(0)" @onclick="OnLogoutClick" @onclick:preventDefault="true">
+                                        <i class="fas fa-sign-out-alt me-2"></i>
+                                        Logout
+                                    </a>
+                                </div>
                             </ChildContent>
                         </RadzenProfileMenu>
                     </div>
@@ -177,7 +183,7 @@
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
                         <a class="nav-link sms-nav-link" href="/Login">
-                            <i class="fas fa-sign-in-alt me-1 sms-icon-accent"></i> Login
+                            <i class="fas fa-sign-in-alt me-1"></i> Login
                         </a>
                     </li>
                 </ul>
@@ -210,66 +216,17 @@
         }
     }
 
-    private async Task OnProfileItemClick(MenuItemEventArgs args)
-    {
-        if (args.Value?.ToString() == "logout")
-        {
-            await Logout();
-        }
-        else if (!string.IsNullOrEmpty(args.Text))
-        {
-            // Handle navigation for profile menu items
-            string path = "";
-            switch (args.Text.ToLower())
-            {
-                case "profile":
-                    path = "/Profile";
-                    break;
-                case "my dashboard":
-                    path = "/dashboard";
-                    break;
-                case "settings":
-                    path = "/Settings";
-                    break;
-                case "help":
-                    path = "/Help";
-                    break;
-                case "about":
-                    path = "/About";
-                    break;
-            }
-            
-            if (!string.IsNullOrEmpty(path))
-            {
-                Navigation.NavigateTo(path);
-            }
-        }
-    }
-
-    private void OnProfileMenuClick(MenuItemEventArgs args)
-    {
-        if (!string.IsNullOrEmpty(args.Value?.ToString()))
-        {
-            var path = args.Value.ToString();
-            if (path.StartsWith("/"))
-            {
-                Navigation.NavigateTo(path);
-            }
-        }
-    }
-
-    private async Task OnLogoutClick(MenuItemEventArgs args)
+    private async Task OnLogoutClick()
     {
         await Logout();
     }
 
     private async Task Logout()
     {
-        // Trigger logout callback to parent layout
+        // Trigger logout callback to parent layout - let it handle navigation
         await OnLogoutRequested.InvokeAsync();
         
-        // Navigate to login
-        Navigation.NavigateTo("/login");
+        // Don't navigate here - let HandleLogout in MainLayout handle it
     }
 }
 
