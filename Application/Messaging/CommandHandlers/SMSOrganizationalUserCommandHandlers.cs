@@ -156,7 +156,10 @@ public class UpdateSMSOrganizationalUserPasswordCommandHandler : BaseCommandBund
 
             // Update user password
             user.UpdatePassword(passwordResult.Value);
+            user.UpdatedBy = "SYSTEM"; // TODO: Get current user
+            user.UpdatedDate = DateTime.UtcNow;
 
+            // Update the entire user record (which includes the new password)
             var updateResult = await _dataService.UpdateSMSOrganizationalUserAsync(user, cancellationToken);
 
             if (updateResult.IsSuccess)

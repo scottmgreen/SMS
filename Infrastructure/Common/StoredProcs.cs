@@ -243,6 +243,8 @@
         private static readonly Lazy<string> _pr_SMSApplicationUserGroup_ClearUserGroups = new(() => "pr_SMSApplicationUserGroup_ClearUserGroups");
         public static string pr_SMSApplicationUserGroup_ClearUserGroups => _pr_SMSApplicationUserGroup_ClearUserGroups.Value;
 
+        private static readonly Lazy<string> _pr_SMSApplicationGroups_GetByUserCode = new(() => "pr_SMSApplicationUserGroup_GetGroupsByUserCode");
+        public static string pr_SMSApplicationGroups_GetByUserCode => _pr_SMSApplicationGroups_GetByUserCode.Value;
         #endregion
 
 
@@ -795,6 +797,9 @@
 
         private static readonly Lazy<string> _pr_SMSOrganizationalGroup_GetByCode = new(() => "pr_SMSOrganizationalGroup_GetByCode");
         public static string pr_SMSOrganizationalGroup_GetByCode => _pr_SMSOrganizationalGroup_GetByCode.Value;
+
+        private static readonly Lazy<string> _pr_SMSOrganizationalGroups_GetByUserCode = new(() => "pr_SMSOrganizationalGroup_GetByUserCode");
+        public static string pr_SMSOrganizationalGroups_GetByUserCode => _pr_SMSOrganizationalGroups_GetByUserCode.Value;
 
         /// <summary>
         /// Stored procedures for SMS Organizational User-Group membership operations

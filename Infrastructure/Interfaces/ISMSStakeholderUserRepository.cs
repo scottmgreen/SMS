@@ -4,7 +4,7 @@ namespace SMS_Infrastructure.Persistence;
 public interface ISMSStakeholderUserRepository
 {
     Task<Result<SMSStakeholderUser>> AddAsync(SMSStakeholderUser user);
-    Task<Result<bool>> DeleteAsync(BaseUserID userId);
+    Task<Result<bool>> DeleteAsync(SMSStakeholderUserID userId);
     Task<Result<bool>> DeleteAsync(string userId);
     Task<Result<IEnumerable<SMSStakeholderUser>>> GetActiveUsersAsync();
     Task<Result<IEnumerable<SMSStakeholderUser>>> GetAirlineStakeholdersAsync();
@@ -21,10 +21,9 @@ public interface ISMSStakeholderUserRepository
     Task<Result<IEnumerable<SMSStakeholderUser>>> GetUsersByGroupCodeAsync(string groupCode);
     Task<Result<UserStatistics>> GetUserStatisticsAsync();
     Task<Result<IEnumerable<SMSStakeholderUser>>> GetUsersWithMinimumAccessAsync(string minimumAccessLevel);
-    Task<Result<bool>> RecordLoginAsync(BaseUserID userId, DateTime loginDate);
-    Task<Result<bool>> RecordLoginAsync(string userId, DateTime loginDate);
+    Task<Result<bool>> RecordLoginAsync(SMSStakeholderUserID userId, DateTime loginDate);
     Task<Result<bool>> UpdateAsync(SMSStakeholderUser user);
-    Task<Result<bool>> UpdatePasswordAsync(BaseUserID userId, string hashedPassword);
-    Task<Result<bool>> UpdatePasswordAsync(string userId, string hashedPassword);
+    //Task<Result<bool>> UpdatePasswordAsync(SMSStakeholderUserID userId, string hashedPassword);*/
+    Task<Result<bool>> UpdatePasswordAsync(SMSStakeholderUserID userId, string hashedPassword);
     Task<Result<bool>> UserNameExistsAsync(string userName);
 }

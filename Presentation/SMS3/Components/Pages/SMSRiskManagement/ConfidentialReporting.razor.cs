@@ -122,6 +122,87 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
 
     #endregion
 
+    #region Map/Location Properties
+
+    /// <summary>
+    /// Show map modal for location selection
+    /// </summary>
+    public bool ShowMapModal { get; set; }
+
+    /// <summary>
+    /// Selected latitude from map
+    /// </summary>
+    public decimal SelectedLatitude { get; set; }
+
+    /// <summary>
+    /// Selected longitude from map  
+    /// </summary>
+    public decimal SelectedLongitude { get; set; }
+
+    /// <summary>
+    /// Location description for map selection
+    /// </summary>
+    public string LocationDescription { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Geographic location data
+    /// </summary>
+    public GeoLocationData SelectedGeoLocation { get; set; } = new();
+
+    /// <summary>
+    /// Check if we have valid coordinates
+    /// </summary>
+    public bool HasValidCoordinates => SelectedLatitude != 0 && SelectedLongitude != 0;
+
+    /// <summary>
+    /// Check if we have geographic location data
+    /// </summary>
+    public bool HasGeoLocation => SelectedGeoLocation?.IsValid == true;
+
+    /// <summary>
+    /// Display text for geographic location
+    /// </summary>
+    public string GeoLocationDisplay => HasGeoLocation ? 
+        $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}" : 
+        "No coordinates selected";
+
+    /// <summary>
+    /// Display text for location field
+    /// </summary>
+    public string LocationDisplayText
+    {
+        get
+        {
+            if (HasGeoLocation)
+            {
+                var locationText = GeoLocationDisplay;
+                if (!string.IsNullOrEmpty(SelectedGeoLocation.Description))
+                {
+                    locationText += $" - {SelectedGeoLocation.Description}";
+                }
+                return locationText;
+            }
+
+            if (!string.IsNullOrEmpty(ConfidentialReport.Location) && ConfidentialReport.Location != "MAP_LOCATION")
+            {
+                return ConfidentialReport.Location;
+            }
+
+            return "No location selected - click 'Select on Map'";
+        }
+    }
+
+    // CRITICAL MISSING PROPERTIES FOR MAP FUNCTIONALITY:
+    // Airport coordinates
+    private double AirportCenterLatitude => 45.5898;
+    private double AirportCenterLongitude => -122.5951;
+    private int DefaultZoomLevel => 15;
+
+    private IJSObjectReference? _mapModule;
+    private DotNetObjectReference<ConfidentialReporting>? _dotNetRef;
+
+    #endregion
+
     #region Lifecycle Methods
 
     protected override async Task OnInitializedAsync()
@@ -129,13 +210,37 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         InitializeDropdownOptions();
         InitializeFormDefaults();
         
+        // Create DotNet reference for JavaScript callbacks
+        _dotNetRef = DotNetObjectReference.Create(this);
+        
         Logger.LogInformation("Confidential reporting page initialized for user: {User}", 
             SessionService.GetCurrentUserDisplayName() ?? "Anonymous");
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                // Initialize JavaScript mapping module only once
+                _mapModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "/js/hazard-map.js");
+                Logger.LogInformation("Map module loaded successfully for confidential reporting");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Could not load JavaScript map module for confidential reporting");
+            }
+        }
+        
+        // Don't auto-initialize the map here - let OpenMapSelector handle it
+        // This prevents conflicts between automatic and manual initialization
+    }
+
     public void Dispose()
     {
-        // Clean up any resources if needed
+        _mapModule?.DisposeAsync();
+        _dotNetRef?.Dispose();
     }
 
     #endregion
@@ -735,6 +840,202 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                 Duration = 2000
             });
         }
+    }
+
+    #endregion
+
+    #region Map/Location Methods
+
+    /// <summary>
+    /// Open map selector modal
+    /// </summary>
+    public async Task OpenMapSelector()
+    {
+        ShowMapModal = true;
+        StateHasChanged();
+        
+        // Give DOM time to render the modal
+        await Task.Delay(300);
+        
+        // Always try to initialize the map when modal opens
+        if (_mapModule != null)
+        {
+            try
+            {
+                // Always reinitialize the map since the DOM element is recreated
+                await _mapModule.InvokeVoidAsync("initializeMap", 
+                    AirportCenterLatitude, AirportCenterLongitude, DefaultZoomLevel, _dotNetRef);
+                
+                Logger.LogInformation("Map reinitialized for confidential modal opening");
+                
+                // Restore existing location if we have one
+                if (HasGeoLocation)
+                {
+                    await Task.Delay(100); // Give map time to initialize
+                    
+                    await _mapModule.InvokeVoidAsync("setLocationFromCoordinates",
+                        (double)SelectedGeoLocation.Latitude, (double)SelectedGeoLocation.Longitude,
+                        SelectedGeoLocation.Description);
+                    
+                    // Update the form fields to match the restored location
+                    SelectedLatitude = SelectedGeoLocation.Latitude;
+                    SelectedLongitude = SelectedGeoLocation.Longitude;
+                    LocationDescription = SelectedGeoLocation.Description ?? "";
+                    
+                    Logger.LogInformation("Existing location restored: {Lat}, {Lng}", 
+                        SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
+                    
+                    StateHasChanged();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error initializing map in OpenMapSelector");
+                
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "Map Error",
+                    Detail = "Could not initialize map. Please try refreshing the page.",
+                    Duration = 5000
+                });
+            }
+        }
+        
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = "Map Selector",
+            Detail = "Click on the map to select the hazard location.",
+            Duration = 3000
+        });
+    }
+
+    /// <summary>
+    /// Close map selector modal
+    /// </summary>
+    public void CloseMapSelector()
+    {
+        ShowMapModal = false;
+        // Don't reset map initialization state here to preserve the pin
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Get current location
+    /// </summary>
+    public async Task GetCurrentLocation()
+    {
+        if (_mapModule != null)
+        {
+            try
+            {
+                await _mapModule.InvokeVoidAsync("getCurrentLocation");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error getting current location");
+                
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Location Error",
+                    Detail = "Unable to get current location. Please check your device settings.",
+                    Duration = 3000
+                });
+            }
+        }
+    }
+
+    /// <summary>
+    /// Clear map selection
+    /// </summary>
+    public async Task ClearMapSelection()
+    {
+        SelectedLatitude = 0;
+        SelectedLongitude = 0;
+        LocationDescription = string.Empty;
+        SelectedGeoLocation = new GeoLocationData();
+        ConfidentialReport.Location = "";
+        
+        if (_mapModule != null)
+        {
+            try
+            {
+                await _mapModule.InvokeVoidAsync("clearSelection");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Error clearing map selection");
+            }
+        }
+        
+        StateHasChanged();
+        
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = "Selection Cleared",
+            Detail = "Map selection has been cleared.",
+            Duration = 2000
+        });
+    }
+
+    /// <summary>
+    /// Use selected location from map
+    /// </summary>
+    public async Task UseSelectedLocation()
+    {
+        if (!HasValidCoordinates)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "No Location Selected",
+                Detail = "Please click on the map to select a location first.",
+                Duration = 3000
+            });
+            return;
+        }
+
+        // Set the geolocation data
+        SelectedGeoLocation = new GeoLocationData
+        {
+            Latitude = SelectedLatitude,
+            Longitude = SelectedLongitude,
+            Description = string.IsNullOrEmpty(LocationDescription) ? 
+                $"Map Location ({SelectedLatitude:F6}, {SelectedLongitude:F6})" : LocationDescription,
+            SelectedDateTime = DateTime.UtcNow
+        };
+
+        // Update the form location to indicate map location is selected
+        ConfidentialReport.Location = "MAP_LOCATION";
+        
+        ShowMapModal = false;
+        StateHasChanged();
+        
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Location Set",
+            Detail = $"Location selected: {GeoLocationDisplay}",
+            Duration = 3000
+        });
+    }
+
+    /// <summary>
+    /// JavaScript callback for map location selection
+    /// </summary>
+    [JSInvokable]
+    public async Task OnMapLocationSelected(double latitude, double longitude, string description)
+    {
+        SelectedLatitude = (decimal)latitude;
+        SelectedLongitude = (decimal)longitude;
+        LocationDescription = description;
+        
+        await InvokeAsync(StateHasChanged);
+        
+        Logger.LogInformation("Map location selected: {Lat}, {Lng}, {Desc}", latitude, longitude, description);
     }
 
     #endregion

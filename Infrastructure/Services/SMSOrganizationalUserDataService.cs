@@ -324,4 +324,31 @@ public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrgani
             return Result<UserStatistics>.Failure<UserStatistics>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
+    /// <summary>
+    /// Updates SMS Application User password
+    /// </summary>
+    public async Task<Result<bool>> UpdateSMSOrganizationalUserPasswordAsync(SMSOrganizationalUserID userId, string hashedPassword, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Updating password for SMS Application User with ID: {Id}", userId.Value);
+            var result = await _repository.UpdatePasswordAsync(userId, hashedPassword);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully updated password for SMS Application User with ID: {Id}", userId.Value);
+            }
+            else
+            {
+                _logger.LogError("Failed to update password for SMS Application User. Error: {Error}", result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error updating password for SMS Application User with ID: {Id}", userId.Value);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.PasswordUpdateFailed);
+        }
+    }
 }

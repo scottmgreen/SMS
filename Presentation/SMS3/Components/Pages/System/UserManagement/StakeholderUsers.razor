@@ -3,6 +3,7 @@
 @using SMS_Application.Messaging.Queries
 @using SMS_Domain.Entities
 @using SMS_Domain.ValueObjects
+@using SMS3.Components.Shared
 @using Radzen
 @using Radzen.Blazor
 
@@ -139,7 +140,7 @@
                                         </RadzenStack>
                                     </Template>
                                 </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="SMSStakeholderUser" Title="Actions" Width="250px" Sortable="false" Filterable="false">
+                                <RadzenDataGridColumn TItem="SMSStakeholderUser" Title="Actions" Width="300px" Sortable="false" Filterable="false">
                                     <Template Context="user">
                                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
                                             <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
@@ -148,8 +149,10 @@
                                             <RadzenButton Icon="admin_panel_settings" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" 
                                                         Click="@(() => ShowRoleDialog(user.Code, user.DisplayName, user.UserRole?.Code))" 
                                                         title="Assign Role" />
+                                            <RadzenButton Icon="group" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small"
+                                                        Click="@(() => ManageGroups(user.Code, user.DisplayName))" title="Manage Groups" />
                                             <RadzenButton Icon="vpn_key" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small" 
-                                                        Click="@(() => ShowPasswordDialog(user.Code, user.DisplayName))" 
+                                                        Click="@(() => OpenPasswordChangeModal(user.Code, user.DisplayName))" 
                                                         title="Change Password" />
                                             <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
                                                         Click="@(() => ShowDeleteDialog(user.Code, user.DisplayName))" 
@@ -179,3 +182,144 @@
         </RadzenColumn>
     </RadzenRow>
 </div>
+
+<!-- Shared Password Change Modal -->
+<PasswordChangeModal IsVisible="@ShowPasswordModal" 
+                    UserCode="@PasswordUserCode" 
+                    UserDisplayName="@PasswordUserDisplayName" 
+                    UserType="Stakeholder"
+                    OnPasswordChanged="@OnPasswordChangedSuccess" 
+                    OnCancel="@ClosePasswordChangeModal" />
+
+<!-- Group Management Modal -->
+@if (ShowGroupsModal && !string.IsNullOrEmpty(GroupManagementUserCode))
+{
+    <div class="modal-backdrop">
+        <div class="modal-dialog modal-xl">
+            <RadzenCard class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header" style="background-color: #212e61; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
+                    <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
+                        <RadzenIcon Icon="group" Style="margin-right: 0.5rem;" />
+                        Manage Groups: @GroupManagementUserDisplayName
+                    </RadzenText>
+                </div>
+                
+                <!-- Modal Body -->
+                <RadzenRow Gap="1rem" Style="height: 500px;">
+                    <!-- Current User Groups -->
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenCard Style="height: 100%;">
+                            <RadzenCard Style="background-color: #e8f5e8; margin: -0.5rem -0.5rem 1rem -0.5rem; padding: 0.5rem;">
+                                <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: #28a745;">
+                                    <RadzenIcon Icon="groups" Style="margin-right: 0.5rem;" />
+                                    Current Groups (@UserCurrentGroups.Count)
+                                </RadzenText>
+                            </RadzenCard>
+                            <div style="height: 400px; overflow-y: auto;">
+                                @if (UserCurrentGroups.Any())
+                                {
+                                    @foreach (var group in UserCurrentGroups.OrderBy(g => g.Name))
+                                    {
+                                        <RadzenCard class="mb-2" Style="background-color: #f8f9fa;">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0;">
+                                                        @group.Name
+                                                    </RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                                        @group.Code
+                                                    </RadzenText>
+                                                    @if (!string.IsNullOrEmpty(group.Description))
+                                                    {
+                                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                                            @group.Description
+                                                        </RadzenText>
+                                                    }
+                                                </div>
+                                                <RadzenButton Icon="group_remove" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                                              Click="@(() => RemoveUserFromGroup(group.Code))" title="Remove from group" />
+                                            </div>
+                                        </RadzenCard>
+                                    }
+                                }
+                                else
+                                {
+                                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
+                                        <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
+                                        This user is not currently assigned to any stakeholder groups.
+                                    </RadzenAlert>
+                                }
+                            </div>
+                        </RadzenCard>
+                    </RadzenColumn>
+
+                    <!-- Available Groups -->
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenCard Style="height: 100%;">
+                            <RadzenCard Style="background-color: #e3f2fd; margin: -0.5rem -0.5rem 1rem -0.5rem; padding: 0.5rem;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: #007bff;">
+                                        <RadzenIcon Icon="group_add" Style="margin-right: 0.5rem;" />
+                                        Available Groups (@AvailableGroups.Count)
+                                    </RadzenText>
+                                    <RadzenButton Text="Assign Selected" Icon="group_add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                                                  Click="@AssignMultipleGroups" Disabled="@(!SelectedGroups.Any(s => s.Value))" />
+                                </div>
+                            </RadzenCard>
+                            <div style="height: 400px; overflow-y: auto;">
+                                @if (AvailableGroups.Any())
+                                {
+                                    @foreach (var group in AvailableGroups.OrderBy(g => g.Name))
+                                    {
+                                        <RadzenCard class="mb-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="d-flex align-items-center">
+                                                    <RadzenCheckBox @bind-Value="SelectedGroups[group.Code]" class="me-2" />
+                                                    <div>
+                                                        <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0;">
+                                                            @group.Name
+                                                        </RadzenText>
+                                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                                            @group.Code
+                                                        </RadzenText>
+                                                        @if (!string.IsNullOrEmpty(group.Description))
+                                                        {
+                                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                                                @group.Description
+                                                            </RadzenText>
+                                                        }
+                                                    </div>
+                                                </div>
+                                                <RadzenButton Icon="group_add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                                                              Click="@(() => AssignUserToGroup(group.Code))" title="Assign to group" />
+                                            </div>
+                                        </RadzenCard>
+                                    }
+                                }
+                                else
+                                {
+                                    <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat">
+                                        <RadzenIcon Icon="warning" Style="margin-right: 0.5rem;" />
+                                        This user is already assigned to all available stakeholder groups.
+                                    </RadzenAlert>
+                                }
+                            </div>
+                        </RadzenCard>
+                    </RadzenColumn>
+                </RadzenRow>
+                
+                <!-- Modal Footer -->
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Style="margin: 0; flex: 1; margin-right: 1rem;">
+                        <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
+                        Stakeholder groups define external user access and collaboration permissions within the SMS.
+                    </RadzenAlert>
+                    <div class="d-flex gap-2">
+                        <RadzenButton Text="Close" ButtonStyle="ButtonStyle.Light" Click="@CloseGroupsModal" />
+                    </div>
+                </div>
+            </RadzenCard>
+        </div>
+    </div>
+}

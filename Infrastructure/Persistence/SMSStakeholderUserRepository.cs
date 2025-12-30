@@ -426,19 +426,19 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
         }
     }
 
-    public async Task<Result<bool>> UpdatePasswordAsync(BaseUserID userId, string hashedPassword)
+    public async Task<Result<bool>> UpdatePasswordAsync(SMSStakeholderUserID userId, string hashedPassword)
     {
         // Convert BaseUserID to string for compatibility
         return await UpdatePasswordAsync(userId.Value, hashedPassword);
     }
 
-    public async Task<Result<bool>> RecordLoginAsync(BaseUserID userId, DateTime loginDate)
+    public async Task<Result<bool>> RecordLoginAsync(SMSStakeholderUserID userId, DateTime loginDate)
     {
         // Convert BaseUserID to string for compatibility  
         return await RecordLoginAsync(userId.Value, loginDate);
     }
 
-    public async Task<Result<bool>> DeleteAsync(BaseUserID userId)
+    public async Task<Result<bool>> DeleteAsync(SMSStakeholderUserID userId)
     {
         // Convert BaseUserID to string for compatibility
         return await DeleteAsync(userId.Value);
@@ -479,38 +479,38 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
         }
     }
 
-    public async Task<Result<bool>> RecordLoginAsync(string userId, DateTime loginDate)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(userId))
-            {
-                return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
-            }
+    //public async Task<Result<bool>> RecordLoginAsync(SMSStakeholderUserID userId, DateTime loginDate)
+    //{
+    //    try
+    //    {
+    //        if (string.IsNullOrWhiteSpace(userId))
+    //        {
+    //            return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
+    //        }
 
-            _logger.LogInfrastructurePutItem($"{_logHeader} {StoredProcs.pr_SMSStakeholderUser_RecordLogin} ID:{userId}", null);
+    //        _logger.LogInfrastructurePutItem($"{_logHeader} {StoredProcs.pr_SMSStakeholderUser_RecordLogin} ID:{userId}", null);
 
-            using var sql = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(StoredProcs.pr_SMSStakeholderUser_RecordLogin, sql)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
+    //        using var sql = new SqlConnection(_connectionString);
+    //        using var cmd = new SqlCommand(StoredProcs.pr_SMSStakeholderUser_RecordLogin, sql)
+    //        {
+    //            CommandType = CommandType.StoredProcedure
+    //        };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, userId));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserLoginDate, loginDate));
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, userId));
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserLoginDate, loginDate));
 
-            await sql.OpenAsync().ConfigureAwait(false);
-            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
-            await sql.CloseAsync().ConfigureAwait(false);
+    //        await sql.OpenAsync().ConfigureAwait(false);
+    //        await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+    //        await sql.CloseAsync().ConfigureAwait(false);
 
-            return Result<bool>.Success(true);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructurePutItemError($"{_logHeader} {ex.Message}", null);
-            return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.UpdateFailed);
-        }
-    }
+    //        return Result<bool>.Success(true);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogInfrastructurePutItemError($"{_logHeader} {ex.Message}", null);
+    //        return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.UpdateFailed);
+    //    }
+    //}
 
     public async Task<Result<bool>> DeleteAsync(string userId)
     {

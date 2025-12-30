@@ -125,7 +125,7 @@ public class GetSMSOrganizationalGroupsByUserCodeQueryHandler : BaseQueryBundle,
         {
             _logger.LogInformation("Processing GetSMSOrganizationalGroupsByUserCodeQuery for user: {UserCode}", request.UserCode);
 
-            var result = await _organizationalGroupDataService.GetByUserCodeAsync(request.UserCode, ct);
+            var result = await _organizationalGroupDataService.GetGroupsByUserCodeAsync(request.UserCode, ct);
 
             if (result.IsSuccess)
             {

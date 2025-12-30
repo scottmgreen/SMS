@@ -70,25 +70,31 @@
 
 <style>
 /* =============================================================================
-   LOGIN BACKGROUND - SAME AS HOME PAGE
+   LOGIN BACKGROUND - WORKS WITH UNIFIED LAYOUT SYSTEM
    ============================================================================= */
 
-.login-background {
-    background-image: url('images/background_opening.jpg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    width: calc(100% + 3rem);
-    min-height: calc(100vh + 3rem);
-    margin: -1.5rem;
-    padding: 2rem;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 
+
+    .login-background {
+        background-image: url('images/background_opening.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        padding: 2rem;
+        overflow: hidden;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 /* =============================================================================
    SMS LOGIN PAGE - EXACT COLOR COMPLIANCE
    ============================================================================= */

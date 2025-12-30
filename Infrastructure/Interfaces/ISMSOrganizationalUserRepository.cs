@@ -16,10 +16,10 @@ public interface ISMSOrganizationalUserRepository
     Task<Result<IEnumerable<SMSOrganizationalUser>>> GetDepartmentSupervisorsAsync(string department);
     Task<Result<IEnumerable<SMSOrganizationalUser>>> GetUsersAtOrAboveLevelAsync(string minimumLevel);
     Task<Result<UserStatistics>> GetUserStatisticsAsync();
-    Task<Result<bool>> RecordLoginAsync(BaseUserID userId, DateTime loginDate);
+    Task<Result<bool>> RecordLoginAsync(SMSOrganizationalUserID userId, DateTime loginDate);
     Task<Result<bool>> RecordLoginAsync(string userId, DateTime loginDate);
     Task<Result<bool>> UpdateAsync(SMSOrganizationalUser user);
-    Task<Result<bool>> UpdatePasswordAsync(BaseUserID userId, string hashedPassword);
+    Task<Result<bool>> UpdatePasswordAsync(SMSOrganizationalUserID userId, string hashedPassword);
     Task<Result<bool>> UpdatePasswordAsync(string userId, string hashedPassword);
     Task<Result<bool>> UserNameExistsAsync(string userName);
 }

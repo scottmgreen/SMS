@@ -107,7 +107,7 @@ public sealed class SMSOrganizationalGroupDataService : BaseDataService<SMSOrgan
     /// <summary>
     /// Gets SMS Organizational Groups by user code
     /// </summary>
-    public async Task<Result<IEnumerable<SMSOrganizationalGroup>>> GetByUserCodeAsync(string userCode, CancellationToken ct = default)
+    public async Task<Result<IEnumerable<SMSOrganizationalGroup>>> GetGroupsByUserCodeAsync(string userCode, CancellationToken ct = default)
     {
         try
         {
@@ -118,11 +118,13 @@ public sealed class SMSOrganizationalGroupDataService : BaseDataService<SMSOrgan
             }
 
             _logger.LogInformation("Retrieving SMS Organizational Groups by user code: {UserCode}", userCode);
-            
+
             // Note: This method would need to be implemented in the repository if needed
             // For now, return an empty list as this functionality may not be implemented yet
-            var emptyGroups = new List<SMSOrganizationalGroup>();
-            return Result<IEnumerable<SMSOrganizationalGroup>>.Success(emptyGroups.AsEnumerable());
+            var result = await _repository.GetGroupsByUserCodeAsync(userCode);
+
+            
+            return Result<IEnumerable<SMSOrganizationalGroup>>.Success(result.Value.AsEnumerable());
         }
         catch (Exception ex)
         {
@@ -321,7 +323,7 @@ public sealed class SMSOrganizationalGroupDataService : BaseDataService<SMSOrgan
             }
 
             _logger.LogInformation("Retrieving users for group {GroupCode}", groupCode);
-            
+
             return await _repository.GetUsersByGroupCodeAsync(groupCode);
         }
         catch (Exception ex)
@@ -330,4 +332,4 @@ public sealed class SMSOrganizationalGroupDataService : BaseDataService<SMSOrgan
             return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalGroupError.NotFound);
         }
     }
-}
+ }

@@ -283,7 +283,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
         }
     }
 
-    public async Task<Result<bool>> UpdatePasswordAsync(BaseUserID userId, string hashedPassword)
+    public async Task<Result<bool>> UpdatePasswordAsync(SMSOrganizationalUserID userId, string hashedPassword)
     {
         // Convert BaseUserID to string for compatibility
         return await UpdatePasswordAsync(userId.Value, hashedPassword);
@@ -324,7 +324,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
         }
     }
 
-    public async Task<Result<bool>> RecordLoginAsync(BaseUserID userId, DateTime loginDate)
+    public async Task<Result<bool>> RecordLoginAsync(SMSOrganizationalUserID userId, DateTime loginDate)
     {
         // Convert BaseUserID to string for compatibility  
         return await RecordLoginAsync(userId.Value, loginDate);

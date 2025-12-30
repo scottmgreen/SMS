@@ -334,6 +334,19 @@
   color: white !important;
 }
 
+/* Brand Link Specific Override */
+.sms-nav .navbar-brand {
+  color: white !important;
+  text-decoration: none !important;
+}
+
+.sms-nav .navbar-brand:hover,
+.sms-nav .navbar-brand:focus,
+.sms-nav .navbar-brand:active {
+  color: #cccccc !important;
+  text-decoration: none !important;
+}
+
 /* Card Headers */
 .sms-card-header {
   background-color: var(--sms-card-header-bg) !important;

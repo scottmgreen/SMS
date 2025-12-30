@@ -43,6 +43,7 @@ public partial class OrganizationalUsers : ComponentBase
     private bool ShowEditModal { get; set; } = false;
     private bool ShowPasswordModal { get; set; } = false;
     private bool ShowDeleteModal { get; set; } = false;
+    private bool ShowGroupsModal { get; set; } = false;
 
     // Create form fields
     private string NewFirstName { get; set; } = string.Empty;
@@ -68,9 +69,20 @@ public partial class OrganizationalUsers : ComponentBase
     private string ConfirmPassword { get; set; } = string.Empty;
     private string PasswordValidationMessage { get; set; } = string.Empty;
 
+    // Password Modal Properties for Shared Component
+    private string PasswordUserCode { get; set; } = string.Empty;
+
     // Delete confirmation fields
     private string DeleteUserId { get; set; } = string.Empty;
     private string DeleteUserDisplayName { get; set; } = string.Empty;
+
+    // Group Management Properties
+    private string GroupManagementUserCode { get; set; } = string.Empty;
+    private string GroupManagementUserDisplayName { get; set; } = string.Empty;
+    private List<SMSOrganizationalGroup> AllOrganizationalGroups { get; set; } = new();
+    private List<SMSOrganizationalGroup> UserCurrentGroups { get; set; } = new();
+    private List<SMSOrganizationalGroup> AvailableGroups { get; set; } = new();
+    private Dictionary<string, bool> SelectedGroups { get; set; } = new();
 
     #endregion
 
@@ -216,7 +228,15 @@ public partial class OrganizationalUsers : ComponentBase
                 organizationalUsersResult.Value?.ToList() ?? new List<SMSOrganizationalUser>() : 
                 new List<SMSOrganizationalUser>();
 
-            Logger.LogInformation("Loaded {UserCount} organizational users", OrganizationalUsersList.Count);
+            // Load Organizational Groups for group management
+            var groupsQuery = new GetAllSMSOrganizationalGroupsQuery();
+            var groupsResult = await Mediator.SendAsync(groupsQuery, CancellationToken.None);
+            AllOrganizationalGroups = groupsResult.IsSuccess ? 
+                groupsResult.Value?.ToList() ?? new List<SMSOrganizationalGroup>() : 
+                new List<SMSOrganizationalGroup>();
+
+            Logger.LogInformation("Loaded {UserCount} organizational users and {GroupCount} organizational groups", 
+                OrganizationalUsersList.Count, AllOrganizationalGroups.Count);
 
             StateHasChanged();
         }
@@ -271,7 +291,7 @@ public partial class OrganizationalUsers : ComponentBase
             StateHasChanged();
 
             // Create user entity
-            var userCode = $"OU-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
+            var userCode = $"OU-0000";
             var userId = new SMSOrganizationalUserID(userCode);
             var user = new SMSOrganizationalUser(userId)
             {
@@ -423,73 +443,37 @@ public partial class OrganizationalUsers : ComponentBase
 
     private void OpenPasswordModal(string userId, string displayName)
     {
-        PasswordUserId = userId;
+        PasswordUserCode = userId;
         PasswordUserDisplayName = displayName;
-        NewPassword = string.Empty;
-        ConfirmPassword = string.Empty;
-        PasswordValidationMessage = string.Empty;
         ShowPasswordModal = true;
+        StateHasChanged();
     }
 
-    private void ClosePasswordModal()
+    private void ClosePasswordChangeModal()
     {
         ShowPasswordModal = false;
-        PasswordUserId = string.Empty;
+        PasswordUserCode = string.Empty;
         PasswordUserDisplayName = string.Empty;
-        NewPassword = string.Empty;
-        ConfirmPassword = string.Empty;
-        PasswordValidationMessage = string.Empty;
+        StateHasChanged();
+    }
+
+    private async Task OnPasswordChangedSuccess()
+    {
+        // Password was changed successfully by the modal
+        ShowSuccessNotification($"Password updated successfully for {PasswordUserDisplayName}.");
+    }
+
+    // Legacy methods - kept for compatibility
+    private void ClosePasswordModal()
+    {
+        ClosePasswordChangeModal();
     }
 
     private async Task UpdatePassword()
     {
-        // Validate passwords
-        if (string.IsNullOrWhiteSpace(NewPassword) || string.IsNullOrWhiteSpace(ConfirmPassword))
-        {
-            PasswordValidationMessage = "Both password fields are required.";
-            return;
-        }
-
-        if (NewPassword != ConfirmPassword)
-        {
-            PasswordValidationMessage = "Passwords do not match.";
-            return;
-        }
-
-        if (NewPassword.Length < 8)
-        {
-            PasswordValidationMessage = "Password must be at least 8 characters long.";
-            return;
-        }
-
-        try
-        {
-            IsSaving = true;
-            StateHasChanged();
-
-            var command = new UpdateSMSOrganizationalUserPasswordCommand(PasswordUserId, NewPassword);
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
-
-            if (result.IsSuccess)
-            {
-                ShowSuccessNotification("Password updated successfully.");
-                ClosePasswordModal();
-            }
-            else
-            {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to update password.");
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error updating password: {UserId}", PasswordUserId);
-            ShowErrorNotification("Error updating password. Please try again.");
-        }
-        finally
-        {
-            IsSaving = false;
-            StateHasChanged();
-        }
+        // This method is no longer used with the shared component
+        // but kept for compatibility if referenced elsewhere
+        ShowErrorNotification("Please use the password change modal to update passwords.");
     }
 
     #endregion
@@ -553,12 +537,196 @@ public partial class OrganizationalUsers : ComponentBase
 
     #endregion
 
-    #region Group Management (Placeholder)
+    #region Group Management
 
     private async Task ManageGroups(string userId, string displayName)
     {
-        // TODO: Implement group management modal
-        ShowInfoNotification($"Group management for {displayName} will be implemented soon.");
+        try
+        {
+            GroupManagementUserCode = userId;
+            GroupManagementUserDisplayName = displayName;
+            
+            await LoadUserGroups(userId);
+            ShowGroupsModal = true;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error opening group management for user: {UserId}", userId);
+            ShowErrorNotification("Error loading user groups. Please try again.");
+        }
+    }
+
+    private async Task LoadUserGroups(string userId)
+    {
+        try
+        {
+            // Load groups that this user is currently assigned to
+            var userGroupsQuery = new GetSMSOrganizationalGroupsByUserCodeQuery(userId);
+            var userGroupsResult = await Mediator.SendAsync(userGroupsQuery, CancellationToken.None);
+            UserCurrentGroups = userGroupsResult.IsSuccess ? 
+                userGroupsResult.Value?.ToList() ?? new List<SMSOrganizationalGroup>() : 
+                new List<SMSOrganizationalGroup>();
+            
+            // Calculate available groups (groups the user is not currently in)
+            var currentGroupCodes = UserCurrentGroups.Select(g => g.Code).ToHashSet();
+            AvailableGroups = AllOrganizationalGroups
+                .Where(g => !currentGroupCodes.Contains(g.Code) && g.IsActive)
+                .OrderBy(g => g.Name)
+                .ToList();
+
+            // Initialize selection tracking
+            SelectedGroups.Clear();
+            foreach (var group in AvailableGroups)
+            {
+                SelectedGroups[group.Code] = false;
+            }
+
+            Logger.LogInformation("Loaded {CurrentGroupCount} current groups and {AvailableGroupCount} available groups for user {UserId}", 
+                UserCurrentGroups.Count, AvailableGroups.Count, userId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading groups for user: {UserId}", userId);
+            UserCurrentGroups = new List<SMSOrganizationalGroup>();
+            AvailableGroups = AllOrganizationalGroups.Where(g => g.IsActive).ToList();
+            
+            // Initialize selection tracking even on error
+            SelectedGroups.Clear();
+            foreach (var group in AvailableGroups)
+            {
+                SelectedGroups[group.Code] = false;
+            }
+        }
+    }
+
+    private void CloseGroupsModal()
+    {
+        ShowGroupsModal = false;
+        GroupManagementUserCode = string.Empty;
+        GroupManagementUserDisplayName = string.Empty;
+        UserCurrentGroups.Clear();
+        AvailableGroups.Clear();
+        SelectedGroups.Clear();
+    }
+
+    private async Task RemoveUserFromGroup(string groupCode)
+    {
+        if (string.IsNullOrWhiteSpace(groupCode) || string.IsNullOrWhiteSpace(GroupManagementUserCode))
+        {
+            ShowErrorNotification("Group code and user code are required.");
+            return;
+        }
+
+        try
+        {
+            var groupId = new SMSOrganizationalGroupID(groupCode);
+            var command = new RemoveUserFromOrganizationalGroupCommand(GroupManagementUserCode, groupId);
+            var result = await Mediator.SendAsync(command, CancellationToken.None);
+
+            if (result.IsSuccess)
+            {
+                ShowSuccessNotification("User removed from group successfully.");
+                await LoadUserGroups(GroupManagementUserCode);
+                StateHasChanged();
+            }
+            else
+            {
+                ShowErrorNotification(result.Error?.Message ?? "Failed to remove user from group.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", GroupManagementUserCode, groupCode);
+            ShowErrorNotification("Error removing user from group. Please try again.");
+        }
+    }
+
+    private async Task AssignUserToGroup(string groupCode)
+    {
+        if (string.IsNullOrWhiteSpace(groupCode) || string.IsNullOrWhiteSpace(GroupManagementUserCode))
+        {
+            ShowErrorNotification("Group code and user code are required.");
+            return;
+        }
+
+        try
+        {
+            var groupId = new SMSOrganizationalGroupID(groupCode);
+            var command = new AssignUserToOrganizationalGroupCommand(GroupManagementUserCode, groupId);
+            var result = await Mediator.SendAsync(command, CancellationToken.None);
+
+            if (result.IsSuccess)
+            {
+                ShowSuccessNotification("User assigned to group successfully.");
+                await LoadUserGroups(GroupManagementUserCode);
+                StateHasChanged();
+            }
+            else
+            {
+                ShowErrorNotification(result.Error?.Message ?? "Failed to assign user to group.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", GroupManagementUserCode, groupCode);
+            ShowErrorNotification("Error assigning user to group. Please try again.");
+        }
+    }
+
+    private async Task AssignMultipleGroups()
+    {
+        if (string.IsNullOrWhiteSpace(GroupManagementUserCode) || !SelectedGroups.Any(s => s.Value))
+        {
+            ShowErrorNotification("User code and at least one group must be selected.");
+            return;
+        }
+
+        try
+        {
+            var selectedGroupCodes = SelectedGroups.Where(s => s.Value).Select(s => s.Key).ToArray();
+            int successCount = 0;
+            int failureCount = 0;
+
+            foreach (var groupCode in selectedGroupCodes)
+            {
+                try
+                {
+                    var groupId = new SMSOrganizationalGroupID(groupCode);
+                    var command = new AssignUserToOrganizationalGroupCommand(GroupManagementUserCode, groupId);
+                    var result = await Mediator.SendAsync(command, CancellationToken.None);
+
+                    if (result.IsSuccess)
+                        successCount++;
+                    else
+                        failureCount++;
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", GroupManagementUserCode, groupCode);
+                    failureCount++;
+                }
+            }
+
+            if (successCount > 0)
+            {
+                var message = $"Successfully assigned user to {successCount} group(s).";
+                if (failureCount > 0)
+                    message += $" {failureCount} assignment(s) failed.";
+                ShowSuccessNotification(message);
+                
+                await LoadUserGroups(GroupManagementUserCode);
+                StateHasChanged();
+            }
+            else
+            {
+                ShowErrorNotification("Failed to assign user to groups.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error assigning user {UserCode} to multiple groups", GroupManagementUserCode);
+            ShowErrorNotification("Error assigning user to groups. Please try again.");
+        }
     }
 
     #endregion

@@ -12,6 +12,14 @@
 
 <PageTitle>Submit Confidential Report - SMS3</PageTitle>
 
+<!-- Leaflet.js CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+<!-- Leaflet.js JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
 <!-- SMS Page Header using reusable component -->
 <PageHeader Title="@PageTitle"
            Subtitle="@PageSubtitle"
@@ -37,20 +45,7 @@ else if (ShowFinalSuccessConfirmation)
                     </h5>
                 </div>
                 <div class="sms-modal-body">
-                    <!-- Success Message -->
-                    @* <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Class="mb-3">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-shield-alt fa-2x me-3"></i>
-                            <div>
-                                <h6 class="mb-1">Confidential Report Successfully Submitted!</h6>
-                                <p class="mb-1"><strong>Your Tracking ID:</strong></p>
-                                <h5 class="text-success mb-0">
-                                    <i class="fas fa-id-badge"></i> @GeneratedTrackingId
-                                </h5>
-                            </div>
-                        </div>
-                    </RadzenAlert> *@
-
+                   
                     <!-- Report Details -->
                     <RadzenCard Variant="Variant.Outlined" Class="mb-3">
                         <div class="p-3">
@@ -98,11 +93,7 @@ else
         <RadzenColumn Size="9">
             <RadzenCard>
                 <RadzenStack Gap="1rem" Class="rz-p-3">
-                    @* <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Class="rz-mb-3 rz-pb-2 rz-border-bottom-1">
-                        <RadzenIcon Icon="shield" Style="color: var(--rz-primary); font-size: 1.2rem;" />
-                        <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">Confidential Safety Report</RadzenText>
-                    </RadzenStack> *@
-
+                    
                     <!-- Confidentiality Notice -->
                     <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
                         <h5> Confidentiality Assurance</h5>
@@ -115,9 +106,9 @@ else
                     </RadzenAlert>
 
                     <RadzenTemplateForm Data="@ConfidentialReport" Submit="@HandleFormSubmit" TItem="ConfidentialReportForm">
-                        <!-- Row 1: Report Type (3 columns) and Priority (2 columns) -->
-                        <RadzenRow Gap="6rem" Class="rz-mb-3">
-                            <RadzenColumn Size="4" >
+                        <!-- Row 1: Report Type (4 columns) and Priority (4 columns) -->
+                        <RadzenRow Gap="2rem" Class="rz-mb-3">
+                            <RadzenColumn Size="6" >
                                 <RadzenFormField Text="Report Type *" Variant="Variant.Outlined">
                                     <RadzenDropDown @bind-Value="@ConfidentialReport.ReportType" 
                                                   Data="@ReportTypeOptions" 
@@ -125,17 +116,17 @@ else
                                                   ValueProperty="Value"
                                                   Placeholder="Select report type..."
                                                   Name="ReportType"
-                                                  Style="width: 100%; min-width: 500px;" />
+                                                  Style="width: 100%; min-width: 100%;" />
                                 </RadzenFormField>
                                 <RadzenRequiredValidator Component="ReportType" Text="Report type is required" />
                             </RadzenColumn>
-                            <RadzenColumn Size="4">
+                            <RadzenColumn Size="6">
                                 <RadzenFormField Text="Urgency Level" Variant="Variant.Outlined">
                                     <RadzenDropDown @bind-Value="@ConfidentialReport.Priority" 
                                                   Data="@PriorityOptions" 
                                                   TextProperty="Text" 
                                                   ValueProperty="Value"
-                                                  Style="width: 100%; min-width: 500px;" />
+                                                  Style="width: 100%; min-width: 100%;" />
                                 </RadzenFormField>
                             </RadzenColumn>
                         </RadzenRow>
@@ -163,41 +154,151 @@ else
                                 </RadzenFormField>
                             </RadzenColumn>
                         </RadzenRow>
-
-                        <!-- Row 3: Location (Full Width - 9 columns) -->
-                        <RadzenRow Gap="1rem" Class="rz-mb-3">
-                            <RadzenColumn Size="12">
-                                <RadzenFormField Text="Location *" Variant="Variant.Outlined">
-                                    <RadzenTextBox @bind-Value="@ConfidentialReport.Location" 
-                                                 Placeholder="General area or facility (avoid specific identifying details)"
-                                                 Name="Location"
-                                                 Style="width: 100%;" />
-                                </RadzenFormField>
-                                <RadzenRequiredValidator Component="Location" Text="Location is required" />
-                                <div class="form-text">Provide general location information. Avoid details that might identify you.</div>
-                            </RadzenColumn>
-                        </RadzenRow>
-
-                        <!-- Row 4: Detailed Description (Full Width - 9 columns) -->
+                        <!-- Row 3: Detailed Description (Full Width - 9 columns) -->
                         <RadzenRow Gap="1rem" Class="rz-mb-3">
                             <RadzenColumn Size="12">
                                 <RadzenFormField Text="Detailed Description *" Variant="Variant.Outlined">
-                                    <RadzenTextArea @bind-Value="@ConfidentialReport.Description" 
-                                                  Rows="6"
-                                                  Name="Description"
-                                                  Placeholder="Describe the safety concern, incident, or issue in detail. Include what happened, when it occurred, and why it's a safety concern. Avoid information that could identify you personally."
-                                                  Style="width: 100%;" />
+                                    <RadzenTextArea @bind-Value="@ConfidentialReport.Description"
+                                                    Rows="6"
+                                                    Cols="200"
+                                                    Name="Description"
+                                                    Placeholder="Describe the safety concern, incident, or issue in detail. Include what happened, when it occurred, and why it's a safety concern. Avoid information that could identify you personally."
+                                                    Style="width: 100%; min-width: 100%; resize: vertical;" />
                                 </RadzenFormField>
                                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Class="rz-mt-1">
                                     <RadzenRequiredValidator Component="Description" Text="Description is required" />
-                                    <RadzenText TextStyle="TextStyle.Caption" 
-                                              Class="@(DescriptionCharacterCount > 1950 ? "rz-color-danger" : DescriptionCharacterCount > 1800 ? "rz-color-warning" : "rz-color-base-500")">
+                                    <RadzenText TextStyle="TextStyle.Caption"
+                                                Class="@(DescriptionCharacterCount > 1950 ? "rz-color-danger" : DescriptionCharacterCount > 1800 ? "rz-color-warning" : "rz-color-base-500")">
                                         @DescriptionCharacterCount/2000 characters
                                     </RadzenText>
                                 </RadzenStack>
                                 <div class="form-text">Be thorough but avoid personal identifying information</div>
                             </RadzenColumn>
                         </RadzenRow>
+                        <!-- Row 4: Location (Full Width - 9 columns) -->
+                        <RadzenRow Gap="1rem" Class="rz-mb-3">
+                            <RadzenColumn Size="12">
+                                <RadzenFormField Text="Location *" Variant="Variant.Outlined">
+                                    <RadzenTextArea Value="@LocationDisplayText"
+                                                   ReadOnly="true"
+                                                   Placeholder="No location selected - click 'Select on Map' below"
+                                                   Style="width: 100%; min-width: 100%;" 
+                                                   Cols="200" />
+                                </RadzenFormField>
+                                <RadzenRequiredValidator Component="Location" Text="Location is required" />
+                                
+                                <div class="d-flex justify-content-start mt-2">
+                                    <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                                  Click="OpenMapSelector"
+                                                  Text="Select on Map"
+                                                  Icon="map"
+                                                  Size="ButtonSize.Medium" />
+                                </div>
+                            </RadzenColumn>
+                        </RadzenRow>
+                        <!-- Map Modal -->
+                        @if (ShowMapModal)
+                        {
+                            <div class="modal-overlay">
+                                <div class="sms-modal-dialog sms-modal-xl">
+                                    <div class="sms-modal-content">
+                                        <div class="sms-modal-header sms-header-primary">
+                                            <div class="d-flex justify-content-between align-items-center w-100">
+                                                <h5 class="sms-modal-title mb-0">
+                                                    <i class="fas fa-map-marked-alt"></i> Select Hazard Location
+                                                </h5>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <RadzenButton ButtonStyle="ButtonStyle.Warning"
+                                                                  Text="Get Current Location"
+                                                                  Icon="my_location"
+                                                                  Size="ButtonSize.Small"
+                                                                  Click="GetCurrentLocation" />
+                                                    <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                                                  Variant="Variant.Text"
+                                                                  Icon="close"
+                                                                  Size="ButtonSize.Small"
+                                                                  Click="CloseMapSelector" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="sms-modal-body p-0">
+                                            <!-- Map Container -->
+                                            <div id="hazardLocationMap" style="height: 500px; width: 100%;"></div>
+
+                                            <!-- Location Form and Controls -->
+                                            <div class="p-4">
+                                                <!-- Selected Coordinates Display -->
+                                                <div class="row mb-3">
+                                                    <div class="col-md-4">
+                                                        <RadzenFormField Text="Selected Latitude" Variant="Variant.Outlined">
+                                                            <RadzenNumeric @bind-Value="@SelectedLatitude"
+                                                                           ReadOnly="true"
+                                                                           Step="0.000001M"
+                                                                           Format="0.000000"
+                                                                           Style="width: 100%;" />
+                                                        </RadzenFormField>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <RadzenFormField Text="Selected Longitude" Variant="Variant.Outlined">
+                                                            <RadzenNumeric @bind-Value="@SelectedLongitude"
+                                                                           ReadOnly="true"
+                                                                           Step="0.000001M"
+                                                                           Format="0.000000"
+                                                                           Style="width: 100%;" />
+                                                        </RadzenFormField>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <RadzenFormField Text="Location Description" Variant="Variant.Outlined">
+                                                            <RadzenTextBox @bind-Value="@LocationDescription"
+                                                                           Placeholder="Optional description"
+                                                                           Style="width: 100%;min-width: 100%;" />
+                                                        </RadzenFormField>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Current Selection Display -->
+                                                @if (HasGeoLocation)
+                                                {
+                                                    <RadzenAlert AlertStyle="AlertStyle.Success" Size="AlertSize.Small" Variant="Variant.Flat" Class="mb-3">
+                                                        <h6 class="alert-heading"><i class="fas fa-map-pin"></i> Current Selection</h6>
+                                                        <p class="mb-1">
+                                                            <strong>Coordinates:</strong> @GeoLocationDisplay
+                                                        </p>
+                                                      
+                                                        @if (!string.IsNullOrEmpty(SelectedGeoLocation.Description))
+                                                        {
+                                                            <p class="mb-1">
+                                                                <strong>Description:</strong> @SelectedGeoLocation.Description
+                                                            </p>
+                                                        }
+                                                    </RadzenAlert>
+                                                }
+
+                                                <div class="d-flex justify-content-end gap-2">
+                                                    <RadzenButton ButtonStyle="ButtonStyle.Secondary"
+                                                                  Text="Cancel"
+                                                                  Icon="close"
+                                                                  Size="ButtonSize.Medium"
+                                                                  Click="CloseMapSelector" />
+                                                    <RadzenButton ButtonStyle="ButtonStyle.Warning"
+                                                                  Text="Clear Selection"
+                                                                  Icon="clear"
+                                                                  Size="ButtonSize.Medium"
+                                                                  Click="ClearMapSelection" />
+                                                    <RadzenButton ButtonStyle="ButtonStyle.Success"
+                                                                  Text="Use Selected Location"
+                                                                  Icon="check"
+                                                                  Size="ButtonSize.Medium"
+                                                                  Click="UseSelectedLocation"
+                                                                  Disabled="@(!HasValidCoordinates)" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        
 
                         <!-- Row 5: Additional Protection (Full Width - 9 columns) -->
                         <RadzenRow Gap="1rem" Class="rz-mb-3">
@@ -205,8 +306,9 @@ else
                                 <RadzenFormField Text="Additional Protection Needed" Variant="Variant.Outlined">
                                     <RadzenTextArea @bind-Value="@ConfidentialReport.AdditionalProtection" 
                                                   Rows="3"
+                                                  Cols="200"
                                                   Placeholder="Describe any specific protection concerns or special handling requirements..."
-                                                  Style="width: 100%;" />
+                                                  Style="width: 100%; min-width: 100%; resize: vertical;" />
                                 </RadzenFormField>
                                 <div class="form-text">Optional: Any special considerations for handling this report</div>
                             </RadzenColumn>
@@ -271,7 +373,7 @@ else
                             <RadzenColumn Size="6">
                                 @if (!ShowSubmissionConfirmation && !ShowFinalSuccessConfirmation)
                                 {
-                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="0.5rem">
                                         <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
                                                     Icon="clear"
                                                     Text="Clear Form"
@@ -788,34 +890,42 @@ else
 }
 
 /* Enhanced dropdown and input sizing for better layout */
-::deep .rz-textbox,
-::deep .rz-textarea,
-::deep .rz-fileinput {
+.rz-textbox,
+.rz-textarea,
+.rz-fileinput {
     width: 100% !important;
     min-width: 100% !important;
 }
 
+/* Ensure textareas take full width */
+.rz-textarea {
+    width: 100% !important;
+    min-width: 100% !important;
+    box-sizing: border-box !important;
+    resize: vertical !important;
+}
+
 /* Report Type dropdown - wider to prevent wrapping */
-::deep .rz-dropdown {
+.rz-dropdown {
     width: 100% !important;
     min-width: 250px !important;
 }
 
 /* Special handling for wide dropdown content */
-::deep .rz-dropdown .rz-dropdown-label {
+.rz-dropdown .rz-dropdown-label {
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     width: calc(100% - 32px) !important;
 }
 
-::deep .rz-dropdown-panel {
+.rz-dropdown-panel {
     min-width: 250px !important;
     max-width: 400px !important;
 }
 
 /* Ensure FormField containers take full width */
-::deep .rz-formfield {
+.rz-formfield {
     width: 100% !important;
 }
 
@@ -827,12 +937,12 @@ else
 }
 
 /* Checkbox and label alignment */
-::deep .rz-checkbox {
+.rz-checkbox {
     margin-right: 0.5rem;
 }
 
 /* Better spacing for stacked elements */
-::deep .rz-stack-horizontal {
+.rz-stack-horizontal {
     align-items: flex-start;
 }
 
@@ -844,25 +954,24 @@ else
     }
     
     /* Adjust dropdown minimum widths for mobile */
-    ::deep .rz-dropdown {
+    .rz-dropdown {
         min-width: 200px !important;
     }
 }
 
 @@media (max-width: 768px) {
     /* Further mobile adjustments */
-    ::deep .rz-dropdown {
+    .rz-dropdown {
         min-width: 150px !important;
     }
     
     /* Ensure form elements remain readable */
-    ::deep .rz-dropdown-panel {
+    .rz-dropdown-panel {
         min-width: 200px !important;
         max-width: 90vw !important;
     }
 }
-
+</style>
 /* =============================================================================
    END SMS CONFIDENTIAL REPORTING STYLING
    ============================================================================= */
-</style>

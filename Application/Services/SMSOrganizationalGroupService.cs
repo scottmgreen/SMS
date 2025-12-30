@@ -116,7 +116,7 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
                 return Result<IEnumerable<SMSOrganizationalGroup>>.Failure<IEnumerable<SMSOrganizationalGroup>>(DomainErrors.SMSOrganizationalGroupError.UserCodeRequired);
             }
 
-            return await _dataService.GetByUserCodeAsync(userCode, ct).ConfigureAwait(false);
+            return await _dataService.GetGroupsByUserCodeAsync(userCode, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

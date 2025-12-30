@@ -156,7 +156,10 @@ public class UpdateSMSStakeholderUserPasswordCommandHandler : BaseCommandBundle,
 
             // Update user password
             user.UpdatePassword(passwordResult.Value);
+            user.UpdatedBy = "SYSTEM"; // TODO: Get current user
+            user.UpdatedDate = DateTime.UtcNow;
 
+            // Update the entire user record (which includes the new password)
             var updateResult = await _dataService.UpdateAsync(user, cancellationToken);
 
             if (updateResult.IsSuccess)

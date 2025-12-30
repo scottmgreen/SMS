@@ -156,8 +156,10 @@ public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle,
 
             // Update user password
             user.UpdatePassword(passwordResult.Value);
+            user.UpdatedBy = request.UpdatedBy;
+            user.UpdatedDate = DateTime.UtcNow;
 
-            var updateResult = await _dataService.UpdateSMSApplicationUserAsync(user, cancellationToken);
+            var updateResult = await _dataService.UpdateSMSApplicationUserPasswordAsync(user.Code,user.Password.HashedValue, cancellationToken);
 
             if (updateResult.IsSuccess)
             {

@@ -330,6 +330,47 @@ public sealed class SMSOrganizationalGroupRepository : BaseRepository<SMSOrganiz
         }
     }
 
+    public async Task<Result<IEnumerable<SMSOrganizationalGroup>>> GetGroupsByUserCodeAsync(string userCode)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(userCode))
+            {
+                return Result<IEnumerable<SMSOrganizationalGroup>>.Failure<IEnumerable<SMSOrganizationalGroup>>(DomainErrors.SMSOrganizationalGroupError.NullOrEmpty);
+            }
+
+            _logger.LogInfrastructureGetItems($"{_logHeader} {StoredProcs.pr_SMSOrganizationalGroups_GetByUserCode} GroupCode:{userCode}", null);
+
+            using var sql = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(StoredProcs.pr_SMSOrganizationalGroups_GetByUserCode, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserCode, userCode));
+
+            var groups = new List<SMSOrganizationalGroup>();
+
+            await sql.OpenAsync().ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+            while (await reader.ReadAsync().ConfigureAwait(false))
+            {
+                var group = Mappers.MapToSMSOrganizationalGroup(reader);
+                groups.Add(group);
+            }
+
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<IEnumerable<SMSOrganizationalGroup>>.Success(groups.AsEnumerable());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemsError($"{_logHeader} {ex.Message}", null);
+            return Result<IEnumerable<SMSOrganizationalGroup>>.Failure<IEnumerable<SMSOrganizationalGroup >>(DomainErrors.SMSOrganizationalGroupError.NotFound);
+        }
+    }
+
     public async Task<Result<bool>> ClearUserGroupsAsync(string userCode, string clearedBy)
     {
         try

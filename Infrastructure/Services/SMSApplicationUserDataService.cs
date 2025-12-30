@@ -190,7 +190,7 @@ public sealed class SMSApplicationUserDataService : BaseDataService<SMSApplicati
             }
 
             // Return the updated user
-            return await _repository.GetByIdAsync(user.UserId);
+            return await _repository.GetByIdAsync(user.Code);
         }
         catch (Exception ex)
         {

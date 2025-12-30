@@ -117,7 +117,7 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
                 return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.SMSApplicationGroupError.UserCodeRequired);
             }
 
-            return await _dataService.GetByUserCodeAsync(userCode, ct).ConfigureAwait(false);
+            return await _dataService.GetGroupsByUserCodeAsync(userCode, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
