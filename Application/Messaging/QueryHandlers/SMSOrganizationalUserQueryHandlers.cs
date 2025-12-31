@@ -387,3 +387,47 @@ public class GetSMSOrganizationalUserStatisticsQueryHandler : BaseQueryBundle, I
         }
     }
 }
+
+public class ValidateSMSOrganizationalUserCredentialsQueryHandler : BaseQueryBundle, IRequestHandler<ValidateSMSOrganizationalUserCredentialsQuery, Result<bool>>
+{
+    private readonly SMSOrganizationalUserDataService _dataService;
+    private readonly ILogger<ValidateSMSOrganizationalUserCredentialsQueryHandler> _logger;
+
+    public ValidateSMSOrganizationalUserCredentialsQueryHandler(SMSOrganizationalUserDataService dataService, ILogger<ValidateSMSOrganizationalUserCredentialsQueryHandler> logger)
+    {
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<bool>> HandleAsync(ValidateSMSOrganizationalUserCredentialsQuery request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing ValidateSMSOrganizationalUserCredentialsQuery for UserName: {UserName}", request.UserName);
+
+            var userResult = await _dataService.GetSMSOrganizationalUserByUserNameAsync(request.UserName);
+            if (userResult.IsFailure)
+            {
+                _logger.LogWarning("User not found for credential validation: {UserName}", request.UserName);
+                return Result<bool>.Success(false);
+            }
+
+            var user = userResult.Value;
+            var isValid = user.IsActive && user.Authenticate(request.Password);
+
+            user.UpdatedBy = "SYSTEM";
+            user.LastLoginDate = DateTime.UtcNow;
+            await _dataService.UpdateSMSOrganizationalUserAsync(user, ct);
+
+
+            _logger.LogInformation("Credential validation for {UserName}: {IsValid}", request.UserName, isValid);
+
+            return Result<bool>.Success(isValid);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing ValidateSMSOrganizationalUserCredentialsQuery for UserName: {UserName}", request.UserName);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.LoginFailed);
+        }
+    }
+}

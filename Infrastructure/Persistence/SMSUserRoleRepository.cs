@@ -690,15 +690,56 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleCode, userRole.Code));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRoleName, userRole.Name));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRoleName, userRole.Name.Trim()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, userRole.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, userRole.CreatedDate));
 
+            var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            var newCode = new SqlParameter("@pNewSMSUserRoleCode", SqlDbType.VarChar, 60) { Direction = ParameterDirection.Output };
+            cmd.Parameters.Add(newID);
+            cmd.Parameters.Add(newCode);
+
+
+
             await sql.OpenAsync().ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+
+            string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
+
+
+            if (userRole.Permissions != null)
+            {
+                foreach (var permission in userRole.Permissions)
+                {
+                    using var permCmd = new SqlCommand(StoredProcs.pr_SMSUserRolePermission_Insert, sql)
+                    {
+                        CommandType = CommandType.StoredProcedure
+                    };
+
+                    permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionCode, permission.Code));
+                    permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionSMSUserRoleCode, newCodeValue));
+                    permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionModule, permission.SMSModule));
+                    permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionCreate, permission.Create));
+                    permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionRead, permission.Read));
+                    permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionUpdate, permission.Update));
+                    permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionDelete, permission.Delete));
+
+                    var newPermissionID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
+                    var newPermissionCode = new SqlParameter("@pNewPermissionCode", SqlDbType.VarChar, 60) { Direction = ParameterDirection.Output };
+                    permCmd.Parameters.Add(newPermissionID);
+                    permCmd.Parameters.Add(newPermissionCode);
+
+                    await permCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                }
+            }
+
+
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetByIdAsync(userRole.Code).ConfigureAwait(false);
+            
+
+            return await GetByIdAsync(newCodeValue).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -775,18 +816,16 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                 return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureDeleteItem($"{_logHeader} {StoredProcs.pr_SMSUserRole_Deactivate} ID:{id}", null);
+            _logger.LogInfrastructureDeleteItem($"{_logHeader} {StoredProcs.pr_SMSUserRole_Delete} ID:{id}", null);
 
             using var sql = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(StoredProcs.pr_SMSUserRole_Deactivate, sql)
+            using var cmd = new SqlCommand(StoredProcs.pr_SMSUserRole_Delete, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleDeactivatedBy, "SYSTEM"));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleDeactivatedDate, DateTime.UtcNow));
-
+            
             await sql.OpenAsync().ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);

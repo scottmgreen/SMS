@@ -135,6 +135,14 @@ public sealed class SMSOrganizationalGroupRepository : BaseRepository<SMSOrganiz
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, group.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
+
+            var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            var newCode = new SqlParameter("@pNewGroupCode", SqlDbType.VarChar, 60) { Direction = ParameterDirection.Output };
+            cmd.Parameters.Add(newID);
+            cmd.Parameters.Add(newCode);
+
+
+
             await sql.OpenAsync().ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);

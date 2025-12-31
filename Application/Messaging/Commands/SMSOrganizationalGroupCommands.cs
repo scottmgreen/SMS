@@ -1,7 +1,7 @@
 using SMS_Application.Common;
 using SMS_Shared.Common;
 using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
+using Domain.Entities;
 
 namespace SMS_Application.Messaging.Commands;
 

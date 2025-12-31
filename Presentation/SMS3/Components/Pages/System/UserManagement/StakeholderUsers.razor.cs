@@ -6,6 +6,7 @@ using SMS_Application.Messaging.Queries;
 using SMS_Application.Interfaces;
 using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
+using SMS_Domain.Enums;
 using SMS_Shared.Common;
 using SMS3.Components.Pages.System.Components;
 
@@ -26,7 +27,26 @@ public partial class StakeholderUsers : ComponentBase
     private string? ErrorMessage { get; set; }
 
     // Predefined stakeholder types
-    private static readonly string[] StakeholderTypes = { "SUT-0001", "SUT-0002", "SUT-0003" };
+    //private static readonly string[] StakeholderTypes = { "SUT-0001", "SUT-0002", "SUT-0003" };
+    private string[] StakeholderTypes { get; set; } = Array.Empty<string>();
+
+    // Form Models
+    private EditStakeholderUserModel editUser = new();
+    private CreateStakeholderUserModel NewUser = new();
+
+    // Create Modal Properties  
+    private bool ShowCreateModal { get; set; }
+    private bool IsSaving { get; set; }
+
+    // Edit Modal Properties
+    private bool ShowEditModal { get; set; }
+    private SMSStakeholderUser? CurrentEditUser { get; set; }
+
+    // Role Assignment Modal Properties
+    private bool ShowRoleModal { get; set; }
+    private string RoleUserCode { get; set; } = string.Empty;
+    private string RoleUserDisplayName { get; set; } = string.Empty;
+    private string CurrentRoleCode { get; set; } = string.Empty;
 
     // Component References
     private RadzenDataGrid<SMSStakeholderUser>? usersGrid;
@@ -63,6 +83,10 @@ public partial class StakeholderUsers : ComponentBase
                 groupsResult.Value?.ToList() ?? new List<SMSStakeholderGroup>() : 
                 new List<SMSStakeholderGroup>();
 
+
+            StakeholderTypes = SMSStakeholderType.GetAllValuesAsStringArray();
+
+
             Logger.LogInformation("Loaded {UserCount} stakeholder users, {RoleCount} user roles, and {GroupCount} stakeholder groups", 
                 StakeholderUsersList.Count, UserRoles.Count, AllStakeholderGroups.Count);
 
@@ -81,46 +105,43 @@ public partial class StakeholderUsers : ComponentBase
 
     private async Task ShowCreateDialog()
     {
-        var createUser = new CreateStakeholderUserModel();
-        
-        var result = await DialogService.OpenAsync<CreateStakeholderUserDialog>("Create Stakeholder User",
-            new Dictionary<string, object>
-            {
-                { "Model", createUser },
-                { "UserRoles", UserRoles },
-                { "StakeholderTypes", StakeholderTypes }
-            },
-            new DialogOptions { Width = "800px", Height = "600px", Resizable = true, Draggable = true });
-
-        if (result is CreateStakeholderUserModel model && model != null)
-        {
-            await CreateUser(model);
-        }
+        NewUser = new CreateStakeholderUserModel();
+        ShowCreateModal = true;
+        StateHasChanged();
     }
 
-    private async Task CreateUser(CreateStakeholderUserModel model)
+    private async Task CreateUser()
     {
+        if (!IsCreateFormValid)
+        {
+            ShowErrorNotification("Please fill in all required fields.");
+            return;
+        }
+
         try
         {
+            IsSaving = true;
+            StateHasChanged();
+
             // Create user entity
             var userId = new SMSStakeholderUserID($"SU-0000");
             var user = new SMSStakeholderUser(userId)
             {
                 Code = userId.Value,
-                FirstName = FirstName.Create(model.FirstName).Value,
-                LastName = LastName.Create(model.LastName).Value,
-                UserName = UserName.Create(model.UserName).Value,
-                Password = Password.Create(model.Password).Value,
-                StakeholderType = model.StakeholderType,
-                Organization = model.Organization,
+                FirstName = FirstName.Create(NewUser.FirstName).Value,
+                LastName = LastName.Create(NewUser.LastName).Value,
+                UserName = UserName.Create(NewUser.UserName).Value,
+                Password = Password.Create(NewUser.Password).Value,
+                StakeholderType = NewUser.StakeholderType,
+                Organization = NewUser.Organization,
                 IsActive = true,
-                SMSUserType = "sut-0003" // MEMBER - this needs fixing as noted in original
+                SMSUserType = "StakeHolder"
             };
 
             // Assign user role if specified
-            if (!string.IsNullOrWhiteSpace(model.UserRoleCode))
+            if (!string.IsNullOrWhiteSpace(NewUser.UserRoleCode))
             {
-                var roleQuery = new GetSMSUserRoleByIdQuery(model.UserRoleCode);
+                var roleQuery = new GetSMSUserRoleByIdQuery(NewUser.UserRoleCode);
                 var roleResult = await Mediator.SendAsync(roleQuery, CancellationToken.None);
                 if (roleResult.IsSuccess && roleResult.Value != null)
                 {
@@ -133,7 +154,8 @@ public partial class StakeholderUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification($"Stakeholder user '{model.FirstName} {model.LastName}' created successfully.");
+                ShowSuccessNotification($"Stakeholder user '{NewUser.FirstName} {NewUser.LastName}' created successfully.");
+                CloseCreateModal();
                 await LoadDataAsync();
             }
             else
@@ -146,11 +168,38 @@ public partial class StakeholderUsers : ComponentBase
             Logger.LogError(ex, "Error creating stakeholder user");
             ShowErrorNotification("Error creating stakeholder user. Please try again.");
         }
+        finally
+        {
+            IsSaving = false;
+            StateHasChanged();
+        }
     }
+
+    private void CloseCreateModal()
+    {
+        ShowCreateModal = false;
+        NewUser = new CreateStakeholderUserModel();
+        StateHasChanged();
+    }
+
+    private bool IsCreateFormValid => 
+        !string.IsNullOrWhiteSpace(NewUser.FirstName) && 
+        !string.IsNullOrWhiteSpace(NewUser.LastName) && 
+        !string.IsNullOrWhiteSpace(NewUser.UserName) && 
+        !string.IsNullOrWhiteSpace(NewUser.Password) &&
+        !string.IsNullOrWhiteSpace(NewUser.StakeholderType) &&
+        !string.IsNullOrWhiteSpace(NewUser.Organization);
+
+    // Transform stakeholder types for dropdown
+    private IEnumerable<object> StakeholderTypesForDropdown => StakeholderTypes.Select(type => new { 
+        Value = type, 
+        Text = GetStakeholderTypeDisplay(type) 
+    });
 
     private async Task ShowEditDialog(SMSStakeholderUser user)
     {
-        var editUser = new EditStakeholderUserModel
+        CurrentEditUser = user;
+        editUser = new EditStakeholderUserModel
         {
             UserId = user.Code,
             FirstName = user.FirstName?.Value ?? "",
@@ -160,63 +209,57 @@ public partial class StakeholderUsers : ComponentBase
             UserRoleCode = user.UserRole?.Code ?? "",
             IsActive = user.IsActive
         };
-        
-        var result = await DialogService.OpenAsync<EditStakeholderUserDialog>("Edit Stakeholder User",
-            new Dictionary<string, object>
-            {
-                { "Model", editUser },
-                { "UserRoles", UserRoles },
-                { "StakeholderTypes", StakeholderTypes }
-            },
-            new DialogOptions { Width = "800px", Height = "600px", Resizable = true, Draggable = true });
-
-        if (result is EditStakeholderUserModel model && model != null)
-        {
-            await UpdateUser(model);
-        }
+        ShowEditModal = true;
+        StateHasChanged();
     }
 
-    private async Task UpdateUser(EditStakeholderUserModel model)
+    private async Task UpdateUser()
     {
+        if (!IsEditFormValid)
+        {
+            ShowErrorNotification("Please fill in all required fields.");
+            return;
+        }
+
         try
         {
-            var getUserQuery = new GetSMSStakeholderUserByIdQuery(model.UserId);
-            var userResult = await Mediator.SendAsync(getUserQuery, CancellationToken.None);
-            
-            if (userResult.IsFailure)
+            IsSaving = true;
+            StateHasChanged();
+
+            if (CurrentEditUser == null)
             {
-                ShowErrorNotification("User not found.");
+                ShowErrorNotification("No user selected for update.");
                 return;
             }
 
-            var user = userResult.Value;
-            user.FirstName = FirstName.Create(model.FirstName).Value;
-            user.LastName = LastName.Create(model.LastName).Value;
-            user.StakeholderType = model.StakeholderType;
-            user.Organization = model.Organization;
-            user.IsActive = model.IsActive;
+            CurrentEditUser.FirstName = FirstName.Create(editUser.FirstName).Value;
+            CurrentEditUser.LastName = LastName.Create(editUser.LastName).Value;
+            CurrentEditUser.StakeholderType = editUser.StakeholderType;
+            CurrentEditUser.Organization = editUser.Organization;
+            CurrentEditUser.IsActive = editUser.IsActive;
 
             // Update user role if specified
-            if (!string.IsNullOrWhiteSpace(model.UserRoleCode))
+            if (!string.IsNullOrWhiteSpace(editUser.UserRoleCode))
             {
-                var roleQuery = new GetSMSUserRoleByIdQuery(model.UserRoleCode);
+                var roleQuery = new GetSMSUserRoleByIdQuery(editUser.UserRoleCode);
                 var roleResult = await Mediator.SendAsync(roleQuery, CancellationToken.None);
                 if (roleResult.IsSuccess && roleResult.Value != null)
                 {
-                    user.UserRole = roleResult.Value;
+                    CurrentEditUser.UserRole = roleResult.Value;
                 }
             }
             else
             {
-                user.UserRole = null;
+                CurrentEditUser.UserRole = null;
             }
 
-            var updateCommand = new UpdateSMSStakeholderUserCommand(user);
+            var updateCommand = new UpdateSMSStakeholderUserCommand(CurrentEditUser);
             var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification($"Stakeholder user '{model.FirstName} {model.LastName}' updated successfully.");
+                ShowSuccessNotification($"Stakeholder user '{editUser.FirstName} {editUser.LastName}' updated successfully.");
+                CloseEditModal();
                 await LoadDataAsync();
             }
             else
@@ -226,10 +269,29 @@ public partial class StakeholderUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error updating stakeholder user: {UserId}", model.UserId);
+            Logger.LogError(ex, "Error updating stakeholder user: {UserId}", editUser.UserId);
             ShowErrorNotification("Error updating stakeholder user. Please try again.");
         }
+        finally
+        {
+            IsSaving = false;
+            StateHasChanged();
+        }
     }
+
+    private void CloseEditModal()
+    {
+        ShowEditModal = false;
+        CurrentEditUser = null;
+        editUser = new EditStakeholderUserModel();
+        StateHasChanged();
+    }
+
+    private bool IsEditFormValid => 
+        !string.IsNullOrWhiteSpace(editUser.FirstName) && 
+        !string.IsNullOrWhiteSpace(editUser.LastName) && 
+        !string.IsNullOrWhiteSpace(editUser.StakeholderType) &&
+        !string.IsNullOrWhiteSpace(editUser.Organization);
 
     private async Task ShowDeleteDialog(string userId, string displayName)
     {
@@ -331,20 +393,26 @@ public partial class StakeholderUsers : ComponentBase
 
     private async Task ShowRoleDialog(string userId, string displayName, string? currentRoleCode)
     {
-        var result = await DialogService.OpenAsync<AssignRoleDialog>("Assign User Role",
-            new Dictionary<string, object>
-            {
-                { "UserId", userId },
-                { "DisplayName", displayName },
-                { "CurrentRoleCode", currentRoleCode ?? "" },
-                { "UserRoles", UserRoles }
-            },
-            new DialogOptions { Width = "500px", Height = "400px", Resizable = true, Draggable = true });
+        RoleUserCode = userId;
+        RoleUserDisplayName = displayName;
+        CurrentRoleCode = currentRoleCode ?? "";
+        ShowRoleModal = true;
+        StateHasChanged();
+    }
 
-        if (result is string roleCode)
-        {
-            await AssignRole(userId, displayName, roleCode);
-        }
+    private void CloseRoleModal()
+    {
+        ShowRoleModal = false;
+        RoleUserCode = string.Empty;
+        RoleUserDisplayName = string.Empty;
+        CurrentRoleCode = string.Empty;
+        StateHasChanged();
+    }
+
+    private async Task AssignRoleFromModal(string? userRoleCode)
+    {
+        await AssignRole(RoleUserCode, RoleUserDisplayName, userRoleCode);
+        CloseRoleModal();
     }
 
     private async Task AssignRole(string userId, string displayName, string? userRoleCode)
@@ -609,10 +677,11 @@ public partial class StakeholderUsers : ComponentBase
 
     private BadgeStyle GetStakeholderTypeBadgeStyle(string stakeholderType)
     {
-        return stakeholderType switch
+        var stakeholderTypeEnum = SMSStakeholderType.FromValue(stakeholderType);
+        return stakeholderTypeEnum?.Value switch
         {
             "SUT-0001" => BadgeStyle.Primary,   // Airline
-            "SUT-0002" => BadgeStyle.Success,   // Ground Handler  
+            "SUT-0002" => BadgeStyle.Success,   // Inspector  
             "SUT-0003" => BadgeStyle.Warning,   // Contractor
             _ => BadgeStyle.Secondary
         };
@@ -620,13 +689,8 @@ public partial class StakeholderUsers : ComponentBase
 
     private string GetStakeholderTypeDisplay(string stakeholderType)
     {
-        return stakeholderType switch
-        {
-            "SUT-0001" => "Airline",
-            "SUT-0002" => "Ground Handler",
-            "SUT-0003" => "Contractor",
-            _ => stakeholderType
-        };
+        var stakeholderTypeEnum = SMSStakeholderType.FromValue(stakeholderType);
+        return stakeholderTypeEnum?.Name ?? stakeholderType;
     }
 
     #endregion

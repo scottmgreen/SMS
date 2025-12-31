@@ -189,7 +189,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
     /// <summary>
     /// Gets SMS application groups by user code
     /// </summary>
-    public async Task<Result<IEnumerable<SMSApplicationGroup>>> GetByUserCodeAsync(string userCode, CancellationToken ct = default)
+    public async Task<Result<IEnumerable<SMSApplicationGroup>>> GetGroupsByUserCodeAsync(string userCode, CancellationToken ct = default)
     {
         try
         {
@@ -198,16 +198,16 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
                 return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.SMSApplicationGroupError.UserCodeRequired);
             }
 
-            _logger.LogInfrastructureGetItems($"{_logheader} {StoredProcs.pr_SMSApplicationGroup_GetByUserID} UserCode:{userCode}", null);
+            _logger.LogInfrastructureGetItems($"{_logheader} {StoredProcs.pr_SMSApplicationGroups_GetByUserCode} UserCode:{userCode}", null);
 
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_SMSApplicationGroup_GetByUserID, sql)
+            using SqlCommand cmd = new(StoredProcs.pr_SMSApplicationGroups_GetByUserCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserCode, userCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, "SYSTEM"));
+            //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, "SYSTEM"));
 
             List<SMSApplicationGroup> response = new();
 
@@ -502,46 +502,46 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
         }
     }
 
-    public async Task<Result<IEnumerable<SMSApplicationGroup>>> GetGroupsByUserCodeAsync(string userCode, CancellationToken ct = default)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(userCode))
-            {
-                return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.SMSApplicationGroupError.CodeRequired);
-            }
+    //public async Task<Result<IEnumerable<SMSApplicationGroup>>> GetGroupsByUserCodeAsync(string userCode, CancellationToken ct = default)
+    //{
+    //    try
+    //    {
+    //        if (string.IsNullOrWhiteSpace(userCode))
+    //        {
+    //            return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.SMSApplicationGroupError.CodeRequired);
+    //        }
 
-            _logger.LogInfrastructureGetItems($"{_logheader} {StoredProcs.pr_SMSApplicationGroups_GetByUserCode} GroupCode:{userCode}", null);
+    //        _logger.LogInfrastructureGetItems($"{_logheader} {StoredProcs.pr_SMSApplicationGroups_GetByUserCode} GroupCode:{userCode}", null);
 
-            using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_SMSApplicationGroups_GetByUserCode, sql)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
+    //        using SqlConnection sql = new(_connectionString);
+    //        using SqlCommand cmd = new(StoredProcs.pr_SMSApplicationGroups_GetByUserCode, sql)
+    //        {
+    //            CommandType = CommandType.StoredProcedure
+    //        };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupUserCode, userCode));
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupUserCode, userCode));
 
-            List<SMSApplicationGroup> groups = new();
+    //        List<SMSApplicationGroup> groups = new();
 
-            await sql.OpenAsync(ct).ConfigureAwait(false);
-            using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
-            {
-                while (await reader.ReadAsync().ConfigureAwait(false))
-                {
-                    var group = Mappers.MapToSMSApplicationGroup(reader);
-                    groups.Add(group);
-                }
-            }
-            await sql.CloseAsync().ConfigureAwait(false);
+    //        await sql.OpenAsync(ct).ConfigureAwait(false);
+    //        using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
+    //        {
+    //            while (await reader.ReadAsync().ConfigureAwait(false))
+    //            {
+    //                var group = Mappers.MapToSMSApplicationGroup(reader);
+    //                groups.Add(group);
+    //            }
+    //        }
+    //        await sql.CloseAsync().ConfigureAwait(false);
 
-            return Result<IEnumerable<SMSApplicationGroup>>.Success((IEnumerable<SMSApplicationGroup>)groups);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureGetItemsError($"{_logheader} {ex.Message}", null);
-            return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.SMSApplicationGroupError.NotFound);
-        }
-    }
+    //        return Result<IEnumerable<SMSApplicationGroup>>.Success((IEnumerable<SMSApplicationGroup>)groups);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogInfrastructureGetItemsError($"{_logheader} {ex.Message}", null);
+    //        return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.SMSApplicationGroupError.NotFound);
+    //    }
+    //}
 
 
 

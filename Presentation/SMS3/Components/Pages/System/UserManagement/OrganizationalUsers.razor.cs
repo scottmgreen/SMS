@@ -8,6 +8,7 @@ using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
 using SMS_Domain.Enums;
 using SMS_Shared.Common;
+using Domain.Entities;
 
 namespace SMS3.Components.Pages.System.UserManagement;
 

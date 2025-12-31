@@ -131,25 +131,25 @@ public sealed class SMSApplicationGroupDataService : BaseDataService<SMSApplicat
     /// <summary>
     /// Gets SMS Application Groups by user code
     /// </summary>
-    public async Task<Result<IEnumerable<SMSApplicationGroup>>> GetByUserCodeAsync(string userCode, CancellationToken ct = default)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(userCode))
-            {
-                _logger.LogError("GetSMSApplicationGroupsByUserCodeAsync received null or empty user code");
-                return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.SMSApplicationGroupError.UserCodeRequired);
-            }
+    //public async Task<Result<IEnumerable<SMSApplicationGroup>>> GetGroupsByUserCodeAsync(string userCode, CancellationToken ct = default)
+    //{
+    //    try
+    //    {
+    //        if (string.IsNullOrWhiteSpace(userCode))
+    //        {
+    //            _logger.LogError("GetSMSApplicationGroupsByUserCodeAsync received null or empty user code");
+    //            return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.SMSApplicationGroupError.UserCodeRequired);
+    //        }
 
-            _logger.LogInformation("Retrieving SMS Application Groups by user code: {UserCode}", userCode);
-            return await _repository.GetGroupsByUserCodeAsync(userCode, ct);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Application Groups by user code: {UserCode}", userCode);
-            return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.SMSApplicationGroupError.NotFound);
-        }
-    }
+    //        _logger.LogInformation("Retrieving SMS Application Groups by user code: {UserCode}", userCode);
+    //        return await _repository.GetGroupsByUserCodeAsync(userCode, ct);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogError(ex, "Unexpected error retrieving SMS Application Groups by user code: {UserCode}", userCode);
+    //        return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.SMSApplicationGroupError.NotFound);
+    //    }
+    //}
 
     /// <summary>
     /// Updates an existing SMS Application Group

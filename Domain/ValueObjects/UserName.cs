@@ -20,7 +20,7 @@ public sealed class UserName : BaseValueObject
     }
 
     public static Result<UserName> Create(string userName) =>
-        Result.Create(userName, DomainErrors.UserNameError.NullOrEmpty)
+        Result.Create(userName.Trim(), DomainErrors.UserNameError.NullOrEmpty)
             .Ensure(u => !string.IsNullOrWhiteSpace(u), DomainErrors.UserNameError.NullOrEmpty)
             .Ensure(u => u.Length >= MinLength, DomainErrors.UserNameError.TooShort)
             .Ensure(u => u.Length <= MaxLength, DomainErrors.UserNameError.TooLong)

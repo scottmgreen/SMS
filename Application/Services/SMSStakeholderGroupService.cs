@@ -216,7 +216,7 @@ public class SMSStakeholderGroupService
     /// <summary>
     /// Gets stakeholder groups for a specific user
     /// </summary>
-    public async Task<Result<IEnumerable<SMSStakeholderGroup>>> GetUserStakeholderGroupsAsync(string userCode)
+    public async Task<Result<IEnumerable<SMSStakeholderGroup>>> GetSMSStakeholderGroupsByUserCodeAsync(string userCode)
     {
         try
         {

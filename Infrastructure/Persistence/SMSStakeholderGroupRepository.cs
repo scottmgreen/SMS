@@ -185,7 +185,7 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
     /// <summary>
     /// Gets SMS stakeholder groups by user code
     /// </summary>
-    public async Task<Result<IEnumerable<SMSStakeholderGroup>>> GetByUserCodeAsync(string userCode, CancellationToken ct = default)
+    public async Task<Result<IEnumerable<SMSStakeholderGroup>>> GetGroupsByUserCodeAsync(string userCode, CancellationToken ct = default)
     {
         try
         {

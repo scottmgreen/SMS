@@ -7,6 +7,7 @@ using SMS_Application.Interfaces;
 using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
 using SMS_Shared.Common;
+using SMS3.Components.Pages.System.Components;
 
 namespace SMS3.Components.Pages.System.UserManagement;
 
@@ -45,7 +46,11 @@ public partial class ApplicationUsers : ComponentBase
 
     // Form Models
     private EditUserModel editUser = new();
-    private CreateUserModel createUser = new();
+    private CreateUserModel NewUser = new();
+
+    // Create Modal Properties
+    private bool ShowCreateModal { get; set; }
+    private bool IsSaving { get; set; }
 
     // Component References
     private RadzenDataGrid<SMSApplicationUser>? usersGrid;
@@ -154,39 +159,33 @@ public partial class ApplicationUsers : ComponentBase
 
     private async Task ShowCreateDialog()
     {
-        // TODO: Implement create modal instead of dialog
-        ShowInfoNotification("Create user functionality will be implemented with modal interface soon.");
-        
-        /*
-        createUser = new CreateUserModel();
-        
-        var result = await DialogService.OpenAsync<CreateApplicationUserDialog>("Create Application User",
-            new Dictionary<string, object>
-            {
-                { "Model", createUser }
-            },
-            new DialogOptions { Width = "600px", Height = "500px", Resizable = true, Draggable = true });
-
-        if (result is CreateUserModel model && model != null)
-        {
-            await CreateUser(model);
-        }
-        */
+        NewUser = new CreateUserModel();
+        ShowCreateModal = true;
+        StateHasChanged();
     }
 
-    private async Task CreateUser(CreateUserModel model)
+    private async Task CreateUser()
     {
+        if (!IsCreateFormValid)
+        {
+            ShowErrorNotification("Please fill in all required fields.");
+            return;
+        }
+
         try
         {
+            IsSaving = true;
+            StateHasChanged();
+
             // Create user entity
             var userId = new SMSApplicationUserID($"AU-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}");
             var user = new SMSApplicationUser(userId)
             {
                 Code = userId.Value,
-                FirstName = FirstName.Create(model.FirstName).Value,
-                LastName = LastName.Create(model.LastName).Value,
-                UserName = UserName.Create(model.UserName).Value,
-                Password = Password.Create(model.Password).Value,
+                FirstName = FirstName.Create(NewUser.FirstName).Value,
+                LastName = LastName.Create(NewUser.LastName).Value,
+                UserName = UserName.Create(NewUser.UserName).Value,
+                Password = Password.Create(NewUser.Password).Value,
                 IsActive = true,
                 SMSUserType = "Application",
                 CreatedBy = SessionService.GetCurrentUserId() ?? "SYSTEM",
@@ -198,7 +197,8 @@ public partial class ApplicationUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification($"Application user '{model.FirstName} {model.LastName}' created successfully.");
+                ShowSuccessNotification($"Application user '{NewUser.FirstName} {NewUser.LastName}' created successfully.");
+                CloseCreateModal();
                 await LoadDataAsync();
             }
             else
@@ -211,7 +211,25 @@ public partial class ApplicationUsers : ComponentBase
             Logger.LogError(ex, "Error creating application user");
             ShowErrorNotification("Error creating application user. Please try again.");
         }
+        finally
+        {
+            IsSaving = false;
+            StateHasChanged();
+        }
     }
+
+    private void CloseCreateModal()
+    {
+        ShowCreateModal = false;
+        NewUser = new CreateUserModel();
+        StateHasChanged();
+    }
+
+    private bool IsCreateFormValid => 
+        !string.IsNullOrWhiteSpace(NewUser.FirstName) && 
+        !string.IsNullOrWhiteSpace(NewUser.LastName) && 
+        !string.IsNullOrWhiteSpace(NewUser.UserName) && 
+        !string.IsNullOrWhiteSpace(NewUser.Password);
 
     private async Task EditUser(string userId)
     {

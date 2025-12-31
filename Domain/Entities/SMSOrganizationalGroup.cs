@@ -1,5 +1,6 @@
+using Domain.Entities;
+
 using SMS_Domain.Common;
-using SMS_Domain.ValueObjects;
 
 namespace SMS_Domain.Entities;
 

@@ -185,7 +185,7 @@
         private static readonly Lazy<string> _pr_SMSStakeholderUserGroup_GetAll = new(() => "pr_SMSStakeholderUserGroup_GetAll");
         public static string pr_SMSStakeholderUserGroup_GetAll => _pr_SMSStakeholderUserGroup_GetAll.Value;
 
-        private static readonly Lazy<string> _pr_SMSStakeholderUserGroup_GetByUserID = new(() => "pr_SMSStakeholderUserGroup_GetByUserID");
+        private static readonly Lazy<string> _pr_SMSStakeholderUserGroup_GetByUserID = new(() => "pr_SMSStakeholderUserGroup_GetGroupsByUserCode");
         public static string pr_SMSStakeholderUserGroup_GetByUserID => _pr_SMSStakeholderUserGroup_GetByUserID.Value;
 
         private static readonly Lazy<string> _pr_SMSStakeholderUserGroup_GetByGroupCode = new(() => "pr_SMSStakeholderUserGroup_GetByGroupCode");
@@ -222,8 +222,8 @@
         private static readonly Lazy<string> _pr_SMSApplicationGroup_GetAll = new(() => "pr_SMSApplicationGroup_GetAll");
         public static string pr_SMSApplicationGroup_GetAll => _pr_SMSApplicationGroup_GetAll.Value;
 
-        private static readonly Lazy<string> _pr_SMSApplicationGroup_GetByUserID = new(() => "pr_SMSApplicationGroup_GetByUserID");
-        public static string pr_SMSApplicationGroup_GetByUserID => _pr_SMSApplicationGroup_GetByUserID.Value;
+        private static readonly Lazy<string> _pr_SMSApplicationGroups_GetByUserCode = new(() => "pr_SMSApplicationUserGroup_GetGroupsByUserCode");
+        public static string pr_SMSApplicationGroups_GetByUserCode => _pr_SMSApplicationGroups_GetByUserCode.Value;
 
         private static readonly Lazy<string> _pr_SMSApplicationGroup_GetByCode = new(() => "pr_SMSApplicationGroup_GetByCode");
         public static string pr_SMSApplicationGroup_GetByCode => _pr_SMSApplicationGroup_GetByCode.Value;
@@ -243,8 +243,7 @@
         private static readonly Lazy<string> _pr_SMSApplicationUserGroup_ClearUserGroups = new(() => "pr_SMSApplicationUserGroup_ClearUserGroups");
         public static string pr_SMSApplicationUserGroup_ClearUserGroups => _pr_SMSApplicationUserGroup_ClearUserGroups.Value;
 
-        private static readonly Lazy<string> _pr_SMSApplicationGroups_GetByUserCode = new(() => "pr_SMSApplicationUserGroup_GetGroupsByUserCode");
-        public static string pr_SMSApplicationGroups_GetByUserCode => _pr_SMSApplicationGroups_GetByUserCode.Value;
+       
         #endregion
 
 
@@ -374,6 +373,9 @@
         /// </summary>
         private static readonly Lazy<string> _pr_SMSUserRolePermission_Update = new Lazy<string>(() => "pr_SMSUserRolePermission_Update");
         public static string pr_SMSUserRolePermission_Update => _pr_SMSUserRolePermission_Update.Value;
+
+        private static readonly Lazy<string> _pr_SMSUserRolePermission_Insert = new Lazy<string>(() => "pr_SMSUserRolePermission_Insert");
+        public static string pr_SMSUserRolePermission_Insert => _pr_SMSUserRolePermission_Insert.Value;
 
         #endregion
 

@@ -48,8 +48,10 @@
                             <RadzenIcon Icon="list" Style="margin-right: 0.5rem;" />
                             Application Users (@ApplicationUsersList.Count())
                         </RadzenText>
-                        <RadzenButton Text="Export" Icon="download" Variant="Variant.Outlined" Size="ButtonSize.Small" 
-                                    Click="@ExportUsers" />
+                        @* <RadzenButton Text="Export" Icon="download" Variant="Variant.Outlined" Size="ButtonSize.Small" 
+                                    Click="@ExportUsers" /> *@
+                        <RadzenButton Text="Add User" Icon="add" ButtonStyle="ButtonStyle.Success"
+                                      Click="@ShowCreateDialog" />
                     </RadzenStack>
                 </RadzenCard>
                 <RadzenCard>
@@ -115,12 +117,12 @@
                                 <RadzenDataGridColumn TItem="SMSApplicationUser" Title="Actions" Width="250px" Sortable="false" Filterable="false">
                                     <Template Context="user">
                                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
+                                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" 
                                                         Click="@(() => EditUser(user.Code))" 
                                                         title="Edit User" />
                                             <RadzenButton Icon="group" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small"
                                                         Click="@(() => ManageGroups(user.Code, user.DisplayName))" title="Manage Groups" />
-                                            <RadzenButton Icon="vpn_key" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small" 
+                                            <RadzenButton Icon="lock" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
                                                         Click="@(() => OpenPasswordChangeModal(user.Code, user.DisplayName))" 
                                                         title="Change Password" />
                                             <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
@@ -220,6 +222,80 @@
                     OnPasswordChanged="@OnPasswordChangedSuccess" 
                     OnCancel="@ClosePasswordChangeModal" />
 
+<!-- Create User Modal -->
+@if (ShowCreateModal)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-lg">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-primary">
+                    <h5 class="sms-modal-title">
+                        <i class="fas fa-user-plus"></i> Create Application User
+                    </h5>
+                </div>
+                <div class="sms-modal-body">
+                    <RadzenTemplateForm Data="@NewUser" Submit="@((CreateUserModel model) => CreateUser())">
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="First Name *" Variant="Variant.Outlined">
+                                    <RadzenTextBox @bind-Value="@NewUser.FirstName" Name="FirstName" 
+                                                   Placeholder="Enter first name" 
+                                                   Style="width: 100%;" />
+                                </RadzenFormField>
+                                <RadzenRequiredValidator Component="FirstName" Text="First name is required" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Last Name *" Variant="Variant.Outlined">
+                                    <RadzenTextBox @bind-Value="@NewUser.LastName" Name="LastName" 
+                                                   Placeholder="Enter last name" 
+                                                   Style="width: 100%;" />
+                                </RadzenFormField>
+                                <RadzenRequiredValidator Component="LastName" Text="Last name is required" />
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12">
+                                <RadzenFormField Text="Username *" Variant="Variant.Outlined">
+                                    <RadzenTextBox @bind-Value="@NewUser.UserName" Name="UserName" 
+                                                   Placeholder="Enter username" 
+                                                   Style="width: 100%;" />
+                                </RadzenFormField>
+                                <RadzenRequiredValidator Component="UserName" Text="Username is required" />
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12">
+                                <RadzenFormField Text="Password *" Variant="Variant.Outlined">
+                                    <RadzenPassword @bind-Value="@NewUser.Password" Name="Password" 
+                                                    Placeholder="Enter password" 
+                                                    Style="width: 100%;" />
+                                </RadzenFormField>
+                                <RadzenRequiredValidator Component="Password" Text="Password is required" />
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenTemplateForm>
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Style="margin: 0;">
+                            <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
+                            Application users have access to SMS internal functions and administrative features.
+                        </RadzenAlert>
+                        <div class="d-flex gap-2">
+                            <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseCreateModal" />
+                            <RadzenButton Text="Create User" Icon="save" ButtonStyle="ButtonStyle.Primary" 
+                                          Click="@CreateUser" Disabled="@(!IsCreateFormValid || IsSaving)"
+                                          Style="background-color: #212e61; border-color: #212e61;" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <!-- Group Management Modal -->
 @if (ShowGroupsModal && !string.IsNullOrEmpty(GroupManagementUserCode))
 {
@@ -314,7 +390,7 @@
                                                             </RadzenText>
                                                             @if (!string.IsNullOrEmpty(group.Description))
                                                             {
-                                                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-textsecondary-color);">
                                                                     @group.Description
                                                                 </RadzenText>
                                                             }

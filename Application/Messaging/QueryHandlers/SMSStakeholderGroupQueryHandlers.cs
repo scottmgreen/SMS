@@ -124,7 +124,7 @@ public class GetSMSStakeholderGroupsByUserCodeQueryHandler : BaseQueryBundle, IR
         {
             _logger.LogInformation("Processing GetSMSStakeholderGroupsByUserCodeQuery for user: {UserCode}", request.UserCode);
 
-            var result = await _dataService.GetByUserCodeAsync(request.UserCode, ct);
+            var result = await _dataService.GetGroupsByUserCodeAsync(request.UserCode, ct);
 
             if (result.IsSuccess)
             {

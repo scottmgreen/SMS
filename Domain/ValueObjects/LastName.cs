@@ -32,7 +32,7 @@ public sealed class LastName : BaseValueObject
         /// <param name="lastName">The last name value.</param>
         /// <returns>The result of the last name creation process containing the last name or an error.</returns>
         public static Result<LastName> Create(string lastName) =>
-            Result.Create(lastName, DomainErrors.LastNameError.NullOrEmpty)
+            Result.Create(lastName.Trim(), DomainErrors.LastNameError.NullOrEmpty)
                 .Ensure(l => !string.IsNullOrWhiteSpace(l), DomainErrors.LastNameError.NullOrEmpty)
                 .Ensure(l => l.Length <= MaxLength, DomainErrors.LastNameError.LongerThanAllowed)
                 .Ensure(f => Regex.IsMatch(f, @"^[a-zA-Z]+$"), DomainErrors.LastNameError.ContainsSpecialCharactersOrNumbers)

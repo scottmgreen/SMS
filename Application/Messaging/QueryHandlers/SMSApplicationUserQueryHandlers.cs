@@ -351,7 +351,12 @@ public class ValidateSMSApplicationUserCredentialsQueryHandler : BaseQueryBundle
 
             var user = userResult.Value;
             var isValid = user.IsActive && user.Authenticate(request.Password);
-            
+
+            user.UpdatedBy = "SYSTEM";
+            user.LastLoginDate = DateTime.UtcNow;
+            await _dataService.UpdateSMSApplicationUserAsync(user, ct);
+
+
             _logger.LogInformation("Credential validation for {UserName}: {IsValid}", request.UserName, isValid);
             
             return Result<bool>.Success(isValid);

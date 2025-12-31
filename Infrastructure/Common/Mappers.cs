@@ -7,11 +7,11 @@ using System.Data;
 
 using SMS_Domain.Enums;
 using SMS_Domain.Models;
-using SMS_Domain.ValueObjects;
 
 using SMS_Infrastructure.Common;
 
 using SMS_Shared.Common;
+using Domain.Entities;
 
 namespace SMS_Infrastructure.Common;
 

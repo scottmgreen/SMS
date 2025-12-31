@@ -108,7 +108,7 @@ public sealed class SMSStakeholderGroupDataService : BaseDataService<SMSStakehol
     /// <summary>
     /// Gets SMS Stakeholder Groups by user code
     /// </summary>
-    public async Task<Result<IEnumerable<SMSStakeholderGroup>>> GetByUserCodeAsync(string userCode, CancellationToken ct = default)
+    public async Task<Result<IEnumerable<SMSStakeholderGroup>>> GetGroupsByUserCodeAsync(string userCode, CancellationToken ct = default)
     {
         try
         {
@@ -119,7 +119,7 @@ public sealed class SMSStakeholderGroupDataService : BaseDataService<SMSStakehol
             }
 
             _logger.LogInformation("Retrieving SMS Stakeholder Groups by user code: {UserCode}", userCode);
-            return await _repository.GetByUserCodeAsync(userCode, ct);
+            return await _repository.GetGroupsByUserCodeAsync(userCode, ct);
         }
         catch (Exception ex)
         {

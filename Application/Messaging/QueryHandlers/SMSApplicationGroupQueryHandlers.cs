@@ -124,7 +124,7 @@ public class GetSMSApplicationGroupsByUserCodeQueryHandler : BaseQueryBundle, IR
         {
             _logger.LogInformation("Processing GetSMSApplicationGroupsByUserCodeQuery for user: {UserCode}", request.UserCode);
 
-            var result = await _applicationGroupDataService.GetByUserCodeAsync(request.UserCode);
+            var result = await _applicationGroupDataService.GetGroupsByUserCodeAsync(request.UserCode);
 
             if (result.IsSuccess)
             {

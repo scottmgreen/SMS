@@ -37,7 +37,7 @@ namespace SMS_Domain.ValueObjects;
         /// <param name="firstName">The first name value.</param>
         /// <returns>The result of the first name creation process containing the first name or an error.</returns>
         public static Result<FirstName> Create(string firstName) =>
-            Result.Create(firstName, DomainErrors.FirstNameError.NullOrEmpty)
+            Result.Create(firstName.Trim(), DomainErrors.FirstNameError.NullOrEmpty)
                 .Ensure(f => !string.IsNullOrWhiteSpace(f), DomainErrors.FirstNameError.NullOrEmpty)
                 .Ensure(f => f.Length <= MaxLength, DomainErrors.FirstNameError.LongerThanAllowed)
                 .Ensure(f => Regex.IsMatch(f, @"^[a-zA-Z]+$"), DomainErrors.FirstNameError.ContainsSpecialCharactersOrNumbers)
