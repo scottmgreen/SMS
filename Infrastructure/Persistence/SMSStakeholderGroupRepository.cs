@@ -129,7 +129,7 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, groupCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, groupCode.Trim()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, "SYSTEM"));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);

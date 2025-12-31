@@ -200,7 +200,7 @@ public partial class StakeholderGroups : ComponentBase
             StateHasChanged();
 
             // Create group entity
-            var groupCode = $"SG-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
+            var groupCode = $"SG-0000";
             var groupId = new SMSStakeholderGroupID(groupCode);
             var group = new SMSStakeholderGroup(groupId)
             {
