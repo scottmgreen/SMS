@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Components;
 using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
 using SMS_Domain.Enums;
@@ -14,7 +15,7 @@ public partial class CreateInterviewDialog : ComponentBase
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private ILogger<CreateInterviewDialog> Logger { get; set; } = default!;
-    [CascadingParameter] public DialogService DialogService { get; set; } = default!;
+    [Inject] public DialogService DialogService { get; set; } = default!;
     #endregion
 
     #region Parameters

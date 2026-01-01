@@ -1,0 +1,381 @@
+@page "/Listings/ReportCalendar"
+@using SMS3.Components.Shared
+@using SMS_Application.Messaging.Queries
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Report Calendar - SMS3</PageTitle>
+
+<!-- SMS Page Header -->
+<PageHeader Title="Report Calendar"
+           Subtitle="View reports by date using an interactive calendar scheduler"
+           Icon="fas fa-calendar-alt">
+    <AdditionalContent>
+        <div class="d-flex gap-2">
+            <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                         Text="Today" 
+                         Icon="today"
+                         Click="@GoToToday"
+                         Size="ButtonSize.Small" />
+            <RadzenButton ButtonStyle="ButtonStyle.Info" 
+                         Text="Refresh" 
+                         Icon="refresh"
+                         Click="@RefreshData"
+                         Size="ButtonSize.Small" />
+        </div>
+    </AdditionalContent>
+</PageHeader>
+
+<!-- Calendar Scheduler -->
+<RadzenRow Gap="1rem">
+    <RadzenColumn Size="12">
+        <RadzenCard>
+            @if (IsLoading)
+            {
+                <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
+                    <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+                </div>
+            }
+            else
+            {
+                <!-- Scheduler Component -->
+                <RadzenScheduler @ref="scheduler" 
+                                TItem="ReportSchedulerItem" 
+                                Data="@SchedulerData"
+                                StartProperty="@nameof(ReportSchedulerItem.Start)"
+                                EndProperty="@nameof(ReportSchedulerItem.End)"
+                                TextProperty="@nameof(ReportSchedulerItem.Text)"
+                                SelectedIndex="2"
+                                SlotSelect="@OnSlotSelect"
+                                AppointmentSelect="@OnAppointmentSelect"
+                                AppointmentRender="@OnAppointmentRender"
+                                SlotRender="@OnSlotRender"
+                                Height="600px"
+                                Style="width: 100%;">
+                    
+                    <!-- Custom Views -->
+                    <RadzenDayView />
+                    <RadzenWeekView />
+                    <RadzenMonthView />
+                    <RadzenYearView />
+                    
+                </RadzenScheduler>
+            }
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>
+
+<!-- Report Statistics Card -->
+<RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+    <RadzenColumn Size="12" SizeMD="3">
+        <RadzenCard Style="text-align: center; padding: 1.5rem;">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="description" Style="font-size: 2rem; color: var(--rz-primary);" />
+                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: bold;">@Reports.Count</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-text-secondary-color);">Total Reports</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+    
+    <RadzenColumn Size="12" SizeMD="3">
+        <RadzenCard Style="text-align: center; padding: 1.5rem;">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="event" Style="font-size: 2rem; color: var(--rz-success);" />
+                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: bold;">@GetReportsThisMonth()</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-text-secondary-color);">This Month</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+    
+    <RadzenColumn Size="12" SizeMD="3">
+        <RadzenCard Style="text-align: center; padding: 1.5rem;">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="calendar_today" Style="font-size: 2rem; color: var(--rz-warning);" />
+                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: bold;">@GetReportsThisWeek()</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-text-secondary-color);">This Week</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+    
+    <RadzenColumn Size="12" SizeMD="3">
+        <RadzenCard Style="text-align: center; padding: 1.5rem;">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="today" Style="font-size: 2rem; color: var(--rz-info);" />
+                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: bold;">@GetReportsToday()</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-text-secondary-color);">Today</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>
+
+<!-- Read-Only Report Details Modal (copied from ReportListing) -->
+@if (ShowDetailsModal && SelectedReport != null)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-xxl">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-primary">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <h5 class="sms-modal-title mb-0">
+                            <i class="fas fa-file-alt"></i> Report Details - @SelectedReport.Code
+                        </h5>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                    Variant="Variant.Text"
+                                    Icon="close"
+                                    Size="ButtonSize.Small"
+                                    Click="CloseDetailsModal" />
+                    </div>
+                </div>
+                <div class="sms-modal-body p-0">
+                    <!-- Report Information Section -->
+                    <div class="p-4 border-bottom">
+                        <RadzenRow Gap="2rem">
+                            <RadzenColumn Size="8">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-info-circle"></i> Report Information
+                                </h6>
+                                <RadzenRow Gap="1rem">
+                                    <RadzenColumn Size="6">
+                                        <RadzenCard Variant="Variant.Outlined">
+                                            <div class="p-3">
+                                                <strong>Code:</strong> @SelectedReport.Code<br>
+                                                <strong>Name:</strong> @(SelectedReport.Name ?? "Not specified")<br>
+                                                <strong>Status:</strong> 
+                                                @if (!string.IsNullOrEmpty(SelectedReport.Status))
+                                                {
+                                                    <RadzenBadge Text="@SelectedReport.Status" BadgeStyle="@GetStatusBadgeStyle(SelectedReport.Status)" />
+                                                }
+                                                <br>
+                                                <strong>Stage:</strong>
+                                                @if (!string.IsNullOrEmpty(SelectedReport.Stage))
+                                                {
+                                                    <RadzenBadge Text="@SelectedReport.Stage" BadgeStyle="@GetStageBadgeStyle(SelectedReport.Stage)" />
+                                                }
+                                            </div>
+                                        </RadzenCard>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="6">
+                                        <RadzenCard Variant="Variant.Outlined">
+                                            <div class="p-3">
+                                                <strong>Created:</strong> @(SelectedReport.CreatedDate?.ToString("MM/dd/yyyy HH:mm") ?? "N/A")<br>
+                                                <strong>Created By:</strong> @(SelectedReport.CreatedBy ?? "System")<br>
+                                                <strong>Updated:</strong> @(SelectedReport.UpdatedDate?.ToString("MM/dd/yyyy HH:mm") ?? "Never")<br>
+                                                <strong>Updated By:</strong> @(SelectedReport.UpdatedBy ?? "N/A")
+                                            </div>
+                                        </RadzenCard>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                                @if (!string.IsNullOrEmpty(SelectedReport.Description))
+                                {
+                                    <div class="mt-3">
+                                        <strong>Description:</strong>
+                                        <RadzenCard Variant="Variant.Text" Class="mt-2">
+                                            <div class="p-2" style="background-color: #f8f9fa;">
+                                                @SelectedReport.Description
+                                            </div>
+                                        </RadzenCard>
+                                    </div>
+                                }
+                            </RadzenColumn>
+                            <RadzenColumn Size="4">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-chart-line"></i> Quick Stats
+                                </h6>
+                                <RadzenCard Variant="Variant.Outlined">
+                                    <div class="p-3">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Associated Hazards:</span>
+                                            <RadzenBadge Text="@AssociatedHazards.Count.ToString()" BadgeStyle="BadgeStyle.Info" />
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Locations with Maps:</span>
+                                            <RadzenBadge Text="@LocationsWithMaps" BadgeStyle="BadgeStyle.Success" />
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Files Attached:</span>
+                                            <RadzenBadge Text="@TotalFilesCount.ToString()" BadgeStyle="BadgeStyle.Secondary" />
+                                        </div>
+                                    </div>
+                                </RadzenCard>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </div>
+
+                    <!-- Associated Hazards Section -->
+                    @if (AssociatedHazards.Any())
+                    {
+                        <div class="p-4 border-bottom">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-exclamation-triangle"></i> Associated Hazards (@AssociatedHazards.Count)
+                            </h6>
+                            <RadzenDataList Data="@AssociatedHazards" WrapItems="true" AllowPaging="false">
+                                <Template Context="hazard">
+                                    <RadzenCard Class="mb-3">
+                                        <RadzenRow>
+                                            <RadzenColumn Size="8">
+                                                <strong class="text-danger">@hazard.Code</strong> - @(hazard.Name ?? "Unnamed Hazard")
+                                                @if (!string.IsNullOrEmpty(hazard.Description))
+                                                {
+                                                    <div class="text-muted mt-1">
+                                                        @(hazard.Description.Length > 100 ? hazard.Description[..97] + "..." : hazard.Description)
+                                                    </div>
+                                                }
+                                                <div class="mt-2">
+                                                    <small>
+                                                        <strong>Reported:</strong> @hazard.ReportedOn.ToString("MM/dd/yyyy") by @(hazard.ReportedBy ?? "Unknown")
+                                                        @if (!string.IsNullOrEmpty(hazard.Category))
+                                                        {
+                                                            <RadzenBadge Text="@hazard.Category" BadgeStyle="BadgeStyle.Light" Class="ms-2" />
+                                                        }
+                                                    </small>
+                                                </div>
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="4">
+                                                @if (hazard.HazardLocation != null && hazard.HazardLocation.Latitude.HasValue && hazard.HazardLocation.Longitude.HasValue)
+                                                {
+                                                    <div class="text-center">
+                                                        <ReadOnlyLocationMap Latitude="@(hazard.HazardLocation.Latitude.Value)"
+                                                                           Longitude="@(hazard.HazardLocation.Longitude.Value)"
+                                                                           LocationDescription="@(hazard.HazardLocation.Description ?? hazard.Code)"
+                                                                           MapHeight="200px"
+                                                                           ShowZoomControls="false" />
+                                                        <small class="text-muted d-block mt-1">
+                                                            <i class="fas fa-map-marker-alt"></i> 
+                                                            @hazard.HazardLocation.Latitude.Value.ToString("F6"), @hazard.HazardLocation.Longitude.Value.ToString("F6")
+                                                        </small>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="text-center text-muted">
+                                                        <i class="fas fa-map-marker-alt fa-2x mb-2"></i>
+                                                        <div>No location data available</div>
+                                                        @if (!string.IsNullOrEmpty(hazard.LocationArea))
+                                                        {
+                                                            <small>@hazard.LocationArea</small>
+                                                        }
+                                                    </div>
+                                                }
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                    </RadzenCard>
+                                </Template>
+                            </RadzenDataList>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-4 text-center text-muted">
+                            <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                            <div>No hazards associated with this report</div>
+                        </div>
+                    }
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end gap-2">
+                        <RadzenButton ButtonStyle="ButtonStyle.Warning" 
+                                    Text="Edit Report" 
+                                    Icon="edit"
+                                    Click="@(() => EditFromDetailsModal(SelectedReport))"
+                                    Size="ButtonSize.Medium" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
+                                    Text="Close" 
+                                    Icon="close"
+                                    Click="CloseDetailsModal"
+                                    Size="ButtonSize.Medium" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .report-scheduler .rz-scheduler-appointment {
+        border-radius: 4px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .report-scheduler .rz-scheduler-appointment.report-incident {
+        background-color: var(--rz-danger);
+        border-color: var(--rz-danger);
+    }
+    
+    .report-scheduler .rz-scheduler-appointment.report-hazard {
+        background-color: var(--rz-warning);
+        border-color: var(--rz-warning);
+    }
+    
+    .report-scheduler .rz-scheduler-appointment.report-observation {
+        background-color: var(--rz-info);
+        border-color: var(--rz-info);
+    }
+    
+    .report-scheduler .rz-scheduler-appointment.report-other {
+        background-color: var(--rz-secondary);
+        border-color: var(--rz-secondary);
+    }
+
+    /* Modal Styles (copied from ReportListing) */
+    .sms-modal-xxl {
+        max-width: 1400px;
+        width: 95%;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1050;
+        padding: 1rem;
+    }
+
+    .sms-modal-dialog {
+        position: relative;
+        margin: 0 auto;
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+    }
+
+    .sms-modal-content {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+    }
+
+    .sms-modal-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .sms-header-primary {
+        background-color: #212e61; /* SMS Blue Dark Bold */
+        color: white;
+    }
+
+    .sms-modal-title {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .sms-modal-body {
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+
+    .sms-modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e9ecef;
+        border-radius: 0 0 0.5rem 0.5rem;
+    }
+</style>

@@ -16,6 +16,7 @@ public partial class ReportProcessing : ComponentBase
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<ReportProcessing> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private NotificationService NotificationService { get; set; } = default!;
 
     // Data Properties
     private List<ReportProcessingSummary> PendingValidation { get; set; } = new();
@@ -40,8 +41,8 @@ public partial class ReportProcessing : ComponentBase
         {
             IsLoading = true;
 
-            // Load core entities using CQRS - ENHANCED to include ReportValidations
-            var (reports, hazards, riskAssessments, reportValidations) = await LoadCoreEntitiesAsync();
+            // Load core entities using CQRS - ENHANCED to include Investigations and Interviews
+            var (reports, hazards, riskAssessments, reportValidations, investigations, interviews) = await LoadCoreEntitiesAsync();
 
             if (!reports.Any())
             {
@@ -50,8 +51,8 @@ public partial class ReportProcessing : ComponentBase
                 return;
             }
 
-            // Create report summaries and categorize - ENHANCED with report validations
-            var reportSummaries = CreateReportSummaries(reports, hazards, riskAssessments, reportValidations);
+            // Create report summaries and categorize - ENHANCED with investigations and interviews
+            var reportSummaries = CreateReportSummaries(reports, hazards, riskAssessments, reportValidations, investigations, interviews);
             CategorizeReports(reportSummaries);
 
             Logger.LogInformation("Report processing data loaded - V:{V}, RA:{RA}, I:{I}, M:{M}, C:{C}",
@@ -70,12 +71,14 @@ public partial class ReportProcessing : ComponentBase
         }
     }
 
-    private async Task<(List<Report> reports, List<Hazard> hazards, List<RiskAssessment> riskAssessments, List<SMS_Domain.Entities.ReportValidation> reportValidations)> LoadCoreEntitiesAsync()
+    private async Task<(List<Report> reports, List<Hazard> hazards, List<RiskAssessment> riskAssessments, List<SMS_Domain.Entities.ReportValidation> reportValidations, List<Investigation> investigations, List<Interview> interviews)> LoadCoreEntitiesAsync()
     {
         var reports = new List<Report>();
         var hazards = new List<Hazard>();
         var riskAssessments = new List<RiskAssessment>();
         var reportValidations = new List<SMS_Domain.Entities.ReportValidation>();
+        var investigations = new List<Investigation>();
+        var interviews = new List<Interview>();
 
         try
         {
@@ -128,25 +131,51 @@ public partial class ReportProcessing : ComponentBase
             {
                 Logger.LogError("Failed to retrieve report validations: {Error}", reportValidationsResult.Error?.Message);
             }
+
+            // NEW: Get all investigations
+            var investigationsQuery = new GetAllInvestigationsQuery();
+            var investigationsResult = await Mediator.SendAsync(investigationsQuery, CancellationToken.None);
+            if (investigationsResult.IsSuccess && investigationsResult.Value != null)
+            {
+                investigations = investigationsResult.Value.ToList();
+                Logger.LogInformation("Loaded {Count} investigations", investigations.Count);
+            }
+            else
+            {
+                Logger.LogError("Failed to retrieve investigations: {Error}", investigationsResult.Error?.Message);
+            }
+
+            // NEW: Get all interviews
+            var interviewsQuery = new GetAllInterviewsQuery();
+            var interviewsResult = await Mediator.SendAsync(interviewsQuery, CancellationToken.None);
+            if (interviewsResult.IsSuccess && interviewsResult.Value != null)
+            {
+                interviews = interviewsResult.Value.ToList();
+                Logger.LogInformation("Loaded {Count} interviews", interviews.Count);
+            }
+            else
+            {
+                Logger.LogError("Failed to retrieve interviews: {Error}", interviewsResult.Error?.Message);
+            }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in core entities retrieval");
         }
 
-        return (reports, hazards, riskAssessments, reportValidations);
+        return (reports, hazards, riskAssessments, reportValidations, investigations, interviews);
     }
 
     #endregion
 
     #region Report Processing
 
-    private List<ReportProcessingSummary> CreateReportSummaries(List<Report> reports, List<Hazard> hazards, List<RiskAssessment> riskAssessments, List<SMS_Domain.Entities.ReportValidation> reportValidations)
+    private List<ReportProcessingSummary> CreateReportSummaries(List<Report> reports, List<Hazard> hazards, List<RiskAssessment> riskAssessments, List<SMS_Domain.Entities.ReportValidation> reportValidations, List<Investigation> investigations, List<Interview> interviews)
     {
         var summaries = new List<ReportProcessingSummary>();
 
-        Logger.LogInformation("Creating report summaries - Reports: {ReportCount}, Hazards: {HazardCount}, RiskAssessments: {AssessmentCount}, ReportValidations: {ValidationCount}", 
-            reports.Count, hazards.Count, riskAssessments.Count, reportValidations.Count);
+        Logger.LogInformation("Creating report summaries - Reports: {ReportCount}, Hazards: {HazardCount}, RiskAssessments: {AssessmentCount}, ReportValidations: {ValidationCount}, Investigations: {InvestigationCount}, Interviews: {InterviewCount}", 
+            reports.Count, hazards.Count, riskAssessments.Count, reportValidations.Count, investigations.Count, interviews.Count);
 
         foreach (var report in reports)
         {
@@ -163,6 +192,16 @@ public partial class ReportProcessing : ComponentBase
 
                 // CRITICAL: Find matching report validation
                 var reportValidation = reportValidations.FirstOrDefault(rv => rv.ReportCode?.Trim() == report.Code?.Trim());
+                
+                // NEW: Find matching investigation
+                var investigation = hazard != null ? 
+                    investigations.FirstOrDefault(inv => inv.HazardCode?.Trim() == hazard.Code?.Trim()) : 
+                    null;
+
+                // NEW: Find matching interviews for this investigation
+                var investigationInterviews = investigation != null ?
+                    interviews.Where(iv => iv.InvestigationCode?.Trim() == investigation.Code?.Trim()).ToList() :
+                    new List<Interview>();
                 
                 var summary = new ReportProcessingSummary
                 {
@@ -193,10 +232,17 @@ public partial class ReportProcessing : ComponentBase
                     ValidationType = reportValidation?.ValidationType ?? "", // NEW: Key for smart routing
                     ValidationDecision = reportValidation?.ValidationDecision ?? "",
                     
-                    // Status determination
-                    StatusCategory = DetermineStatusCategory(report, hazard, riskAssessment, reportValidation),
+                    // Investigation Information - NEW
+                    InvestigationId = investigation?.Code,
+                    InvestigationStatus = investigation?.Status?.ToString() ?? "",
+                    AssignedInvestigator = investigation?.AssignedInvestigatorId,
+                    InvestigationNotes = investigation?.InvestigationNotes,
+                    InterviewCount = investigationInterviews.Count,
+                    
+                    // Status determination - UPDATED: Include investigation
+                    StatusCategory = DetermineStatusCategory(report, hazard, riskAssessment, reportValidation, investigation),
                     DaysInStage = CalculateDaysInStage(report, hazard, riskAssessment, reportValidation),
-                    AssignedTo = DetermineAssignedTo(report, hazard, riskAssessment, reportValidation),
+                    AssignedTo = DetermineAssignedTo(report, hazard, riskAssessment, reportValidation, investigation),
                     ValidationUrl = GetValidationUrl(report, hazard, reportValidation)
                 };
                 
@@ -225,13 +271,27 @@ public partial class ReportProcessing : ComponentBase
 
     #region Helper Methods
 
-    private ProcessingStatusCategory DetermineStatusCategory(Report report, Hazard? hazard, RiskAssessment? riskAssessment, SMS_Domain.Entities.ReportValidation? reportValidation)
+    private ProcessingStatusCategory DetermineStatusCategory(Report report, Hazard? hazard, RiskAssessment? riskAssessment, SMS_Domain.Entities.ReportValidation? reportValidation, Investigation? investigation)
     {
         // CRITICAL DESIGN CONCEPT: 
         // 1. If no ReportValidation exists -> VALIDATION tab (needs initial validation)
         // 2. If ReportValidation exists but no RiskAssessment -> RISK ASSESSMENT tab (validated, needs risk assessment)  
         // 3. If RiskAssessment exists and in progress -> RISK ASSESSMENT tab (assessment in progress)
         // 4. If RiskAssessment complete -> MITIGATION tab
+        // 5. NEW: If Investigation exists and is active -> INVESTIGATION tab
+        
+        // NEW: Check for active investigation first - this takes priority
+        if (investigation != null)
+        {
+            // Check if investigation is active (not completed) - Use Smart Enum comparison
+            if (investigation.Status == InvestigationStatus.InProgress || 
+                investigation.Status == InvestigationStatus.OnHold)
+            {
+                Logger.LogDebug("Report {ReportId} -> INVESTIGATION (active investigation {InvestigationId} with status {Status})", 
+                    report.Code, investigation.Code, investigation.Status);
+                return ProcessingStatusCategory.Investigation;
+            }
+        }
         
         // No validation record = needs validation
         if (reportValidation == null)
@@ -297,8 +357,14 @@ public partial class ReportProcessing : ComponentBase
         return (DateTime.UtcNow - referenceDate).Days;
     }
 
-    private string? DetermineAssignedTo(Report report, Hazard? hazard, RiskAssessment? riskAssessment, SMS_Domain.Entities.ReportValidation? reportValidation)
+    private string? DetermineAssignedTo(Report report, Hazard? hazard, RiskAssessment? riskAssessment, SMS_Domain.Entities.ReportValidation? reportValidation, Investigation? investigation)
     {
+        // NEW: Use Investigation assigned investigator if available
+        if (investigation != null && !string.IsNullOrEmpty(investigation.AssignedInvestigatorId))
+        {
+            return investigation.AssignedInvestigatorId;
+        }
+        
         // Use RiskAssessment lead assessor if available
         if (riskAssessment != null && !string.IsNullOrEmpty(riskAssessment.LeadAssessorId))
         {
@@ -312,7 +378,7 @@ public partial class ReportProcessing : ComponentBase
         }
         
         // Fallback to category-based assignment
-        var category = DetermineStatusCategory(report, hazard, riskAssessment, reportValidation);
+        var category = DetermineStatusCategory(report, hazard, riskAssessment, reportValidation, investigation);
         return category switch
         {
             ProcessingStatusCategory.Validation => "SMS Validation Team",
@@ -443,7 +509,7 @@ public partial class ReportProcessing : ComponentBase
             builder.AddAttribute(4, "PageSize", 10);
             builder.AddAttribute(5, "Columns", (RenderFragment)(columnsBuilder =>
             {
-                RenderStandardColumns(columnsBuilder);
+                RenderInvestigationColumns(columnsBuilder);
             }));
             builder.CloseComponent();
         };
@@ -474,7 +540,7 @@ public partial class ReportProcessing : ComponentBase
             builder.AddAttribute(4, "PageSize", 10);
             builder.AddAttribute(5, "Columns", (RenderFragment)(columnsBuilder =>
             {
-                RenderStandardColumns(columnsBuilder);
+                RenderMitigationColumns(columnsBuilder);
             }));
             builder.CloseComponent();
         };
@@ -898,6 +964,299 @@ public partial class ReportProcessing : ComponentBase
         builder.CloseComponent();
     }
 
+    private void RenderInvestigationColumns(RenderTreeBuilder builder)
+    {
+        // Hazard ID Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(0);
+        builder.AddAttribute(1, "Property", "HazardId");
+        builder.AddAttribute(2, "Title", "Hazard ID");
+        builder.AddAttribute(3, "Width", "150px");
+        builder.AddAttribute(4, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenStack>(0);
+                templateBuilder.AddAttribute(1, "Orientation", Orientation.Vertical);
+                templateBuilder.AddAttribute(2, "Gap", "0.25rem");
+                templateBuilder.AddAttribute(3, "ChildContent", (RenderFragment)(stackBuilder =>
+                {
+                    stackBuilder.OpenComponent<RadzenText>(0);
+                    stackBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
+                    stackBuilder.AddAttribute(2, "Style", "font-weight: 600;");
+                    stackBuilder.AddAttribute(3, "Text", report.HazardId ?? "N/A");
+                    stackBuilder.CloseComponent();
+                    
+                    stackBuilder.OpenComponent<RadzenText>(5);
+                    stackBuilder.AddAttribute(6, "TextStyle", TextStyle.Caption);
+                    stackBuilder.AddAttribute(7, "Style", "color: var(--rz-warning); font-weight: 500;");
+                    stackBuilder.AddAttribute(8, "Text", "Investigation Required");
+                    stackBuilder.CloseComponent();
+                }));
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        // Description Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(10);
+        builder.AddAttribute(11, "Property", "HazardDescription");
+        builder.AddAttribute(12, "Title", "Description");
+        builder.AddAttribute(13, "Width", "300px");
+        builder.CloseComponent();
+
+        // Investigation Status Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(15);
+        builder.AddAttribute(16, "Property", "InvestigationStatus");
+        builder.AddAttribute(17, "Title", "Investigation Status");
+        builder.AddAttribute(18, "Width", "150px");
+        builder.AddAttribute(19, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                var badgeStyle = report.HasInvestigation ? BadgeStyle.Primary : BadgeStyle.Warning;
+                var statusText = report.HasInvestigation ? report.InvestigationStatus : "Not Started";
+                
+                templateBuilder.OpenComponent<RadzenBadge>(0);
+                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
+                templateBuilder.AddAttribute(2, "Text", statusText);
+                templateBuilder.AddAttribute(3, "Variant", Variant.Flat);
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        // Assigned Investigator Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(20);
+        builder.AddAttribute(21, "Property", "AssignedInvestigator");
+        builder.AddAttribute(22, "Title", "Assigned To");
+        builder.AddAttribute(23, "Width", "150px");
+        builder.AddAttribute(24, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenText>(0);
+                templateBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
+                templateBuilder.AddAttribute(2, "Text", report.AssignedInvestigator ?? "Not Assigned");
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        // Interview Count Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(25);
+        builder.AddAttribute(26, "Property", "InterviewCount");
+        builder.AddAttribute(27, "Title", "Interviews");
+        builder.AddAttribute(28, "Width", "100px");
+        builder.AddAttribute(29, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                var badgeStyle = report.InterviewCount > 0 ? BadgeStyle.Success : BadgeStyle.Light;
+                
+                templateBuilder.OpenComponent<RadzenBadge>(0);
+                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
+                templateBuilder.AddAttribute(2, "Text", report.InterviewCount.ToString());
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        // Priority Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(30);
+        builder.AddAttribute(31, "Property", "Priority");
+        builder.AddAttribute(32, "Title", "Priority");
+        builder.AddAttribute(33, "Width", "100px");
+        builder.AddAttribute(34, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                var badgeStyle = report.Priority switch
+                {
+                    "High" => BadgeStyle.Danger,
+                    "Medium" => BadgeStyle.Warning,
+                    _ => BadgeStyle.Info
+                };
+                templateBuilder.OpenComponent<RadzenBadge>(0);
+                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
+                templateBuilder.AddAttribute(2, "Text", report.Priority);
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        // Days in Stage Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(40);
+        builder.AddAttribute(41, "Property", "DaysInStage");
+        builder.AddAttribute(42, "Title", "Days in Stage");
+        builder.AddAttribute(43, "Width", "120px");
+        builder.AddAttribute(44, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                var badgeStyle = report.DaysInStage > 3 ? BadgeStyle.Danger : 
+                               report.DaysInStage > 1 ? BadgeStyle.Warning : BadgeStyle.Secondary;
+                templateBuilder.OpenComponent<RadzenBadge>(0);
+                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
+                templateBuilder.AddAttribute(2, "Text", $"{report.DaysInStage} days");
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        // Actions Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(50);
+        builder.AddAttribute(51, "Title", "Actions");
+        builder.AddAttribute(52, "Width", "150px");
+        builder.AddAttribute(53, "Sortable", false);
+        builder.AddAttribute(54, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                var buttonText = report.HasInvestigation ? "Continue Investigation" : "Start Investigation";
+                var buttonIcon = report.HasInvestigation ? "edit" : "search";
+                var buttonStyle = report.HasInvestigation ? ButtonStyle.Primary : ButtonStyle.Warning;
+                
+                templateBuilder.OpenComponent<RadzenButton>(0);
+                templateBuilder.AddAttribute(1, "Text", buttonText);
+                templateBuilder.AddAttribute(2, "Icon", buttonIcon);
+                templateBuilder.AddAttribute(3, "ButtonStyle", buttonStyle);
+                templateBuilder.AddAttribute(4, "Size", ButtonSize.Small);
+                templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this, 
+                    (args) => NavigateToInvestigation(report)));
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+    }
+
+    private void RenderMitigationColumns(RenderTreeBuilder builder)
+    {
+        // Hazard ID Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(0);
+        builder.AddAttribute(1, "Property", "HazardId");
+        builder.AddAttribute(2, "Title", "Hazard ID");
+        builder.AddAttribute(3, "Width", "150px");
+        builder.AddAttribute(4, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenStack>(0);
+                templateBuilder.AddAttribute(1, "Orientation", Orientation.Vertical);
+                templateBuilder.AddAttribute(2, "Gap", "0.25rem");
+                templateBuilder.AddAttribute(3, "ChildContent", (RenderFragment)(stackBuilder =>
+                {
+                    stackBuilder.OpenComponent<RadzenText>(0);
+                    stackBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
+                    stackBuilder.AddAttribute(2, "Style", "font-weight: 600;");
+                    stackBuilder.AddAttribute(3, "Text", report.HazardId ?? "N/A");
+                    stackBuilder.CloseComponent();
+                    
+                    stackBuilder.OpenComponent<RadzenText>(5);
+                    stackBuilder.AddAttribute(6, "TextStyle", TextStyle.Caption);
+                    stackBuilder.AddAttribute(7, "Style", "color: var(--rz-success); font-weight: 500;");
+                    stackBuilder.AddAttribute(8, "Text", "Ready for Mitigation");
+                    stackBuilder.CloseComponent();
+                }));
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        // Description Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(10);
+        builder.AddAttribute(11, "Property", "HazardDescription");
+        builder.AddAttribute(12, "Title", "Description");
+        builder.AddAttribute(13, "Width", "300px");
+        builder.CloseComponent();
+
+        // Risk Assessment Status Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(15);
+        builder.AddAttribute(16, "Property", "RiskAssessmentStatus");
+        builder.AddAttribute(17, "Title", "Assessment Status");
+        builder.AddAttribute(18, "Width", "150px");
+        builder.AddAttribute(19, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                var badgeStyle = report.RiskAssessmentStatus?.Contains("Complete") == true ? 
+                    BadgeStyle.Success : BadgeStyle.Primary;
+                var statusText = report.RiskAssessmentStatus ?? "Completed";
+                
+                templateBuilder.OpenComponent<RadzenBadge>(0);
+                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
+                templateBuilder.AddAttribute(2, "Text", statusText);
+                templateBuilder.AddAttribute(3, "Variant", Variant.Flat);
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        // Assessment Type Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(20);
+        builder.AddAttribute(21, "Property", "AssessmentType");
+        builder.AddAttribute(22, "Title", "Assessment Type");
+        builder.AddAttribute(23, "Width", "120px");
+        builder.AddAttribute(24, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                var badgeStyle = report.AssessmentType?.ToLower() == "technical" ? 
+                    BadgeStyle.Info : BadgeStyle.Secondary;
+                var typeText = report.AssessmentType ?? "Standard";
+                
+                templateBuilder.OpenComponent<RadzenBadge>(0);
+                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
+                templateBuilder.AddAttribute(2, "Text", typeText);
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        // Priority Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(30);
+        builder.AddAttribute(31, "Property", "Priority");
+        builder.AddAttribute(32, "Title", "Priority");
+        builder.AddAttribute(33, "Width", "100px");
+        builder.AddAttribute(34, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                var badgeStyle = report.Priority switch
+                {
+                    "High" => BadgeStyle.Danger,
+                    "Medium" => BadgeStyle.Warning,
+                    _ => BadgeStyle.Info
+                };
+                templateBuilder.OpenComponent<RadzenBadge>(0);
+                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
+                templateBuilder.AddAttribute(2, "Text", report.Priority);
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        // Assigned To Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(40);
+        builder.AddAttribute(41, "Property", "AssignedTo");
+        builder.AddAttribute(42, "Title", "Assigned To");
+        builder.AddAttribute(43, "Width", "150px");
+        builder.CloseComponent();
+
+        // Days in Stage Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(50);
+        builder.AddAttribute(51, "Property", "DaysInStage");
+        builder.AddAttribute(52, "Title", "Days in Stage");
+        builder.AddAttribute(53, "Width", "120px");
+        builder.AddAttribute(54, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                var badgeStyle = report.DaysInStage > 5 ? BadgeStyle.Danger : 
+                               report.DaysInStage > 2 ? BadgeStyle.Warning : BadgeStyle.Secondary;
+                templateBuilder.OpenComponent<RadzenBadge>(0);
+                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
+                templateBuilder.AddAttribute(2, "Text", $"{report.DaysInStage} days");
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        // Actions Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(60);
+        builder.AddAttribute(61, "Title", "Actions");
+        builder.AddAttribute(62, "Width", "150px");
+        builder.AddAttribute(63, "Sortable", false);
+        builder.AddAttribute(64, "Template", (RenderFragment<ReportProcessingSummary>)(report => 
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenButton>(0);
+                templateBuilder.AddAttribute(1, "Text", "Manage Mitigation");
+                templateBuilder.AddAttribute(2, "Icon", "build");
+                templateBuilder.AddAttribute(3, "ButtonStyle", ButtonStyle.Success);
+                templateBuilder.AddAttribute(4, "Size", ButtonSize.Small);
+                templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this, 
+                    (args) => NavigateToMitigation(report)));
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+    }
+
     private string GetAssessmentIcon(ReportProcessingSummary report)
     {
         if (report.ValidationType?.ToLower() == "preliminary")
@@ -918,6 +1277,75 @@ public partial class ReportProcessing : ComponentBase
             return ButtonStyle.Secondary;
     }
     
+    #endregion
+
+    #region Navigation Methods
+
+    private void NavigateToInvestigation(ReportProcessingSummary report)
+    {
+        try
+        {
+            string navigationUrl;
+            
+            if (report.HasInvestigation && !string.IsNullOrEmpty(report.HazardId))
+            {
+                // Navigate to existing investigation
+                navigationUrl = $"/SMSRiskManagement/Investigation/{report.InvestigationId}/{report.HazardId}";
+                Logger.LogInformation("Navigating to existing investigation: {InvestigationId} for hazard: {HazardId}", 
+                    report.InvestigationId, report.HazardId);
+            }
+            else if (!string.IsNullOrEmpty(report.HazardId))
+            {
+                // Navigate to investigation page with hazard (will create investigation if needed)
+                navigationUrl = $"/SMSRiskManagement/Investigation/{report.HazardId}";
+                Logger.LogInformation("Navigating to start investigation for hazard: {HazardId}", report.HazardId);
+            }
+            else
+            {
+                // Navigate to general investigation page
+                navigationUrl = "/SMSRiskManagement/Investigation";
+                Logger.LogInformation("Navigating to general investigation page for report: {ReportId}", report.ReportId);
+            }
+            
+            Navigation.NavigateTo(navigationUrl);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error navigating to investigation for report: {ReportId}", report.ReportId);
+            ShowErrorNotification("Error navigating to investigation page");
+        }
+    }
+
+    private void NavigateToMitigation(ReportProcessingSummary report)
+    {
+        try
+        {
+            // For now, navigate to the mitigation listings page
+            // Later this could be enhanced to create/edit specific mitigation records
+            string navigationUrl = "/Listings/Mitigations";
+            
+            Logger.LogInformation("Navigating to mitigation management for hazard: {HazardId}", report.HazardId);
+            Navigation.NavigateTo(navigationUrl);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error navigating to mitigation for report: {ReportId}", report.ReportId);
+            ShowErrorNotification("Error navigating to mitigation page");
+        }
+    }
+
+    private void ShowErrorNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Error,
+            Summary = "Navigation Error",
+            Detail = message,
+            Duration = 5000
+        });
+        Logger.LogError("Error: {Message}", message);
+    }
+
     #endregion
 
     #region Models
@@ -961,6 +1389,14 @@ public partial class ReportProcessing : ComponentBase
         public string ValidationType { get; set; } = string.Empty; // NEW: Preliminary vs Technical
         public string ValidationDecision { get; set; } = string.Empty;
         public bool HasReportValidation => !string.IsNullOrEmpty(ReportValidationId);
+        
+        // NEW: Investigation Information
+        public string? InvestigationId { get; set; }
+        public string InvestigationStatus { get; set; } = string.Empty;
+        public string? AssignedInvestigator { get; set; }
+        public string? InvestigationNotes { get; set; }
+        public int InterviewCount { get; set; } = 0;
+        public bool HasInvestigation => !string.IsNullOrEmpty(InvestigationId);
         
         public ProcessingStatusCategory StatusCategory { get; set; }
         public int DaysInStage { get; set; }
@@ -1006,6 +1442,15 @@ public partial class ReportProcessing : ComponentBase
                     }
                 }
                 
+                // INVESTIGATION TAB: Navigate to investigation if available
+                if (StatusCategory == ProcessingStatusCategory.Investigation)
+                {
+                    if (HasInvestigation && !string.IsNullOrEmpty(HazardId))
+                    {
+                        return $"/SMSRiskManagement/Investigation/{InvestigationId}/{HazardId}";
+                    }
+                }
+                
                 // Fallback to report validation
                 return $"/SMSRiskManagement/ReportValidation/{ReportId}";
             }
@@ -1020,7 +1465,7 @@ public partial class ReportProcessing : ComponentBase
                 {
                     ProcessingStatusCategory.Validation => "Start Validation",
                     ProcessingStatusCategory.RiskAssessment => GetRiskAssessmentButtonText(),
-                    ProcessingStatusCategory.Investigation => "View Investigation",
+                    ProcessingStatusCategory.Investigation => HasInvestigation ? "Continue Investigation" : "Start Investigation",
                     ProcessingStatusCategory.Mitigation => "View Mitigation",
                     ProcessingStatusCategory.Closed => "View Closed",
                     _ => "Process"
