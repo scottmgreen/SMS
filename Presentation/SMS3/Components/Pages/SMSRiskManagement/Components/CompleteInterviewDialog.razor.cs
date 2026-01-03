@@ -47,6 +47,11 @@ public partial class CompleteInterviewDialog : ComponentBase
     #endregion
 
     #region Methods
+    private async Task CompleteInterview()
+    {
+        await CompleteInterview(Model);
+    }
+    
     private async Task CompleteInterview(CompleteInterviewModel model)
     {
         try
@@ -88,6 +93,7 @@ public partial class CompleteInterviewDialog : ComponentBase
             if (result.IsSuccess)
             {
                 Logger.LogInformation("Interview completed successfully: {Code}", Interview.Code);
+                ShowSuccessNotification("Interview completed successfully");
                 DialogService.Close(true);
             }
             else
@@ -118,6 +124,17 @@ public partial class CompleteInterviewDialog : ComponentBase
         notes.Add($"- Completed: {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC");
 
         return string.Join("\n", notes);
+    }
+
+    private void ShowSuccessNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Success",
+            Detail = message,
+            Duration = 4000
+        });
     }
 
     private void ShowErrorNotification(string message)

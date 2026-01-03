@@ -612,7 +612,7 @@ public static class FieldNames
     public static string fInvestigationReferralDetails => _fInvestigationReferralDetails.Value;
 
     // Interview field names
-    private static readonly Lazy<string> _fInterviewCode = new Lazy<string>(() => "fldv_InterviewCode");
+    private static readonly Lazy<string> _fInterviewCode = new Lazy<string>(() => "fldv_Code");
     public static string fInterviewCode => _fInterviewCode.Value;
 
     private static readonly Lazy<string> _fInterviewInvestigationCode = new Lazy<string>(() => "fldv_InvestigationCode");

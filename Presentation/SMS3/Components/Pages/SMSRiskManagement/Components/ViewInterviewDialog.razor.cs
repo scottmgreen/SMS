@@ -6,9 +6,12 @@ namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
 public partial class ViewInterviewDialog : ComponentBase
 {
+    #region Injected Services
+    [Inject] public DialogService DialogService { get; set; } = default!;
+    #endregion
+
     #region Parameters
     [Parameter] public Interview Interview { get; set; } = default!;
-    [CascadingParameter] public DialogService DialogService { get; set; } = default!;
     #endregion
 
     #region UI Helpers

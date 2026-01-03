@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Logging;
 using SMS_Application.Messaging.Queries;
+using SMS_Application.Services;
+using SMS_Application.Interfaces;
 
 namespace SMS_Application.Messaging.QueryHandlers;
 
@@ -9,12 +11,12 @@ namespace SMS_Application.Messaging.QueryHandlers;
 
 public class GetMitigationByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetMitigationByIdQuery, Result<Mitigation>>
 {
-    private readonly MitigationDataService _mitigationDataService;
+    private readonly MitigationService _appService;
     private readonly ILogger<GetMitigationByIdQueryHandler> _logger;
 
-    public GetMitigationByIdQueryHandler(MitigationDataService mitigationDataService, ILogger<GetMitigationByIdQueryHandler> logger)
+    public GetMitigationByIdQueryHandler(MitigationService appService, ILogger<GetMitigationByIdQueryHandler> logger)
     {
-        _mitigationDataService = mitigationDataService ?? throw new ArgumentNullException(nameof(mitigationDataService));
+        _appService = appService ?? throw new ArgumentNullException(nameof(appService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -22,13 +24,36 @@ public class GetMitigationByIdQueryHandler : BaseQueryBundle, IRequestHandler<Ge
     {
         try
         {
-            _logger.LogInformation("Processing GetMitigationByIdQuery for ID: {Id}", request.MitigationId);
-            var result = await _mitigationDataService.GetMitigationByIdAsync(request.MitigationId, ct).ConfigureAwait(false);
+            if (request?.MitigationId is null)
+            {
+                _logger.LogError("GetMitigationByIdQuery received with null MitigationId");
+                return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.NotFound);
+            }
+
+            _logger.LogInformation("Processing GetMitigationByIdQuery for ID: {Id}", request.MitigationId.Value);
+
+            var result = await _appService.GetMitigationByIdAsync(request.MitigationId, ct).ConfigureAwait(false);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully retrieved Mitigation with ID: {Id}", request.MitigationId.Value);
+            }
+            else
+            {
+                _logger.LogError("Failed to retrieve Mitigation with ID: {Id}. Error: {Error}",
+                    request.MitigationId.Value, result.Error?.Message);
+            }
+
             return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("GetMitigationByIdQuery operation was cancelled");
+            throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetMitigationByIdQuery for ID: {Id}", request.MitigationId);
+            _logger.LogError(ex, "Unexpected error occurred while retrieving Mitigation");
             return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.NotFound);
         }
     }
@@ -36,12 +61,12 @@ public class GetMitigationByIdQueryHandler : BaseQueryBundle, IRequestHandler<Ge
 
 public class GetAllMitigationsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllMitigationsQuery, Result<List<Mitigation>>>
 {
-    private readonly MitigationDataService _mitigationDataService;
+    private readonly MitigationDataService _dataService;
     private readonly ILogger<GetAllMitigationsQueryHandler> _logger;
 
-    public GetAllMitigationsQueryHandler(MitigationDataService mitigationDataService, ILogger<GetAllMitigationsQueryHandler> logger)
+    public GetAllMitigationsQueryHandler(MitigationDataService dataService, ILogger<GetAllMitigationsQueryHandler> logger)
     {
-        _mitigationDataService = mitigationDataService ?? throw new ArgumentNullException(nameof(mitigationDataService));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -50,13 +75,29 @@ public class GetAllMitigationsQueryHandler : BaseQueryBundle, IRequestHandler<Ge
         try
         {
             _logger.LogInformation("Processing GetAllMitigationsQuery");
-            var result = await _mitigationDataService.GetAllMitigationsAsync(ct).ConfigureAwait(false);
+
+            var result = await _dataService.GetAllMitigationsAsync(ct).ConfigureAwait(false);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully retrieved {Count} Mitigations", result.Value?.Count ?? 0);
+            }
+            else
+            {
+                _logger.LogError("Failed to retrieve Mitigations. Error: {Error}", result.Error?.Message);
+            }
+
             return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("GetAllMitigationsQuery operation was cancelled");
+            throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllMitigationsQuery");
-            return Result<List<Mitigation>>.Failure<List<Mitigation>>(DomainErrors.MitigationError.NullOrEmpty);
+            _logger.LogError(ex, "Unexpected error occurred while retrieving all Mitigations");
+            return Result<List<Mitigation>>.Failure<List<Mitigation>>(DomainErrors.MitigationError.NotFound);
         }
     }
 }

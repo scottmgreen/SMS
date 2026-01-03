@@ -1,0 +1,465 @@
+﻿@page "/SMSRiskManagement/InterviewCalendar"
+@using SMS3.Components.Shared
+@using SMS_Application.Messaging.Queries
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Interview Calendar - SMS3</PageTitle>
+
+<!-- SMS Page Header -->
+<PageHeader Title="Interview Calendar"
+           Subtitle="Schedule and manage investigation interviews using an interactive calendar scheduler"
+           Icon="fas fa-calendar-users">
+</PageHeader>
+
+<!-- Calendar Controls -->
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" class="rz-p-4 rz-mb-6 rz-border-radius-1" Style="border: var(--rz-grid-cell-border);height:4rem;">
+    <RadzenLabel Text="Show Header:" />
+    <RadzenSwitch @bind-Value="@showHeader" />
+    
+    <RadzenButton Icon="today" Text="Today" Click="@GoToToday" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" />
+    <RadzenButton Icon="refresh" Text="Refresh" Click="@RefreshData" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@IsLoading" />
+    <RadzenButton Icon="add" Text="New Interview" Click="@(() => ShowCreateInterviewDialog())" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" />
+</RadzenStack>
+
+<!-- Calendar Scheduler -->
+<RadzenRow Gap="1rem">
+    <RadzenColumn Size="12">
+        <RadzenCard>
+            @if (IsLoading)
+            {
+                <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
+                    <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+                </div>
+            }
+            else
+            {
+                <!-- Enhanced Scheduler Component -->
+                <RadzenScheduler @ref="scheduler"  
+                                TItem="InterviewSchedulerItem" 
+                                Data="@SchedulerData"
+                                StartProperty="@nameof(InterviewSchedulerItem.Start)"
+                                EndProperty="@nameof(InterviewSchedulerItem.End)"
+                                TextProperty="@nameof(InterviewSchedulerItem.Text)"
+                                SelectedIndex="2"
+                                ShowHeader="@showHeader"
+                                SlotSelect="@OnSlotSelect"
+                                AppointmentSelect="@OnAppointmentSelect"
+                                AppointmentRender="@OnAppointmentRender"
+                                SlotRender="@OnSlotRender"
+                                AppointmentMove="@OnAppointmentMove"
+                                Style="width: 100%;height:800px"
+                                class="interview-scheduler">
+                    
+                    <!-- Custom Views -->
+                    <RadzenDayView />
+                    <RadzenWeekView />
+                    <RadzenMonthView />
+                    <RadzenYearView />
+                    
+                </RadzenScheduler>
+            }
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>
+
+<!-- Interview Statistics Card -->
+<RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+    <RadzenColumn Size="12" SizeMD="3">
+        <RadzenCard Style="text-align: center; padding: 1.5rem;">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="people" Style="font-size: 2rem; color: var(--rz-primary);" />
+                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: bold;">@Interviews.Count</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-text-secondary-color);">Total Interviews</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+    
+    <RadzenColumn Size="12" SizeMD="3">
+        <RadzenCard Style="text-align: center; padding: 1.5rem;">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="event" Style="font-size: 2rem; color: var(--rz-success);" />
+                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: bold;">@GetInterviewsThisMonth()</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-text-secondary-color);">This Month</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+    
+    <RadzenColumn Size="12" SizeMD="3">
+        <RadzenCard Style="text-align: center; padding: 1.5rem;">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="calendar_today" Style="font-size: 2rem; color: var(--rz-warning);" />
+                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: bold;">@GetInterviewsThisWeek()</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-text.secondary-color);">This Week</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+    
+    <RadzenColumn Size="12" SizeMD="3">
+        <RadzenCard Style="text-align: center; padding: 1.5rem;">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="today" Style="font-size: 2rem; color: var(--rz-info);" />
+                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: bold;">@GetInterviewsToday()</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-text-secondary-color);">Today</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>
+
+<!-- Event Console for debugging (similar to Radzen example) -->
+@if (showEventConsole)
+{
+    <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+        <RadzenColumn Size="12">
+            <RadzenCard>
+                <RadzenText TextStyle="TextStyle.H6">Event Console</RadzenText>
+                <RadzenTextArea @bind-Value="@eventLog" Rows="5" ReadOnly="true" Style="width: 100%;" />
+                <div style="margin-top: 10px;">
+                    <RadzenButton Text="Clear Log" Click="@ClearEventLog" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" />
+                    <RadzenSwitch @bind-Value="@showEventConsole" Style="margin-left: 10px;" />
+                    <RadzenLabel Text="Show Event Console" Style="margin-left: 5px;" />
+                </div>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+}
+
+<!-- Interview Details Modal -->
+@if (ShowDetailsModal && SelectedInterview != null)
+{
+    <div class="modal-overlay" @onclick="@PreventBackgroundClick" @onclick:stopPropagation="true">
+        <div class="sms-modal-dialog sms-modal-xxl" @onclick:stopPropagation="true">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-primary">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <h5 class="sms-modal-title mb-0">
+                            <i class="fas fa-users"></i> Interview Details - @SelectedInterview.Code
+                        </h5>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                    Variant="Variant.Text"
+                                    Icon="close"
+                                    Size="ButtonSize.Small"
+                                    Click="CloseDetailsModal" />
+                    </div>
+                </div>
+                <div class="sms-modal-body p-0">
+                    <!-- Interview Information Section -->
+                    <div class="p-4 border-bottom">
+                        <RadzenRow Gap="2rem">
+                            <RadzenColumn Size="8">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-info-circle"></i> Interview Information
+                                </h6>
+                                <RadzenRow Gap="1rem">
+                                    <RadzenColumn Size="6">
+                                        <RadzenCard Variant="Variant.Outlined">
+                                            <div class="p-3">
+                                                <strong>Code:</strong> @SelectedInterview.Code<br>
+                                                <strong>Person Interviewed:</strong> @SelectedInterview.PersonInterviewed<br>
+                                                <strong>Status:</strong> 
+                                                <RadzenBadge Text="@SelectedInterview.Status.Name" BadgeStyle="@GetStatusBadgeStyle(SelectedInterview.Status)" /><br>
+                                                <strong>Type:</strong>
+                                                <RadzenBadge Text="@SelectedInterview.Type.Name" BadgeStyle="BadgeStyle.Info" />
+                                            </div>
+                                        </RadzenCard>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="6">
+                                        <RadzenCard Variant="Variant.Outlined">
+                                            <div class="p-3">
+                                                <strong>Investigation:</strong> @SelectedInterview.InvestigationCode<br>
+                                                <strong>Investigator:</strong> @SelectedInterview.SMSInvestigatorCode<br>
+                                                <strong>Interview Date:</strong> @(SelectedInterview.InterviewDate?.ToString("MM/dd/yyyy HH:mm") ?? "Not scheduled")<br>
+                                                <strong>Location:</strong> @(SelectedInterview.InterviewLocation ?? "Not specified")
+                                            </div>
+                                        </RadzenCard>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                                
+                                @if (!string.IsNullOrEmpty(SelectedInterview.PreparationNotes))
+                                {
+                                    <div class="mt-3">
+                                        <strong>Preparation Notes:</strong>
+                                        <RadzenCard Variant="Variant.Text" Class="mt-2">
+                                            <div class="p-2" style="background-color: #f8f9fa;">
+                                                @SelectedInterview.PreparationNotes
+                                            </div>
+                                        </RadzenCard>
+                                    </div>
+                                }
+                                
+                                @if (!string.IsNullOrEmpty(SelectedInterview.InvestigatorNotes))
+                                {
+                                    <div class="mt-3">
+                                        <strong>Investigator Notes:</strong>
+                                        <RadzenCard Variant="Variant.Text" Class="mt-2">
+                                            <div class="p-2" style="background-color: #e8f5e8;">
+                                                @SelectedInterview.InvestigatorNotes
+                                            </div>
+                                        </RadzenCard>
+                                    </div>
+                                }
+                            </RadzenColumn>
+                            <RadzenColumn Size="4">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-chart-line"></i> Interview Details
+                                </h6>
+                                <RadzenCard Variant="Variant.Outlined">
+                                    <div class="p-3">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Duration:</span>
+                                            <RadzenBadge Text="@(SelectedInterview.DurationMinutes?.ToString() + " min" ?? "Not set")" BadgeStyle="BadgeStyle.Info" />
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Confidential:</span>
+                                            <RadzenBadge Text="@(SelectedInterview.IsConfidential ? "Yes" : "No")" 
+                                                       BadgeStyle="@(SelectedInterview.IsConfidential ? BadgeStyle.Warning : BadgeStyle.Success)" />
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Role:</span>
+                                            <RadzenBadge Text="@(SelectedInterview.PersonInterviewedRole ?? "Not specified")" BadgeStyle="BadgeStyle.Secondary" />
+                                        </div>
+                                    </div>
+                                </RadzenCard>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </div>
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end gap-2">
+                        <RadzenButton ButtonStyle="ButtonStyle.Warning" 
+                                    Text="Edit Interview" 
+                                    Icon="edit"
+                                    Click="@(() => EditFromDetailsModal(SelectedInterview))"
+                                    Size="ButtonSize.Medium" 
+                                    Disabled="@IsLoading" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
+                                    Text="Close" 
+                                    Icon="close"
+                                    Click="@CloseDetailsModal"
+                                    Size="ButtonSize.Medium" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .interview-scheduler .rz-scheduler-appointment {
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        outline: none !important;
+        transition: all 0.3s ease;
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        pointer-events: auto;
+        position: relative;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .interview-scheduler .rz-scheduler-appointment:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .interview-scheduler .rz-scheduler-appointment:focus,
+    .interview-scheduler .rz-scheduler-appointment:focus-visible,
+    .interview-scheduler .rz-scheduler-appointment:active {
+        outline: none !important;
+        box-shadow: 0 0 0 3px rgba(33, 46, 97, 0.3) !important;
+    }
+    
+    /* Prevent focus issues on child elements */
+    .interview-scheduler .rz-scheduler-appointment * {
+        outline: none !important;
+        user-select: none;
+        pointer-events: none;
+    }
+    
+    /* Status-based styling */
+    .interview-scheduler .rz-scheduler-appointment.interview-planned {
+        background: linear-gradient(135deg, #6c757d, #5a6268);
+        border-color: #6c757d;
+        color: white;
+    }
+    
+    .interview-scheduler .rz-scheduler-appointment.interview-scheduled {
+        background: linear-gradient(135deg, #17a2b8, #138496);
+        border-color: #17a2b8;
+        color: white;
+    }
+    
+    .interview-scheduler .rz-scheduler-appointment.interview-inprogress {
+        background: linear-gradient(135deg, #ffc107, #e0a800);
+        border-color: #ffc107;
+        color: #212529;
+    }
+    
+    .interview-scheduler .rz-scheduler-appointment.interview-completed {
+        background: linear-gradient(135deg, #28a745, #1e7e34);
+        border-color: #28a745;
+        color: white;
+    }
+    
+    .interview-scheduler .rz-scheduler-appointment.interview-cancelled {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        border-color: #dc3545;
+        color: white;
+    }
+
+    /* Confidential interviews get a special indicator */
+    .interview-scheduler .rz-scheduler-appointment.confidential::before {
+        content: '🔒';
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        font-size: 0.75rem;
+    }
+
+    /* Enhanced slot highlighting */
+    .interview-scheduler .rz-scheduler-slot.business-hours {
+        background: var(--rz-scheduler-highlight-background-color, rgba(255,220,40,.1)) !important;
+    }
+
+    .interview-scheduler .rz-scheduler-slot.today {
+        background: var(--rz-scheduler-today-background-color, rgba(33,46,97,.1)) !important;
+    }
+
+    /* Modal Styles */
+    .sms-modal-xxl {
+        max-width: 1400px;
+        width: 95%;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1050;
+        padding: 1rem;
+    }
+
+    .sms-modal-dialog {
+        position: relative;
+        margin: 0 auto;
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+    }
+
+    .sms-modal-content {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+    }
+
+    .sms-modal-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .sms-header-primary {
+        background-color: #212e61; /* SMS Blue Dark Bold */
+        color: white;
+    }
+
+    .sms-modal-title {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .sms-modal-body {
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+
+    .sms-modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e9ecef;
+        border-radius: 0 0 0.5rem 0.5rem;
+    }
+
+    /* Custom Modal Dialog Styles for Calendar */
+    :global(.custom-modal-dialog .rz-dialog) {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: none !important;
+        max-height: none !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    :global(.custom-modal-dialog .rz-dialog-content) {
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+        overflow: visible !important;
+    }
+
+    :global(.custom-modal-dialog .rz-dialog-titlebar) {
+        display: none !important;
+    }
+
+    /* Event console styling */
+    .event-console-container {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+</style>
+
+<script>
+    window.interviewCalendarHelpers = {
+        preventFocusErrors: function() {
+            // Prevent focus errors on scheduler appointments
+            document.addEventListener('click', function(event) {
+                const appointment = event.target.closest('.rz-scheduler-appointment');
+                if (appointment) {
+                    // Prevent default focus behavior that can cause issues
+                    event.preventDefault();
+                    event.stopPropagation();
+                    
+                    // Remove focus from any active elements to prevent conflicts
+                    if (document.activeElement && document.activeElement.blur) {
+                        document.activeElement.blur();
+                    }
+                }
+            }, true);
+            
+            // Handle focus errors globally
+            window.addEventListener('error', function(event) {
+                if (event.error && event.error.message && 
+                    event.error.message.includes('Unable to focus an invalid element')) {
+                    console.warn('Focus error prevented:', event.error.message);
+                    event.preventDefault();
+                    return false;
+                }
+            });
+        }
+    };
+    
+    // Initialize when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.interviewCalendarHelpers) {
+            window.interviewCalendarHelpers.preventFocusErrors();
+        }
+    });
+</script>

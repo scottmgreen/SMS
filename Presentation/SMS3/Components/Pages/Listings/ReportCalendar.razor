@@ -12,7 +12,7 @@
 <PageHeader Title="Report Calendar"
            Subtitle="View reports by date using an interactive calendar scheduler"
            Icon="fas fa-calendar-alt">
-    <AdditionalContent>
+    @* <AdditionalContent>
         <div class="d-flex gap-2">
             <RadzenButton ButtonStyle="ButtonStyle.Light" 
                          Text="Today" 
@@ -25,7 +25,7 @@
                          Click="@RefreshData"
                          Size="ButtonSize.Small" />
         </div>
-    </AdditionalContent>
+    </AdditionalContent> *@
 </PageHeader>
 
 <!-- Calendar Scheduler -->
@@ -52,8 +52,7 @@
                                 AppointmentSelect="@OnAppointmentSelect"
                                 AppointmentRender="@OnAppointmentRender"
                                 SlotRender="@OnSlotRender"
-                                Height="600px"
-                                Style="width: 100%;">
+                                 Style="width: 100%;height:800px">
                     
                     <!-- Custom Views -->
                     <RadzenDayView />
@@ -68,7 +67,7 @@
 </RadzenRow>
 
 <!-- Report Statistics Card -->
-<RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+@* <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
     <RadzenColumn Size="12" SizeMD="3">
         <RadzenCard Style="text-align: center; padding: 1.5rem;">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
@@ -108,7 +107,7 @@
             </RadzenStack>
         </RadzenCard>
     </RadzenColumn>
-</RadzenRow>
+</RadzenRow> *@
 
 <!-- Read-Only Report Details Modal (copied from ReportListing) -->
 @if (ShowDetailsModal && SelectedReport != null)

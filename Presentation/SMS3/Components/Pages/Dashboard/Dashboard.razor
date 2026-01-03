@@ -2,120 +2,395 @@
 @using Radzen
 @using Radzen.Blazor
 @using SMS3.Components.Shared
+@using SMS_Application.Messaging.Queries
 
 <PageTitle>Dashboard - SMS3</PageTitle>
 
 <!-- SMS Page Header using reusable component -->
 <PageHeader Title="SMS Dashboard"
-           Subtitle="Safety Management System overview and key performance metrics"
+           Subtitle="Safety Management System overview and key performance metrics with real-time data"
            Icon="fas fa-tachometer-alt" />
 
-<!-- Key Metrics Cards -->
-<RadzenRow Gap="1rem" class="rz-my-4">
-    <RadzenColumn Size="12" SizeMD="3">
-        <RadzenCard Variant="Variant.Outlined" class="rz-text-align-center">
-            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-                <RadzenIcon Icon="assignment" Style="font-size: 2rem; color: var(--rz-primary);" />
-                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0;">@TotalReports</RadzenText>
-                <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">Total Reports</RadzenText>
-            </RadzenStack>
-        </RadzenCard>
-    </RadzenColumn>
-    
-    <RadzenColumn Size="12" SizeMD="3">
-        <RadzenCard Variant="Variant.Outlined" class="rz-text-align-center">
-            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-                <RadzenIcon Icon="warning" Style="font-size: 2rem; color: var(--rz-warning);" />
-                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0;">@ActiveHazards</RadzenText>
-                <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">Active Hazards</RadzenText>
-            </RadzenStack>
-        </RadzenCard>
-    </RadzenColumn>
-    
-    <RadzenColumn Size="12" SizeMD="3">
-        <RadzenCard Variant="Variant.Outlined" class="rz-text-align-center">
-            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-                <RadzenIcon Icon="pending" Style="font-size: 2rem; color: var(--rz-info);" />
-                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0;">@PendingAssessments</RadzenText>
-                <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">Pending Assessments</RadzenText>
-            </RadzenStack>
-        </RadzenCard>
-    </RadzenColumn>
-    
-    <RadzenColumn Size="12" SizeMD="3">
-        <RadzenCard Variant="Variant.Outlined" class="rz-text-align-center">
-            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-                <RadzenIcon Icon="check_circle" Style="font-size: 2rem; color: var(--rz-success);" />
-                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0;">@CompletedActions</RadzenText>
-                <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">Completed Actions</RadzenText>
-            </RadzenStack>
-        </RadzenCard>
-    </RadzenColumn>
-</RadzenRow>
-
-<!-- Charts Row -->
-<RadzenRow Gap="1rem" class="rz-my-4">
-    <RadzenColumn Size="12" SizeLG="6">
-        <RadzenCard Variant="Variant.Outlined">
-            <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
-                <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">Reports by Month</RadzenText>
-                <RadzenChart>
-                    <RadzenColumnSeries Data="@ReportsByMonth" CategoryProperty="Label" ValueProperty="Value" Title="Reports">
-                    </RadzenColumnSeries>
-                    <RadzenCategoryAxis Padding="20" />
-                    <RadzenValueAxis>
-                        <RadzenGridLines Visible="true" />
-                        <RadzenAxisTitle Text="Number of Reports" />
-                    </RadzenValueAxis>
-                </RadzenChart>
-            </RadzenStack>
-        </RadzenCard>
-    </RadzenColumn>
-    
-    <RadzenColumn Size="12" SizeLG="6">
-        <RadzenCard Variant="Variant.Outlined">
-            <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
-                <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">Hazards by Type</RadzenText>
-                <RadzenChart>
-                    <RadzenDonutSeries Data="@HazardsByType" CategoryProperty="Label" ValueProperty="Value" Title="Hazards">
-                    </RadzenDonutSeries>
-                    <RadzenLegend Position="LegendPosition.Right" />
-                </RadzenChart>
-            </RadzenStack>
-        </RadzenCard>
-    </RadzenColumn>
-</RadzenRow>
-
-<!-- Recent Activity -->
-<RadzenRow Gap="1rem" class="rz-my-4">
-    <RadzenColumn Size="12">
-        <RadzenCard Variant="Variant.Outlined">
-            <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
-                <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">Recent Activity</RadzenText>
-                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-                    <RadzenCard Variant="Variant.Text" class="rz-border-radius-1">
-                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                            <RadzenIcon Icon="circle" Style="color: var(--rz-success); font-size: 0.8rem;" />
-                            <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0;">New hazard reported - Aircraft Ground Equipment</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; margin-left: auto;">2 hours ago</RadzenText>
-                        </RadzenStack>
-                    </RadzenCard>
-                    <RadzenCard Variant="Variant.Text" class="rz-border-radius-1">
-                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                            <RadzenIcon Icon="circle" Style="color: var(--rz-info); font-size: 0.8rem;" />
-                            <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0;">Risk assessment completed - Runway Operations</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; margin-left: auto;">4 hours ago</RadzenText>
-                        </RadzenStack>
-                    </RadzenCard>
-                    <RadzenCard Variant="Variant.Text" class="rz-border-radius-1">
-                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                            <RadzenIcon Icon="circle" Style="color: var(--rz-warning); font-size: 0.8rem;" />
-                            <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0;">Action item overdue - Safety Training Update</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; margin-left: auto;">1 day ago</RadzenText>
-                        </RadzenStack>
-                    </RadzenCard>
+@if (IsLoading)
+{
+    <div class="d-flex justify-content-center align-items-center" style="height: 300px;">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        <span class="ms-3">Loading dashboard data...</span>
+    </div>
+}
+else
+{
+    <!-- Control Panel Row -->
+    <RadzenRow Gap="1rem" class="rz-my-4">
+        <RadzenColumn Size="12" SizeMD="8">
+            <!-- Filters -->
+            <RadzenCard Variant="Variant.Outlined" Style="padding: 1rem;">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0;">Filters:</RadzenText>
+                    
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenText TextStyle="TextStyle.Body2">Entity Type:</RadzenText>
+                        <RadzenDropDown @bind-Value="@SelectedEntityType" 
+                                      Data="@EntityTypeOptions" 
+                                      Change="@(args => OnEntityTypeChanged(args.ToString()))"
+                                      Style="width: 150px;" />
+                    </RadzenStack>
+                    
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenText TextStyle="TextStyle.Body2">Status:</RadzenText>
+                        <RadzenDropDown @bind-Value="@SelectedStatusFilter" 
+                                      Data="@StatusFilterOptions" 
+                                      Change="@(args => OnStatusFilterChanged(args.ToString()))"
+                                      Style="width: 150px;" />
+                    </RadzenStack>
                 </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="4">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+                <RadzenButton Text="Refresh" 
+                            Icon="refresh" 
+                            ButtonStyle="ButtonStyle.Secondary"
+                            Click="@RefreshDashboardData" 
+                            Size="ButtonSize.Medium" />
             </RadzenStack>
-        </RadzenCard>
-    </RadzenColumn>
-</RadzenRow>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Key Metrics Cards -->
+    <RadzenRow Gap="1rem" class="rz-my-4">
+        <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+            <RadzenCard Variant="Variant.Outlined" class="rz-text-align-center metric-card clickable-card" 
+                      @onclick="NavigateToReports" Style="cursor: pointer;">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenIcon Icon="assignment" Style="font-size: 2.5rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: 700;">@TotalReports</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">Total Reports</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                        Active: @(TotalReports - GetCompletedCount())
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        
+        <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+            <RadzenCard Variant="Variant.Outlined" class="rz-text-align-center metric-card clickable-card"
+                      @onclick="NavigateToHazards" Style="cursor: pointer;">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenIcon Icon="warning" Style="font-size: 2.5rem; color: var(--rz-warning);" />
+                    <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: 700;">@TotalHazards</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">Total Hazards</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                        Active: @ActiveItems
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        
+        <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+            <RadzenCard Variant="Variant.Outlined" class="rz-text-align-center metric-card clickable-card"
+                      @onclick="NavigateToRiskAssessments" Style="cursor: pointer;">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenIcon Icon="analytics" Style="font-size: 2.5rem, color: var(--rz-info);" />
+                    <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: 700;">@TotalRiskAssessments</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">Risk Assessments</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                        Pending: @PendingItems
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        
+        <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+            <RadzenCard Variant="Variant.Outlined" class="rz-text-align-center metric-card clickable-card"
+                      @onclick="NavigateToInvestigations" Style="cursor: pointer;">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenIcon Icon="search" Style="font-size: 2.5rem; color: var(--rz-success);" />
+                    <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: 700;">@TotalInvestigations</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">Investigations</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                        Interviews: @(Statistics?.TotalInterviews ?? 0)
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Secondary Metrics Row -->
+    <RadzenRow Gap="1rem" class="rz-my-4">
+        <RadzenColumn Size="12" SizeSM="6" SizeLG="2">
+            <RadzenCard Variant="Variant.Outlined" class="rz-text-align-center secondary-metric">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                    <RadzenIcon Icon="build" Style="font-size: 1.5rem; color: var(--rz-secondary);" />
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">@TotalMitigations</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">Mitigations</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        
+        <RadzenColumn Size="12" SizeSM="6" SizeLG="2">
+            <RadzenCard Variant="Variant.Outlined" class="rz-text-align-center secondary-metric">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                    <RadzenIcon Icon="schedule" Style="font-size: 1.5rem; color: var(--rz-warning);" />
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">@OverdueItems</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">Overdue</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        
+        <RadzenColumn Size="12" SizeSM="6" SizeLG="2">
+            <RadzenCard Variant="Variant.Outlined" class="rz-text-align-center secondary-metric">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                    <RadzenIcon Icon="check_circle" Style="font-size: 1.5rem; color: var(--rz-success);" />
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">@(Statistics?.ItemsCompletedThisMonth ?? 0)</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">This Month</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        
+        <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+            <RadzenCard Variant="Variant.Outlined" class="rz-text-align-center secondary-metric">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                    <RadzenIcon Icon="timer" Style="font-size: 1.5rem; color: var(--rz-info);" />
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">@(Statistics?.AverageProcessingDays.ToString("F1") ?? "0") days</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">Avg Processing</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        
+        <RadzenColumn Size="12" SizeLG="3">
+            <RadzenCard Variant="Variant.Outlined" class="rz-text-align-center secondary-metric">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                    <RadzenIcon Icon="trending_up" Style="font-size: 1.5rem; color: var(--rz-success);" />
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">@CompletedItems</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">Total Completed</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Charts Row -->
+    <RadzenRow Gap="1rem" class="rz-my-4">
+        <RadzenColumn Size="12" SizeLG="6">
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">Reports by Month</RadzenText>
+                        <RadzenBadge Text="@ReportsByMonth.Count.ToString()" BadgeStyle="BadgeStyle.Info" />
+                    </div>
+                    
+                    @if (ReportsByMonth.Any())
+                    {
+                        <RadzenChart>
+                            <RadzenColumnSeries Data="@ReportsByMonth" CategoryProperty="Label" ValueProperty="Value" Title="Reports">
+                                <RadzenSeriesDataLabels Visible="true" />
+                            </RadzenColumnSeries>
+                            <RadzenCategoryAxis Padding="20" />
+                            <RadzenValueAxis>
+                                <RadzenGridLines Visible="true" />
+                                <RadzenAxisTitle Text="Number of Reports" />
+                            </RadzenValueAxis>
+                        </RadzenChart>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                                No report data available for the selected period
+                            </RadzenText>
+                        </div>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        
+        <RadzenColumn Size="12" SizeLG="6">
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">Hazards by Type</RadzenText>
+                        <RadzenBadge Text="@HazardsByType.Count.ToString()" BadgeStyle="BadgeStyle.Warning" />
+                    </div>
+                    
+                    @if (HazardsByType.Any())
+                    {
+                        <RadzenChart>
+                            <RadzenDonutSeries Data="@HazardsByType" CategoryProperty="Label" ValueProperty="Value" Title="Hazards">
+                                <RadzenSeriesDataLabels Visible="true" />
+                            </RadzenDonutSeries>
+                            <RadzenLegend Position="LegendPosition.Right" />
+                        </RadzenChart>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-textsecondary-color);">
+                                No hazard data available
+                            </RadzenText>
+                        </div>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Additional Charts Row -->
+    <RadzenRow Gap="1rem" class="rz-my-4">
+        <RadzenColumn Size="12" SizeLG="6">
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">Status Distribution</RadzenText>
+                        <RadzenBadge Text="All Items" BadgeStyle="BadgeStyle.Secondary" />
+                    </div>
+                    
+                    @if (ItemsByStatus.Any())
+                    {
+                        <RadzenChart>
+                            <RadzenBarSeries Data="@ItemsByStatus" CategoryProperty="Label" ValueProperty="Value" Title="Items">
+                                <RadzenSeriesDataLabels Visible="true" />
+                            </RadzenBarSeries>
+                            <RadzenCategoryAxis Padding="20" />
+                            <RadzenValueAxis>
+                                <RadzenGridLines Visible="true" />
+                            </RadzenValueAxis>
+                        </RadzenChart>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                                No status data available
+                            </RadzenText>
+                        </div>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        
+        <RadzenColumn Size="12" SizeLG="6">
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">Assessment Types</RadzenText>
+                        <RadzenBadge Text="@AssessmentsByType.Count.ToString()" BadgeStyle="BadgeStyle.Info" />
+                    </div>
+                    
+                    @if (AssessmentsByType.Any())
+                    {
+                        <RadzenChart>
+                            <RadzenPieSeries Data="@AssessmentsByType" CategoryProperty="Label" ValueProperty="Value" Title="Assessments">
+                                <RadzenSeriesDataLabels Visible="true" />
+                            </RadzenPieSeries>
+                            <RadzenLegend Position="LegendPosition.Bottom" />
+                        </RadzenChart>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text.secondary-color);">
+                                No assessment data available
+                            </RadzenText>
+                        </div>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Recent Activity -->
+    <RadzenRow Gap="1rem" class="rz-my-4">
+        <RadzenColumn Size="12">
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">Recent Activity</RadzenText>
+                    </div>
+                    
+                    @if (Statistics?.RecentActivity?.Any() == true)
+                    {
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                            @foreach (var activity in Statistics.RecentActivity.Take(10))
+                            {
+                                <RadzenCard Variant="Variant.Text" class="activity-card clickable-card" 
+                                          @onclick="() => NavigateToActivity(activity)"
+                                          Style="cursor: pointer;">
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                                        <RadzenIcon Icon="@activity.Icon" Style="@($"color: {activity.Color}; font-size: 1.2rem;")" />
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem" Style="flex: 1;">
+                                            <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; font-weight: 500;">
+                                                @activity.Title
+                                            </RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; color: var(--rz-text-secondary-color);">
+                                                @activity.Description
+                                            </RadzenText>
+                                        </RadzenStack>
+                                        <RadzenBadge Text="@activity.Type" BadgeStyle="BadgeStyle.Light" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text.secondary-color); white-space: nowrap;">
+                                            @GetTimeAgo(activity.Timestamp)
+                                        </RadzenText>
+                                    </RadzenStack>
+                                </RadzenCard>
+                            }
+                        </RadzenStack>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <RadzenIcon Icon="inbox" Style="font-size: 3rem; color: var(--rz-text.secondary-color); opacity: 0.5;" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text.secondary-color); margin-top: 1rem;">
+                                No recent activity to display
+                            </RadzenText>
+                        </div>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+}
+
+<style>
+    .metric-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        padding: 1.5rem;
+    }
+
+    .clickable-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .secondary-metric {
+        padding: 1rem;
+    }
+
+    .activity-card {
+        border: 1px solid #e9ecef;
+        border-radius: 0.375rem;
+        padding: 0.75rem;
+        transition: all 0.2s ease;
+    }
+
+    .activity-card:hover {
+        border-color: var(--rz-primary);
+        background-color: rgba(var(--rz-primary-rgb), 0.02);
+    }
+</style>
+
+@code {
+    private string GetTimeAgo(DateTime timestamp)
+    {
+        var timeSpan = DateTime.UtcNow - timestamp;
+        
+        if (timeSpan.TotalMinutes < 1)
+            return "Just now";
+        if (timeSpan.TotalMinutes < 60)
+            return $"{(int)timeSpan.TotalMinutes}m ago";
+        if (timeSpan.TotalHours < 24)
+            return $"{(int)timeSpan.TotalHours}h ago";
+        if (timeSpan.TotalDays < 7)
+            return $"{(int)timeSpan.TotalDays}d ago";
+        
+        return timestamp.ToString("MMM dd");
+    }
+}

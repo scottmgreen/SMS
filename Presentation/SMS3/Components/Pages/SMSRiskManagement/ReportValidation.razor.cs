@@ -405,7 +405,7 @@ public partial class ReportValidation : ComponentBase
                 {
                     var newInvestigation = createResult.Value;
                     ShowSuccessNotification($"Investigation {newInvestigation.Code} created successfully");
-                    var navigationUrl = $"/SMSRiskManagement/Investigation/{newInvestigation.Code}/{ReportHazard.Code}";
+                    var navigationUrl = $"/SMSRiskManagement/Investigations/{newInvestigation.Code}/{ReportHazard.Code}";
                     Logger.LogInformation("Navigating to new investigation: {Url}", navigationUrl);
                     await Task.Delay(1500);
                     Navigation.NavigateTo(navigationUrl);

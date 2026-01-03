@@ -20,6 +20,7 @@ public partial class InterviewsManager : ComponentBase
 
     #region Parameters
     [Parameter] public string InvestigationCode { get; set; } = default!;
+    [Parameter] public EventCallback OnInterviewsChanged { get; set; }
     #endregion
 
     #region State Properties
@@ -46,6 +47,13 @@ public partial class InterviewsManager : ComponentBase
     public async Task RefreshInterviews()
     {
         await LoadInterviews();
+        
+        // Notify parent component of changes
+        if (OnInterviewsChanged.HasDelegate)
+        {
+            await OnInterviewsChanged.InvokeAsync();
+        }
+        
         StateHasChanged();
     }
     #endregion
@@ -57,6 +65,7 @@ public partial class InterviewsManager : ComponentBase
         {
             if (string.IsNullOrWhiteSpace(InvestigationCode))
             {
+                Logger.LogWarning("LoadInterviews called with empty InvestigationCode");
                 return;
             }
 
@@ -72,8 +81,8 @@ public partial class InterviewsManager : ComponentBase
                     .OrderBy(i => i.InterviewDate ?? DateTime.MaxValue)
                     .ToList();
                 
-                Logger.LogInformation("Loaded {Count} interviews for investigation {Code}", 
-                    Interviews.Count, InvestigationCode);
+                Logger.LogInformation("Loaded {Count} interviews for investigation {Code} (Total available: {Total})", 
+                    Interviews.Count, InvestigationCode, result.Value.Count);
             }
             else
             {
@@ -99,12 +108,15 @@ public partial class InterviewsManager : ComponentBase
     {
         var options = new DialogOptions() 
         { 
-            Width = "600px", 
-            Height = "500px",
-            Resizable = true,
-            Draggable = true,
-            CloseDialogOnOverlayClick = false,
-            CloseDialogOnEsc = true
+            Width = "100%", 
+            Height = "100%",
+            Resizable = false,
+            Draggable = false,
+            CloseDialogOnOverlayClick = true,
+            CloseDialogOnEsc = true,
+            ShowTitle = false,
+            ShowClose = false,
+            CssClass = "custom-modal-dialog"
         };
 
         var parameters = new Dictionary<string, object> 
@@ -113,7 +125,7 @@ public partial class InterviewsManager : ComponentBase
         };
 
         var result = await DialogService.OpenAsync<CreateInterviewDialog>(
-            "Schedule New Interview", 
+            "", // No title since our custom modal has its own header
             parameters,
             options);
 
@@ -128,12 +140,15 @@ public partial class InterviewsManager : ComponentBase
     {
         var options = new DialogOptions() 
         { 
-            Width = "800px", 
-            Height = "600px",
-            Resizable = true,
-            Draggable = true,
-            CloseDialogOnOverlayClick = false,
-            CloseDialogOnEsc = true
+            Width = "100%", 
+            Height = "100%",
+            Resizable = false,
+            Draggable = false,
+            CloseDialogOnOverlayClick = true,
+            CloseDialogOnEsc = true,
+            ShowTitle = false,
+            ShowClose = false,
+            CssClass = "custom-modal-dialog"
         };
 
         var parameters = new Dictionary<string, object> 
@@ -142,7 +157,7 @@ public partial class InterviewsManager : ComponentBase
         };
 
         await DialogService.OpenAsync<ViewInterviewDialog>(
-            $"Interview: {interview.PersonInterviewed}", 
+            "", // No title since our custom modal has its own header
             parameters,
             options);
     }
@@ -151,12 +166,15 @@ public partial class InterviewsManager : ComponentBase
     {
         var options = new DialogOptions() 
         { 
-            Width = "700px", 
-            Height = "600px",
-            Resizable = true,
-            Draggable = true,
-            CloseDialogOnOverlayClick = false,
-            CloseDialogOnEsc = true
+            Width = "100%", 
+            Height = "100%",
+            Resizable = false,
+            Draggable = false,
+            CloseDialogOnOverlayClick = true,
+            CloseDialogOnEsc = true,
+            ShowTitle = false,
+            ShowClose = false,
+            CssClass = "custom-modal-dialog"
         };
 
         var parameters = new Dictionary<string, object> 
@@ -165,7 +183,7 @@ public partial class InterviewsManager : ComponentBase
         };
 
         var result = await DialogService.OpenAsync<EditInterviewDialog>(
-            $"Edit Interview: {interview.PersonInterviewed}", 
+            "", // No title since our custom modal has its own header
             parameters,
             options);
 
@@ -220,12 +238,15 @@ public partial class InterviewsManager : ComponentBase
     {
         var options = new DialogOptions() 
         { 
-            Width = "700px", 
-            Height = "500px",
-            Resizable = true,
-            Draggable = true,
-            CloseDialogOnOverlayClick = false,
-            CloseDialogOnEsc = false // Don't allow ESC to close completion dialog
+            Width = "100%", 
+            Height = "100%",
+            Resizable = false,
+            Draggable = false,
+            CloseDialogOnOverlayClick = false, // Don't allow overlay click for completion
+            CloseDialogOnEsc = false, // Don't allow ESC to close completion dialog
+            ShowTitle = false,
+            ShowClose = false,
+            CssClass = "custom-modal-dialog"
         };
 
         var parameters = new Dictionary<string, object> 
@@ -234,7 +255,7 @@ public partial class InterviewsManager : ComponentBase
         };
 
         var result = await DialogService.OpenAsync<CompleteInterviewDialog>(
-            $"Complete Interview: {interview.PersonInterviewed}", 
+            "", // No title since our custom modal has its own header
             parameters,
             options);
 

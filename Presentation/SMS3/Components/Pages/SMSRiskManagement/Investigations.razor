@@ -53,20 +53,20 @@ else
             </RadzenStack>
 
             <!-- Debug Info (temporary) -->
-            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+            @* <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
                 <RadzenText TextStyle="TextStyle.Body2">
                     <strong>Debug Info:</strong><br/>
                     Investigation: @(InvestigationId ?? "NULL")<br/>
                     Hazard: @(InvestigationEntity?.HazardCode ?? "NULL")<br />
                     Investigation Status: @(InvestigationEntity?.Status ?? "NULL")
                 </RadzenText>
-            </RadzenAlert>
+            </RadzenAlert> *@
 
             <!-- Main Form Tabs -->
             <RadzenTabs @bind-SelectedIndex="selectedTabIndex" RenderMode="TabRenderMode.Client">
                 <Tabs>
                     <!-- Investigation Details Tab -->
-                    <RadzenTabsItem Text="Investigation Details">
+                    <RadzenTabsItem Text="Investigation Details" Style="font-size:larger;font-weight:500;">
                         <RadzenStack Gap="1rem" Style="padding: 1rem;">
                             <RadzenRow Gap="1rem">
                                 <RadzenColumn Size="6">
@@ -85,9 +85,9 @@ else
                                 <RadzenColumn Size="6">
                                     <RadzenFormField Text="Assigned Investigator" Variant="Variant.Outlined">
                                         <RadzenDropDown @bind-Value="InvestigationEntity.AssignedInvestigatorId" 
-                                                       Data="AvailableInvestigators" 
-                                                       TextProperty="Id" 
-                                                       ValueProperty="Id" 
+                                                       Data="AvailableInvestigators"
+                                                        TextProperty="DisplayName"
+                                                        ValueProperty="Code" 
                                                        AllowClear="false" />
                                     </RadzenFormField>
                                 </RadzenColumn>
@@ -187,7 +187,8 @@ else
                     <RadzenTabsItem Text="@($"Interviews ({Interviews.Count})")">
                         <div style="padding: 1rem;">
                             <InterviewsManager @ref="interviewsManager" 
-                                             InvestigationCode="@InvestigationEntity.Code" />
+                                             InvestigationCode="@InvestigationEntity.Code"
+                                             OnInterviewsChanged="@OnInterviewsChanged" />
                         </div>
                     </RadzenTabsItem>
 

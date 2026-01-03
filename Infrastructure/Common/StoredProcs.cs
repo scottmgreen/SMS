@@ -498,7 +498,17 @@
         #region SMS Interview CRUD Operations
         /// <summary>
         /// SMS Interview CRUD Operations
+        /// 
+        /// pr_Interview_Insert_Enhanced
         /// </summary>
+        private static readonly Lazy<string> _pr_Interview_Insert_Enhanced = new Lazy<string>(() => "pr_Interview_Insert_Enhanced");
+        public static string pr_Interview_Insert_Enhanced => _pr_Interview_Insert_Enhanced.Value;
+
+        private static readonly Lazy<string> _pr_Interview_Update_Enhanced = new Lazy<string>(() => "pr_Interview_Update_Enhanced");
+        public static string pr_Interview_Update_Enhanced => _pr_Interview_Update_Enhanced.Value;
+
+
+
         private static readonly Lazy<string> _pr_Interview_Insert = new Lazy<string>(() => "pr_Interview_Insert");
         public static string pr_Interview_Insert => _pr_Interview_Insert.Value;
 

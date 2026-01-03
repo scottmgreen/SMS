@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Components;
 using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
 using SMS_Domain.Enums;
@@ -12,9 +13,10 @@ public partial class EditInterviewDialog : ComponentBase
 {
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private ILogger<EditInterviewDialog> Logger { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] public DialogService DialogService { get; set; } = default!;
     #endregion
 
     #region Parameters
@@ -34,31 +36,51 @@ public partial class EditInterviewDialog : ComponentBase
         new() { Value = InterviewType.Stakeholder, Text = "Stakeholder Interview" },
         new() { Value = InterviewType.FollowUp, Text = "Follow-up Interview" }
     };
+
+    private readonly List<DropdownOption> InterviewStatusOptions = new()
+    {
+        new() { Value = InterviewStatus.Planned, Text = "Planned" },
+        new() { Value = InterviewStatus.Scheduled, Text = "Scheduled" },
+        new() { Value = InterviewStatus.InProgress, Text = "In Progress" },
+        new() { Value = InterviewStatus.Completed, Text = "Completed" },
+        new() { Value = InterviewStatus.Cancelled, Text = "Cancelled" }
+    };
     #endregion
 
     #region Lifecycle
     protected override void OnInitialized()
     {
-        if (Interview != null)
+        // Initialize model from Interview entity
+        Model = new EditInterviewModel
         {
-            Model = new EditInterviewModel
-            {
-                PersonInterviewed = Interview.PersonInterviewed,
-                PersonInterviewedRole = Interview.PersonInterviewedRole,
-                PersonInterviewedDepartment = Interview.PersonInterviewedDepartment,
-                Type = Interview.Type,
-                InterviewDate = Interview.InterviewDate,
-                InterviewLocation = Interview.InterviewLocation,
-                PreparationNotes = Interview.PreparationNotes,
-                PersonInterviewedNotes = Interview.PersonInterviewedNotes,
-                InvestigatorNotes = Interview.InvestigatorNotes,
-                IsConfidential = Interview.IsConfidential
-            };
-        }
+            PersonInterviewed = Interview.PersonInterviewed,
+            PersonInterviewedRole = Interview.PersonInterviewedRole,
+            PersonInterviewedDepartment = Interview.PersonInterviewedDepartment,
+            PersonInterviewedNotes = Interview.PersonInterviewedNotes,
+            InvestigatorNotes = Interview.InvestigatorNotes,
+            Type = Interview.Type,
+            Status = Interview.Status,
+            InterviewDate = Interview.InterviewDate,
+            DurationMinutes = Interview.DurationMinutes,
+            InterviewLocation = Interview.InterviewLocation,
+            IsConfidential = Interview.IsConfidential,
+            PreparationNotes = Interview.PreparationNotes,
+            QuestionsToAsk = Interview.QuestionsToAsk,
+            BackgroundInformation = Interview.BackgroundInformation,
+            KeyFindings = Interview.KeyFindings,
+            FollowUpRequired = Interview.FollowUpRequired,
+            AdditionalWitnesses = Interview.AdditionalWitnesses,
+            CompletedDate = Interview.CompletedDate
+        };
     }
     #endregion
 
     #region Methods
+    private async Task UpdateInterview()
+    {
+        await UpdateInterview(Model);
+    }
+    
     private async Task UpdateInterview(EditInterviewModel model)
     {
         try
@@ -72,28 +94,27 @@ public partial class EditInterviewDialog : ComponentBase
             IsSaving = true;
             StateHasChanged();
 
-            // Update interview properties
+            // Update interview entity with all Enhanced parameters
             Interview.PersonInterviewed = model.PersonInterviewed;
             Interview.PersonInterviewedRole = model.PersonInterviewedRole;
             Interview.PersonInterviewedDepartment = model.PersonInterviewedDepartment;
-            Interview.Type = model.Type;
-            Interview.InterviewLocation = model.InterviewLocation;
-            Interview.PreparationNotes = model.PreparationNotes;
             Interview.PersonInterviewedNotes = model.PersonInterviewedNotes;
             Interview.InvestigatorNotes = model.InvestigatorNotes;
+            Interview.Type = model.Type;
+            Interview.Status = model.Status;
+            Interview.DurationMinutes = model.DurationMinutes;
+            Interview.InterviewLocation = model.InterviewLocation;
+            Interview.IsConfidential = model.IsConfidential;
+            Interview.PreparationNotes = model.PreparationNotes;
+            Interview.QuestionsToAsk = model.QuestionsToAsk;
+            Interview.BackgroundInformation = model.BackgroundInformation;
+            Interview.KeyFindings = model.KeyFindings;
+            Interview.FollowUpRequired = model.FollowUpRequired;
+            Interview.AdditionalWitnesses = model.AdditionalWitnesses;
+            Interview.CompletedDate = model.CompletedDate;
 
-            // Update confidentiality
-            var confidentialResult = Interview.SetConfidentiality(model.IsConfidential);
-            if (confidentialResult.IsFailure)
-            {
-                ShowErrorNotification($"Failed to update confidentiality: {confidentialResult.Error?.Message}");
-                return;
-            }
-
-            // Schedule if date/time changed
-            if (model.InterviewDate.HasValue && 
-                model.InterviewDate != Interview.InterviewDate &&
-                Interview.Status == InterviewStatus.Planned)
+            // Handle interview date changes
+            if (model.InterviewDate.HasValue && model.InterviewDate != Interview.InterviewDate)
             {
                 var scheduleResult = Interview.ScheduleInterview(
                     model.InterviewDate.Value,
@@ -106,23 +127,32 @@ public partial class EditInterviewDialog : ComponentBase
                 }
             }
 
-            // Save interview
+            // Set audit fields
+            Interview.UpdatedBy = CurrentUserService.UserId;
+            Interview.UpdatedDate = DateTime.UtcNow;
+
+            // Save interview using CQRS command
             var updateCommand = new UpdateInterviewCommand(Interview);
             var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (result.IsSuccess)
             {
-                Logger.LogInformation("Interview updated successfully: {Code}", Interview.Code);
+                Logger.LogInformation("Interview updated successfully: {Code} by user {UserId}", 
+                    Interview.Code, CurrentUserService.UserId);
+                
+                ShowSuccessNotification("Interview updated successfully");
                 DialogService.Close(true);
             }
             else
             {
                 ShowErrorNotification($"Failed to update interview: {result.Error?.Message}");
+                Logger.LogError("Failed to update interview {Code}: {Error}", 
+                    Interview.Code, result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error updating interview");
+            Logger.LogError(ex, "Error updating interview {Code}", Interview.Code);
             ShowErrorNotification("Error updating interview");
         }
         finally
@@ -130,6 +160,17 @@ public partial class EditInterviewDialog : ComponentBase
             IsSaving = false;
             StateHasChanged();
         }
+    }
+
+    private void ShowSuccessNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Success",
+            Detail = message,
+            Duration = 4000
+        });
     }
 
     private void ShowErrorNotification(string message)
@@ -150,13 +191,21 @@ public partial class EditInterviewDialog : ComponentBase
         public string PersonInterviewed { get; set; } = "";
         public string? PersonInterviewedRole { get; set; }
         public string? PersonInterviewedDepartment { get; set; }
-        public InterviewType Type { get; set; } = InterviewType.Witness;
-        public DateTime? InterviewDate { get; set; }
-        public string? InterviewLocation { get; set; }
-        public string? PreparationNotes { get; set; }
         public string? PersonInterviewedNotes { get; set; }
         public string? InvestigatorNotes { get; set; }
+        public InterviewType Type { get; set; } = InterviewType.Witness;
+        public InterviewStatus Status { get; set; } = InterviewStatus.Planned;
+        public DateTime? InterviewDate { get; set; }
+        public int? DurationMinutes { get; set; }
+        public string? InterviewLocation { get; set; }
         public bool IsConfidential { get; set; } = false;
+        public string? PreparationNotes { get; set; }
+        public string? QuestionsToAsk { get; set; }
+        public string? BackgroundInformation { get; set; }
+        public string? KeyFindings { get; set; }
+        public string? FollowUpRequired { get; set; }
+        public string? AdditionalWitnesses { get; set; }
+        public DateTime? CompletedDate { get; set; }
     }
 
     public class DropdownOption

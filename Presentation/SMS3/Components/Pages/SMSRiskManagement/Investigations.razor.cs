@@ -170,7 +170,7 @@ public partial class Investigations : ComponentBase
             if (interviewsResult.IsSuccess && interviewsResult.Value != null)
             {
                 Interviews = interviewsResult.Value
-                    .Where(i => i.InvestigationCode == InvestigationEntity?.Code)
+                    .Where(i => i.InvestigationCode.Trim() == InvestigationEntity?.Code)
                     .ToList();
                 
                 Logger.LogInformation("Loaded {Count} interviews for investigation", Interviews.Count);
@@ -372,6 +372,15 @@ public partial class Investigations : ComponentBase
             Logger.LogError(ex, "Error recording investigation decision");
             ShowErrorNotification($"Error recording decision: {ex.Message}");
         }
+    }
+    #endregion
+
+    #region Component Communication
+    private async Task OnInterviewsChanged()
+    {
+        // Refresh the interviews count for the tab
+        await LoadInterviews();
+        StateHasChanged();
     }
     #endregion
 

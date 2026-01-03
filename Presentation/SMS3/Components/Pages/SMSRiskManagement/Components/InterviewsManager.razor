@@ -140,3 +140,39 @@
     }
 
 </RadzenCard>
+
+<style>
+    /* Custom Modal Dialog Styles */
+    :global(.custom-modal-dialog .rz-dialog) {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: none !important;
+        max-height: none !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    :global(.custom-modal-dialog .rz-dialog-content) {
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+        overflow: visible !important;
+    }
+
+    :global(.custom-modal-dialog .rz-dialog-titlebar) {
+        display: none !important;
+    }
+    
+    /* Interview Status Styling */
+    .interview-item {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .interview-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+</style>

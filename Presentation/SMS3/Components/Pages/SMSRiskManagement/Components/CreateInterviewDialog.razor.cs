@@ -13,6 +13,7 @@ public partial class CreateInterviewDialog : ComponentBase
 {
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private ILogger<CreateInterviewDialog> Logger { get; set; } = default!;
     [Inject] public DialogService DialogService { get; set; } = default!;
@@ -20,11 +21,28 @@ public partial class CreateInterviewDialog : ComponentBase
 
     #region Parameters
     [Parameter] public string InvestigationCode { get; set; } = default!;
+    [Parameter] public DateTime? PresetDateTime { get; set; }
     #endregion
 
     #region State
     private bool IsSaving { get; set; } = false;
     public CreateInterviewModel Model { get; set; } = new();
+    #endregion
+
+    #region Lifecycle
+    protected override void OnInitialized()
+    {
+        // Initialize model with preset date/time if provided
+        Model = new CreateInterviewModel
+        {
+            InvestigationCode = InvestigationCode == "UNKNOWN" ? "" : InvestigationCode
+        };
+        
+        if (PresetDateTime.HasValue)
+        {
+            Model.InterviewDate = PresetDateTime.Value;
+        }
+    }
     #endregion
 
     #region Dropdown Options
@@ -38,6 +56,11 @@ public partial class CreateInterviewDialog : ComponentBase
     #endregion
 
     #region Methods
+    private async Task CreateInterview()
+    {
+        await CreateInterview(Model);
+    }
+    
     private async Task CreateInterview(CreateInterviewModel model)
     {
         try
@@ -48,14 +71,21 @@ public partial class CreateInterviewDialog : ComponentBase
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(model.InvestigationCode))
+            {
+                ShowErrorNotification("Investigation code is required");
+                return;
+            }
+
             IsSaving = true;
             StateHasChanged();
 
-            // Create interview entity
+            // Create interview entity with current user
+            var currentUserId = CurrentUserService.UserId;
             var interviewResult = Interview.CreateForInvestigation(
-                InvestigationCode,
+                model.InvestigationCode,
                 model.PersonInterviewed,
-                "CURRENT_USER", // TODO: Get actual current user
+                currentUserId,
                 model.Type);
 
             if (interviewResult.IsFailure)
@@ -66,10 +96,12 @@ public partial class CreateInterviewDialog : ComponentBase
 
             var interview = interviewResult.Value;
             
-            // Set additional properties
+            // Set additional properties to support all database parameters
             interview.PersonInterviewedRole = model.PersonInterviewedRole;
             interview.PersonInterviewedDepartment = model.PersonInterviewedDepartment;
             interview.PreparationNotes = model.PreparationNotes;
+            interview.QuestionsToAsk = model.QuestionsToAsk;
+            interview.BackgroundInformation = model.BackgroundInformation;
             interview.IsConfidential = model.IsConfidential;
 
             // Schedule if date/time provided
@@ -86,23 +118,28 @@ public partial class CreateInterviewDialog : ComponentBase
                 }
             }
 
-            // Save interview
+            // Save interview using CQRS command
             var createCommand = new CreateInterviewCommand(interview);
             var result = await Mediator.SendAsync(createCommand, CancellationToken.None);
 
             if (result.IsSuccess)
             {
-                Logger.LogInformation("Interview created successfully: {Code}", interview.Code);
+                Logger.LogInformation("Interview created successfully: {Code} by user {UserId}", 
+                    interview.Code, currentUserId);
+                
+                ShowSuccessNotification("Interview scheduled successfully");
                 DialogService.Close(true);
             }
             else
             {
                 ShowErrorNotification($"Failed to save interview: {result.Error?.Message}");
+                Logger.LogError("Failed to save interview {Code}: {Error}", 
+                    interview.Code, result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error creating interview");
+            Logger.LogError(ex, "Error creating interview for investigation {InvestigationCode}", model.InvestigationCode);
             ShowErrorNotification("Error creating interview");
         }
         finally
@@ -110,6 +147,17 @@ public partial class CreateInterviewDialog : ComponentBase
             IsSaving = false;
             StateHasChanged();
         }
+    }
+
+    private void ShowSuccessNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Success",
+            Detail = message,
+            Duration = 4000
+        });
     }
 
     private void ShowErrorNotification(string message)
@@ -127,6 +175,7 @@ public partial class CreateInterviewDialog : ComponentBase
     #region Models
     public class CreateInterviewModel
     {
+        public string InvestigationCode { get; set; } = "";
         public string PersonInterviewed { get; set; } = "";
         public string? PersonInterviewedRole { get; set; }
         public string? PersonInterviewedDepartment { get; set; }
@@ -134,6 +183,8 @@ public partial class CreateInterviewDialog : ComponentBase
         public DateTime? InterviewDate { get; set; }
         public string? InterviewLocation { get; set; }
         public string? PreparationNotes { get; set; }
+        public string? QuestionsToAsk { get; set; }
+        public string? BackgroundInformation { get; set; }
         public bool IsConfidential { get; set; } = false;
     }
 

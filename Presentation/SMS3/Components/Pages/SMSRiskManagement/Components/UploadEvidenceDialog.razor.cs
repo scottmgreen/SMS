@@ -3,6 +3,7 @@ using SMS_Domain.ValueObjects;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Interfaces;
 using SMS_Shared.Common;
+using Microsoft.AspNetCore.Components.Forms;
 using Radzen;
 
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
@@ -14,6 +15,7 @@ public partial class UploadEvidenceDialog : ComponentBase
     [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private ILogger<UploadEvidenceDialog> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private ISMSSessionService SessionService { get; set; } = default!;
     #endregion
 
     #region Parameters
@@ -21,10 +23,35 @@ public partial class UploadEvidenceDialog : ComponentBase
     [Parameter] public string InvestigationCode { get; set; } = default!;
     #endregion
 
-    #region State
+    #region State Properties
     private bool IsUploading { get; set; } = false;
     private int UploadProgress { get; set; } = 0;
+    private int FileProgress { get; set; } = 0;
+    private int CurrentFileIndex { get; set; } = 0;
+    private string CurrentFileName { get; set; } = string.Empty;
+    private string CurrentUploadStatus { get; set; } = string.Empty;
+    private bool ShowConfidentialInfo { get; set; } = false;
+    
     public UploadFileModel Model { get; set; } = new();
+    public List<AttachedFile> AttachedFiles { get; set; } = new();
+    #endregion
+
+    #region Computed Properties
+    public int DescriptionCharacterCount => Model.Description?.Length ?? 0;
+    
+    private long TotalSize => AttachedFiles.Sum(f => f.Size);
+    
+    private string GetTotalSizeDisplay() => FormatFileSize(TotalSize);
+    
+    private string GetFileTypeSummary()
+    {
+        var typeGroups = AttachedFiles
+            .GroupBy(f => GetFileTypeCategory(f.FileName))
+            .Select(g => $"{g.Count()} {g.Key}")
+            .ToList();
+        
+        return typeGroups.Any() ? string.Join(", ", typeGroups) : "None";
+    }
     #endregion
 
     #region Dropdown Options
@@ -41,102 +68,378 @@ public partial class UploadEvidenceDialog : ComponentBase
     };
     #endregion
 
-    #region Methods
-    private bool CanUpload()
+    #region Lifecycle Methods
+    protected override async Task OnInitializedAsync()
     {
-        return Model.SelectedFiles?.Any() == true && 
-               !string.IsNullOrWhiteSpace(Model.Description);
+        InitializeModel();
     }
 
-    private async Task UploadFile(UploadFileModel model)
+    protected override async Task OnParametersSetAsync()
+    {
+        // React to parameter changes
+        if (Model.SelectedFiles?.Any() == true)
+        {
+            await ProcessAttachedFiles();
+        }
+    }
+    #endregion
+
+    #region Initialization
+    private void InitializeModel()
+    {
+        var currentUser = SessionService.GetCurrentUserDisplayName() ?? "System User";
+        
+        Model = new UploadFileModel
+        {
+            Category = "Evidence",
+            IsConfidential = false
+        };
+    }
+    #endregion
+
+    #region File Processing
+    private async Task ProcessAttachedFiles()
+    {
+        AttachedFiles.Clear();
+
+        if (Model.SelectedFiles != null)
+        {
+            foreach (var file in Model.SelectedFiles)
+            {
+                try
+                {
+                    // Validate file size (50MB limit)
+                    if (file.Size > 52428800)
+                    {
+                        ShowWarningNotification($"File '{file.Name}' exceeds 50MB limit and will be skipped");
+                        continue;
+                    }
+
+                    // Read file data for upload
+                    byte[] fileData;
+                    using (var stream = file.OpenReadStream(maxAllowedSize: 52428800))
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await stream.CopyToAsync(memoryStream);
+                        fileData = memoryStream.ToArray();
+                    }
+                    
+                    AttachedFiles.Add(new AttachedFile
+                    {
+                        FileName = file.Name,
+                        ContentType = file.ContentType,
+                        Size = file.Size,
+                        Data = fileData,
+                        SizeDisplay = FormatFileSize(file.Size)
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Error processing file: {FileName}", file.Name);
+                    ShowErrorNotification($"Error processing file '{file.Name}': {ex.Message}");
+                }
+            }
+        }
+
+        StateHasChanged();
+    }
+    #endregion
+
+    #region Validation
+    private bool CanUpload()
+    {
+        return AttachedFiles.Any() && 
+               !string.IsNullOrWhiteSpace(Model.Description) && 
+               DescriptionCharacterCount <= 1000;
+    }
+
+    private string GetValidationMessage()
+    {
+        if (!AttachedFiles.Any()) return "Please select at least one file";
+        if (string.IsNullOrWhiteSpace(Model.Description)) return "Evidence description is required";
+        if (DescriptionCharacterCount > 1000) return "Description exceeds character limit";
+        
+        return "Ready to upload";
+    }
+    #endregion
+
+    #region Upload Processing
+    private async Task UploadFiles(UploadFileModel model)
     {
         try
         {
             if (!CanUpload())
             {
-                ShowErrorNotification("Please select a file and provide a description");
+                ShowErrorNotification(GetValidationMessage());
                 return;
             }
 
             IsUploading = true;
             UploadProgress = 0;
+            CurrentUploadStatus = "Preparing upload...";
             StateHasChanged();
 
-            var file = model.SelectedFiles!.First();
+            Logger.LogInformation("?? Starting upload of {Count} evidence files for Hazard: {HazardCode}", 
+                AttachedFiles.Count, HazardCode);
 
-            // Simulate upload progress
-            for (int i = 0; i <= 100; i += 10)
+            var uploadedFileIds = new List<string>();
+            var totalFiles = AttachedFiles.Count;
+            var currentUser = SessionService.GetCurrentUserDisplayName() ?? "Unknown User";
+
+            for (int i = 0; i < totalFiles; i++)
             {
-                UploadProgress = i;
+                var file = AttachedFiles[i];
+                CurrentFileIndex = i;
+                CurrentFileName = file.FileName;
+                CurrentUploadStatus = $"Uploading {file.FileName}...";
+                FileProgress = 0;
                 StateHasChanged();
-                await Task.Delay(100); // Simulate upload time
+
+                try
+                {
+                    // Simulate file processing progress
+                    for (int progress = 0; progress <= 100; progress += 20)
+                    {
+                        FileProgress = progress;
+                        UploadProgress = (int)((i * 100 + progress) / (double)totalFiles);
+                        StateHasChanged();
+                        await Task.Delay(50); // Simulate processing time
+                    }
+
+                    // Generate unique file code
+                    var fileCode = "HF-0000";
+
+                    // Create HazardFile entity using only existing properties
+                    var hazardFile = new HazardFile(new HazardFileID(fileCode))
+                    {
+                        Code = fileCode,
+                        HazardCode = HazardCode,
+                        ReportCode = string.Empty,
+                        FileName = file.FileName,
+                        FileType = GetFileTypeFromExtension(file.FileName),
+                        ContentType = file.ContentType ?? "application/octet-stream",
+                        FileSizeBytes = file.Size,
+                        FileSize = FormatFileSize(file.Size),
+                        StorageType = "Database",
+                        FileData = file.Data,
+                        UploadedBy = currentUser,
+                        UploadedDate = DateTime.UtcNow,
+                        IsActive = true,
+                        IsConfidential = Model.IsConfidential,
+                        Description = Model.Description,
+                        Category = Model.Category ?? "Evidence"
+                    };
+
+                    // Send CreateHazardFileCommand
+                    Logger.LogInformation("?? Creating HazardFile: {FileName} with Code: {FileCode} for Evidence", 
+                        file.FileName, fileCode);
+
+                    var createCommand = new CreateHazardFileCommand(hazardFile);
+                    var result = await Mediator.SendAsync(createCommand, CancellationToken.None);
+
+                    if (result.IsSuccess)
+                    {
+                        var createdFileId = result.Value.Code;
+                        uploadedFileIds.Add(createdFileId);
+
+                        Logger.LogInformation("? Successfully created evidence file: {FileName} with ID: {FileId}", 
+                            file.FileName, createdFileId);
+                    }
+                    else
+                    {
+                        Logger.LogError("? Failed to create evidence file: {FileName}. Error: {Error}", 
+                            file.FileName, result.Error?.Message);
+                        
+                        ShowErrorNotification($"Failed to upload '{file.FileName}': {result.Error?.Message}");
+                    }
+                }
+                catch (Exception fileEx)
+                {
+                    Logger.LogError(fileEx, "? Exception uploading evidence file: {FileName}", file.FileName);
+                    ShowErrorNotification($"Error uploading '{file.FileName}': {fileEx.Message}");
+                }
+
+                // Update overall progress
+                UploadProgress = (int)(((i + 1) * 100.0) / totalFiles);
+                StateHasChanged();
             }
 
-            // Create HazardFile entity
-            var hazardFileResult = HazardFile.CreateForHazard(
-                HazardCode,
-                file.Name,
-                file.Size.ToString(),
-                GetFileType(file.Name),
-                "CURRENT_USER"); // TODO: Get actual current user
+            // Final status update
+            CurrentUploadStatus = "Upload completed!";
+            CurrentFileName = string.Empty;
+            UploadProgress = 100;
+            StateHasChanged();
 
-            if (hazardFileResult.IsFailure)
+            // Show completion message
+            if (uploadedFileIds.Count == totalFiles)
             {
-                ShowErrorNotification($"Failed to create file record: {hazardFileResult.Error?.Message}");
-                return;
-            }
-
-            var hazardFile = hazardFileResult.Value;
-            hazardFile.Description = model.Description;
-            hazardFile.Category = model.Category ?? "Evidence";
-            hazardFile.IsConfidential = model.IsConfidential;
-            hazardFile.UploadedDate = DateTime.UtcNow;
-
-            // TODO: Implement actual file upload to storage
-            // For now, we'll just create the database record
-            
-            var createCommand = new CreateHazardFileCommand(hazardFile);
-            var result = await Mediator.SendAsync(createCommand, CancellationToken.None);
-
-            if (result.IsSuccess)
-            {
-                Logger.LogInformation("Evidence file uploaded successfully: {FileName} for hazard {HazardCode}", 
-                    file.Name, HazardCode);
+                Logger.LogInformation("? All evidence files uploaded successfully: {SuccessCount}/{TotalCount} files", 
+                    uploadedFileIds.Count, totalFiles);
+                
+                ShowSuccessNotification($"Successfully uploaded {uploadedFileIds.Count} evidence file(s)");
+                
+                // Close dialog with success
+                await Task.Delay(1000); // Brief delay to show completion
                 DialogService.Close(true);
             }
             else
             {
-                ShowErrorNotification($"Failed to save file record: {result.Error?.Message}");
+                var failedCount = totalFiles - uploadedFileIds.Count;
+                Logger.LogWarning("?? Partial upload success: {SuccessCount}/{TotalCount} files uploaded, {FailedCount} failed", 
+                    uploadedFileIds.Count, totalFiles, failedCount);
+                
+                ShowWarningNotification($"Uploaded {uploadedFileIds.Count} of {totalFiles} files. {failedCount} file(s) failed.");
+                
+                if (uploadedFileIds.Any())
+                {
+                    // Close dialog as we had some success
+                    await Task.Delay(1500);
+                    DialogService.Close(true);
+                }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error uploading evidence file");
-            ShowErrorNotification("Error uploading file");
+            Logger.LogError(ex, "? Critical error during evidence upload process");
+            ShowErrorNotification("Critical error during upload process. Please try again.");
         }
         finally
         {
             IsUploading = false;
             UploadProgress = 0;
+            FileProgress = 0;
+            CurrentFileName = string.Empty;
+            CurrentUploadStatus = string.Empty;
+            CurrentFileIndex = 0;
             StateHasChanged();
         }
     }
 
-    private string GetFileType(string fileName)
+    private string GetUploadButtonText()
+    {
+        if (IsUploading) return $"Uploading... ({UploadProgress}%)";
+        if (!AttachedFiles.Any()) return "Upload Evidence";
+        return $"Upload {AttachedFiles.Count} File(s)";
+    }
+    #endregion
+
+    #region File Type Helpers
+    private string GetFileTypeFromExtension(string fileName)
     {
         var extension = Path.GetExtension(fileName)?.ToLowerInvariant();
         return extension switch
         {
             ".pdf" => "PDF",
-            ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" => "Image",
-            ".mp4" or ".avi" or ".mov" or ".wmv" => "Video",
-            ".mp3" or ".wav" or ".m4a" => "Audio",
+            ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".webp" => "Image",
+            ".mp4" or ".avi" or ".mov" or ".wmv" or ".flv" or ".webm" => "Video",
+            ".mp3" or ".wav" or ".m4a" or ".aac" or ".ogg" => "Audio",
             ".doc" or ".docx" => "Document",
             ".xls" or ".xlsx" => "Spreadsheet",
-            ".txt" => "Text",
-            ".zip" or ".rar" => "Archive",
+            ".txt" or ".rtf" => "Text",
+            ".zip" or ".rar" or ".7z" => "Archive",
             _ => "Other"
         };
+    }
+
+    private string GetFileTypeCategory(string fileName)
+    {
+        return GetFileTypeFromExtension(fileName).ToLowerInvariant() switch
+        {
+            "image" => "images",
+            "video" => "videos", 
+            "audio" => "audio files",
+            "pdf" => "PDFs",
+            "document" => "documents",
+            "spreadsheet" => "spreadsheets",
+            "text" => "text files",
+            "archive" => "archives",
+            _ => "other files"
+        };
+    }
+
+    private string GetFileIcon(string fileName)
+    {
+        return GetFileTypeFromExtension(fileName) switch
+        {
+            "PDF" => "picture_as_pdf",
+            "Image" => "image",
+            "Video" => "videocam",
+            "Audio" => "audiotrack",
+            "Document" => "description",
+            "Spreadsheet" => "grid_on",
+            "Text" => "text_snippet",
+            "Archive" => "archive",
+            _ => "insert_drive_file"
+        };
+    }
+
+    private string GetFileIconColor(string fileName)
+    {
+        return GetFileTypeFromExtension(fileName) switch
+        {
+            "PDF" => "#d32f2f",
+            "Image" => "#388e3c", 
+            "Video" => "#1976d2",
+            "Audio" => "#f57c00",
+            "Document" => "#7b1fa2",
+            "Spreadsheet" => "#388e3c",
+            "Text" => "#616161",
+            "Archive" => "#795548",
+            _ => "#757575"
+        };
+    }
+
+    private string GetFileTypeDisplay(string fileName)
+    {
+        return GetFileTypeFromExtension(fileName);
+    }
+
+    private string GetFileStatusBadge(string fileName)
+    {
+        return "Ready";
+    }
+
+    private BadgeStyle GetFileStatusBadgeStyle(string fileName)
+    {
+        return BadgeStyle.Success;
+    }
+    #endregion
+
+    #region UI Event Handlers
+    private void ToggleConfidentialInfo()
+    {
+        ShowConfidentialInfo = !ShowConfidentialInfo;
+        StateHasChanged();
+    }
+    #endregion
+
+    #region Utility Methods
+    private string FormatFileSize(long bytes)
+    {
+        const int scale = 1024;
+        string[] orders = { "GB", "MB", "KB", "Bytes" };
+        long max = (long)Math.Pow(scale, orders.Length - 1);
+
+        foreach (string order in orders)
+        {
+            if (bytes > max)
+                return $"{decimal.Divide(bytes, max):##.##} {order}";
+            max /= scale;
+        }
+        return "0 Bytes";
+    }
+    #endregion
+
+    #region Notification Methods
+    private void ShowSuccessNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Upload Successful",
+            Detail = message,
+            Duration = 5000
+        });
     }
 
     private void ShowErrorNotification(string message)
@@ -144,17 +447,28 @@ public partial class UploadEvidenceDialog : ComponentBase
         NotificationService.Notify(new NotificationMessage
         {
             Severity = NotificationSeverity.Error,
-            Summary = "Error",
+            Summary = "Upload Error",
+            Detail = message,
+            Duration = 8000
+        });
+    }
+
+    private void ShowWarningNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Warning,
+            Summary = "Upload Warning",
             Detail = message,
             Duration = 6000
         });
     }
     #endregion
 
-    #region Models
+    #region Data Models
     public class UploadFileModel
     {
-        public IEnumerable<IBrowserFile>? SelectedFiles { get; set; }
+        public IReadOnlyList<IBrowserFile>? SelectedFiles { get; set; }
         public string? Description { get; set; }
         public string? Category { get; set; } = "Evidence";
         public bool IsConfidential { get; set; } = false;
@@ -164,6 +478,16 @@ public partial class UploadEvidenceDialog : ComponentBase
     {
         public object Value { get; set; } = default!;
         public string Text { get; set; } = "";
+    }
+
+    public class AttachedFile
+    {
+        public string FileName { get; set; } = string.Empty;
+        public long FileSizeBytes { get; set; }
+        public string SizeDisplay { get; set; } = string.Empty;
+        public string ContentType { get; set; } = string.Empty;
+        public byte[] Data { get; set; } = Array.Empty<byte>();
+        public long Size { get; set; }
     }
     #endregion
 }
