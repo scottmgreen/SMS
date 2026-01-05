@@ -41,27 +41,35 @@ public partial class ReportProcessing : ComponentBase
         {
             IsLoading = true;
 
+            Logger.LogWarning("?? DEBUG: Starting LoadDataAsync()...");
+
             // Load core entities using CQRS - ENHANCED to include Investigations and Interviews
             var (reports, hazards, riskAssessments, reportValidations, investigations, interviews) = await LoadCoreEntitiesAsync();
 
+            Logger.LogWarning("?? DEBUG: LoadCoreEntitiesAsync completed. Reports: {ReportCount}, Hazards: {HazardCount}, Validations: {ValidationCount}", 
+                reports.Count, hazards.Count, reportValidations.Count);
+
             if (!reports.Any())
             {
-                Logger.LogWarning("No reports found - initializing empty lists");
+                Logger.LogWarning("? No reports found - initializing empty lists");
                 InitializeEmptyLists();
                 return;
             }
 
             // Create report summaries and categorize - ENHANCED with investigations and interviews
             var reportSummaries = CreateReportSummaries(reports, hazards, riskAssessments, reportValidations, investigations, interviews);
+            
+            Logger.LogWarning("?? DEBUG: Created {SummaryCount} report summaries", reportSummaries.Count);
+            
             CategorizeReports(reportSummaries);
 
-            Logger.LogInformation("Report processing data loaded - V:{V}, RA:{RA}, I:{I}, M:{M}, C:{C}",
+            Logger.LogWarning("? Report processing data loaded - V:{V}, RA:{RA}, I:{I}, M:{M}, C:{C}",
                 PendingValidation.Count, PendingRiskAssessment.Count, PendingInvestigation.Count,
                 InMitigation.Count, ClosedReferred.Count);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading report processing data");
+            Logger.LogError(ex, "? Error loading report processing data");
             InitializeEmptyLists();
         }
         finally
@@ -82,28 +90,63 @@ public partial class ReportProcessing : ComponentBase
 
         try
         {
+            Logger.LogWarning("?? DEBUG: Starting LoadCoreEntitiesAsync - loading reports...");
+            
             // Get all reports
             var reportsQuery = new GetAllReportsQuery();
             var reportsResult = await Mediator.SendAsync(reportsQuery, CancellationToken.None);
             if (reportsResult.IsSuccess)
             {
                 reports = reportsResult.Value ?? new List<Report>();
+                Logger.LogWarning("? Successfully loaded {Count} reports from database", reports.Count);
+                
+                // Log first few report details for debugging
+                foreach (var report in reports.Take(3))
+                {
+                    Logger.LogWarning("?? Report: {Code} | Status: {Status} | Created: {Created}", 
+                        report.Code, report.Status, report.CreatedDate);
+                }
             }
             else
             {
-                Logger.LogError("Failed to retrieve reports: {Error}", reportsResult.Error?.Message);
+                Logger.LogError("? Failed to retrieve reports: {Error}", reportsResult.Error?.Message);
             }
 
+            Logger.LogWarning("?? DEBUG: Loading hazards...");
+            
             // Get all hazards
             var hazardsQuery = new GetAllHazardsQuery();
             var hazardsResult = await Mediator.SendAsync(hazardsQuery, CancellationToken.None);
             if (hazardsResult.IsSuccess)
             {
                 hazards = hazardsResult.Value ?? new List<Hazard>();
+                Logger.LogWarning("? Successfully loaded {Count} hazards from database", hazards.Count);
             }
             else
             {
-                Logger.LogError("Failed to retrieve hazards: {Error}", hazardsResult.Error?.Message);
+                Logger.LogError("? Failed to retrieve hazards: {Error}", hazardsResult.Error?.Message);
+            }
+
+            Logger.LogWarning("?? DEBUG: Loading report validations...");
+            
+            // CRITICAL: Get all report validations to determine which reports have been validated
+            var reportValidationsQuery = new GetAllReportValidationsQuery();
+            var reportValidationsResult = await Mediator.SendAsync(reportValidationsQuery, CancellationToken.None);
+            if (reportValidationsResult.IsSuccess && reportValidationsResult.Value != null)
+            {
+                reportValidations = reportValidationsResult.Value.ToList();
+                Logger.LogWarning("? Successfully loaded {Count} report validations", reportValidations.Count);
+                
+                // Log which reports have been validated for debugging
+                foreach (var validation in reportValidations.Take(3))
+                {
+                    Logger.LogWarning("?? Validation: Report {ReportCode} | Decision: {Decision} | Type: {Type}", 
+                        validation.ReportCode, validation.ValidationDecision, validation.ValidationType);
+                }
+            }
+            else
+            {
+                Logger.LogWarning("?? No report validations found or failed to retrieve: {Error}", reportValidationsResult.Error?.Message);
             }
 
             // Get all risk assessments
@@ -117,19 +160,6 @@ public partial class ReportProcessing : ComponentBase
             else
             {
                 Logger.LogError("Failed to retrieve risk assessments: {Error}", riskAssessmentsResult.Error?.Message);
-            }
-
-            // CRITICAL: Get all report validations to determine which reports have been validated
-            var reportValidationsQuery = new GetAllReportValidationsQuery();
-            var reportValidationsResult = await Mediator.SendAsync(reportValidationsQuery, CancellationToken.None);
-            if (reportValidationsResult.IsSuccess && reportValidationsResult.Value != null)
-            {
-                reportValidations = reportValidationsResult.Value.ToList();
-                Logger.LogInformation("Loaded {Count} report validations", reportValidations.Count);
-            }
-            else
-            {
-                Logger.LogError("Failed to retrieve report validations: {Error}", reportValidationsResult.Error?.Message);
             }
 
             // NEW: Get all investigations
@@ -160,8 +190,11 @@ public partial class ReportProcessing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in core entities retrieval");
+            Logger.LogError(ex, "? Exception in LoadCoreEntitiesAsync");
         }
+
+        Logger.LogWarning("?? DEBUG: LoadCoreEntitiesAsync returning - Reports: {RC}, Hazards: {HC}, Validations: {VC}", 
+            reports.Count, hazards.Count, reportValidations.Count);
 
         return (reports, hazards, riskAssessments, reportValidations, investigations, interviews);
     }
@@ -273,6 +306,9 @@ public partial class ReportProcessing : ComponentBase
 
     private ProcessingStatusCategory DetermineStatusCategory(Report report, Hazard? hazard, RiskAssessment? riskAssessment, SMS_Domain.Entities.ReportValidation? reportValidation, Investigation? investigation)
     {
+        Logger.LogWarning("?? CATEGORIZING Report: {ReportCode} | HasValidation: {HasValidation} | HasRiskAssessment: {HasRA} | HasInvestigation: {HasInv}", 
+            report.Code, reportValidation != null, riskAssessment != null, investigation != null);
+
         // CRITICAL DESIGN CONCEPT: 
         // 1. If no ReportValidation exists -> VALIDATION tab (needs initial validation)
         // 2. If ReportValidation exists but no RiskAssessment -> RISK ASSESSMENT tab (validated, needs risk assessment)  
@@ -287,7 +323,7 @@ public partial class ReportProcessing : ComponentBase
             if (investigation.Status == InvestigationStatus.InProgress || 
                 investigation.Status == InvestigationStatus.OnHold)
             {
-                Logger.LogDebug("Report {ReportId} -> INVESTIGATION (active investigation {InvestigationId} with status {Status})", 
+                Logger.LogWarning("? Report {ReportId} -> INVESTIGATION (active investigation {InvestigationId} with status {Status})", 
                     report.Code, investigation.Code, investigation.Status);
                 return ProcessingStatusCategory.Investigation;
             }
@@ -296,14 +332,14 @@ public partial class ReportProcessing : ComponentBase
         // No validation record = needs validation
         if (reportValidation == null)
         {
-            Logger.LogDebug("Report {ReportId} -> VALIDATION (no validation record)", report.Code);
+            Logger.LogWarning("? Report {ReportId} -> VALIDATION (no validation record)", report.Code);
             return ProcessingStatusCategory.Validation;
         }
 
         // Has validation but no risk assessment = validated, needs risk assessment
         if (riskAssessment == null)
         {
-            Logger.LogDebug("Report {ReportId} -> RISK ASSESSMENT (validated but no assessment)", report.Code);
+            Logger.LogWarning("? Report {ReportId} -> RISK ASSESSMENT (validated but no assessment)", report.Code);
             return ProcessingStatusCategory.RiskAssessment;
         }
 
@@ -321,20 +357,20 @@ public partial class ReportProcessing : ComponentBase
                 _ => ProcessingStatusCategory.RiskAssessment
             };
             
-            Logger.LogDebug("Report {ReportId} -> {Category} (assessment step {Step})", 
+            Logger.LogWarning("? Report {ReportId} -> {Category} (assessment step {Step})", 
                 report.Code, category, riskAssessment.CurrentStep);
             return category;
         }
         else if (riskAssessment.Status == RiskAssessmentStatus.Completed)
         {
-            Logger.LogDebug("Report {ReportId} -> MITIGATION (assessment complete)", report.Code);
+            Logger.LogWarning("? Report {ReportId} -> MITIGATION (assessment complete)", report.Code);
             return ProcessingStatusCategory.Mitigation;
         }
 
         // Fallback to hazard/report status for edge cases
         var effectiveStatus = hazard?.Status?.ToString() ?? report.Status ?? "New";
         
-        Logger.LogDebug("Report {ReportId} -> Fallback logic with status: {Status}", report.Code, effectiveStatus);
+        Logger.LogWarning("? Report {ReportId} -> Fallback logic with status: {Status}", report.Code, effectiveStatus);
         
         return effectiveStatus switch
         {

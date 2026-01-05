@@ -174,25 +174,64 @@ else
                         <RadzenRow Gap="1rem" Class="rz-mb-3">
                             <RadzenColumn Size="12">
                                 <RadzenFormField Text="Supporting Documents" Variant="Variant.Outlined">
-                                    <RadzenFileInput @bind-Value="@SelectedFiles" 
-                                                   Multiple="true"
-                                                   Accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt"
-                                                   MaxFileSize="10485760"
-                                                   Style="width: 100%;" />
+                                    <InputFile OnChange="OnInputFileChange" 
+                                             multiple 
+                                             accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt"
+                                             style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem;" />
                                 </RadzenFormField>
                                 <RadzenText TextStyle="TextStyle.Caption" Class="rz-color-base-500 rz-mt-1">
-                                    <RadzenIcon Icon="attach_file" Style="font-size: 0.9rem;" /> Supported: JPG, PNG, PDF, DOC, DOCX, TXT (Max 10MB per file)
+                                    <RadzenIcon Icon="attach_file" Style="font-size: 0.9rem;" /> 
+                                    Supported: JPG, PNG, PDF, DOC, DOCX, TXT (Max 10MB per file)
+                                    @if (AttachedFiles.Any())
+                                    {
+                                        <span style="margin-left: 1rem; color: var(--rz-success);">
+                                            <RadzenIcon Icon="check_circle" Style="font-size: 0.9rem;" />
+                                            @AttachedFiles.Count file(s) queued
+                                        </span>
+                                    }
+                                    <br />
+                                    <small class="text-muted">
+                                        <RadzenIcon Icon="info" Style="font-size: 0.8rem;" />
+                                        Tip: You can select multiple files at once or add files multiple times to build your queue.
+                                    </small>
                                 </RadzenText>
                                 @if (AttachedFiles.Any())
                                 {
                                     <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small" Variant="Variant.Flat" Class="rz-mt-2">
-                                        <strong>Selected files:</strong>
-                                        <ul class="rz-mb-0 rz-mt-1">
-                                            @foreach (var file in AttachedFiles)
-                                            {
-                                                <li>@file.FileName (@file.SizeDisplay)</li>
-                                            }
-                                        </ul>
+                                        <RadzenStack Gap="1rem">
+                                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                                <strong>Queued files (@AttachedFiles.Count):</strong>
+                                                <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                                            Variant="Variant.Text"
+                                                            Icon="clear_all" 
+                                                            Text="Clear All"
+                                                            Size="ButtonSize.ExtraSmall"
+                                                            Click="ClearAllFiles" />
+                                            </RadzenStack>
+                                            
+                                            <RadzenStack Gap="0.5rem">
+                                                @for (int i = 0; i < AttachedFiles.Count; i++)
+                                                {
+                                                    var file = AttachedFiles[i];
+                                                    var fileIndex = i;
+                                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" 
+                                                               Style="padding: 0.25rem 0.5rem; border: 1px solid #dee2e6; border-radius: 0.25rem; background-color: #f8f9fa;">
+                                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                                            <RadzenIcon Icon="attach_file" Style="color: var(--rz-info); font-size: 0.9rem;" />
+                                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                                                @file.FileName (@file.SizeDisplay)
+                                                            </RadzenText>
+                                                        </RadzenStack>
+                                                        <RadzenButton ButtonStyle="ButtonStyle.Danger" 
+                                                                    Variant="Variant.Text"
+                                                                    Icon="close" 
+                                                                    Size="ButtonSize.ExtraSmall"
+                                                                    Click="@(() => RemoveFile(fileIndex))"
+                                                                    title="Remove this file" />
+                                                    </RadzenStack>
+                                                }
+                                            </RadzenStack>
+                                        </RadzenStack>
                                     </RadzenAlert>
                                 }
                             </RadzenColumn>

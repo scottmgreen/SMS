@@ -384,10 +384,10 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         ShowPreview = false;
         ShowSubmissionConfirmation = false;
         ShowFinalSuccessConfirmation = false;
-        
+
         InitializeFormDefaults();
         StateHasChanged();
-        
+
         NotificationService.Notify(new NotificationMessage
         {
             Severity = NotificationSeverity.Info,

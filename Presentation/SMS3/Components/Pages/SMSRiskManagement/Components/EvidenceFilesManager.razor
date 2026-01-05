@@ -6,6 +6,7 @@
 @using SMS_Shared.Common
 @using Radzen
 @using Radzen.Blazor
+@using SMS3.Components.Pages.SMSRiskManagement.Components
 
 <!-- Evidence Files Manager Component -->
 <RadzenCard Style="margin-top: 1rem;">
@@ -30,7 +31,7 @@
     else
     {
         <!-- File Type Tabs -->
-        <RadzenTabView SelectedIndex="selectedFileTypeIndex" SelectedIndexChanged="@((int index) => selectedFileTypeIndex = index)" Style="margin-bottom: 1rem;">
+        <RadzenTabs SelectedIndex="selectedFileTypeIndex" SelectedIndexChanged="@((int index) => selectedFileTypeIndex = index)" RenderMode="TabRenderMode.Client">
             <Tabs>
                 <RadzenTabsItem Text="@($"All Files ({EvidenceFiles.Count})")">
                     <div style="margin-top: 1rem;">
@@ -44,9 +45,63 @@
                         {
                             @foreach (var file in EvidenceFiles.OrderByDescending(f => f.UploadedDate))
                             {
-                                <div style="margin-bottom: 1rem;">
-                                    @RenderFileCard(file)
-                                </div>
+                                <RadzenCard Variant="Variant.Outlined" Style="margin-bottom: 1rem;">
+                                    <RadzenRow Gap="1rem" AlignItems="AlignItems.Center">
+                                        <RadzenColumn Size="2" Style="text-align: center;">
+                                            <RadzenIcon Icon="@GetFileIcon(file)" Style="@($"font-size: 2rem; color: {GetFileIconColor(file)};")" />
+                                        </RadzenColumn>
+                                        <RadzenColumn Size="8">
+                                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                                                <!-- Clickable file name -->
+                                                <RadzenLink Text="@file.FileName" 
+                                                          Style="font-size: 1.1rem; font-weight: 600; cursor: pointer; color: var(--rz-primary);" 
+                                                          Click="@(() => ViewFile(file))"
+                                                          title="Click to view file" />
+                                                
+                                                @if (!string.IsNullOrEmpty(file.Description))
+                                                {
+                                                    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                                                        @file.Description
+                                                    </RadzenText>
+                                                }
+                                                
+                                                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                                        <RadzenIcon Icon="person" Style="font-size: 14px; margin-right: 0.25rem;" />
+                                                        @file.UploadedBy
+                                                    </RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                                        <RadzenIcon Icon="schedule" Style="font-size: 14px; margin-right: 0.25rem;" />
+                                                        @file.UploadedDate?.ToString("MMM dd, yyyy")
+                                                    </RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-textsecondary-color);">
+                                                        <RadzenIcon Icon="storage" Style="font-size: 14px; margin-right: 0.25rem;" />
+                                                        @FormatFileSize(file.FileSizeBytes)
+                                                    </RadzenText>
+                                                </RadzenStack>
+                                            </RadzenStack>
+                                        </RadzenColumn>
+                                        <RadzenColumn Size="2" Style="text-align: end;">
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+                                                <RadzenButton Icon="visibility" 
+                                                            ButtonStyle="ButtonStyle.Info" 
+                                                            Size="ButtonSize.Small"
+                                                            Click="@(() => ViewFile(file))" 
+                                                            Title="View file" />
+                                                <RadzenButton Icon="download" 
+                                                            ButtonStyle="ButtonStyle.Light" 
+                                                            Size="ButtonSize.Small"
+                                                            Click="@(() => DownloadFile(file))" 
+                                                            Title="Download file" />
+                                                <RadzenButton Icon="delete" 
+                                                            ButtonStyle="ButtonStyle.Danger" 
+                                                            Size="ButtonSize.Small"
+                                                            Click="@(() => DeleteFile(file))" 
+                                                            Title="Delete file" />
+                                            </RadzenStack>
+                                        </RadzenColumn>
+                                    </RadzenRow>
+                                </RadzenCard>
                             }
                         }
                     </div>
@@ -56,8 +111,9 @@
                     <div style="margin-top: 1rem;">
                         @foreach (var file in GetFilesByType("PDF"))
                         {
-                            <div style="margin-bottom: 1rem;">
-                                @RenderFileCard(file)
+                            <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid #ccc; border-radius: 4px;">
+                                <strong>@file.FileName</strong> (PDF)<br/>
+                                Size: @FormatFileSize(file.FileSizeBytes)
                             </div>
                         }
                         @if (!GetFilesByType("PDF").Any())
@@ -71,19 +127,54 @@
 
                 <RadzenTabsItem Text="@($"Images ({GetFilesByType("Image").Count()})")">
                     <div style="margin-top: 1rem;">
-                        <RadzenRow Gap="1rem">
-                            @foreach (var file in GetFilesByType("Image"))
-                            {
-                                <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
-                                    @RenderImageCard(file)
-                                </RadzenColumn>
-                            }
-                        </RadzenRow>
                         @if (!GetFilesByType("Image").Any())
                         {
                             <RadzenAlert AlertStyle="AlertStyle.Info" Icon="image" Title="No Images">
                                 No images have been uploaded yet.
                             </RadzenAlert>
+                        }
+                        else
+                        {
+                            <RadzenRow Gap="1rem">
+                                @foreach (var file in GetFilesByType("Image"))
+                                {
+                                    <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                                        <RadzenCard Variant="Variant.Outlined" Style="height: 320px; cursor: pointer;" 
+                                                  Click="@(() => ViewFile(file))">
+                                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" Style="height: 100%;">
+                                                <div style="height: 200px; background: #f5f5f5; display: flex; align-items: center; justify-content: center; border-radius: 4px; overflow: hidden;">
+                                                    @if (file.FileData != null && file.FileData.Length > 0)
+                                                    {
+                                                        <img src="@($"data:{GetMimeType(file)};base64,{Convert.ToBase64String(file.FileData)}")" 
+                                                             alt="@file.FileName" 
+                                                             style="max-width: 100%; max-height: 100%; object-fit: cover;" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <RadzenIcon Icon="image" Style="font-size: 3rem; color: var(--rz-text-tertiary-color);" />
+                                                    }
+                                                </div>
+                                                <RadzenLink Text="@file.FileName" 
+                                                          TextStyle="TextStyle.Subtitle2" 
+                                                          Style="margin: 0; text-align: center; display: block; color: var(--rz-primary);"
+                                                          Click="@(() => ViewFile(file))"
+                                                          title="Click to view image" />
+                                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color); text-align: center;">
+                                                    @FormatFileSize(file.FileSizeBytes) • @file.UploadedDate?.ToString("MMM dd, yyyy")
+                                                </RadzenText>
+                                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                                                    <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
+                                                                Click="@(() => ViewFile(file))" Click:stopPropagation="true" />
+                                                    <RadzenButton Icon="download" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small" 
+                                                                Click="@(() => DownloadFile(file))" Click:stopPropagation="true" />
+                                                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
+                                                                Click="@(() => DeleteFile(file))" Click:stopPropagation="true" />
+                                                </RadzenStack>
+                                            </RadzenStack>
+                                        </RadzenCard>
+                                    </RadzenColumn>
+                                }
+                            </RadzenRow>
                         }
                     </div>
                 </RadzenTabsItem>
@@ -92,8 +183,9 @@
                     <div style="margin-top: 1rem;">
                         @foreach (var file in GetFilesByType("Video"))
                         {
-                            <div style="margin-bottom: 1rem;">
-                                @RenderVideoCard(file)
+                            <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid #ccc; border-radius: 4px;">
+                                <strong>@file.FileName</strong> (Video)<br/>
+                                Size: @FormatFileSize(file.FileSizeBytes)
                             </div>
                         }
                         @if (!GetFilesByType("Video").Any())
@@ -109,8 +201,9 @@
                     <div style="margin-top: 1rem;">
                         @foreach (var file in GetFilesByType("Other"))
                         {
-                            <div style="margin-bottom: 1rem;">
-                                @RenderFileCard(file)
+                            <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid #ccc; border-radius: 4px;">
+                                <strong>@file.FileName</strong><br/>
+                                Size: @FormatFileSize(file.FileSizeBytes)
                             </div>
                         }
                         @if (!GetFilesByType("Other").Any())
@@ -122,130 +215,30 @@
                     </div>
                 </RadzenTabsItem>
             </Tabs>
-        </RadzenTabView>
+        </RadzenTabs>
     }
 
 </RadzenCard>
 
+<!-- File Viewer Dialog -->
+@if (ShowFileViewer && ViewingFile != null)
+{
+    <FileViewerDialog ViewingFile="@ViewingFile" OnClose="@CloseFileViewer" />
+}
+
 @code {
-    private async Task<RenderFragment> RenderFileCard(HazardFile file)
+    private string FormatFileSize(long bytes)
     {
-        return @<RadzenCard Variant="Variant.Outlined">
-            <RadzenRow Gap="1rem" AlignItems="AlignItems.Center">
-                <RadzenColumn Size="2" Style="text-align: center;">
-                    <RadzenIcon Icon="@GetFileIcon(file)" Style="@($"font-size: 2rem; color: {GetFileIconColor(file)};")" />
-                </RadzenColumn>
-                <RadzenColumn Size="8">
-                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0;">
-                            @file.FileName
-                        </RadzenText>
-                        
-                        @if (!string.IsNullOrEmpty(file.Description))
-                        {
-                            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
-                                @file.Description
-                            </RadzenText>
-                        }
-                        
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
-                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
-                                <RadzenIcon Icon="person" Style="font-size: 14px; margin-right: 0.25rem;" />
-                                @file.UploadedBy
-                            </RadzenText>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
-                                <RadzenIcon Icon="schedule" Style="font-size: 14px; margin-right: 0.25rem;" />
-                                @file.UploadedDate?.ToString("MMM dd, yyyy")
-                            </RadzenText>
-                            @if (!string.IsNullOrEmpty(file.FileSize))
-                            {
-                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-textsecondary-color);">
-                                    <RadzenIcon Icon="storage" Style="font-size: 14px; margin-right: 0.25rem;" />
-                                    @file.FileSize
-                                </RadzenText>
-                            }
-                        </RadzenStack>
-                    </RadzenStack>
-                </RadzenColumn>
-                <RadzenColumn Size="2" Style="text-align: end;">
-                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
-                        <RadzenButton Icon="download" 
-                                    ButtonStyle="ButtonStyle.Light" 
-                                    Size="ButtonSize.Small"
-                                    Click="@(() => DownloadFile(file))" 
-                                    Title="Download" />
-                        <RadzenButton Icon="visibility" 
-                                    ButtonStyle="ButtonStyle.Info" 
-                                    Size="ButtonSize.Small"
-                                    Click="@(() => ViewFile(file))" 
-                                    Title="View" />
-                        <RadzenButton Icon="delete" 
-                                    ButtonStyle="ButtonStyle.Danger" 
-                                    Size="ButtonSize.Small"
-                                    Click="@(() => DeleteFile(file))" 
-                                    Title="Delete" />
-                    </RadzenStack>
-                </RadzenColumn>
-            </RadzenRow>
-        </RadzenCard>;
-    }
+        const int scale = 1024;
+        string[] orders = { "GB", "MB", "KB", "Bytes" };
+        long max = (long)Math.Pow(scale, orders.Length - 1);
 
-    private async Task<RenderFragment> RenderImageCard(HazardFile file)
-    {
-        return @<RadzenCard Variant="Variant.Outlined" Style="height: 300px;">
-            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" Style="height: 100%;">
-                <div style="height: 200px; background: #f5f5f5; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
-                    <RadzenIcon Icon="image" Style="font-size: 3rem; color: var(--rz-text-tertiary-color);" />
-                    <!-- TODO: Add actual image preview when file viewing is implemented -->
-                </div>
-                <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; text-align: center;">
-                    @file.FileName
-                </RadzenText>
-                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color); text-align: center;">
-                    @file.UploadedDate?.ToString("MMM dd, yyyy")
-                </RadzenText>
-                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
-                    <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => ViewFile(file))" />
-                    <RadzenButton Icon="download" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small" Click="@(() => DownloadFile(file))" />
-                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Click="@(() => DeleteFile(file))" />
-                </RadzenStack>
-            </RadzenStack>
-        </RadzenCard>;
-    }
-
-    private async Task<RenderFragment> RenderVideoCard(HazardFile file)
-    {
-        return @<RadzenCard Variant="Variant.Outlined">
-            <RadzenRow Gap="1rem" AlignItems="AlignItems.Center">
-                <RadzenColumn Size="3" Style="text-align: center;">
-                    <div style="height: 80px; background: #000; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
-                        <RadzenIcon Icon="play_circle_filled" Style="font-size: 2.5rem; color: white;" />
-                    </div>
-                </RadzenColumn>
-                <RadzenColumn Size="7">
-                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0;">
-                            @file.FileName
-                        </RadzenText>
-                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
-                            Video • @file.UploadedDate?.ToString("MMM dd, yyyy") • @file.FileSize
-                        </RadzenText>
-                        @if (!string.IsNullOrEmpty(file.Description))
-                        {
-                            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-textsecondary-color);">
-                                @file.Description
-                            </RadzenText>
-                        }
-                    </RadzenStack>
-                </RadzenColumn>
-                <RadzenColumn Size="2" Style="text-align: end;">
-                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
-                        <RadzenButton Icon="play_arrow" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" Click="@(() => ViewFile(file))" />
-                        <RadzenButton Icon="download" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small" Click="@(() => DownloadFile(file))" />
-                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Click="@(() => DeleteFile(file))" />
-                    </RadzenStack>
-                </RadzenColumn>
-            </RadzenRow>
-        </RadzenCard>;
+        foreach (string order in orders)
+        {
+            if (bytes > max)
+                return $"{decimal.Divide(bytes, max):##.##} {order}";
+            max /= scale;
+        }
+        return "0 Bytes";
     }
 }

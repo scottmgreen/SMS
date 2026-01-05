@@ -2,53 +2,330 @@
 @using Radzen
 @using Radzen.Blazor
 
-<RadzenStack Gap="1rem">
-    <RadzenAlert AlertStyle="AlertStyle.Info" Icon="info">
-        <RadzenText Text="@($"Select stakeholders to score: {HazardDescription}")" />
-        <RadzenText TextStyle="TextStyle.Caption" Text="@($"Currently selected: {WorkingSelectedCodes.Count} member(s)")" />
-    </RadzenAlert>
+<!-- Panel Management Modal -->
+<div class="panel-management-overlay" @onclick="@(e => CloseIfClickedOutside(e))" @onclick:stopPropagation="false">
+    <div class="panel-management-dialog" @onclick:stopPropagation="true">
+        <div class="panel-management-content">
+            <!-- Modal Header -->
+            <div class="panel-management-header">
+                <div class="panel-management-header-content">
+                    <div class="panel-management-title">
+                        <RadzenIcon Icon="group" Style="margin-right: 0.5rem; color: var(--rz-primary);" />
+                        Panel Management
+                    </div>
+                    <div class="panel-management-actions">
+                        <RadzenButton Icon="close" 
+                                    ButtonStyle="ButtonStyle.Light" 
+                                    Size="ButtonSize.Small"
+                                    Click="@CloseDialog"
+                                    Title="Close dialog" />
+                    </div>
+                </div>
+                <div class="panel-management-subtitle">
+                    <RadzenText Text="@($"Managing scoring panel for: {HazardCode}")" TextStyle="TextStyle.Body2" Style="color:white"/>
+                </div>
+            </div>
 
-    <!-- Debug info (remove in production) -->
-    <RadzenCard Variant="Variant.Text" Style="background-color: #f8f9fa; padding: 0.5rem;">
-        <RadzenText TextStyle="TextStyle.Caption" Text="@($"Debug: Received {SelectedStakeholderCodes.Count} pre-selected codes: {string.Join(", ", SelectedStakeholderCodes)}")" />
-        <RadzenText TextStyle="TextStyle.Caption" Text="@($"Debug: Working with {WorkingSelectedCodes.Count} codes: {string.Join(", ", WorkingSelectedCodes)}")" />
-    </RadzenCard>
+            <!-- Modal Body -->
+            <div class="panel-management-body">
+                <!-- Info Alert -->
+                @* <RadzenAlert AlertStyle="AlertStyle.Info" Icon="info" Variant="Variant.Flat" 
+                           Style="margin-bottom: 1rem; background-color: #e7f3ff; border-color: #b3d9ff;">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                        <RadzenText Text="Select stakeholders to participate in the scoring panel for this hazard" TextStyle="TextStyle.Body2" />
+                        <RadzenText Text="@($"Currently selected: {WorkingSelectedCodes.Count} member(s)")" 
+                                  TextStyle="TextStyle.Caption" 
+                                  Style="color: var(--rz-info);" />
+                    </RadzenStack>
+                </RadzenAlert> *@
 
-    <RadzenDataGrid Data="@AvailableStakeholders" TItem="SMSStakeholderUser" AllowPaging="false">
-        <Columns>
-            <RadzenDataGridColumn TItem="SMSStakeholderUser" Title="Select" Width="80px">
-                <Template Context="stakeholder">
-                    <RadzenCheckBox Value="@IsStakeholderSelected(stakeholder.Code)" 
-                                    ValueChanged="@((bool value) => ToggleStakeholder(stakeholder.Code, value))"
-                                    Name="@($"stakeholder_{stakeholder.Code}")" />
-                </Template>
-            </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="DisplayName" Title="Name" />
-            <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="Organization" Title="Organization" />
-            <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="StakeholderType" Title="Role" />
-            <RadzenDataGridColumn TItem="SMSStakeholderUser" Title="Status" Width="100px">
-                <Template Context="stakeholder">
-                    @if (IsStakeholderSelected(stakeholder.Code))
-                    {
-                        <RadzenBadge Text="Selected" BadgeStyle="BadgeStyle.Success" />
-                    }
-                    else
-                    {
-                        <RadzenBadge Text="Available" BadgeStyle="BadgeStyle.Light" />
-                    }
-                </Template>
-            </RadzenDataGridColumn>
-        </Columns>
-    </RadzenDataGrid>
+                <!-- Debug info (remove in production) -->
+              @*   @if (ShowDebugInfo)
+                {
+                    <RadzenCard Variant="Variant.Text" Style="background-color: #f8f9fa; padding: 0.5rem; margin-bottom: 1rem;">
+                        <RadzenText TextStyle="TextStyle.Caption" Text="@($"Debug: Received {SelectedStakeholderCodes.Count} pre-selected codes: {string.Join(", ", SelectedStakeholderCodes)}")" />
+                        <RadzenText TextStyle="TextStyle.Caption" Text="@($"Debug: Working with {WorkingSelectedCodes.Count} codes: {string.Join(", ", WorkingSelectedCodes)}")" />
+                    </RadzenCard>
+                } *@
 
-    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
-        <RadzenText TextStyle="TextStyle.Body2" Text="@($"Selected: {WorkingSelectedCodes.Count} stakeholder(s)")" />
-        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-            <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@(() => DialogService.Close())" />
-            <RadzenButton Text="Update Panel" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="@SaveChanges" />
-        </RadzenStack>
-    </RadzenStack>
-</RadzenStack>
+                <!-- Stakeholders Grid -->
+                <div class="stakeholders-grid-container">
+                    <RadzenDataGrid Data="@AvailableStakeholders" 
+                                   TItem="SMSStakeholderUser" 
+                                   AllowPaging="false"
+                                   GridLines="DataGridGridLines.Both"
+                                   Style="height: 100%; border-radius: 4px; overflow: hidden;">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="SMSStakeholderUser" Title="Select" Width="80px" Sortable="false">
+                                <HeaderTemplate>
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                        <RadzenIcon Icon="check_box" Style="font-size: 1rem;" />
+                                        <span>Select</span>
+                                    </RadzenStack>
+                                </HeaderTemplate>
+                                <Template Context="stakeholder">
+                                    <RadzenCheckBox Value="@IsStakeholderSelected(stakeholder.Code)" 
+                                                   ValueChanged="@((bool value) => ToggleStakeholder(stakeholder.Code, value))"
+                                                   Name="@($"stakeholder_{stakeholder.Code}")" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                            
+                            <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="DisplayName" Title="Name" Width="200px">
+                                <HeaderTemplate>
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                        <RadzenIcon Icon="person" Style="font-size: 1rem;" />
+                                        <span>Name</span>
+                                    </RadzenStack>
+                                </HeaderTemplate>
+                                <Template Context="stakeholder">
+                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.1rem">
+                                        <RadzenText Text="@stakeholder.DisplayName" TextStyle="TextStyle.Body2" Style="font-weight: 500;" />
+                                        <RadzenText Text="@stakeholder.UserName?.Value" TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);" />
+                                    </RadzenStack>
+                                </Template>
+                            </RadzenDataGridColumn>
+                            
+                            <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="Organization" Title="Organization" Width="280px">
+                                <HeaderTemplate>
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                        <RadzenIcon Icon="business" Style="font-size: 1rem;" />
+                                        <span>Organization</span>
+                                    </RadzenStack>
+                                </HeaderTemplate>
+                            </RadzenDataGridColumn>
+                            
+                            @* <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="StakeholderType" Title="Role" Width="140px">
+                                <HeaderTemplate>
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                        <RadzenIcon Icon="badge" Style="font-size: 1rem;" />
+                                        <span>Role</span>
+                                    </RadzenStack>
+                                </HeaderTemplate>
+                                <Template Context="stakeholder">
+                                    <RadzenBadge Text="@stakeholder.StakeholderType" BadgeStyle="BadgeStyle.Secondary" Variant="Variant.Flat" />
+                                </Template>
+                            </RadzenDataGridColumn> *@
+                            
+                            <RadzenDataGridColumn TItem="SMSStakeholderUser" Title="Status" Width="120px" Sortable="false">
+                                <HeaderTemplate>
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                        <RadzenIcon Icon="flag" Style="font-size: 1rem;" />
+                                        <span>Status</span>
+                                    </RadzenStack>
+                                </HeaderTemplate>
+                                <Template Context="stakeholder">
+                                    @if (IsStakeholderSelected(stakeholder.Code))
+                                    {
+                                        <RadzenBadge Text="Selected" BadgeStyle="BadgeStyle.Success" Variant="Variant.Flat" />
+                                    }
+                                    else
+                                    {
+                                        <RadzenBadge Text="Available" BadgeStyle="BadgeStyle.Light" Variant="Variant.Flat" />
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="panel-management-footer">
+                <div class="panel-management-footer-content">
+                    <div class="selection-summary">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="people" Style="color: var(--rz-primary);" />
+                            <RadzenText Text="@($"Selected: {WorkingSelectedCodes.Count} stakeholder(s)")" 
+                                      TextStyle="TextStyle.Body2" 
+                                      Style="font-weight: 500;" />
+                        </RadzenStack>
+                    </div>
+                    <div class="action-buttons">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem">
+                            <RadzenButton Text="Cancel" 
+                                        Icon="cancel"
+                                        ButtonStyle="ButtonStyle.Light" 
+                                        Click="@CloseDialog"
+                                        Size="ButtonSize.Medium" />
+                            <RadzenButton Text="Update Panel" 
+                                        Icon="save" 
+                                        ButtonStyle="ButtonStyle.Primary" 
+                                        Click="@SaveChanges"
+                                        Size="ButtonSize.Medium" />
+                        </RadzenStack>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Panel Management Modal Styling */
+.panel-management-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* background-color: rgba(0, 0, 0, 0.75); */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.panel-management-dialog {
+    width: 900px;
+    height: 900px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    animation: slideIn 0.3s ease-out;
+    overflow: hidden;
+}
+
+.panel-management-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.panel-management-header {
+    padding: 1.5rem 2rem 1rem 2rem;
+    border-bottom: 1px solid #e9ecef;
+        background: #0d8944;
+    color: white;
+    flex-shrink: 0;
+}
+
+.panel-management-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.panel-management-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    color: white;
+}
+
+.panel-management-title .rz-icon {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.panel-management-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.panel-management-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.panel-management-body {
+    flex: 1;
+    padding: 1.5rem 2rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: #fafbfc;
+}
+
+.stakeholders-grid-container {
+    flex: 1;
+    overflow: hidden;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.panel-management-footer {
+    padding: 1.25rem 2rem;
+    border-top: 1px solid #e9ecef;
+    background: white;
+    flex-shrink: 0;
+}
+
+.panel-management-footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.selection-summary {
+    display: flex;
+    align-items: center;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* Animations */
+@@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Responsive adjustments */
+@@media (max-width: 1000px) {
+    .panel-management-dialog {
+        width: 95vw;
+        height: 95vh;
+        max-width: 900px;
+        max-height: 900px;
+    }
+}
+
+@@media (max-width: 768px) {
+    .panel-management-dialog {
+        width: 98vw;
+        height: 98vh;
+    }
+    
+    .panel-management-header {
+        padding: 1rem 1.5rem 0.75rem 1.5rem;
+    }
+    
+    .panel-management-body {
+        padding: 1rem 1.5rem;
+    }
+    
+    .panel-management-footer {
+        padding: 1rem 1.5rem;
+    }
+    
+    .panel-management-footer-content {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .action-buttons {
+        justify-content: center;
+    }
+}
+</style>
 
 @code {
     [Parameter] public string HazardCode { get; set; } = string.Empty;
@@ -59,6 +336,7 @@
     [Inject] private DialogService DialogService { get; set; } = default!;
 
     private List<string> WorkingSelectedCodes = new();
+    private bool ShowDebugInfo = false; // Set to true for debugging
 
     protected override void OnInitialized()
     {
@@ -98,6 +376,18 @@
         }
         
         StateHasChanged(); // Force UI refresh
+    }
+
+    private void CloseDialog()
+    {
+        DialogService.Close();
+    }
+
+    private void CloseIfClickedOutside(MouseEventArgs e)
+    {
+        // This method will be used to close when clicking outside the dialog
+        // For now, we'll just close the dialog
+        CloseDialog();
     }
 
     private void SaveChanges()

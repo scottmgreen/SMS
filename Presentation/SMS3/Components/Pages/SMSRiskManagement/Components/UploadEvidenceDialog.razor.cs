@@ -69,18 +69,20 @@ public partial class UploadEvidenceDialog : ComponentBase
     #endregion
 
     #region Lifecycle Methods
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync()
     {
         InitializeModel();
+        return Task.CompletedTask;
     }
 
-    protected override async Task OnParametersSetAsync()
+    protected override Task OnParametersSetAsync()
     {
         // React to parameter changes
-        if (Model.SelectedFiles?.Any() == true)
+        if (Model.SelectedFiles?.Any() == true && !AttachedFiles.Any())
         {
-            await ProcessAttachedFiles();
+            return ProcessAttachedFiles();
         }
+        return Task.CompletedTask;
     }
     #endregion
 
@@ -98,50 +100,131 @@ public partial class UploadEvidenceDialog : ComponentBase
     #endregion
 
     #region File Processing
-    private async Task ProcessAttachedFiles()
+    /// <summary>
+    /// Handle InputFile change event - this will accumulate files properly
+    /// </summary>
+    public async Task OnInputFileChange(InputFileChangeEventArgs e)
     {
-        AttachedFiles.Clear();
-
-        if (Model.SelectedFiles != null)
+        var newFiles = e.GetMultipleFiles(10); // Allow up to 10 files at once
+        Logger.LogInformation("?? OnInputFileChange called with {Count} new files", newFiles?.Count() ?? 0);
+        
+        if (newFiles?.Any() == true)
         {
-            foreach (var file in Model.SelectedFiles)
+            // Process files immediately to avoid the "file list may have changed" error
+            var successfullyProcessedFiles = new List<AttachedFile>();
+            var failedFiles = new List<string>();
+            
+            foreach (var newFile in newFiles)
             {
                 try
                 {
-                    // Validate file size (50MB limit)
-                    if (file.Size > 52428800)
+                    // Check for duplicate first (before processing)
+                    var isDuplicate = AttachedFiles.Any(existing => 
+                        existing.FileName.Equals(newFile.Name, StringComparison.OrdinalIgnoreCase) && 
+                        existing.Size == newFile.Size);
+                    
+                    if (isDuplicate)
                     {
-                        ShowWarningNotification($"File '{file.Name}' exceeds 50MB limit and will be skipped");
+                        Logger.LogInformation("?? Skipped duplicate file: {FileName}", newFile.Name);
                         continue;
                     }
 
-                    // Read file data for upload
+                    // Check file size (50MB limit)
+                    if (newFile.Size > 52428800)
+                    {
+                        Logger.LogWarning("? File {FileName} exceeds 50MB limit", newFile.Name);
+                        ShowWarningNotification($"File '{newFile.Name}' exceeds 50MB limit and will be skipped");
+                        failedFiles.Add(newFile.Name);
+                        continue;
+                    }
+
+                    // Read file data immediately to avoid JavaScript interop issues
                     byte[] fileData;
-                    using (var stream = file.OpenReadStream(maxAllowedSize: 52428800))
+                    using (var stream = newFile.OpenReadStream(maxAllowedSize: 52428800))
                     using (var memoryStream = new MemoryStream())
                     {
                         await stream.CopyToAsync(memoryStream);
                         fileData = memoryStream.ToArray();
                     }
                     
-                    AttachedFiles.Add(new AttachedFile
+                    // Create the attached file object with cached data
+                    var attachedFile = new AttachedFile
                     {
-                        FileName = file.Name,
-                        ContentType = file.ContentType,
-                        Size = file.Size,
+                        FileName = newFile.Name,
+                        ContentType = newFile.ContentType ?? "application/octet-stream",
+                        Size = newFile.Size,
                         Data = fileData,
-                        SizeDisplay = FormatFileSize(file.Size)
-                    });
+                        SizeDisplay = FormatFileSize(newFile.Size)
+                    };
+                    
+                    successfullyProcessedFiles.Add(attachedFile);
+                    Logger.LogInformation("? Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Error processing file: {FileName}", file.Name);
-                    ShowErrorNotification($"Error processing file '{file.Name}': {ex.Message}");
+                    Logger.LogError(ex, "? Error processing file: {FileName}", newFile.Name);
+                    failedFiles.Add(newFile.Name);
+                    ShowErrorNotification($"Error processing file '{newFile.Name}': {ex.Message}");
                 }
             }
+            
+            // Add successfully processed files to the collection
+            if (successfullyProcessedFiles.Any())
+            {
+                AttachedFiles.AddRange(successfullyProcessedFiles);
+            }
+            
+            // Show notification about results
+            if (successfullyProcessedFiles.Any() && failedFiles.Any())
+            {
+                ShowWarningNotification($"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued.");
+            }
+            else if (successfullyProcessedFiles.Any())
+            {
+                ShowSuccessNotification($"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files ready for upload.");
+            }
+            else if (failedFiles.Any())
+            {
+                ShowErrorNotification($"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.");
+            }
+            
+            Logger.LogInformation("?? File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}", 
+                successfullyProcessedFiles.Count, failedFiles.Count, AttachedFiles.Count);
         }
-
+        else
+        {
+            Logger.LogInformation("?? No files provided to OnInputFileChange");
+        }
+        
         StateHasChanged();
+    }
+
+    /// <summary>
+    /// Handle file selection with proper event callback signature
+    /// </summary>
+    public async Task OnFilesSelected(IReadOnlyList<IBrowserFile> files)
+    {
+        Model.SelectedFiles = files;
+        await ProcessAttachedFiles();
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Wrapper method for RadzenFileInput Change event
+    /// </summary>
+    public async Task OnFilesSelectedWrapper(object files)
+    {
+        if (files is IReadOnlyList<IBrowserFile> browserFiles)
+        {
+            await OnFilesSelected(browserFiles);
+        }
+    }
+
+    private async Task ProcessAttachedFiles()
+    {
+        // This method is now redundant since we process files directly in OnInputFileChange
+        // But keeping it for backward compatibility with any existing calls
+        Logger.LogInformation("ProcessAttachedFiles called - files are now processed immediately in OnInputFileChange");
     }
     #endregion
 
@@ -436,9 +519,9 @@ public partial class UploadEvidenceDialog : ComponentBase
         NotificationService.Notify(new NotificationMessage
         {
             Severity = NotificationSeverity.Success,
-            Summary = "Upload Successful",
+            Summary = "File Processing",
             Detail = message,
-            Duration = 5000
+            Duration = 3000
         });
     }
 
@@ -458,7 +541,7 @@ public partial class UploadEvidenceDialog : ComponentBase
         NotificationService.Notify(new NotificationMessage
         {
             Severity = NotificationSeverity.Warning,
-            Summary = "Upload Warning",
+            Summary = "File Processing Warning",
             Detail = message,
             Duration = 6000
         });
@@ -489,5 +572,36 @@ public partial class UploadEvidenceDialog : ComponentBase
         public byte[] Data { get; set; } = Array.Empty<byte>();
         public long Size { get; set; }
     }
+    #endregion
+
+    #region File Management Methods
+
+    /// <summary>
+    /// Remove a specific file from the queue
+    /// </summary>
+    public async Task RemoveFile(int index)
+    {
+        if (index >= 0 && index < AttachedFiles.Count)
+        {
+            var fileToRemove = AttachedFiles[index];
+            AttachedFiles.RemoveAt(index);
+            
+            Logger.LogInformation("Removed file: {FileName} from upload queue", fileToRemove.FileName);
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Clear all queued files
+    /// </summary>
+    public async Task ClearAllFiles()
+    {
+        AttachedFiles.Clear();
+        Model.SelectedFiles = null;
+        
+        Logger.LogInformation("Cleared all files from upload queue");
+        StateHasChanged();
+    }
+
     #endregion
 }

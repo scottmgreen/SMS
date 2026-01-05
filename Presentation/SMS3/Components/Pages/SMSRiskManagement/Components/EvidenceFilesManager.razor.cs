@@ -5,6 +5,7 @@ using SMS_Application.Messaging.Commands;
 using SMS_Application.Interfaces;
 using SMS_Shared.Common;
 using Radzen;
+using Microsoft.JSInterop;
 
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
@@ -15,6 +16,7 @@ public partial class EvidenceFilesManager : ComponentBase
     [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private ILogger<EvidenceFilesManager> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
     #endregion
 
     #region Parameters
@@ -25,6 +27,8 @@ public partial class EvidenceFilesManager : ComponentBase
     #region State Properties
     private bool IsLoading { get; set; } = true;
     private int selectedFileTypeIndex { get; set; } = 0;
+    private bool ShowFileViewer { get; set; } = false;
+    private HazardFile? ViewingFile { get; set; }
     public List<HazardFile> EvidenceFiles { get; set; } = new();
     #endregion
 
@@ -39,6 +43,8 @@ public partial class EvidenceFilesManager : ComponentBase
         if (!string.IsNullOrEmpty(HazardCode))
         {
             await LoadEvidenceFiles();
+            // Force UI update
+            await InvokeAsync(StateHasChanged);
         }
     }
     #endregion
@@ -47,7 +53,19 @@ public partial class EvidenceFilesManager : ComponentBase
     public async Task RefreshFiles()
     {
         await LoadEvidenceFiles();
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>
+    /// Force component to refresh - useful for debugging
+    /// </summary>
+    public async Task ForceRefresh()
+    {
+        await InvokeAsync(() =>
+        {
+            Logger.LogInformation("?? ForceRefresh called - Files count: {Count}", EvidenceFiles.Count);
+            StateHasChanged();
+        });
     }
     #endregion
 
@@ -58,37 +76,55 @@ public partial class EvidenceFilesManager : ComponentBase
         {
             if (string.IsNullOrWhiteSpace(HazardCode))
             {
+                Logger.LogWarning("HazardCode is null or empty, cannot load evidence files");
                 return;
             }
 
             IsLoading = true;
             
-            var query = new GetHazardFilesByHazardCodeQuery(HazardCode, false, "Evidence");
+            Logger.LogInformation("?? Loading evidence files for HazardCode: {HazardCode}", HazardCode);
+            
+            // Load ALL files for this hazard, not just those with Category = "Evidence"
+            // This will include both files uploaded during initial reporting and investigation
+            var query = new GetHazardFilesByHazardCodeQuery(HazardCode, false, null); // null removes category filter
             var result = await Mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
-                EvidenceFiles = result.Value
+                var allFiles = result.Value.ToList();
+                Logger.LogInformation("?? Retrieved {Count} total files from database for HazardCode: {HazardCode}", allFiles.Count, HazardCode);
+
+                EvidenceFiles = allFiles
+                    .Where(f => f.IsActive) // Only show active files
                     .OrderByDescending(f => f.UploadedDate)
                     .ToList();
                 
-                Logger.LogInformation("Loaded {Count} evidence files for hazard {HazardCode}", 
+                Logger.LogInformation("? Filtered to {Count} active evidence files for hazard {HazardCode}", 
                     EvidenceFiles.Count, HazardCode);
+                
+                // Log details about each file for debugging
+                foreach (var file in EvidenceFiles)
+                {
+                    Logger.LogInformation("?? File: {FileName} | Category: {Category} | Size: {Size} | Type: {Type} | Active: {Active} | Uploaded: {Date}",
+                        file.FileName, file.Category ?? "NULL", file.FileSizeBytes, file.FileType, file.IsActive, file.UploadedDate);
+                }
             }
             else
             {
-                Logger.LogError("Failed to load evidence files: {Error}", result.Error?.Message);
+                Logger.LogError("? Failed to load evidence files for HazardCode {HazardCode}: {Error}", HazardCode, result.Error?.Message);
                 EvidenceFiles = new List<HazardFile>();
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading evidence files for hazard: {HazardCode}", HazardCode);
+            Logger.LogError(ex, "? Exception loading evidence files for hazard: {HazardCode}", HazardCode);
             ShowErrorNotification("Error loading evidence files");
+            EvidenceFiles = new List<HazardFile>();
         }
         finally
         {
             IsLoading = false;
+            Logger.LogInformation("?? LoadEvidenceFiles completed. Final count: {Count}", EvidenceFiles.Count);
             StateHasChanged();
         }
     }
@@ -99,8 +135,8 @@ public partial class EvidenceFilesManager : ComponentBase
     {
         var options = new DialogOptions() 
         { 
-            Width = "600px", 
-            Height = "500px",
+            Width = "1098px", 
+            Height = "584px",
             Resizable = true,
             Draggable = true,
             CloseDialogOnOverlayClick = false,
@@ -127,36 +163,49 @@ public partial class EvidenceFilesManager : ComponentBase
 
     private async Task ViewFile(HazardFile file)
     {
-        var options = new DialogOptions() 
-        { 
-            Width = "800px", 
-            Height = "600px",
-            Resizable = true,
-            Draggable = true,
-            CloseDialogOnOverlayClick = false,
-            CloseDialogOnEsc = true
-        };
+        try
+        {
+            Logger.LogInformation("Opening file viewer for: {FileName}", file.FileName);
+            
+            ViewingFile = file;
+            ShowFileViewer = true;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error opening file viewer for: {FileName}", file.FileName);
+            ShowErrorNotification($"Error opening file: {ex.Message}");
+        }
+    }
 
-        var parameters = new Dictionary<string, object> 
-        { 
-            { "HazardFile", file } 
-        };
-
-        await DialogService.OpenAsync<ViewFileDialog>(
-            $"View File: {file.FileName}", 
-            parameters,
-            options);
+    private async Task CloseFileViewer()
+    {
+        ShowFileViewer = false;
+        ViewingFile = null;
+        StateHasChanged();
     }
 
     private async Task DownloadFile(HazardFile file)
     {
         try
         {
-            // TODO: Implement file download functionality
-            // This would typically involve calling a file download service
-            ShowInfoNotification($"Download functionality for {file.FileName} will be implemented");
+            if (file.FileData == null || file.FileData.Length == 0)
+            {
+                ShowErrorNotification("File data is not available for download");
+                return;
+            }
+
+            Logger.LogInformation("Starting download for file: {FileName}", file.FileName);
             
-            Logger.LogInformation("Download requested for file: {FileName} (Code: {Code})", 
+            var fileName = file.FileName ?? "file";
+            var mimeType = GetMimeType(file);
+            var base64 = Convert.ToBase64String(file.FileData);
+            
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, mimeType, base64);
+            
+            ShowInfoNotification($"Download started for '{fileName}'");
+            
+            Logger.LogInformation("Download initiated for file: {FileName} (Code: {Code})", 
                 file.FileName, file.Code);
         }
         catch (Exception ex)
@@ -261,6 +310,46 @@ public partial class EvidenceFilesManager : ComponentBase
         if (IsVideoFile(file)) return "#1976d2";
         
         return "#757575";
+    }
+
+    private string GetMimeType(HazardFile file)
+    {
+        // Use the stored ContentType if available
+        if (!string.IsNullOrEmpty(file.ContentType) && file.ContentType != "application/octet-stream")
+        {
+            return file.ContentType;
+        }
+
+        // Fallback to extension-based detection
+        var extension = Path.GetExtension(file.FileName)?.ToLowerInvariant();
+        return extension switch
+        {
+            ".pdf" => "application/pdf",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".gif" => "image/gif",
+            ".bmp" => "image/bmp",
+            ".webp" => "image/webp",
+            ".svg" => "image/svg+xml",
+            ".mp4" => "video/mp4",
+            ".avi" => "video/x-msvideo",
+            ".mov" => "video/quicktime",
+            ".wmv" => "video/x-ms-wmv",
+            ".webm" => "video/webm",
+            ".mp3" => "audio/mpeg",
+            ".wav" => "audio/wav",
+            ".m4a" => "audio/mp4",
+            ".aac" => "audio/aac",
+            ".ogg" => "audio/ogg",
+            ".txt" => "text/plain",
+            ".csv" => "text/csv",
+            ".xml" => "text/xml",
+            ".json" => "application/json",
+            ".html" => "text/html",
+            ".css" => "text/css",
+            ".js" => "text/javascript",
+            _ => "application/octet-stream"
+        };
     }
     #endregion
 

@@ -434,12 +434,216 @@ public partial class HazardReporting : ComponentBase, IDisposable
     }
 
     /// <summary>
-    /// Handle file selection
+    /// Handle file selection with proper event callback signature - now accumulates files
     /// </summary>
-    public void OnFilesSelected(IReadOnlyList<IBrowserFile> files)
+    public async Task OnFilesSelected(IReadOnlyList<IBrowserFile> newFiles)
     {
-        SelectedFiles = files;
-        ProcessAttachedFiles();
+        Logger.LogInformation("🔄 OnFilesSelected called with {Count} new files", newFiles?.Count ?? 0);
+        
+        if (newFiles?.Any() == true)
+        {
+            // Process files immediately to avoid JavaScript interop issues
+            var successfullyProcessedFiles = new List<AttachedFile>();
+            var failedFiles = new List<string>();
+            
+            foreach (var newFile in newFiles)
+            {
+                try
+                {
+                    // Check for duplicate first (before processing)
+                    var isDuplicate = AttachedFiles.Any(existing => 
+                        existing.FileName.Equals(newFile.Name, StringComparison.OrdinalIgnoreCase) && 
+                        existing.Size == newFile.Size);
+                    
+                    if (isDuplicate)
+                    {
+                        Logger.LogInformation("⚠️ Skipped duplicate file: {FileName}", newFile.Name);
+                        continue;
+                    }
+
+                    // Read file data immediately to avoid JavaScript interop issues
+                    byte[] fileData;
+                    using (var stream = newFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024))
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await stream.CopyToAsync(memoryStream);
+                        fileData = memoryStream.ToArray();
+                    }
+                    
+                    // Create the attached file object with cached data
+                    var attachedFile = new AttachedFile
+                    {
+                        FileName = newFile.Name,
+                        ContentType = newFile.ContentType ?? "application/octet-stream",
+                        Size = newFile.Size,
+                        Data = fileData,
+                        SizeDisplay = FormatFileSize(newFile.Size)
+                    };
+                    
+                    successfullyProcessedFiles.Add(attachedFile);
+                    Logger.LogInformation("✅ Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "❌ Error processing file: {FileName}", newFile.Name);
+                    failedFiles.Add(newFile.Name);
+                }
+            }
+            
+            // Add successfully processed files to the collection
+            if (successfullyProcessedFiles.Any())
+            {
+                AttachedFiles.AddRange(successfullyProcessedFiles);
+                
+                // Update SelectedFiles to maintain compatibility
+                var allFiles = SelectedFiles?.ToList() ?? new List<IBrowserFile>();
+                foreach (var file in newFiles.Where(f => successfullyProcessedFiles.Any(sf => sf.FileName == f.Name && sf.Size == f.Size)))
+                {
+                    allFiles.Add(file);
+                }
+                SelectedFiles = allFiles.AsReadOnly();
+            }
+            
+            // Show notification about results
+            if (successfullyProcessedFiles.Any())
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Files Added",
+                    Detail = $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.",
+                    Duration = 3000
+                });
+            }
+        }
+        else
+        {
+            Logger.LogInformation("⚠️ No files provided to OnFilesSelected");
+        }
+        
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Wrapper method for RadzenFileInput Change event
+    /// </summary>
+    public async Task OnFilesSelectedWrapper(IReadOnlyList<IBrowserFile> files)
+    {
+        await OnFilesSelected(files);
+    }
+
+    /// <summary>
+    /// Handle InputFile change event - this will accumulate files properly
+    /// </summary>
+    public async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        var newFiles = e.GetMultipleFiles(10); // Allow up to 10 files at once
+        Logger.LogInformation("🔄 OnInputFileChange called with {Count} new files", newFiles?.Count() ?? 0);
+        
+        if (newFiles?.Any() == true)
+        {
+            // Process files immediately to avoid the "file list may have changed" error
+            var successfullyProcessedFiles = new List<AttachedFile>();
+            var failedFiles = new List<string>();
+            
+            foreach (var newFile in newFiles)
+            {
+                try
+                {
+                    // Check for duplicate first (before processing)
+                    var isDuplicate = AttachedFiles.Any(existing => 
+                        existing.FileName.Equals(newFile.Name, StringComparison.OrdinalIgnoreCase) && 
+                        existing.Size == newFile.Size);
+                    
+                    if (isDuplicate)
+                    {
+                        Logger.LogInformation("⚠️ Skipped duplicate file: {FileName}", newFile.Name);
+                        continue;
+                    }
+
+                    // Read file data immediately to avoid JavaScript interop issues
+                    byte[] fileData;
+                    using (var stream = newFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024))
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await stream.CopyToAsync(memoryStream);
+                        fileData = memoryStream.ToArray();
+                    }
+                    
+                    // Create the attached file object with cached data
+                    var attachedFile = new AttachedFile
+                    {
+                        FileName = newFile.Name,
+                        ContentType = newFile.ContentType ?? "application/octet-stream",
+                        Size = newFile.Size,
+                        Data = fileData,
+                        SizeDisplay = FormatFileSize(newFile.Size)
+                    };
+                    
+                    successfullyProcessedFiles.Add(attachedFile);
+                    Logger.LogInformation("✅ Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "❌ Error processing file: {FileName}", newFile.Name);
+                    failedFiles.Add(newFile.Name);
+                }
+            }
+            
+            // Add successfully processed files to the collection
+            if (successfullyProcessedFiles.Any())
+            {
+                AttachedFiles.AddRange(successfullyProcessedFiles);
+                
+                // Update SelectedFiles to maintain compatibility (though we won't use it for reading data)
+                var allFiles = SelectedFiles?.ToList() ?? new List<IBrowserFile>();
+                foreach (var file in newFiles.Where(f => successfullyProcessedFiles.Any(sf => sf.FileName == f.Name && sf.Size == f.Size)))
+                {
+                    allFiles.Add(file);
+                }
+                SelectedFiles = allFiles.AsReadOnly();
+            }
+            
+            // Show notification about results
+            if (successfullyProcessedFiles.Any() && failedFiles.Any())
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "Partial Success",
+                    Detail = $"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued.",
+                    Duration = 4000
+                });
+            }
+            else if (successfullyProcessedFiles.Any())
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Files Added",
+                    Detail = $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.",
+                    Duration = 3000
+                });
+            }
+            else if (failedFiles.Any())
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "File Processing Failed",
+                    Detail = $"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.",
+                    Duration = 5000
+                });
+            }
+            
+            Logger.LogInformation("📁 File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}", 
+                successfullyProcessedFiles.Count, failedFiles.Count, AttachedFiles.Count);
+        }
+        else
+        {
+            Logger.LogInformation("⚠️ No files provided to OnInputFileChange");
+        }
+        
         StateHasChanged();
     }
 
@@ -690,6 +894,17 @@ public partial class HazardReporting : ComponentBase, IDisposable
             return;
         }
 
+        // Log cached files that will be submitted
+        Logger.LogInformation("🚀 Preparing for submission with {Count} cached files ready", AttachedFiles?.Count ?? 0);
+        if (AttachedFiles?.Any() == true)
+        {
+            foreach (var file in AttachedFiles)
+            {
+                Logger.LogInformation("📄 Cached file ready for submission: {FileName} ({Size} bytes, {DataSize} bytes cached)", 
+                    file.FileName, file.Size, file.Data?.Length ?? 0);
+            }
+        }
+
         ShowSubmissionConfirmation = true;
         ShowPreview = false;
         StateHasChanged(); // Force UI update to hide buttons
@@ -729,8 +944,11 @@ public partial class HazardReporting : ComponentBase, IDisposable
         // Clear all form data after successful submission
         HazardReport = new HazardReportForm();
         SelectedGeoLocation = new GeoLocationData();
-        SelectedFiles = new List<IBrowserFile>();
+        
+        // Clear files properly
+        SelectedFiles = new List<IBrowserFile>().AsReadOnly();
         AttachedFiles.Clear();
+        
         GeneratedHazardId = null;
         GeneratedReportId = null;
         SubmissionDateTime = null;
@@ -746,17 +964,18 @@ public partial class HazardReporting : ComponentBase, IDisposable
         ShowMapModal = false;
         ShowSubmissionConfirmation = false;
         ShowFinalSuccessConfirmation = false;
-        
-        InitializeFormDefaults();
-        StateHasChanged(); // Force UI update to show buttons again
-        
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Info,
-            Summary = "Form Cleared",
-            Detail = "Form cleared successfully. Ready for new hazard report.",
-            Duration = 3000
-        });
+
+        //InitializeFormDefaults();
+        //StateHasChanged(); // Force UI update to show buttons again
+
+        //NotificationService.Notify(new NotificationMessage
+        //{
+        //    Severity = NotificationSeverity.Info,
+        //    Summary = "Form Cleared",
+        //    Detail = "Form cleared successfully. Ready for new hazard report.",
+        //    Duration = 3000
+        //});
+        Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
     }
 
     #endregion
@@ -933,25 +1152,19 @@ public partial class HazardReporting : ComponentBase, IDisposable
             // ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●
             try
             {
-                if (SelectedFiles?.Any() == true)
+                if (AttachedFiles?.Any() == true)
                 {
-                    Logger.LogInformation("📎 Processing {Count} files for Hazard: {HazardCode}", 
-                        SelectedFiles.Count, createdHazard.Code);
+                    Logger.LogInformation("📎 Processing {Count} cached files for Hazard: {HazardCode}", 
+                        AttachedFiles.Count, createdHazard.Code);
 
                     var createdFileIds = new List<string>();
 
-                    foreach (var browserFile in SelectedFiles.Where(f => f?.Size > 0))
+                    foreach (var attachedFile in AttachedFiles.Where(f => f?.Data?.Length > 0))
                     {
                         try
                         {
-                            // Read file data from Blazor IBrowserFile
-                            byte[] fileData;
-                            using (var stream = browserFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024))
-                            using (var memoryStream = new MemoryStream())
-                            {
-                                await stream.CopyToAsync(memoryStream);
-                                fileData = memoryStream.ToArray();
-                            }
+                            // Use the cached file data instead of reading from IBrowserFile
+                            var fileData = attachedFile.Data;
 
                             // Generate unique file code
                             var fileCode = "HF-0000";
@@ -962,10 +1175,10 @@ public partial class HazardReporting : ComponentBase, IDisposable
                                 Code = fileCode,
                                 HazardCode = createdHazard.Code,
                                 ReportCode = createdHazard.ReportCode ?? string.Empty,
-                                FileName = browserFile.Name,
-                                FileType = Path.GetExtension(browserFile.Name)?.TrimStart('.') ?? "unknown",
-                                ContentType = browserFile.ContentType ?? "application/octet-stream",
-                                FileSizeBytes = browserFile.Size,
+                                FileName = attachedFile.FileName,
+                                FileType = Path.GetExtension(attachedFile.FileName)?.TrimStart('.') ?? "unknown",
+                                ContentType = attachedFile.ContentType ?? "application/octet-stream",
+                                FileSizeBytes = attachedFile.Size,
                                 StorageType = "Database",
                                 FileData = fileData,
                                 UploadedBy = HazardReport.ReportedBy ?? "SYSTEM",
@@ -976,7 +1189,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
                             // Send CreateHazardFileCommand for each file
                             Logger.LogInformation("Creating HazardFile: {FileName} with Code: {FileCode}", 
-                                browserFile.Name, fileCode);
+                                attachedFile.FileName, fileCode);
 
                             var createHazardFileCommand = new CreateHazardFileCommand(hazardFile);
                             var hazardFileResult = await Mediator.SendAsync(createHazardFileCommand, CancellationToken.None);
@@ -990,23 +1203,27 @@ public partial class HazardReporting : ComponentBase, IDisposable
                                 createdHazard.AddHazardFile(new HazardFileID(createdFileId));
 
                                 Logger.LogInformation("✓ Created HazardFile: {FileName} with ID: {FileId} for Hazard: {HazardCode}", 
-                                    browserFile.Name, createdFileId, createdHazard.Code);
+                                    attachedFile.FileName, createdFileId, createdHazard.Code);
                             }
                             else
                             {
                                 Logger.LogError("✗ Failed to create HazardFile: {FileName} for Hazard: {HazardCode}. Error: {Error}", 
-                                    browserFile.Name, createdHazard.Code, hazardFileResult.Error?.Message);
+                                    attachedFile.FileName, createdHazard.Code, hazardFileResult.Error?.Message);
                             }
                         }
                         catch (Exception fileEx)
                         {
                             Logger.LogError(fileEx, "✗ Exception creating HazardFile: {FileName} for Hazard: {HazardCode}", 
-                                browserFile.Name, createdHazard.Code);
+                                attachedFile.FileName, createdHazard.Code);
                         }
                     }
 
                     Logger.LogInformation("📎 File processing completed: {CreatedCount} HazardFiles created for Hazard: {HazardCode}", 
                         createdFileIds.Count, createdHazard.Code);
+                }
+                else
+                {
+                    Logger.LogInformation("📎 No files to process for Hazard: {HazardCode}", createdHazard.Code);
                 }
             }
             catch (Exception fileEx)
@@ -1121,7 +1338,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
             SelectedDateTime = DateTime.UtcNow
         };
 
-        SelectedFiles = new List<IBrowserFile>();
+        // Initialize empty file collections
+        SelectedFiles = new List<IBrowserFile>().AsReadOnly();
         AttachedFiles.Clear();
 
         ShowPreview = false;
@@ -1145,39 +1363,6 @@ public partial class HazardReporting : ComponentBase, IDisposable
         return string.IsNullOrEmpty(key) ? "UNKNOWN" : key;
     }
 
-    private async Task ProcessAttachedFiles()
-    {
-        AttachedFiles = new List<AttachedFile>();
-
-        if (SelectedFiles != null)
-        {
-            foreach (var file in SelectedFiles)
-            {
-                try
-                {
-                    var buffer = new byte[file.Size];
-                    using (var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024))
-                    {
-                        await stream.ReadAsync(buffer, 0, (int)file.Size);
-                    }
-                    
-                    AttachedFiles.Add(new AttachedFile
-                    {
-                        FileName = file.Name,
-                        ContentType = file.ContentType,
-                        Size = file.Size,
-                        Data = buffer,
-                        SizeDisplay = FormatFileSize(file.Size)
-                    });
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex, "Error processing file: {FileName}", file.Name);
-                }
-            }
-        }
-    }
-
     /// <summary>
     /// Format file size for display
     /// </summary>
@@ -1196,16 +1381,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         return "0 Bytes";
     }
 
-    private async Task ProcessFileAttachments(Hazard createdHazard)
-    {
-        if (AttachedFiles == null || !AttachedFiles.Any())
-        {
-            return;
-        }
-
-        // Process file attachments here
-        // Implementation would depend on your file storage requirements
-    }
+    
 
     /// <summary>
     /// Clear form data
@@ -1226,7 +1402,9 @@ public partial class HazardReporting : ComponentBase, IDisposable
             // Clear all form data
             HazardReport = new HazardReportForm();
             SelectedGeoLocation = new GeoLocationData();
-            SelectedFiles = new List<IBrowserFile>();
+            
+            // Clear files
+            SelectedFiles = new List<IBrowserFile>().AsReadOnly();
             AttachedFiles.Clear();
             
             // Reset coordinates
@@ -1252,6 +1430,50 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 Duration = 2000
             });
         }
+    }
+
+    #endregion
+
+    #region File Management Methods
+
+    /// <summary>
+    /// Remove a specific file from the queue
+    /// </summary>
+    public async Task RemoveFile(int index)
+    {
+        if (index >= 0 && index < AttachedFiles.Count)
+        {
+            var fileToRemove = AttachedFiles[index];
+            
+            // Remove from AttachedFiles
+            AttachedFiles.RemoveAt(index);
+            
+            // Also remove from SelectedFiles (maintain compatibility)
+            var selectedFilesList = SelectedFiles.ToList();
+            var selectedFileToRemove = selectedFilesList.FirstOrDefault(sf => 
+                sf.Name == fileToRemove.FileName && sf.Size == fileToRemove.Size);
+            
+            if (selectedFileToRemove != null)
+            {
+                selectedFilesList.Remove(selectedFileToRemove);
+                SelectedFiles = selectedFilesList.AsReadOnly();
+            }
+            
+            Logger.LogInformation("Removed file: {FileName} from queue", fileToRemove.FileName);
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Clear all queued files
+    /// </summary>
+    public async Task ClearAllFiles()
+    {
+        AttachedFiles.Clear();
+        SelectedFiles = new List<IBrowserFile>().AsReadOnly();
+        
+        Logger.LogInformation("Cleared all files from queue");
+        StateHasChanged();
     }
 
     #endregion

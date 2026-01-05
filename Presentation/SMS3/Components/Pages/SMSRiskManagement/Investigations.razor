@@ -52,16 +52,6 @@ else
                 </RadzenStack>
             </RadzenStack>
 
-            <!-- Debug Info (temporary) -->
-            @* <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
-                <RadzenText TextStyle="TextStyle.Body2">
-                    <strong>Debug Info:</strong><br/>
-                    Investigation: @(InvestigationId ?? "NULL")<br/>
-                    Hazard: @(InvestigationEntity?.HazardCode ?? "NULL")<br />
-                    Investigation Status: @(InvestigationEntity?.Status ?? "NULL")
-                </RadzenText>
-            </RadzenAlert> *@
-
             <!-- Main Form Tabs -->
             <RadzenTabs @bind-SelectedIndex="selectedTabIndex" RenderMode="TabRenderMode.Client">
                 <Tabs>
@@ -196,7 +186,8 @@ else
                     <RadzenTabsItem Text="@($"Evidence ({GetFileCountText()})")">
                         <div style="padding: 1rem;">
                             <EvidenceFilesManager @ref="evidenceFilesManager" 
-                                                HazardCode="@InvestigationEntity.HazardCode" />
+                                                HazardCode="@InvestigationEntity.HazardCode"
+                                                InvestigationCode="@InvestigationEntity.Code" />
                         </div>
                     </RadzenTabsItem>
                 </Tabs>

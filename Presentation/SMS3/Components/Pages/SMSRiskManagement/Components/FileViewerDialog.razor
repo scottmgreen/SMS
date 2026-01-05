@@ -1,0 +1,446 @@
+@using SMS_Domain.Entities
+@using SMS_Domain.ValueObjects
+@using Microsoft.JSInterop
+@using Radzen
+@using Radzen.Blazor
+
+<!-- File Viewer Modal -->
+<div class="file-viewer-overlay" @onclick="@(e => CloseIfClickedOutside(e))" @onclick:stopPropagation="false">
+    <div class="file-viewer-dialog" @onclick:stopPropagation="true">
+        <div class="file-viewer-content">
+            <!-- Modal Header -->
+            <div class="file-viewer-header">
+                <div class="file-viewer-header-content">
+                    <div class="file-viewer-title">
+                        <RadzenIcon Icon="@GetFileIcon(ViewingFile?.FileType)" Style="@($"margin-right: 0.5rem; color: {GetFileIconColor(ViewingFile?.FileType)};")" />
+                        @ViewingFile?.FileName
+                    </div>
+                    <div class="file-viewer-actions">
+                        <RadzenButton Icon="open_in_new" 
+                                    Text="New Tab" 
+                                    ButtonStyle="ButtonStyle.Light" 
+                                    Size="ButtonSize.Small"
+                                    Click="@OpenInNewTab"
+                                    Title="Open in new browser tab" />
+                        <RadzenButton Icon="download" 
+                                    Text="Download" 
+                                    ButtonStyle="ButtonStyle.Info" 
+                                    Size="ButtonSize.Small"
+                                    Click="@DownloadFile"
+                                    Title="Download file" />
+                        <RadzenButton Icon="close" 
+                                    ButtonStyle="ButtonStyle.Light" 
+                                    Size="ButtonSize.Small"
+                                    Click="@CloseViewer"
+                                    Title="Close viewer" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="file-viewer-body">
+                @if (ViewingFile != null && !string.IsNullOrEmpty(FileDataUrl))
+                {
+                    @if (IsImageFile(ViewingFile))
+                    {
+                        <!-- Image Viewer -->
+                        <div class="image-viewer">
+                            <img src="@FileDataUrl" alt="@ViewingFile.FileName" class="file-viewer-image" />
+                            <div class="image-info">
+                                <small>@ViewingFile.FileName • @FormatFileSize(ViewingFile.FileSizeBytes) • @ViewingFile.UploadedDate?.ToString("MMM dd, yyyy")</small>
+                            </div>
+                        </div>
+                    }
+                    else if (IsPdfFile(ViewingFile))
+                    {
+                        <!-- PDF Viewer -->
+                        <div class="pdf-viewer">
+                            <iframe src="@FileDataUrl" 
+                                    class="file-viewer-iframe"
+                                    title="@ViewingFile.FileName">
+                            </iframe>
+                            <div class="pdf-info">
+                                <small>@ViewingFile.FileName • @FormatFileSize(ViewingFile.FileSizeBytes) • @ViewingFile.UploadedDate?.ToString("MMM dd, yyyy")</small>
+                            </div>
+                        </div>
+                    }
+                    else if (IsVideoFile(ViewingFile))
+                    {
+                        <!-- Video Viewer -->
+                        <div class="video-viewer">
+                            <video controls class="file-viewer-video">
+                                <source src="@FileDataUrl" type="@ViewingFile.ContentType">
+                                Your browser does not support the video element.
+                            </video>
+                            <div class="video-info">
+                                <small>@ViewingFile.FileName • @FormatFileSize(ViewingFile.FileSizeBytes) • @ViewingFile.UploadedDate?.ToString("MMM dd, yyyy")</small>
+                            </div>
+                        </div>
+                    }
+                    else if (IsAudioFile(ViewingFile))
+                    {
+                        <!-- Audio Viewer -->
+                        <div class="audio-viewer">
+                            <div class="audio-player-container">
+                                <RadzenIcon Icon="audiotrack" Style="font-size: 4rem; color: var(--rz-info); margin-bottom: 1rem;" />
+                                <h5>@ViewingFile.FileName</h5>
+                                <audio controls class="file-viewer-audio">
+                                    <source src="@FileDataUrl" type="@ViewingFile.ContentType">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </div>
+                            <div class="audio-info">
+                                <small>@ViewingFile.FileName • @FormatFileSize(ViewingFile.FileSizeBytes) • @ViewingFile.UploadedDate?.ToString("MMM dd, yyyy")</small>
+                            </div>
+                        </div>
+                    }
+                    else if (IsTextFile(ViewingFile) && !string.IsNullOrEmpty(TextContent))
+                    {
+                        <!-- Text File Viewer -->
+                        <div class="text-viewer">
+                            <div class="text-content">
+                                <pre>@TextContent</pre>
+                            </div>
+                            <div class="text-info">
+                                <small>@ViewingFile.FileName • @FormatFileSize(ViewingFile.FileSizeBytes) • @ViewingFile.UploadedDate?.ToString("MMM dd, yyyy")</small>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Unsupported File Type -->
+                        <div class="unsupported-viewer">
+                            <div class="unsupported-content">
+                                <RadzenIcon Icon="@GetFileIcon(ViewingFile.FileType)" Style="@($"font-size: 4rem; color: {GetFileIconColor(ViewingFile.FileType)}; margin-bottom: 1rem;")" />
+                                <h5>@ViewingFile.FileName</h5>
+                                <p>This file type cannot be previewed in the browser.</p>
+                                <div class="unsupported-actions">
+                                    <RadzenButton Text="Open in New Tab" 
+                                                Icon="open_in_new" 
+                                                ButtonStyle="ButtonStyle.Primary" 
+                                                Click="@OpenInNewTab" />
+                                    <RadzenButton Text="Download File" 
+                                                Icon="download" 
+                                                ButtonStyle="ButtonStyle.Info" 
+                                                Click="@DownloadFile" />
+                                </div>
+                            </div>
+                            <div class="unsupported-info">
+                                <small>Type: @ViewingFile.FileType • Size: @FormatFileSize(ViewingFile.FileSizeBytes) • Uploaded: @ViewingFile.UploadedDate?.ToString("MMM dd, yyyy")</small>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <!-- Loading State -->
+                    <div class="loading-viewer">
+                        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+                        <p>Loading file...</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="file-viewer-footer">
+                <div class="file-metadata">
+                    @if (ViewingFile != null)
+                    {
+                        <small>
+                            <strong>Uploaded:</strong> @ViewingFile.UploadedDate?.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt") by @ViewingFile.UploadedBy
+                            @if (!string.IsNullOrEmpty(ViewingFile.Description))
+                            {
+                                <br/><strong>Description:</strong> @ViewingFile.Description
+                            }
+                            @if (!string.IsNullOrEmpty(ViewingFile.Category))
+                            {
+                                <br/><strong>Category:</strong> @ViewingFile.Category
+                            }
+                        </small>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* File Viewer Modal Styling */
+.file-viewer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.file-viewer-dialog {
+    width: 90vw;
+    max-width: 1200px;
+    height: 90vh;
+    max-height: 800px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    animation: slideIn 0.3s ease-out;
+}
+
+.file-viewer-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.file-viewer-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+    flex-shrink: 0;
+}
+
+.file-viewer-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.file-viewer-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #212529;
+    display: flex;
+    align-items: center;
+    max-width: 60%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-viewer-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.file-viewer-body {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: #f8f9fa;
+}
+
+.file-viewer-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+    border-radius: 0 0 8px 8px;
+    flex-shrink: 0;
+}
+
+/* Image Viewer */
+.image-viewer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.file-viewer-image {
+    flex: 1;
+    max-width: 100%;
+    max-height: calc(100% - 2rem);
+    object-fit: contain;
+    margin: auto;
+    background: white;
+}
+
+.image-info {
+    text-align: center;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+}
+
+/* PDF Viewer */
+.pdf-viewer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.file-viewer-iframe {
+    flex: 1;
+    border: none;
+    width: 100%;
+    background: white;
+}
+
+.pdf-info {
+    text-align: center;
+    padding: 0.5rem;
+    background: white;
+    border-top: 1px solid #e9ecef;
+}
+
+/* Video Viewer */
+.video-viewer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+}
+
+.file-viewer-video {
+    max-width: 100%;
+    max-height: calc(100% - 3rem);
+    background: black;
+}
+
+.video-info {
+    text-align: center;
+    padding: 0.5rem;
+    margin-top: 1rem;
+}
+
+/* Audio Viewer */
+.audio-viewer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.audio-player-container {
+    text-align: center;
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.file-viewer-audio {
+    width: 300px;
+    margin-top: 1rem;
+}
+
+.audio-info {
+    text-align: center;
+    padding: 0.5rem;
+    margin-top: 1rem;
+}
+
+/* Text Viewer */
+.text-viewer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.text-content {
+    flex: 1;
+    overflow: auto;
+    padding: 1rem;
+    background: white;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.text-content pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.text-info {
+    text-align: center;
+    padding: 0.5rem;
+    background: white;
+    border-top: 1px solid #e9ecef;
+}
+
+/* Unsupported Viewer */
+.unsupported-viewer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.unsupported-content {
+    text-align: center;
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.unsupported-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    justify-content: center;
+}
+
+.unsupported-info {
+    text-align: center;
+    padding: 0.5rem;
+    margin-top: 1rem;
+}
+
+/* Loading Viewer */
+.loading-viewer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+/* Animations */
+@@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Responsive */
+@@media (max-width: 768px) {
+    .file-viewer-dialog {
+        width: 95vw;
+        height: 95vh;
+    }
+    
+    .file-viewer-header-content {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .file-viewer-title {
+        max-width: 100%;
+    }
+}
+</style>

@@ -4,6 +4,7 @@ using SMS_Application.Messaging.Queries;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Interfaces;
 using SMS_Shared.Common;
+using Microsoft.AspNetCore.Components.Forms;
 using Radzen;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
@@ -56,7 +57,7 @@ public partial class Investigations : ComponentBase
         new() { Value = "ContinueMonitoring", Text = "Continue Monitoring" },
         new() { Value = "RequiresMitigation", Text = "Requires Mitigation" },
         new() { Value = "EscalateToRiskAssessment", Text = "Escalate to Risk Assessment" },
-        new() { Value = "ReferToExternalAgency", Text = "Refer to External Agency" }
+        new() { Value = "ReferToExternal", Text = "Refer to External Authority" }
     };
     #endregion
 
@@ -188,19 +189,33 @@ public partial class Investigations : ComponentBase
         {
             if (InvestigationEntity?.HazardCode != null)
             {
-                var filesQuery = new GetHazardFilesByHazardCodeQuery(InvestigationEntity.HazardCode, false, "Evidence");
+                // Load ALL files for this hazard, not just those with Category = "Evidence"
+                // This will include both files uploaded during initial reporting and investigation
+                var filesQuery = new GetHazardFilesByHazardCodeQuery(InvestigationEntity.HazardCode, false, null);
                 var filesResult = await Mediator.SendAsync(filesQuery, CancellationToken.None);
                 
                 if (filesResult.IsSuccess && filesResult.Value != null)
                 {
-                    EvidenceFiles = filesResult.Value.ToList();
-                    Logger.LogInformation("Loaded {Count} evidence files", EvidenceFiles.Count);
+                    EvidenceFiles = filesResult.Value
+                        .Where(f => f.IsActive) // Only show active files
+                        .OrderByDescending(f => f.UploadedDate)
+                        .ToList();
+                    
+                    Logger.LogInformation("Loaded {Count} evidence files for hazard {HazardCode}", 
+                        EvidenceFiles.Count, InvestigationEntity.HazardCode);
+                }
+                else
+                {
+                    EvidenceFiles = new List<HazardFile>();
+                    Logger.LogWarning("No evidence files found for hazard {HazardCode}: {Error}", 
+                        InvestigationEntity.HazardCode, filesResult.Error?.Message);
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogWarning(ex, "Could not load evidence files");
+            Logger.LogWarning(ex, "Could not load evidence files for hazard {HazardCode}", InvestigationEntity?.HazardCode);
+            EvidenceFiles = new List<HazardFile>();
         }
     }
     #endregion
@@ -299,25 +314,6 @@ public partial class Investigations : ComponentBase
                     Navigation.NavigateTo($"/SMSRiskManagement/ReportValidation/{InvestigationEntity.ReportCode}");
                 }
                 break;
-            
-            case "NoFurtherAction":
-            case "ReferToExternalAgency":
-                // Navigate to hazard details to show closure
-                if (!string.IsNullOrEmpty(InvestigationEntity.HazardCode))
-                {
-                    Navigation.NavigateTo($"/SMSRiskManagement/Hazards/{InvestigationEntity.HazardCode}");
-                }
-                break;
-            
-            case "ContinueMonitoring":
-            case "RequiresMitigation":
-                // Stay on investigation page but refresh data
-                await LoadInvestigationData();
-                break;
-            
-            default:
-                Navigation.NavigateTo("/Listings/Investigations");
-                break;
         }
     }
 
@@ -375,6 +371,38 @@ public partial class Investigations : ComponentBase
     }
     #endregion
 
+    #region Notification Methods
+    private void ShowErrorNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Error,
+            Summary = "Error",
+            Detail = message,
+            Duration = 4000
+        });
+    }
+
+    private void ShowSuccessNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Success",
+            Detail = message,
+            Duration = 4000
+        });
+    }
+    #endregion
+
+    #region Tab Handling
+    private void OnTabSelect(int index)
+    {
+        selectedTabIndex = index;
+        StateHasChanged();
+    }
+    #endregion
+
     #region Component Communication
     private async Task OnInterviewsChanged()
     {
@@ -410,47 +438,8 @@ public partial class Investigations : ComponentBase
 
     private string GetFileCountText()
     {
-        var fileCount = EvidenceFiles.Count;
-        return fileCount == 0 ? "No Files" : $"{fileCount} File{(fileCount == 1 ? "" : "s")}";
+        return EvidenceFiles.Count.ToString();
     }
 
-    private string GetCurrentUserCode()
-    {
-        // Implement your user identification logic here
-        // For now, return a placeholder
-        return "SYSTEM_USER"; // Replace with actual user identification logic
-    }
-    #endregion
-
-    #region Notifications
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
-    }
-    #endregion
-
-    #region Models
-    public class DropdownOption
-    {
-        public object Value { get; set; } = default!;
-        public string Text { get; set; } = "";
-    }
     #endregion
 }

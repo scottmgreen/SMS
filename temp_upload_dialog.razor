@@ -1,4 +1,4 @@
-@using SMS_Domain.Entities
+﻿@using SMS_Domain.Entities
 @using SMS_Domain.ValueObjects
 @using SMS_Application.Messaging.Commands
 @using SMS_Application.Interfaces
@@ -35,10 +35,11 @@
                         
                         <!-- File Selection - Multiple Files Support -->
                         <RadzenFormField Text="Select Evidence Files *" Variant="Variant.Outlined">
-                            <InputFile OnChange="OnInputFileChange" 
-                                     multiple 
-                                     accept=".jpg,.jpeg,.png,.gif,.bmp,.pdf,.doc,.docx,.txt,.xlsx,.xls,.zip,.rar,.mp4,.avi,.mov,.wmv,.mp3,.wav"
-                                     style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem;" />
+                            <RadzenFileInput @bind-Value="@Model.SelectedFiles" 
+                                           Multiple="true" 
+                                           Accept=".jpg,.jpeg,.png,.gif,.bmp,.pdf,.doc,.docx,.txt,.xlsx,.xls,.zip,.rar,.mp4,.avi,.mov,.wmv,.mp3,.wav"
+                                           MaxFileSize="52428800"
+                                           Style="width: 100%;" />
                             <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color); margin-top: 0.5rem;">
                                 <RadzenIcon Icon="attach_file" Style="font-size: 0.9rem;" /> 
                                 <strong>Supported formats:</strong> Images (JPG, PNG, GIF), Documents (PDF, DOC, DOCX, TXT), Spreadsheets (XLS, XLSX), 
@@ -46,13 +47,15 @@
                                 <br/>
                                 <RadzenIcon Icon="info" Style="font-size: 0.9rem;" /> 
                                 <strong>File size limit:</strong> 50MB per file | <strong>Multiple files:</strong> Up to 10 files at once
-                                @if (AttachedFiles.Any())
+                                @if (Model.SelectedFiles?.Any() == true && !AttachedFiles.Any())
                                 {
                                     <br/>
-                                    <span style="margin-left: 1rem; color: var(--rz-success);">
-                                        <RadzenIcon Icon="check_circle" Style="font-size: 0.9rem;" />
-                                        @AttachedFiles.Count file(s) queued for upload
-                                    </span>
+                                    <RadzenButton Text="Process Selected Files" 
+                                                Icon="refresh" 
+                                                ButtonStyle="ButtonStyle.Light" 
+                                                Size="ButtonSize.ExtraSmall"
+                                                Click="@ProcessAttachedFiles" 
+                                                Style="margin-top: 0.5rem;" />
                                 }
                             </RadzenText>
                         </RadzenFormField>
@@ -63,44 +66,27 @@
                             <RadzenFormField Text="Selected Files" Variant="Variant.Outlined">
                                 <RadzenCard Variant="Variant.Text" Style="background-color: #f8f9fa; border: 1px solid #e9ecef; max-height: 200px; overflow-y: auto;">
                                     <RadzenStack Gap="0.5rem">
-                                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-                                            <RadzenText TextStyle="TextStyle.Subtitle2" Style="color: var(--rz-primary);">
-                                                <RadzenIcon Icon="folder_open" Style="margin-right: 0.5rem;" />
-                                                @AttachedFiles.Count file(s) ready for upload
-                                            </RadzenText>
-                                            <RadzenButton ButtonStyle="ButtonStyle.Light" 
-                                                        Variant="Variant.Text"
-                                                        Icon="clear_all" 
-                                                        Text="Clear All"
-                                                        Size="ButtonSize.ExtraSmall"
-                                                        Click="ClearAllFiles" />
-                                        </RadzenStack>
+                                        <RadzenText TextStyle="TextStyle.Subtitle2" Style="color: var(--rz-primary);">
+                                            <RadzenIcon Icon="folder_open" Style="margin-right: 0.5rem;" />
+                                            @AttachedFiles.Count file(s) ready for upload
+                                        </RadzenText>
                                         
-                                        @for (int i = 0; i < AttachedFiles.Count; i++)
+                                        @foreach (var file in AttachedFiles)
                                         {
-                                            var file = AttachedFiles[i];
-                                            var fileIndex = i;
-                                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" 
-                                                       Style="padding: 0.25rem 0.5rem; border: 1px solid #dee2e6; border-radius: 0.25rem; background-color: #ffffff;">
-                                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
-                                                    <RadzenIcon Icon="@GetFileIcon(file.FileName)" Style="@($"color: {GetFileIconColor(file.FileName)}; font-size: 1.1rem;")" />
-                                                    <RadzenStack Gap="0.1rem">
-                                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-weight: 500;">@file.FileName</RadzenText>
-                                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color); margin: 0;">
-                                                            @file.SizeDisplay | @GetFileTypeDisplay(file.FileName)
-                                                        </RadzenText>
+                                            <RadzenCard Variant="Variant.Outlined" Style="padding: 0.5rem; margin: 0.25rem 0;">
+                                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                        <RadzenIcon Icon="@GetFileIcon(file.FileName)" Style="@($"color: {GetFileIconColor(file.FileName)}; font-size: 1.1rem;")" />
+                                                        <RadzenStack Gap="0.1rem">
+                                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-weight: 500;">@file.FileName</RadzenText>
+                                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color); margin: 0;">
+                                                                @file.SizeDisplay | @GetFileTypeDisplay(file.FileName)
+                                                            </RadzenText>
+                                                        </RadzenStack>
                                                     </RadzenStack>
+                                                    <RadzenBadge Text="@GetFileStatusBadge(file.FileName)" BadgeStyle="@GetFileStatusBadgeStyle(file.FileName)" />
                                                 </RadzenStack>
-                                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
-                                                    <RadzenBadge Text="Ready" BadgeStyle="BadgeStyle.Success" />
-                                                    <RadzenButton ButtonStyle="ButtonStyle.Danger" 
-                                                                Variant="Variant.Text"
-                                                                Icon="close" 
-                                                                Size="ButtonSize.ExtraSmall"
-                                                                Click="@(() => RemoveFile(fileIndex))"
-                                                                title="Remove this file" />
-                                                </RadzenStack>
-                                            </RadzenStack>
+                                            </RadzenCard>
                                         }
                                         
                                         <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small" Variant="Variant.Flat">
@@ -377,4 +363,3 @@
 /* =============================================================================
    END SMS UPLOAD EVIDENCE DIALOG STYLING
    ============================================================================= */
-</style>
