@@ -478,7 +478,7 @@ public static class DomainErrors
         public static Error InvalidCancellationReason => new Error("Mitigation.InvalidCancellationReason", "A cancellation reason is required.");
         public static Error AlreadyCompleted => new Error("Mitigation.AlreadyCompleted", "The Mitigation is already completed.");
         public static Error CannotModifyCompleted => new Error("Mitigation.CannotModifyCompleted", "Cannot modify a completed Mitigation.");
-        
+
         // Enhanced validation errors for comprehensive schema
         public static Error InvalidTargetDate => new Error("Mitigation.InvalidTargetDate", "The target date cannot be in the past.");
         public static Error InvalidEstimatedCost => new Error("Mitigation.InvalidEstimatedCost", "The estimated cost must be greater than or equal to 0.");
@@ -840,5 +840,45 @@ public static class DomainErrors
         public static Error HierarchyViolation => new Error("SMSOrganizationalGroup.HierarchyViolation", "The assignment violates organizational hierarchy rules.");
         public static Error DepartmentNotFound => new Error("SMSOrganizationalGroup.DepartmentNotFound", "The specified department was not found.");
         public static Error PositionNotAuthorized => new Error("SMSOrganizationalGroup.PositionNotAuthorized", "The position is not authorized for this group type.");
+    }
+
+    /// <summary>
+    /// Contains Safety Performance Indicator (SPI) related errors.
+    /// </summary>
+    public static class SPIError
+    {
+        public static Error NullOrEmpty => new Error("SPI.NullOrEmpty", "The Safety Performance Indicator is required.");
+        public static Error CodeRequired => new Error("SPI.CodeRequired", "The SPI Code is required.");
+        public static Error InvalidCode => new Error("SPI.InvalidCode", "The SPI Code is invalid.");
+        public static Error InvalidName => new Error("SPI.InvalidName", "The SPI Name is required and cannot be empty.");
+        public static Error InvalidDescription => new Error("SPI.InvalidDescription", "The SPI Description is required and cannot be empty.");
+        public static Error InvalidIndicatorType => new Error("SPI.InvalidIndicatorType", "The SPI Indicator Type is invalid.");
+        public static Error InvalidMeasurementUnit => new Error("SPI.InvalidMeasurementUnit", "The measurement unit is required.");
+        public static Error InvalidMeasurementFrequency => new Error("SPI.InvalidMeasurementFrequency", "The measurement frequency is invalid.");
+        public static Error InvalidTargetValue => new Error("SPI.InvalidTargetValue", "The target value must be greater than 0.");
+        public static Error InvalidThresholdValues => new Error("SPI.InvalidThresholdValues", "Warning threshold must be less than critical threshold.");
+        public static Error InvalidDataSource => new Error("SPI.InvalidDataSource", "The data source information is required.");
+        public static Error InvalidReviewDate => new Error("SPI.InvalidReviewDate", "The review date must be in the future.");
+        public static Error InvalidDataPoint => new Error("SPI.InvalidDataPoint", "The data point value is invalid.");
+        public static Error InvalidPeriod => new Error("SPI.InvalidPeriod", "The measurement period is invalid for the frequency.");
+        
+        public static Error NotFound => new Error("SPI.NotFound", "The Safety Performance Indicator was not found.");
+        public static Error CreateFailed => new Error("SPI.CreateFailed", "Failed to create the Safety Performance Indicator.");
+        public static Error UpdateFailed => new Error("SPI.UpdateFailed", "Failed to update the Safety Performance Indicator.");
+        public static Error DeleteFailed => new Error("SPI.DeleteFailed", "Failed to delete the Safety Performance Indicator.");
+        public static Error StatusUpdateFailed => new Error("SPI.StatusUpdateFailed", "Failed to update the SPI status.");
+        public static Error TargetUpdateFailed => new Error("SPI.TargetUpdateFailed", "Failed to update the SPI targets.");
+        public static Error DataPointAddFailed => new Error("SPI.DataPointAddFailed", "Failed to add data point to the SPI.");
+        public static Error ReviewScheduleFailed => new Error("SPI.ReviewScheduleFailed", "Failed to schedule SPI review.");
+        public static Error ReviewCompletionFailed => new Error("SPI.ReviewCompletionFailed", "Failed to complete SPI review.");
+        
+        public static Error CannotModifyInactive => new Error("SPI.CannotModifyInactive", "Cannot modify an inactive Safety Performance Indicator.");
+        public static Error AlreadyExists => new Error("SPI.AlreadyExists", "A Safety Performance Indicator with this code already exists.");
+        public static Error DependentDataExists => new Error("SPI.DependentDataExists", "Cannot delete SPI that has associated data points.");
+        public static Error DuplicateDataPoint => new Error("SPI.DuplicateDataPoint", "A data point for this period already exists.");
+        public static Error ThresholdExceeded => new Error("SPI.ThresholdExceeded", "The data value exceeds the critical threshold.");
+        public static Error InsufficientData => new Error("SPI.InsufficientData", "Insufficient data points for trend analysis.");
+        public static Error AlertConfigurationFailed => new Error("SPI.AlertConfigurationFailed", "Failed to configure SPI alerts.");
+        public static Error DataValidationFailed => new Error("SPI.DataValidationFailed", "Data validation failed for the SPI measurement.");
     }
 }

@@ -1,0 +1,454 @@
+using Microsoft.AspNetCore.Components;
+using SMS_Application.Interfaces;
+using SMS_Application.Messaging.Queries;
+using SMS_Application.Messaging.Commands;
+using SMS_Domain.Entities;
+using SMS_Domain.Enums;
+using SMS_Shared.Common;
+using Radzen;
+using Radzen.Blazor;
+
+namespace SMS3.Components.Pages.SMSAssurance;
+
+public partial class SPIDashboard : ComponentBase
+{
+    #region Injected Services
+    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private ILogger<SPIDashboard> Logger { get; set; } = default!;
+    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    #endregion
+
+    #region Component State
+    private bool IsLoading { get; set; } = true;
+    private SPIDashboardData? DashboardData { get; set; }
+    
+    // Filter State
+    private string? SelectedSPIType { get; set; } = "All";
+    private string? SelectedDepartment { get; set; } = "All";
+    private string? SelectedTimePeriod { get; set; } = "Last 12 Months";
+    private string? SelectedTrendSPI { get; set; }
+    
+    // Chart Data
+    private List<SPIDataPointSummary>? TrendData { get; set; }
+    private List<SPIDataPointSummary>? TrendTargetData { get; set; }
+    private List<CategoryDataPoint>? CategoryData { get; set; }
+    #endregion
+
+    #region Filter Options
+    public List<string> SPITypeOptions { get; } = new()
+    {
+        "All", "Leading", "Lagging", "Process", "Compliance"
+    };
+
+    public List<string> DepartmentOptions { get; } = new()
+    {
+        "All", "Airport Operations", "Security", "Maintenance", "Ground Handling", "Air Traffic Control"
+    };
+
+    public List<string> TimePeriodOptions { get; } = new()
+    {
+        "Last 3 Months", "Last 6 Months", "Last 12 Months", "Year to Date", "Custom Range"
+    };
+
+    public List<string> TrendSPIOptions { get; set; } = new();
+    #endregion
+
+    #region Lifecycle Methods
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardDataAsync();
+    }
+    #endregion
+
+    #region Data Loading
+    private async Task LoadDashboardDataAsync()
+    {
+        try
+        {
+            IsLoading = true;
+            StateHasChanged();
+
+            Logger.LogInformation("Loading SPI Dashboard data with filters - Type: {Type}, Department: {Department}, Period: {Period}", 
+                SelectedSPIType, SelectedDepartment, SelectedTimePeriod);
+
+            var (startDate, endDate) = GetDateRange();
+            var typeFilters = GetTypeFilters();
+            var departmentFilters = GetDepartmentFilters();
+
+            var query = new GetSPIDashboardDataQuery(
+                startDate: startDate,
+                endDate: endDate,
+                spiIds: null,
+                departmentFilters: departmentFilters,
+                typeFilters: typeFilters,
+                includeTrends: true,
+                includeAlerts: true
+            );
+
+            var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+            if (result.IsSuccess && result.Value != null)
+            {
+                DashboardData = result.Value;
+                await LoadTrendSPIOptionsAsync();
+                await LoadCategoryDataAsync();
+                
+                Logger.LogInformation("SPI Dashboard data loaded successfully - Total SPIs: {TotalSPIs}, Active Alerts: {ActiveAlerts}",
+                    DashboardData.TotalSPIs, DashboardData.ActiveAlerts.Count);
+            }
+            else
+            {
+                Logger.LogError("Failed to load SPI Dashboard data: {Error}", result.Error?.Message);
+                ShowErrorNotification("Failed to load SPI dashboard data");
+                DashboardData = new SPIDashboardData(); // Initialize empty
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading SPI Dashboard data");
+            ShowErrorNotification("Error loading SPI dashboard data");
+            DashboardData = new SPIDashboardData();
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadTrendSPIOptionsAsync()
+    {
+        if (DashboardData?.SPICards?.Any() == true)
+        {
+            TrendSPIOptions = DashboardData.SPICards
+                .Where(spi => spi.Status == "Active")
+                .Select(spi => spi.Name)
+                .OrderBy(name => name)
+                .ToList();
+
+            // Auto-select first SPI for trend analysis
+            if (TrendSPIOptions.Any() && string.IsNullOrEmpty(SelectedTrendSPI))
+            {
+                SelectedTrendSPI = TrendSPIOptions.First();
+                await LoadTrendDataAsync();
+            }
+        }
+    }
+
+    private async Task LoadTrendDataAsync()
+    {
+        if (string.IsNullOrEmpty(SelectedTrendSPI) || DashboardData == null)
+        {
+            TrendData = null;
+            TrendTargetData = null;
+            return;
+        }
+
+        try
+        {
+            var selectedSPI = DashboardData.SPICards.FirstOrDefault(spi => spi.Name == SelectedTrendSPI);
+            if (selectedSPI == null) return;
+
+            var trendAnalysis = DashboardData.TrendAnalysis?.FirstOrDefault(t => t.SPIId == selectedSPI.SPIId);
+            if (trendAnalysis != null)
+            {
+                TrendData = trendAnalysis.DataPoints.OrderBy(dp => dp.MeasurementDate).ToList();
+                TrendTargetData = trendAnalysis.DataPoints
+                    .Where(dp => dp.Target.HasValue)
+                    .Select(dp => new SPIDataPointSummary
+                    {
+                        Period = dp.Period,
+                        MeasurementDate = dp.MeasurementDate,
+                        Value = dp.Target.Value
+                    })
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading trend data for SPI: {SPIName}", SelectedTrendSPI);
+        }
+    }
+
+    private async Task LoadCategoryDataAsync()
+    {
+        if (DashboardData?.PerformanceSummary?.SPIsByType?.Any() == true)
+        {
+            CategoryData = DashboardData.PerformanceSummary.SPIsByType
+                .Select(kvp => new CategoryDataPoint(kvp.Key, kvp.Value))
+                .ToList();
+        }
+    }
+
+    private async Task RefreshDashboard()
+    {
+        await LoadDashboardDataAsync();
+        ShowSuccessNotification("SPI Dashboard refreshed successfully");
+    }
+    #endregion
+
+    #region Filter Methods
+    private (DateTime? StartDate, DateTime? EndDate) GetDateRange()
+    {
+        var endDate = DateTime.UtcNow;
+        var startDate = SelectedTimePeriod switch
+        {
+            "Last 3 Months" => endDate.AddMonths(-3),
+            "Last 6 Months" => endDate.AddMonths(-6),
+            "Last 12 Months" => endDate.AddMonths(-12),
+            "Year to Date" => new DateTime(endDate.Year, 1, 1),
+            _ => endDate.AddMonths(-12)
+        };
+
+        return (startDate, endDate);
+    }
+
+    private List<string>? GetTypeFilters()
+    {
+        if (SelectedSPIType == "All") return null;
+        return new List<string> { SelectedSPIType };
+    }
+
+    private List<string>? GetDepartmentFilters()
+    {
+        if (SelectedDepartment == "All") return null;
+        return new List<string> { SelectedDepartment };
+    }
+
+    private List<SPIDashboardCard> GetFilteredSPICards()
+    {
+        if (DashboardData?.SPICards == null) return new List<SPIDashboardCard>();
+
+        var filtered = DashboardData.SPICards.AsEnumerable();
+
+        if (SelectedSPIType != "All")
+        {
+            filtered = filtered.Where(spi => spi.IndicatorType.Contains(SelectedSPIType));
+        }
+
+        if (SelectedDepartment != "All")
+        {
+            filtered = filtered.Where(spi => spi.ResponsibleDepartment == SelectedDepartment);
+        }
+
+        return filtered.OrderBy(spi => spi.Name).ToList();
+    }
+    #endregion
+
+    #region Event Handlers
+    private async Task OnSPITypeChanged(object args)
+    {
+        SelectedSPIType = args?.ToString();
+        StateHasChanged();
+    }
+
+    private async Task OnDepartmentChanged(object args)
+    {
+        SelectedDepartment = args?.ToString();
+        StateHasChanged();
+    }
+
+    private async Task OnTimePeriodChanged(object args)
+    {
+        SelectedTimePeriod = args?.ToString();
+        await LoadDashboardDataAsync();
+    }
+
+    private async Task OnTrendSPIChanged(object args)
+    {
+        SelectedTrendSPI = args?.ToString();
+        await LoadTrendDataAsync();
+        StateHasChanged();
+    }
+    #endregion
+
+    #region Navigation Methods
+    private void NavigateToConfiguration()
+    {
+        Navigation.NavigateTo("/SMSAssurance/SPIConfiguration");
+    }
+
+    private void NavigateToSPIDetail(string spiId)
+    {
+        Navigation.NavigateTo($"/SMSAssurance/SPIDetail/{spiId}");
+    }
+
+    private void ShowAllAlerts()
+    {
+        Navigation.NavigateTo("/SMSAssurance/SPIAlerts");
+    }
+    #endregion
+
+    #region Helper Methods
+    private string GetComplianceRate()
+    {
+        if (DashboardData?.PerformanceSummary == null) return "0";
+        return DashboardData.PerformanceSummary.OverallComplianceRate.ToString("F1");
+    }
+
+    private int GetCriticalAlerts()
+    {
+        return DashboardData?.ActiveAlerts?.Count(alert => alert.AlertType == "Critical") ?? 0;
+    }
+
+    private string GetAlertCardStyle(string alertType)
+    {
+        return alertType switch
+        {
+            "Critical" => "border-left: 4px solid var(--rz-danger);",
+            "Warning" => "border-left: 4px solid var(--rz-warning);",
+            _ => "border-left: 4px solid var(--rz-info);"
+        };
+    }
+
+    private string GetAlertIcon(string alertType)
+    {
+        return alertType switch
+        {
+            "Critical" => "error",
+            "Warning" => "warning",
+            _ => "info"
+        };
+    }
+
+    private string GetAlertColor(string alertType)
+    {
+        return alertType switch
+        {
+            "Critical" => "var(--rz-danger)",
+            "Warning" => "var(--rz-warning)",
+            _ => "var(--rz-info)"
+        };
+    }
+
+    private string GetTrendIcon(string direction)
+    {
+        return direction switch
+        {
+            "IMPROVING" or "Improving" => "trending_up",
+            "DECLINING" or "Declining" => "trending_down",
+            _ => "trending_flat"
+        };
+    }
+
+    private string GetTrendColor(string direction)
+    {
+        return direction switch
+        {
+            "IMPROVING" or "Improving" => "#28a745",
+            "DECLINING" or "Declining" => "#dc3545",
+            _ => "#6c757d"
+        };
+    }
+
+    private string GetSPICardStyle(SPIDashboardCard spiCard)
+    {
+        var styleClass = "spi-card";
+        
+        if (spiCard.IsOverThreshold)
+            styleClass += " critical";
+        else if (spiCard.IsAtWarningLevel)
+            styleClass += " warning";
+        else if (spiCard.CurrentValue.HasValue && spiCard.TargetValue.HasValue && 
+                 spiCard.CurrentValue.Value >= spiCard.TargetValue.Value)
+            styleClass += " compliant";
+
+        return styleClass;
+    }
+
+    private BadgeStyle GetStatusBadgeStyle(string status)
+    {
+        return status switch
+        {
+            "ACTIVE" or "Active" => BadgeStyle.Success,
+            "INACTIVE" or "Inactive" => BadgeStyle.Secondary,
+            "UNDER_REVIEW" or "Under Review" => BadgeStyle.Warning,
+            "DEPRECATED" or "Deprecated" => BadgeStyle.Danger,
+            _ => BadgeStyle.Light
+        };
+    }
+
+    private string GetPerformanceText(SPIDashboardCard spiCard)
+    {
+        if (!spiCard.CurrentValue.HasValue || !spiCard.TargetValue.HasValue) 
+            return "";
+
+        var percentage = (spiCard.CurrentValue.Value / spiCard.TargetValue.Value * 100m);
+        return $"{percentage:F1}% of target";
+    }
+
+    private double GetProgressValue(SPIDashboardCard spiCard)
+    {
+        if (!spiCard.CurrentValue.HasValue || !spiCard.TargetValue.HasValue || spiCard.TargetValue.Value == 0) 
+            return 0;
+
+        var progress = (double)(spiCard.CurrentValue.Value / spiCard.TargetValue.Value * 100m);
+        return Math.Min(Math.Max(progress, 0), 100); // Clamp between 0 and 100
+    }
+
+    private ProgressBarStyle GetProgressStyle(SPIDashboardCard spiCard)
+    {
+        var progress = GetProgressValue(spiCard);
+        
+        if (progress >= 95) return ProgressBarStyle.Success;
+        if (progress >= 80) return ProgressBarStyle.Info;
+        if (progress >= 60) return ProgressBarStyle.Warning;
+        return ProgressBarStyle.Danger;
+    }
+
+    private string GetLastUpdateText(SPIDashboardCard spiCard)
+    {
+        if (!spiCard.LastMeasurementDate.HasValue) return "No data";
+        
+        var timeAgo = DateTime.UtcNow - spiCard.LastMeasurementDate.Value;
+        
+        if (timeAgo.TotalDays < 1)
+            return "Today";
+        else if (timeAgo.TotalDays < 7)
+            return $"{(int)timeAgo.TotalDays}d ago";
+        else if (timeAgo.TotalDays < 30)
+            return $"{(int)(timeAgo.TotalDays / 7)}w ago";
+        else
+            return spiCard.LastMeasurementDate.Value.ToString("MMM dd");
+    }
+    #endregion
+
+    #region Notification Methods
+    private void ShowSuccessNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Success",
+            Detail = message,
+            Duration = 4000
+        });
+    }
+
+    private void ShowErrorNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Error,
+            Summary = "Error",
+            Detail = message,
+            Duration = 6000
+        });
+    }
+    #endregion
+
+    #region Supporting Types
+    public class CategoryDataPoint
+    {
+        public string Category { get; set; }
+        public int Count { get; set; }
+
+        public CategoryDataPoint(string category, int count)
+        {
+            Category = category;
+            Count = count;
+        }
+    }
+    #endregion
+}

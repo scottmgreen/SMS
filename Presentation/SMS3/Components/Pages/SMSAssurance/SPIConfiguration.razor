@@ -1,0 +1,222 @@
+@page "/SMSAssurance/SPIConfiguration"
+@using SMS_Application.Messaging.Commands
+@using SMS_Application.Messaging.Queries
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using SMS_Shared.Common
+@using Radzen
+@using Radzen.Blazor
+@using SMS3.Components.Shared
+@rendermode InteractiveServer
+
+<PageTitle>SPI Configuration - SMS Assurance</PageTitle>
+
+<!-- SMS Page Header using reusable component -->
+<PageHeader Title="Safety Performance Indicator Configuration"
+           Subtitle="Manage and configure safety performance indicators for monitoring organizational safety metrics"
+           Icon="fas fa-chart-line">
+    <AdditionalContent>
+        <RadzenButton Text="New SPI" 
+                      Icon="add" 
+                      ButtonStyle="ButtonStyle.Light" 
+                      Click="@CreateNewSPI" />
+    </AdditionalContent>
+</PageHeader>
+
+<RadzenStack Gap="1rem">
+    <!-- Filters Card -->
+    <RadzenCard Variant="Variant.Outlined">
+        <RadzenText TextStyle="TextStyle.H6" class="mb-3">Filters</RadzenText>
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenFormField Text="Search" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="@searchTerm" 
+                                   @onchange="@OnSearchChanged"
+                                   Placeholder="Search SPIs..." 
+                                   Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenFormField Text="Type" Variant="Variant.Outlined">
+                    <RadzenDropDown @bind-Value="@selectedType" 
+                                    @onchange="@OnFilterChanged"
+                                    Data="@GetTypeFilterOptions()" 
+                                    TextProperty="Text" 
+                                    ValueProperty="Value"
+                                    Placeholder="All Types" 
+                                    Style="width: 100%;" 
+                                    AllowClear="true" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenFormField Text="Department" Variant="Variant.Outlined">
+                    <RadzenDropDown @bind-Value="@selectedDepartment" 
+                                    @onchange="@OnFilterChanged"
+                                    Data="@GetDepartmentFilterOptions()" 
+                                    Placeholder="All Departments" 
+                                    Style="width: 100%;" 
+                                    AllowClear="true" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenFormField Text="Status" Variant="Variant.Outlined">
+                    <RadzenDropDown @bind-Value="@selectedStatus" 
+                                    @onchange="@OnFilterChanged"
+                                    Data="@GetStatusFilterOptions()" 
+                                    TextProperty="Text" 
+                                    ValueProperty="Value"
+                                    Placeholder="All Status" 
+                                    Style="width: 100%;" 
+                                    AllowClear="true" />
+                </RadzenFormField>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <!-- SPI Data Grid -->
+    <RadzenCard Variant="Variant.Outlined">
+        @if (isLoading)
+        {
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Gap="1rem" class="py-5">
+                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium" />
+                <RadzenText>Loading SPIs...</RadzenText>
+            </RadzenStack>
+        }
+        else if (filteredSPIs?.Any() == true)
+        {
+            <RadzenDataGrid @ref="spGrid" 
+                            Data="@filteredSPIs" 
+                            TItem="SafetyPerformanceIndicator" 
+                            AllowFiltering="false" 
+                            AllowColumnResize="true" 
+                            AllowAlternatingRows="true" 
+                            FilterMode="FilterMode.Advanced" 
+                            AllowSorting="true" 
+                            PageSize="@itemsPerPage" 
+                            AllowPaging="true" 
+                            PagerHorizontalAlign="HorizontalAlign.Left" 
+                            ShowPagingSummary="true"
+                            Density="Density.Compact"
+                            GridLines="DataGridGridLines.Both">
+                <Columns>
+                    <RadzenDataGridColumn TItem="SafetyPerformanceIndicator" Property="Code" Title="Code" Width="120px" Sortable="true">
+                        <Template Context="spi">
+                            <RadzenText TextStyle="TextStyle.Subtitle2" class="text-primary">@spi.Code</RadzenText>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    
+                    <RadzenDataGridColumn TItem="SafetyPerformanceIndicator" Property="Name" Title="Name" Sortable="true">
+                        <Template Context="spi">
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenText TextStyle="TextStyle.Body1"><strong>@spi.Name</strong></RadzenText>
+                                @if (!string.IsNullOrEmpty(spi.Description))
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary">
+                                        @TruncateText(spi.Description, 50)
+                                    </RadzenText>
+                                }
+                            </RadzenStack>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    
+                    <RadzenDataGridColumn TItem="SafetyPerformanceIndicator" Property="IndicatorType" Title="Type" Width="140px" Sortable="true">
+                        <Template Context="spi">
+                            <RadzenBadge BadgeStyle="@GetTypeBadgeStyle(spi.IndicatorType)" 
+                                         Text="@GetTypeDisplayName(spi.IndicatorType)" 
+                                         Variant="Variant.Flat" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    
+                    <RadzenDataGridColumn TItem="SafetyPerformanceIndicator" Property="ResponsibleDepartment" Title="Department" Width="150px" Sortable="true">
+                        <Template Context="spi">
+                            <RadzenText TextStyle="TextStyle.Body2">@(spi.ResponsibleDepartment ?? "Not assigned")</RadzenText>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    
+                    <RadzenDataGridColumn TItem="SafetyPerformanceIndicator" Property="Status" Title="Status" Width="100px" Sortable="true">
+                        <Template Context="spi">
+                            <RadzenBadge BadgeStyle="@GetStatusBadgeStyle(spi.Status)" 
+                                         Text="@spi.Status.Name" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    
+                    <RadzenDataGridColumn TItem="SafetyPerformanceIndicator" Property="MeasurementFrequency" Title="Frequency" Width="100px" Sortable="true">
+                        <Template Context="spi">
+                            <RadzenText TextStyle="TextStyle.Body2">@spi.MeasurementFrequency.Name</RadzenText>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    
+                    <RadzenDataGridColumn TItem="SafetyPerformanceIndicator" Property="TargetValue" Title="Target" Width="120px" Sortable="true">
+                        <Template Context="spi">
+                            @if (spi.TargetValue.HasValue)
+                            {
+                                <RadzenText TextStyle="TextStyle.Body2">
+                                    @spi.TargetValue.Value.ToString("F1") @spi.MeasurementUnit
+                                </RadzenText>
+                            }
+                            else
+                            {
+                                <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary">Not set</RadzenText>
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+                    
+                    <RadzenDataGridColumn TItem="SafetyPerformanceIndicator" Title="Actions" Width="160px" Sortable="false" Filterable="false">
+                        <Template Context="spi">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                                <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                              Variant="Variant.Flat" 
+                                              Size="ButtonSize.ExtraSmall" 
+                                              Icon="edit" 
+                                              ToolTip="Edit SPI"
+                                              Click="@(() => EditSPI(spi))" />
+                                <RadzenButton ButtonStyle="ButtonStyle.Info" 
+                                              Variant="Variant.Flat" 
+                                              Size="ButtonSize.ExtraSmall" 
+                                              Icon="bar_chart" 
+                                              ToolTip="View Data Points"
+                                              Click="@(() => ViewDataPoints(spi))" />
+                                <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
+                                              Variant="Variant.Flat" 
+                                              Size="ButtonSize.ExtraSmall" 
+                                              Icon="content_copy" 
+                                              ToolTip="Duplicate SPI"
+                                              Click="@(() => DuplicateSPI(spi))" />
+                                <RadzenButton ButtonStyle="ButtonStyle.Danger" 
+                                              Variant="Variant.Flat" 
+                                              Size="ButtonSize.ExtraSmall" 
+                                              Icon="delete" 
+                                              ToolTip="Delete SPI"
+                                              Click="@(() => DeleteSPI(spi))" />
+                            </RadzenStack>
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        }
+        else
+        {
+            <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Gap="1rem" class="py-5">
+                <RadzenIcon Icon="trending_up" Style="font-size: 3rem; color: var(--rz-secondary);" />
+                <RadzenText TextStyle="TextStyle.H5" class="rz-color-secondary">No SPIs Found</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" class="rz-color-secondary">
+                    @if (HasActiveFilters)
+                    {
+                        <text>No SPIs match your current filter criteria.</text>
+                    }
+                    else
+                    {
+                        <text>Get started by creating your first Safety Performance Indicator.</text>
+                    }
+                </RadzenText>
+                @if (!HasActiveFilters)
+                {
+                    <RadzenButton Text="Create First SPI" 
+                                  Icon="add" 
+                                  ButtonStyle="ButtonStyle.Primary" 
+                                  Click="@CreateNewSPI" />
+                }
+            </RadzenStack>
+        }
+    </RadzenCard>
+</RadzenStack>

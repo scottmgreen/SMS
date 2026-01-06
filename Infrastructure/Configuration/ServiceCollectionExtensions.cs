@@ -43,6 +43,7 @@ internal static class ServiceCollectionExtensions
         services.AddScoped<MitigationAssignmentRepository>();
         services.AddScoped<ReportValidationRepository>();
         services.AddScoped<ScoringPanelRepository>();
+        services.AddScoped<SafetyPerformanceIndicatorRepository>();
         services.AddScoped<SMSApplicationUserRepository>();
         services.AddScoped<SMSApplicationGroupRepository>();
         services.AddScoped<SMSOrganizationalUserRepository>();
@@ -74,6 +75,7 @@ internal static class ServiceCollectionExtensions
         services.AddScoped<MitigationAssignmentDataService>();
         services.AddScoped<ReportValidationDataService>();
         services.AddScoped<ScoringPanelDataService>();
+        services.AddScoped<SafetyPerformanceIndicatorDataService>();
 
         return services;
     }

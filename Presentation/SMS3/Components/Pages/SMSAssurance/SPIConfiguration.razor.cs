@@ -1,0 +1,556 @@
+using SMS_Application.Messaging.Commands;
+using SMS_Application.Messaging.Queries;
+using SMS_Domain.Entities;
+using SMS_Domain.Enums;
+using SMS_Shared.Common;
+using Microsoft.AspNetCore.Components;
+using Radzen;
+using Radzen.Blazor;
+
+namespace SMS3.Components.Pages.SMSAssurance;
+
+public partial class SPIConfiguration
+{
+    #region Injected Services
+    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    #endregion
+
+    #region Component References
+    private RadzenDataGrid<SafetyPerformanceIndicator>? spGrid;
+    #endregion
+
+    #region Data Properties
+    private IEnumerable<SafetyPerformanceIndicator> allSPIs = new List<SafetyPerformanceIndicator>();
+    private IEnumerable<SafetyPerformanceIndicator> filteredSPIs = new List<SafetyPerformanceIndicator>();
+    
+    // Filter properties
+    private string searchTerm = string.Empty;
+    private string? selectedType = null;
+    private string? selectedDepartment = null;
+    private string? selectedStatus = null;
+    
+    // Pagination
+    private int itemsPerPage = 20;
+    
+    // Loading state
+    private bool isLoading = true;
+    
+    // Dropdown data
+    private List<SPIType> availableTypes = new();
+    private List<SPIStatus> availableStatuses = new();
+    private List<SPIMeasurementFrequency> availableFrequencies = new();
+    private List<string> availableDepartments = new();
+    #endregion
+
+    #region Computed Properties
+    private bool HasActiveFilters => 
+        !string.IsNullOrWhiteSpace(searchTerm) ||
+        !string.IsNullOrWhiteSpace(selectedType) ||
+        !string.IsNullOrWhiteSpace(selectedDepartment) ||
+        !string.IsNullOrWhiteSpace(selectedStatus);
+    #endregion
+
+    #region Lifecycle Methods
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await LoadDropdownData();
+            await LoadSPIs();
+        }
+        catch (Exception ex)
+        {
+            ShowErrorNotification($"Failed to load SPI configuration: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+    #endregion
+
+    #region Data Loading Methods
+    private async Task LoadDropdownData()
+    {
+        // Load SPI types
+        availableTypes = SPIType.GetAllValues().ToList();
+        
+        // Load statuses
+        availableStatuses = new List<SPIStatus>
+        {
+            SPIStatus.Active,
+            SPIStatus.Inactive,
+            SPIStatus.UnderReview,
+            SPIStatus.Deprecated
+        };
+        
+        // Load frequencies
+        availableFrequencies = new List<SPIMeasurementFrequency>
+        {
+            SPIMeasurementFrequency.Daily,
+            SPIMeasurementFrequency.Weekly,
+            SPIMeasurementFrequency.Monthly,
+            SPIMeasurementFrequency.Quarterly,
+            SPIMeasurementFrequency.Annually
+        };
+        
+        // Load departments
+        availableDepartments = new List<string>
+        {
+            "Safety Department",
+            "Operations",
+            "Human Resources",
+            "Maintenance", 
+            "Security",
+            "Ground Services",
+            "Air Traffic Control",
+            "Emergency Services",
+            "Quality Assurance",
+            "Training Department"
+        };
+    }
+
+    private async Task LoadSPIs()
+    {
+        try
+        {
+            var query = new GetAllSafetyPerformanceIndicatorsQuery();
+            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            
+            if (result.IsSuccess)
+            {
+                allSPIs = result.Value ?? new List<SafetyPerformanceIndicator>();
+                
+                // Extract unique departments from loaded SPIs
+                var spiDepartments = allSPIs
+                    .Where(spi => !string.IsNullOrEmpty(spi.ResponsibleDepartment))
+                    .Select(spi => spi.ResponsibleDepartment)
+                    .Distinct()
+                    .ToList();
+                
+                // Merge with predefined departments
+                availableDepartments = availableDepartments
+                    .Union(spiDepartments)
+                    .OrderBy(d => d)
+                    .ToList();
+                
+                ApplyFilters();
+            }
+            else
+            {
+                ShowErrorNotification("Failed to load SPIs from database.");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowErrorNotification($"Error loading SPIs: {ex.Message}");
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        var query = allSPIs.AsQueryable();
+        
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var lowerSearch = searchTerm.ToLower();
+            query = query.Where(spi => 
+                spi.Code.ToLower().Contains(lowerSearch) ||
+                spi.Name.ToLower().Contains(lowerSearch) ||
+                (spi.Description != null && spi.Description.ToLower().Contains(lowerSearch)));
+        }
+        
+        // Apply type filter
+        if (!string.IsNullOrWhiteSpace(selectedType))
+        {
+            query = query.Where(spi => spi.IndicatorType.Value == selectedType);
+        }
+        
+        // Apply department filter
+        if (!string.IsNullOrWhiteSpace(selectedDepartment))
+        {
+            query = query.Where(spi => spi.ResponsibleDepartment == selectedDepartment);
+        }
+        
+        // Apply status filter
+        if (!string.IsNullOrWhiteSpace(selectedStatus))
+        {
+            query = query.Where(spi => spi.Status.Value == selectedStatus);
+        }
+        
+        filteredSPIs = query.OrderBy(spi => spi.Code).ToList();
+        StateHasChanged();
+    }
+    #endregion
+
+    #region Filter Event Handlers
+    private async Task OnSearchChanged(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+        ApplyFilters();
+        await Task.CompletedTask;
+    }
+
+    private async Task OnFilterChanged(object value)
+    {
+        ApplyFilters();
+        await Task.CompletedTask;
+    }
+    #endregion
+
+    #region SPI Management Methods
+    private async Task CreateNewSPI()
+    {
+        var newSPI = new SafetyPerformanceIndicator(
+            new SafetyPerformanceIndicatorID("PI-0000"),
+            "New SPI",
+            "Safety Performance Indicator",
+            SPIType.IncidentRate,
+            "SYSTEM"
+        );
+        
+        await OpenSPIDialog(newSPI, false);
+    }
+
+    private async Task EditSPI(SafetyPerformanceIndicator spi)
+    {
+        // Create a copy for editing
+        var editSPI = new SafetyPerformanceIndicator(
+            new SafetyPerformanceIndicatorID(spi.Id.Value),
+            spi.Name,
+            spi.Description ?? string.Empty,
+            spi.IndicatorType,
+            "SYSTEM"
+        );
+
+        // Copy all properties
+        editSPI.Code = spi.Code;
+        editSPI.MeasurementUnit = spi.MeasurementUnit;
+        editSPI.MeasurementFrequency = spi.MeasurementFrequency;
+        editSPI.CalculationMethod = spi.CalculationMethod;
+        editSPI.DataSource = spi.DataSource;
+        editSPI.TargetValue = spi.TargetValue;
+        editSPI.AcceptableRange = spi.AcceptableRange;
+        editSPI.WarningThreshold = spi.WarningThreshold;
+        editSPI.CriticalThreshold = spi.CriticalThreshold;
+        editSPI.ResponsibleDepartment = spi.ResponsibleDepartment;
+        editSPI.DataOwner = spi.DataOwner;
+        editSPI.ReviewAuthority = spi.ReviewAuthority;
+        editSPI.NextReviewDate = spi.NextReviewDate;
+        editSPI.AlertsEnabled = spi.AlertsEnabled;
+        editSPI.AlertRecipients = spi.AlertRecipients;
+        
+        await OpenSPIDialog(editSPI, true);
+    }
+
+    private async Task DuplicateSPI(SafetyPerformanceIndicator spi)
+    {
+        var duplicatedSPI = new SafetyPerformanceIndicator(
+            new SafetyPerformanceIndicatorID(string.Empty),
+            $"Copy of {spi.Name}",
+            spi.Description ?? string.Empty,
+            spi.IndicatorType,
+            "SYSTEM"
+        );
+
+        // Copy configuration but reset ID and code
+        duplicatedSPI.Code = string.Empty; // Will be auto-generated
+        duplicatedSPI.MeasurementUnit = spi.MeasurementUnit;
+        duplicatedSPI.MeasurementFrequency = spi.MeasurementFrequency;
+        duplicatedSPI.CalculationMethod = spi.CalculationMethod;
+        duplicatedSPI.DataSource = spi.DataSource;
+        duplicatedSPI.TargetValue = spi.TargetValue;
+        duplicatedSPI.AcceptableRange = spi.AcceptableRange;
+        duplicatedSPI.WarningThreshold = spi.WarningThreshold;
+        duplicatedSPI.CriticalThreshold = spi.CriticalThreshold;
+        duplicatedSPI.ResponsibleDepartment = spi.ResponsibleDepartment;
+        duplicatedSPI.DataOwner = spi.DataOwner;
+        duplicatedSPI.ReviewAuthority = spi.ReviewAuthority;
+        duplicatedSPI.AlertsEnabled = spi.AlertsEnabled;
+        duplicatedSPI.AlertRecipients = spi.AlertRecipients;
+        
+        await OpenSPIDialog(duplicatedSPI, false);
+    }
+
+    private async Task DeleteSPI(SafetyPerformanceIndicator spi)
+    {
+        var confirmed = await DialogService.Confirm(
+            $"Are you sure you want to delete the SPI '{spi.Code} - {spi.Name}'?\n\nThis action cannot be undone and will also delete all associated data points.",
+            "Delete SPI",
+            new ConfirmOptions() 
+            { 
+                OkButtonText = "Yes, Delete", 
+                CancelButtonText = "Cancel",
+                AutoFocusFirstElement = true
+            });
+        
+        if (confirmed == true)
+        {
+            try
+            {
+                var spiId = new SafetyPerformanceIndicatorID(spi.Id.Value);
+                var command = new DeleteSafetyPerformanceIndicatorCommand(spiId);
+                var result = await Mediator.SendAsync(command, CancellationToken.None);
+                
+                if (result.IsSuccess)
+                {
+                    ShowSuccessNotification($"SPI '{spi.Code}' has been deleted successfully.");
+                    await LoadSPIs();
+                }
+                else
+                {
+                    ShowErrorNotification($"Failed to delete SPI: {result.Error?.Message ?? "Unknown error"}");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowErrorNotification($"Error deleting SPI: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task OpenSPIDialog(SafetyPerformanceIndicator spi, bool isEditMode)
+    {
+        var options = new DialogOptions() 
+        { 
+            Width = "900px", 
+            Height = "auto",
+            Resizable = true,
+            Draggable = true,
+            CloseDialogOnOverlayClick = false,
+            CloseDialogOnEsc = true,
+            ShowClose = true
+        };
+
+        var parameters = new Dictionary<string, object> 
+        { 
+            { "SPI", spi },
+            { "IsEditMode", isEditMode },
+            { "AvailableTypes", availableTypes },
+            { "AvailableStatuses", availableStatuses },
+            { "AvailableFrequencies", availableFrequencies },
+            { "AvailableDepartments", availableDepartments }
+        };
+
+        var title = isEditMode ? $"Edit SPI - {spi.Code}" : "Create New SPI";
+        
+        var result = await DialogService.OpenAsync<Components.SPIEditDialog>(
+            title,
+            parameters,
+            options);
+
+        if (result is SafetyPerformanceIndicator updatedSPI)
+        {
+            await SaveSPI(updatedSPI, isEditMode);
+        }
+    }
+
+    private async Task SaveSPI(SafetyPerformanceIndicator spi, bool isEditMode)
+    {
+        try
+        {
+            Result result;
+            
+            if (!isEditMode)
+            {
+                // Create new SPI
+                var command = new CreateSafetyPerformanceIndicatorCommand(
+                    spi.Name,
+                    spi.Description ?? string.Empty,
+                    spi.IndicatorType,
+                    spi.MeasurementUnit,
+                    spi.MeasurementFrequency,
+                    spi.CalculationMethod,
+                    spi.DataSource,
+                    spi.TargetValue,
+                    spi.AcceptableRange,
+                    spi.WarningThreshold,
+                    spi.CriticalThreshold,
+                    spi.ResponsibleDepartment,
+                    spi.DataOwner,
+                    spi.ReviewAuthority,
+                    spi.NextReviewDate,
+                    spi.AlertsEnabled,
+                    spi.AlertRecipients,
+                    "SYSTEM"
+                );
+                
+                result = await Mediator.SendAsync(command, CancellationToken.None);
+                
+                if (result.IsSuccess)
+                {
+                    ShowSuccessNotification("SPI created successfully.");
+                }
+            }
+            else
+            {
+                // Update existing SPI
+                var spiId = new SafetyPerformanceIndicatorID(spi.Id.Value);
+                var command = new UpdateSafetyPerformanceIndicatorCommand(
+                    spiId,
+                    spi.Code,
+                    spi.Name,
+                    spi.Description ?? string.Empty,
+                    spi.IndicatorType,
+                    spi.Status,
+                    spi.MeasurementUnit,
+                    spi.MeasurementFrequency,
+                    spi.CalculationMethod,
+                    spi.DataSource,
+                    spi.TargetValue,
+                    spi.AcceptableRange,
+                    spi.WarningThreshold,
+                    spi.CriticalThreshold,
+                    spi.ResponsibleDepartment,
+                    spi.DataOwner,
+                    spi.ReviewAuthority,
+                    spi.NextReviewDate,
+                    spi.LastReviewDate,
+                    spi.LastReviewNotes,
+                    spi.AlertsEnabled,
+                    spi.AlertRecipients,
+                    "SYSTEM"
+                );
+                
+                result = await Mediator.SendAsync(command, CancellationToken.None);
+                
+                if (result.IsSuccess)
+                {
+                    ShowSuccessNotification("SPI updated successfully.");
+                }
+            }
+            
+            if (result.IsSuccess)
+            {
+                await LoadSPIs();
+            }
+            else
+            {
+                ShowErrorNotification($"Failed to save SPI: {result.Error?.Message ?? "Unknown error"}");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowErrorNotification($"Error saving SPI: {ex.Message}");
+        }
+    }
+
+    private async Task ViewDataPoints(SafetyPerformanceIndicator spi)
+    {
+        // Navigate to data points page or show data points dialog
+        // For now, show a placeholder notification
+        ShowInfoNotification("Data points management will be available in the next release.");
+    }
+    #endregion
+
+    #region Filter Options Methods
+    private List<FilterOption> GetTypeFilterOptions()
+    {
+        return availableTypes.Select(t => new FilterOption 
+        { 
+            Text = $"{t.Name} ({t.Category})", 
+            Value = t.Value 
+        }).ToList();
+    }
+
+    private List<string> GetDepartmentFilterOptions()
+    {
+        return availableDepartments;
+    }
+
+    private List<FilterOption> GetStatusFilterOptions()
+    {
+        return availableStatuses.Select(s => new FilterOption 
+        { 
+            Text = s.Name, 
+            Value = s.Value 
+        }).ToList();
+    }
+    #endregion
+
+    #region UI Helper Methods
+    private BadgeStyle GetStatusBadgeStyle(SPIStatus status)
+    {
+        return status.Value switch
+        {
+            "ACTIVE" => BadgeStyle.Success,
+            "INACTIVE" => BadgeStyle.Secondary,
+            "UNDER_REVIEW" => BadgeStyle.Warning,
+            "DEPRECATED" => BadgeStyle.Danger,
+            _ => BadgeStyle.Light
+        };
+    }
+
+    private BadgeStyle GetTypeBadgeStyle(SPIType type)
+    {
+        return type.Category switch
+        {
+            "Leading" => BadgeStyle.Primary,
+            "Lagging" => BadgeStyle.Danger,
+            "Process" => BadgeStyle.Info,
+            "Compliance" => BadgeStyle.Warning,
+            _ => BadgeStyle.Secondary
+        };
+    }
+
+    private string GetTypeDisplayName(SPIType type)
+    {
+        return $"{type.Name} ({type.Category})";
+    }
+
+    private string TruncateText(string text, int maxLength)
+    {
+        if (string.IsNullOrEmpty(text) || text.Length <= maxLength)
+            return text;
+        
+        return text.Substring(0, maxLength) + "...";
+    }
+    #endregion
+
+    #region Notification Methods
+    private void ShowSuccessNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Success",
+            Detail = message,
+            Duration = 4000
+        });
+    }
+
+    private void ShowErrorNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Error,
+            Summary = "Error",
+            Detail = message,
+            Duration = 6000
+        });
+    }
+
+    private void ShowInfoNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = "Information",
+            Detail = message,
+            Duration = 4000
+        });
+    }
+    #endregion
+
+    #region Supporting Types
+    public class FilterOption
+    {
+        public string Text { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+    }
+    #endregion
+}

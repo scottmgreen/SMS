@@ -29,7 +29,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Components\Pages\SMSAssurance\" />
     <Folder Include="Components\Pages\SMSPromotion\" />
     <Folder Include="wwwroot\uploads\" />
   </ItemGroup>

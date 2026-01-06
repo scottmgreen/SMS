@@ -983,5 +983,49 @@ public static partial class Mappers
         return hazardFile;
     }
 
+    /// <summary>
+    /// Maps SqlDataReader to SafetyPerformanceIndicator entity
+    /// </summary>
+    public static SafetyPerformanceIndicator MapToSafetyPerformanceIndicator(SqlDataReader reader)
+    {
+        var code = reader.GetValue<string>(FieldNames.fSPICode);
+        SafetyPerformanceIndicatorID spiID = new(reader.GetValue<string>(FieldNames.fSPIId));
+        SafetyPerformanceIndicator spi = new(spiID, 
+            reader.GetValue<string>(FieldNames.fSPIName) ?? string.Empty,
+            reader.GetValue<string>(FieldNames.fSPIDescription) ?? string.Empty,
+            SPIType.GetAllValues().FirstOrDefault(t => t.Value == reader.GetValue<string>(FieldNames.fSPIIndicatorType)) ?? SPIType.IncidentRate,
+            reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM");
+
+        // Set the code
+        //spi.SetCode(code ?? string.Empty);
+
+        // Set additional properties
+        spi.Status = SPIStatus.FromValue(reader.GetValue<string>(FieldNames.fSPIStatus)) ?? SPIStatus.Active;
+        spi.MeasurementUnit = reader.GetValue<string>(FieldNames.fSPIMeasurementUnit) ?? string.Empty;
+        spi.MeasurementFrequency = SPIMeasurementFrequency.GetAllValues().FirstOrDefault(f => f.Value == reader.GetValue<string>(FieldNames.fSPIMeasurementFrequency)) ?? SPIMeasurementFrequency.Monthly;
+        spi.CalculationMethod = reader.GetValue<string>(FieldNames.fSPICalculationMethod) ?? string.Empty;
+        spi.DataSource = reader.GetValue<string>(FieldNames.fSPIDataSource) ?? string.Empty;
+        spi.TargetValue = reader.IsDBNull(FieldNames.fSPITargetValue) ? null : reader.GetValue<decimal?>(FieldNames.fSPITargetValue);
+        spi.AcceptableRange = reader.IsDBNull(FieldNames.fSPIAcceptableRange) ? null : reader.GetValue<decimal?>(FieldNames.fSPIAcceptableRange);
+        spi.WarningThreshold = reader.IsDBNull(FieldNames.fSPIWarningThreshold) ? null : reader.GetValue<decimal?>(FieldNames.fSPIWarningThreshold);
+        spi.CriticalThreshold = reader.IsDBNull(FieldNames.fSPICriticalThreshold) ? null : reader.GetValue<decimal?>(FieldNames.fSPICriticalThreshold);
+        spi.ResponsibleDepartment = reader.GetValue<string>(FieldNames.fSPIResponsibleDepartment) ?? string.Empty;
+        spi.DataOwner = reader.GetValue<string>(FieldNames.fSPIDataOwner) ?? string.Empty;
+        spi.ReviewAuthority = reader.GetValue<string>(FieldNames.fSPIReviewAuthority) ?? string.Empty;
+        spi.NextReviewDate = reader.IsDBNull(FieldNames.fSPINextReviewDate) ? null : reader.GetValue<DateTime?>(FieldNames.fSPINextReviewDate);
+        spi.LastReviewDate = reader.IsDBNull(FieldNames.fSPILastReviewDate) ? null : reader.GetValue<DateTime?>(FieldNames.fSPILastReviewDate);
+        spi.LastReviewNotes = reader.GetValue<string>(FieldNames.fSPILastReviewNotes);
+        spi.AlertsEnabled = reader.IsDBNull(FieldNames.fSPIAlertsEnabled) ? false : reader.GetValue<bool>(FieldNames.fSPIAlertsEnabled);
+        spi.AlertRecipients = reader.GetValue<string>(FieldNames.fSPIAlertRecipients);
+
+        // Set audit properties
+        spi.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
+        spi.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+        spi.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
+        spi.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fUpdatedDate);
+
+        return spi;
+    }
+
     #endregion
 }

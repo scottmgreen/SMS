@@ -832,5 +832,49 @@
         public static string pr_SMSOrganizationalUser_GetByGroupCode => _pr_SMSOrganizationalUser_GetByGroupCode.Value;
 
         #endregion
+
+        #region SMS Safety Performance Indicator CRUD Operations
+        /// <summary>
+        /// SMS Safety Performance Indicator CRUD Operations
+        /// </summary>
+        private static readonly Lazy<string> _pr_SafetyPerformanceIndicator_Insert = new(() => "pr_SafetyPerformanceIndicator_Insert");
+        public static string pr_SafetyPerformanceIndicator_Insert => _pr_SafetyPerformanceIndicator_Insert.Value;
+
+        private static readonly Lazy<string> _pr_SafetyPerformanceIndicator_GetById = new(() => "pr_SafetyPerformanceIndicator_GetById");
+        public static string pr_SafetyPerformanceIndicator_GetById => _pr_SafetyPerformanceIndicator_GetById.Value;
+
+        private static readonly Lazy<string> _pr_SafetyPerformanceIndicator_GetByCode = new(() => "pr_SafetyPerformanceIndicator_GetByCode");
+        public static string pr_SafetyPerformanceIndicator_GetByCode => _pr_SafetyPerformanceIndicator_GetByCode.Value;
+
+        private static readonly Lazy<string> _pr_SafetyPerformanceIndicator_GetAll = new(() => "pr_SafetyPerformanceIndicator_GetAll");
+        public static string pr_SafetyPerformanceIndicator_GetAll => _pr_SafetyPerformanceIndicator_GetAll.Value;
+
+        private static readonly Lazy<string> _pr_SafetyPerformanceIndicator_GetByType = new(() => "pr_SafetyPerformanceIndicator_GetByType");
+        public static string pr_SafetyPerformanceIndicator_GetByType => _pr_SafetyPerformanceIndicator_GetByType.Value;
+
+        private static readonly Lazy<string> _pr_SafetyPerformanceIndicator_GetByDepartment = new(() => "pr_SafetyPerformanceIndicator_GetByDepartment");
+        public static string pr_SafetyPerformanceIndicator_GetByDepartment => _pr_SafetyPerformanceIndicator_GetByDepartment.Value;
+
+        private static readonly Lazy<string> _pr_SafetyPerformanceIndicator_Update = new(() => "pr_SafetyPerformanceIndicator_Update");
+        public static string pr_SafetyPerformanceIndicator_Update => _pr_SafetyPerformanceIndicator_Update.Value;
+
+        private static readonly Lazy<string> _pr_SafetyPerformanceIndicator_Delete = new(() => "pr_SafetyPerformanceIndicator_Delete");
+        public static string pr_SafetyPerformanceIndicator_Delete => _pr_SafetyPerformanceIndicator_Delete.Value;
+
+        /// <summary>
+        /// SMS Safety Performance Indicator Data Points Operations
+        /// </summary>
+        private static readonly Lazy<string> _pr_SPIDataPoint_Insert = new(() => "pr_SPIDataPoint_Insert");
+        public static string pr_SPIDataPoint_Insert => _pr_SPIDataPoint_Insert.Value;
+
+        private static readonly Lazy<string> _pr_SPIDataPoint_GetBySPIId = new(() => "pr_SPIDataPoint_GetBySPIId");
+        public static string pr_SPIDataPoint_GetBySPIId => _pr_SPIDataPoint_GetBySPIId.Value;
+
+        private static readonly Lazy<string> _pr_SPIDataPoint_Update = new(() => "pr_SPIDataPoint_Update");
+        public static string pr_SPIDataPoint_Update => _pr_SPIDataPoint_Update.Value;
+
+        private static readonly Lazy<string> _pr_SPIDataPoint_Delete = new(() => "pr_SPIDataPoint_Delete");
+        public static string pr_SPIDataPoint_Delete => _pr_SPIDataPoint_Delete.Value;
+        #endregion
     }
 }

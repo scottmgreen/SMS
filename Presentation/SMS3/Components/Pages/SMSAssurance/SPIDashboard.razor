@@ -1,0 +1,427 @@
+@page "/SMSAssurance/SPIDashboard"
+@using Radzen
+@using Radzen.Blazor
+@using SMS3.Components.Shared
+@using SMS_Application.Messaging.Queries
+@using SMS_Application.Messaging.Commands
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+
+<PageTitle>SPI Dashboard - SMS3</PageTitle>
+
+<!-- SMS Page Header -->
+<PageHeader Title="Safety Performance Indicators Dashboard"
+           Subtitle="Monitor and analyze safety performance metrics, trends, and compliance status in real-time"
+           Icon="fas fa-chart-line" />
+
+@if (IsLoading)
+{
+    <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        <span class="ms-3">Loading SPI dashboard data...</span>
+    </div>
+}
+else
+{
+    <!-- Control Panel -->
+    <RadzenRow Gap="1rem" class="rz-my-4">
+        <RadzenColumn Size="12" SizeMD="8">
+            <RadzenCard Variant="Variant.Outlined" Style="padding: 1rem;">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0;">Filters & Views:</RadzenText>
+                    
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenText TextStyle="TextStyle.Body2">SPI Type:</RadzenText>
+                        <RadzenDropDown @bind-Value="@SelectedSPIType" 
+                                      Data="@SPITypeOptions" 
+                                      Change="@OnSPITypeChanged"
+                                      Style="width: 180px;" />
+                    </RadzenStack>
+                    
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenText TextStyle="TextStyle.Body2">Department:</RadzenText>
+                        <RadzenDropDown @bind-Value="@SelectedDepartment" 
+                                      Data="@DepartmentOptions" 
+                                      Change="@OnDepartmentChanged"
+                                      Style="width: 150px;" />
+                    </RadzenStack>
+                    
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenText TextStyle="TextStyle.Body2">Time Period:</RadzenText>
+                        <RadzenDropDown @bind-Value="@SelectedTimePeriod" 
+                                      Data="@TimePeriodOptions" 
+                                      Change="@OnTimePeriodChanged"
+                                      Style="width: 120px;" />
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        
+        <RadzenColumn Size="12" SizeMD="4">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+                <RadzenButton Text="Configure SPIs" 
+                            Icon="settings" 
+                            ButtonStyle="ButtonStyle.Light"
+                            Click="@NavigateToConfiguration" 
+                            Size="ButtonSize.Medium" />
+                <RadzenButton Text="Refresh" 
+                            Icon="refresh" 
+                            ButtonStyle="ButtonStyle.Secondary"
+                            Click="@RefreshDashboard" 
+                            Size="ButtonSize.Medium" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Key Metrics Summary Cards -->
+    <RadzenRow Gap="1rem" class="rz-my-4">
+        <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+            <RadzenCard Variant="Variant.Outlined" class="rz-text-align-center metric-card">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenIcon Icon="speed" Style="font-size: 2.5rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: 700;">
+                        @DashboardData?.TotalSPIs.ToString() ?? "0"
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">Total SPIs</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                        Active: @(DashboardData?.ActiveSPIs.ToString() ?? "0")
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        
+        <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+            <RadzenCard Variant="Variant.Outlined" class="rz-text-align-center metric-card">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenIcon Icon="trending_up" Style="font-size: 2.5rem; color: var(--rz-success);" />
+                    <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: 700;">
+                        @(DashboardData?.PerformanceSummary?.SPIsMeetingTarget.ToString() ?? "0")
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">Meeting Target</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text_secondary-color);">
+                        @(GetComplianceRate())% Compliance
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        
+        <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+            <RadzenCard Variant="Variant.Outlined" class="rz-text-align-center metric-card">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenIcon Icon="warning" Style="font-size: 2.5rem; color: var(--rz-warning);" />
+                    <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: 700;">
+                        @(DashboardData?.ActiveAlerts?.Count.ToString() ?? "0")
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">Active Alerts</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                        Critical: @(GetCriticalAlerts())
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        
+        <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+            <RadzenCard Variant="Variant.Outlined" class="rz-text-align-center metric-card">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenIcon Icon="schedule" Style="font-size: 2.5rem; color: var(--rz-info);" />
+                    <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: 700;">
+                        @(DashboardData?.SPIsRequiringReview.ToString() ?? "0")
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">Reviews Due</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                        This Month
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Active Alerts Section -->
+    @if (DashboardData?.ActiveAlerts?.Any() == true)
+    {
+        <RadzenRow Gap="1rem" class="rz-my-4">
+            <RadzenColumn Size="12">
+                <RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid var(--rz-warning);">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: var(--rz-warning);">
+                                <RadzenIcon Icon="notification_important" /> Active Safety Performance Alerts
+                            </RadzenText>
+                            <RadzenBadge Text="@DashboardData.ActiveAlerts.Count.ToString()" BadgeStyle="BadgeStyle.Warning" />
+                        </div>
+                        
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                            @foreach (var alert in DashboardData.ActiveAlerts.Take(5))
+                            {
+                                <RadzenCard Variant="Variant.Text" class="alert-card" 
+                                          Style="@GetAlertCardStyle(alert.AlertType)">
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                                        <RadzenIcon Icon="@GetAlertIcon(alert.AlertType)" 
+                                                  Style="@($"color: {GetAlertColor(alert.AlertType)}; font-size: 1.5rem;")" />
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem" Style="flex: 1;">
+                                            <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; font-weight: 500;">
+                                                @alert.SPIName
+                                            </RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                                @alert.AlertMessage
+                                            </RadzenText>
+                                        </RadzenStack>
+                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
+                                            @alert.CurrentValue.ToString("F1")
+                                        </RadzenText>
+                                        <RadzenIcon Icon="@GetTrendIcon(alert.TrendDirection)" 
+                                                  Style="@($"color: {GetTrendColor(alert.TrendDirection)};")" />
+                                    </RadzenStack>
+                                </RadzenCard>
+                            }
+                        </RadzenStack>
+                        
+                        @if (DashboardData.ActiveAlerts.Count > 5)
+                        {
+                            <RadzenButton Text="@($"View All {DashboardData.ActiveAlerts.Count} Alerts")" 
+                                        ButtonStyle="ButtonStyle.Light" 
+                                        Size="ButtonSize.Small"
+                                        Click="@ShowAllAlerts" />
+                        }
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenRow>
+    }
+
+    <!-- SPI Performance Cards Grid -->
+    <RadzenRow Gap="1rem" class="rz-my-4">
+        @if (DashboardData?.SPICards?.Any() == true)
+        {
+            @foreach (var spiCard in GetFilteredSPICards())
+            {
+                <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                    <RadzenCard Variant="Variant.Outlined" class="spi-card clickable-card h-100"
+                              Style="@GetSPICardStyle(spiCard)"
+                              @onclick="() => NavigateToSPIDetail(spiCard.SPIId)">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                            <!-- SPI Header -->
+                            <div class="d-flex justify-content-between align-items-start">
+                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; font-weight: 600;">
+                                        @spiCard.Name
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color);">
+                                        @spiCard.Code | @spiCard.IndicatorType
+                                    </RadzenText>
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" AlignItems="AlignItems.End">
+                                    <RadzenBadge Text="@spiCard.Status" 
+                                               BadgeStyle="@GetStatusBadgeStyle(spiCard.Status)" />
+                                    <RadzenIcon Icon="@GetTrendIcon(spiCard.TrendDirection)" 
+                                              Style="@($"color: {GetTrendColor(spiCard.TrendDirection)}; font-size: 1.25rem;")" />
+                                </RadzenStack>
+                            </div>
+                            
+                            <!-- Current Value Display -->
+                            <div class="text-center">
+                                <RadzenText TextStyle="TextStyle.H3" Style="margin: 0; font-weight: 700;">
+                                    @(spiCard.CurrentValue?.ToString("F1") ?? "No Data")
+                                </RadzenText>
+                                @if (!string.IsNullOrEmpty(spiCard.MeasurementUnit))
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; color: var(--rz-text.secondary-color);">
+                                        @spiCard.MeasurementUnit
+                                    </RadzenText>
+                                }
+                            </div>
+                            
+                            <!-- Target Comparison -->
+                            @if (spiCard.TargetValue.HasValue && spiCard.CurrentValue.HasValue)
+                            {
+                                <div>
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                                            Target: @spiCard.TargetValue.Value.ToString("F1")
+                                        </RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                                            @GetPerformanceText(spiCard)
+                                        </RadzenText>
+                                    </div>
+                                    <RadzenProgressBar Value="@GetProgressValue(spiCard)" 
+                                                     ShowValue="false" 
+                                                     ProgressBarStyle="@GetProgressStyle(spiCard)" />
+                                </div>
+                            }
+                            
+                            <!-- Status Indicators -->
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Wrap="FlexWrap.Wrap">
+                                @if (spiCard.IsOverThreshold)
+                                {
+                                    <RadzenBadge Text="Critical" BadgeStyle="BadgeStyle.Danger" />
+                                }
+                                @if (spiCard.IsAtWarningLevel)
+                                {
+                                    <RadzenBadge Text="Warning" BadgeStyle="BadgeStyle.Warning" />
+                                }
+                                @if (spiCard.RequiresReview)
+                                {
+                                    <RadzenBadge Text="Review Due" BadgeStyle="BadgeStyle.Info" />
+                                }
+                            </RadzenStack>
+                            
+                            <!-- Footer Info -->
+                            <div class="border-top pt-2">
+                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                                        @spiCard.ResponsibleDepartment
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                                        @GetLastUpdateText(spiCard)
+                                    </RadzenText>
+                                </RadzenStack>
+                            </div>
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+            }
+        }
+        else
+        {
+            <RadzenColumn Size="12">
+                <div class="text-center py-5">
+                    <RadzenIcon Icon="insights" Style="font-size: 4rem; color: var(--rz-text-secondary-color); opacity: 0.5;" />
+                    <RadzenText TextStyle="TextStyle.H5" Style="color: var(--rz-text.secondary-color); margin-top: 1rem;">
+                        No Safety Performance Indicators configured
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text_secondary-color);">
+                        Get started by configuring your safety performance indicators to monitor safety metrics.
+                    </RadzenText>
+                    <RadzenButton Text="Configure SPIs" 
+                                Icon="add" 
+                                ButtonStyle="ButtonStyle.Primary"
+                                Click="@NavigateToConfiguration" 
+                                Style="margin-top: 1rem;" />
+                </div>
+            </RadzenColumn>
+        }
+    </RadzenRow>
+
+    <!-- Charts Section -->
+    <RadzenRow Gap="1rem" class="rz-my-4">
+        <!-- Trend Analysis Chart -->
+        <RadzenColumn Size="12" SizeLG="8">
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">Performance Trends</RadzenText>
+                        <RadzenDropDown @bind-Value="@SelectedTrendSPI" 
+                                      Data="@TrendSPIOptions" 
+                                      Change="@OnTrendSPIChanged"
+                                      Style="width: 200px;" 
+                                      Placeholder="Select SPI..." />
+                    </div>
+                    
+                    @if (TrendData?.Any() == true)
+                    {
+                        <RadzenChart>
+                            <RadzenLineSeries Data="@TrendData" CategoryProperty="Period" ValueProperty="Value" Title="Actual">
+                                <RadzenMarkers MarkerType="MarkerType.Circle" />
+                                <RadzenSeriesDataLabels Visible="false" />
+                            </RadzenLineSeries>
+                            @if (TrendTargetData?.Any() == true)
+                            {
+                                <RadzenLineSeries Data="@TrendTargetData" CategoryProperty="Period" ValueProperty="Target" Title="Target">
+                                    <RadzenMarkers MarkerType="MarkerType.Square" />
+                                    <RadzenSeriesDataLabels Visible="false" />
+                                </RadzenLineSeries>
+                            }
+                            <RadzenCategoryAxis Padding="20" />
+                            <RadzenValueAxis>
+                                <RadzenGridLines Visible="true" />
+                                <RadzenAxisTitle Text="Value" />
+                            </RadzenValueAxis>
+                            <RadzenLegend Position="LegendPosition.Bottom" />
+                        </RadzenChart>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                                Select an SPI to view trend analysis
+                            </RadzenText>
+                        </div>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        
+        <!-- Performance by Category -->
+        <RadzenColumn Size="12" SizeLG="4">
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                    <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">Performance by Type</RadzenText>
+                    
+                    @if (CategoryData?.Any() == true)
+                    {
+                        <RadzenChart>
+                            <RadzenDonutSeries Data="@CategoryData" CategoryProperty="Category" ValueProperty="Count" Title="SPIs">
+                                <RadzenSeriesDataLabels Visible="true" />
+                            </RadzenDonutSeries>
+                            <RadzenLegend Position="LegendPosition.Bottom" />
+                        </RadzenChart>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                                No category data available
+                            </RadzenText>
+                        </div>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+}
+
+<style>
+    .metric-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        padding: 1.5rem;
+    }
+
+    .clickable-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .spi-card {
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border-left: 4px solid transparent;
+    }
+
+    .spi-card:hover {
+        border-left-color: var(--rz-primary);
+    }
+
+    .spi-card.critical {
+        border-left-color: var(--rz-danger);
+    }
+
+    .spi-card.warning {
+        border-left-color: var(--rz-warning);
+    }
+
+    .spi-card.compliant {
+        border-left-color: var(--rz-success);
+    }
+
+    .alert-card {
+        transition: all 0.2s ease;
+    }
+
+    .alert-card:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+</style>
+
+@code {
+    // Component state and data binding will be in the code-behind file
+}

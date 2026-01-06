@@ -1362,4 +1362,109 @@ public static class ParameterNames
 
     private static readonly Lazy<string> _pmMitigationRecommendationsForFuture = new Lazy<string>(() => "@pMitigationRecommendationsForFuture");
     public static string pmMitigationRecommendationsForFuture => _pmMitigationRecommendationsForFuture.Value;
+
+    /// <summary>
+    /// Safety Performance Indicator parameters
+    /// </summary>
+    private static readonly Lazy<string> _pmSPIId = new Lazy<string>(() => "@pID");
+    public static string pmSPIId => _pmSPIId.Value;
+
+    private static readonly Lazy<string> _pmSPICode = new Lazy<string>(() => "@pCode");
+    public static string pmSPICode => _pmSPICode.Value;
+
+    private static readonly Lazy<string> _pmSPIName = new Lazy<string>(() => "@pName");
+    public static string pmSPIName => _pmSPIName.Value;
+
+    private static readonly Lazy<string> _pmSPIDescription = new Lazy<string>(() => "@pDescription");
+    public static string pmSPIDescription => _pmSPIDescription.Value;
+
+    private static readonly Lazy<string> _pmSPIIndicatorType = new Lazy<string>(() => "@pIndicatorType");
+    public static string pmSPIIndicatorType => _pmSPIIndicatorType.Value;
+
+    private static readonly Lazy<string> _pmSPIStatus = new Lazy<string>(() => "@pStatus");
+    public static string pmSPIStatus => _pmSPIStatus.Value;
+
+    private static readonly Lazy<string> _pmSPIMeasurementUnit = new Lazy<string>(() => "@pMeasurementUnit");
+    public static string pmSPIMeasurementUnit => _pmSPIMeasurementUnit.Value;
+
+    private static readonly Lazy<string> _pmSPIMeasurementFrequency = new Lazy<string>(() => "@pMeasurementFrequency");
+    public static string pmSPIMeasurementFrequency => _pmSPIMeasurementFrequency.Value;
+
+    private static readonly Lazy<string> _pmSPICalculationMethod = new Lazy<string>(() => "@pCalculationMethod");
+    public static string pmSPICalculationMethod => _pmSPICalculationMethod.Value;
+
+    private static readonly Lazy<string> _pmSPIDataSource = new Lazy<string>(() => "@pDataSource");
+    public static string pmSPIDataSource => _pmSPIDataSource.Value;
+
+    private static readonly Lazy<string> _pmSPITargetValue = new Lazy<string>(() => "@pTargetValue");
+    public static string pmSPITargetValue => _pmSPITargetValue.Value;
+
+    private static readonly Lazy<string> _pmSPIAcceptableRange = new Lazy<string>(() => "@pAcceptableRange");
+    public static string pmSPIAcceptableRange => _pmSPIAcceptableRange.Value;
+
+    private static readonly Lazy<string> _pmSPIWarningThreshold = new Lazy<string>(() => "@pWarningThreshold");
+    public static string pmSPIWarningThreshold => _pmSPIWarningThreshold.Value;
+
+    private static readonly Lazy<string> _pmSPICriticalThreshold = new Lazy<string>(() => "@pCriticalThreshold");
+    public static string pmSPICriticalThreshold => _pmSPICriticalThreshold.Value;
+
+    private static readonly Lazy<string> _pmSPIResponsibleDepartment = new Lazy<string>(() => "@pResponsibleDepartment");
+    public static string pmSPIResponsibleDepartment => _pmSPIResponsibleDepartment.Value;
+
+    private static readonly Lazy<string> _pmSPIDataOwner = new Lazy<string>(() => "@pDataOwner");
+    public static string pmSPIDataOwner => _pmSPIDataOwner.Value;
+
+    private static readonly Lazy<string> _pmSPIReviewAuthority = new Lazy<string>(() => "@pReviewAuthority");
+    public static string pmSPIReviewAuthority => _pmSPIReviewAuthority.Value;
+
+    private static readonly Lazy<string> _pmSPINextReviewDate = new Lazy<string>(() => "@pNextReviewDate");
+    public static string pmSPINextReviewDate => _pmSPINextReviewDate.Value;
+
+    private static readonly Lazy<string> _pmSPILastReviewDate = new Lazy<string>(() => "@pLastReviewDate");
+    public static string pmSPILastReviewDate => _pmSPILastReviewDate.Value;
+
+    private static readonly Lazy<string> _pmSPILastReviewNotes = new Lazy<string>(() => "@pLastReviewNotes");
+    public static string pmSPILastReviewNotes => _pmSPILastReviewNotes.Value;
+
+    private static readonly Lazy<string> _pmSPIAlertsEnabled = new Lazy<string>(() => "@pAlertsEnabled");
+    public static string pmSPIAlertsEnabled => _pmSPIAlertsEnabled.Value;
+
+    private static readonly Lazy<string> _pmSPIAlertRecipients = new Lazy<string>(() => "@pAlertRecipients");
+    public static string pmSPIAlertRecipients => _pmSPIAlertRecipients.Value;
+
+    /// <summary>
+    /// SPI Data Point parameters
+    /// </summary>
+    private static readonly Lazy<string> _pmSPIDataPointSPIId = new Lazy<string>(() => "@pSPIId");
+    public static string pmSPIDataPointSPIId => _pmSPIDataPointSPIId.Value;
+
+    private static readonly Lazy<string> _pmSPIDataPointValue = new Lazy<string>(() => "@pValue");
+    public static string pmSPIDataPointValue => _pmSPIDataPointValue.Value;
+
+    private static readonly Lazy<string> _pmSPIDataPointMeasurementDate = new Lazy<string>(() => "@pMeasurementDate");
+    public static string pmSPIDataPointMeasurementDate => _pmSPIDataPointMeasurementDate.Value;
+
+    private static readonly Lazy<string> _pmSPIDataPointPeriod = new Lazy<string>(() => "@pPeriod");
+    public static string pmSPIDataPointPeriod => _pmSPIDataPointPeriod.Value;
+
+    private static readonly Lazy<string> _pmSPIDataPointDataSource = new Lazy<string>(() => "@pDataSource");
+    public static string pmSPIDataPointDataSource => _pmSPIDataPointDataSource.Value;
+
+    private static readonly Lazy<string> _pmSPIDataPointEnteredBy = new Lazy<string>(() => "@pEnteredBy");
+    public static string pmSPIDataPointEnteredBy => _pmSPIDataPointEnteredBy.Value;
+
+    private static readonly Lazy<string> _pmSPIDataPointEnteredDate = new Lazy<string>(() => "@pEnteredDate");
+    public static string pmSPIDataPointEnteredDate => _pmSPIDataPointEnteredDate.Value;
+
+    private static readonly Lazy<string> _pmSPIDataPointNotes = new Lazy<string>(() => "@pNotes");
+    public static string pmSPIDataPointNotes => _pmSPIDataPointNotes.Value;
+
+    private static readonly Lazy<string> _pmSPIDataPointIsVerified = new Lazy<string>(() => "@pIsVerified");
+    public static string pmSPIDataPointIsVerified => _pmSPIDataPointIsVerified.Value;
+
+    private static readonly Lazy<string> _pmSPIDataPointVerifiedBy = new Lazy<string>(() => "@pVerifiedBy");
+    public static string pmSPIDataPointVerifiedBy => _pmSPIDataPointVerifiedBy.Value;
+
+    private static readonly Lazy<string> _pmSPIDataPointVerifiedDate = new Lazy<string>(() => "@pVerifiedDate");
+    public static string pmSPIDataPointVerifiedDate => _pmSPIDataPointVerifiedDate.Value;
 }

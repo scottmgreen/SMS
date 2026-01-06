@@ -76,6 +76,7 @@ namespace SMS_Application.Configuration
             services.AddScoped<MitigationService>();
             services.AddScoped<MitigationAssignmentService>();
             services.AddScoped<ScoringPanelService>();
+            services.AddScoped<SafetyPerformanceIndicatorService>();
 
             return services;
         }
