@@ -39,13 +39,13 @@ public class CreateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
 
             // Create the SPI entity
             var spi = new SafetyPerformanceIndicator(
-                new SafetyPerformanceIndicatorID(string.Empty), // ID will be generated
+                new SafetyPerformanceIndicatorID("PI-0000"), // ID will be generated
                 request.Name,
                 request.Description,
                 request.IndicatorType,
                 request.CreatedBy
             );
-
+            spi.Code = spi.Id.Value;
             // Set additional properties
             spi.MeasurementUnit = request.MeasurementUnit;
             spi.MeasurementFrequency = request.MeasurementFrequency;
@@ -244,6 +244,300 @@ public class DeleteSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
                 "Unexpected error occurred while deleting Safety Performance Indicator with ID: {Id}", 
                 request?.SafetyPerformanceIndicatorId?.Value);
             return Result<bool>.Failure<bool>(DomainErrors.SPIError.DeleteFailed);
+        }
+    }
+}
+
+public class AddSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandler<AddSPIDataPointCommand, Result<SafetyPerformanceIndicator>>
+{
+    private readonly SafetyPerformanceIndicatorDataService _dataService;
+    private readonly ILogger<AddSPIDataPointCommandHandler> _logger;
+
+    public AddSPIDataPointCommandHandler(
+        SafetyPerformanceIndicatorDataService dataService,
+        ILogger<AddSPIDataPointCommandHandler> logger)
+    {
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SafetyPerformanceIndicator>> HandleAsync(
+        AddSPIDataPointCommand request, 
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request is null)
+            {
+                _logger.LogError("AddSPIDataPointCommand received with null request");
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(
+                    DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Processing AddSPIDataPointCommand for SPI ID: {SPIId}, Value: {Value}, Date: {Date}",
+                request.SPIId, request.Value, request.MeasurementDate);
+
+            // Get the SPI by code
+            var getSpiResult = await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(request.SPIId, cancellationToken);
+            if (!getSpiResult.IsSuccess || getSpiResult.Value == null)
+            {
+                _logger.LogError("Could not find SPI with code: {SPIId}", request.SPIId);
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(
+                    DomainErrors.SPIError.NotFound);
+            }
+
+            var spi = getSpiResult.Value;
+
+            // Create the new data point
+            var dataPoint = new SPIDataPoint
+            {
+                Value = request.Value,
+                MeasurementDate = request.MeasurementDate,
+                DataSource = request.DataSource,
+                EnteredBy = request.EnteredBy,
+                EnteredDate = DateTime.UtcNow,
+                Notes = request.Notes,
+                IsVerified = false, // New data points start unverified
+                Period = GetPeriodFromDate(request.MeasurementDate, spi.MeasurementFrequency)
+            };
+
+            // Add the data point directly to the database using the proper repository method
+            var addResult = await _dataService.AddSPIDataPointAsync(spi.Code, dataPoint, cancellationToken);
+
+            if (!addResult.IsSuccess)
+            {
+                _logger.LogError("Failed to add data point to database: {Error}", addResult.Error?.Message);
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(addResult.Error);
+            }
+
+            // Refresh the SPI to get the updated data points
+            var refreshedSpiResult = await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(request.SPIId, cancellationToken);
+            if (!refreshedSpiResult.IsSuccess)
+            {
+                _logger.LogError("Failed to refresh SPI after adding data point");
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(refreshedSpiResult.Error);
+            }
+
+            _logger.LogInformation("Successfully added data point to SPI with ID: {SPIId}, Value: {Value}",
+                request.SPIId, request.Value);
+
+            return refreshedSpiResult;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("AddSPIDataPointCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error occurred while adding data point to SPI with ID: {SPIId}", 
+                request?.SPIId);
+            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.UpdateFailed);
+        }
+    }
+
+    private string GetPeriodFromDate(DateTime date, SPIMeasurementFrequency frequency)
+    {
+        return frequency.Value switch
+        {
+            "DAILY" => date.ToString("yyyy-MM-dd"),
+            "WEEKLY" => $"{date.Year}-W{GetWeekNumber(date):D2}",
+            "MONTHLY" => date.ToString("yyyy-MM"),
+            "QUARTERLY" => $"{date.Year}-Q{GetQuarter(date)}",
+            "ANNUALLY" => date.ToString("yyyy"),
+            _ => date.ToString("yyyy-MM")
+        };
+    }
+
+    private int GetWeekNumber(DateTime date)
+    {
+        var culture = System.Globalization.CultureInfo.CurrentCulture;
+        return culture.Calendar.GetWeekOfYear(date, 
+            System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Monday);
+    }
+
+    private int GetQuarter(DateTime date)
+    {
+        return (date.Month - 1) / 3 + 1;
+    }
+}
+
+public class UpdateSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSPIDataPointCommand, Result<SafetyPerformanceIndicator>>
+{
+    private readonly SafetyPerformanceIndicatorDataService _dataService;
+    private readonly ILogger<UpdateSPIDataPointCommandHandler> _logger;
+
+    public UpdateSPIDataPointCommandHandler(
+        SafetyPerformanceIndicatorDataService dataService,
+        ILogger<UpdateSPIDataPointCommandHandler> logger)
+    {
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SafetyPerformanceIndicator>> HandleAsync(
+        UpdateSPIDataPointCommand request, 
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request is null)
+            {
+                _logger.LogError("UpdateSPIDataPointCommand received with null request");
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(
+                    DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Processing UpdateSPIDataPointCommand for SPI ID: {SPIId}, DataPoint ID: {DataPointId}, Value: {Value}",
+                request.SPIId, request.DataPointId, request.Value);
+
+            // Get the SPI by code first to validate it exists
+            var getSpiResult = await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(request.SPIId, cancellationToken);
+            if (!getSpiResult.IsSuccess || getSpiResult.Value == null)
+            {
+                _logger.LogError("Could not find SPI with code: {SPIId}", request.SPIId);
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(
+                    DomainErrors.SPIError.NotFound);
+            }
+
+            var spi = getSpiResult.Value;
+
+            // Create the updated data point
+            var dataPoint = new SPIDataPoint
+            {
+                Id = request.DataPointId,
+                Value = request.Value,
+                MeasurementDate = request.MeasurementDate,
+                DataSource = request.DataSource,
+                Notes = request.Notes,
+                IsVerified = request.IsVerified,
+                VerifiedBy = request.VerifiedBy,
+                VerifiedDate = request.IsVerified ? DateTime.UtcNow : null,
+                Period = GetPeriodFromDate(request.MeasurementDate, spi.MeasurementFrequency)
+            };
+
+            // Update the data point in the database
+            var updateResult = await _dataService.UpdateSPIDataPointAsync(dataPoint, cancellationToken);
+
+            if (!updateResult.IsSuccess)
+            {
+                _logger.LogError("Failed to update data point in database: {Error}", updateResult.Error?.Message);
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(updateResult.Error);
+            }
+
+            // Refresh the SPI to get the updated data points
+            var refreshedSpiResult = await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(request.SPIId, cancellationToken);
+            if (!refreshedSpiResult.IsSuccess)
+            {
+                _logger.LogError("Failed to refresh SPI after updating data point");
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(refreshedSpiResult.Error);
+            }
+
+            _logger.LogInformation("Successfully updated data point for SPI with ID: {SPIId}, DataPoint ID: {DataPointId}",
+                request.SPIId, request.DataPointId);
+
+            return refreshedSpiResult;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("UpdateSPIDataPointCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error occurred while updating data point for SPI with ID: {SPIId}", 
+                request?.SPIId);
+            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.UpdateFailed);
+        }
+    }
+
+    private string GetPeriodFromDate(DateTime date, SPIMeasurementFrequency frequency)
+    {
+        return frequency.Value switch
+        {
+            "DAILY" => date.ToString("yyyy-MM-dd"),
+            "WEEKLY" => $"{date.Year}-W{GetWeekNumber(date):D2}",
+            "MONTHLY" => date.ToString("yyyy-MM"),
+            "QUARTERLY" => $"{date.Year}-Q{GetQuarter(date)}",
+            "ANNUALLY" => date.ToString("yyyy"),
+            _ => date.ToString("yyyy-MM")
+        };
+    }
+
+    private int GetWeekNumber(DateTime date)
+    {
+        var culture = System.Globalization.CultureInfo.CurrentCulture;
+        return culture.Calendar.GetWeekOfYear(date, 
+            System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Monday);
+    }
+
+    private int GetQuarter(DateTime date)
+    {
+        return (date.Month - 1) / 3 + 1;
+    }
+}
+
+public class DeleteSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSPIDataPointCommand, Result<SafetyPerformanceIndicator>>
+{
+    private readonly SafetyPerformanceIndicatorDataService _dataService;
+    private readonly ILogger<DeleteSPIDataPointCommandHandler> _logger;
+
+    public DeleteSPIDataPointCommandHandler(
+        SafetyPerformanceIndicatorDataService dataService,
+        ILogger<DeleteSPIDataPointCommandHandler> logger)
+    {
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SafetyPerformanceIndicator>> HandleAsync(
+        DeleteSPIDataPointCommand request, 
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request is null)
+            {
+                _logger.LogError("DeleteSPIDataPointCommand received with null request");
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(
+                    DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Processing DeleteSPIDataPointCommand for SPI ID: {SPIId}, DataPoint ID: {DataPointId}",
+                request.SPIId, request.DataPointId);
+
+            // Delete the data point from the database
+            var deleteResult = await _dataService.DeleteSPIDataPointAsync(request.DataPointId, cancellationToken);
+
+            if (!deleteResult.IsSuccess)
+            {
+                _logger.LogError("Failed to delete data point from database: {Error}", deleteResult.Error?.Message);
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(deleteResult.Error);
+            }
+
+            // Refresh the SPI to get the updated data points
+            var refreshedSpiResult = await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(request.SPIId, cancellationToken);
+            if (!refreshedSpiResult.IsSuccess)
+            {
+                _logger.LogError("Failed to refresh SPI after deleting data point");
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(refreshedSpiResult.Error);
+            }
+
+            _logger.LogInformation("Successfully deleted data point for SPI with ID: {SPIId}, DataPoint ID: {DataPointId}",
+                request.SPIId, request.DataPointId);
+
+            return refreshedSpiResult;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("DeleteSPIDataPointCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error occurred while deleting data point for SPI with ID: {SPIId}", 
+                request?.SPIId);
+            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.DeleteFailed);
         }
     }
 }

@@ -1,0 +1,336 @@
+@page "/SMSAssurance/SPIDetail/{SPICode}"
+@using SMS_Application.Messaging.Queries
+@using SMS_Application.Messaging.Commands
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using SMS_Shared.Common
+@using Radzen
+@using Radzen.Blazor
+@using SMS3.Components.Shared
+@using SMS3.Components.Pages.SMSAssurance.Components
+@rendermode InteractiveServer
+
+<PageTitle>@(SPI?.Name ?? "SPI Detail") - SMS Assurance</PageTitle>
+
+@if (!IsAuthenticated)
+{
+    <!-- Unauthorized Access -->
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+        <strong>Access Denied:</strong> You must be logged in to view SPI details.
+    </RadzenAlert>
+}
+else if (IsLoading)
+{
+    <!-- Loading State -->
+    <div class="text-center py-5">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+        <p class="mt-3 text-muted">Loading SPI details...</p>
+    </div>
+}
+else if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <!-- Error State -->
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+        <strong>Error:</strong> @ErrorMessage
+        <div class="mt-2">
+            <RadzenButton Text="Back to Configuration" 
+                          Icon="arrow_back" 
+                          ButtonStyle="ButtonStyle.Secondary"
+                          Click="@NavigateToConfiguration" />
+        </div>
+    </RadzenAlert>
+}
+else if (SPI == null)
+{
+    <!-- Not Found -->
+    <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
+        <strong>Not Found:</strong> Safety Performance Indicator with code "@SPICode" was not found.
+        <div class="mt-2">
+            <RadzenButton Text="Back to Configuration" 
+                          Icon="arrow_back" 
+                          ButtonStyle="ButtonStyle.Secondary"
+                          Click="@NavigateToConfiguration" />
+        </div>
+    </RadzenAlert>
+}
+else
+{
+    <!-- Page Header -->
+    <PageHeader Title="@($"SPI Detail - {SPI.Name}")"
+               Subtitle="@($"Code: {SPI.Code} | Type: {SPI.IndicatorType.Name} | Department: {SPI.ResponsibleDepartment}")"
+               Icon="fas fa-chart-line">
+        <AdditionalContent>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                <RadzenButton Text="Back to List" 
+                              Icon="arrow_back" 
+                              ButtonStyle="ButtonStyle.Secondary"
+                              Click="@NavigateToConfiguration" />
+                <RadzenButton Text="Edit SPI" 
+                              Icon="edit" 
+                              ButtonStyle="ButtonStyle.Primary"
+                              Click="@(() => EditSPI())" />
+                <RadzenButton Text="Add Data Point" 
+                              Icon="add" 
+                              ButtonStyle="ButtonStyle.Success"
+                              Click="@(() => ShowAddDataPointDialog())" />
+            </RadzenStack>
+        </AdditionalContent>
+    </PageHeader>
+
+    <RadzenRow Gap="1rem">
+        <!-- Left Column: SPI Information -->
+        <RadzenColumn Size="12" SizeMD="4">
+            <!-- SPI Overview Card -->
+            <RadzenCard class="mb-3">
+                <RadzenText TextStyle="TextStyle.H6" class="mb-3">
+                    <RadzenIcon Icon="info" class="me-2" />SPI Overview
+                </RadzenText>
+                
+                <RadzenStack Gap="0.75rem">
+                    <!-- Status Badge -->
+                    <div class="d-flex align-items-center">
+                        <RadzenText TextStyle="TextStyle.Body2" class="me-2" Style="min-width: 80px;">Status:</RadzenText>
+                        <RadzenBadge BadgeStyle="@GetStatusBadgeStyle(SPI.Status)" Text="@SPI.Status.Name" />
+                    </div>
+
+                    <!-- Type Badge -->
+                    <div class="d-flex align-items-center">
+                        <RadzenText TextStyle="TextStyle.Body2" class="me-2" Style="min-width: 80px;">Type:</RadzenText>
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@SPI.IndicatorType.Name" />
+                    </div>
+
+                    <!-- Current Value with Color Coding -->
+                    <div class="d-flex align-items-center">
+                        <RadzenText TextStyle="TextStyle.Body2" class="me-2" Style="min-width: 80px;">Current:</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H6" Style="@GetCurrentValueStyle()">
+                            @(SPI.GetCurrentValue()?.ToString("F2") ?? "No Data") @SPI.MeasurementUnit
+                        </RadzenText>
+                    </div>
+
+                    <!-- Target Achievement -->
+                    @if (SPI.TargetValue.HasValue && SPI.GetCurrentValue().HasValue)
+                    {
+                        var achievement = (double)((SPI.GetCurrentValue().Value / SPI.TargetValue.Value) * 100);
+                        <div class="d-flex align-items-center">
+                            <RadzenText TextStyle="TextStyle.Body2" class="me-2" Style="min-width: 80px;">Target:</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body1">@achievement.ToString("F1")% achieved</RadzenText>
+                        </div>
+                        <RadzenProgressBar Value="@(Math.Min(achievement, 100))" Style="@GetProgressBarStyle(achievement)" />
+                    }
+
+                    <!-- Trend Direction -->
+                    <div class="d-flex align-items-center">
+                        <RadzenText TextStyle="TextStyle.Body2" class="me-2" Style="min-width: 80px;">Trend:</RadzenText>
+                        <RadzenIcon Icon="@GetTrendIcon(SPI.GetTrendDirection().Name)" Style="@GetTrendIconStyle(SPI.GetTrendDirection().Name)" class="me-1" />
+                        <RadzenText TextStyle="TextStyle.Body2">@SPI.GetTrendDirection().Name</RadzenText>
+                    </div>
+                </RadzenStack>
+            </RadzenCard>
+
+            <!-- Configuration Card -->
+            <RadzenCard class="mb-3">
+                <RadzenText TextStyle="TextStyle.H6" class="mb-3">
+                    <RadzenIcon Icon="settings" class="me-2" />Configuration
+                </RadzenText>
+                
+                <RadzenStack Gap="0.5rem">
+                    <div><strong>Unit:</strong> @SPI.MeasurementUnit</div>
+                    <div><strong>Frequency:</strong> @SPI.MeasurementFrequency.Name</div>
+                    <div><strong>Data Source:</strong> @SPI.DataSource</div>
+                    <div><strong>Calculation:</strong> @SPI.CalculationMethod</div>
+                </RadzenStack>
+            </RadzenCard>
+
+            <!-- Targets & Thresholds Card -->
+            <RadzenCard class="mb-3">
+                <RadzenText TextStyle="TextStyle.H6" class="mb-3">
+                    <RadzenIcon Icon="flag" class="me-2" />Targets & Thresholds
+                </RadzenText>
+                
+                <RadzenStack Gap="0.5rem">
+                    @if (SPI.TargetValue.HasValue)
+                    {
+                        <div><strong>Target:</strong> @SPI.TargetValue.Value.ToString("F2") @SPI.MeasurementUnit</div>
+                    }
+                    @if (SPI.AcceptableRange.HasValue)
+                    {
+                        <div><strong>Acceptable:</strong> ±@SPI.AcceptableRange.Value.ToString("F2") @SPI.MeasurementUnit</div>
+                    }
+                    @if (SPI.WarningThreshold.HasValue)
+                    {
+                        <div class="text-warning"><strong>Warning:</strong> @SPI.WarningThreshold.Value.ToString("F2") @SPI.MeasurementUnit</div>
+                    }
+                    @if (SPI.CriticalThreshold.HasValue)
+                    {
+                        <div class="text-danger"><strong>Critical:</strong> @SPI.CriticalThreshold.Value.ToString("F2") @SPI.MeasurementUnit</div>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+
+            <!-- Ownership Card -->
+            <RadzenCard class="mb-3">
+                <RadzenText TextStyle="TextStyle.H6" class="mb-3">
+                    <RadzenIcon Icon="group" class="me-2" />Ownership
+                </RadzenText>
+                
+                <RadzenStack Gap="0.5rem">
+                    <div><strong>Department:</strong> @SPI.ResponsibleDepartment</div>
+                    <div><strong>Data Owner:</strong> @SPI.DataOwner</div>
+                    <div><strong>Review Authority:</strong> @SPI.ReviewAuthority</div>
+                </RadzenStack>
+            </RadzenCard>
+
+            <!-- Review Schedule Card -->
+            @if (SPI.NextReviewDate.HasValue || SPI.LastReviewDate.HasValue)
+            {
+                <RadzenCard class="mb-3">
+                    <RadzenText TextStyle="TextStyle.H6" class="mb-3">
+                        <RadzenIcon Icon="schedule" class="me-2" />Review Schedule
+                    </RadzenText>
+                    
+                    <RadzenStack Gap="0.5rem">
+                        @if (SPI.NextReviewDate.HasValue)
+                        {
+                            var isOverdue = SPI.NextReviewDate.Value < DateTime.UtcNow;
+                            <div class="@(isOverdue ? "text-danger" : "")">
+                                <strong>Next Review:</strong> @SPI.NextReviewDate.Value.ToString("MMM dd, yyyy")
+                                @if (isOverdue)
+                                {
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="Overdue" class="ms-2" />
+                                }
+                            </div>
+                        }
+                        @if (SPI.LastReviewDate.HasValue)
+                        {
+                            <div><strong>Last Review:</strong> @SPI.LastReviewDate.Value.ToString("MMM dd, yyyy")</div>
+                        }
+                        @if (!string.IsNullOrEmpty(SPI.LastReviewNotes))
+                        {
+                            <div><strong>Notes:</strong> @SPI.LastReviewNotes</div>
+                        }
+                    </RadzenStack>
+                </RadzenCard>
+            }
+        </RadzenColumn>
+
+        <!-- Right Column: Data Points -->
+        <RadzenColumn Size="12" SizeMD="8">
+            <!-- Data Points Card -->
+            <RadzenCard>
+                <RadzenText TextStyle="TextStyle.H6" class="mb-3">
+                    <RadzenIcon Icon="timeline" class="me-2" />Data Points
+                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@((DataPoints?.Count ?? 0).ToString())" class="ms-2" />
+                </RadzenText>
+
+                @if (DataPoints?.Any() == true)
+                {
+                    <RadzenDataGrid @ref="dataPointsGrid" 
+                                    Data="@DataPoints" 
+                                    TItem="SPIDataPoint"
+                                    AllowFiltering="true" 
+                                    AllowPaging="true" 
+                                    PageSize="10"
+                                    AllowSorting="true"
+                                    ColumnWidth="200px"
+                                    class="mt-3">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="SPIDataPoint" Property="MeasurementDate" Title="Date" Width="120px">
+                                <Template Context="dataPoint">
+                                    @dataPoint.MeasurementDate.ToString("MMM dd, yyyy")
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn TItem="SPIDataPoint" Property="Period" Title="Period" Width="100px" />
+
+                            <RadzenDataGridColumn TItem="SPIDataPoint" Property="Value" Title="Value" Width="100px">
+                                <Template Context="dataPoint">
+                                    <RadzenText TextStyle="TextStyle.Body1" Style="@GetDataPointValueStyle(dataPoint)">
+                                        @dataPoint.Value.ToString("F2")
+                                    </RadzenText>
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn TItem="SPIDataPoint" Title="vs Target" Width="100px">
+                                <Template Context="dataPoint">
+                                    @if (SPI.TargetValue.HasValue)
+                                    {
+                                        var diff = dataPoint.Value - SPI.TargetValue.Value;
+                                        var percentage = (dataPoint.Value / SPI.TargetValue.Value * 100) - 100;
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="@GetTargetComparisonStyle(diff)">
+                                            @(diff >= 0 ? "+" : "")@diff.ToString("F2") (@(percentage >= 0 ? "+" : "")@percentage.ToString("F1")%)
+                                        </RadzenText>
+                                    }
+                                    else
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Caption" class="text-muted">No Target</RadzenText>
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn TItem="SPIDataPoint" Property="DataSource" Title="Source" Width="120px" />
+
+                            <RadzenDataGridColumn TItem="SPIDataPoint" Title="Status" Width="80px">
+                                <Template Context="dataPoint">
+                                    @if (SPI.CriticalThreshold.HasValue && dataPoint.Value >= SPI.CriticalThreshold.Value)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="Critical" />
+                                    }
+                                    else if (SPI.WarningThreshold.HasValue && dataPoint.Value >= SPI.WarningThreshold.Value)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Warning" />
+                                    }
+                                    else
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Normal" />
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn TItem="SPIDataPoint" Property="IsVerified" Title="Verified" Width="80px">
+                                <Template Context="dataPoint">
+                                    @if (dataPoint.IsVerified)
+                                    {
+                                        <RadzenIcon Icon="verified" Style="color: green;" />
+                                    }
+                                    else
+                                    {
+                                        <RadzenIcon Icon="schedule" Style="color: orange;" />
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn TItem="SPIDataPoint" Title="Actions" Width="100px" Sortable="false" Filterable="false">
+                                <Template Context="dataPoint">
+                                    <RadzenButton Icon="edit" 
+                                                  ButtonStyle="ButtonStyle.Light" 
+                                                  Size="ButtonSize.ExtraSmall"
+                                                  class="me-1"
+                                                  Click="@(() => EditDataPoint(dataPoint))" />
+                                    <RadzenButton Icon="delete" 
+                                                  ButtonStyle="ButtonStyle.Danger" 
+                                                  Size="ButtonSize.ExtraSmall"
+                                                  Click="@(() => DeleteDataPoint(dataPoint))" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+                else
+                {
+                    <!-- No Data Points State -->
+                    <div class="text-center py-5">
+                        <RadzenIcon Icon="timeline" Style="font-size: 64px;" class="text-muted mb-3" />
+                        <RadzenText TextStyle="TextStyle.H6" class="text-muted">No Data Points</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" class="text-muted mb-3">
+                            No measurement data has been recorded for this SPI yet.
+                        </RadzenText>
+                        <RadzenButton Text="Add First Data Point" 
+                                      Icon="add" 
+                                      ButtonStyle="ButtonStyle.Success"
+                                      Click="@(() => ShowAddDataPointDialog())" />
+                    </div>
+                }
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+}

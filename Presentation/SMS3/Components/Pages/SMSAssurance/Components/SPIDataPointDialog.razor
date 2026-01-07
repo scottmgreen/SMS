@@ -1,0 +1,237 @@
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using Radzen
+@using Radzen.Blazor
+
+<!-- Modal Header with SMS styling - SAME AS SPIEditDialog -->
+<div class="sms-modal-header sms-header-primary">
+    <RadzenText TextStyle="TextStyle.H5" class="sms-modal-title" Style="color:white">
+        <RadzenIcon Icon="@(IsEditMode ? "edit" : "add")" Style="margin-right: 0.5rem;" />
+        @(IsEditMode ? $"Edit Data Point - {SPI?.Name}" : $"Add Data Point - {SPI?.Name}")
+    </RadzenText>
+</div>
+
+<!-- Modal Body -->
+<div class="sms-modal-body">
+    <RadzenTemplateForm Data="@editModel">
+        <DataAnnotationsValidator />
+        
+        <RadzenStack Gap="1rem">
+            <!-- SPI Information Display -->
+            <RadzenCard Variant="Variant.Outlined" Style="background: #f8f9fa; border-color: #212e61;">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; font-weight: 600;">@SPI?.Name</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; color: #6c757d;">Code: @SPI?.Code | Unit: @SPI?.MeasurementUnit</RadzenText>
+                    </RadzenStack>
+                    <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@SPI?.IndicatorType?.Name" />
+                </RadzenStack>
+            </RadzenCard>
+
+            <!-- Primary Information -->
+            <RadzenFieldset Text="Measurement Data">
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="8">
+                        <RadzenFormField Text="Measurement Value *" Variant="Variant.Outlined">
+                            <RadzenNumeric @bind-Value="@editModel.Value" 
+                                           TValue="decimal"
+                                           Min="0"
+                                           Step="0.01"
+                                           Style="width: 100%;"
+                                           Placeholder="Enter measurement value..."
+                                           ShowUpDown="true" />
+                        </RadzenFormField>
+                        <RadzenRequiredValidator Component="Value" Text="Value is required" />
+                        <RadzenNumericRangeValidator Component="Value" Min="0" Text="Value must be greater than or equal to 0" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenFormField Text="Unit" Variant="Variant.Outlined">
+                            <RadzenTextBox Value="@SPI?.MeasurementUnit" 
+                                           ReadOnly="true" 
+                                           Style="width: 100%; background-color: #f8f9fa; color: #6c757d;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Measurement Date *" Variant="Variant.Outlined">
+                            <RadzenDatePicker @bind-Value="@editModel.MeasurementDate" 
+                                              TValue="DateTime"
+                                              Max="@DateTime.Today"
+                                              Style="width: 100%;"
+                                              DateFormat="MMM dd, yyyy"
+                                              Change="@(() => OnDateChanged())"
+                                              ShowTime="false" />
+                        </RadzenFormField>
+                        <RadzenRequiredValidator Component="MeasurementDate" Text="Measurement date is required" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Reporting Period" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="@editModel.Period" 
+                                           Style="width: 100%; background-color: #f8f9fa; color: #6c757d;" 
+                                           ReadOnly="true"
+                                           Placeholder="Auto-calculated..." />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenFieldset>
+
+            <!-- Source Information -->
+            <RadzenFieldset Text="Source Information">
+                <RadzenFormField Text="Data Source *" Variant="Variant.Outlined" Style="margin-bottom: 1rem;">
+                    <RadzenDropDown @bind-Value="@editModel.DataSource"
+                                    Data="@GetDataSourceOptions()"
+                                    Style="width: 100%;"
+                                    AllowFiltering="true"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    Placeholder="Select or type data source..."
+                                    AllowClear="false" />
+                </RadzenFormField>
+                <RadzenRequiredValidator Component="DataSource" Text="Data source is required" />
+
+                <RadzenFormField Text="Additional Notes" Variant="Variant.Outlined">
+                    <RadzenTextArea @bind-Value="@editModel.Notes" 
+                                    Rows="3" 
+                                    Style="width: 100%;" 
+                                    Placeholder="Optional notes about this measurement..."
+                                    MaxLength="500" />
+                </RadzenFormField>
+            </RadzenFieldset>
+
+            <!-- Verification Section (Edit Mode Only) -->
+            @if (IsEditMode)
+            {
+                <RadzenFieldset Text="Data Verification">
+                    <RadzenRow Gap="1rem" AlignItems="AlignItems.Center">
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenCheckBox @bind-Value="@editModel.IsVerified" TValue="bool" Name="IsVerified" />
+                            <RadzenLabel Text="Mark as Verified" Component="IsVerified" Style="margin-left: 0.5rem; font-weight: 500;" />
+                        </RadzenColumn>
+                        @if (editModel.IsVerified)
+                        {
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Verified By" Variant="Variant.Outlined">
+                                    <RadzenTextBox @bind-Value="@editModel.VerifiedBy" 
+                                                   Style="width: 100%;" 
+                                                   Placeholder="Name of verifying person..." />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        }
+                    </RadzenRow>
+                </RadzenFieldset>
+            }
+
+            <!-- Performance Indicators (when value is entered) -->
+            @if (SPI != null && editModel.Value > 0)
+            {
+                <RadzenFieldset Text="Performance Analysis">
+                    <RadzenRow Gap="1rem">
+                        @if (SPI.TargetValue.HasValue)
+                        {
+                            var targetDiff = editModel.Value - SPI.TargetValue.Value;
+                            var targetPercentage = (editModel.Value / SPI.TargetValue.Value * 100) - 100;
+                            var isPositive = targetDiff >= 0;
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenCard Style="text-align: center; padding: 1rem; background: white;">
+                                    <RadzenIcon Icon="@(isPositive ? "trending_up" : "trending_down")" 
+                                               Style="@($"font-size: 2rem; color: {(isPositive ? "#28a745" : "#dc3545")};")"/>
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0.5rem 0 0.25rem 0;">vs Target</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.H6" Style="@($"margin: 0; color: {(isPositive ? "#28a745" : "#dc3545")};")">
+                                        @(isPositive ? "+" : "")@targetDiff.ToString("F2")
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption">
+                                        @(targetPercentage >= 0 ? "+" : "")@targetPercentage.ToString("F1")%
+                                    </RadzenText>
+                                </RadzenCard>
+                            </RadzenColumn>
+                        }
+                        
+                        @if (SPI.WarningThreshold.HasValue)
+                        {
+                            var isAboveWarning = editModel.Value >= SPI.WarningThreshold.Value;
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenCard Style="text-align: center; padding: 1rem; background: white;">
+                                    <RadzenIcon Icon="@(isAboveWarning ? "warning" : "check_circle")" 
+                                               Style="@($"font-size: 2rem; color: {(isAboveWarning ? "#ffc107" : "#28a745")};")"/>
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0.5rem 0 0.25rem 0;">Warning Level</RadzenText>
+                                    <RadzenBadge BadgeStyle="@(isAboveWarning ? BadgeStyle.Warning : BadgeStyle.Success)" 
+                                                 Text="@(isAboveWarning ? "Above" : "Below")" />
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0.25rem 0 0 0;">
+                                        Threshold: @SPI.WarningThreshold.Value.ToString("F2")
+                                    </RadzenText>
+                                </RadzenCard>
+                            </RadzenColumn>
+                        }
+                        
+                        @if (SPI.CriticalThreshold.HasValue)
+                        {
+                            var isAboveCritical = editModel.Value >= SPI.CriticalThreshold.Value;
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenCard Style="text-align: center; padding: 1rem; background: white;">
+                                    <RadzenIcon Icon="@(isAboveCritical ? "error" : "verified")" 
+                                               Style="@($"font-size: 2rem; color: {(isAboveCritical ? "#dc3545" : "#28a745")};")"/>
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0.5rem 0 0.25rem 0;">Critical Level</RadzenText>
+                                    <RadzenBadge BadgeStyle="@(isAboveCritical ? BadgeStyle.Danger : BadgeStyle.Success)" 
+                                                 Text="@(isAboveCritical ? "Above" : "Below")" />
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0.25rem 0 0 0;">
+                                        Threshold: @SPI.CriticalThreshold.Value.ToString("F2")
+                                    </RadzenText>
+                                </RadzenCard>
+                            </RadzenColumn>
+                        }
+                    </RadzenRow>
+                </RadzenFieldset>
+            }
+        </RadzenStack>
+    </RadzenTemplateForm>
+</div>
+
+<!-- Modal Footer - SAME AS SPIEditDialog -->
+<div class="sms-modal-footer">
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Text="Cancel" 
+                      ButtonStyle="ButtonStyle.Light" 
+                      Click="@HandleCancel" />
+        <RadzenButton Text="@(IsEditMode ? "Update Data Point" : "Add Data Point")" 
+                      Icon="@(IsEditMode ? "save" : "add")" 
+                      ButtonStyle="ButtonStyle.Primary" 
+                      Click="@SubmitForm" 
+                      Disabled="@IsSaving" 
+                      Style="background-color: #212e61; border-color: #212e61;" />
+    </RadzenStack>
+</div>
+
+<style>
+/* SMS Modal Styling - SAME AS SPIEditDialog */
+.sms-modal-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.sms-header-primary {
+    background-color: #212e61; /* SMS Blue Dark Bold */
+    color: white;
+}
+
+.sms-modal-title {
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.sms-modal-body {
+    padding: 1.5rem;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.sms-modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e9ecef;
+    border-radius: 0 0 0.5rem 0.5rem;
+    background-color: #f8f9fa;
+}
+</style>

@@ -98,9 +98,32 @@ public class SafetyPerformanceIndicatorDataService : BaseDataService<SafetyPerfo
     /// <summary>
     /// Gets Safety Performance Indicators by department
     /// </summary>
-    public Task<Result<List<SafetyPerformanceIndicator>>> GetSafetyPerformanceIndicatorsByDepartmentAsync(
-        string department, CancellationToken ct = default)
+    public Task<Result<List<SafetyPerformanceIndicator>>> GetSafetyPerformanceIndicatorsByDepartmentAsync(string department, CancellationToken ct = default)
     {
         return _repo.GetSafetyPerformanceIndicatorsByDepartmentAsync(department, ct);
+    }
+
+    /// <summary>
+    /// Adds a new data point to an existing Safety Performance Indicator
+    /// </summary>
+    public Task<Result<SPIDataPoint>> AddSPIDataPointAsync(string spiId, SPIDataPoint dataPoint, CancellationToken ct = default)
+    {
+        return _repo.AddSPIDataPointAsync(spiId, dataPoint, ct);
+    }
+
+    /// <summary>
+    /// Updates an existing SPI data point
+    /// </summary>
+    public Task<Result<SPIDataPoint>> UpdateSPIDataPointAsync(SPIDataPoint dataPoint, CancellationToken ct = default)
+    {
+        return _repo.UpdateSPIDataPointAsync(dataPoint, ct);
+    }
+
+    /// <summary>
+    /// Deletes an SPI data point
+    /// </summary>
+    public Task<Result<bool>> DeleteSPIDataPointAsync(string dataPointId, CancellationToken ct = default)
+    {
+        return _repo.DeleteSPIDataPointAsync(dataPointId, ct);
     }
 }

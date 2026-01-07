@@ -240,24 +240,44 @@ public class AddSPIDataPointCommand : BaseCommandBundle, IRequest<Result<SafetyP
     }
 }
 
-public class BulkAddSPIDataPointsCommand : BaseCommandBundle, IRequest<Result<List<SafetyPerformanceIndicator>>>
+public class UpdateSPIDataPointCommand : BaseCommandBundle, IRequest<Result<SafetyPerformanceIndicator>>
 {
-    public List<SPIDataPointEntry> DataPoints { get; set; }
-    public string EnteredBy { get; set; }
+    public string DataPointId { get; set; }
+    public string SPIId { get; set; }
+    public decimal Value { get; set; }
+    public DateTime MeasurementDate { get; set; }
+    public string DataSource { get; set; }
+    public string? Notes { get; set; }
+    public bool IsVerified { get; set; }
+    public string? VerifiedBy { get; set; }
+    public string UpdatedBy { get; set; }
 
-    public BulkAddSPIDataPointsCommand(List<SPIDataPointEntry> dataPoints, string enteredBy)
+    public UpdateSPIDataPointCommand(string dataPointId, string spiId, decimal value, DateTime measurementDate,
+        string dataSource, string updatedBy, string? notes = null, bool isVerified = false, string? verifiedBy = null)
     {
-        DataPoints = dataPoints ?? throw new ArgumentNullException(nameof(dataPoints));
-        EnteredBy = enteredBy ?? throw new ArgumentNullException(nameof(enteredBy));
+        DataPointId = dataPointId ?? throw new ArgumentNullException(nameof(dataPointId));
+        SPIId = spiId ?? throw new ArgumentNullException(nameof(spiId));
+        Value = value;
+        MeasurementDate = measurementDate;
+        DataSource = dataSource ?? throw new ArgumentNullException(nameof(dataSource));
+        UpdatedBy = updatedBy ?? throw new ArgumentNullException(nameof(updatedBy));
+        Notes = notes;
+        IsVerified = isVerified;
+        VerifiedBy = verifiedBy;
     }
+}
 
-    public class SPIDataPointEntry
+public class DeleteSPIDataPointCommand : BaseCommandBundle, IRequest<Result<SafetyPerformanceIndicator>>
+{
+    public string DataPointId { get; set; }
+    public string SPIId { get; set; }
+    public string DeletedBy { get; set; }
+
+    public DeleteSPIDataPointCommand(string dataPointId, string spiId, string deletedBy)
     {
-        public string SPIId { get; set; } = string.Empty;
-        public decimal Value { get; set; }
-        public DateTime MeasurementDate { get; set; }
-        public string DataSource { get; set; } = string.Empty;
-        public string? Notes { get; set; }
+        DataPointId = dataPointId ?? throw new ArgumentNullException(nameof(dataPointId));
+        SPIId = spiId ?? throw new ArgumentNullException(nameof(spiId));
+        DeletedBy = deletedBy ?? throw new ArgumentNullException(nameof(deletedBy));
     }
 }
 

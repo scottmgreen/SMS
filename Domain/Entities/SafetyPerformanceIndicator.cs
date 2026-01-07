@@ -293,6 +293,7 @@ public sealed class SafetyPerformanceIndicator : BaseAuditableEntity
 /// </summary>
 public class SPIDataPoint
 {
+    public string Id { get; set; }
     public decimal Value { get; set; }
     public DateTime MeasurementDate { get; set; }
     public string Period { get; set; } = string.Empty;

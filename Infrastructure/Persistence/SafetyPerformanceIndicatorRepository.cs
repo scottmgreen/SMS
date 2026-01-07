@@ -295,6 +295,16 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
             }
             await sql.CloseAsync().ConfigureAwait(false);
 
+            // Load data points for this SPI
+            if (response != null)
+            {
+                var dataPoints = await GetSPIDataPointsAsync(response.Code, ct);
+                if (dataPoints.IsSuccess)
+                {
+                    response.DataPoints = dataPoints.Value ?? new List<SPIDataPoint>();
+                }
+            }
+
             if (response is not null)
             {
                 return Result<SafetyPerformanceIndicator>.Success(response);
@@ -310,6 +320,10 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NotFound);
         }
     }
+
+    #endregion
+
+    #region SPI Query Operations
 
     public async Task<Result<List<SafetyPerformanceIndicator>>> GetSafetyPerformanceIndicatorsByTypeAsync(
         string indicatorType, CancellationToken ct = default)
@@ -382,6 +396,164 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
         {
             _logger.LogInfrastructureGetItemsError($"{_logheader} {ex.Message}", null);
             return Result<List<SafetyPerformanceIndicator>>.Failure<List<SafetyPerformanceIndicator>>(DomainErrors.SPIError.NotFound);
+        }
+    }
+
+    #endregion
+
+    #region SPI Data Points Operations
+
+    public async Task<Result<List<SPIDataPoint>>> GetSPIDataPointsAsync(
+        string spiId, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(spiId))
+            {
+                return Result<List<SPIDataPoint>>.Failure<List<SPIDataPoint>>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            _logger.LogInfrastructureGetItems($"{_logheader} {StoredProcs.pr_SPIDataPoint_GetBySPIId} SPIId:{spiId}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_SPIDataPoint_GetBySPIId, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointSPIId, spiId));
+
+            List<SPIDataPoint> response = new();
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var dataPoint = Mappers.MapToSPIDataPoint(reader);
+                    response.Add(dataPoint);
+                }
+            }
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<List<SPIDataPoint>>.Success(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemsError($"{_logheader} {ex.Message}", null);
+            return Result<List<SPIDataPoint>>.Failure<List<SPIDataPoint>>(DomainErrors.SPIError.NotFound);
+        }
+    }
+
+    public async Task<Result<SPIDataPoint>> AddSPIDataPointAsync(
+        string spiId, SPIDataPoint dataPoint, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(spiId) || dataPoint == null)
+            {
+                return Result<SPIDataPoint>.Failure<SPIDataPoint>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            _logger.LogInfrastructurePostItem($"{_logheader} {StoredProcs.pr_SPIDataPoint_Insert} SPIId:{spiId}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_SPIDataPoint_Insert, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointSPIId, spiId));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointValue, dataPoint.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointMeasurementDate, dataPoint.MeasurementDate));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointPeriod, dataPoint.Period));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointDataSource, dataPoint.DataSource));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointEnteredBy, dataPoint.EnteredBy));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointEnteredDate, dataPoint.EnteredDate));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointNotes, dataPoint.Notes));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointIsVerified, dataPoint.IsVerified));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointVerifiedBy, dataPoint.VerifiedBy));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointVerifiedDate, dataPoint.VerifiedDate));
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<SPIDataPoint>.Success(dataPoint);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructurePostItemError($"{_logheader} {ex.Message}", null);
+            return Result<SPIDataPoint>.Failure<SPIDataPoint>(DomainErrors.SPIError.CreateFailed);
+        }
+    }
+
+    public async Task<Result<SPIDataPoint>> UpdateSPIDataPointAsync(
+        SPIDataPoint dataPoint, CancellationToken ct = default)
+    {
+        try
+        {
+            if (dataPoint == null)
+            {
+                return Result<SPIDataPoint>.Failure<SPIDataPoint>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_SPIDataPoint_Update} ID:{dataPoint.Id}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_SPIDataPoint_Update, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, dataPoint.Id));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointValue, dataPoint.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointMeasurementDate, dataPoint.MeasurementDate));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointPeriod, dataPoint.Period));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointDataSource, dataPoint.DataSource));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointNotes, dataPoint.Notes));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointIsVerified, dataPoint.IsVerified));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointVerifiedBy, dataPoint.VerifiedBy));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointVerifiedDate, dataPoint.VerifiedDate));
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<SPIDataPoint>.Success(dataPoint);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructurePutItemError($"{_logheader} {ex.Message}", null);
+            return Result<SPIDataPoint>.Failure<SPIDataPoint>(DomainErrors.SPIError.UpdateFailed);
+        }
+    }
+
+    public async Task<Result<bool>> DeleteSPIDataPointAsync(
+        string dataPointId, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_SPIDataPoint_Delete} ID:{dataPointId}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_SPIDataPoint_Delete, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, dataPointId));
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureDeleteItemError($"{_logheader} {ex.Message}", null);
+            return Result<bool>.Failure<bool>(DomainErrors.SPIError.DeleteFailed);
         }
     }
 

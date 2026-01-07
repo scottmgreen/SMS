@@ -3,183 +3,241 @@
 @using Radzen
 @using Radzen.Blazor
 
-<RadzenStack Gap="1rem">
-    <RadzenRow Gap="1rem">
-        <RadzenColumn Size="12" SizeMD="6">
-            <RadzenFormField Text="Code" Variant="Variant.Outlined">
-                <RadzenTextBox @bind-Value="@SPI.Code" 
-                              ReadOnly="@(IsEditMode)" 
-                              Placeholder="Auto-generated" 
-                              Style="width: 100%;" />
-            </RadzenFormField>
-        </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="6">
-            <RadzenFormField Text="Status" Variant="Variant.Outlined">
-                <RadzenDropDown @bind-Value="@SelectedStatus" 
-                               Data="@AvailableStatuses" 
-                               TextProperty="Name" 
-                               ValueProperty="Value"
-                               Style="width: 100%;" />
-            </RadzenFormField>
-        </RadzenColumn>
-    </RadzenRow>
-
-    <RadzenFormField Text="Name *" Variant="Variant.Outlined">
-        <RadzenTextBox @bind-Value="@SPI.Name" 
-                      Placeholder="Enter SPI name" 
-                      Style="width: 100%;" />
-    </RadzenFormField>
-
-    <RadzenFormField Text="Description" Variant="Variant.Outlined">
-        <RadzenTextArea @bind-Value="@SPI.Description" 
-                       Rows="3" 
-                       Placeholder="Describe this safety performance indicator..." 
-                       Style="width: 100%;" />
-    </RadzenFormField>
-
-    <RadzenRow Gap="1rem">
-        <RadzenColumn Size="12" SizeMD="6">
-            <RadzenFormField Text="Indicator Type *" Variant="Variant.Outlined">
-                <RadzenDropDown @bind-Value="@SelectedIndicatorType" 
-                               Data="@GetTypeDisplayItems()" 
-                               TextProperty="DisplayText" 
-                               ValueProperty="Value"
-                               Placeholder="Select indicator type..."
-                               Style="width: 100%;" />
-            </RadzenFormField>
-        </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="6">
-            <RadzenFormField Text="Measurement Frequency" Variant="Variant.Outlined">
-                <RadzenDropDown @bind-Value="@SelectedFrequency" 
-                               Data="@AvailableFrequencies" 
-                               TextProperty="Name" 
-                               ValueProperty="Value"
-                               Style="width: 100%;" />
-            </RadzenFormField>
-        </RadzenColumn>
-    </RadzenRow>
-
-    <RadzenRow Gap="1rem">
-        <RadzenColumn Size="12" SizeMD="6">
-            <RadzenFormField Text="Measurement Unit" Variant="Variant.Outlined">
-                <RadzenTextBox @bind-Value="@SPI.MeasurementUnit" 
-                              Placeholder="e.g., %, Count, Rate" 
-                              Style="width: 100%;" />
-            </RadzenFormField>
-        </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="6">
-            <RadzenFormField Text="Data Source" Variant="Variant.Outlined">
-                <RadzenTextBox @bind-Value="@SPI.DataSource" 
-                              Placeholder="e.g., SMS Reports, Training Records" 
-                              Style="width: 100%;" />
-            </RadzenFormField>
-        </RadzenColumn>
-    </RadzenRow>
-
-    <RadzenFieldset Text="Targets & Thresholds">
-        <RadzenRow Gap="1rem">
-            <RadzenColumn Size="12" SizeMD="3">
-                <RadzenFormField Text="Target Value" Variant="Variant.Outlined">
-                    <RadzenNumeric @bind-Value="@SPI.TargetValue" 
-                                  Format="0.####" 
-                                  Style="width: 100%;" />
-                </RadzenFormField>
-            </RadzenColumn>
-            <RadzenColumn Size="12" SizeMD="3">
-                <RadzenFormField Text="Acceptable Range" Variant="Variant.Outlined">
-                    <RadzenNumeric @bind-Value="@SPI.AcceptableRange" 
-                                  Format="0.####" 
-                                  Style="width: 100%;" />
-                </RadzenFormField>
-            </RadzenColumn>
-            <RadzenColumn Size="12" SizeMD="3">
-                <RadzenFormField Text="Warning Threshold" Variant="Variant.Outlined">
-                    <RadzenNumeric @bind-Value="@SPI.WarningThreshold" 
-                                  Format="0.####" 
-                                  Style="width: 100%;" />
-                </RadzenFormField>
-            </RadzenColumn>
-            <RadzenColumn Size="12" SizeMD="3">
-                <RadzenFormField Text="Critical Threshold" Variant="Variant.Outlined">
-                    <RadzenNumeric @bind-Value="@SPI.CriticalThreshold" 
-                                  Format="0.####" 
-                                  Style="width: 100%;" />
-                </RadzenFormField>
-            </RadzenColumn>
-        </RadzenRow>
-    </RadzenFieldset>
-
-    <RadzenFieldset Text="Ownership & Review">
-        <RadzenRow Gap="1rem">
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenFormField Text="Responsible Department" Variant="Variant.Outlined">
-                    <RadzenDropDown @bind-Value="@SPI.ResponsibleDepartment" 
-                                   Data="@AvailableDepartments" 
-                                   Placeholder="Select department..."
-                                   Style="width: 100%;" 
-                                   AllowClear="true" />
-                </RadzenFormField>
-            </RadzenColumn>
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenFormField Text="Data Owner" Variant="Variant.Outlined">
-                    <RadzenTextBox @bind-Value="@SPI.DataOwner" 
-                                  Placeholder="Person responsible for data collection" 
-                                  Style="width: 100%;" />
-                </RadzenFormField>
-            </RadzenColumn>
-        </RadzenRow>
-        <RadzenRow Gap="1rem">
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenFormField Text="Review Authority" Variant="Variant.Outlined">
-                    <RadzenTextBox @bind-Value="@SPI.ReviewAuthority" 
-                                  Placeholder="Person responsible for review" 
-                                  Style="width: 100%;" />
-                </RadzenFormField>
-            </RadzenColumn>
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenFormField Text="Next Review Date" Variant="Variant.Outlined">
-                    <RadzenDatePicker @bind-Value="@SPI.NextReviewDate" 
-                                     DateFormat="yyyy-MM-dd" 
-                                     Style="width: 100%;" />
-                </RadzenFormField>
-            </RadzenColumn>
-        </RadzenRow>
-    </RadzenFieldset>
-
-    <RadzenFormField Text="Calculation Method" Variant="Variant.Outlined">
-        <RadzenTextArea @bind-Value="@SPI.CalculationMethod" 
-                       Rows="2" 
-                       Placeholder="Describe how this indicator is calculated..." 
-                       Style="width: 100%;" />
-    </RadzenFormField>
-
-    <RadzenFieldset Text="Alert Configuration">
-        <RadzenStack Gap="1rem">
-            <RadzenCheckBox @bind-Value="@SPI.AlertsEnabled" Name="alertsEnabled" />
-            <RadzenLabel Text="Enable Alerts" Component="alertsEnabled" Style="cursor: pointer;" />
-            
-            @if (SPI.AlertsEnabled)
-            {
-                <RadzenFormField Text="Alert Recipients" Variant="Variant.Outlined">
-                    <RadzenTextBox @bind-Value="@SPI.AlertRecipients" 
-                                  Placeholder="Comma-separated email addresses" 
-                                  Style="width: 100%;" />
-                </RadzenFormField>
-            }
-        </RadzenStack>
-    </RadzenFieldset>
-</RadzenStack>
-
-<div class="d-flex justify-content-end gap-2 mt-3">
-    <RadzenButton Text="Cancel" 
-                  ButtonStyle="ButtonStyle.Light" 
-                  Click="@(() => DialogService.Close(false))" />
-    <RadzenButton Text="@(IsEditMode ? "Update SPI" : "Create SPI")" 
-                  Icon="@(IsEditMode ? "save" : "add")" 
-                  ButtonStyle="ButtonStyle.Primary" 
-                  Click="@SaveSPI" 
-                  Disabled="@(!IsValid || IsSaving)" />
+<!-- Modal Header with SMS styling -->
+<div class="sms-modal-header sms-header-primary">
+    <RadzenText TextStyle="TextStyle.H5" class="sms-modal-title" Style="color:white">
+        <RadzenIcon Icon="@(IsEditMode ? "edit" : "add")" Style="margin-right: 0.5rem;" />
+        @(IsEditMode ? $"Edit SPI - {SPI.Code}" : "Create New Safety Performance Indicator")
+    </RadzenText>
 </div>
+
+<!-- Modal Body -->
+<div class="sms-modal-body">
+    <RadzenStack Gap="1rem">
+        <!-- Row 1: Code, Status, Name -->
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenFormField Text="Code" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="@SPI.Code" 
+                                  ReadOnly="@(IsEditMode)" 
+                                  Placeholder="Auto-generated" 
+                                  Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenFormField Text="Status" Variant="Variant.Outlined">
+                    <RadzenDropDown @bind-Value="@SelectedStatus" 
+                                   Data="@AvailableStatuses" 
+                                   TextProperty="Name" 
+                                   ValueProperty="Value"
+                                   Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenFormField Text="Name *" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="@SPI.Name" 
+                                  Placeholder="Enter SPI name" 
+                                  Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <!-- Row 2: Description -->
+        <RadzenFormField Text="Description" Variant="Variant.Outlined">
+            <RadzenTextArea @bind-Value="@SPI.Description" 
+                           Rows="2" 
+                           Placeholder="Describe this safety performance indicator..." 
+                           Style="width: 100%;" />
+        </RadzenFormField>
+
+        <!-- Row 3: Indicator Type, Frequency, Unit, Data Source -->
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenFormField Text="Indicator Type *" Variant="Variant.Outlined">
+                    <RadzenDropDown @bind-Value="@SelectedIndicatorType" 
+                                   Data="@GetTypeDisplayItems()" 
+                                   TextProperty="DisplayText" 
+                                   ValueProperty="Value"
+                                   Placeholder="Select type..."
+                                   Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenFormField Text="Frequency" Variant="Variant.Outlined">
+                    <RadzenDropDown @bind-Value="@SelectedFrequency" 
+                                   Data="@AvailableFrequencies" 
+                                   TextProperty="Name" 
+                                   ValueProperty="Value"
+                                   Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenFormField Text="Unit" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="@SPI.MeasurementUnit" 
+                                  Placeholder="%, Count, Rate" 
+                                  Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenFormField Text="Data Source" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="@SPI.DataSource" 
+                                  Placeholder="Reports, Training, etc." 
+                                  Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <!-- Row 4: Targets & Thresholds -->
+        <RadzenFieldset Text="Targets & Thresholds">
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenFormField Text="Target Value" Variant="Variant.Outlined">
+                        <RadzenNumeric @bind-Value="@SPI.TargetValue" 
+                                      Format="0.####" 
+                                      Style="width: 100%;" />
+                    </RadzenFormField>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenFormField Text="Acceptable Range" Variant="Variant.Outlined">
+                        <RadzenNumeric @bind-Value="@SPI.AcceptableRange" 
+                                      Format="0.####" 
+                                      Style="width: 100%;" />
+                    </RadzenFormField>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenFormField Text="Warning Threshold" Variant="Variant.Outlined">
+                        <RadzenNumeric @bind-Value="@SPI.WarningThreshold" 
+                                      Format="0.####" 
+                                      Style="width: 100%;" />
+                    </RadzenFormField>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenFormField Text="Critical Threshold" Variant="Variant.Outlined">
+                        <RadzenNumeric @bind-Value="@SPI.CriticalThreshold" 
+                                      Format="0.####" 
+                                      Style="width: 100%;" />
+                    </RadzenFormField>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenFieldset>
+
+        <!-- Row 5: Ownership & Review -->
+        <RadzenFieldset Text="Ownership & Review">
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenFormField Text="Responsible Department" Variant="Variant.Outlined">
+                        <RadzenDropDown @bind-Value="@SPI.ResponsibleDepartment" 
+                                       Data="@AvailableDepartments" 
+                                       Placeholder="Select department..."
+                                       Style="width: 100%;" 
+                                       AllowClear="true" />
+                    </RadzenFormField>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenFormField Text="Data Owner" Variant="Variant.Outlined">
+                        <RadzenTextBox @bind-Value="@SPI.DataOwner" 
+                                      Placeholder="Person responsible for data" 
+                                      Style="width: 100%;" />
+                    </RadzenFormField>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenFormField Text="Review Authority" Variant="Variant.Outlined">
+                        <RadzenTextBox @bind-Value="@SPI.ReviewAuthority" 
+                                      Placeholder="Person responsible for review" 
+                                      Style="width: 100%;" />
+                    </RadzenFormField>
+                </RadzenColumn>
+            </RadzenRow>
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenFormField Text="Next Review Date" Variant="Variant.Outlined">
+                        <RadzenDatePicker @bind-Value="@SPI.NextReviewDate" 
+                                         DateFormat="yyyy-MM-dd" 
+                                         Style="width: 100%;" />
+                    </RadzenFormField>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenFormField Text="Calculation Method" Variant="Variant.Outlined">
+                        <RadzenTextBox @bind-Value="@SPI.CalculationMethod" 
+                                      Placeholder="How is this indicator calculated..." 
+                                      Style="width: 100%;" />
+                    </RadzenFormField>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenFieldset>
+
+        <!-- Row 6: Alert Configuration -->
+        <RadzenFieldset Text="Alert Configuration">
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenCheckBox @bind-Value="@SPI.AlertsEnabled" Name="alertsEnabled" />
+                        <RadzenLabel Text="Enable Alerts" Component="alertsEnabled" Style="cursor: pointer;" />
+                    </RadzenStack>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="9">
+                    @if (SPI.AlertsEnabled)
+                    {
+                        <RadzenFormField Text="Alert Recipients" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="@SPI.AlertRecipients" 
+                                          Placeholder="Comma-separated email addresses" 
+                                          Style="width: 100%;" />
+                        </RadzenFormField>
+                    }
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenFieldset>
+    </RadzenStack>
+</div>
+
+<!-- Modal Footer -->
+<div class="sms-modal-footer">
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Text="Cancel" 
+                      ButtonStyle="ButtonStyle.Light" 
+                      Click="@(() => DialogService.Close(false))" />
+        <RadzenButton Text="@(IsEditMode ? "Update SPI" : "Create SPI")" 
+                      Icon="@(IsEditMode ? "save" : "add")" 
+                      ButtonStyle="ButtonStyle.Primary" 
+                      Click="@SaveSPI" 
+                      Disabled="@(!IsValid || IsSaving)" 
+                      Style="background-color: #212e61; border-color: #212e61;" />
+    </RadzenStack>
+</div>
+
+<style>
+/* SMS Modal Styling - Consistent with system */
+.sms-modal-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.sms-header-primary {
+    background-color: #212e61; /* SMS Blue Dark Bold */
+    color: white;
+}
+
+.sms-modal-title {
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.sms-modal-body {
+    padding: 1.5rem;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.sms-modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e9ecef;
+    border-radius: 0 0 0.5rem 0.5rem;
+    background-color: #f8f9fa;
+}
+</style>
 
 @code {
     [Inject] private DialogService DialogService { get; set; } = default!;
@@ -195,14 +253,6 @@
     private string SelectedIndicatorType { get; set; } = string.Empty;
     private string SelectedFrequency { get; set; } = string.Empty;
     private bool IsSaving { get; set; } = false;
-
-    // Computed properties for dropdown display
-    private List<SPITypeDisplayItem> GetTypeDisplayItems() => AvailableTypes
-        .Select(t => new SPITypeDisplayItem 
-        { 
-            Value = t.Value, 
-            DisplayText = $"{t.Name} - {t.Description}" 
-        }).ToList();
 
     private bool IsValid => 
         !string.IsNullOrWhiteSpace(SPI?.Name) &&
@@ -244,6 +294,14 @@
             IsSaving = false;
         }
     }
+
+    // Computed properties for dropdown display
+    private List<SPITypeDisplayItem> GetTypeDisplayItems() => AvailableTypes
+        .Select(t => new SPITypeDisplayItem 
+        { 
+            Value = t.Value, 
+            DisplayText = $"{t.Name} - {t.Description}" 
+        }).ToList();
 
     public class SPITypeDisplayItem
     {

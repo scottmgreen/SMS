@@ -989,15 +989,16 @@ public static partial class Mappers
     public static SafetyPerformanceIndicator MapToSafetyPerformanceIndicator(SqlDataReader reader)
     {
         var code = reader.GetValue<string>(FieldNames.fSPICode);
-        SafetyPerformanceIndicatorID spiID = new(reader.GetValue<string>(FieldNames.fSPIId));
+        SafetyPerformanceIndicatorID spiID = new(code);
+
         SafetyPerformanceIndicator spi = new(spiID, 
             reader.GetValue<string>(FieldNames.fSPIName) ?? string.Empty,
             reader.GetValue<string>(FieldNames.fSPIDescription) ?? string.Empty,
             SPIType.GetAllValues().FirstOrDefault(t => t.Value == reader.GetValue<string>(FieldNames.fSPIIndicatorType)) ?? SPIType.IncidentRate,
             reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM");
 
-        // Set the code
-        //spi.SetCode(code ?? string.Empty);
+        // Set the code property
+        spi.Code = code ?? string.Empty;
 
         // Set additional properties
         spi.Status = SPIStatus.FromValue(reader.GetValue<string>(FieldNames.fSPIStatus)) ?? SPIStatus.Active;
@@ -1027,5 +1028,27 @@ public static partial class Mappers
         return spi;
     }
 
+    /// <summary>
+    /// Maps SqlDataReader to SPIDataPoint entity
+    /// </summary>
+    public static SPIDataPoint MapToSPIDataPoint(SqlDataReader reader)
+    {
+        var dataPoint = new SPIDataPoint
+        {
+            Id = reader.GetValue<string>(FieldNames.fSPIDataPointSPIId), // Use SPIDataPointId field for string Id
+            Value = reader.GetValue<decimal>(FieldNames.fSPIDataPointValue),
+            MeasurementDate = reader.GetValue<DateTime>(FieldNames.fSPIDataPointMeasurementDate),
+            Period = reader.GetValue<string>(FieldNames.fSPIDataPointPeriod) ?? string.Empty,
+            DataSource = reader.GetValue<string>(FieldNames.fSPIDataPointDataSource) ?? string.Empty,
+            EnteredBy = reader.GetValue<string>(FieldNames.fSPIDataPointEnteredBy) ?? "SYSTEM",
+            EnteredDate = reader.IsDBNull(FieldNames.fSPIDataPointEnteredDate) ? DateTime.UtcNow : reader.GetValue<DateTime>(FieldNames.fSPIDataPointEnteredDate),
+            Notes = reader.GetValue<string>(FieldNames.fSPIDataPointNotes),
+            IsVerified = reader.IsDBNull(FieldNames.fSPIDataPointIsVerified) ? false : reader.GetValue<bool>(FieldNames.fSPIDataPointIsVerified),
+            VerifiedBy = reader.GetValue<string>(FieldNames.fSPIDataPointVerifiedBy),
+            VerifiedDate = reader.IsDBNull(FieldNames.fSPIDataPointVerifiedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fSPIDataPointVerifiedDate)
+        };
+
+        return dataPoint;
+    }
     #endregion
 }

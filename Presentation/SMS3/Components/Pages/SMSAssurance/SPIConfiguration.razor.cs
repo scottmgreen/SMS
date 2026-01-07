@@ -317,13 +317,15 @@ public partial class SPIConfiguration
     {
         var options = new DialogOptions() 
         { 
-            Width = "900px", 
+            Width = "1200px", 
             Height = "auto",
             Resizable = true,
             Draggable = true,
             CloseDialogOnOverlayClick = false,
             CloseDialogOnEsc = true,
-            ShowClose = true
+            ShowClose = true,
+            ShowTitle = false, // We're using our own custom header
+            CssClass = "sms-spi-dialog"
         };
 
         var parameters = new Dictionary<string, object> 
@@ -336,10 +338,8 @@ public partial class SPIConfiguration
             { "AvailableDepartments", availableDepartments }
         };
 
-        var title = isEditMode ? $"Edit SPI - {spi.Code}" : "Create New SPI";
-        
         var result = await DialogService.OpenAsync<Components.SPIEditDialog>(
-            title,
+            "", // Empty title since we're using custom header
             parameters,
             options);
 
@@ -491,7 +491,7 @@ public partial class SPIConfiguration
         {
             "Leading" => BadgeStyle.Primary,
             "Lagging" => BadgeStyle.Danger,
-            "Process" => BadgeStyle.Info,
+            "Process" => BadgeStyle.Base,
             "Compliance" => BadgeStyle.Warning,
             _ => BadgeStyle.Secondary
         };
