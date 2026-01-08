@@ -1,0 +1,259 @@
+@using Radzen
+@using Radzen.Blazor
+@using SMS_Domain.Entities
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.5rem">
+    <!-- Form Header -->
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+        <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">
+            @(IsNew ? "Schedule New Audit" : "Edit Audit")
+        </RadzenText>
+        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color); margin: 0;">
+            Schedule and manage audit execution details
+        </RadzenText>
+    </RadzenStack>
+
+    <!-- Validation Message -->
+    @if (!IsValid)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" Variant="Variant.Flat">
+            @ValidationMessage
+        </RadzenAlert>
+    }
+
+    <!-- Form Content -->
+    <RadzenTabs RenderMode="TabRenderMode.Client">
+        <!-- Basic Information Tab -->
+        <RadzenTabsItem Text="Basic Information" Icon="info">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" Style="padding: 1rem 0;">
+                <!-- Code and Name Row -->
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenFormField Text="Audit Code" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="@Code" 
+                                         Placeholder="e.g., AUD-INT-2024-001"
+                                         Style="width: 100%;" />
+                        </RadzenFormField>
+                        <RadzenButton Text="Generate" 
+                                    ButtonStyle="ButtonStyle.Light" 
+                                    Size="ButtonSize.ExtraSmall"
+                                    Click="@GenerateCode" 
+                                    Style="margin-top: 0.25rem;" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="8">
+                        <RadzenFormField Text="Audit Name" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="@Name" 
+                                         Placeholder="Enter audit name"
+                                         Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <!-- Audit Plan Code (if applicable) -->
+                @if (!string.IsNullOrWhiteSpace(AuditPlanCode))
+                {
+                    <RadzenFormField Text="Related Audit Plan" Variant="Variant.Outlined">
+                        <RadzenTextBox @bind-Value="@AuditPlanCode" 
+                                     Disabled="true"
+                                     Style="width: 100%;" />
+                    </RadzenFormField>
+                }
+
+                <!-- Description -->
+                <RadzenFormField Text="Description" Variant="Variant.Outlined">
+                    <RadzenTextArea @bind-Value="@Description" 
+                                  Placeholder="Describe the audit purpose and scope"
+                                  Rows="3" 
+                                  Style="width: 100%;" />
+                </RadzenFormField>
+
+                <!-- Type and Department Row -->
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Audit Type" Variant="Variant.Outlined">
+                            <RadzenDropDown @bind-Value="@AuditType" 
+                                          Data="@AuditTypeOptions" 
+                                          Placeholder="Select audit type"
+                                          Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Responsible Department" Variant="Variant.Outlined">
+                            <RadzenDropDown @bind-Value="@ResponsibleDepartment" 
+                                          Data="@DepartmentOptions" 
+                                          Placeholder="Select department"
+                                          Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <!-- Priority and Status Row -->
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Priority" Variant="Variant.Outlined">
+                            <RadzenDropDown @bind-Value="@Priority" 
+                                          Data="@PriorityOptions" 
+                                          Placeholder="Select priority"
+                                          Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Status" Variant="Variant.Outlined">
+                            <RadzenDropDown @bind-Value="@Status" 
+                                          Data="@StatusOptions" 
+                                          Change="@OnStatusChanged"
+                                          Placeholder="Select status"
+                                          Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenStack>
+        </RadzenTabsItem>
+
+        <!-- Scope & Objectives Tab -->
+        <RadzenTabsItem Text="Scope & Objectives" Icon="target">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" Style="padding: 1rem 0;">
+                <!-- Scope -->
+                <RadzenFormField Text="Audit Scope" Variant="Variant.Outlined">
+                    <RadzenTextArea @bind-Value="@Scope" 
+                                  Placeholder="Define what areas, processes, or departments will be audited"
+                                  Rows="4" 
+                                  Style="width: 100%;" />
+                </RadzenFormField>
+
+                <!-- Objectives -->
+                <RadzenFormField Text="Audit Objectives" Variant="Variant.Outlined">
+                    <RadzenTextArea @bind-Value="@Objectives" 
+                                  Placeholder="List the specific objectives and goals of this audit"
+                                  Rows="4" 
+                                  Style="width: 100%;" />
+                </RadzenFormField>
+
+                <!-- Executive Summary (if audit is completed) -->
+                @if (Status == "Completed" || Status == "In Progress")
+                {
+                    <RadzenFormField Text="Executive Summary" Variant="Variant.Outlined">
+                        <RadzenTextArea @bind-Value="@ExecutiveSummary" 
+                                      Placeholder="High-level summary of audit results and key findings"
+                                      Rows="4" 
+                                      Style="width: 100%;" />
+                    </RadzenFormField>
+                }
+            </RadzenStack>
+        </RadzenTabsItem>
+
+        <!-- Team & Schedule Tab -->
+        <RadzenTabsItem Text="Team & Schedule" Icon="schedule">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" Style="padding: 1rem 0;">
+                <!-- Lead Auditor and Contact Person Row -->
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Lead Auditor" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="@LeadAuditor" 
+                                         Placeholder="Enter lead auditor name"
+                                         Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Contact Person" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="@ContactPerson" 
+                                         Placeholder="Department contact person"
+                                         Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <!-- Auditor Team -->
+                <RadzenFormField Text="Auditor Team" Variant="Variant.Outlined">
+                    <RadzenTextArea @bind-Value="@AuditorTeam" 
+                                  Placeholder="List team members and their roles"
+                                  Rows="3" 
+                                  Style="width: 100%;" />
+                </RadzenFormField>
+
+                <!-- Audit Location -->
+                <RadzenFormField Text="Audit Location" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="@AuditLocation" 
+                                 Placeholder="Primary audit location or areas"
+                                 Style="width: 100%;" />
+                </RadzenFormField>
+
+                <!-- Scheduled Dates Row -->
+                <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0.5rem 0;">Scheduled Dates</RadzenText>
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Scheduled Start Date" Variant="Variant.Outlined">
+                            <RadzenDatePicker @bind-Value="@ScheduledStartDate" 
+                                            DateFormat="MM/dd/yyyy"
+                                            Change="@OnScheduledStartDateChanged"
+                                            Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Scheduled End Date" Variant="Variant.Outlined">
+                            <RadzenDatePicker @bind-Value="@ScheduledEndDate" 
+                                            DateFormat="MM/dd/yyyy"
+                                            Change="@OnScheduledEndDateChanged"
+                                            Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <!-- Actual Dates Row (only show if status is In Progress or Completed) -->
+                @if (ShowActualDates)
+                {
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0.5rem 0;">Actual Dates</RadzenText>
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenFormField Text="Actual Start Date" Variant="Variant.Outlined">
+                                <RadzenDatePicker @bind-Value="@ActualStartDate" 
+                                                DateFormat="MM/dd/yyyy"
+                                                Change="@OnActualStartDateChanged"
+                                                Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenFormField Text="Actual End Date" Variant="Variant.Outlined">
+                                <RadzenDatePicker @bind-Value="@ActualEndDate" 
+                                                DateFormat="MM/dd/yyyy"
+                                                Change="@OnActualEndDateChanged"
+                                                Disabled="@(Status != "Completed")"
+                                                Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    </RadzenRow>
+                }
+            </RadzenStack>
+        </RadzenTabsItem>
+
+        <!-- Notes Tab -->
+        <RadzenTabsItem Text="Notes" Icon="notes">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" Style="padding: 1rem 0;">
+                <RadzenFormField Text="Audit Notes" Variant="Variant.Outlined">
+                    <RadzenTextArea @bind-Value="@Notes" 
+                                  Placeholder="Additional notes, observations, or special requirements"
+                                  Rows="8" 
+                                  Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenStack>
+        </RadzenTabsItem>
+    </RadzenTabs>
+
+    <!-- Action Buttons -->
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" 
+                class="border-top pt-3">
+        <RadzenButton Text="Cancel" 
+                    ButtonStyle="ButtonStyle.Light" 
+                    Click="@Cancel"
+                    Disabled="@IsSubmitting" />
+        <RadzenButton Text="@(IsNew ? "Schedule Audit" : "Update Audit")" 
+                    Icon="@(IsNew ? "schedule" : "save")"
+                    ButtonStyle="ButtonStyle.Primary" 
+                    Click="@SaveAudit"
+                    IsBusy="@IsSubmitting" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    // Component logic is in the code-behind file
+}

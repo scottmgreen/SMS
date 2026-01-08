@@ -60,7 +60,7 @@ public class SMSAuditEvidenceDataService : BaseDataService<SMSAuditEvidenceDataS
             return Result<bool>.Failure<bool>(evidenceResult.Error);
         }
 
-        return await _repo.DeleteSMSAuditEvidenceAsync(evidenceResult.Value.Id.Value, ct);
+        return await _repo.DeleteSMSAuditEvidenceAsync(evidenceCode, ct);
     }
 
     /// <summary>

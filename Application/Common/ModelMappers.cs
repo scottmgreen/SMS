@@ -12,12 +12,12 @@ public static class ModelMappers
     /// <summary>
     /// Maps Domain SMSAuditExecutionDashboard to Application SMSAuditExecutionDashboard
     /// </summary>
-    public static SMSAuditExecutionDashboard ToApplicationModel(this Domain.Models.SMSAuditExecutionDashboard domainModel)
+    public static SMS_Application.Messaging.Queries.SMSAuditExecutionDashboard ToApplicationModel(this Domain.Models.SMSAuditExecutionDashboard domainModel)
     {
         if (domainModel == null) 
-            return new SMSAuditExecutionDashboard();
+            return new SMS_Application.Messaging.Queries.SMSAuditExecutionDashboard();
 
-        return new SMSAuditExecutionDashboard
+        return new SMS_Application.Messaging.Queries.SMSAuditExecutionDashboard
         {
             // Map equivalent properties with different names
             TotalAudits = domainModel.TotalAuditsScheduled,

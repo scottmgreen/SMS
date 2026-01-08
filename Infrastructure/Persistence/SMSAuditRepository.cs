@@ -64,14 +64,22 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditLocation, audit.AuditLocation));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, audit.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, audit.CreatedDate));
+            var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            var newCode = new SqlParameter("@pNewAuditCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
+            cmd.Parameters.Add(newID);
+            cmd.Parameters.Add(newCode);
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             var newId = await cmd.ExecuteScalarAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
+
+            int newIdValue = (int)newID.Value;
+            string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
+
             if (newId != null)
             {
-                var result = await GetSMSAuditByIdAsync(Convert.ToInt32(newId), ct).ConfigureAwait(false);
+                var result = await GetSMSAuditByCodeAsync(newCodeValue, ct).ConfigureAwait(false);
                 return result;
             }
 
@@ -84,11 +92,11 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
         }
     }
 
-    public async Task<Result<SMSAudit>> GetSMSAuditByIdAsync(int id, CancellationToken ct = default)
+    public async Task<Result<SMSAudit>> GetSMSAuditByCodeAsync(string code, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_SMSAudit_GetById} ID:{id}", null);
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_SMSAudit_GetById} ID:{code}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_SMSAudit_GetById, sql)
@@ -96,7 +104,7 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditId, id));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditId, code));
 
             SMSAudit? audit = null;
 

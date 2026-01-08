@@ -4,6 +4,7 @@ using SMS_Shared.Common;
 using Microsoft.Extensions.Logging;
 using SMS_Application.Messaging.Queries;
 using SMS_Application.Common;
+using SMS_Domain.Errors;
 
 namespace SMS_Application.Services;
 
@@ -36,7 +37,7 @@ public class SMSAuditService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating audit: {AuditCode}", audit?.Code);
-            return Result<SMSAudit>.Failure<SMSAudit>(new Error("CREATE_FAILED", "Failed to create audit"));
+            return Result<SMSAudit>.Failure<SMSAudit>(DomainErrors.SMSAuditError.CreateFailed);
         }
     }
 
@@ -53,7 +54,7 @@ public class SMSAuditService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating audit: {AuditCode}", audit?.Code);
-            return Result<SMSAudit>.Failure<SMSAudit>(new Error("UPDATE_FAILED", "Failed to update audit"));
+            return Result<SMSAudit>.Failure<SMSAudit>(DomainErrors.SMSAuditError.UpdateFailed);
         }
     }
 
@@ -70,7 +71,7 @@ public class SMSAuditService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting audit by code: {AuditCode}", auditCode);
-            return Result<SMSAudit>.Failure<SMSAudit>(new Error("GET_FAILED", "Failed to get audit"));
+            return Result<SMSAudit>.Failure<SMSAudit>(DomainErrors.SMSAuditError.NotFound);
         }
     }
 
@@ -87,7 +88,7 @@ public class SMSAuditService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting all audits");
-            return Result<List<SMSAudit>>.Failure<List<SMSAudit>>(new Error("GET_ALL_FAILED", "Failed to get audits"));
+            return Result<List<SMSAudit>>.Failure<List<SMSAudit>>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 
@@ -104,7 +105,7 @@ public class SMSAuditService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting audit: {AuditCode}", auditCode);
-            return Result<bool>.Failure<bool>(new Error("DELETE_FAILED", "Failed to delete audit"));
+            return Result<bool>.Failure<bool>(DomainErrors.SMSAuditError.DeleteFailed);
         }
     }
 
@@ -145,7 +146,7 @@ public class SMSAuditService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting SMS audit execution dashboard");
-            return Result<SMSAuditExecutionDashboard>.Failure<SMSAuditExecutionDashboard>(new Error("DASHBOARD_FAILED", "Failed to get audit execution dashboard"));
+            return Result<SMSAuditExecutionDashboard>.Failure<SMSAuditExecutionDashboard>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 
@@ -163,7 +164,7 @@ public class SMSAuditService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting audits by plan: {AuditPlanCode}", auditPlanCode);
-            return Result<List<SMSAudit>>.Failure<List<SMSAudit>>(new Error("GET_BY_PLAN_FAILED", "Failed to get audits by plan"));
+            return Result<List<SMSAudit>>.Failure<List<SMSAudit>>(DomainErrors.SMSAuditError.NotFound);
         }
     }
 
@@ -181,7 +182,7 @@ public class SMSAuditService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting audits by status: {Status}", status);
-            return Result<List<SMSAudit>>.Failure<List<SMSAudit>(new Error("GET_BY_STATUS_FAILED", "Failed to get audits by status"));
+            return Result<List<SMSAudit>>.Failure<List<SMSAudit>>(DomainErrors.SMSAuditError.NotFound);
         }
     }
 
@@ -199,7 +200,7 @@ public class SMSAuditService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting audits by auditor: {Auditor}", auditor);
-            return Result<List<SMSAudit>>.Failure<List<SMSAudit>(new Error("GET_BY_AUDITOR_FAILED", "Failed to get audits by auditor"));
+            return Result<List<SMSAudit>>.Failure<List<SMSAudit>>(DomainErrors.SMSAuditError.NotFound);
         }
     }
 
@@ -234,7 +235,7 @@ public class SMSAuditService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting overdue audits");
-            return Result<List<SMSAudit>>.Failure<List<SMSAudit>(new Error("GET_OVERDUE_FAILED", "Failed to get overdue audits"));
+            return Result<List<SMSAudit>>.Failure<List<SMSAudit>>(DomainErrors.SMSAuditError.NotFound);
         }
     }
 
@@ -255,7 +256,7 @@ public class SMSAuditService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error scheduling audit from plan: {AuditPlanCode}", auditPlanCode);
-            return Result<SMSAudit>.Failure<SMSAudit>(new Error("SCHEDULE_FAILED", "Failed to schedule audit from plan"));
+            return Result<SMSAudit>.Failure<SMSAudit>(DomainErrors.SMSAuditError.CreateFailed);
         }
     }
 
@@ -267,29 +268,29 @@ public class SMSAuditService
         try
         {
             if (audit == null)
-                return Result.Failure(new Error("AUDIT_NULL", "Audit cannot be null"));
+                return Result.Failure(DomainErrors.SMSAuditError.NullOrEmpty);
 
             if (string.IsNullOrWhiteSpace(audit.Name))
-                return Result.Failure(new Error("AUDIT_NAME_REQUIRED", "Audit name is required"));
+                return Result.Failure(DomainErrors.SMSAuditError.NameRequired);
 
             if (string.IsNullOrWhiteSpace(audit.AuditType))
-                return Result.Failure(new Error("AUDIT_TYPE_REQUIRED", "Audit type is required"));
+                return Result.Failure(DomainErrors.SMSAuditError.AuditTypeRequired);
 
             if (string.IsNullOrWhiteSpace(audit.LeadAuditor))
-                return Result.Failure(new Error("LEAD_AUDITOR_REQUIRED", "Lead auditor is required"));
+                return Result.Failure(DomainErrors.SMSAuditError.LeadAuditorRequired);
 
             if (audit.ScheduledStartDate >= audit.ScheduledEndDate)
-                return Result.Failure(new Error("INVALID_DATE_RANGE", "Scheduled end date must be after start date"));
+                return Result.Failure(DomainErrors.SMSAuditError.InvalidScheduledDates);
 
             if (audit.ScheduledStartDate < DateTime.UtcNow.Date)
-                return Result.Failure(new Error("PAST_START_DATE", "Scheduled start date cannot be in the past"));
+                return Result.Failure(DomainErrors.SMSAuditError.CannotStartNonScheduled);
 
             return Result.Success();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error validating audit: {AuditCode}", audit?.Code);
-            return Result.Failure(new Error("VALIDATION_ERROR", "Error occurred during audit validation"));
+            return Result.Failure(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 

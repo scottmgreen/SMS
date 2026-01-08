@@ -247,3 +247,50 @@ public class SMSAuditEvidenceStatistics
     public decimal AverageEvidencePerAudit { get; set; }
     public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
 }
+
+// GET SMS AUDIT FINDINGS BY AUDIT CODE
+public class GetSMSAuditFindingsByAuditCodeQuery : BaseQueryBundle, IRequest<Result<List<SMSAuditFinding>>>
+{
+    public string AuditCode { get; set; }
+    public string? StatusFilter { get; set; }
+    public string? SeverityFilter { get; set; }
+
+    public GetSMSAuditFindingsByAuditCodeQuery(string auditCode, string? statusFilter = null, string? severityFilter = null)
+    {
+        AuditCode = auditCode ?? throw new ArgumentNullException(nameof(auditCode));
+        StatusFilter = statusFilter;
+        SeverityFilter = severityFilter;
+    }
+}
+
+// GET SMS AUDIT EVIDENCE BY AUDIT CODE
+public class GetSMSAuditEvidenceByAuditCodeQuery : BaseQueryBundle, IRequest<Result<List<SMSAuditEvidence>>>
+{
+    public string AuditCode { get; set; }
+    public string? EvidenceTypeFilter { get; set; }
+    public bool IncludeArchived { get; set; }
+
+    public GetSMSAuditEvidenceByAuditCodeQuery(string auditCode, string? evidenceTypeFilter = null, bool includeArchived = false)
+    {
+        AuditCode = auditCode ?? throw new ArgumentNullException(nameof(auditCode));
+        EvidenceTypeFilter = evidenceTypeFilter;
+        IncludeArchived = includeArchived;
+    }
+}
+
+// GET SMS AUDIT CHECKLIST ITEMS BY AUDIT CODE
+public class GetSMSAuditChecklistItemsByAuditCodeQuery : BaseQueryBundle, IRequest<Result<List<SMSAuditChecklistItem>>>
+{
+    public string AuditCode { get; set; }
+    public string? StatusFilter { get; set; }
+    public string? CategoryFilter { get; set; }
+    public bool OnlyRequired { get; set; }
+
+    public GetSMSAuditChecklistItemsByAuditCodeQuery(string auditCode, string? statusFilter = null, string? categoryFilter = null, bool onlyRequired = false)
+    {
+        AuditCode = auditCode ?? throw new ArgumentNullException(nameof(auditCode));
+        StatusFilter = statusFilter;
+        CategoryFilter = categoryFilter;
+        OnlyRequired = onlyRequired;
+    }
+}

@@ -1002,4 +1002,35 @@ public static class DomainErrors
         public static Error AlreadyVerified => new Error("SMSAuditEvidence.AlreadyVerified", "The evidence is already verified.");
         public static Error StorageLocationRequired => new Error("SMSAuditEvidence.StorageLocationRequired", "The Storage Location is required for external file references.");
     }
+
+    /// <summary>
+    /// Contains SMS Audit Checklist Item related errors.
+    /// </summary>
+    public static class SMSAuditChecklistItemError
+    {
+        public static Error NullOrEmpty => new Error("SMSAuditChecklistItem.NullOrEmpty", "The SMS Audit Checklist Item is required.");
+        public static Error CodeRequired => new Error("SMSAuditChecklistItem.CodeRequired", "The SMS Audit Checklist Item Code is required.");
+        public static Error AuditCodeRequired => new Error("SMSAuditChecklistItem.AuditCodeRequired", "The Audit Code is required.");
+        public static Error CategoryRequired => new Error("SMSAuditChecklistItem.CategoryRequired", "The Category is required.");
+        public static Error DescriptionRequired => new Error("SMSAuditChecklistItem.DescriptionRequired", "The Description is required.");
+        public static Error CreatedByRequired => new Error("SMSAuditChecklistItem.CreatedByRequired", "The Created By field is required.");
+        public static Error InvalidItemNumber => new Error("SMSAuditChecklistItem.InvalidItemNumber", "The Item Number must be greater than zero.");
+        public static Error InvalidStatus => new Error("SMSAuditChecklistItem.InvalidStatus", "The Status is invalid.");
+        public static Error InvalidCode => new Error("SMSAuditChecklistItem.InvalidCode", "The SMS Audit Checklist Item Code is invalid.");
+        public static Error NotFound => new Error("SMSAuditChecklistItem.NotFound", "The SMS Audit Checklist Item was not found.");
+        public static Error CreateFailed => new Error("SMSAuditChecklistItem.CreateFailed", "Failed to create the SMS Audit Checklist Item.");
+        public static Error UpdateFailed => new Error("SMSAuditChecklistItem.UpdateFailed", "Failed to update the SMS Audit Checklist Item.");
+        public static Error DeleteFailed => new Error("SMSAuditChecklistItem.DeleteFailed", "Failed to delete the SMS Audit Checklist Item.");
+        public static Error AlreadyCompleted => new Error("SMSAuditChecklistItem.AlreadyCompleted", "Cannot change status of completed item.");
+        public static Error NotApplicable => new Error("SMSAuditChecklistItem.NotApplicable", "Cannot mark N/A item as in progress.");
+        public static Error Skipped => new Error("SMSAuditChecklistItem.Skipped", "Cannot complete skipped item.");
+        public static Error RequiredItem => new Error("SMSAuditChecklistItem.RequiredItem", "Cannot mark required item as N/A or skip.");
+        public static Error ReasonRequired => new Error("SMSAuditChecklistItem.ReasonRequired", "A reason is required for this action.");
+        public static Error NotCompleted => new Error("SMSAuditChecklistItem.NotCompleted", "Can only review completed items.");
+        public static Error CannotUpdateCompleted => new Error("SMSAuditChecklistItem.CannotUpdateCompleted", "Cannot update completed checklist item.");
+        public static Error CannotResetRequired => new Error("SMSAuditChecklistItem.CannotResetRequired", "Cannot reset required item from N/A.");
+        public static Error StatusUpdateFailed => new Error("SMSAuditChecklistItem.StatusUpdateFailed", "Failed to update checklist item status.");
+        public static Error CompletionFailed => new Error("SMSAuditChecklistItem.CompletionFailed", "Failed to complete checklist item.");
+        public static Error ReviewFailed => new Error("SMSAuditChecklistItem.ReviewFailed", "Failed to review checklist item.");
+    }
 }

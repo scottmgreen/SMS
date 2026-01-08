@@ -1,0 +1,459 @@
+@page "/SMSAssurance/AuditDetail/{AuditCode}"
+@using Radzen
+@using Radzen.Blazor
+@using SMS3.Components.Shared
+@using SMS_Application.Messaging.Queries
+@using SMS_Application.Messaging.Commands
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+
+<PageTitle>Audit Detail - @(Audit?.Name ?? "Loading...") - SMS3</PageTitle>
+
+@if (IsLoading)
+{
+    <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        <span class="ms-3">Loading audit details...</span>
+    </div>
+}
+else if (Audit == null)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Warning" ShowIcon="true" Variant="Variant.Flat">
+        Audit not found or you don't have permission to view this audit.
+    </RadzenAlert>
+}
+else
+{
+    <!-- Page Header -->
+    <PageHeader Title="@Audit.Name"
+               Subtitle="@($"Audit Code: {Audit.Code} | Lead Auditor: {Audit.LeadAuditor}")"
+               Icon="fas fa-clipboard-check" />
+
+    <!-- Action Bar -->
+    <RadzenRow Gap="1rem" class="rz-mb-4">
+        <RadzenColumn Size="12" SizeMD="8">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                <RadzenBadge Text="@(Audit?.Status ?? "Unknown")" BadgeStyle="@GetStatusBadgeStyle(Audit.Status)" />
+                <RadzenBadge Text="@(Audit?.Priority ?? "Medium")" BadgeStyle="@(Audit?.Priority == "Critical" ? BadgeStyle.Danger : 
+                                                                Audit?.Priority == "High" ? BadgeStyle.Warning : 
+                                                                Audit?.Priority == "Medium" ? BadgeStyle.Info : BadgeStyle.Light)" />
+                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                    @(Audit?.AuditType ?? "Unknown")
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; color: var(--rz-text-secondary-color);">
+                    Department: @(Audit?.ResponsibleDepartment ?? "Unknown")
+                </RadzenText>
+            </RadzenStack>
+        </RadzenColumn>
+        
+        <RadzenColumn Size="12" SizeMD="4">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+                <RadzenButton Text="Edit" 
+                            Icon="edit" 
+                            ButtonStyle="ButtonStyle.Light"
+                            Click="@EditAudit"
+                            Disabled="@(Audit?.Status == "Completed")" 
+                            Size="ButtonSize.Medium" />
+                
+                @if (Audit?.Status == "Scheduled")
+                {
+                    <RadzenButton Text="Start Audit" 
+                                Icon="play_arrow" 
+                                ButtonStyle="ButtonStyle.Success"
+                                Click="@StartAudit"
+                                IsBusy="@IsUpdating" 
+                                Size="ButtonSize.Medium" />
+                }
+                else if (Audit?.Status == "In Progress")
+                {
+                    <RadzenButton Text="Complete" 
+                                Icon="check_circle" 
+                                ButtonStyle="ButtonStyle.Success"
+                                Click="@CompleteAudit"
+                                IsBusy="@IsUpdating" 
+                                Size="ButtonSize.Medium" />
+                }
+                
+                <RadzenButton Text="Refresh" 
+                            Icon="refresh" 
+                            ButtonStyle="ButtonStyle.Secondary"
+                            Click="@RefreshData" 
+                            Size="ButtonSize.Medium" />
+                
+                <RadzenButton Text="Back to Audits" 
+                            Icon="arrow_back" 
+                            ButtonStyle="ButtonStyle.Light"
+                            Click="@NavigateToAuditManagement" 
+                            Size="ButtonSize.Medium" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Audit Overview Cards -->
+    <RadzenRow Gap="1rem" class="rz-mb-4">
+        <RadzenColumn Size="12" SizeMD="4">
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" AlignItems="AlignItems.Center">
+                    <RadzenIcon Icon="schedule" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; text-align: center;">Schedule</RadzenText>
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" AlignItems="AlignItems.Center">
+                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; text-align: center;">
+                            Scheduled: @(Audit?.ScheduledStartDate.ToString("MM/dd/yyyy") ?? "TBD") - @(Audit?.ScheduledEndDate.ToString("MM/dd/yyyy") ?? "TBD")
+                        </RadzenText>
+                        @if (Audit?.ActualStartDate.HasValue == true)
+                        {
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; text-align: center;">
+                                Actual: @(Audit?.ActualStartDate?.ToString("MM/dd/yyyy") ?? "TBD") - @(Audit?.ActualEndDate?.ToString("MM/dd/yyyy") ?? "In Progress")
+                            </RadzenText>
+                        }
+                        <RadzenProgressBar Value="@int.Parse(GetProgressPercentage())" ShowValue="true" 
+                                         Text="@($"{GetProgressPercentage()}% Complete")" Style="width: 100%;" />
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        
+        <RadzenColumn Size="12" SizeMD="4">
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" AlignItems="AlignItems.Center">
+                    <RadzenIcon Icon="bug_report" Style="font-size: 2rem; color: var(--rz-warning);" />
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; text-align: center;">Findings</RadzenText>
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" AlignItems="AlignItems.Center">
+                        <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: var(--rz-danger);">@Stats.TotalFindings</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                            Critical: @Stats.CriticalFindings | Major: @Stats.MajorFindings | Minor: @Stats.MinorFindings
+                        </RadzenText>
+                        <RadzenProgressBar Value="@GetFindingResolutionRate()" ShowValue="true" 
+                                         Text="@($"{GetFindingResolutionRate():F0}% Resolved")" 
+                                         ProgressBarStyle="@(Stats.OpenFindings > 0 ? ProgressBarStyle.Warning : ProgressBarStyle.Success)"
+                                         Style="width: 100%;" />
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        
+        <RadzenColumn Size="12" SizeMD="4">
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" AlignItems="AlignItems.Center">
+                    <RadzenIcon Icon="folder" Style="font-size: 2rem; color: var(--rz-info);" />
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; text-align: center;">Evidence</RadzenText>
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" AlignItems="AlignItems.Center">
+                        <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: var(--rz-info);">@Stats.TotalEvidence</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                            Docs: @Stats.DocumentEvidence | Photos: @Stats.PhotoEvidence | Videos: @Stats.VideoEvidence
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Main Content Tabs -->
+    <RadzenTabs @bind-SelectedIndex="@ActiveTabIndex" RenderMode="TabRenderMode.Client">
+        <!-- Audit Information Tab -->
+        <RadzenTabsItem Text="Audit Information" Icon="info">
+            <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+                <RadzenColumn Size="12" SizeLG="8">
+                    <RadzenCard Variant="Variant.Outlined">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Audit Details</RadzenText>
+                            
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenFormField Text="Audit Code" Variant="Variant.Outlined">
+                                        <RadzenTextBox Value="@(Audit?.Code ?? string.Empty)" ReadOnly="true" Style="width: 100%;" />
+                                    </RadzenFormField>
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenFormField Text="Audit Type" Variant="Variant.Outlined">
+                                        <RadzenTextBox Value="@(Audit?.AuditType ?? string.Empty)" ReadOnly="true" Style="width: 100%;" />
+                                    </RadzenFormField>
+                                </RadzenColumn>
+                            </RadzenRow>
+                            
+                            <RadzenFormField Text="Description" Variant="Variant.Outlined">
+                                <RadzenTextArea Value="@(Audit?.Description ?? string.Empty)" ReadOnly="true" Rows="3" Style="width: 100%;" />
+                            </RadzenFormField>
+                            
+                            <RadzenFormField Text="Scope" Variant="Variant.Outlined">
+                                <RadzenTextArea Value="@(Audit?.Scope ?? string.Empty)" ReadOnly="true" Rows="4" Style="width: 100%;" />
+                            </RadzenFormField>
+                            
+                            <RadzenFormField Text="Objectives" Variant="Variant.Outlined">
+                                <RadzenTextArea Value="@(Audit?.Objectives ?? string.Empty)" ReadOnly="true" Rows="4" Style="width: 100%;" />
+                            </RadzenFormField>
+                            
+                            @if (!string.IsNullOrWhiteSpace(Audit?.ExecutiveSummary))
+                            {
+                                <RadzenFormField Text="Executive Summary" Variant="Variant.Outlined">
+                                    <RadzenTextArea Value="@(Audit?.ExecutiveSummary ?? string.Empty)" ReadOnly="true" Rows="4" Style="width: 100%;" />
+                                </RadzenFormField>
+                            }
+                            
+                            @if (!string.IsNullOrWhiteSpace(Audit?.Notes))
+                            {
+                                <RadzenFormField Text="Notes" Variant="Variant.Outlined">
+                                    <RadzenTextArea Value="@(Audit?.Notes ?? string.Empty)" ReadOnly="true" Rows="3" Style="width: 100%;" />
+                                </RadzenFormField>
+                            }
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+                
+                <RadzenColumn Size="12" SizeLG="4">
+                    <RadzenCard Variant="Variant.Outlined">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Team & Contact Information</RadzenText>
+                            
+                            <RadzenFormField Text="Lead Auditor" Variant="Variant.Outlined">
+                                <RadzenTextBox Value="@(Audit?.LeadAuditor ?? string.Empty)" ReadOnly="true" Style="width: 100%;" />
+                            </RadzenFormField>
+                            
+                            @if (!string.IsNullOrWhiteSpace(Audit?.ContactPerson))
+                            {
+                                <RadzenFormField Text="Contact Person" Variant="Variant.Outlined">
+                                    <RadzenTextBox Value="@(Audit?.ContactPerson ?? string.Empty)" ReadOnly="true" Style="width: 100%;" />
+                                </RadzenFormField>
+                            }
+                            
+                            @if (!string.IsNullOrWhiteSpace(Audit?.AuditLocation))
+                            {
+                                <RadzenFormField Text="Audit Location" Variant="Variant.Outlined">
+                                    <RadzenTextBox Value="@(Audit?.AuditLocation ?? string.Empty)" ReadOnly="true" Style="width: 100%;" />
+                                </RadzenFormField>
+                            }
+                            
+                            @if (!string.IsNullOrWhiteSpace(Audit?.AuditorTeam))
+                            {
+                                <RadzenFormField Text="Auditor Team" Variant="Variant.Outlined">
+                                    <RadzenTextArea Value="@(Audit?.AuditorTeam ?? string.Empty)" ReadOnly="true" Rows="4" Style="width: 100%;" />
+                                </RadzenFormField>
+                            }
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenTabsItem>
+
+        <!-- Findings Tab -->
+        <RadzenTabsItem Text="Findings" Icon="bug_report">
+            <RadzenCard Variant="Variant.Outlined" Style="margin-top: 1rem;">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Audit Findings (@Stats.TotalFindings)</RadzenText>
+                        <RadzenButton Text="Add Finding" 
+                                    Icon="add" 
+                                    ButtonStyle="ButtonStyle.Primary"
+                                    Size="ButtonSize.Small"
+                                    Click="@CreateFinding"
+                                    Disabled="@(Audit?.Status == "Completed")" />
+                    </div>
+                    
+                    @if (Findings?.Any() == true)
+                    {
+                        <RadzenDataGrid Data="@Findings" 
+                                      TItem="SMSAuditFinding"
+                                      AllowFiltering="true" 
+                                      AllowPaging="true" 
+                                      PageSize="10"
+                                      AllowSorting="true"
+                                      SelectionMode="DataGridSelectionMode.Single">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="SMSAuditFinding" Property="Code" Title="Finding Code" Width="120px">
+                                    <Template Context="data">
+                                        <RadzenLink Path="@($"/SMSAssurance/FindingDetail/{data.Code}")" Text="@data.Code" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="SMSAuditFinding" Property="Title" Title="Title" Width="250px" />
+                                <RadzenDataGridColumn TItem="SMSAuditFinding" Property="Severity" Title="Severity" Width="100px">
+                                    <Template Context="data">
+                                        <RadzenBadge Text="@data.Severity" BadgeStyle="@GetSeverityBadgeStyle(data.Severity)" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="SMSAuditFinding" Property="Status" Title="Status" Width="100px">
+                                    <Template Context="data">
+                                        <RadzenBadge Text="@data.Status" BadgeStyle="@GetFindingStatusBadgeStyle(data.Status)" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="SMSAuditFinding" Property="ProcessArea" Title="Process Area" Width="150px" />
+                                <RadzenDataGridColumn TItem="SMSAuditFinding" Property="DiscoveredDate" Title="Discovered" Width="100px" FormatString="{0:MM/dd/yyyy}" />
+                                <RadzenDataGridColumn TItem="SMSAuditFinding" Property="DueDate" Title="Due Date" Width="100px" FormatString="{0:MM/dd/yyyy}" />
+                                <RadzenDataGridColumn TItem="SMSAuditFinding" Sortable="false" Filterable="false" Width="120px" Title="Actions">
+                                    <Template Context="data">
+                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                                            <RadzenButton Icon="visibility" 
+                                                        ButtonStyle="ButtonStyle.Light" 
+                                                        Size="ButtonSize.ExtraSmall"
+                                                        Click="@(() => ViewFindingDetail(data.Code!))"
+                                                        title="View" />
+                                            <RadzenButton Icon="edit" 
+                                                        ButtonStyle="ButtonStyle.Light" 
+                                                        Size="ButtonSize.ExtraSmall"
+                                                        Click="@(() => EditFinding(data))"
+                                                        Disabled="@(Audit?.Status == "Completed")"
+                                                        title="Edit" />
+                                        </RadzenStack>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <RadzenIcon Icon="search_off" Style="font-size: 3rem, color: var(--rz-text-secondary-color); opacity: 0.5;" />
+                            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text.secondary-color); margin-top: 1rem;">
+                                No findings recorded for this audit
+                            </RadzenText>
+                            @if (Audit?.Status != "Completed")
+                            {
+                                <RadzenButton Text="Add First Finding" 
+                                            Icon="add" 
+                                            ButtonStyle="ButtonStyle.Primary"
+                                            Click="@CreateFinding" 
+                                            Style="margin-top: 1rem;" />
+                            }
+                        </div>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenTabsItem>
+
+        <!-- Evidence Tab -->
+        <RadzenTabsItem Text="Evidence" Icon="folder">
+            <RadzenCard Variant="Variant.Outlined" Style="margin-top: 1rem;">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Audit Evidence (@Stats.TotalEvidence)</RadzenText>
+                        <RadzenButton Text="Upload Evidence" 
+                                    Icon="upload" 
+                                    ButtonStyle="ButtonStyle.Primary"
+                                    Size="ButtonSize.Small"
+                                    Click="@UploadEvidence"
+                                    Disabled="@(Audit?.Status == "Completed")" />
+                    </div>
+                    
+                    @if (Evidence?.Any() == true)
+                    {
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                            @foreach (var evidence in Evidence)
+                            {
+                                <RadzenCard Variant="Variant.Text" class="evidence-card" 
+                                          @onclick="() => ViewEvidence(evidence)" 
+                                          Style="cursor: pointer; transition: all 0.2s ease;">
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                                        <RadzenIcon Icon="@(evidence.EvidenceType == "Document" ? "description" : 
+                                                          evidence.EvidenceType == "Photo" ? "photo" : 
+                                                          evidence.EvidenceType == "Video" ? "videocam" : "attach_file")" 
+                                                  Style="font-size: 1.5rem; color: var(--rz-primary);" />
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem" Style="flex: 1;">
+                                            <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">
+                                                @(evidence.Title ?? evidence.EvidenceTitle ?? "No Title")
+                                            </RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                                @(evidence.Description ?? evidence.EvidenceDescription ?? "No Description")
+                                            </RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color); margin: 0;">
+                                                @(evidence.CollectedBy ?? "Unknown") | @(evidence.CollectionDate.ToString("MM/dd/yyyy HH:mm"))
+                                            </RadzenText>
+                                        </RadzenStack>
+                                        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.End" Gap="0.25rem">
+                                            <RadzenBadge Text="@(evidence.EvidenceType ?? "Unknown")" BadgeStyle="BadgeStyle.Info" />
+                                            @if (evidence.FileSize > 0)
+                                            {
+                                                <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                                                    @evidence.FileSize
+                                                </RadzenText>
+                                            }
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                </RadzenCard>
+                            }
+                        </RadzenStack>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <RadzenIcon Icon="folder_open" Style="font-size: 3rem; color: var(--rz-text-secondary-color); opacity: 0.5;" />
+                            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text.secondary-color); margin-top: 1rem;">
+                                No evidence uploaded for this audit
+                            </RadzenText>
+                            @if (Audit?.Status != "Completed")
+                            {
+                                <RadzenButton Text="Upload First Evidence" 
+                                            Icon="upload" 
+                                            ButtonStyle="ButtonStyle.Primary"
+                                            Click="@UploadEvidence" 
+                                            Style="margin-top: 1rem;" />
+                            }
+                        </div>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenTabsItem>
+
+        <!-- Checklist Tab -->
+        <RadzenTabsItem Text="Checklist" Icon="checklist">
+            <RadzenCard Variant="Variant.Outlined" Style="margin-top: 1rem;">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
+                            Audit Checklist (@Stats.CompletedChecklistItems/@Stats.TotalChecklistItems Complete)
+                        </RadzenText>
+                        <RadzenProgressBar Value="@GetChecklistProgress()" ShowValue="true" 
+                                         Text="@($"{GetChecklistProgress():F0}% Complete")" 
+                                         Style="width: 200px;" />
+                    </div>
+                    
+                    @if (ChecklistItems?.Any() == true)
+                    {
+                        <RadzenDataGrid Data="@ChecklistItems" 
+                                      TItem="SMSAuditChecklistItem"
+                                      AllowFiltering="true" 
+                                      AllowPaging="false"
+                                      AllowSorting="true"
+                                      SelectionMode="DataGridSelectionMode.Single">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="SMSAuditChecklistItem" Property="ItemNumber" Title="#" Width="60px" />
+                                <RadzenDataGridColumn TItem="SMSAuditChecklistItem" Property="Category" Title="Category" Width="150px" />
+                                <RadzenDataGridColumn TItem="SMSAuditChecklistItem" Property="Description" Title="Checklist Item" Width="400px" />
+                                <RadzenDataGridColumn TItem="SMSAuditChecklistItem" Property="Status" Title="Status" Width="100px">
+                                    <Template Context="data">
+                                        <RadzenBadge Text="@data.Status" 
+                                                   BadgeStyle="@(data.Status == "Completed" ? BadgeStyle.Success : 
+                                                               data.Status == "Pending" ? BadgeStyle.Warning : 
+                                                               data.Status == "N/A" ? BadgeStyle.Light : BadgeStyle.Secondary)" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="SMSAuditChecklistItem" Property="CompletedBy" Title="Completed By" Width="150px" />
+                                <RadzenDataGridColumn TItem="SMSAuditChecklistItem" Property="CompletedDate" Title="Completed" Width="120px" FormatString="{0:MM/dd/yyyy}" />
+                                <RadzenDataGridColumn TItem="SMSAuditChecklistItem" Property="Notes" Title="Notes" Width="200px" />
+                            </Columns>
+                        </RadzenDataGrid>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <RadzenIcon Icon="checklist" Style="font-size: 3rem; color: var(--rz-text-secondary-color); opacity: 0.5;" />
+                            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text.secondary-color); margin-top: 1rem;">
+                                No checklist items defined for this audit
+                            </RadzenText>
+                        </div>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenTabsItem>
+    </RadzenTabs>
+}
+
+<style>
+    .evidence-card:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+@code {
+    // Component logic is in the code-behind file
+}

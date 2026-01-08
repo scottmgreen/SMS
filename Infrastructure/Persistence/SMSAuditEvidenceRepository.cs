@@ -67,14 +67,22 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceNotes, evidence.Notes));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, evidence.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, evidence.CreatedDate));
+            var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            var newCode = new SqlParameter("@pNewAuditEvidenceCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
+            cmd.Parameters.Add(newID);
+            cmd.Parameters.Add(newCode);
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             var newId = await cmd.ExecuteScalarAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
+
+            int newIdValue = (int)newID.Value;
+            string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
+
             if (newId != null)
             {
-                var result = await GetSMSAuditEvidenceByCodeAsync(Convert.ToInt32(newId), ct).ConfigureAwait(false);
+                var result = await GetSMSAuditEvidenceByCodeAsync(newCodeValue, ct).ConfigureAwait(false);
                 return result;
             }
 
@@ -225,11 +233,11 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
         }
     }
 
-    public async Task<Result<bool>> DeleteSMSAuditEvidenceAsync(int id, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteSMSAuditEvidenceAsync(string code, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_SMSAuditEvidence_Delete} ID:{id}", null);
+            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_SMSAuditEvidence_Delete} ID:{code}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_SMSAuditEvidence_Delete, sql)
@@ -237,7 +245,7 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceId, id));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceId, code));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             var rowsAffected = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

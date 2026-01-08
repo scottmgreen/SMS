@@ -62,14 +62,22 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingNotes, finding.Notes));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, finding.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, finding.CreatedDate));
+            var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            var newCode = new SqlParameter("@pNewAuditFindingCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
+            cmd.Parameters.Add(newID);
+            cmd.Parameters.Add(newCode);
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             var newId = await cmd.ExecuteScalarAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
+
+            int newIdValue = (int)newID.Value;
+            string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
+
             if (newId != null)
             {
-                var result = await GetSMSAuditFindingByIdAsync(Convert.ToInt32(newId), ct).ConfigureAwait(false);
+                var result = await GetSMSAuditFindingByCodeAsync(newCodeValue, ct).ConfigureAwait(false);
                 return result;
             }
 
@@ -82,11 +90,11 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
         }
     }
 
-    public async Task<Result<SMSAuditFinding>> GetSMSAuditFindingByIdAsync(int id, CancellationToken ct = default)
+    public async Task<Result<SMSAuditFinding>> GetSMSAuditFindingByCodeAsync(string code, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_SMSAuditFinding_GetById} ID:{id}", null);
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_SMSAuditFinding_GetById} ID:{code}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_SMSAuditFinding_GetById, sql)
@@ -94,7 +102,7 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingId, id));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingCode, code));
 
             SMSAuditFinding? finding = null;
 
@@ -215,11 +223,11 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
         }
     }
 
-    public async Task<Result<bool>> DeleteSMSAuditFindingAsync(int id, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteSMSAuditFindingAsync(string code, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_SMSAuditFinding_Delete} ID:{id}", null);
+            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_SMSAuditFinding_Delete} ID:{code}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_SMSAuditFinding_Delete, sql)
@@ -227,7 +235,7 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingId, id));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingCode, code));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             var rowsAffected = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
