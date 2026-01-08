@@ -1,5 +1,6 @@
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
+@using SMS_Application.Common
 @using Radzen
 @using Radzen.Blazor
 
@@ -16,12 +17,19 @@
     <RadzenStack Gap="1rem">
         <!-- Row 1: Code, Status, Name -->
         <RadzenRow Gap="1rem">
-            <RadzenColumn Size="12" SizeMD="3">
+            @* <RadzenColumn Size="12" SizeMD="3">
                 <RadzenFormField Text="Code" Variant="Variant.Outlined">
                     <RadzenTextBox @bind-Value="@SPI.Code" 
                                   ReadOnly="@(IsEditMode)" 
                                   Placeholder="Auto-generated" 
                                   Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenColumn> *@
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenFormField Text="Name *" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="@SPI.Name"
+                                   Placeholder="Enter SPI name"
+                                   Style="width: 100%;" />
                 </RadzenFormField>
             </RadzenColumn>
             <RadzenColumn Size="12" SizeMD="3">
@@ -33,13 +41,7 @@
                                    Style="width: 100%;" />
                 </RadzenFormField>
             </RadzenColumn>
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenFormField Text="Name *" Variant="Variant.Outlined">
-                    <RadzenTextBox @bind-Value="@SPI.Name" 
-                                  Placeholder="Enter SPI name" 
-                                  Style="width: 100%;" />
-                </RadzenFormField>
-            </RadzenColumn>
+            
         </RadzenRow>
 
         <!-- Row 2: Description -->
@@ -52,16 +54,18 @@
 
         <!-- Row 3: Indicator Type, Frequency, Unit, Data Source -->
         <RadzenRow Gap="1rem">
-            <RadzenColumn Size="12" SizeMD="3">
+            <RadzenColumn Size="12" SizeMD="6">
                 <RadzenFormField Text="Indicator Type *" Variant="Variant.Outlined">
                     <RadzenDropDown @bind-Value="@SelectedIndicatorType" 
                                    Data="@GetTypeDisplayItems()" 
                                    TextProperty="DisplayText" 
                                    ValueProperty="Value"
                                    Placeholder="Select type..."
-                                   Style="width: 100%;" />
+                                   Style="width:100%;min-width:300px" />
                 </RadzenFormField>
             </RadzenColumn>
+        </RadzenRow>
+            <RadzenRow Gap="1rem">
             <RadzenColumn Size="12" SizeMD="3">
                 <RadzenFormField Text="Frequency" Variant="Variant.Outlined">
                     <RadzenDropDown @bind-Value="@SelectedFrequency" 
@@ -78,11 +82,17 @@
                                   Style="width: 100%;" />
                 </RadzenFormField>
             </RadzenColumn>
-            <RadzenColumn Size="12" SizeMD="3">
-                <RadzenFormField Text="Data Source" Variant="Variant.Outlined">
-                    <RadzenTextBox @bind-Value="@SPI.DataSource" 
-                                  Placeholder="Reports, Training, etc." 
-                                  Style="width: 100%;" />
+        @* </RadzenRow>
+        <RadzenRow Gap="1rem"> *@
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenFormField Text="Data Source *" Variant="Variant.Outlined">
+                    <RadzenDropDown @bind-Value="@SPI.DataSource"
+                                   Data="@GetDataSourceOptions()"
+                                   Style="width: 100%;"
+                                   AllowFiltering="true"
+                                   FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                   Placeholder="Select or type data source..."
+                                   AllowClear="false" />
                 </RadzenFormField>
             </RadzenColumn>
         </RadzenRow>
@@ -94,7 +104,7 @@
                     <RadzenFormField Text="Target Value" Variant="Variant.Outlined">
                         <RadzenNumeric @bind-Value="@SPI.TargetValue" 
                                       Format="0.####" 
-                                      Style="width: 100%;" />
+                                      Style="width: 50%;" />
                     </RadzenFormField>
                 </RadzenColumn>
                 <RadzenColumn Size="12" SizeMD="3">
@@ -214,7 +224,7 @@
 }
 
 .sms-header-primary {
-    background-color: #212e61; /* SMS Blue Dark Bold */
+        background-color: #0d8944; /*#212e61; /* SMS Blue Dark Bold */
     color: white;
 }
 
@@ -302,6 +312,14 @@
             Value = t.Value, 
             DisplayText = $"{t.Name} - {t.Description}" 
         }).ToList();
+
+    /// <summary>
+    /// Gets the standard data source options for consistency across dialogs
+    /// </summary>
+    private List<string> GetDataSourceOptions()
+    {
+        return SPIConstants.DataSources.GetAll();
+    }
 
     public class SPITypeDisplayItem
     {

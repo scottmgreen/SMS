@@ -107,31 +107,30 @@ public sealed class SafetyPerformanceIndicator : BaseAuditableEntity
         }
     }
 
-    public Result AddDataPoint(decimal value, DateTime measurementDate, string dataSource, string enteredBy)
-    {
-        try
-        {
-            var dataPoint = new SPIDataPoint
-            {
-                Value = value,
-                MeasurementDate = measurementDate,
-                DataSource = dataSource,
-                EnteredBy = enteredBy,
-                EnteredDate = DateTime.UtcNow,
-                Period = GetPeriodFromDate(measurementDate)
-            };
+    //public Result AddDataPoint(decimal value, DateTime measurementDate, string dataSource, string enteredBy)
+    //{
+    //    try
+    //    {
+    //        var dataPoint = new SPIDataPoint(new SPIDataPointID("DP-0000"); // Temporary ID - will be replaced by repository
 
-            DataPoints.Add(dataPoint);
-            UpdatedBy = enteredBy;
-            UpdatedDate = DateTime.UtcNow;
+    //        dataPoint.SPIId = this.Code,
+    //            Value = value,
+    //            MeasurementDate = measurementDate,
+    //            DataSource = dataSource,
+    //            Period = GetPeriodFromDate(measurementDate)
+    //        };
 
-            return Result.Success();
-        }
-        catch (Exception)
-        {
-            return Result.Failure(DomainErrors.SPIError.DataPointAddFailed);
-        }
-    }
+    //        DataPoints.Add(dataPoint);
+    //        UpdatedBy = enteredBy;
+    //        UpdatedDate = DateTime.UtcNow;
+
+    //        return Result.Success();
+    //    }
+    //    catch (Exception)
+    //    {
+    //        return Result.Failure(DomainErrors.SPIError.DataPointAddFailed);
+    //    }
+    //}
 
     public Result UpdateStatus(SPIStatus newStatus, string updatedBy)
     {
@@ -286,35 +285,4 @@ public sealed class SafetyPerformanceIndicator : BaseAuditableEntity
     {
         return (date.Month - 1) / 3 + 1;
     }
-}
-
-/// <summary>
-/// SPI Data Point value object for individual measurements
-/// </summary>
-public class SPIDataPoint
-{
-    public string Id { get; set; }
-    public decimal Value { get; set; }
-    public DateTime MeasurementDate { get; set; }
-    public string Period { get; set; } = string.Empty;
-    public string DataSource { get; set; } = string.Empty;
-    public string EnteredBy { get; set; } = string.Empty;
-    public DateTime EnteredDate { get; set; }
-    public string? Notes { get; set; }
-    public bool IsVerified { get; set; } = false;
-    public string? VerifiedBy { get; set; }
-    public DateTime? VerifiedDate { get; set; }
-}
-
-/// <summary>
-/// SPI Threshold configuration for alerts
-/// </summary>
-public class SPIThreshold
-{
-    public string ThresholdType { get; set; } = string.Empty; // Warning, Critical, Target
-    public decimal Value { get; set; }
-    public string ComparisonOperator { get; set; } = string.Empty; // >=, <=, =, !=
-    public string AlertMessage { get; set; } = string.Empty;
-    public bool IsActive { get; set; } = true;
-    public string? AlertRecipients { get; set; }
 }

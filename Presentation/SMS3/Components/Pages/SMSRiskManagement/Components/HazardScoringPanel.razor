@@ -66,14 +66,14 @@
                             <Template Context="panel">
                                 <RadzenStack Gap="0.25rem">
                                     <RadzenText TextStyle="TextStyle.Subtitle2" Text="@GetMemberName(panel.SMSUserCode)" Style="margin: 0;" />
-                                    @if (HasScore(panel))
+                                    @* @if (HasScore(panel))
                                     {
                                         <RadzenBadge Text="Completed" BadgeStyle="BadgeStyle.Success" />
                                     }
                                     else
                                     {
                                         <RadzenBadge Text="Pending" BadgeStyle="BadgeStyle.Warning" />
-                                    }
+                                    } *@
                                 </RadzenStack>
                             </Template>
                         </RadzenDataGridColumn>
@@ -173,15 +173,15 @@
             <!-- Progress Alert -->
             @if (AllScoresComplete())
             {
-                <RadzenAlert AlertStyle="AlertStyle.Success" Icon="check_circle">
+                @* <RadzenAlert AlertStyle="AlertStyle.Success" Icon="check_circle">
                     <RadzenText TextStyle="TextStyle.Body2" Text="@($"All panel members have scored this hazard. Average: {GetHazardMatrixCodeFromPanels()}")" />
-                </RadzenAlert>
+                </RadzenAlert> *@
             }
             else
             {
-                <RadzenAlert AlertStyle="AlertStyle.Info" Icon="schedule">
+                @* <RadzenAlert AlertStyle="AlertStyle.Info" Icon="schedule">
                     <RadzenText TextStyle="TextStyle.Body2" Text="@($"Scoring Progress: {GetCompletedScoreCount()} of {HazardScoringPanels.Count} panel members completed.")" />
-                </RadzenAlert>
+                </RadzenAlert> *@
             }
         }
         else

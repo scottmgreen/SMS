@@ -129,12 +129,13 @@ public partial class SPIDetail : ComponentBase
         IsEditingDataPoint = false; // Ensure we're not in edit mode
         CurrentDataPoint = null; // Clear any previous data point
 
-        var currentDataPoint = new SPIDataPoint
+        var currentDataPoint = new SPIDataPoint(new("DP-0000"))
         {
             MeasurementDate = DateTime.Today,
             DataSource = SPI.DataSource,
-            EnteredBy = "SYSTEM", // TODO: Get current user
-            EnteredDate = DateTime.UtcNow,
+            CreatedBy = "SYSTEM", // TODO: Get current user
+            CreatedDate = DateTime.UtcNow,
+            IsVerified = true,
             Period = string.Empty
         };
         
@@ -153,7 +154,7 @@ public partial class SPIDetail : ComponentBase
             new DialogOptions
             {
                 Width = "800px",
-                Height = "auto",
+                Height = "1094px",
                 Resizable = true,
                 Draggable = true,
                 CloseDialogOnOverlayClick = false,
@@ -167,25 +168,25 @@ public partial class SPIDetail : ComponentBase
         IsEditingDataPoint = true; // Set this flag so we know we're editing
         CurrentDataPoint = dataPoint; // Store the current data point being edited
         
-        var currentDataPoint = new SPIDataPoint
-        {
-            Id = dataPoint.Id, // Include the ID for edit mode
-            Value = dataPoint.Value,
-            MeasurementDate = dataPoint.MeasurementDate,
-            Period = dataPoint.Period,
-            DataSource = dataPoint.DataSource,
-            EnteredBy = dataPoint.EnteredBy,
-            EnteredDate = dataPoint.EnteredDate,
-            Notes = dataPoint.Notes,
-            IsVerified = dataPoint.IsVerified,
-            VerifiedBy = dataPoint.VerifiedBy,
-            VerifiedDate = dataPoint.VerifiedDate
-        };
+        //var currentDataPoint = new SPIDataPoint(new SPIDataPointID(dataPoint.Code))
+        //{
+        //    Code = dataPoint.Code, // Include the ID for edit mode
+        //    Value = dataPoint.Value,
+        //    MeasurementDate = dataPoint.MeasurementDate,
+        //    Period = dataPoint.Period,
+        //    DataSource = dataPoint.DataSource,
+        //    EnteredBy = dataPoint.EnteredBy,
+        //    EnteredDate = dataPoint.EnteredDate,
+        //    Notes = dataPoint.Notes,
+        //    IsVerified = dataPoint.IsVerified,
+        //    VerifiedBy = dataPoint.VerifiedBy,
+        //    VerifiedDate = dataPoint.VerifiedDate
+        //};
         
         var parameters = new Dictionary<string, object>
         {
             { "SPI", SPI },
-            { "DataPoint", currentDataPoint },
+            { "DataPoint", dataPoint },
             { "IsEditMode", true },
             { "OnSave", EventCallback.Factory.Create<SPIDataPoint>(this, OnDataPointSaved) },
             { "OnCancel", EventCallback.Factory.Create(this, OnDataPointDialogCanceled) }
@@ -217,11 +218,11 @@ public partial class SPIDetail : ComponentBase
         {
             try
             {
-                var command = new DeleteSPIDataPointCommand(
-                    dataPoint.Id,
-                    SPI!.Code,
-                    "SYSTEM" // TODO: Get current user
-                );
+                var command = new DeleteSPIDataPointCommand(dataPoint);
+                //    dataPoint.Code,
+                //    SPI!.Code,
+                //    "SYSTEM" // TODO: Get current user
+                //);
 
                 var result = await Mediator.SendAsync(command, CancellationToken.None);
 
@@ -255,17 +256,7 @@ public partial class SPIDetail : ComponentBase
             if (IsEditingDataPoint && CurrentDataPoint != null)
             {
                 // Update existing data point
-                var updateCommand = new UpdateSPIDataPointCommand(
-                    savedDataPoint.Id,
-                    SPI.Code,
-                    savedDataPoint.Value,
-                    savedDataPoint.MeasurementDate,
-                    savedDataPoint.DataSource,
-                    "SYSTEM", // TODO: Get current user
-                    savedDataPoint.Notes,
-                    savedDataPoint.IsVerified,
-                    savedDataPoint.VerifiedBy
-                );
+                var updateCommand = new UpdateSPIDataPointCommand(savedDataPoint);
 
                 var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
 
@@ -282,14 +273,14 @@ public partial class SPIDetail : ComponentBase
             else
             {
                 // Add new data point
-                var addCommand = new AddSPIDataPointCommand(
-                    SPI.Code,
-                    savedDataPoint.Value,
-                    savedDataPoint.MeasurementDate,
-                    savedDataPoint.DataSource,
-                    savedDataPoint.EnteredBy,
-                    savedDataPoint.Notes
-                );
+                var addCommand = new AddSPIDataPointCommand(savedDataPoint);
+                //    SPI.Code,
+                //    savedDataPoint.Value,
+                //    savedDataPoint.MeasurementDate,
+                //    savedDataPoint.DataSource,
+                //    savedDataPoint.EnteredBy,
+                //    savedDataPoint.Notes
+                //);
 
                 var result = await Mediator.SendAsync(addCommand, CancellationToken.None);
 

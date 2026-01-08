@@ -148,8 +148,7 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
         }
     }
 
-    public async Task<Result<bool>> DeleteSafetyPerformanceIndicatorAsync(
-        SafetyPerformanceIndicatorID spiId, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteSafetyPerformanceIndicatorAsync(SafetyPerformanceIndicatorID spiId, CancellationToken ct = default)
     {
         try
         {
@@ -205,6 +204,22 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
                 }
             }
             await sql.CloseAsync().ConfigureAwait(false);
+
+            // Load data points for each SPI - CRITICAL FOR DASHBOARD
+            foreach (var spi in response)
+            {
+                var dataPoints = await GetSPIDataPointsAsync(spi.Code, ct);
+                if (dataPoints.IsSuccess && dataPoints.Value != null)
+                {
+                    spi.DataPoints = dataPoints.Value ?? new List<SPIDataPoint>();
+                }
+                else
+                {
+                    spi.DataPoints = new List<SPIDataPoint>();
+                }
+            }
+
+            _logger.LogInfrastructureGetItems($"{_logheader} Loaded {response.Count} SPIs with data points", null);
 
             return Result<IEnumerable<SafetyPerformanceIndicator>>.Success(response);
         }
@@ -295,13 +310,20 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
             }
             await sql.CloseAsync().ConfigureAwait(false);
 
-            // Load data points for this SPI
+            // Load data points for this SPI - CRITICAL FOR DASHBOARD
             if (response != null)
             {
+                _logger.LogInfrastructureGetItem($"{_logheader} Loading data points for SPI: {code}", null);
                 var dataPoints = await GetSPIDataPointsAsync(response.Code, ct);
-                if (dataPoints.IsSuccess)
+                if (dataPoints.IsSuccess && dataPoints.Value != null)
                 {
                     response.DataPoints = dataPoints.Value ?? new List<SPIDataPoint>();
+                    _logger.LogInfrastructureGetItem($"{_logheader} Loaded {response.DataPoints.Count} data points for SPI: {code}", null);
+                }
+                else
+                {
+                    response.DataPoints = new List<SPIDataPoint>();
+                    _logger.LogInfrastructureGetItem($"{_logheader} No data points found for SPI: {code}", null);
                 }
             }
 
@@ -445,8 +467,7 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
         }
     }
 
-    public async Task<Result<SPIDataPoint>> AddSPIDataPointAsync(
-        string spiId, SPIDataPoint dataPoint, CancellationToken ct = default)
+    public async Task<Result<SPIDataPoint>> AddSPIDataPointAsync(string spiId, SPIDataPoint dataPoint, CancellationToken ct = default)
     {
         try
         {
@@ -468,16 +489,32 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointMeasurementDate, dataPoint.MeasurementDate));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointPeriod, dataPoint.Period));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointDataSource, dataPoint.DataSource));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointEnteredBy, dataPoint.EnteredBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointEnteredDate, dataPoint.EnteredDate));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, dataPoint.CreatedBy));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, dataPoint.CreatedDate));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointNotes, dataPoint.Notes));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointIsVerified, dataPoint.IsVerified));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointVerifiedBy, dataPoint.VerifiedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointVerifiedDate, dataPoint.VerifiedDate));
 
+            var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            var newCode = new SqlParameter("@pNewDataPointCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
+            cmd.Parameters.Add(newID);
+            cmd.Parameters.Add(newCode);
+
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
+
+            int newIdValue = (int)newID.Value;
+            string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
+            SPIDataPointID datapointId = new(newCodeValue);
+
+
+
+
+            //await sql.OpenAsync(ct).ConfigureAwait(false);
+            //await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            //await sql.CloseAsync().ConfigureAwait(false);
 
             return Result<SPIDataPoint>.Success(dataPoint);
         }
@@ -506,11 +543,13 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, dataPoint.Id));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, dataPoint.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointValue, dataPoint.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointMeasurementDate, dataPoint.MeasurementDate));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointPeriod, dataPoint.Period));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointDataSource, dataPoint.DataSource));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, dataPoint.UpdatedBy ?? "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointNotes, dataPoint.Notes));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointIsVerified, dataPoint.IsVerified));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointVerifiedBy, dataPoint.VerifiedBy));

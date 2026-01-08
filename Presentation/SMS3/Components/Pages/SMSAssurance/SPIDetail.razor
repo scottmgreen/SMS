@@ -110,12 +110,25 @@ else
                     <!-- Target Achievement -->
                     @if (SPI.TargetValue.HasValue && SPI.GetCurrentValue().HasValue)
                     {
-                        var achievement = (double)((SPI.GetCurrentValue().Value / SPI.TargetValue.Value) * 100);
-                        <div class="d-flex align-items-center">
-                            <RadzenText TextStyle="TextStyle.Body2" class="me-2" Style="min-width: 80px;">Target:</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body1">@achievement.ToString("F1")% achieved</RadzenText>
-                        </div>
-                        <RadzenProgressBar Value="@(Math.Min(achievement, 100))" Style="@GetProgressBarStyle(achievement)" />
+                        @if (SPI.TargetValue.Value == 0)
+                        {
+                            <div class="d-flex align-items-center">
+                                <RadzenText TextStyle="TextStyle.Body2" class="me-2" Style="min-width: 80px;">Target:</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body1" Style="color: #fd7e14;">
+                                    @(SPI.GetCurrentValue().Value == 0 ? "Target met" : "Target not properly configured")
+                                </RadzenText>
+                            </div>
+                            <RadzenProgressBar Value="0" Style="background: linear-gradient(90deg, #ffc107 0%, #fd7e14 100%);" />
+                        }
+                        else
+                        {
+                            var achievement = (double)((SPI.GetCurrentValue().Value / SPI.TargetValue.Value) * 100);
+                            <div class="d-flex align-items-center">
+                                <RadzenText TextStyle="TextStyle.Body2" class="me-2" Style="min-width: 80px;">Target:</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body1">@achievement.ToString("F1")% achieved</RadzenText>
+                            </div>
+                            <RadzenProgressBar Value="@(Math.Min(achievement, 100))" Style="@GetProgressBarStyle(achievement)" />
+                        }
                     }
 
                     <!-- Trend Direction -->
@@ -234,6 +247,8 @@ else
                                     ColumnWidth="200px"
                                     class="mt-3">
                         <Columns>
+                            <RadzenDataGridColumn TItem="SPIDataPoint" Property="Code" Title="Code" Width="100px" />
+
                             <RadzenDataGridColumn TItem="SPIDataPoint" Property="MeasurementDate" Title="Date" Width="120px">
                                 <Template Context="dataPoint">
                                     @dataPoint.MeasurementDate.ToString("MMM dd, yyyy")
@@ -254,11 +269,20 @@ else
                                 <Template Context="dataPoint">
                                     @if (SPI.TargetValue.HasValue)
                                     {
-                                        var diff = dataPoint.Value - SPI.TargetValue.Value;
-                                        var percentage = (dataPoint.Value / SPI.TargetValue.Value * 100) - 100;
-                                        <RadzenText TextStyle="TextStyle.Caption" Style="@GetTargetComparisonStyle(diff)">
-                                            @(diff >= 0 ? "+" : "")@diff.ToString("F2") (@(percentage >= 0 ? "+" : "")@percentage.ToString("F1")%)
-                                        </RadzenText>
+                                        @if (SPI.TargetValue.Value == 0)
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: #fd7e14;">
+                                                Target: 0 (Invalid)
+                                            </RadzenText>
+                                        }
+                                        else
+                                        {
+                                            var diff = dataPoint.Value - SPI.TargetValue.Value;
+                                            var percentage = (dataPoint.Value / SPI.TargetValue.Value * 100) - 100;
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="@GetTargetComparisonStyle(diff)">
+                                                @(diff >= 0 ? "+" : "")@diff.ToString("F2") (@(percentage >= 0 ? "+" : "")@percentage.ToString("F1")%)
+                                            </RadzenText>
+                                        }
                                     }
                                     else
                                     {
@@ -268,6 +292,14 @@ else
                             </RadzenDataGridColumn>
 
                             <RadzenDataGridColumn TItem="SPIDataPoint" Property="DataSource" Title="Source" Width="120px" />
+
+                            <RadzenDataGridColumn TItem="SPIDataPoint" Property="CreatedBy" Title="Created By" Width="100px" />
+
+                            <RadzenDataGridColumn TItem="SPIDataPoint" Property="CreatedDate" Title="Created" Width="120px">
+                                <Template Context="dataPoint">
+                                    @(dataPoint.CreatedDate?.ToString("MMM dd, yyyy") ?? "Unknown")
+                                </Template>
+                            </RadzenDataGridColumn>
 
                             <RadzenDataGridColumn TItem="SPIDataPoint" Title="Status" Width="80px">
                                 <Template Context="dataPoint">

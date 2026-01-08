@@ -29,15 +29,13 @@ public class SafetyPerformanceIndicatorDataService : BaseDataService<SafetyPerfo
         _logheader = base.LogHeader;
         _repo = repo;
 
-        _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent,
-            $"{_logheader} {repo.GetType().Name}");
+        _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent,$"{_logheader} {repo.GetType().Name}");
     }
 
     /// <summary>
     /// Creates a new Safety Performance Indicator
     /// </summary>
-    public Task<Result<SafetyPerformanceIndicator>> CreateSafetyPerformanceIndicatorAsync(
-        SafetyPerformanceIndicator spi, CancellationToken ct = default)
+    public Task<Result<SafetyPerformanceIndicator>> CreateSafetyPerformanceIndicatorAsync(SafetyPerformanceIndicator spi, CancellationToken ct = default)
     {
         return _repo.CreateSafetyPerformanceIndicatorAsync(spi, ct);
     }
@@ -45,8 +43,7 @@ public class SafetyPerformanceIndicatorDataService : BaseDataService<SafetyPerfo
     /// <summary>
     /// Updates an existing Safety Performance Indicator
     /// </summary>
-    public Task<Result<SafetyPerformanceIndicator>> UpdateSafetyPerformanceIndicatorAsync(
-        SafetyPerformanceIndicator spi, CancellationToken ct = default)
+    public Task<Result<SafetyPerformanceIndicator>> UpdateSafetyPerformanceIndicatorAsync(SafetyPerformanceIndicator spi, CancellationToken ct = default)
     {
         return _repo.UpdateSafetyPerformanceIndicatorAsync(spi, ct);
     }
@@ -54,8 +51,7 @@ public class SafetyPerformanceIndicatorDataService : BaseDataService<SafetyPerfo
     /// <summary>
     /// Deletes a Safety Performance Indicator
     /// </summary>
-    public Task<Result<bool>> DeleteSafetyPerformanceIndicatorAsync(
-        SafetyPerformanceIndicatorID spiId, CancellationToken ct = default)
+    public Task<Result<bool>> DeleteSafetyPerformanceIndicatorAsync(SafetyPerformanceIndicatorID spiId, CancellationToken ct = default)
     {
         return _repo.DeleteSafetyPerformanceIndicatorAsync(spiId, ct);
     }
@@ -71,8 +67,7 @@ public class SafetyPerformanceIndicatorDataService : BaseDataService<SafetyPerfo
     /// <summary>
     /// Gets a Safety Performance Indicator by ID
     /// </summary>
-    public Task<Result<SafetyPerformanceIndicator>> GetSafetyPerformanceIndicatorByIdAsync(
-        SafetyPerformanceIndicatorID spiId, CancellationToken ct = default)
+    public Task<Result<SafetyPerformanceIndicator>> GetSafetyPerformanceIndicatorByIdAsync(SafetyPerformanceIndicatorID spiId, CancellationToken ct = default)
     {
         return _repo.GetSafetyPerformanceIndicatorByIdAsync(spiId, ct);
     }
@@ -80,8 +75,7 @@ public class SafetyPerformanceIndicatorDataService : BaseDataService<SafetyPerfo
     /// <summary>
     /// Gets a Safety Performance Indicator by Code
     /// </summary>
-    public Task<Result<SafetyPerformanceIndicator>> GetSafetyPerformanceIndicatorByCodeAsync(
-        string code, CancellationToken ct = default)
+    public Task<Result<SafetyPerformanceIndicator>> GetSafetyPerformanceIndicatorByCodeAsync(string code, CancellationToken ct = default)
     {
         return _repo.GetSafetyPerformanceIndicatorByCodeAsync(code, ct);
     }
@@ -89,8 +83,7 @@ public class SafetyPerformanceIndicatorDataService : BaseDataService<SafetyPerfo
     /// <summary>
     /// Gets Safety Performance Indicators by type
     /// </summary>
-    public Task<Result<List<SafetyPerformanceIndicator>>> GetSafetyPerformanceIndicatorsByTypeAsync(
-        string indicatorType, CancellationToken ct = default)
+    public Task<Result<List<SafetyPerformanceIndicator>>> GetSafetyPerformanceIndicatorsByTypeAsync(string indicatorType, CancellationToken ct = default)
     {
         return _repo.GetSafetyPerformanceIndicatorsByTypeAsync(indicatorType, ct);
     }

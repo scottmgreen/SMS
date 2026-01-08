@@ -1467,4 +1467,310 @@ public static class ParameterNames
 
     private static readonly Lazy<string> _pmSPIDataPointVerifiedDate = new Lazy<string>(() => "@pVerifiedDate");
     public static string pmSPIDataPointVerifiedDate => _pmSPIDataPointVerifiedDate.Value;
+
+    /// <summary>
+    /// SMS Audit Management parameters
+    /// </summary>
+    
+    // SMS Audit Plan parameters
+    private static readonly Lazy<string> _pmSMSAuditPlanId = new Lazy<string>(() => "@pID");
+    public static string pmSMSAuditPlanId => _pmSMSAuditPlanId.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditPlanCode = new Lazy<string>(() => "@pCode");
+    public static string pmSMSAuditPlanCode => _pmSMSAuditPlanCode.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditPlanName = new Lazy<string>(() => "@pName");
+    public static string pmSMSAuditPlanName => _pmSMSAuditPlanName.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditPlanDescription = new Lazy<string>(() => "@pDescription");
+    public static string pmSMSAuditPlanDescription => _pmSMSAuditPlanDescription.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditPlanAuditType = new Lazy<string>(() => "@pAuditType");
+    public static string pmSMSAuditPlanAuditType => _pmSMSAuditPlanAuditType.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditPlanScope = new Lazy<string>(() => "@pScope");
+    public static string pmSMSAuditPlanScope => _pmSMSAuditPlanScope.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditPlanObjectives = new Lazy<string>(() => "@pObjectives");
+    public static string pmSMSAuditPlanObjectives => _pmSMSAuditPlanObjectives.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditPlanPlannedStartDate = new Lazy<string>(() => "@pPlannedStartDate");
+    public static string pmSMSAuditPlanPlannedStartDate => _pmSMSAuditPlanPlannedStartDate.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditPlanPlannedEndDate = new Lazy<string>(() => "@pPlannedEndDate");
+    public static string pmSMSAuditPlanPlannedEndDate => _pmSMSAuditPlanPlannedEndDate.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditPlanLeadAuditor = new Lazy<string>(() => "@pLeadAuditor");
+    public static string pmSMSAuditPlanLeadAuditor => _pmSMSAuditPlanLeadAuditor.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditPlanAuditorTeam = new Lazy<string>(() => "@pAuditorTeam");
+    public static string pmSMSAuditPlanAuditorTeam => _pmSMSAuditPlanAuditorTeam.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditPlanResponsibleDepartment = new Lazy<string>(() => "@pResponsibleDepartment");
+    public static string pmSMSAuditPlanResponsibleDepartment => _pmSMSAuditPlanResponsibleDepartment.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditPlanStatus = new Lazy<string>(() => "@pStatus");
+    public static string pmSMSAuditPlanStatus => _pmSMSAuditPlanStatus.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditPlanPriority = new Lazy<string>(() => "@pPriority");
+    public static string pmSMSAuditPlanPriority => _pmSMSAuditPlanPriority.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditPlanRecurrencePattern = new Lazy<string>(() => "@pRecurrencePattern");
+    public static string pmSMSAuditPlanRecurrencePattern => _pmSMSAuditPlanRecurrencePattern.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditPlanRequiresApproval = new Lazy<string>(() => "@pRequiresApproval");
+    public static string pmSMSAuditPlanRequiresApproval => _pmSMSAuditPlanRequiresApproval.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditPlanApprovedBy = new Lazy<string>(() => "@pApprovedBy");
+    public static string pmSMSAuditPlanApprovedBy => _pmSMSAuditPlanApprovedBy.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditPlanApprovedDate = new Lazy<string>(() => "@pApprovedDate");
+    public static string pmSMSAuditPlanApprovedDate => _pmSMSAuditPlanApprovedDate.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditPlanExpectedDurationHours = new Lazy<string>(() => "@pExpectedDurationHours");
+    public static string pmSMSAuditPlanExpectedDurationHours => _pmSMSAuditPlanExpectedDurationHours.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditPlanNotes = new Lazy<string>(() => "@pNotes");
+    public static string pmSMSAuditPlanNotes => _pmSMSAuditPlanNotes.Value;
+
+    // SMS Audit parameters
+    private static readonly Lazy<string> _pmSMSAuditId = new Lazy<string>(() => "@pID");
+    public static string pmSMSAuditId => _pmSMSAuditId.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditCode = new Lazy<string>(() => "@pCode");
+    public static string pmSMSAuditCode => _pmSMSAuditCode.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditName = new Lazy<string>(() => "@pName");
+    public static string pmSMSAuditName => _pmSMSAuditName.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditDescription = new Lazy<string>(() => "@pDescription");
+    public static string pmSMSAuditDescription => _pmSMSAuditDescription.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditAuditPlanCode = new Lazy<string>(() => "@pAuditPlanCode");
+    public static string pmSMSAuditAuditPlanCode => _pmSMSAuditAuditPlanCode.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditAuditType = new Lazy<string>(() => "@pAuditType");
+    public static string pmSMSAuditAuditType => _pmSMSAuditAuditType.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditScope = new Lazy<string>(() => "@pScope");
+    public static string pmSMSAuditScope => _pmSMSAuditScope.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditObjectives = new Lazy<string>(() => "@pObjectives");
+    public static string pmSMSAuditObjectives => _pmSMSAuditObjectives.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditScheduledStartDate = new Lazy<string>(() => "@pScheduledStartDate");
+    public static string pmSMSAuditScheduledStartDate => _pmSMSAuditScheduledStartDate.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditScheduledEndDate = new Lazy<string>(() => "@pScheduledEndDate");
+    public static string pmSMSAuditScheduledEndDate => _pmSMSAuditScheduledEndDate.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditActualStartDate = new Lazy<string>(() => "@pActualStartDate");
+    public static string pmSMSAuditActualStartDate => _pmSMSAuditActualStartDate.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditActualEndDate = new Lazy<string>(() => "@pActualEndDate");
+    public static string pmSMSAuditActualEndDate => _pmSMSAuditActualEndDate.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditLeadAuditor = new Lazy<string>(() => "@pLeadAuditor");
+    public static string pmSMSAuditLeadAuditor => _pmSMSAuditLeadAuditor.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditAuditorTeam = new Lazy<string>(() => "@pAuditorTeam");
+    public static string pmSMSAuditAuditorTeam => _pmSMSAuditAuditorTeam.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditResponsibleDepartment = new Lazy<string>(() => "@pResponsibleDepartment");
+    public static string pmSMSAuditResponsibleDepartment => _pmSMSAuditResponsibleDepartment.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditStatus = new Lazy<string>(() => "@pStatus");
+    public static string pmSMSAuditStatus => _pmSMSAuditStatus.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditPriority = new Lazy<string>(() => "@pPriority");
+    public static string pmSMSAuditPriority => _pmSMSAuditPriority.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditContactPerson = new Lazy<string>(() => "@pContactPerson");
+    public static string pmSMSAuditContactPerson => _pmSMSAuditContactPerson.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditLocation = new Lazy<string>(() => "@pAuditLocation");
+    public static string pmSMSAuditLocation => _pmSMSAuditLocation.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditExecutiveSummary = new Lazy<string>(() => "@pExecutiveSummary");
+    public static string pmSMSAuditExecutiveSummary => _pmSMSAuditExecutiveSummary.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditNotes = new Lazy<string>(() => "@pNotes");
+    public static string pmSMSAuditNotes => _pmSMSAuditNotes.Value;
+
+    // SMS Audit Finding parameters
+    private static readonly Lazy<string> _pmSMSAuditFindingId = new Lazy<string>(() => "@pID");
+    public static string pmSMSAuditFindingId => _pmSMSAuditFindingId.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditFindingCode = new Lazy<string>(() => "@pCode");
+    public static string pmSMSAuditFindingCode => _pmSMSAuditFindingCode.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditFindingAuditCode = new Lazy<string>(() => "@pAuditCode");
+    public static string pmSMSAuditFindingAuditCode => _pmSMSAuditFindingAuditCode.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditFindingTitle = new Lazy<string>(() => "@pTitle");
+    public static string pmSMSAuditFindingTitle => _pmSMSAuditFindingTitle.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditFindingDescription = new Lazy<string>(() => "@pDescription");
+    public static string pmSMSAuditFindingDescription => _pmSMSAuditFindingDescription.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditFindingSeverity = new Lazy<string>(() => "@pSeverity");
+    public static string pmSMSAuditFindingSeverity => _pmSMSAuditFindingSeverity.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditFindingCategory = new Lazy<string>(() => "@pCategory");
+    public static string pmSMSAuditFindingCategory => _pmSMSAuditFindingCategory.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditFindingStatus = new Lazy<string>(() => "@pStatus");
+    public static string pmSMSAuditFindingStatus => _pmSMSAuditFindingStatus.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditFindingDiscoveredDate = new Lazy<string>(() => "@pDiscoveredDate");
+    public static string pmSMSAuditFindingDiscoveredDate => _pmSMSAuditFindingDiscoveredDate.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditFindingResponsiblePerson = new Lazy<string>(() => "@pResponsiblePerson");
+    public static string pmSMSAuditFindingResponsiblePerson => _pmSMSAuditFindingResponsiblePerson.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditFindingTargetResolutionDate = new Lazy<string>(() => "@pTargetResolutionDate");
+    public static string pmSMSAuditFindingTargetResolutionDate => _pmSMSAuditFindingTargetResolutionDate.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditFindingActualResolutionDate = new Lazy<string>(() => "@pActualResolutionDate");
+    public static string pmSMSAuditFindingActualResolutionDate => _pmSMSAuditFindingActualResolutionDate.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditFindingCorrectiveAction = new Lazy<string>(() => "@pCorrectiveAction");
+    public static string pmSMSAuditFindingCorrectiveAction => _pmSMSAuditFindingCorrectiveAction.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditFindingRootCauseAnalysis = new Lazy<string>(() => "@pRootCauseAnalysis");
+    public static string pmSMSAuditFindingRootCauseAnalysis => _pmSMSAuditFindingRootCauseAnalysis.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditFindingVerificationRequired = new Lazy<string>(() => "@pVerificationRequired");
+    public static string pmSMSAuditFindingVerificationRequired => _pmSMSAuditFindingVerificationRequired.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditFindingVerifiedBy = new Lazy<string>(() => "@pVerifiedBy");
+    public static string pmSMSAuditFindingVerifiedBy => _pmSMSAuditFindingVerifiedBy.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditFindingVerificationDate = new Lazy<string>(() => "@pVerificationDate");
+    public static string pmSMSAuditFindingVerificationDate => _pmSMSAuditFindingVerificationDate.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditFindingNotes = new Lazy<string>(() => "@pNotes");
+    public static string pmSMSAuditFindingNotes => _pmSMSAuditFindingNotes.Value;
+
+    // SMS Audit Evidence parameters
+    private static readonly Lazy<string> _pmSMSAuditEvidenceId = new Lazy<string>(() => "@pID");
+    public static string pmSMSAuditEvidenceId => _pmSMSAuditEvidenceId.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceCode = new Lazy<string>(() => "@pCode");
+    public static string pmSMSAuditEvidenceCode => _pmSMSAuditEvidenceCode.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceAuditCode = new Lazy<string>(() => "@pAuditCode");
+    public static string pmSMSAuditEvidenceAuditCode => _pmSMSAuditEvidenceAuditCode.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceFindingCode = new Lazy<string>(() => "@pFindingCode");
+    public static string pmSMSAuditEvidenceFindingCode => _pmSMSAuditEvidenceFindingCode.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceTitle = new Lazy<string>(() => "@pTitle");
+    public static string pmSMSAuditEvidenceTitle => _pmSMSAuditEvidenceTitle.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceDescription = new Lazy<string>(() => "@pDescription");
+    public static string pmSMSAuditEvidenceDescription => _pmSMSAuditEvidenceDescription.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceType = new Lazy<string>(() => "@pEvidenceType");
+    public static string pmSMSAuditEvidenceType => _pmSMSAuditEvidenceType.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceSource = new Lazy<string>(() => "@pSource");
+    public static string pmSMSAuditEvidenceSource => _pmSMSAuditEvidenceSource.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceCollectedBy = new Lazy<string>(() => "@pCollectedBy");
+    public static string pmSMSAuditEvidenceCollectedBy => _pmSMSAuditEvidenceCollectedBy.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceCollectionDate = new Lazy<string>(() => "@pCollectionDate");
+    public static string pmSMSAuditEvidenceCollectionDate => _pmSMSAuditEvidenceCollectionDate.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceFilePath = new Lazy<string>(() => "@pFilePath");
+    public static string pmSMSAuditEvidenceFilePath => _pmSMSAuditEvidenceFilePath.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceFileSize = new Lazy<string>(() => "@pFileSize");
+    public static string pmSMSAuditEvidenceFileSize => _pmSMSAuditEvidenceFileSize.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceContentType = new Lazy<string>(() => "@pContentType");
+    public static string pmSMSAuditEvidenceContentType => _pmSMSAuditEvidenceContentType.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceStorageLocation = new Lazy<string>(() => "@pStorageLocation");
+    public static string pmSMSAuditEvidenceStorageLocation => _pmSMSAuditEvidenceStorageLocation.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceConfidentialityLevel = new Lazy<string>(() => "@pConfidentialityLevel");
+    public static string pmSMSAuditEvidenceConfidentialityLevel => _pmSMSAuditEvidenceConfidentialityLevel.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceRetentionPeriodMonths = new Lazy<string>(() => "@pRetentionPeriodMonths");
+    public static string pmSMSAuditEvidenceRetentionPeriodMonths => _pmSMSAuditEvidenceRetentionPeriodMonths.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceRetentionReason = new Lazy<string>(() => "@pRetentionReason");
+    public static string pmSMSAuditEvidenceRetentionReason => _pmSMSAuditEvidenceRetentionReason.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceIsVerified = new Lazy<string>(() => "@pIsVerified");
+    public static string pmSMSAuditEvidenceIsVerified => _pmSMSAuditEvidenceIsVerified.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceVerifiedBy = new Lazy<string>(() => "@pVerifiedBy");
+    public static string pmSMSAuditEvidenceVerifiedBy => _pmSMSAuditEvidenceVerifiedBy.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceVerificationDate = new Lazy<string>(() => "@pVerificationDate");
+    public static string pmSMSAuditEvidenceVerificationDate => _pmSMSAuditEvidenceVerificationDate.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceIsArchived = new Lazy<string>(() => "@pIsArchived");
+    public static string pmSMSAuditEvidenceIsArchived => _pmSMSAuditEvidenceIsArchived.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceArchivedDate = new Lazy<string>(() => "@pArchivedDate");
+    public static string pmSMSAuditEvidenceArchivedDate => _pmSMSAuditEvidenceArchivedDate.Value;
+
+    private static readonly Lazy<string> _pmSMSAuditEvidenceNotes = new Lazy<string>(() => "@pNotes");
+    public static string pmSMSAuditEvidenceNotes => _pmSMSAuditEvidenceNotes.Value;
+
+    // Common filter parameters for SMS Audit Management
+    private static readonly Lazy<string> _pmStatusFilter = new Lazy<string>(() => "@pStatusFilter");
+    public static string pmStatusFilter => _pmStatusFilter.Value;
+
+    private static readonly Lazy<string> _pmAuditTypeFilter = new Lazy<string>(() => "@pAuditTypeFilter");
+    public static string pmAuditTypeFilter => _pmAuditTypeFilter.Value;
+
+    private static readonly Lazy<string> _pmDepartmentFilter = new Lazy<string>(() => "@pDepartmentFilter");
+    public static string pmDepartmentFilter => _pmDepartmentFilter.Value;
+
+    private static readonly Lazy<string> _pmAuditorFilter = new Lazy<string>(() => "@pAuditorFilter");
+    public static string pmAuditorFilter => _pmAuditorFilter.Value;
+
+    private static readonly Lazy<string> _pmStartDateFrom = new Lazy<string>(() => "@pStartDateFrom");
+    public static string pmStartDateFrom => _pmStartDateFrom.Value;
+
+    private static readonly Lazy<string> _pmStartDateTo = new Lazy<string>(() => "@pStartDateTo");
+    public static string pmStartDateTo => _pmStartDateTo.Value;
+
+    private static readonly Lazy<string> _pmIncludeFindings = new Lazy<string>(() => "@pIncludeFindings");
+    public static string pmIncludeFindings => _pmIncludeFindings.Value;
+
+    private static readonly Lazy<string> _pmIncludeEvidence = new Lazy<string>(() => "@pIncludeEvidence");
+    public static string pmIncludeEvidence => _pmIncludeEvidence.Value;
+
+    private static readonly Lazy<string> _pmSeverityFilter = new Lazy<string>(() => "@pSeverityFilter");
+    public static string pmSeverityFilter => _pmSeverityFilter.Value;
+
+    private static readonly Lazy<string> _pmEvidenceTypeFilter = new Lazy<string>(() => "@pEvidenceTypeFilter");
+    public static string pmEvidenceTypeFilter => _pmEvidenceTypeFilter.Value;
+
+    private static readonly Lazy<string> _pmConfidentialityLevel = new Lazy<string>(() => "@pConfidentialityLevel");
+    public static string pmConfidentialityLevel => _pmConfidentialityLevel.Value;
+
+    private static readonly Lazy<string> _pmRetentionReasonFilter = new Lazy<string>(() => "@pRetentionReasonFilter");
+    public static string pmRetentionReasonFilter => _pmRetentionReasonFilter.Value;
+
+    private static readonly Lazy<string> _pmStartDate = new Lazy<string>(() => "@pStartDate");
+    public static string pmStartDate => _pmStartDate.Value;
+
+    private static readonly Lazy<string> _pmEndDate = new Lazy<string>(() => "@pEndDate");
+    public static string pmEndDate => _pmEndDate.Value;
+
+    private static readonly Lazy<string> _pmScheduledBy = new Lazy<string>(() => "@pScheduledBy");
+    public static string pmScheduledBy => _pmScheduledBy.Value;
+
+    private static readonly Lazy<string> _pmDeletedBy = new Lazy<string>(() => "@pDeletedBy");
+    public static string pmDeletedBy => _pmDeletedBy.Value;
+
+    private static readonly Lazy<string> _pmDeleteReason = new Lazy<string>(() => "@pDeleteReason");
+    public static string pmDeleteReason => _pmDeleteReason.Value;
 }

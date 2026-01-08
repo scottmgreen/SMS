@@ -104,9 +104,9 @@
                             </RadzenCard>
 
                             <!-- Machine (Equipment) -->
-                            <RadzenCard Style="border-left: 4px solid var(--rz-success);">
+                            <RadzenCard Style="border-left: 4px solid var(--rz-primary);">
                                 <RadzenStack Gap="0.5rem" Style="padding: 0.5rem;">
-                                    <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-success); margin: 0;">
+                                    <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
                                         <RadzenIcon Icon="settings" Style="margin-right: 0.5rem;" />
                                         Machine (Equipment)
                                     </RadzenText>
@@ -120,9 +120,9 @@
                             </RadzenCard>
 
                             <!-- Method (Procedures) -->
-                            <RadzenCard Style="border-left: 4px solid var(--rz-info);">
+                            <RadzenCard Style="border-left: 4px solid var(--rz-primary);">
                                 <RadzenStack Gap="0.5rem" Style="padding: 0.5rem;">
-                                    <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-info); margin: 0;">
+                                    <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
                                         <RadzenIcon Icon="list_alt" Style="margin-right: 0.5rem;" />
                                         Method (Procedures)
                                     </RadzenText>
@@ -136,9 +136,9 @@
                             </RadzenCard>
 
                             <!-- Material (Resources) -->
-                            <RadzenCard Style="border-left: 4px solid var(--rz-warning);">
+                            <RadzenCard Style="border-left: 4px solid var(--rz-primary);">
                                 <RadzenStack Gap="0.5rem" Style="padding: 0.5rem;">
-                                    <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-warning); margin: 0;">
+                                    <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
                                         <RadzenIcon Icon="inventory" Style="margin-right: 0.5rem;" />
                                         Material (Resources)
                                     </RadzenText>
@@ -152,9 +152,9 @@
                             </RadzenCard>
 
                             <!-- Milieu (Environment) -->
-                            <RadzenCard Style="border-left: 4px solid var(--rz-danger);">
+                            <RadzenCard Style="border-left: 4px solid var(--rz-primary);">
                                 <RadzenStack Gap="0.5rem" Style="padding: 0.5rem;">
-                                    <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-danger); margin: 0;">
+                                    <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
                                         <RadzenIcon Icon="public" Style="margin-right: 0.5rem;" />
                                         Milieu (Environment)
                                     </RadzenText>
@@ -227,8 +227,8 @@
                                             {
                                                 <RadzenDataGrid Data="@StakeholderGroups" TItem="SMSStakeholderGroup" AllowFiltering="false" AllowPaging="false" Style="height: 300px;">
                                                     <Columns>
-                                                        <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="Name" Title="Group Name" Width="50%" />
-                                                        <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="Description" Title="Description" Width="30%" />
+                                                        <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="Name" Title="Group Name" Width="30%" />
+                                                        <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="Description" Title="Description" Width="60%" />
                                                         <RadzenDataGridColumn TItem="SMSStakeholderGroup" Title="Action" Width="20%">
                                                             <Template Context="group">
                                                                 @if (Step1.SelectedStakeholderGroupIds != null && !Step1.SelectedStakeholderGroupIds.Contains(group.Code))
@@ -270,7 +270,7 @@
                                                         var stakeholder = AvailableStakeholders?.FirstOrDefault(s => s.Code == stakeholderId);
                                                         if (stakeholder != null)
                                                         {
-                                                            <RadzenBadge Text="@stakeholder.DisplayName" BadgeStyle="BadgeStyle.Info" Style="margin: 0.2rem;" />
+                                                            <RadzenBadge Text="@stakeholder.DisplayName" BadgeStyle="BadgeStyle.Primary" Style="margin: 0.2rem;" />
                                                         }
                                                     }
                                                 }
@@ -290,8 +290,8 @@
                                             {
                                                 <RadzenDataGrid Data="@AvailableStakeholders" TItem="SMSStakeholderUser" AllowFiltering="false" AllowPaging="false" Style="height: 300px;">
                                                     <Columns>
-                                                        <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="DisplayName" Title="Name" Width="40%" />
-                                                        <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="Organization" Title="Organization" Width="30%" />
+                                                        <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="DisplayName" Title="Name" Width="30%" />
+                                                        <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="Organization" Title="Organization" Width="60%" />
                                                         <RadzenDataGridColumn TItem="SMSStakeholderUser" Title="Action" Width="20%">
                                                             <Template Context="stakeholder">
                                                                 @if (Step1.SelectedIndividualStakeholderIds != null && !Step1.SelectedIndividualStakeholderIds.Contains(stakeholder.Code))

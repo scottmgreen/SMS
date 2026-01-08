@@ -85,6 +85,9 @@ public static class DomainErrors
         public static Error PasswordUpdateFailed => new Error("SMSApplicationUser.PasswordUpdateFailed", "Failed to update SMS Application User password.");
     }
 
+    /// <summary>
+    /// Contains SMS application group errors.
+    /// </summary>
     public static class SMSApplicationGroupError
     {
         public static Error NullOrEmpty => new Error("SMSApplicationGroup.NullOrEmpty", "The SMS Application Group is required.");
@@ -880,5 +883,123 @@ public static class DomainErrors
         public static Error InsufficientData => new Error("SPI.InsufficientData", "Insufficient data points for trend analysis.");
         public static Error AlertConfigurationFailed => new Error("SPI.AlertConfigurationFailed", "Failed to configure SPI alerts.");
         public static Error DataValidationFailed => new Error("SPI.DataValidationFailed", "Data validation failed for the SPI measurement.");
+    }
+
+    /// <summary>
+    /// Contains SMS Audit Plan related errors.
+    /// </summary>
+    public static class SMSAuditPlanError
+    {
+        public static Error NullOrEmpty => new Error("SMSAuditPlan.NullOrEmpty", "The SMS Audit Plan is required.");
+        public static Error CodeRequired => new Error("SMSAuditPlan.CodeRequired", "The SMS Audit Plan Code is required.");
+        public static Error NameRequired => new Error("SMSAuditPlan.NameRequired", "The SMS Audit Plan Name is required.");
+        public static Error AuditTypeRequired => new Error("SMSAuditPlan.AuditTypeRequired", "The Audit Type is required.");
+        public static Error LeadAuditorRequired => new Error("SMSAuditPlan.LeadAuditorRequired", "The Lead Auditor is required.");
+        public static Error InvalidPlannedDates => new Error("SMSAuditPlan.InvalidPlannedDates", "The planned start date must be before the planned end date.");
+        public static Error InvalidStatus => new Error("SMSAuditPlan.InvalidStatus", "The SMS Audit Plan Status is invalid.");
+        public static Error InvalidAuditType => new Error("SMSAuditPlan.InvalidAuditType", "The Audit Type is invalid.");
+        public static Error InvalidCode => new Error("SMSAuditPlan.InvalidCode", "The SMS Audit Plan Code is invalid.");
+        public static Error NotFound => new Error("SMSAuditPlan.NotFound", "The SMS Audit Plan was not found.");
+        public static Error CreateFailed => new Error("SMSAuditPlan.CreateFailed", "Failed to create the SMS Audit Plan.");
+        public static Error UpdateFailed => new Error("SMSAuditPlan.UpdateFailed", "Failed to update the SMS Audit Plan.");
+        public static Error DeleteFailed => new Error("SMSAuditPlan.DeleteFailed", "Failed to delete the SMS Audit Plan.");
+        public static Error AlreadyApproved => new Error("SMSAuditPlan.AlreadyApproved", "The SMS Audit Plan is already approved.");
+        public static Error ApprovalRequired => new Error("SMSAuditPlan.ApprovalRequired", "The SMS Audit Plan must be approved before scheduling.");
+        public static Error CannotModifyApproved => new Error("SMSAuditPlan.CannotModifyApproved", "Cannot modify an approved SMS Audit Plan.");
+        public static Error SchedulingFailed => new Error("SMSAuditPlan.SchedulingFailed", "Failed to schedule audit from the audit plan.");
+        public static Error InvalidScheduleDate => new Error("SMSAuditPlan.InvalidScheduleDate", "Cannot schedule audit in the past.");
+        public static Error StatusUpdateFailed => new Error("SMSAuditPlan.StatusUpdateFailed", "Failed to update the SMS Audit Plan status.");
+    }
+
+    /// <summary>
+    /// Contains SMS Audit related errors.
+    /// </summary>
+    public static class SMSAuditError
+    {
+        public static Error NullOrEmpty => new Error("SMSAudit.NullOrEmpty", "The SMS Audit is required.");
+        public static Error CodeRequired => new Error("SMSAudit.CodeRequired", "The SMS Audit Code is required.");
+        public static Error NameRequired => new Error("SMSAudit.NameRequired", "The SMS Audit Name is required.");
+        public static Error AuditTypeRequired => new Error("SMSAudit.AuditTypeRequired", "The Audit Type is required.");
+        public static Error LeadAuditorRequired => new Error("SMSAudit.LeadAuditorRequired", "The Lead Auditor is required.");
+        public static Error InvalidScheduledDates => new Error("SMSAudit.InvalidScheduledDates", "The scheduled start date must be before the scheduled end date.");
+        public static Error InvalidActualDates => new Error("SMSAudit.InvalidActualDates", "The actual start date must be before the actual end date.");
+        public static Error InvalidStatus => new Error("SMSAudit.InvalidStatus", "The SMS Audit Status is invalid.");
+        public static Error InvalidAuditType => new Error("SMSAudit.InvalidAuditType", "The Audit Type is invalid.");
+        public static Error InvalidCurrentPhase => new Error("SMSAudit.InvalidCurrentPhase", "The Current Phase is invalid.");
+        public static Error InvalidCode => new Error("SMSAudit.InvalidCode", "The SMS Audit Code is invalid.");
+        public static Error NotFound => new Error("SMSAudit.NotFound", "The SMS Audit was not found.");
+        public static Error CreateFailed => new Error("SMSAudit.CreateFailed", "Failed to create the SMS Audit.");
+        public static Error UpdateFailed => new Error("SMSAudit.UpdateFailed", "Failed to update the SMS Audit.");
+        public static Error DeleteFailed => new Error("SMSAudit.DeleteFailed", "Failed to delete the SMS Audit.");
+        public static Error StartFailed => new Error("SMSAudit.StartFailed", "Failed to start the SMS Audit.");
+        public static Error CompletionFailed => new Error("SMSAudit.CompletionFailed", "Failed to complete the SMS Audit.");
+        public static Error CannotStartNonScheduled => new Error("SMSAudit.CannotStartNonScheduled", "Cannot start a non-scheduled audit.");
+        public static Error CannotCompleteNonStarted => new Error("SMSAudit.CannotCompleteNonStarted", "Cannot complete an audit that has not been started.");
+        public static Error CannotModifyCompleted => new Error("SMSAudit.CannotModifyCompleted", "Cannot modify a completed SMS Audit.");
+        public static Error AlreadyStarted => new Error("SMSAudit.AlreadyStarted", "The SMS Audit has already been started.");
+        public static Error AlreadyCompleted => new Error("SMSAudit.AlreadyCompleted", "The SMS Audit has already been completed.");
+        public static Error AddFindingFailed => new Error("SMSAudit.AddFindingFailed", "Failed to add finding to the SMS Audit.");
+        public static Error StatusUpdateFailed => new Error("SMSAudit.StatusUpdateFailed", "Failed to update the SMS Audit status.");
+    }
+
+    /// <summary>
+    /// Contains SMS Audit Finding related errors.
+    /// </summary>
+    public static class SMSAuditFindingError
+    {
+        public static Error NullOrEmpty => new Error("SMSAuditFinding.NullOrEmpty", "The SMS Audit Finding is required.");
+        public static Error CodeRequired => new Error("SMSAuditFinding.CodeRequired", "The SMS Audit Finding Code is required.");
+        public static Error AuditCodeRequired => new Error("SMSAuditFinding.AuditCodeRequired", "The Audit Code is required.");
+        public static Error DescriptionRequired => new Error("SMSAuditFinding.DescriptionRequired", "The Finding Description is required.");
+        public static Error SeverityRequired => new Error("SMSAuditFinding.SeverityRequired", "The Severity is required.");
+        public static Error ResponsiblePersonRequired => new Error("SMSAuditFinding.ResponsiblePersonRequired", "The Responsible Person is required for corrective actions.");
+        public static Error TargetDateRequired => new Error("SMSAuditFinding.TargetDateRequired", "The Target Completion Date is required for corrective actions.");
+        public static Error InvalidSeverity => new Error("SMSAuditFinding.InvalidSeverity", "The Severity level is invalid.");
+        public static Error InvalidStatus => new Error("SMSAuditFinding.InvalidStatus", "The SMS Audit Finding Status is invalid.");
+        public static Error InvalidFindingType => new Error("SMSAuditFinding.InvalidFindingType", "The Finding Type is invalid.");
+        public static Error InvalidTargetDate => new Error("SMSAuditFinding.InvalidTargetDate", "The Target Completion Date cannot be in the past.");
+        public static Error InvalidCode => new Error("SMSAuditFinding.InvalidCode", "The SMS Audit Finding Code is invalid.");
+        public static Error NotFound => new Error("SMSAuditFinding.NotFound", "The SMS Audit Finding was not found.");
+        public static Error CreateFailed => new Error("SMSAuditFinding.CreateFailed", "Failed to create the SMS Audit Finding.");
+        public static Error UpdateFailed => new Error("SMSAuditFinding.UpdateFailed", "Failed to update the SMS Audit Finding.");
+        public static Error DeleteFailed => new Error("SMSAuditFinding.DeleteFailed", "Failed to delete the SMS Audit Finding.");
+        public static Error AssignmentFailed => new Error("SMSAuditFinding.AssignmentFailed", "Failed to assign corrective action.");
+        public static Error CompletionFailed => new Error("SMSAuditFinding.CompletionFailed", "Failed to complete corrective action.");
+        public static Error VerificationFailed => new Error("SMSAuditFinding.VerificationFailed", "Failed to verify the finding.");
+        public static Error CannotModifyCompleted => new Error("SMSAuditFinding.CannotModifyCompleted", "Cannot modify a completed finding.");
+        public static Error CannotVerifyIncomplete => new Error("SMSAuditFinding.CannotVerifyIncomplete", "Cannot verify an incomplete finding.");
+        public static Error CannotAssignToOpen => new Error("SMSAuditFinding.CannotAssignToOpen", "Can only assign corrective actions to open findings.");
+        public static Error StatusUpdateFailed => new Error("SMSAuditFinding.StatusUpdateFailed", "Failed to update the finding status.");
+    }
+
+    /// <summary>
+    /// Contains SMS Audit Evidence related errors.
+    /// </summary>
+    public static class SMSAuditEvidenceError
+    {
+        public static Error NullOrEmpty => new Error("SMSAuditEvidence.NullOrEmpty", "The SMS Audit Evidence is required.");
+        public static Error CodeRequired => new Error("SMSAuditEvidence.CodeRequired", "The SMS Audit Evidence Code is required.");
+        public static Error AuditCodeRequired => new Error("SMSAuditEvidence.AuditCodeRequired", "The Audit Code is required.");
+        public static Error TitleRequired => new Error("SMSAuditEvidence.TitleRequired", "The Evidence Title is required.");
+        public static Error DescriptionRequired => new Error("SMSAuditEvidence.DescriptionRequired", "The Evidence Description is required.");
+        public static Error EvidenceTypeRequired => new Error("SMSAuditEvidence.EvidenceTypeRequired", "The Evidence Type is required.");
+        public static Error CollectedByRequired => new Error("SMSAuditEvidence.CollectedByRequired", "The Collected By field is required.");
+        public static Error InvalidEvidenceType => new Error("SMSAuditEvidence.InvalidEvidenceType", "The Evidence Type is invalid.");
+        public static Error InvalidConfidentialityLevel => new Error("SMSAuditEvidence.InvalidConfidentialityLevel", "The Confidentiality Level is invalid.");
+        public static Error InvalidRetentionPeriod => new Error("SMSAuditEvidence.InvalidRetentionPeriod", "The Retention Period must be greater than 0.");
+        public static Error InvalidFileSize => new Error("SMSAuditEvidence.InvalidFileSize", "The File Size must be greater than 0 for file evidence.");
+        public static Error FileDataRequired => new Error("SMSAuditEvidence.FileDataRequired", "File data is required for file-based evidence.");
+        public static Error InvalidCode => new Error("SMSAuditEvidence.InvalidCode", "The SMS Audit Evidence Code is invalid.");
+        public static Error NotFound => new Error("SMSAuditEvidence.NotFound", "The SMS Audit Evidence was not found.");
+        public static Error CreateFailed => new Error("SMSAuditEvidence.CreateFailed", "Failed to create the SMS Audit Evidence.");
+        public static Error UpdateFailed => new Error("SMSAuditEvidence.UpdateFailed", "Failed to update the SMS Audit Evidence.");
+        public static Error DeleteFailed => new Error("SMSAuditEvidence.DeleteFailed", "Failed to delete the SMS Audit Evidence.");
+        public static Error VerificationFailed => new Error("SMSAuditEvidence.VerificationFailed", "Failed to verify the evidence.");
+        public static Error ArchivingFailed => new Error("SMSAuditEvidence.ArchivingFailed", "Failed to archive the evidence.");
+        public static Error LinkingFailed => new Error("SMSAuditEvidence.LinkingFailed", "Failed to link evidence to finding.");
+        public static Error CannotModifyArchived => new Error("SMSAuditEvidence.CannotModifyArchived", "Cannot modify archived evidence.");
+        public static Error AlreadyArchived => new Error("SMSAuditEvidence.AlreadyArchived", "The evidence is already archived.");
+        public static Error AlreadyVerified => new Error("SMSAuditEvidence.AlreadyVerified", "The evidence is already verified.");
+        public static Error StorageLocationRequired => new Error("SMSAuditEvidence.StorageLocationRequired", "The Storage Location is required for external file references.");
     }
 }

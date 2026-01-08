@@ -2,6 +2,7 @@
 using SMS_Infrastructure.Services;
 using SMS_Domain.Interfaces;
 using Infrastructure.Interfaces;
+using Infrastructure.Persistence;
 
 namespace SMS_Infrastructure.Configuration;
 
@@ -52,6 +53,12 @@ internal static class ServiceCollectionExtensions
         services.AddScoped<SMSStakeholderUserRepository>();
         services.AddScoped<SMSUserRoleRepository>();
 
+        // SMS Audit Management Repositories (NEW) - NOW AVAILABLE
+        services.AddScoped<SMSAuditPlanRepository>();
+        services.AddScoped<SMSAuditRepository>();
+        services.AddScoped<SMSAuditFindingRepository>();
+        services.AddScoped<SMSAuditEvidenceRepository>();
+
         // SMS User Data Services
         services.AddScoped<SMSApplicationUserDataService>();
         services.AddScoped<SMSOrganizationalUserDataService>();
@@ -76,6 +83,12 @@ internal static class ServiceCollectionExtensions
         services.AddScoped<ReportValidationDataService>();
         services.AddScoped<ScoringPanelDataService>();
         services.AddScoped<SafetyPerformanceIndicatorDataService>();
+
+        // SMS Audit Management Data Services (NEW) - NOW ENABLED WITH PERSISTENCE LAYER
+        services.AddScoped<SMSAuditPlanDataService>();
+        services.AddScoped<SMSAuditDataService>();
+        services.AddScoped<SMSAuditFindingDataService>();
+        services.AddScoped<SMSAuditEvidenceDataService>();
 
         return services;
     }

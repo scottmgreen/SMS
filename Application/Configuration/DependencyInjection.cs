@@ -78,6 +78,10 @@ namespace SMS_Application.Configuration
             services.AddScoped<ScoringPanelService>();
             services.AddScoped<SafetyPerformanceIndicatorService>();
 
+            // SMS Audit Management Services (NEW) - TEMPORARILY DISABLED UNTIL INFRASTRUCTURE IS READY
+            // services.AddScoped<SMSAuditPlanService>();
+            // services.AddScoped<SMSAuditService>();
+
             return services;
         }
     }

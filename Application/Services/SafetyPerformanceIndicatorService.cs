@@ -154,45 +154,45 @@ public class SafetyPerformanceIndicatorService
     /// <summary>
     /// Adds data point to SPI
     /// </summary>
-    public async Task<Result<SafetyPerformanceIndicator>> AddDataPointAsync(
-        string spiId, decimal value, DateTime measurementDate, string dataSource,
-        string enteredBy, string? notes = null, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Adding data point to SPI ID: {Id}, Value: {Value}", spiId, value);
+    //public async Task<Result<SafetyPerformanceIndicator>> AddDataPointAsync(
+    //    string spiId, decimal value, DateTime measurementDate, string dataSource,
+    //    string enteredBy, string? notes = null, CancellationToken ct = default)
+    //{
+    //    try
+    //    {
+    //        _logger.LogInformation("Adding data point to SPI ID: {Id}, Value: {Value}", spiId, value);
 
-            // Get existing SPI
-            var existingResult = await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(spiId, ct);
-            if (existingResult.IsFailure)
-            {
-                return existingResult;
-            }
+    //        // Get existing SPI
+    //        var existingResult = await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(spiId, ct);
+    //        if (existingResult.IsFailure)
+    //        {
+    //            return existingResult;
+    //        }
 
-            var spi = existingResult.Value;
+    //        var spi = existingResult.Value;
 
-            // Add data point using domain method
-            var addResult = spi.AddDataPoint(value, measurementDate, dataSource, enteredBy);
-            if (addResult.IsFailure)
-            {
-                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(addResult.Error);
-            }
+    //        // Add data point using domain method
+    //        var addResult = _dataService.AddSPIDataPointAsync(spi.Code,       //spi.AddDataPoint(value, measurementDate, dataSource, enteredBy);
+    //        if (addResult.IsFailure)
+    //        {
+    //            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(addResult.Error);
+    //        }
 
-            // Set notes if provided
-            if (!string.IsNullOrEmpty(notes) && spi.DataPoints.Any())
-            {
-                spi.DataPoints.Last().Notes = notes;
-            }
+    //        // Set notes if provided
+    //        if (!string.IsNullOrEmpty(notes) && spi.DataPoints.Any())
+    //        {
+    //            spi.DataPoints.Last().Notes = notes;
+    //        }
 
-            // Save to database
-            return await _dataService.UpdateSafetyPerformanceIndicatorAsync(spi, ct);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error adding data point to SPI ID: {Id}", spiId);
-            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.DataPointAddFailed);
-        }
-    }
+    //        // Save to database
+    //        return await _dataService.UpdateSafetyPerformanceIndicatorAsync(spi, ct);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogError(ex, "Error adding data point to SPI ID: {Id}", spiId);
+    //        return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.DataPointAddFailed);
+    //    }
+    //}
 
     /// <summary>
     /// Schedules SPI review

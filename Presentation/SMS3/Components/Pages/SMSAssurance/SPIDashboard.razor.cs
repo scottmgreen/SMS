@@ -151,33 +151,77 @@ public partial class SPIDashboard : ComponentBase
             if (selectedSPI == null) return;
 
             var trendAnalysis = DashboardData.TrendAnalysis?.FirstOrDefault(t => t.SPIId == selectedSPI.SPIId);
-            if (trendAnalysis != null)
+            if (trendAnalysis != null && trendAnalysis.DataPoints?.Any() == true)
             {
-                TrendData = trendAnalysis.DataPoints.OrderBy(dp => dp.MeasurementDate).ToList();
+                // Filter out invalid data points that could cause chart issues
+                TrendData = trendAnalysis.DataPoints
+                    .Where(dp => dp.MeasurementDate != default && dp.Value >= 0)
+                    .OrderBy(dp => dp.MeasurementDate)
+                    .ToList();
+
+                // Only include target data if targets exist and are valid
                 TrendTargetData = trendAnalysis.DataPoints
-                    .Where(dp => dp.Target.HasValue)
+                    .Where(dp => dp.Target.HasValue && dp.Target.Value >= 0 && dp.MeasurementDate != default)
                     .Select(dp => new SPIDataPointSummary
                     {
                         Period = dp.Period,
                         MeasurementDate = dp.MeasurementDate,
-                        Value = dp.Target.Value
+                        Value = dp.Target!.Value  // We know it's not null due to the Where clause
                     })
+                    .OrderBy(dp => dp.MeasurementDate)
                     .ToList();
+                
+                // If no valid data, clear the collections
+                if (!TrendData.Any())
+                {
+                    TrendData = null;
+                    TrendTargetData = null;
+                }
+                else if (!TrendTargetData.Any())
+                {
+                    TrendTargetData = null;
+                }
+            }
+            else
+            {
+                TrendData = null;
+                TrendTargetData = null;
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading trend data for SPI: {SPIName}", SelectedTrendSPI);
+            TrendData = null;
+            TrendTargetData = null;
         }
     }
 
     private async Task LoadCategoryDataAsync()
     {
-        if (DashboardData?.PerformanceSummary?.SPIsByType?.Any() == true)
+        try
         {
-            CategoryData = DashboardData.PerformanceSummary.SPIsByType
-                .Select(kvp => new CategoryDataPoint(kvp.Key, kvp.Value))
-                .ToList();
+            if (DashboardData?.PerformanceSummary?.SPIsByType?.Any() == true)
+            {
+                CategoryData = DashboardData.PerformanceSummary.SPIsByType
+                    .Where(kvp => !string.IsNullOrEmpty(kvp.Key) && kvp.Value > 0)
+                    .Select(kvp => new CategoryDataPoint(kvp.Key, kvp.Value))
+                    .ToList();
+                
+                // If no valid data, clear the collection
+                if (!CategoryData.Any())
+                {
+                    CategoryData = null;
+                }
+            }
+            else
+            {
+                CategoryData = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading category data");
+            CategoryData = null;
         }
     }
 
@@ -373,6 +417,12 @@ public partial class SPIDashboard : ComponentBase
     {
         if (!spiCard.CurrentValue.HasValue || !spiCard.TargetValue.HasValue) 
             return "";
+
+        // Handle division by zero case
+        if (spiCard.TargetValue.Value == 0)
+        {
+            return spiCard.CurrentValue.Value == 0 ? "Target met" : "Target not set";
+        }
 
         var percentage = (spiCard.CurrentValue.Value / spiCard.TargetValue.Value * 100m);
         return $"{percentage:F1}% of target";

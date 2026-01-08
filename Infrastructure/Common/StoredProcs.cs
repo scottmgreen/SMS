@@ -40,8 +40,8 @@
         private static readonly Lazy<string> _pr_SMSApplicationUser_GetByRole = new(() => "pr_SMSApplicationUser_GetByRole");
         public static string pr_SMSApplicationUser_GetByRole => _pr_SMSApplicationUser_GetByRole.Value;
 
-        private static readonly Lazy<string> _pr_SMSApplicationUser_GetByPermissionLevel = new(() => "pr_SMSApplicationUser_GetByPermissionLevel");
-        public static string pr_SMSApplicationUser_GetByPermissionLevel => _pr_SMSApplicationUser_GetByPermissionLevel.Value;
+        //private static readonly Lazy<string> _pr_SMSApplicationUser_GetByPermissionLevel = new(() => "pr_SMSApplicationUser_GetByPermissionLevel");
+        //public static string pr_SMSApplicationUser_GetByPermissionLevel => _pr_SMSApplicationUser_GetByPermissionLevel.Value;
         
         private static readonly Lazy<string> _pr_SMSApplicationUser_GetActiveUsers = new(() => "pr_SMSApplicationUser_GetActiveUsers");
         public static string pr_SMSApplicationUser_GetActiveUsers => _pr_SMSApplicationUser_GetActiveUsers.Value;
@@ -875,6 +875,170 @@
 
         private static readonly Lazy<string> _pr_SPIDataPoint_Delete = new(() => "pr_SPIDataPoint_Delete");
         public static string pr_SPIDataPoint_Delete => _pr_SPIDataPoint_Delete.Value;
+        #endregion
+
+        #region SMS Audit Management CRUD Operations
+        /// <summary>
+        /// SMS Audit Plan CRUD Operations
+        /// </summary>
+        private static readonly Lazy<string> _pr_SMSAuditPlan_Insert = new(() => "pr_SMSAuditPlan_Insert");
+        public static string pr_SMSAuditPlan_Insert => _pr_SMSAuditPlan_Insert.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditPlan_GetById = new(() => "pr_SMSAuditPlan_GetById");
+        public static string pr_SMSAuditPlan_GetById => _pr_SMSAuditPlan_GetById.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditPlan_GetByCode = new(() => "pr_SMSAuditPlan_GetByCode");
+        public static string pr_SMSAuditPlan_GetByCode => _pr_SMSAuditPlan_GetByCode.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditPlan_GetAll = new(() => "pr_SMSAuditPlan_GetAll");
+        public static string pr_SMSAuditPlan_GetAll => _pr_SMSAuditPlan_GetAll.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditPlan_GetByType = new(() => "pr_SMSAuditPlan_GetByType");
+        public static string pr_SMSAuditPlan_GetByType => _pr_SMSAuditPlan_GetByType.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditPlan_GetByDepartment = new(() => "pr_SMSAuditPlan_GetByDepartment");
+        public static string pr_SMSAuditPlan_GetByDepartment => _pr_SMSAuditPlan_GetByDepartment.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditPlan_GetRequiringApproval = new(() => "pr_SMSAuditPlan_GetRequiringApproval");
+        public static string pr_SMSAuditPlan_GetRequiringApproval => _pr_SMSAuditPlan_GetRequiringApproval.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditPlan_GetCalendarData = new(() => "pr_SMSAuditPlan_GetCalendarData");
+        public static string pr_SMSAuditPlan_GetCalendarData => _pr_SMSAuditPlan_GetCalendarData.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditPlan_Update = new(() => "pr_SMSAuditPlan_Update");
+        public static string pr_SMSAuditPlan_Update => _pr_SMSAuditPlan_Update.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditPlan_Delete = new(() => "pr_SMSAuditPlan_Delete");
+        public static string pr_SMSAuditPlan_Delete => _pr_SMSAuditPlan_Delete.Value;
+
+        /// <summary>
+        /// SMS Audit CRUD Operations
+        /// </summary>
+        private static readonly Lazy<string> _pr_SMSAudit_Insert = new(() => "pr_SMSAudit_Insert");
+        public static string pr_SMSAudit_Insert => _pr_SMSAudit_Insert.Value;
+
+        private static readonly Lazy<string> _pr_SMSAudit_GetById = new(() => "pr_SMSAudit_GetById");
+        public static string pr_SMSAudit_GetById => _pr_SMSAudit_GetById.Value;
+
+        private static readonly Lazy<string> _pr_SMSAudit_GetByCode = new(() => "pr_SMSAudit_GetByCode");
+        public static string pr_SMSAudit_GetByCode => _pr_SMSAudit_GetByCode.Value;
+
+        private static readonly Lazy<string> _pr_SMSAudit_GetAll = new(() => "pr_SMSAudit_GetAll");
+        public static string pr_SMSAudit_GetAll => _pr_SMSAudit_GetAll.Value;
+
+        private static readonly Lazy<string> _pr_SMSAudit_GetByPlan = new(() => "pr_SMSAudit_GetByPlan");
+        public static string pr_SMSAudit_GetByPlan => _pr_SMSAudit_GetByPlan.Value;
+
+        private static readonly Lazy<string> _pr_SMSAudit_GetByStatus = new(() => "pr_SMSAudit_GetByStatus");
+        public static string pr_SMSAudit_GetByStatus => _pr_SMSAudit_GetByStatus.Value;
+
+        private static readonly Lazy<string> _pr_SMSAudit_GetByAuditor = new(() => "pr_SMSAudit_GetByAuditor");
+        public static string pr_SMSAudit_GetByAuditor => _pr_SMSAudit_GetByAuditor.Value;
+
+        private static readonly Lazy<string> _pr_SMSAudit_GetOverdue = new(() => "pr_SMSAudit_GetOverdue");
+        public static string pr_SMSAudit_GetOverdue => _pr_SMSAudit_GetOverdue.Value;
+
+        private static readonly Lazy<string> _pr_SMSAudit_GetExecutionDashboard = new(() => "pr_SMSAudit_GetExecutionDashboard");
+        public static string pr_SMSAudit_GetExecutionDashboard => _pr_SMSAudit_GetExecutionDashboard.Value;
+
+        private static readonly Lazy<string> _pr_SMSAudit_ScheduleFromPlan = new(() => "pr_SMSAudit_ScheduleFromPlan");
+        public static string pr_SMSAudit_ScheduleFromPlan => _pr_SMSAudit_ScheduleFromPlan.Value;
+
+        private static readonly Lazy<string> _pr_SMSAudit_Update = new(() => "pr_SMSAudit_Update");
+        public static string pr_SMSAudit_Update => _pr_SMSAudit_Update.Value;
+
+        private static readonly Lazy<string> _pr_SMSAudit_Delete = new(() => "pr_SMSAudit_Delete");
+        public static string pr_SMSAudit_Delete => _pr_SMSAudit_Delete.Value;
+
+        /// <summary>
+        /// SMS Audit Finding CRUD Operations
+        /// </summary>
+        private static readonly Lazy<string> _pr_SMSAuditFinding_Insert = new(() => "pr_SMSAuditFinding_Insert");
+        public static string pr_SMSAuditFinding_Insert => _pr_SMSAuditFinding_Insert.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditFinding_GetById = new(() => "pr_SMSAuditFinding_GetById");
+        public static string pr_SMSAuditFinding_GetById => _pr_SMSAuditFinding_GetById.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditFinding_GetByCode = new(() => "pr_SMSAuditFinding_GetByCode");
+        public static string pr_SMSAuditFinding_GetByCode => _pr_SMSAuditFinding_GetByCode.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditFinding_GetAll = new(() => "pr_SMSAuditFinding_GetAll");
+        public static string pr_SMSAuditFinding_GetAll => _pr_SMSAuditFinding_GetAll.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditFinding_GetByAudit = new(() => "pr_SMSAuditFinding_GetByAudit");
+        public static string pr_SMSAuditFinding_GetByAudit => _pr_SMSAuditFinding_GetByAudit.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditFinding_GetBySeverity = new(() => "pr_SMSAuditFinding_GetBySeverity");
+        public static string pr_SMSAuditFinding_GetBySeverity => _pr_SMSAuditFinding_GetBySeverity.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditFinding_GetByStatus = new(() => "pr_SMSAuditFinding_GetByStatus");
+        public static string pr_SMSAuditFinding_GetByStatus => _pr_SMSAuditFinding_GetByStatus.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditFinding_GetByResponsiblePerson = new(() => "pr_SMSAuditFinding_GetByResponsiblePerson");
+        public static string pr_SMSAuditFinding_GetByResponsiblePerson => _pr_SMSAuditFinding_GetByResponsiblePerson.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditFinding_GetOverdue = new(() => "pr_SMSAuditFinding_GetOverdue");
+        public static string pr_SMSAuditFinding_GetOverdue => _pr_SMSAuditFinding_GetOverdue.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditFinding_GetRequiringVerification = new(() => "pr_SMSAuditFinding_GetRequiringVerification");
+        public static string pr_SMSAuditFinding_GetRequiringVerification => _pr_SMSAuditFinding_GetRequiringVerification.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditFinding_GetStatistics = new(() => "pr_SMSAuditFinding_GetStatistics");
+        public static string pr_SMSAuditFinding_GetStatistics => _pr_SMSAuditFinding_GetStatistics.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditFinding_Update = new(() => "pr_SMSAuditFinding_Update");
+        public static string pr_SMSAuditFinding_Update => _pr_SMSAuditFinding_Update.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditFinding_Delete = new(() => "pr_SMSAuditFinding_Delete");
+        public static string pr_SMSAuditFinding_Delete => _pr_SMSAuditFinding_Delete.Value;
+
+        /// <summary>
+        /// SMS Audit Evidence CRUD Operations
+        /// </summary>
+        private static readonly Lazy<string> _pr_SMSAuditEvidence_Insert = new(() => "pr_SMSAuditEvidence_Insert");
+        public static string pr_SMSAuditEvidence_Insert => _pr_SMSAuditEvidence_Insert.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditEvidence_GetById = new(() => "pr_SMSAuditEvidence_GetById");
+        public static string pr_SMSAuditEvidence_GetById => _pr_SMSAuditEvidence_GetById.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditEvidence_GetByCode = new(() => "pr_SMSAuditEvidence_GetByCode");
+        public static string pr_SMSAuditEvidence_GetByCode => _pr_SMSAuditEvidence_GetByCode.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditEvidence_GetAll = new(() => "pr_SMSAuditEvidence_GetAll");
+        public static string pr_SMSAuditEvidence_GetAll => _pr_SMSAuditEvidence_GetAll.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditEvidence_GetByAudit = new(() => "pr_SMSAuditEvidence_GetByAudit");
+        public static string pr_SMSAuditEvidence_GetByAudit => _pr_SMSAuditEvidence_GetByAudit.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditEvidence_GetByFinding = new(() => "pr_SMSAuditEvidence_GetByFinding");
+        public static string pr_SMSAuditEvidence_GetByFinding => _pr_SMSAuditEvidence_GetByFinding.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditEvidence_GetByType = new(() => "pr_SMSAuditEvidence_GetByType");
+        public static string pr_SMSAuditEvidence_GetByType => _pr_SMSAuditEvidence_GetByType.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditEvidence_GetByCollector = new(() => "pr_SMSAuditEvidence_GetByCollector");
+        public static string pr_SMSAuditEvidence_GetByCollector => _pr_SMSAuditEvidence_GetByCollector.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditEvidence_GetUnverified = new(() => "pr_SMSAuditEvidence_GetUnverified");
+        public static string pr_SMSAuditEvidence_GetUnverified => _pr_SMSAuditEvidence_GetUnverified.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditEvidence_GetArchived = new(() => "pr_SMSAuditEvidence_GetArchived");
+        public static string pr_SMSAuditEvidence_GetArchived => _pr_SMSAuditEvidence_GetArchived.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditEvidence_GetStatistics = new(() => "pr_SMSAuditEvidence_GetStatistics");
+        public static string pr_SMSAuditEvidence_GetStatistics => _pr_SMSAuditEvidence_GetStatistics.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditEvidence_UploadFile = new(() => "pr_SMSAuditEvidence_UploadFile");
+        public static string pr_SMSAuditEvidence_UploadFile => _pr_SMSAuditEvidence_UploadFile.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditEvidence_DownloadFile = new(() => "pr_SMSAuditEvidence_DownloadFile");
+        public static string pr_SMSAuditEvidence_DownloadFile => _pr_SMSAuditEvidence_DownloadFile.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditEvidence_Update = new(() => "pr_SMSAuditEvidence_Update");
+        public static string pr_SMSAuditEvidence_Update => _pr_SMSAuditEvidence_Update.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditEvidence_Delete = new(() => "pr_SMSAuditEvidence_Delete");
+        public static string pr_SMSAuditEvidence_Delete => _pr_SMSAuditEvidence_Delete.Value;
         #endregion
     }
 }

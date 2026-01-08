@@ -605,7 +605,7 @@ public static partial class Mappers
         riskAssessment.FiveMProcedures = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMProcedures) ?? string.Empty;
         riskAssessment.FiveMResources = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMResources) ?? string.Empty;
         riskAssessment.FiveMPhysicalEnvironment = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMPhysicalEnvironment) ?? string.Empty;
-        riskAssessment.FiveMOperationalEnvironment = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMOperationalEnvironment) ?? string.Empty;
+   //     riskAssessment.FiveMOperationalEnvironment = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMOperationalEnvironment) ?? string.Empty;
 
         // ✅ Step 3 - Risk Analysis Fields
         riskAssessment.RiskAnalysisMethod = reader.GetValue<string>(FieldNames.fRiskAssessmentRiskAnalysisMethod) ?? "SMS Risk Matrix";
@@ -1033,22 +1033,192 @@ public static partial class Mappers
     /// </summary>
     public static SPIDataPoint MapToSPIDataPoint(SqlDataReader reader)
     {
-        var dataPoint = new SPIDataPoint
-        {
-            Id = reader.GetValue<string>(FieldNames.fSPIDataPointSPIId), // Use SPIDataPointId field for string Id
-            Value = reader.GetValue<decimal>(FieldNames.fSPIDataPointValue),
-            MeasurementDate = reader.GetValue<DateTime>(FieldNames.fSPIDataPointMeasurementDate),
-            Period = reader.GetValue<string>(FieldNames.fSPIDataPointPeriod) ?? string.Empty,
-            DataSource = reader.GetValue<string>(FieldNames.fSPIDataPointDataSource) ?? string.Empty,
-            EnteredBy = reader.GetValue<string>(FieldNames.fSPIDataPointEnteredBy) ?? "SYSTEM",
-            EnteredDate = reader.IsDBNull(FieldNames.fSPIDataPointEnteredDate) ? DateTime.UtcNow : reader.GetValue<DateTime>(FieldNames.fSPIDataPointEnteredDate),
-            Notes = reader.GetValue<string>(FieldNames.fSPIDataPointNotes),
-            IsVerified = reader.IsDBNull(FieldNames.fSPIDataPointIsVerified) ? false : reader.GetValue<bool>(FieldNames.fSPIDataPointIsVerified),
-            VerifiedBy = reader.GetValue<string>(FieldNames.fSPIDataPointVerifiedBy),
-            VerifiedDate = reader.IsDBNull(FieldNames.fSPIDataPointVerifiedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fSPIDataPointVerifiedDate)
-        };
+        var dataPoint = new SPIDataPoint(new SPIDataPointID(reader.GetValue<string>(FieldNames.fSPIDataPointCode)));
+
+        dataPoint.Code = reader.GetValue<string>(FieldNames.fSPIDataPointCode);
+        dataPoint.SPIId = reader.GetValue<string>(FieldNames.fSPIDataPointSPIId); 
+        dataPoint.Value = reader.GetValue<decimal>(FieldNames.fSPIDataPointValue);
+        dataPoint.MeasurementDate = reader.GetValue<DateTime>(FieldNames.fSPIDataPointMeasurementDate);
+        dataPoint.Period = reader.GetValue<string>(FieldNames.fSPIDataPointPeriod) ?? string.Empty;
+        dataPoint.DataSource = reader.GetValue<string>(FieldNames.fSPIDataPointDataSource) ?? string.Empty;
+        dataPoint.Notes = reader.GetValue<string>(FieldNames.fSPIDataPointNotes);
+        dataPoint.IsVerified = reader.IsDBNull(FieldNames.fSPIDataPointIsVerified) ? false : reader.GetValue<bool>(FieldNames.fSPIDataPointIsVerified);
+        dataPoint.VerifiedBy = reader.GetValue<string>(FieldNames.fSPIDataPointVerifiedBy);
+        dataPoint.VerifiedDate = reader.IsDBNull(FieldNames.fSPIDataPointVerifiedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fSPIDataPointVerifiedDate);
+        dataPoint.CreatedBy = reader.GetValue<string>(FieldNames.fSPIDataPointCreatedBy) ?? "SYSTEM";
+        dataPoint.CreatedDate = reader.IsDBNull(FieldNames.fSPIDataPointCreatedDate) ? DateTime.UtcNow : reader.GetValue<DateTime>(FieldNames.fSPIDataPointCreatedDate);
+        dataPoint.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy) ?? "SYSTEM";
+        dataPoint.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? DateTime.UtcNow : reader.GetValue<DateTime>(FieldNames.fUpdatedDate);
+        ;
 
         return dataPoint;
     }
+    #endregion
+
+    #region SMS Audit Management Entity Mappers
+
+    /// <summary>
+    /// Maps SqlDataReader to SMSAuditPlan entity
+    /// </summary>
+    public static SMSAuditPlan MapToSMSAuditPlan(SqlDataReader reader)
+    {
+        var code = reader.GetValue<string>(FieldNames.fSMSAuditPlanCode);
+        var createdBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
+        SMSAuditPlanID auditPlanId = new(code);
+        SMSAuditPlan auditPlan = new(auditPlanId, createdBy);
+
+        auditPlan.Code = code ?? string.Empty;
+        auditPlan.Name = reader.GetValue<string>(FieldNames.fSMSAuditPlanName) ?? string.Empty;
+        auditPlan.Description = reader.GetValue<string>(FieldNames.fSMSAuditPlanDescription) ?? string.Empty;
+        auditPlan.AuditType = reader.GetValue<string>(FieldNames.fSMSAuditPlanAuditType) ?? string.Empty;
+        auditPlan.Scope = reader.GetValue<string>(FieldNames.fSMSAuditPlanScope) ?? string.Empty;
+        auditPlan.Objectives = reader.GetValue<string>(FieldNames.fSMSAuditPlanObjectives) ?? string.Empty;
+        auditPlan.PlannedStartDate = reader.IsDBNull(FieldNames.fSMSAuditPlanPlannedStartDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fSMSAuditPlanPlannedStartDate);
+        auditPlan.PlannedEndDate = reader.IsDBNull(FieldNames.fSMSAuditPlanPlannedEndDate) ? DateTime.UtcNow.AddHours(1) : reader.GetDateTime(FieldNames.fSMSAuditPlanPlannedEndDate);
+        auditPlan.LeadAuditor = reader.GetValue<string>(FieldNames.fSMSAuditPlanLeadAuditor) ?? string.Empty;
+        auditPlan.AuditorTeam = reader.GetValue<string>(FieldNames.fSMSAuditPlanAuditorTeam) ?? string.Empty;
+        auditPlan.ResponsibleDepartment = reader.GetValue<string>(FieldNames.fSMSAuditPlanResponsibleDepartment) ?? string.Empty;
+        auditPlan.Status = reader.GetValue<string>(FieldNames.fSMSAuditPlanStatus) ?? string.Empty;
+        auditPlan.Priority = reader.GetValue<string>(FieldNames.fSMSAuditPlanPriority) ?? string.Empty;
+        auditPlan.RecurrencePattern = reader.GetValue<string>(FieldNames.fSMSAuditPlanRecurrencePattern);
+        auditPlan.RequiresApproval = reader.IsDBNull(FieldNames.fSMSAuditPlanRequiresApproval) ? false : reader.GetValue<bool>(FieldNames.fSMSAuditPlanRequiresApproval);
+        auditPlan.ApprovedBy = reader.GetValue<string>(FieldNames.fSMSAuditPlanApprovedBy);
+        auditPlan.ApprovedDate = reader.IsDBNull(FieldNames.fSMSAuditPlanApprovedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fSMSAuditPlanApprovedDate);
+        auditPlan.ExpectedDurationHours = reader.IsDBNull(FieldNames.fSMSAuditPlanExpectedDurationHours) ? 0 : reader.GetInt32(FieldNames.fSMSAuditPlanExpectedDurationHours);
+
+        // Audit properties
+        auditPlan.CreatedBy = createdBy;
+        auditPlan.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+        auditPlan.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
+        auditPlan.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fUpdatedDate);
+
+        return auditPlan;
+    }
+
+    /// <summary>
+    /// Maps SqlDataReader to SMSAudit entity
+    /// </summary>
+    public static SMSAudit MapToSMSAudit(SqlDataReader reader)
+    {
+        var code = reader.GetValue<string>(FieldNames.fSMSAuditCode);
+        var createdBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
+        SMSAuditID auditId = new(code);
+        SMSAudit audit = new(auditId, createdBy);
+
+        audit.Code = code ?? string.Empty;
+        audit.Name = reader.GetValue<string>(FieldNames.fSMSAuditName) ?? string.Empty;
+        audit.Description = reader.GetValue<string>(FieldNames.fSMSAuditDescription) ?? string.Empty;
+        audit.AuditPlanCode = reader.GetValue<string>(FieldNames.fSMSAuditAuditPlanCode);
+        audit.AuditType = reader.GetValue<string>(FieldNames.fSMSAuditAuditType) ?? string.Empty;
+        audit.Scope = reader.GetValue<string>(FieldNames.fSMSAuditScope) ?? string.Empty;
+        audit.Objectives = reader.GetValue<string>(FieldNames.fSMSAuditObjectives) ?? string.Empty;
+        audit.ScheduledStartDate = reader.IsDBNull(FieldNames.fSMSAuditScheduledStartDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fSMSAuditScheduledStartDate);
+        audit.ScheduledEndDate = reader.IsDBNull(FieldNames.fSMSAuditScheduledEndDate) ? DateTime.UtcNow.AddHours(1) : reader.GetDateTime(FieldNames.fSMSAuditScheduledEndDate);
+        audit.ActualStartDate = reader.IsDBNull(FieldNames.fSMSAuditActualStartDate) ? null : reader.GetDateTime(FieldNames.fSMSAuditActualStartDate);
+        audit.ActualEndDate = reader.IsDBNull(FieldNames.fSMSAuditActualEndDate) ? null : reader.GetDateTime(FieldNames.fSMSAuditActualEndDate);
+        audit.LeadAuditor = reader.GetValue<string>(FieldNames.fSMSAuditLeadAuditor) ?? string.Empty;
+        audit.AuditorTeam = reader.GetValue<string>(FieldNames.fSMSAuditAuditorTeam) ?? string.Empty;
+        audit.ResponsibleDepartment = reader.GetValue<string>(FieldNames.fSMSAuditResponsibleDepartment) ?? string.Empty;
+        audit.Status = reader.GetValue<string>(FieldNames.fSMSAuditStatus) ?? string.Empty;
+        audit.Priority = reader.GetValue<string>(FieldNames.fSMSAuditPriority) ?? string.Empty;
+        audit.ContactPerson = reader.GetValue<string>(FieldNames.fSMSAuditContactPerson);
+        audit.AuditLocation = reader.GetValue<string>(FieldNames.fSMSAuditLocation);
+        audit.TotalFindings = reader.IsDBNull(FieldNames.fSMSAuditTotalFindings) ? 0 : reader.GetValue<int>(FieldNames.fSMSAuditTotalFindings);
+        audit.CriticalFindings = reader.IsDBNull(FieldNames.fSMSAuditCriticalFindings) ? 0 : reader.GetValue<int>(FieldNames.fSMSAuditCriticalFindings);
+        audit.MajorFindings = reader.IsDBNull(FieldNames.fSMSAuditMajorFindings) ? 0 : reader.GetValue<int>(FieldNames.fSMSAuditMajorFindings);
+        audit.MinorFindings = reader.IsDBNull(FieldNames.fSMSAuditMinorFindings) ? 0 : reader.GetValue<int>(FieldNames.fSMSAuditMinorFindings);
+        audit.Observations = reader.IsDBNull(FieldNames.fSMSAuditObservations) ? 0 : reader.GetValue<int>(FieldNames.fSMSAuditObservations);
+        audit.ReportSubmittedDate = reader.IsDBNull(FieldNames.fSMSAuditReportSubmittedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fSMSAuditReportSubmittedDate);
+        audit.ExecutiveSummary = reader.GetValue<string>(FieldNames.fSMSAuditExecutiveSummary);
+        audit.Notes = reader.GetValue<string>(FieldNames.fSMSAuditNotes);
+
+        // Audit properties
+        audit.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
+        audit.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+        audit.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
+        audit.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fUpdatedDate);
+
+        return audit;
+    }
+
+    /// <summary>
+    /// Maps SqlDataReader to SMSAuditFinding entity
+    /// </summary>
+    public static SMSAuditFinding MapToSMSAuditFinding(SqlDataReader reader)
+    {
+        var code = reader.GetValue<string>(FieldNames.fSMSAuditFindingCode);
+        var createdBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
+        SMSAuditFindingID findingId = new(code);
+        SMSAuditFinding finding = new(findingId, createdBy);
+
+        finding.Code = code ?? string.Empty;
+        finding.AuditCode = reader.GetValue<string>(FieldNames.fSMSAuditFindingAuditCode) ?? string.Empty;
+        finding.Title = reader.GetValue<string>(FieldNames.fSMSAuditFindingTitle) ?? string.Empty;
+        finding.Description = reader.GetValue<string>(FieldNames.fSMSAuditFindingDescription) ?? string.Empty;
+        finding.Severity = reader.GetValue<string>(FieldNames.fSMSAuditFindingSeverity) ?? string.Empty;
+        finding.Category = reader.GetValue<string>(FieldNames.fSMSAuditFindingCategory) ?? string.Empty;
+        finding.Status = reader.GetValue<string>(FieldNames.fSMSAuditFindingStatus) ?? string.Empty;
+        finding.DiscoveredDate = reader.IsDBNull(FieldNames.fSMSAuditFindingDiscoveredDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fSMSAuditFindingDiscoveredDate);
+        finding.ResponsiblePerson = reader.GetValue<string>(FieldNames.fSMSAuditFindingResponsiblePerson) ?? string.Empty;
+        finding.TargetResolutionDate = reader.IsDBNull(FieldNames.fSMSAuditFindingTargetResolutionDate) ? null : reader.GetValue<DateTime?>(FieldNames.fSMSAuditFindingTargetResolutionDate);
+        finding.ActualResolutionDate = reader.IsDBNull(FieldNames.fSMSAuditFindingActualResolutionDate) ? null : reader.GetValue<DateTime?>(FieldNames.fSMSAuditFindingActualResolutionDate);
+        finding.CorrectiveAction = reader.GetValue<string>(FieldNames.fSMSAuditFindingCorrectiveAction);
+        finding.RootCauseAnalysis = reader.GetValue<string>(FieldNames.fSMSAuditFindingRootCauseAnalysis);
+        finding.VerificationRequired = reader.IsDBNull(FieldNames.fSMSAuditFindingVerificationRequired) ? false : reader.GetValue<bool>(FieldNames.fSMSAuditFindingVerificationRequired);
+        finding.VerifiedBy = reader.GetValue<string>(FieldNames.fSMSAuditFindingVerifiedBy);
+        finding.VerificationDate = reader.IsDBNull(FieldNames.fSMSAuditFindingVerificationDate) ? null : reader.GetValue<DateTime?>(FieldNames.fSMSAuditFindingVerificationDate);
+        finding.Notes = reader.GetValue<string>(FieldNames.fSMSAuditFindingNotes);
+
+        // Audit properties
+        finding.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
+        finding.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+        finding.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
+        finding.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fUpdatedDate);
+
+        return finding;
+    }
+
+    /// <summary>
+    /// Maps SqlDataReader to SMSAuditEvidence entity
+    /// </summary>
+    public static SMSAuditEvidence MapToSMSAuditEvidence(SqlDataReader reader)
+    {
+        var code = reader.GetValue<string>(FieldNames.fSMSAuditEvidenceCode);
+        var createdBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
+        SMSAuditEvidenceID evidenceId = new(code);
+        SMSAuditEvidence evidence = new(evidenceId, createdBy);
+
+        evidence.Code = code ?? string.Empty;
+        evidence.AuditCode = reader.GetValue<string>(FieldNames.fSMSAuditEvidenceAuditCode) ?? string.Empty;
+        evidence.FindingCode = reader.GetValue<string>(FieldNames.fSMSAuditEvidenceFindingCode);
+        evidence.Title = reader.GetValue<string>(FieldNames.fSMSAuditEvidenceTitle) ?? string.Empty;
+        evidence.Description = reader.GetValue<string>(FieldNames.fSMSAuditEvidenceDescription) ?? string.Empty;
+        evidence.EvidenceType = reader.GetValue<string>(FieldNames.fSMSAuditEvidenceType) ?? string.Empty;
+        evidence.Source = reader.GetValue<string>(FieldNames.fSMSAuditEvidenceSource) ?? string.Empty;
+        evidence.CollectedBy = reader.GetValue<string>(FieldNames.fSMSAuditEvidenceCollectedBy) ?? string.Empty;
+        evidence.CollectionDate = reader.IsDBNull(FieldNames.fSMSAuditEvidenceCollectionDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fSMSAuditEvidenceCollectionDate);
+        evidence.FilePath = reader.GetValue<string>(FieldNames.fSMSAuditEvidenceFilePath);
+        evidence.FileSize = reader.IsDBNull(FieldNames.fSMSAuditEvidenceFileSize) ? 0 : reader.GetInt64(FieldNames.fSMSAuditEvidenceFileSize);
+        evidence.ContentType = reader.GetValue<string>(FieldNames.fSMSAuditEvidenceContentType);
+        evidence.StorageLocation = reader.GetValue<string>(FieldNames.fSMSAuditEvidenceStorageLocation) ?? "FileSystem";
+        evidence.ConfidentialityLevel = reader.GetValue<string>(FieldNames.fSMSAuditEvidenceConfidentialityLevel) ?? "Standard";
+        evidence.RetentionPeriodMonths = reader.IsDBNull(FieldNames.fSMSAuditEvidenceRetentionPeriodMonths) ? 24 : reader.GetValue<int>(FieldNames.fSMSAuditEvidenceRetentionPeriodMonths);
+        evidence.RetentionReason = reader.GetValue<string>(FieldNames.fSMSAuditEvidenceRetentionReason) ?? "SMS Compliance";
+        evidence.IsVerified = reader.IsDBNull(FieldNames.fSMSAuditEvidenceIsVerified) ? false : reader.GetValue<bool>(FieldNames.fSMSAuditEvidenceIsVerified);
+        evidence.VerifiedBy = reader.GetValue<string>(FieldNames.fSMSAuditEvidenceVerifiedBy);
+        evidence.VerificationDate = reader.IsDBNull(FieldNames.fSMSAuditEvidenceVerificationDate) ? null : reader.GetValue<DateTime?>(FieldNames.fSMSAuditEvidenceVerificationDate);
+        evidence.IsArchived = reader.IsDBNull(FieldNames.fSMSAuditEvidenceIsArchived) ? false : reader.GetValue<bool>(FieldNames.fSMSAuditEvidenceIsArchived);
+        evidence.ArchivedDate = reader.IsDBNull(FieldNames.fSMSAuditEvidenceArchivedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fSMSAuditEvidenceArchivedDate);
+        evidence.Notes = reader.GetValue<string>(FieldNames.fSMSAuditEvidenceNotes);
+
+        // Audit properties
+        evidence.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
+        evidence.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+        evidence.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
+        evidence.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fUpdatedDate);
+
+        return evidence;
+    }
+
     #endregion
 }

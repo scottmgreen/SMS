@@ -1,0 +1,169 @@
+using Microsoft.Extensions.Logging;
+using SMS_Domain.Entities;
+using SMS_Infrastructure.Common;
+using SMS_Infrastructure.Persistence;
+using SMS_Shared.Common;
+using Domain.Models;
+using Infrastructure.Persistence;
+
+namespace SMS_Infrastructure.Services;
+
+/// <summary>
+/// Data service for SMS Audit Evidence operations
+/// Handles all database interactions for SMS audit evidence management
+/// </summary>
+public class SMSAuditEvidenceDataService : BaseDataService<SMSAuditEvidenceDataService>
+{
+    private readonly ILogger<SMSAuditEvidenceDataService> _logger;
+    private readonly string _logheader;
+    private readonly SMSAuditEvidenceRepository _repo;
+
+    public SMSAuditEvidenceDataService(
+        ILogger<SMSAuditEvidenceDataService> logger,
+        IServiceScopeFactory serviceScopeFactory,
+        IConfiguration configuration,
+        SMSAuditEvidenceRepository repo)
+        : base(logger, serviceScopeFactory, configuration)
+    {
+        _logger = base.Logger;
+        _logheader = base.LogHeader;
+        _repo = repo ?? throw new ArgumentNullException(nameof(repo));
+
+        _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent, $"{_logheader} SMSAuditEvidenceDataService");
+    }
+
+    /// <summary>
+    /// Creates a new SMS Audit Evidence
+    /// </summary>
+    public async Task<Result<SMSAuditEvidence>> CreateAuditEvidenceAsync(SMSAuditEvidence auditEvidence, CancellationToken ct = default)
+    {
+        return await _repo.CreateSMSAuditEvidenceAsync(auditEvidence, ct);
+    }
+
+    /// <summary>
+    /// Updates an existing SMS Audit Evidence
+    /// </summary>
+    public async Task<Result<SMSAuditEvidence>> UpdateAuditEvidenceAsync(SMSAuditEvidence auditEvidence, CancellationToken ct = default)
+    {
+        return await _repo.UpdateSMSAuditEvidenceAsync(auditEvidence, ct);
+    }
+
+    /// <summary>
+    /// Deletes an SMS Audit Evidence
+    /// </summary>
+    public async Task<Result<bool>> DeleteAuditEvidenceAsync(string evidenceCode, string deletedBy, string reason, CancellationToken ct = default)
+    {
+        // Get the evidence by code first to get the ID
+        var evidenceResult = await _repo.GetSMSAuditEvidenceByCodeAsync(evidenceCode, ct);
+        if (evidenceResult.IsFailure)
+        {
+            return Result<bool>.Failure<bool>(evidenceResult.Error);
+        }
+
+        return await _repo.DeleteSMSAuditEvidenceAsync(evidenceResult.Value.Id.Value, ct);
+    }
+
+    /// <summary>
+    /// Gets all SMS Audit Evidence
+    /// </summary>
+    public async Task<Result<List<SMSAuditEvidence>>> GetAllAuditEvidenceAsync(CancellationToken ct = default)
+    {
+        var result = await _repo.GetAllSMSAuditEvidenceAsync(ct);
+        if (result.IsSuccess)
+        {
+            return Result<List<SMSAuditEvidence>>.Success(result.Value.ToList());
+        }
+        return Result<List<SMSAuditEvidence>>.Failure<List<SMSAuditEvidence>>(result.Error);
+    }
+
+    /// <summary>
+    /// Gets an SMS Audit Evidence by Code
+    /// </summary>
+    public async Task<Result<SMSAuditEvidence>> GetAuditEvidenceByCodeAsync(string evidenceCode, CancellationToken ct = default)
+    {
+        return await _repo.GetSMSAuditEvidenceByCodeAsync(evidenceCode, ct);
+    }
+
+    /// <summary>
+    /// Gets SMS Audit Evidence by audit code
+    /// </summary>
+    public Task<Result<List<SMSAuditEvidence>>> GetAuditEvidenceByAuditAsync(string auditCode, string? evidenceTypeFilter = null, CancellationToken ct = default)
+    {
+        // TODO: Implement when repository is ready
+        throw new NotImplementedException("Repository implementation pending");
+    }
+
+    /// <summary>
+    /// Gets SMS Audit Evidence by finding code
+    /// </summary>
+    public Task<Result<List<SMSAuditEvidence>>> GetAuditEvidenceByFindingAsync(string findingCode, string? evidenceTypeFilter = null, CancellationToken ct = default)
+    {
+        // TODO: Implement when repository is ready
+        throw new NotImplementedException("Repository implementation pending");
+    }
+
+    /// <summary>
+    /// Gets SMS Audit Evidence by type
+    /// </summary>
+    public Task<Result<List<SMSAuditEvidence>>> GetAuditEvidenceByTypeAsync(string evidenceType, string? confidentialityLevel = null, CancellationToken ct = default)
+    {
+        // TODO: Implement when repository is ready
+        throw new NotImplementedException("Repository implementation pending");
+    }
+
+    /// <summary>
+    /// Gets SMS Audit Evidence by collector
+    /// </summary>
+    public Task<Result<List<SMSAuditEvidence>>> GetAuditEvidenceByCollectorAsync(string collectedBy, DateTime? collectionDateFrom = null, 
+        DateTime? collectionDateTo = null, CancellationToken ct = default)
+    {
+        // TODO: Implement when repository is ready
+        throw new NotImplementedException("Repository implementation pending");
+    }
+
+    /// <summary>
+    /// Gets unverified SMS Audit Evidence
+    /// </summary>
+    public Task<Result<List<SMSAuditEvidence>>> GetUnverifiedAuditEvidenceAsync(string? auditCodeFilter = null, string? evidenceTypeFilter = null, CancellationToken ct = default)
+    {
+        // TODO: Implement when repository is ready
+        throw new NotImplementedException("Repository implementation pending");
+    }
+
+    /// <summary>
+    /// Gets archived SMS Audit Evidence
+    /// </summary>
+    public Task<Result<List<SMSAuditEvidence>>> GetArchivedAuditEvidenceAsync(DateTime? archivedAfter = null, string? retentionReasonFilter = null, CancellationToken ct = default)
+    {
+        // TODO: Implement when repository is ready
+        throw new NotImplementedException("Repository implementation pending");
+    }
+
+    /// <summary>
+    /// Gets SMS Audit Evidence statistics for dashboard
+    /// </summary>
+    public Task<Result<SMSAuditEvidenceStatistics>> GetAuditEvidenceStatisticsAsync(DateTime? startDate = null, DateTime? endDate = null,
+        string? auditCodeFilter = null, string? evidenceTypeFilter = null, CancellationToken ct = default)
+    {
+        // TODO: Implement when repository is ready
+        throw new NotImplementedException("Repository implementation pending");
+    }
+
+    /// <summary>
+    /// Uploads audit evidence file
+    /// </summary>
+    public Task<Result<SMSAuditEvidence>> UploadEvidenceFileAsync(SMSAuditEvidence auditEvidence, byte[] fileData, CancellationToken ct = default)
+    {
+        // TODO: Implement when repository is ready
+        throw new NotImplementedException("Repository implementation pending");
+    }
+
+    /// <summary>
+    /// Downloads audit evidence file
+    /// </summary>
+    public Task<Result<byte[]>> DownloadEvidenceFileAsync(string evidenceCode, CancellationToken ct = default)
+    {
+        // TODO: Implement when repository is ready
+        throw new NotImplementedException("Repository implementation pending");
+    }
+}

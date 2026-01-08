@@ -1,12 +1,8 @@
 using Microsoft.AspNetCore.Components;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
+using SMS_Application.Common;
 using SMS_Domain.Entities;
-using SMS_Domain.Enums;
 using SMS_Shared.Common;
 using Radzen;
-using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 
 namespace SMS3.Components.Pages.SMSAssurance.Components;
@@ -27,60 +23,59 @@ public partial class SPIDataPointDialog : ComponentBase
     #endregion
 
     #region Component State
-    private EditDataPointModel editModel = new();
+    private SPIDataPoint currentDataPoint = default!;
     private bool IsSaving { get; set; } = false;
 
-    public class EditDataPointModel
-    {
-        [Required(ErrorMessage = "Value is required")]
-        [Range(0, (double)decimal.MaxValue, ErrorMessage = "Value must be greater than or equal to 0")]
-        public decimal Value { get; set; }
-
-        [Required(ErrorMessage = "Measurement date is required")]
-        public DateTime MeasurementDate { get; set; } = DateTime.Today;
-
-        public string Period { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "Data source is required")]
-        public string DataSource { get; set; } = string.Empty;
-
-        public string? Notes { get; set; }
-        public bool IsVerified { get; set; }
-        public string? VerifiedBy { get; set; }
-    }
+    private bool IsValid => 
+        currentDataPoint.Value >= 0 &&
+        currentDataPoint.MeasurementDate != default &&
+        !string.IsNullOrWhiteSpace(currentDataPoint.DataSource) &&
+        (!currentDataPoint.IsVerified || !string.IsNullOrWhiteSpace(currentDataPoint.VerifiedBy));
     #endregion
 
     #region Lifecycle Methods
     protected override void OnParametersSet()
     {
-        InitializeEditModel();
+        InitializeDataPoint();
         UpdatePeriod();
     }
     #endregion
 
     #region Initialization
-    private void InitializeEditModel()
+    private void InitializeDataPoint()
     {
         if (DataPoint != null)
         {
-            editModel = new EditDataPointModel
+            // Edit mode - clone existing data point
+            currentDataPoint = new SPIDataPoint(new SPIDataPointID(DataPoint.Code))
             {
+                SPIId = DataPoint.SPIId,
                 Value = DataPoint.Value,
                 MeasurementDate = DataPoint.MeasurementDate,
                 Period = DataPoint.Period,
                 DataSource = DataPoint.DataSource,
                 Notes = DataPoint.Notes,
                 IsVerified = DataPoint.IsVerified,
-                VerifiedBy = DataPoint.VerifiedBy
+                VerifiedBy = DataPoint.VerifiedBy,
+                VerifiedDate = DataPoint.VerifiedDate
             };
+            
+            // Preserve audit fields from original
+            currentDataPoint.CreatedDate = DataPoint.CreatedDate;
+            currentDataPoint.UpdatedBy = DataPoint.UpdatedBy;
+            currentDataPoint.UpdatedDate = DataPoint.UpdatedDate;
         }
         else
         {
-            editModel = new EditDataPointModel
-            {
-                MeasurementDate = DateTime.Today,
-                DataSource = SPI?.DataSource ?? "Manual Entry"
-            };
+            // Add mode - create new data point
+            currentDataPoint = new SPIDataPoint(
+                new SPIDataPointID("DP-0000")) // TODO: Get current user
+                {
+                    SPIId = SPI?.Code ?? string.Empty,
+                    MeasurementDate = DateTime.Today,
+                    DataSource = SPI?.DataSource ?? SPIConstants.DataSources.ManualEntry,
+                    Period = string.Empty
+                };
         }
 
         UpdatePeriod();
@@ -90,7 +85,7 @@ public partial class SPIDataPointDialog : ComponentBase
     {
         if (SPI != null)
         {
-            editModel.Period = GetPeriodFromDate(editModel.MeasurementDate);
+            currentDataPoint.Period = GetPeriodFromDate(currentDataPoint.MeasurementDate);
         }
     }
 
@@ -125,12 +120,12 @@ public partial class SPIDataPointDialog : ComponentBase
     #region Event Handlers
     private async Task SubmitForm()
     {
-        if (IsSaving) return;
+        if (!IsValid || IsSaving) return;
         
         IsSaving = true;
         try
         {
-            await HandleSave(editModel);
+            await HandleSave();
         }
         finally
         {
@@ -138,51 +133,38 @@ public partial class SPIDataPointDialog : ComponentBase
         }
     }
 
-    private async Task HandleSave(EditDataPointModel model)
+    private async Task HandleSave()
     {
         try
         {
-            IsSaving = true;
-
-            var dataPoint = new SPIDataPoint
+            // Set verification details if verified
+            if (currentDataPoint.IsVerified)
             {
-                Value = model.Value,
-                MeasurementDate = model.MeasurementDate,
-                Period = model.Period,
-                DataSource = model.DataSource,
-                Notes = model.Notes,
-                IsVerified = model.IsVerified,
-                VerifiedBy = model.VerifiedBy,
-                EnteredBy = "SYSTEM", // TODO: Get current user
-                EnteredDate = DateTime.UtcNow
-            };
-
-            if (model.IsVerified && string.IsNullOrEmpty(model.VerifiedBy))
-            {
-                dataPoint.VerifiedBy = "SYSTEM"; // TODO: Get current user
-                dataPoint.VerifiedDate = DateTime.UtcNow;
+                currentDataPoint.VerifiedDate = DateTime.UtcNow;
+                if (string.IsNullOrWhiteSpace(currentDataPoint.VerifiedBy))
+                {
+                    currentDataPoint.VerifiedBy = "SYSTEM"; // Fallback
+                }
             }
-            else if (model.IsVerified)
+            else
             {
-                dataPoint.VerifiedDate = DateTime.UtcNow;
+                currentDataPoint.VerifiedBy = null;
+                currentDataPoint.VerifiedDate = null;
             }
 
-            await OnSave.InvokeAsync(dataPoint);
+            await OnSave.InvokeAsync(currentDataPoint);
             DialogService.Close();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
+            // Simple error notification without excessive details
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
                 Summary = "Error",
-                Detail = $"Failed to save data point: {ex.Message}",
-                Duration = 5000
+                Detail = "Failed to save data point",
+                Duration = 3000
             });
-        }
-        finally
-        {
-            IsSaving = false;
         }
     }
 
@@ -195,7 +177,6 @@ public partial class SPIDataPointDialog : ComponentBase
         }
         catch
         {
-            // Silently handle cancel errors and still close dialog
             DialogService.Close();
         }
     }
@@ -210,27 +191,7 @@ public partial class SPIDataPointDialog : ComponentBase
     #region Data Source Options
     private List<string> GetDataSourceOptions()
     {
-        return new List<string>
-        {
-            "Manual Entry",
-            "System Generated",
-            "External Import", 
-            "Database Query",
-            "Excel Import",
-            "API Integration",
-            "Automated Collection",
-            "Survey Data",
-            "Third Party System",
-            "Legacy System",
-            "Mobile App",
-            "Web Portal",
-            "Sensor Data",
-            "Calculated Value",
-            "Quality Assurance",
-            "Safety Reports",
-            "Audit Results",
-            "Inspection Data"
-        };
+        return SPIConstants.DataSources.GetAll();
     }
     #endregion
 }
