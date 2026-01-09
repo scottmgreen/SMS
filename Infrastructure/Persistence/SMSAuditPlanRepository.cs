@@ -45,7 +45,7 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
                 CommandType = CommandType.StoredProcedure
             };
 
-            // Add parameters
+            // Add parameters - CORRECTED to match stored procedure exactly
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanCode, auditPlan.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanName, auditPlan.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanDescription, auditPlan.Description));
@@ -65,6 +65,8 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanNotes, auditPlan.Notes));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, auditPlan.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, auditPlan.CreatedDate));
+            
+            // Output parameters
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             var newCode = new SqlParameter("@pNewAuditPlanCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
             cmd.Parameters.Add(newID);
@@ -73,7 +75,6 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
             await sql.OpenAsync(ct).ConfigureAwait(false);
             var newId = await cmd.ExecuteScalarAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
-
 
             int newIdValue = (int)newID.Value;
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
@@ -186,9 +187,8 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
                 CommandType = CommandType.StoredProcedure
             };
 
-            // Add parameters
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanId, auditPlan.Id.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanCode, auditPlan.Code));
+            // Add parameters - COMPLETE LIST to match stored procedure
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanCode, auditPlan.Code.Trim()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanName, auditPlan.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanDescription, auditPlan.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanAuditType, auditPlan.AuditType));
@@ -203,21 +203,66 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanPriority, auditPlan.Priority));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanRecurrencePattern, auditPlan.RecurrencePattern));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanRequiresApproval, auditPlan.RequiresApproval));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanApprovedBy, auditPlan.ApprovedBy)); // MISSING!
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanApprovedDate, auditPlan.ApprovedDate)); // MISSING!
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanExpectedDurationHours, auditPlan.ExpectedDurationHours));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanNotes, auditPlan.Notes));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, auditPlan.UpdatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, auditPlan.UpdatedDate ?? DateTime.UtcNow));
 
-            await sql.OpenAsync(ct).ConfigureAwait(false);
-            var rowsAffected = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
-            await sql.CloseAsync().ConfigureAwait(false);
-
-            if (rowsAffected > 0)
+            // DEBUG: Log the actual parameter value being sent
+            foreach (SqlParameter param in cmd.Parameters)
             {
-                return Result.Success(auditPlan);
+                _logger.LogInformation("DEBUG: Parameter {Name} = {Value}", param.ParameterName, param.Value);
             }
 
-            return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(DomainErrors.SMSAuditPlanError.NotFound);
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            
+            // DEBUG: Add a test to see what's actually happening
+            _logger.LogInformation("DEBUG: About to execute stored procedure");
+            
+            try
+            {
+                var rowsAffected = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+                _logger.LogInformation("DEBUG: Stored procedure returned: {RowsAffected}", rowsAffected);
+                
+                // Even if it returns -1, let's check if the record was actually updated
+                if (rowsAffected == -1)
+                {
+                    _logger.LogWarning("DEBUG: Got -1, but let's check if record was actually updated");
+                    // Try to get the record to see if it was updated
+                    var checkResult = await GetSMSAuditPlanByCodeAsync(auditPlan.Code, ct).ConfigureAwait(false);
+                    if (checkResult.IsSuccess && checkResult.Value?.Status == auditPlan.Status)
+                    {
+                        _logger.LogInformation("DEBUG: Record was actually updated despite -1 return");
+                        await sql.CloseAsync().ConfigureAwait(false);
+                        return Result.Success(auditPlan);
+                    }
+                }
+                
+                await sql.CloseAsync().ConfigureAwait(false);
+
+                if (rowsAffected > 0)
+                {
+                    _logger.LogInformation("DEBUG: Update successful, returning success");
+                    return Result.Success(auditPlan);
+                }
+
+                _logger.LogWarning("DEBUG: No rows affected, returning not found");
+                return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(DomainErrors.SMSAuditPlanError.NotFound);
+            }
+            catch (SqlException ex)
+            {
+                _logger.LogError(ex, "DEBUG: SqlException during ExecuteNonQueryAsync: {Message}, ErrorNumber: {ErrorNumber}", ex.Message, ex.Number);
+                await sql.CloseAsync().ConfigureAwait(false);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DEBUG: Exception during ExecuteNonQueryAsync: {Message}", ex.Message);
+                await sql.CloseAsync().ConfigureAwait(false);
+                throw;
+            }
         }
         catch (Exception ex)
         {

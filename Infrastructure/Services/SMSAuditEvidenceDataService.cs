@@ -87,28 +87,85 @@ public class SMSAuditEvidenceDataService : BaseDataService<SMSAuditEvidenceDataS
     /// <summary>
     /// Gets SMS Audit Evidence by audit code
     /// </summary>
-    public Task<Result<List<SMSAuditEvidence>>> GetAuditEvidenceByAuditAsync(string auditCode, string? evidenceTypeFilter = null, CancellationToken ct = default)
+    public async Task<Result<List<SMSAuditEvidence>>> GetEvidenceByAuditCodeAsync(string auditCode, bool includeArchived = false, CancellationToken ct = default)
     {
-        // TODO: Implement when repository is ready
-        throw new NotImplementedException("Repository implementation pending");
+        var result = await _repo.GetSMSAuditEvidenceByAuditCodeAsync(auditCode, includeArchived, ct);
+        if (result.IsSuccess)
+        {
+            return Result<List<SMSAuditEvidence>>.Success(result.Value.ToList());
+        }
+        return Result<List<SMSAuditEvidence>>.Failure<List<SMSAuditEvidence>>(result.Error);
     }
 
     /// <summary>
     /// Gets SMS Audit Evidence by finding code
     /// </summary>
-    public Task<Result<List<SMSAuditEvidence>>> GetAuditEvidenceByFindingAsync(string findingCode, string? evidenceTypeFilter = null, CancellationToken ct = default)
+    public async Task<Result<List<SMSAuditEvidence>>> GetEvidenceByFindingCodeAsync(string findingCode, bool includeArchived = false, CancellationToken ct = default)
     {
-        // TODO: Implement when repository is ready
-        throw new NotImplementedException("Repository implementation pending");
+        var result = await _repo.GetSMSAuditEvidenceByFindingCodeAsync(findingCode, includeArchived, ct);
+        if (result.IsSuccess)
+        {
+            return Result<List<SMSAuditEvidence>>.Success(result.Value.ToList());
+        }
+        return Result<List<SMSAuditEvidence>>.Failure<List<SMSAuditEvidence>>(result.Error);
     }
 
+    /// <summary>
+    /// Archives SMS Audit Evidence
+    /// </summary>
+    public async Task<Result<bool>> ArchiveEvidenceAsync(string evidenceCode, string archivedBy = "SYSTEM", CancellationToken ct = default)
+    {
+        return await _repo.ArchiveSMSAuditEvidenceAsync(evidenceCode, archivedBy, ct);
+    }
+
+    /// <summary>
+    /// Gets all evidence - wrapper for repository method
+    /// </summary>
+    public async Task<Result<List<SMSAuditEvidence>>> GetAllEvidenceAsync(CancellationToken ct = default)
+    {
+        return await GetAllAuditEvidenceAsync(ct);
+    }
+
+    /// <summary>
+    /// Gets evidence by code - wrapper for repository method
+    /// </summary>
+    public async Task<Result<SMSAuditEvidence>> GetEvidenceByCodeAsync(string evidenceCode, CancellationToken ct = default)
+    {
+        return await GetAuditEvidenceByCodeAsync(evidenceCode, ct);
+    }
+
+    /// <summary>
+    /// Creates evidence - wrapper for repository method
+    /// </summary>
+    public async Task<Result<SMSAuditEvidence>> CreateEvidenceAsync(SMSAuditEvidence evidence, CancellationToken ct = default)
+    {
+        return await CreateAuditEvidenceAsync(evidence, ct);
+    }
+
+    /// <summary>
+    /// Updates evidence - wrapper for repository method
+    /// </summary>
+    public async Task<Result<SMSAuditEvidence>> UpdateEvidenceAsync(SMSAuditEvidence evidence, CancellationToken ct = default)
+    {
+        return await UpdateAuditEvidenceAsync(evidence, ct);
+    }
+
+    /// <summary>
+    /// Deletes evidence - wrapper for repository method
+    /// </summary>
+    public async Task<Result<bool>> DeleteEvidenceAsync(string evidenceCode, CancellationToken ct = default)
+    {
+        return await _repo.DeleteSMSAuditEvidenceAsync(evidenceCode, ct);
+    }
+
+    // TODO: Implement when additional stored procedures are available
     /// <summary>
     /// Gets SMS Audit Evidence by type
     /// </summary>
     public Task<Result<List<SMSAuditEvidence>>> GetAuditEvidenceByTypeAsync(string evidenceType, string? confidentialityLevel = null, CancellationToken ct = default)
     {
         // TODO: Implement when repository is ready
-        throw new NotImplementedException("Repository implementation pending");
+        throw new NotImplementedException("Repository implementation pending - requires pr_SMSAuditEvidence_GetByType");
     }
 
     /// <summary>
@@ -118,7 +175,7 @@ public class SMSAuditEvidenceDataService : BaseDataService<SMSAuditEvidenceDataS
         DateTime? collectionDateTo = null, CancellationToken ct = default)
     {
         // TODO: Implement when repository is ready
-        throw new NotImplementedException("Repository implementation pending");
+        throw new NotImplementedException("Repository implementation pending - requires pr_SMSAuditEvidence_GetByCollector");
     }
 
     /// <summary>
@@ -127,7 +184,7 @@ public class SMSAuditEvidenceDataService : BaseDataService<SMSAuditEvidenceDataS
     public Task<Result<List<SMSAuditEvidence>>> GetUnverifiedAuditEvidenceAsync(string? auditCodeFilter = null, string? evidenceTypeFilter = null, CancellationToken ct = default)
     {
         // TODO: Implement when repository is ready
-        throw new NotImplementedException("Repository implementation pending");
+        throw new NotImplementedException("Repository implementation pending - requires pr_SMSAuditEvidence_GetUnverified");
     }
 
     /// <summary>
@@ -136,7 +193,7 @@ public class SMSAuditEvidenceDataService : BaseDataService<SMSAuditEvidenceDataS
     public Task<Result<List<SMSAuditEvidence>>> GetArchivedAuditEvidenceAsync(DateTime? archivedAfter = null, string? retentionReasonFilter = null, CancellationToken ct = default)
     {
         // TODO: Implement when repository is ready
-        throw new NotImplementedException("Repository implementation pending");
+        throw new NotImplementedException("Repository implementation pending - requires pr_SMSAuditEvidence_GetArchived");
     }
 
     /// <summary>
@@ -146,7 +203,7 @@ public class SMSAuditEvidenceDataService : BaseDataService<SMSAuditEvidenceDataS
         string? auditCodeFilter = null, string? evidenceTypeFilter = null, CancellationToken ct = default)
     {
         // TODO: Implement when repository is ready
-        throw new NotImplementedException("Repository implementation pending");
+        throw new NotImplementedException("Repository implementation pending - requires pr_SMSAuditEvidence_GetStatistics");
     }
 
     /// <summary>
@@ -154,8 +211,8 @@ public class SMSAuditEvidenceDataService : BaseDataService<SMSAuditEvidenceDataS
     /// </summary>
     public Task<Result<SMSAuditEvidence>> UploadEvidenceFileAsync(SMSAuditEvidence auditEvidence, byte[] fileData, CancellationToken ct = default)
     {
-        // TODO: Implement when repository is ready
-        throw new NotImplementedException("Repository implementation pending");
+        // TODO: Implement when file storage service is ready
+        throw new NotImplementedException("File upload implementation pending - requires file storage service");
     }
 
     /// <summary>
@@ -163,7 +220,7 @@ public class SMSAuditEvidenceDataService : BaseDataService<SMSAuditEvidenceDataS
     /// </summary>
     public Task<Result<byte[]>> DownloadEvidenceFileAsync(string evidenceCode, CancellationToken ct = default)
     {
-        // TODO: Implement when repository is ready
-        throw new NotImplementedException("Repository implementation pending");
+        // TODO: Implement when file storage service is ready
+        throw new NotImplementedException("File download implementation pending - requires file storage service");
     }
 }

@@ -101,7 +101,7 @@
 
                     <!-- Priority and Status Row -->
                     <RadzenRow Gap="1rem">
-                        <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenColumn Size="12" SizeMD="4">
                             <RadzenFormField Text="Priority" Variant="Variant.Outlined">
                                 <RadzenDropDown @bind-Value="@Priority" 
                                               Data="@PriorityOptions" 
@@ -109,15 +109,41 @@
                                               Style="width: 100%;" />
                             </RadzenFormField>
                         </RadzenColumn>
-                        <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenColumn Size="12" SizeMD="4">
                             <RadzenFormField Text="Status" Variant="Variant.Outlined">
-                                <RadzenDropDown @bind-Value="@Status" 
+                                <RadzenDropDown Value="@Status" 
                                               Data="@StatusOptions" 
                                               Placeholder="Select status"
+                                              ValueChanged="@((string value) => OnStatusChanged(value))"
                                               Style="width: 100%;" />
                             </RadzenFormField>
                         </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem" Style="height: 100%; justify-content: center;">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                    <RadzenCheckBox Value="@RequiresApproval"
+                                                    ValueChanged="@((bool value) => OnRequiresApprovalChanged(value))"
+                                                    Name="RequiresApprovalCheckbox" />
+                                    <RadzenLabel Text="Requires Approval" Component="RequiresApprovalCheckbox" />
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenColumn>
                     </RadzenRow>
+
+                    <!-- Help and Guidelines Section -->
+                    @if (RequiresApproval)
+                    {
+                        <RadzenCard Variant="Variant.Text" Style="background-color: #f8f9fa; border-left: 4px solid var(--rz-info);">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Subtitle2">
+                                    <i class="fas fa-info-circle"></i> Approval Process Guidelines
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2">
+                                    To get this audit plan approved, ensure all required fields are completed and use the Approval Workflow tab to manage approval details.
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenCard>
+                    }
                 </RadzenStack>
             </RadzenTabsItem>
 
@@ -180,13 +206,24 @@
                         </RadzenColumn>
                     </RadzenRow>
 
-                    <!-- Auditor Team -->
-                    <RadzenFormField Text="Auditor Team" Variant="Variant.Outlined">
-                        <RadzenTextArea @bind-Value="@AuditorTeam" 
-                                      Placeholder="List team members and their roles"
-                                      Rows="3" 
-                                      Style="width: 100%;" />
-                    </RadzenFormField>
+                    <!-- Auditor Team and Contact Person -->
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="8">
+                            <RadzenFormField Text="Auditor Team" Variant="Variant.Outlined">
+                                <RadzenTextArea @bind-Value="@AuditorTeam" 
+                                              Placeholder="List team members and their roles"
+                                              Rows="3" 
+                                              Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenFormField Text="Contact Person" Variant="Variant.Outlined">
+                                <RadzenTextBox @bind-Value="@ContactPerson" 
+                                             Placeholder="Primary contact"
+                                             Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    </RadzenRow>
 
                     <!-- Date Range Row -->
                     <RadzenRow Gap="1rem">
@@ -203,6 +240,25 @@
                                 <RadzenDatePicker @bind-Value="@PlannedEndDate" 
                                                 DateFormat="MM/dd/yyyy"
                                                 Change="@OnEndDateChanged"
+                                                Style="width: 100%;" />
+                            </RadzenFormField>
+                            </RadzenColumn>
+                    </RadzenRow>
+
+                    <!-- Recurrence and Next Scheduled Date Row -->
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenFormField Text="Recurrence Pattern" Variant="Variant.Outlined">
+                                <RadzenDropDown @bind-Value="@RecurrencePattern" 
+                                              Data="@RecurrencePatternOptions" 
+                                              Placeholder="Select recurrence"
+                                              Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenFormField Text="Next Scheduled Date" Variant="Variant.Outlined">
+                                <RadzenDatePicker @bind-Value="@NextScheduledDate" 
+                                                DateFormat="MM/dd/yyyy"
                                                 Style="width: 100%;" />
                             </RadzenFormField>
                         </RadzenColumn>
@@ -235,6 +291,96 @@
                                       Rows="8" 
                                       Style="width: 100%;" />
                     </RadzenFormField>
+                </RadzenStack>
+            </RadzenTabsItem>
+
+            <!-- Approval Workflow Tab - Always present but content controlled by RequiresApproval -->
+            <RadzenTabsItem Text="Approval Workflow" Icon="approval" Disabled="@(!RequiresApproval)">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" Style="padding: 1rem;">
+                    @if (RequiresApproval)
+                    {
+                        <!-- Current Approval Status -->
+                        @if (Status == "Approved")
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat">
+                                <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
+                                    <i class="fas fa-check-circle"></i> Audit Plan Approved
+                                </RadzenText>
+                            </RadzenAlert>
+                        }
+                        else
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
+                                <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
+                                    <i class="fas fa-hourglass-half"></i> Pending Approval
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0.5rem 0 0 0;">
+                                    Current Status: <RadzenBadge Text="@Status" BadgeStyle="BadgeStyle.Info" />
+                                </RadzenText>
+                            </RadzenAlert>
+                        }
+
+                        <!-- Approval Fields - Always available when RequiresApproval is checked -->
+                        <RadzenCard Variant="Variant.Outlined">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                                <RadzenText TextStyle="TextStyle.Subtitle1">
+                                    <i class="fas fa-user-check"></i> Approval Information
+                                </RadzenText>
+                                
+                                <RadzenRow Gap="1rem">
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Approved By" Variant="Variant.Outlined">
+                                            <RadzenTextBox @bind-Value="@ApprovedBy" 
+                                                         Placeholder="Enter approver name"
+                                                         Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Approved Date" Variant="Variant.Outlined">
+                                            <RadzenDatePicker @bind-Value="@ApprovedDate" 
+                                                            DateFormat="MM/dd/yyyy HH:mm"
+                                                            ShowTime="true"
+                                                            Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                                
+                                <RadzenFormField Text="Approval Notes" Variant="Variant.Outlined">
+                                    <RadzenTextArea @bind-Value="@ApprovalNotes" 
+                                                  Placeholder="Enter approval notes or conditions"
+                                                  Rows="3" 
+                                                  Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenStack>
+                        </RadzenCard>
+
+                        <!-- Approval History (placeholder for future implementation) -->
+                        <RadzenCard Variant="Variant.Outlined">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Subtitle1">
+                                    <i class="fas fa-history"></i> Approval History
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                                    No approval history available yet.
+                                </RadzenText>
+                                <!-- Future: Add approval history timeline here -->
+                            </RadzenStack>
+                        </RadzenCard>
+                    }
+                    else
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                <RadzenIcon Icon="block" Style="font-size: 3rem; color: var(--rz-warning);" />
+                                <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; text-align: center;">
+                                    Approval Workflow Disabled
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body1" Style="text-align: center;">
+                                    This audit plan does not require approval. Check "Requires Approval" in the Basic Information tab to enable the approval workflow.
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenAlert>
+                    }
                 </RadzenStack>
             </RadzenTabsItem>
         </Tabs>

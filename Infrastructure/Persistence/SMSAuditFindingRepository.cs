@@ -62,20 +62,22 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingNotes, finding.Notes));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, finding.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, finding.CreatedDate));
+            
+            // ? FIXED: Use correct output parameter names to match stored procedure exactly
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             var newCode = new SqlParameter("@pNewAuditFindingCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
             cmd.Parameters.Add(newID);
             cmd.Parameters.Add(newCode);
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
-            var newId = await cmd.ExecuteScalarAsync(ct).ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false); // ? FIXED: Use ExecuteNonQuery not ExecuteScalar for INSERT with output params
             await sql.CloseAsync().ConfigureAwait(false);
 
-
+            // ? FIXED: Get values from output parameters 
             int newIdValue = (int)newID.Value;
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
 
-            if (newId != null)
+            if (newIdValue > 0 && !string.IsNullOrEmpty(newCodeValue))
             {
                 var result = await GetSMSAuditFindingByCodeAsync(newCodeValue, ct).ConfigureAwait(false);
                 return result;
@@ -94,10 +96,10 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
     {
         try
         {
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_SMSAuditFinding_GetById} ID:{code}", null);
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_SMSAuditFinding_GetByCode} Code:{code}", null);
 
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_SMSAuditFinding_GetById, sql)
+            using SqlCommand cmd = new(StoredProcs.pr_SMSAuditFinding_GetByCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
@@ -183,8 +185,8 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
                 CommandType = CommandType.StoredProcedure
             };
 
-            // Add parameters
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingId, finding.Id.Value));
+            // ? FIXED: Use correct ID parameter name for UPDATE operations
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingId, finding.Id.Value)); 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingCode, finding.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingAuditCode, finding.AuditCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingTitle, finding.Title));
@@ -255,5 +257,74 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
         }
     }
 
+    public async Task<Result<IEnumerable<SMSAuditFinding>>> GetSMSAuditFindingsByAuditCodeAsync(string auditCode, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInfrastructureGetItems($"{_logheader} {StoredProcs.pr_SMSAuditFinding_GetByAudit} AuditCode:{auditCode}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_SMSAuditFinding_GetByAudit, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditCode, auditCode));
+
+            List<SMSAuditFinding> findings = new();
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
+            
+            while (await reader.ReadAsync(ct).ConfigureAwait(false))
+            {
+                var finding = Mappers.MapToSMSAuditFinding(reader);
+                findings.Add(finding);
+            }
+            
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result.Success(findings.AsEnumerable());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemsError($"{_logheader} {ex.Message}", null);
+            return Result.Failure<IEnumerable<SMSAuditFinding>>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+
+    public async Task<Result<IEnumerable<SMSAuditFinding>>> GetOverdueSMSAuditFindingsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInfrastructureGetItems($"{_logheader} {StoredProcs.pr_SMSAuditFinding_GetOverdue}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_SMSAuditFinding_GetOverdue, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            List<SMSAuditFinding> findings = new();
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
+            
+            while (await reader.ReadAsync(ct).ConfigureAwait(false))
+            {
+                var finding = Mappers.MapToSMSAuditFinding(reader);
+                findings.Add(finding);
+            }
+            
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result.Success(findings.AsEnumerable());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemsError($"{_logheader} {ex.Message}", null);
+            return Result.Failure<IEnumerable<SMSAuditFinding>>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
     #endregion
 }

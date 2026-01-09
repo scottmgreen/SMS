@@ -35,25 +35,25 @@ public class CreateSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
                 return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
-            _logger.LogInformation("Processing CreateSMSAuditPlanCommand for audit plan: {Name}", request.Name);
+            _logger.LogInformation("Processing CreateSMSAuditPlanCommand for audit plan: {Name}", request.AuditPlan.Name);
 
             // Generate audit plan code
-            var auditPlanCode = _auditPlanService.GenerateAuditPlanCode(request.AuditType, request.PlannedStartDate);
+            var auditPlanCode = _auditPlanService.GenerateAuditPlanCode(request.AuditPlan.AuditType, request.AuditPlan.PlannedStartDate);
             
             // Create audit plan entity
-            var auditPlan = new SMSAuditPlan(new SMSAuditPlanID(auditPlanCode), request.CreatedBy)
+            var auditPlan = new SMSAuditPlan(new SMSAuditPlanID(auditPlanCode), request.AuditPlan.CreatedBy)
             {
-                Name = request.Name,
-                Description = request.Description,
-                AuditType = request.AuditType,
-                PlannedStartDate = request.PlannedStartDate,
-                PlannedEndDate = request.PlannedEndDate,
-                AuditScope = request.AuditScope,
-                AuditObjectives = request.AuditObjectives,
-                LeadAuditor = request.LeadAuditor,
-                ResponsibleDepartment = request.ResponsibleDepartment,
+                Name = request.AuditPlan.Name,
+                Description = request.AuditPlan.Description,
+                AuditType = request.AuditPlan.AuditType,
+                PlannedStartDate = request.AuditPlan.PlannedStartDate,
+                PlannedEndDate = request.AuditPlan.PlannedEndDate,
+                AuditScope = request.AuditPlan.AuditScope,
+                AuditObjectives = request.AuditPlan.AuditObjectives,
+                LeadAuditor = request.AuditPlan.LeadAuditor,
+                ResponsibleDepartment = request.AuditPlan.ResponsibleDepartment,
                 Status = "Draft",
-                EstimatedDurationHours = _auditPlanService.CalculateRecommendedDuration(request.AuditType, request.AuditScope)
+                EstimatedDurationHours = _auditPlanService.CalculateRecommendedDuration(request.AuditPlan.AuditType, request.AuditPlan.AuditScope)
             };
 
             // Validate audit plan
@@ -114,30 +114,9 @@ public class UpdateSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
                 return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
-            _logger.LogInformation("Processing UpdateSMSAuditPlanCommand for audit plan: {AuditPlanCode}", request.AuditPlanCode);
+            _logger.LogInformation("Processing UpdateSMSAuditPlanCommand for audit plan: {AuditPlanCode}", request.AuditPlan.Code);
 
-            // Get existing audit plan
-            var existingPlanResult = await _auditPlanService.GetAuditPlanByCodeAsync(request.AuditPlanCode, cancellationToken);
-            if (existingPlanResult.IsFailure)
-            {
-                _logger.LogError("Audit plan not found: {AuditPlanCode}", request.AuditPlanCode);
-                return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(existingPlanResult.Error);
-            }
-
-            var auditPlan = existingPlanResult.Value!;
-
-            // Update audit plan properties
-            auditPlan.Name = request.Name;
-            auditPlan.Description = request.Description;
-            auditPlan.AuditType = request.AuditType;
-            auditPlan.PlannedStartDate = request.PlannedStartDate;
-            auditPlan.PlannedEndDate = request.PlannedEndDate;
-            auditPlan.AuditScope = request.AuditScope;
-            auditPlan.AuditObjectives = request.AuditObjectives;
-            auditPlan.LeadAuditor = request.LeadAuditor;
-            auditPlan.ResponsibleDepartment = request.ResponsibleDepartment;
-            auditPlan.UpdatedBy = request.UpdatedBy;
-            auditPlan.UpdatedDate = DateTime.UtcNow;
+            var auditPlan = request.AuditPlan; //existingPlanResult.Value!;
 
             // Validate updated audit plan
             var validationResult = _auditPlanService.ValidateAuditPlan(auditPlan);
@@ -152,7 +131,7 @@ public class UpdateSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated SMS audit plan: {AuditPlanCode}", request.AuditPlanCode);
+                _logger.LogInformation("Successfully updated SMS audit plan: {AuditPlanCode}", request.AuditPlan.Code);
             }
             else
             {
@@ -168,7 +147,7 @@ public class UpdateSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating SMS audit plan: {AuditPlanCode}", request?.AuditPlanCode);
+            _logger.LogError(ex, "Unexpected error occurred while updating SMS audit plan: {AuditPlanCode}", request?.AuditPlan.Code);
             return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("UPDATE_FAILED", "Failed to update audit plan"));
         }
     }
@@ -301,6 +280,62 @@ public class DeleteSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
         {
             _logger.LogError(ex, "Unexpected error occurred while deleting SMS audit plan: {AuditPlanCode}", request?.AuditPlanCode);
             return Result<bool>.Failure<bool>(new Error("DELETE_FAILED", "Failed to delete audit plan"));
+        }
+    }
+}
+
+public class ScheduleSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandler<ScheduleSMSAuditPlanCommand, Result<SMSAuditPlan>>
+{
+    private readonly SMSAuditPlanService _auditPlanService;
+    private readonly ILogger<ScheduleSMSAuditPlanCommandHandler> _logger;
+
+    public ScheduleSMSAuditPlanCommandHandler(
+        SMSAuditPlanService auditPlanService,
+        ILogger<ScheduleSMSAuditPlanCommandHandler> logger)
+    {
+        _auditPlanService = auditPlanService ?? throw new ArgumentNullException(nameof(auditPlanService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SMSAuditPlan>> HandleAsync(ScheduleSMSAuditPlanCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request is null)
+            {
+                _logger.LogError("ScheduleSMSAuditPlanCommand received with null request");
+                return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("NULL_REQUEST", "Request cannot be null"));
+            }
+
+            _logger.LogInformation("Processing ScheduleSMSAuditPlanCommand for audit plan: {AuditPlanCode}", request.AuditPlan.Code);
+
+            
+            var auditPlan = request.AuditPlan; //existingPlanResult.Value!;
+            auditPlan.Status = "Scheduled";
+
+            // Save updated audit plan
+            var result = await _auditPlanService.UpdateAuditPlanAsync(auditPlan, cancellationToken);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully updated SMS audit plan: {AuditPlanCode}", request.AuditPlan.Code);
+            }
+            else
+            {
+                _logger.LogError("Failed to update SMS audit plan: {Error}", result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("UpdateSMSAuditPlanCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error occurred while updating SMS audit plan: {AuditPlanCode}", request?.AuditPlan.Code);
+            return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("UPDATE_FAILED", "Failed to update audit plan"));
         }
     }
 }

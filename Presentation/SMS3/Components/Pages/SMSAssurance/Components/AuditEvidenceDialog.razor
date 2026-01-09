@@ -1,0 +1,260 @@
+@using Radzen
+@using Radzen.Blazor
+@using SMS_Application.Messaging.Commands
+@using SMS_Domain.Entities
+@using SMS_Shared.Common
+
+<RadzenTemplateForm @ref="evidenceForm" TItem="EvidenceViewModel" Data="@ViewModel" Submit="@OnSubmit">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+        <!-- Header -->
+        <RadzenCard Variant="Variant.Outlined" Style="margin-bottom: 1rem;">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                <RadzenIcon Icon="@(ViewModel.EvidenceType == "Photo" ? "camera_alt" : 
+                                  ViewModel.EvidenceType == "Video" ? "videocam" :
+                                  ViewModel.EvidenceType == "Document" ? "description" : "attach_file")" 
+                          Style="font-size: 2rem; color: var(--rz-primary);" />
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-primary);">
+                        @(IsNew ? "Upload Evidence" : "Edit Evidence")
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; color: var(--rz-text-secondary-color);">
+                        Audit: @AuditCode
+                        @if (!string.IsNullOrEmpty(FindingCode))
+                        {
+                            <text> | Finding: @FindingCode</text>
+                        }
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+
+        <RadzenTabs>
+            <Tabs>
+                <!-- Basic Information Tab -->
+                <RadzenTabsItem Text="Evidence Details" Icon="info">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" Style="margin-top: 1rem;">
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="8">
+                                <RadzenFormField Text="Evidence Title" Variant="@variant">
+                                    <RadzenTextBox @bind-Value="@ViewModel.Title" 
+                                                 Placeholder="Brief descriptive title for the evidence"
+                                                 MaxLength="200" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenFormField Text="Evidence Type" Variant="@variant">
+                                    <RadzenDropDown @bind-Value="@ViewModel.EvidenceType" 
+                                                  Data="@EvidenceTypeOptions"
+                                                  Change="@OnEvidenceTypeChanged"
+                                                  Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenFormField Text="Description" Variant="@variant">
+                            <RadzenTextArea @bind-Value="@ViewModel.Description" 
+                                          Rows="3"
+                                          Placeholder="Detailed description of the evidence"
+                                          MaxLength="2000" />
+                        </RadzenFormField>
+
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Source" Variant="@variant">
+                                    <RadzenTextBox @bind-Value="@ViewModel.Source" 
+                                                 Placeholder="Source of the evidence (e.g., system, process, document)"
+                                                 MaxLength="200" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Collected By" Variant="@variant">
+                                    <RadzenTextBox @bind-Value="@ViewModel.CollectedBy" 
+                                                 Placeholder="Person who collected the evidence"
+                                                 MaxLength="200" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenFormField Text="Collection Date" Variant="@variant">
+                            <RadzenDatePicker @bind-Value="@ViewModel.CollectionDate" 
+                                            Style="width: 300px;" 
+                                            DateFormat="MM/dd/yyyy" />
+                        </RadzenFormField>
+                    </RadzenStack>
+                </RadzenTabsItem>
+
+                <!-- File Upload Tab -->
+                <RadzenTabsItem Text="File Upload" Icon="cloud_upload">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" Style="margin-top: 1rem;">
+                        @if (IsNew)
+                        {
+                            <RadzenUpload Url="@GetUploadUrl()" 
+                                        Accept="@GetAcceptedFileTypes()"
+                                        MaxFileSize="@(50 * 1024 * 1024)" 
+                                        Multiple="false"
+                                        Complete="@OnFileUploadComplete"
+                                        Error="@OnFileUploadError"
+                                        Style="width: 100%;">
+                                <RadzenUploadHeader>
+                                    <RadzenIcon Icon="cloud_upload" Style="margin-right: 8px;" />
+                                    <span>Drag and drop or click to select @ViewModel.EvidenceType.ToLower()</span>
+                                </RadzenUploadHeader>
+                            </RadzenUpload>
+
+                            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">File Upload Guidelines:</RadzenText>
+                                    <RadzenUnorderedList>
+                                        <li>Maximum file size: 50 MB</li>
+                                        <li>Accepted formats: @GetFileFormatsDescription()</li>
+                                        <li>Files will be automatically scanned for security</li>
+                                        <li>Ensure sensitive information is properly classified</li>
+                                    </RadzenUnorderedList>
+                                </RadzenStack>
+                            </RadzenAlert>
+                        }
+                        else
+                        {
+                            <RadzenCard Variant="Variant.Outlined">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                                    <RadzenIcon Icon="@(GetFileIcon())" Style="font-size: 2rem; color: var(--rz-info);" />
+                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                                        <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">
+                                            Current File: @(ViewModel.OriginalFileName ?? "No file")
+                                        </RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; color: var(--rz-text-secondary-color);">
+                                            Size: @FormatFileSize(ViewModel.FileSize ?? 0) | Type: @ViewModel.ContentType
+                                        </RadzenText>
+                                    </RadzenStack>
+                                    <RadzenButton Text="Download" 
+                                                Icon="download" 
+                                                ButtonStyle="ButtonStyle.Light" 
+                                                Size="ButtonSize.Small"
+                                                Click="@OnDownloadFile" />
+                                </RadzenStack>
+                            </RadzenCard>
+                        }
+                    </RadzenStack>
+                </RadzenTabsItem>
+
+                <!-- Metadata Tab -->
+                <RadzenTabsItem Text="Metadata" Icon="label">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" Style="margin-top: 1rem;">
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Storage Location" Variant="@variant">
+                                    <RadzenDropDown @bind-Value="@ViewModel.StorageLocation" 
+                                                  Data="@StorageLocationOptions"
+                                                  Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Confidentiality Level" Variant="@variant">
+                                    <RadzenDropDown @bind-Value="@ViewModel.ConfidentialityLevel" 
+                                                  Data="@ConfidentialityLevelOptions"
+                                                  Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Retention Period (Months)" Variant="@variant">
+                                    <RadzenNumeric @bind-Value="@ViewModel.RetentionPeriodMonths" 
+                                                 Min="1" Max="240" 
+                                                 Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="margin-top: 1.5rem;">
+                                    <RadzenCheckBox @bind-Value="@ViewModel.IsVerified" Name="isVerified" />
+                                    <RadzenLabel Text="Evidence Verified" Component="isVerified" />
+                                </RadzenStack>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenFormField Text="Retention Reason" Variant="@variant">
+                            <RadzenTextBox @bind-Value="@ViewModel.RetentionReason" 
+                                         Placeholder="Reason for retention period"
+                                         MaxLength="200" />
+                        </RadzenFormField>
+
+                        <RadzenFormField Text="Notes" Variant="@variant">
+                            <RadzenTextArea @bind-Value="@ViewModel.Notes" 
+                                          Rows="3"
+                                          Placeholder="Additional notes about the evidence"
+                                          MaxLength="2000" />
+                        </RadzenFormField>
+                    </RadzenStack>
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
+
+        <!-- Buttons -->
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" Style="margin-top: 2rem;">
+            <RadzenButton Text="Cancel" 
+                        ButtonStyle="ButtonStyle.Light" 
+                        Click="@OnCancel"
+                        Style="min-width: 100px;" />
+            <RadzenButton Text="@(IsNew ? "Upload Evidence" : "Update Evidence")" 
+                        ButtonStyle="ButtonStyle.Primary" 
+                        ButtonType="ButtonType.Submit"
+                        IsBusy="@IsSubmitting"
+                        Disabled="@(IsNew && string.IsNullOrEmpty(ViewModel.FilePath))"
+                        Style="min-width: 120px;" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>
+
+<style>
+    .rz-tabview-panels {
+        padding: 0 !important;
+    }
+    
+    .evidence-dialog .rz-card {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+</style>
+
+@code {
+    private RadzenTemplateForm<EvidenceViewModel>? evidenceForm;
+    private readonly Variant variant = Variant.Outlined;
+
+    public class EvidenceViewModel
+    {
+        public string Code { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string EvidenceType { get; set; } = "Document";
+        public string Source { get; set; } = string.Empty;
+        public string CollectedBy { get; set; } = string.Empty;
+        public DateTime CollectionDate { get; set; } = DateTime.Today;
+        public string? FilePath { get; set; }
+        public string? OriginalFileName { get; set; }
+        public long? FileSize { get; set; }
+        public string? ContentType { get; set; }
+        public string StorageLocation { get; set; } = "Local";
+        public string ConfidentialityLevel { get; set; } = "Internal";
+        public int RetentionPeriodMonths { get; set; } = 84;
+        public string? RetentionReason { get; set; }
+        public bool IsVerified { get; set; } = false;
+        public string? VerifiedBy { get; set; }
+        public DateTime? VerificationDate { get; set; }
+        public string? Notes { get; set; }
+    }
+
+    public List<string> EvidenceTypeOptions { get; } = new()
+    {
+        "Document", "Photo", "Video", "Audio", "Email", "Screenshot", "Log File", "Other"
+    };
+
+    public List<string> StorageLocationOptions { get; } = new()
+    {
+        "Local", "Cloud", "Network Share", "Archive"
+    };
+
+    public List<string> ConfidentialityLevelOptions { get; } = new()
+    {
+        "Public", "Internal", "Confidential", "Restricted"
+    };
+}

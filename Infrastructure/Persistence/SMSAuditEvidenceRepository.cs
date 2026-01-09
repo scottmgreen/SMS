@@ -188,8 +188,8 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
                 CommandType = CommandType.StoredProcedure
             };
 
-            // Add parameters
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceId, evidence.Id.Value));
+            // FIXED: Use correct parameter name to match stored procedure exactly - @pID parameter
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceId, evidence.Id.Value)); 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceCode, evidence.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceAuditCode, evidence.AuditCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceFindingCode, evidence.FindingCode));
@@ -221,7 +221,7 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
 
             if (rowsAffected > 0)
             {
-                return Result.Success(evidence);
+                return await GetSMSAuditEvidenceByCodeAsync(evidence.Code, ct).ConfigureAwait(false);
             }
 
             return Result<SMSAuditEvidence>.Failure<SMSAuditEvidence>(DomainErrors.SMSAuditEvidenceError.NotFound);
@@ -245,7 +245,7 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceId, code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceCode, code));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             var rowsAffected = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -261,6 +261,113 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
         catch (Exception ex)
         {
             _logger.LogInfrastructureDeleteItemError($"{_logheader} {ex.Message}", null);
+            return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+
+    public async Task<Result<IEnumerable<SMSAuditEvidence>>> GetSMSAuditEvidenceByAuditCodeAsync(string auditCode, bool includeArchived = false, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInfrastructureGetItems($"{_logheader} {StoredProcs.pr_SMSAuditEvidence_GetByAudit} AuditCode:{auditCode}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_SMSAuditEvidence_GetByAudit, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditCode, auditCode));
+            cmd.Parameters.Add(DataAccess.Parameter("@pIncludeArchived", includeArchived));
+
+            List<SMSAuditEvidence> evidenceList = new();
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
+            
+            while (await reader.ReadAsync(ct).ConfigureAwait(false))
+            {
+                var evidence = Mappers.MapToSMSAuditEvidence(reader);
+                evidenceList.Add(evidence);
+            }
+            
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result.Success(evidenceList.AsEnumerable());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemsError($"{_logheader} {ex.Message}", null);
+            return Result.Failure<IEnumerable<SMSAuditEvidence>>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+
+    public async Task<Result<IEnumerable<SMSAuditEvidence>>> GetSMSAuditEvidenceByFindingCodeAsync(string findingCode, bool includeArchived = false, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInfrastructureGetItems($"{_logheader} {StoredProcs.pr_SMSAuditEvidence_GetByFinding} FindingCode:{findingCode}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_SMSAuditEvidence_GetByFinding, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingCode, findingCode));
+            cmd.Parameters.Add(DataAccess.Parameter("@pIncludeArchived", includeArchived));
+
+            List<SMSAuditEvidence> evidenceList = new();
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
+            
+            while (await reader.ReadAsync(ct).ConfigureAwait(false))
+            {
+                var evidence = Mappers.MapToSMSAuditEvidence(reader);
+                evidenceList.Add(evidence);
+            }
+            
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result.Success(evidenceList.AsEnumerable());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemsError($"{_logheader} {ex.Message}", null);
+            return Result.Failure<IEnumerable<SMSAuditEvidence>>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+
+    public async Task<Result<bool>> ArchiveSMSAuditEvidenceAsync(string code, string archivedBy = "SYSTEM", CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInfrastructurePostItem($"{_logheader} {StoredProcs.pr_SMSAuditEvidence_Archive} Code:{code}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_SMSAuditEvidence_Archive, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceCode, code));
+            cmd.Parameters.Add(DataAccess.Parameter("@pArchivedBy", archivedBy));
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            var rowsAffected = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            if (rowsAffected > 0)
+            {
+                return Result.Success(true);
+            }
+
+            return Result<bool>.Failure<bool>(DomainErrors.SMSAuditEvidenceError.NotFound);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructurePostItemError($"{_logheader} {ex.Message}", null);
             return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }

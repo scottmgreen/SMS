@@ -114,8 +114,8 @@ public class StartSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<St
 
             _logger.LogInformation("Processing StartSMSAuditCommand for audit: {AuditCode}", request.AuditCode);
 
-            // Get existing audit
-            var existingAuditResult = await _auditService.GetAuditByCodeAsync(request.AuditCode, cancellationToken);
+            //Get existing audit
+           var existingAuditResult = await _auditService.GetAuditByCodeAsync(request.AuditCode, cancellationToken);
             if (existingAuditResult.IsFailure)
             {
                 _logger.LogError("Audit not found: {AuditCode}", request.AuditCode);
@@ -315,6 +315,66 @@ public class AddSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHandl
         {
             _logger.LogError(ex, "Unexpected error occurred while adding SMS audit finding: {AuditCode}", request?.AuditCode);
             return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("ADD_FINDING_FAILED", "Failed to add audit finding"));
+        }
+    }
+}
+
+public class UpdateSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSAuditCommand, Result<SMSAudit>>
+{
+    private readonly SMSAuditService _auditService;
+    private readonly ILogger<UpdateSMSAuditCommandHandler> _logger;
+
+    public UpdateSMSAuditCommandHandler(
+        SMSAuditService auditService,
+        ILogger<UpdateSMSAuditCommandHandler> logger)
+    {
+        _auditService = auditService ?? throw new ArgumentNullException(nameof(auditService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SMSAudit>> HandleAsync(UpdateSMSAuditCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request is null)
+            {
+                _logger.LogError("UpdateSMSAuditCommand received with null request");
+                return Result<SMSAudit>.Failure<SMSAudit>(new Error("NULL_REQUEST", "Request cannot be null"));
+            }
+
+            _logger.LogInformation("Processing UpdateSMSAuditCommand for audit: {Name}", request.Audit.Name);
+
+            // Validate audit
+            var validationResult = _auditService.ValidateAudit(request.Audit);
+            if (validationResult.IsFailure)
+            {
+                _logger.LogError("Audit validation failed: {Error}", validationResult.Error?.Message);
+                return Result<SMSAudit>.Failure<SMSAudit>(validationResult.Error);
+            }
+
+            // Save audit using the service
+            var result = await _auditService.UpdateAuditAsync(request.Audit, cancellationToken);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully created SMS audit: {AuditCode}", request.Audit.Code);
+            }
+            else
+            {
+                _logger.LogError("Failed to create SMS audit: {Error}", result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("CreateSMSAuditCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error occurred while creating SMS audit");
+            return Result<SMSAudit>.Failure<SMSAudit>(new Error("CREATE_FAILED", "Failed to create audit"));
         }
     }
 }

@@ -305,3 +305,345 @@ public class GetSMSAuditExecutionDashboardQueryHandler : BaseQueryBundle, IReque
         }
     }
 }
+
+// =============================================
+// SMS AUDIT FINDING QUERY HANDLERS
+// =============================================
+
+/// <summary>
+/// Query handler for getting SMS Audit Findings by Audit Code
+/// </summary>
+public class GetSMSAuditFindingsByAuditCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditFindingsByAuditCodeQuery, Result<List<SMSAuditFinding>>>
+{
+    private readonly SMSAuditFindingDataService _dataService;
+    private readonly ILogger<GetSMSAuditFindingsByAuditCodeQueryHandler> _logger;
+
+    public GetSMSAuditFindingsByAuditCodeQueryHandler(
+        SMSAuditFindingDataService dataService,
+        ILogger<GetSMSAuditFindingsByAuditCodeQueryHandler> logger)
+    {
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<List<SMSAuditFinding>>> HandleAsync(GetSMSAuditFindingsByAuditCodeQuery request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing GetSMSAuditFindingsByAuditCodeQuery for AuditCode: {AuditCode}", request.AuditCode);
+
+            var result = await _dataService.GetFindingsByAuditCodeAsync(request.AuditCode, ct);
+
+            if (result.IsSuccess)
+            {
+                var findings = result.Value;
+
+                // Apply filters if specified
+                if (!string.IsNullOrEmpty(request.StatusFilter))
+                {
+                    findings = findings.Where(f => f.Status.Equals(request.StatusFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+                }
+
+                if (!string.IsNullOrEmpty(request.SeverityFilter))
+                {
+                    findings = findings.Where(f => f.Severity.Equals(request.SeverityFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+                }
+
+                return Result<List<SMSAuditFinding>>.Success(findings);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing GetSMSAuditFindingsByAuditCodeQuery for AuditCode: {AuditCode}", request.AuditCode);
+            return Result<List<SMSAuditFinding>>.Failure<List<SMSAuditFinding>>(new Error("QUERY_FAILED", "Failed to get audit findings"));
+        }
+    }
+}
+
+/// <summary>
+/// Query handler for getting all SMS Audit Findings
+/// </summary>
+public class GetAllSMSAuditFindingsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSAuditFindingsQuery, Result<List<SMSAuditFinding>>>
+{
+    private readonly SMSAuditFindingDataService _dataService;
+    private readonly ILogger<GetAllSMSAuditFindingsQueryHandler> _logger;
+
+    public GetAllSMSAuditFindingsQueryHandler(
+        SMSAuditFindingDataService dataService,
+        ILogger<GetAllSMSAuditFindingsQueryHandler> logger)
+    {
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<List<SMSAuditFinding>>> HandleAsync(GetAllSMSAuditFindingsQuery request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing GetAllSMSAuditFindingsQuery");
+
+            var result = await _dataService.GetAllFindingsAsync(ct);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing GetAllSMSAuditFindingsQuery");
+            return Result<List<SMSAuditFinding>>.Failure<List<SMSAuditFinding>>(new Error("QUERY_FAILED", "Failed to get all audit findings"));
+        }
+    }
+}
+
+/// <summary>
+/// Query handler for getting SMS Audit Finding by Code
+/// </summary>
+public class GetSMSAuditFindingByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditFindingByCodeQuery, Result<SMSAuditFinding>>
+{
+    private readonly SMSAuditFindingDataService _dataService;
+    private readonly ILogger<GetSMSAuditFindingByCodeQueryHandler> _logger;
+
+    public GetSMSAuditFindingByCodeQueryHandler(
+        SMSAuditFindingDataService dataService,
+        ILogger<GetSMSAuditFindingByCodeQueryHandler> logger)
+    {
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SMSAuditFinding>> HandleAsync(GetSMSAuditFindingByCodeQuery request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing GetSMSAuditFindingByCodeQuery for FindingCode: {FindingCode}", request.FindingCode);
+
+            var result = await _dataService.GetFindingByCodeAsync(request.FindingCode, ct);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing GetSMSAuditFindingByCodeQuery for FindingCode: {FindingCode}", request.FindingCode);
+            return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("QUERY_FAILED", "Failed to get audit finding"));
+        }
+    }
+}
+
+/// <summary>
+/// Query handler for getting overdue SMS Audit Findings
+/// </summary>
+public class GetOverdueSMSAuditFindingsQueryHandler : BaseQueryBundle, IRequestHandler<GetOverdueSMSAuditFindingsQuery, Result<List<SMSAuditFinding>>>
+{
+    private readonly SMSAuditFindingDataService _dataService;
+    private readonly ILogger<GetOverdueSMSAuditFindingsQueryHandler> _logger;
+
+    public GetOverdueSMSAuditFindingsQueryHandler(
+        SMSAuditFindingDataService dataService,
+        ILogger<GetOverdueSMSAuditFindingsQueryHandler> logger)
+    {
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<List<SMSAuditFinding>>> HandleAsync(GetOverdueSMSAuditFindingsQuery request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing GetOverdueSMSAuditFindingsQuery");
+
+            var result = await _dataService.GetOverdueFindingsAsync(ct);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing GetOverdueSMSAuditFindingsQuery");
+            return Result<List<SMSAuditFinding>>.Failure<List<SMSAuditFinding>>(new Error("QUERY_FAILED", "Failed to get overdue audit findings"));
+        }
+    }
+}
+
+// =============================================
+// SMS AUDIT EVIDENCE QUERY HANDLERS
+// =============================================
+
+/// <summary>
+/// Query handler for getting SMS Audit Evidence by Audit Code
+/// </summary>
+public class GetSMSAuditEvidenceByAuditCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditEvidenceByAuditCodeQuery, Result<List<SMSAuditEvidence>>>
+{
+    private readonly SMSAuditEvidenceDataService _dataService;
+    private readonly ILogger<GetSMSAuditEvidenceByAuditCodeQueryHandler> _logger;
+
+    public GetSMSAuditEvidenceByAuditCodeQueryHandler(
+        SMSAuditEvidenceDataService dataService,
+        ILogger<GetSMSAuditEvidenceByAuditCodeQueryHandler> logger)
+    {
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<List<SMSAuditEvidence>>> HandleAsync(GetSMSAuditEvidenceByAuditCodeQuery request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing GetSMSAuditEvidenceByAuditCodeQuery for AuditCode: {AuditCode}", request.AuditCode);
+
+            var result = await _dataService.GetEvidenceByAuditCodeAsync(request.AuditCode, request.IncludeArchived, ct);
+
+            if (result.IsSuccess)
+            {
+                var evidence = result.Value;
+
+                // Apply filters if specified
+                if (!string.IsNullOrEmpty(request.EvidenceTypeFilter))
+                {
+                    evidence = evidence.Where(e => e.EvidenceType.Equals(request.EvidenceTypeFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+                }
+
+                return Result<List<SMSAuditEvidence>>.Success(evidence);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing GetSMSAuditEvidenceByAuditCodeQuery for AuditCode: {AuditCode}", request.AuditCode);
+            return Result<List<SMSAuditEvidence>>.Failure<List<SMSAuditEvidence>>(new Error("QUERY_FAILED", "Failed to get audit evidence"));
+        }
+    }
+}
+
+/// <summary>
+/// Query handler for getting all SMS Audit Evidence
+/// </summary>
+public class GetAllSMSAuditEvidenceQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSAuditEvidenceQuery, Result<List<SMSAuditEvidence>>>
+{
+    private readonly SMSAuditEvidenceDataService _dataService;
+    private readonly ILogger<GetAllSMSAuditEvidenceQueryHandler> _logger;
+
+    public GetAllSMSAuditEvidenceQueryHandler(
+        SMSAuditEvidenceDataService dataService,
+        ILogger<GetAllSMSAuditEvidenceQueryHandler> logger)
+    {
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<List<SMSAuditEvidence>>> HandleAsync(GetAllSMSAuditEvidenceQuery request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing GetAllSMSAuditEvidenceQuery");
+
+            var result = await _dataService.GetAllEvidenceAsync(ct);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing GetAllSMSAuditEvidenceQuery");
+            return Result<List<SMSAuditEvidence>>.Failure<List<SMSAuditEvidence>>(new Error("QUERY_FAILED", "Failed to get all audit evidence"));
+        }
+    }
+}
+
+/// <summary>
+/// Query handler for getting SMS Audit Evidence by Code
+/// </summary>
+public class GetSMSAuditEvidenceByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditEvidenceByCodeQuery, Result<SMSAuditEvidence>>
+{
+    private readonly SMSAuditEvidenceDataService _dataService;
+    private readonly ILogger<GetSMSAuditEvidenceByCodeQueryHandler> _logger;
+
+    public GetSMSAuditEvidenceByCodeQueryHandler(
+        SMSAuditEvidenceDataService dataService,
+        ILogger<GetSMSAuditEvidenceByCodeQueryHandler> logger)
+    {
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SMSAuditEvidence>> HandleAsync(GetSMSAuditEvidenceByCodeQuery request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing GetSMSAuditEvidenceByCodeQuery for EvidenceCode: {EvidenceCode}", request.EvidenceCode);
+
+            var result = await _dataService.GetEvidenceByCodeAsync(request.EvidenceCode, ct);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing GetSMSAuditEvidenceByCodeQuery for EvidenceCode: {EvidenceCode}", request.EvidenceCode);
+            return Result<SMSAuditEvidence>.Failure<SMSAuditEvidence>(new Error("QUERY_FAILED", "Failed to get audit evidence"));
+        }
+    }
+}
+
+/// <summary>
+/// Query handler for getting SMS Audit Evidence by Finding Code
+/// </summary>
+public class GetSMSAuditEvidenceByFindingCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditEvidenceByFindingCodeQuery, Result<List<SMSAuditEvidence>>>
+{
+    private readonly SMSAuditEvidenceDataService _dataService;
+    private readonly ILogger<GetSMSAuditEvidenceByFindingCodeQueryHandler> _logger;
+
+    public GetSMSAuditEvidenceByFindingCodeQueryHandler(
+        SMSAuditEvidenceDataService dataService,
+        ILogger<GetSMSAuditEvidenceByFindingCodeQueryHandler> logger)
+    {
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<List<SMSAuditEvidence>>> HandleAsync(GetSMSAuditEvidenceByFindingCodeQuery request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing GetSMSAuditEvidenceByFindingCodeQuery for FindingCode: {FindingCode}", request.FindingCode);
+
+            var result = await _dataService.GetEvidenceByFindingCodeAsync(request.FindingCode, request.IncludeArchived, ct);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing GetSMSAuditEvidenceByFindingCodeQuery for FindingCode: {FindingCode}", request.FindingCode);
+            return Result<List<SMSAuditEvidence>>.Failure<List<SMSAuditEvidence>>(new Error("QUERY_FAILED", "Failed to get audit evidence by finding"));
+        }
+    }
+}
+
+/// <summary>
+/// Query handler for getting SMS Audit Checklist Items by Audit Code
+/// </summary>
+public class GetSMSAuditChecklistItemsByAuditCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditChecklistItemsByAuditCodeQuery, Result<List<SMSAuditChecklistItem>>>
+{
+    private readonly ILogger<GetSMSAuditChecklistItemsByAuditCodeQueryHandler> _logger;
+
+    public GetSMSAuditChecklistItemsByAuditCodeQueryHandler(
+        ILogger<GetSMSAuditChecklistItemsByAuditCodeQueryHandler> logger)
+    {
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<List<SMSAuditChecklistItem>>> HandleAsync(GetSMSAuditChecklistItemsByAuditCodeQuery request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing GetSMSAuditChecklistItemsByAuditCodeQuery for AuditCode: {AuditCode}", request.AuditCode);
+
+            // For now, return an empty list since the checklist feature isn't fully implemented
+            // TODO: Implement when SMSAuditChecklistDataService is available
+            return await Task.FromResult(Result<List<SMSAuditChecklistItem>>.Success(new List<SMSAuditChecklistItem>()));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing GetSMSAuditChecklistItemsByAuditCodeQuery for AuditCode: {AuditCode}", request.AuditCode);
+            return Result<List<SMSAuditChecklistItem>>.Failure<List<SMSAuditChecklistItem>>(new Error("QUERY_FAILED", "Failed to get audit checklist items"));
+        }
+    }
+}

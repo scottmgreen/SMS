@@ -1039,6 +1039,18 @@
 
         private static readonly Lazy<string> _pr_SMSAuditEvidence_Delete = new(() => "pr_SMSAuditEvidence_Delete");
         public static string pr_SMSAuditEvidence_Delete => _pr_SMSAuditEvidence_Delete.Value;
+
+        /// <summary>
+        /// SMS Audit Utility Operations
+        /// </summary>
+        private static readonly Lazy<string> _pr_SMSAudit_UpdateFindingsSummary = new(() => "pr_SMSAudit_UpdateFindingsSummary");
+        public static string pr_SMSAudit_UpdateFindingsSummary => _pr_SMSAudit_UpdateFindingsSummary.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditEvidence_Archive = new(() => "pr_SMSAuditEvidence_Archive");
+        public static string pr_SMSAuditEvidence_Archive => _pr_SMSAuditEvidence_Archive.Value;
+
+        private static readonly Lazy<string> _pr_SMSAuditEvidence_GetRetentionReview = new(() => "pr_SMSAuditEvidence_GetRetentionReview");
+        public static string pr_SMSAuditEvidence_GetRetentionReview => _pr_SMSAuditEvidence_GetRetentionReview.Value;
         #endregion
     }
 }

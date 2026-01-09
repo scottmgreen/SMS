@@ -294,3 +294,62 @@ public class GetSMSAuditChecklistItemsByAuditCodeQuery : BaseQueryBundle, IReque
         OnlyRequired = onlyRequired;
     }
 }
+
+// GET ALL SMS AUDIT FINDINGS
+public class GetAllSMSAuditFindingsQuery : BaseQueryBundle, IRequest<Result<List<SMSAuditFinding>>>
+{
+    public GetAllSMSAuditFindingsQuery()
+    {
+    }
+}
+
+// GET SMS AUDIT FINDING BY CODE
+public class GetSMSAuditFindingByCodeQuery : BaseQueryBundle, IRequest<Result<SMSAuditFinding>>
+{
+    public string FindingCode { get; set; }
+
+    public GetSMSAuditFindingByCodeQuery(string findingCode)
+    {
+        FindingCode = findingCode ?? throw new ArgumentNullException(nameof(findingCode));
+    }
+}
+
+// GET OVERDUE SMS AUDIT FINDINGS
+public class GetOverdueSMSAuditFindingsQuery : BaseQueryBundle, IRequest<Result<List<SMSAuditFinding>>>
+{
+    public GetOverdueSMSAuditFindingsQuery()
+    {
+    }
+}
+
+// GET ALL SMS AUDIT EVIDENCE
+public class GetAllSMSAuditEvidenceQuery : BaseQueryBundle, IRequest<Result<List<SMSAuditEvidence>>>
+{
+    public GetAllSMSAuditEvidenceQuery()
+    {
+    }
+}
+
+// GET SMS AUDIT EVIDENCE BY CODE
+public class GetSMSAuditEvidenceByCodeQuery : BaseQueryBundle, IRequest<Result<SMSAuditEvidence>>
+{
+    public string EvidenceCode { get; set; }
+
+    public GetSMSAuditEvidenceByCodeQuery(string evidenceCode)
+    {
+        EvidenceCode = evidenceCode ?? throw new ArgumentNullException(nameof(evidenceCode));
+    }
+}
+
+// GET SMS AUDIT EVIDENCE BY FINDING CODE
+public class GetSMSAuditEvidenceByFindingCodeQuery : BaseQueryBundle, IRequest<Result<List<SMSAuditEvidence>>>
+{
+    public string FindingCode { get; set; }
+    public bool IncludeArchived { get; set; } = false;
+
+    public GetSMSAuditEvidenceByFindingCodeQuery(string findingCode, bool includeArchived = false)
+    {
+        FindingCode = findingCode ?? throw new ArgumentNullException(nameof(findingCode));
+        IncludeArchived = includeArchived;
+    }
+}

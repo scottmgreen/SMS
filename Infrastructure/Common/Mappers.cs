@@ -1085,6 +1085,7 @@ public static partial class Mappers
         auditPlan.ApprovedBy = reader.GetValue<string>(FieldNames.fSMSAuditPlanApprovedBy);
         auditPlan.ApprovedDate = reader.IsDBNull(FieldNames.fSMSAuditPlanApprovedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fSMSAuditPlanApprovedDate);
         auditPlan.ExpectedDurationHours = reader.IsDBNull(FieldNames.fSMSAuditPlanExpectedDurationHours) ? 0 : reader.GetInt32(FieldNames.fSMSAuditPlanExpectedDurationHours);
+        auditPlan.Notes = reader.GetValue<string>(FieldNames.fSMSAuditPlanNotes) ?? string.Empty; // ADDED MISSING FIELD
 
         // Audit properties
         auditPlan.CreatedBy = createdBy;

@@ -1,0 +1,222 @@
+﻿@page "/SMSAssurance/AuditCalendar"
+@using SMS3.Components.Shared
+@using SMS3.Components.Pages.SMSAssurance.Components
+@using SMS_Application.Messaging.Queries
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Audit Calendar - SMS3</PageTitle>
+
+<!-- SMS Page Header -->
+<PageHeader Title="SMS Audit Calendar"
+           Subtitle="Schedule and manage SMS audits using an interactive calendar scheduler"
+           Icon="fas fa-calendar-alt">
+    <AdditionalContent>
+        <div class="d-flex gap-2">
+            <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                         Text="Today" 
+                         Icon="today"
+                         Size="ButtonSize.Small"
+                         Click="@GoToToday" />
+            <RadzenButton ButtonStyle="ButtonStyle.Info" 
+                         Text="Refresh" 
+                         Icon="refresh"
+                         Size="ButtonSize.Small"
+                         Click="@RefreshData"
+                         Disabled="@IsLoading" />
+        </div>
+    </AdditionalContent>
+</PageHeader>
+
+<!-- Calendar Controls - Simplified like Radzen sample -->
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" class="rz-p-4 rz-mb-6 rz-border-radius-1" Style="border: var(--rz-grid-cell-border);height:4rem;">
+    <RadzenLabel Text="Show Header:" />
+    <RadzenSwitch @bind-Value="@showHeader" />
+    
+    <RadzenButton Icon="today" Text="Today" Click="@GoToToday" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" />
+    <RadzenButton Icon="refresh" Text="Refresh" Click="@RefreshData" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@IsLoading" />
+    <RadzenButton Icon="add" Text="New Audit Plan" Click="@(() => CreateNewAuditPlan())" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" />
+    
+    <!-- Legend -->
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Style="margin-left: 2rem;">
+        <RadzenText TextStyle="TextStyle.Caption">Legend:</RadzenText>
+        <RadzenBadge Text="Draft" BadgeStyle="BadgeStyle.Secondary" />
+        <RadzenBadge Text="Approved" BadgeStyle="BadgeStyle.Success" />
+        <RadzenBadge Text="Scheduled" BadgeStyle="BadgeStyle.Info" />
+        <RadzenBadge Text="In Progress" BadgeStyle="BadgeStyle.Primary" />
+        <RadzenBadge Text="Completed" BadgeStyle="BadgeStyle.Success" />
+        <RadzenBadge Text="Overdue" BadgeStyle="BadgeStyle.Danger" />
+    </RadzenStack>
+</RadzenStack>
+
+<!-- Main Scheduler - Matching Radzen sample structure -->
+@if (IsLoading)
+{
+    <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+    </div>
+}
+else
+{
+    <RadzenScheduler @ref="scheduler" 
+                     SlotRender="@OnSlotRender" 
+                     style="height: 768px;" 
+                     TItem="AuditSchedulerItem" 
+                     Data="@SchedulerData"
+                     StartProperty="@nameof(AuditSchedulerItem.Start)" 
+                     EndProperty="@nameof(AuditSchedulerItem.End)" 
+                     ShowHeader="@showHeader"
+                     TextProperty="@nameof(AuditSchedulerItem.Text)" 
+                     SelectedIndex="2"
+                     SlotSelect="@OnSlotSelect" 
+                     AppointmentSelect="@OnAppointmentSelect" 
+                     AppointmentRender="@OnAppointmentRender"
+                     AppointmentMove="@OnAppointmentMove"
+                     class="audit-scheduler">
+        <RadzenDayView />
+        <RadzenWeekView />
+        <RadzenMonthView />
+        <RadzenYearView />
+    </RadzenScheduler>
+}
+
+<!-- Event Console for debugging like Radzen sample -->
+<EventConsole @ref="@console" />
+
+<!-- Audit Statistics Card -->
+<RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+    <RadzenColumn Size="12" SizeMD="3">
+        <RadzenCard Style="text-align: center; padding: 1.5rem;">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="assignment" Style="font-size: 2rem; color: var(--rz-primary);" />
+                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: bold;">@AuditPlans.Count</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-text-secondary-color);">Total Audit Plans</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+    
+    <RadzenColumn Size="12" SizeMD="3">
+        <RadzenCard Style="text-align: center; padding: 1.5rem;">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="schedule" Style="font-size: 2rem; color: var(--rz-info);" />
+                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: bold;">@GetAuditsThisMonth()</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-text-secondary-color);">This Month</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+    
+    <RadzenColumn Size="12" SizeMD="3">
+        <RadzenCard Style="text-align: center; padding: 1.5rem;">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="pending_actions" Style="font-size: 2rem; color: var(--rz-warning);" />
+                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: bold;">@GetAuditsThisWeek()</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-text-secondary-color);">This Week</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+    
+    <RadzenColumn Size="12" SizeMD="3">
+        <RadzenCard Style="text-align: center; padding: 1.5rem;">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="today" Style="font-size: 2rem; color: var(--rz-success);" />
+                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: bold;">@GetAuditsToday()</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-text-secondary-color);">Today</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>
+
+<style>
+    .audit-scheduler .rz-scheduler-appointment {
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        outline: none !important;
+        transition: all 0.3s ease;
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        pointer-events: auto;
+        position: relative;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .audit-scheduler .rz-scheduler-appointment:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .audit-scheduler .rz-scheduler-appointment:focus,
+    .audit-scheduler .rz-scheduler-appointment:focus-visible,
+    .audit-scheduler .rz-scheduler-appointment:active {
+        outline: none !important;
+        box-shadow: 0 0 0 3px rgba(33, 46, 97, 0.3) !important;
+    }
+    
+    /* Prevent focus errors on child elements */
+    .audit-scheduler .rz-scheduler-appointment * {
+        outline: none !important;
+        user-select: none;
+        pointer-events: none;
+    }
+    
+    /* Status-based styling matching AuditManagement color scheme */
+    .audit-scheduler .rz-scheduler-appointment.audit-draft {
+        background: linear-gradient(135deg, #6c757d, #5a6268);
+        border-color: #6c757d;
+        color: white;
+    }
+    
+    .audit-scheduler .rz-scheduler-appointment.audit-approved {
+        background: linear-gradient(135deg, #28a745, #1e7e34);
+        border-color: #28a745;
+        color: white;
+    }
+    
+    .audit-scheduler .rz-scheduler-appointment.audit-scheduled {
+        background: linear-gradient(135deg, #17a2b8, #138496);
+        border-color: #17a2b8;
+        color: white;
+    }
+    
+    .audit-scheduler .rz-scheduler-appointment.audit-inprogress {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        border-color: #007bff;
+        color: white;
+    }
+    
+    .audit-scheduler .rz-scheduler-appointment.audit-completed {
+        background: linear-gradient(135deg, #28a745, #1e7e34);
+        border-color: #28a745;
+        color: white;
+    }
+    
+    .audit-scheduler .rz-scheduler-appointment.audit-overdue {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        border-color: #dc3545;
+        color: white;
+    }
+
+    /* High priority audits get a special indicator */
+    .audit-scheduler .rz-scheduler-appointment.high-priority::before {
+        content: '⚠️';
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        font-size: 0.75rem;
+    }
+
+    /* Enhanced slot highlighting */
+    .audit-scheduler .rz-scheduler-slot.business-hours {
+        background: var(--rz-scheduler-highlight-background-color, rgba(255,220,40,.1)) !important;
+    }
+
+    .audit-scheduler .rz-scheduler-slot.today {
+        background: var(--rz-scheduler-today-background-color, rgba(33,46,97,.1)) !important;
+    }
+</style>

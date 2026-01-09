@@ -1,0 +1,170 @@
+@using Radzen
+@using Radzen.Blazor
+@using SMS_Application.Messaging.Commands
+@using SMS_Domain.Entities
+
+<RadzenCard Variant="Variant.Outlined" Style="margin-bottom: 1rem;">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+            <RadzenIcon Icon="bolt" Style="font-size: 1.5rem; color: var(--rz-warning);" />
+            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-warning);">
+                Audit Workflow Actions
+            </RadzenText>
+        </RadzenStack>
+
+        @if (Audit != null)
+        {
+            @if (Audit.Status == "Scheduled")
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                        <RadzenIcon Icon="schedule" />
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1;">
+                            <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; font-weight: 600;">
+                                Audit is scheduled and ready to begin
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                Click "Start Audit" to begin the audit process and start recording findings.
+                            </RadzenText>
+                        </RadzenStack>
+                        <RadzenButton Text="Start Audit" 
+                                    Icon="play_arrow" 
+                                    ButtonStyle="ButtonStyle.Success"
+                                    Click="@OnStartAudit"
+                                    IsBusy="@IsProcessing"
+                                    Size="ButtonSize.Medium" />
+                    </RadzenStack>
+                </RadzenAlert>
+            }
+            else if (Audit.Status == "In Progress")
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                            <RadzenIcon Icon="pending_actions" />
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1;">
+                                <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; font-weight: 600;">
+                                    Audit is in progress
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                    Record findings and upload evidence as you conduct the audit.
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenStack>
+
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Wrap="FlexWrap.Wrap">
+                            <RadzenButton Text="Add Finding" 
+                                        Icon="add" 
+                                        ButtonStyle="ButtonStyle.Warning"
+                                        Click="@OnAddFinding"
+                                        Size="ButtonSize.Small" />
+                            <RadzenButton Text="Upload Evidence" 
+                                        Icon="cloud_upload" 
+                                        ButtonStyle="ButtonStyle.Info"
+                                        Click="@OnUploadEvidence"
+                                        Size="ButtonSize.Small" />
+                            <RadzenButton Text="Complete Audit" 
+                                        Icon="check_circle" 
+                                        ButtonStyle="ButtonStyle.Success"
+                                        Click="@OnCompleteAudit"
+                                        IsBusy="@IsProcessing"
+                                        Size="ButtonSize.Small" />
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenAlert>
+            }
+            else if (Audit.Status == "Completed")
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                        <RadzenIcon Icon="check_circle" />
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1;">
+                            <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; font-weight: 600;">
+                                Audit completed successfully
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                @if (Audit.ActualEndDate.HasValue)
+                                {
+                                    <text>Completed on @Audit.ActualEndDate.Value.ToString("MM/dd/yyyy")</text>
+                                }
+                                | @TotalFindings findings recorded | @TotalEvidence evidence items collected
+                            </RadzenText>
+                        </RadzenStack>
+                        <RadzenButton Text="Generate Report" 
+                                    Icon="assessment" 
+                                    ButtonStyle="ButtonStyle.Primary"
+                                    Click="@OnGenerateReport"
+                                    Size="ButtonSize.Medium" />
+                    </RadzenStack>
+                </RadzenAlert>
+            }
+
+            <!-- Quick Stats -->
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenCard Variant="Variant.Text" Style="text-align: center; border-left: 4px solid var(--rz-warning);">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" AlignItems="AlignItems.Center">
+                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-warning);">
+                                @TotalFindings
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                                Total Findings
+                            </RadzenText>
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenCard Variant="Variant.Text" Style="text-align: center; border-left: 4px solid var(--rz-danger);">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" AlignItems="AlignItems.Center">
+                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-danger);">
+                                @CriticalFindings
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                                Critical
+                            </RadzenText>
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenCard Variant="Variant.Text" Style="text-align: center; border-left: 4px solid var(--rz-info);">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" AlignItems="AlignItems.Center">
+                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-info);">
+                                @TotalEvidence
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                                Evidence Items
+                            </RadzenText>
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenCard Variant="Variant.Text" Style="text-align: center; border-left: 4px solid var(--rz-success);">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" AlignItems="AlignItems.Center">
+                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-success);">
+                                @ProgressPercentage%
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                                Complete
+                            </RadzenText>
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+            </RadzenRow>
+        }
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    [Parameter] public SMSAudit? Audit { get; set; }
+    [Parameter] public int TotalFindings { get; set; } = 0;
+    [Parameter] public int CriticalFindings { get; set; } = 0;
+    [Parameter] public int TotalEvidence { get; set; } = 0;
+    [Parameter] public int ProgressPercentage { get; set; } = 0;
+    [Parameter] public bool IsProcessing { get; set; } = false;
+
+    [Parameter] public EventCallback OnStartAudit { get; set; }
+    [Parameter] public EventCallback OnAddFinding { get; set; }
+    [Parameter] public EventCallback OnUploadEvidence { get; set; }
+    [Parameter] public EventCallback OnCompleteAudit { get; set; }
+    [Parameter] public EventCallback OnGenerateReport { get; set; }
+}

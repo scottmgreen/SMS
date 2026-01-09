@@ -87,10 +87,14 @@ public class SMSAuditFindingDataService : BaseDataService<SMSAuditFindingDataSer
     /// <summary>
     /// Gets SMS Audit Findings by audit code
     /// </summary>
-    public Task<Result<List<SMSAuditFinding>>> GetAuditFindingsByAuditAsync(string auditCode, string? statusFilter = null, CancellationToken ct = default)
+    public async Task<Result<List<SMSAuditFinding>>> GetFindingsByAuditCodeAsync(string auditCode, CancellationToken ct = default)
     {
-        // TODO: Implement when repository is ready
-        throw new NotImplementedException("Repository implementation pending");
+        var result = await _repo.GetSMSAuditFindingsByAuditCodeAsync(auditCode, ct);
+        if (result.IsSuccess)
+        {
+            return Result<List<SMSAuditFinding>>.Success(result.Value.ToList());
+        }
+        return Result<List<SMSAuditFinding>>.Failure<List<SMSAuditFinding>>(result.Error);
     }
 
     /// <summary>
@@ -98,8 +102,8 @@ public class SMSAuditFindingDataService : BaseDataService<SMSAuditFindingDataSer
     /// </summary>
     public Task<Result<List<SMSAuditFinding>>> GetAuditFindingsBySeverityAsync(string severity, string? statusFilter = null, CancellationToken ct = default)
     {
-        // TODO: Implement when repository is ready
-        throw new NotImplementedException("Repository implementation pending");
+        // TODO: Implement when repository is ready - requires pr_SMSAuditFinding_GetBySeverity
+        throw new NotImplementedException("Repository implementation pending - requires pr_SMSAuditFinding_GetBySeverity");
     }
 
     /// <summary>
@@ -107,8 +111,8 @@ public class SMSAuditFindingDataService : BaseDataService<SMSAuditFindingDataSer
     /// </summary>
     public Task<Result<List<SMSAuditFinding>>> GetAuditFindingsByStatusAsync(string status, string? departmentFilter = null, CancellationToken ct = default)
     {
-        // TODO: Implement when repository is ready
-        throw new NotImplementedException("Repository implementation pending");
+        // TODO: Implement when repository is ready - requires pr_SMSAuditFinding_GetByStatus
+        throw new NotImplementedException("Repository implementation pending - requires pr_SMSAuditFinding_GetByStatus");
     }
 
     /// <summary>
@@ -116,17 +120,21 @@ public class SMSAuditFindingDataService : BaseDataService<SMSAuditFindingDataSer
     /// </summary>
     public Task<Result<List<SMSAuditFinding>>> GetAuditFindingsByResponsiblePersonAsync(string responsiblePerson, string? statusFilter = null, CancellationToken ct = default)
     {
-        // TODO: Implement when repository is ready
-        throw new NotImplementedException("Repository implementation pending");
+        // TODO: Implement when repository is ready - requires pr_SMSAuditFinding_GetByResponsiblePerson
+        throw new NotImplementedException("Repository implementation pending - requires pr_SMSAuditFinding_GetByResponsiblePerson");
     }
 
     /// <summary>
     /// Gets overdue SMS Audit Findings
     /// </summary>
-    public Task<Result<List<SMSAuditFinding>>> GetOverdueAuditFindingsAsync(string? departmentFilter = null, string? severityFilter = null, CancellationToken ct = default)
+    public async Task<Result<List<SMSAuditFinding>>> GetOverdueFindingsAsync(CancellationToken ct = default)
     {
-        // TODO: Implement when repository is ready
-        throw new NotImplementedException("Repository implementation pending");
+        var result = await _repo.GetOverdueSMSAuditFindingsAsync(ct);
+        if (result.IsSuccess)
+        {
+            return Result<List<SMSAuditFinding>>.Success(result.Value.ToList());
+        }
+        return Result<List<SMSAuditFinding>>.Failure<List<SMSAuditFinding>>(result.Error);
     }
 
     /// <summary>
@@ -134,8 +142,48 @@ public class SMSAuditFindingDataService : BaseDataService<SMSAuditFindingDataSer
     /// </summary>
     public Task<Result<List<SMSAuditFinding>>> GetAuditFindingsRequiringVerificationAsync(string? departmentFilter = null, CancellationToken ct = default)
     {
-        // TODO: Implement when repository is ready
-        throw new NotImplementedException("Repository implementation pending");
+        // TODO: Implement when repository is ready - requires pr_SMSAuditFinding_GetRequiringVerification
+        throw new NotImplementedException("Repository implementation pending - requires pr_SMSAuditFinding_GetRequiringVerification");
+    }
+
+    /// <summary>
+    /// Gets all findings - wrapper method
+    /// </summary>
+    public async Task<Result<List<SMSAuditFinding>>> GetAllFindingsAsync(CancellationToken ct = default)
+    {
+        return await GetAllAuditFindingsAsync(ct);
+    }
+
+    /// <summary>
+    /// Gets finding by code - wrapper method
+    /// </summary>
+    public async Task<Result<SMSAuditFinding>> GetFindingByCodeAsync(string findingCode, CancellationToken ct = default)
+    {
+        return await GetAuditFindingByCodeAsync(findingCode, ct);
+    }
+
+    /// <summary>
+    /// Creates finding - wrapper method
+    /// </summary>
+    public async Task<Result<SMSAuditFinding>> CreateFindingAsync(SMSAuditFinding finding, CancellationToken ct = default)
+    {
+        return await CreateAuditFindingAsync(finding, ct);
+    }
+
+    /// <summary>
+    /// Updates finding - wrapper method
+    /// </summary>
+    public async Task<Result<SMSAuditFinding>> UpdateFindingAsync(SMSAuditFinding finding, CancellationToken ct = default)
+    {
+        return await UpdateAuditFindingAsync(finding, ct);
+    }
+
+    /// <summary>
+    /// Deletes finding - wrapper method
+    /// </summary>
+    public async Task<Result<bool>> DeleteFindingAsync(string findingCode, CancellationToken ct = default)
+    {
+        return await _repo.DeleteSMSAuditFindingAsync(findingCode, ct);
     }
 
     /// <summary>
@@ -144,7 +192,7 @@ public class SMSAuditFindingDataService : BaseDataService<SMSAuditFindingDataSer
     public Task<Result<SMSAuditFindingStatistics>> GetAuditFindingStatisticsAsync(DateTime? startDate = null, DateTime? endDate = null,
         string? departmentFilter = null, string? auditTypeFilter = null, CancellationToken ct = default)
     {
-        // TODO: Implement when repository is ready
-        throw new NotImplementedException("Repository implementation pending");
+        // TODO: Implement when repository is ready - requires pr_SMSAuditFinding_GetStatistics
+        throw new NotImplementedException("Repository implementation pending - requires pr_SMSAuditFinding_GetStatistics");
     }
 }

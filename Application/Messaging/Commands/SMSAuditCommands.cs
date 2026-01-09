@@ -67,59 +67,57 @@ public class CreateSMSAuditCommand : BaseCommandBundle, IRequest<Result<SMSAudit
 // UPDATE SMS AUDIT
 public class UpdateSMSAuditCommand : BaseCommandBundle, IRequest<Result<SMSAudit>>
 {
-    public string Code { get; set; }
-    public string Name { get; set; }
-    public string? Description { get; set; }
-    public string? AuditPlanCode { get; set; }
-    public string AuditType { get; set; }
-    public string Scope { get; set; }
-    public string? Objectives { get; set; }
-    public DateTime ScheduledStartDate { get; set; }
-    public DateTime ScheduledEndDate { get; set; }
-    public DateTime? ActualStartDate { get; set; }
-    public DateTime? ActualEndDate { get; set; }
-    public string LeadAuditor { get; set; }
-    public string? AuditorTeam { get; set; }
-    public string ResponsibleDepartment { get; set; }
-    public string? ContactPerson { get; set; }
-    public string? AuditLocation { get; set; }
-    public string Status { get; set; }
-    public string Priority { get; set; }
-    public string? ExecutiveSummary { get; set; }
-    public string? Notes { get; set; }
-    public string UpdatedBy { get; set; }
-    public DateTime UpdatedDate { get; set; }
+    public SMSAudit Audit { get; set; }
 
-    public UpdateSMSAuditCommand(string code, string name, string? description,
-        string? auditPlanCode, string auditType, string scope, string? objectives,
-        DateTime scheduledStartDate, DateTime scheduledEndDate, DateTime? actualStartDate, DateTime? actualEndDate,
-        string leadAuditor, string? auditorTeam, string responsibleDepartment, string? contactPerson,
-        string? auditLocation, string status, string priority, string? executiveSummary, string? notes,
-        string updatedBy, DateTime updatedDate)
-    {
-        Code = code ?? throw new ArgumentNullException(nameof(code));
-        Name = name ?? throw new ArgumentNullException(nameof(name));
-        Description = description;
-        AuditPlanCode = auditPlanCode;
-        AuditType = auditType ?? throw new ArgumentNullException(nameof(auditType));
-        Scope = scope ?? throw new ArgumentNullException(nameof(scope));
-        Objectives = objectives;
-        ScheduledStartDate = scheduledStartDate;
-        ScheduledEndDate = scheduledEndDate;
-        ActualStartDate = actualStartDate;
-        ActualEndDate = actualEndDate;
-        LeadAuditor = leadAuditor ?? throw new ArgumentNullException(nameof(leadAuditor));
-        AuditorTeam = auditorTeam;
-        ResponsibleDepartment = responsibleDepartment ?? throw new ArgumentNullException(nameof(responsibleDepartment));
-        ContactPerson = contactPerson;
-        AuditLocation = auditLocation;
-        Status = status ?? throw new ArgumentNullException(nameof(status));
-        Priority = priority ?? throw new ArgumentNullException(nameof(priority));
-        ExecutiveSummary = executiveSummary;
-        Notes = notes;
-        UpdatedBy = updatedBy ?? throw new ArgumentNullException(nameof(updatedBy));
-        UpdatedDate = updatedDate;
-    }
+    //public string Code { get; set; }
+    //public string Name { get; set; }
+    //public string? Description { get; set; }
+    //public string? AuditPlanCode { get; set; }
+    //public string AuditType { get; set; }
+    //public string Scope { get; set; }
+    //public string? Objectives { get; set; }
+    //public DateTime ScheduledStartDate { get; set; }
+    //public DateTime ScheduledEndDate { get; set; }
+    //public DateTime? ActualStartDate { get; set; }
+    //public DateTime? ActualEndDate { get; set; }
+    //public string LeadAuditor { get; set; }
+    //public string? AuditorTeam { get; set; }
+    //public string ResponsibleDepartment { get; set; }
+    //public string? ContactPerson { get; set; }
+    //public string? AuditLocation { get; set; }
+    //public string Status { get; set; }
+    //public string Priority { get; set; }
+    //public string? ExecutiveSummary { get; set; }
+    //public string? Notes { get; set; }
+    //public string UpdatedBy { get; set; }
+    //public DateTime UpdatedDate { get; set; }
+
+    public UpdateSMSAuditCommand(SMSAudit audit)
+    {  this.Audit = audit; }    
+    //{
+    //    Code = code ?? throw new ArgumentNullException(nameof(code));
+    //    Name = name ?? throw new ArgumentNullException(nameof(name));
+    //    Description = description;
+    //    AuditPlanCode = auditPlanCode;
+    //    AuditType = auditType ?? throw new ArgumentNullException(nameof(auditType));
+    //    Scope = scope ?? throw new ArgumentNullException(nameof(scope));
+    //    Objectives = objectives;
+    //    ScheduledStartDate = scheduledStartDate;
+    //    ScheduledEndDate = scheduledEndDate;
+    //    ActualStartDate = actualStartDate;
+    //    ActualEndDate = actualEndDate;
+    //    LeadAuditor = leadAuditor ?? throw new ArgumentNullException(nameof(leadAuditor));
+    //    AuditorTeam = auditorTeam;
+    //    ResponsibleDepartment = responsibleDepartment ?? throw new ArgumentNullException(nameof(responsibleDepartment));
+    //    ContactPerson = contactPerson;
+    //    AuditLocation = auditLocation;
+    //    Status = status ?? throw new ArgumentNullException(nameof(status));
+    //    Priority = priority ?? throw new ArgumentNullException(nameof(priority));
+    //    ExecutiveSummary = executiveSummary;
+    //    Notes = notes;
+    //    UpdatedBy = updatedBy ?? throw new ArgumentNullException(nameof(updatedBy));
+    //    UpdatedDate = updatedDate;
+    //}
 }
 
 // START SMS AUDIT

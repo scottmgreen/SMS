@@ -224,32 +224,31 @@ public partial class AuditDialog : ComponentBase
             }
             else
             {
-                var command = new UpdateSMSAuditCommand(
-                    //id: Audit.Id!.Value,
-                    code: Code!,
-                    name: Name!,
-                    description: Description,
-                    auditPlanCode: AuditPlanCode,
-                    auditType: AuditType!,
-                    scope: Scope!,
-                    objectives: Objectives,
-                    scheduledStartDate: ScheduledStartDate!.Value,
-                    scheduledEndDate: ScheduledEndDate!.Value,
-                    actualStartDate: ActualStartDate,
-                    actualEndDate: ActualEndDate,
-                    leadAuditor: LeadAuditor!,
-                    auditorTeam: AuditorTeam,
-                    responsibleDepartment: ResponsibleDepartment!,
-                    contactPerson: ContactPerson,
-                    auditLocation: AuditLocation,
-                    status: Status!,
-                    priority: Priority!,
-                    executiveSummary: ExecutiveSummary,
-                    notes: Notes,
-                    updatedBy: "CURRENT_USER",
-                    updatedDate: DateTime.Now
-                );
+                // Update the existing audit entity with form data
+                Audit.Code = Code!;
+                Audit.Name = Name!;
+                Audit.Description = Description ?? string.Empty;
+                Audit.AuditPlanCode = AuditPlanCode ?? string.Empty;
+                Audit.AuditType = AuditType!;
+                Audit.Scope = Scope!;
+                Audit.Objectives = Objectives ?? string.Empty;
+                Audit.ResponsibleDepartment = ResponsibleDepartment!;
+                Audit.LeadAuditor = LeadAuditor!;
+                Audit.AuditorTeam = AuditorTeam ?? string.Empty;
+                Audit.ContactPerson = ContactPerson ?? string.Empty;
+                Audit.AuditLocation = AuditLocation ?? string.Empty;
+                Audit.ScheduledStartDate = ScheduledStartDate!.Value;
+                Audit.ScheduledEndDate = ScheduledEndDate!.Value;
+                Audit.ActualStartDate = ActualStartDate;
+                Audit.ActualEndDate = ActualEndDate;
+                Audit.Priority = Priority!;
+                Audit.Status = Status!;
+                Audit.ExecutiveSummary = ExecutiveSummary ?? string.Empty;
+                Audit.Notes = Notes ?? string.Empty;
+                Audit.UpdatedBy = "CURRENT_USER";
+                Audit.UpdatedDate = DateTime.UtcNow;
 
+                var command = new UpdateSMSAuditCommand(Audit);
                 var result = await Mediator.SendAsync(command, CancellationToken.None);
 
                 if (result.IsSuccess)

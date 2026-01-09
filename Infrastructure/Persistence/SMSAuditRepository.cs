@@ -45,7 +45,7 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
                 CommandType = CommandType.StoredProcedure
             };
 
-            // Add parameters
+            // Add ALL parameters to match stored procedure exactly (except fldi_ID)
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditCode, audit.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditName, audit.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditDescription, audit.Description));
@@ -58,12 +58,15 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditLeadAuditor, audit.LeadAuditor));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditAuditorTeam, audit.AuditorTeam));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditResponsibleDepartment, audit.ResponsibleDepartment));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditStatus, audit.Status));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPriority, audit.Priority));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditContactPerson, audit.ContactPerson));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditLocation, audit.AuditLocation));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditStatus, audit.Status));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPriority, audit.Priority));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditNotes, audit.Notes));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, audit.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, audit.CreatedDate));
+            
+            // Output parameters
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             var newCode = new SqlParameter("@pNewAuditCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
             cmd.Parameters.Add(newID);
@@ -73,11 +76,10 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
             var newId = await cmd.ExecuteScalarAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-
             int newIdValue = (int)newID.Value;
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
 
-            if (newId != null)
+            if (newCodeValue != null)
             {
                 var result = await GetSMSAuditByCodeAsync(newCodeValue, ct).ConfigureAwait(false);
                 return result;
@@ -96,15 +98,15 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
     {
         try
         {
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_SMSAudit_GetById} ID:{code}", null);
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_SMSAudit_GetByCode} Code:{code}", null);
 
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_SMSAudit_GetById, sql)
+            using SqlCommand cmd = new(StoredProcs.pr_SMSAudit_GetByCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditId, code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditCode, code));
 
             SMSAudit? audit = null;
 
@@ -186,7 +188,6 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
             };
 
             // Add parameters
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditId, audit.Id.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditCode, audit.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditName, audit.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditDescription, audit.Description));
@@ -259,6 +260,92 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
             return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
+
+    public async Task<Result<bool>> UpdateSMSAuditFindingsSummaryAsync(string auditCode, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInfrastructurePostItem($"{_logheader} {StoredProcs.pr_SMSAudit_UpdateFindingsSummary} AuditCode:{auditCode}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_SMSAudit_UpdateFindingsSummary, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditCode, auditCode));
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructurePostItemError($"{_logheader} {ex.Message}", null);
+            return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+
+    #region Audit Workflow Methods
+
+    public async Task<Result<SMSAudit>> StartAuditAsync(string auditCode, DateTime actualStartDate, string startedBy, CancellationToken ct = default)
+    {
+        try
+        {
+            var auditResult = await GetSMSAuditByCodeAsync(auditCode, ct).ConfigureAwait(false);
+            if (auditResult.IsFailure)
+            {
+                return auditResult;
+            }
+
+            var audit = auditResult.Value;
+            audit.ActualStartDate = actualStartDate;
+            audit.Status = "InProgress";
+            audit.UpdatedBy = startedBy;
+            audit.UpdatedDate = DateTime.UtcNow;
+
+            return await UpdateSMSAuditAsync(audit, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructurePostItemError($"{_logheader} Start Audit Error: {ex.Message}", null);
+            return Result.Failure<SMSAudit>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+
+    public async Task<Result<SMSAudit>> CompleteAuditAsync(string auditCode, DateTime actualEndDate, string executiveSummary, string completedBy, CancellationToken ct = default)
+    {
+        try
+        {
+            var auditResult = await GetSMSAuditByCodeAsync(auditCode, ct).ConfigureAwait(false);
+            if (auditResult.IsFailure)
+            {
+                return auditResult;
+            }
+
+            var audit = auditResult.Value;
+            audit.ActualEndDate = actualEndDate;
+            audit.Status = "Completed";
+            audit.ExecutiveSummary = executiveSummary;
+            audit.ReportSubmittedDate = DateTime.UtcNow;
+            audit.UpdatedBy = completedBy;
+            audit.UpdatedDate = DateTime.UtcNow;
+
+            // Update findings summary before completing
+            await UpdateSMSAuditFindingsSummaryAsync(auditCode, ct).ConfigureAwait(false);
+
+            return await UpdateSMSAuditAsync(audit, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructurePostItemError($"{_logheader} Complete Audit Error: {ex.Message}", null);
+            return Result.Failure<SMSAudit>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+
+    #endregion
 
     #endregion
 }

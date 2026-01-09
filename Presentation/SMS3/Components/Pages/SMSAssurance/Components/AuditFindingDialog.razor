@@ -1,0 +1,220 @@
+@using Radzen
+@using Radzen.Blazor
+@using SMS_Application.Messaging.Commands
+@using SMS_Domain.Entities
+@using SMS_Shared.Common
+
+<RadzenTemplateForm @ref="findingForm" TItem="FindingViewModel" Data="@ViewModel" Submit="@OnSubmit">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+        <!-- Header -->
+        <RadzenCard Variant="Variant.Outlined" Style="margin-bottom: 1rem;">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                <RadzenIcon Icon="bug_report" Style="font-size: 2rem; color: var(--rz-danger);" />
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-danger);">
+                        @(IsNew ? "Create New Finding" : "Edit Finding")
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; color: var(--rz-text-secondary-color);">
+                        Audit: @AuditCode
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+
+        <RadzenTabs>
+            <Tabs>
+                <!-- Basic Information Tab -->
+                <RadzenTabsItem Text="Basic Information" Icon="info">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" Style="margin-top: 1rem;">
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Finding Title" Variant="@variant">
+                                    <RadzenTextBox @bind-Value="@ViewModel.Title" 
+                                                 Placeholder="Brief descriptive title for the finding"
+                                                 MaxLength="200" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenFormField Text="Severity" Variant="@variant">
+                                    <RadzenDropDown @bind-Value="@ViewModel.Severity" 
+                                                  Data="@SeverityOptions"
+                                                  Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenFormField Text="Category" Variant="@variant">
+                                    <RadzenDropDown @bind-Value="@ViewModel.Category" 
+                                                  Data="@CategoryOptions"
+                                                  Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenFormField Text="Finding Description" Variant="@variant">
+                            <RadzenTextArea @bind-Value="@ViewModel.Description" 
+                                          Rows="4"
+                                          Placeholder="Detailed description of the finding, including what was observed and why it's a concern"
+                                          MaxLength="2000" />
+                        </RadzenFormField>
+
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Discovered Date" Variant="@variant">
+                                    <RadzenDatePicker @bind-Value="@ViewModel.DiscoveredDate" 
+                                                    Style="width: 100%;" 
+                                                    DateFormat="MM/dd/yyyy" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Target Resolution Date" Variant="@variant">
+                                    <RadzenDatePicker @bind-Value="@ViewModel.TargetResolutionDate" 
+                                                    Style="width: 100%;" 
+                                                    DateFormat="MM/dd/yyyy" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenStack>
+                </RadzenTabsItem>
+
+                <!-- Assignment Tab -->
+                <RadzenTabsItem Text="Assignment" Icon="assignment_ind">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" Style="margin-top: 1rem;">
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Responsible Person" Variant="@variant">
+                                    <RadzenTextBox @bind-Value="@ViewModel.ResponsiblePerson" 
+                                                 Placeholder="Person responsible for resolution"
+                                                 MaxLength="200" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Status" Variant="@variant">
+                                    <RadzenDropDown @bind-Value="@ViewModel.Status" 
+                                                  Data="@StatusOptions"
+                                                  Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenFormField Text="Corrective Action" Variant="@variant">
+                            <RadzenTextArea @bind-Value="@ViewModel.CorrectiveAction" 
+                                          Rows="3"
+                                          Placeholder="Proposed or implemented corrective action"
+                                          MaxLength="2000" />
+                        </RadzenFormField>
+
+                        <RadzenFormField Text="Root Cause Analysis" Variant="@variant">
+                            <RadzenTextArea @bind-Value="@ViewModel.RootCauseAnalysis" 
+                                          Rows="3"
+                                          Placeholder="Analysis of the root cause of the finding"
+                                          MaxLength="2000" />
+                        </RadzenFormField>
+                    </RadzenStack>
+                </RadzenTabsItem>
+
+                <!-- Verification Tab -->
+                <RadzenTabsItem Text="Verification" Icon="verified">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" Style="margin-top: 1rem;">
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                    <RadzenCheckBox @bind-Value="@ViewModel.VerificationRequired" Name="verificationRequired" />
+                                    <RadzenLabel Text="Verification Required" Component="verificationRequired" />
+                                </RadzenStack>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                @if (!IsNew && ViewModel.VerificationRequired)
+                                {
+                                    <RadzenFormField Text="Verification Date" Variant="@variant">
+                                        <RadzenDatePicker @bind-Value="@ViewModel.VerificationDate" 
+                                                        Style="width: 100%;" 
+                                                        DateFormat="MM/dd/yyyy" />
+                                    </RadzenFormField>
+                                }
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        @if (!IsNew && ViewModel.VerificationRequired)
+                        {
+                            <RadzenFormField Text="Verified By" Variant="@variant">
+                                <RadzenTextBox @bind-Value="@ViewModel.VerifiedBy" 
+                                             Placeholder="Person who verified the finding resolution"
+                                             MaxLength="200" />
+                            </RadzenFormField>
+                        }
+
+                        <RadzenFormField Text="Notes" Variant="@variant">
+                            <RadzenTextArea @bind-Value="@ViewModel.Notes" 
+                                          Rows="3"
+                                          Placeholder="Additional notes about the finding"
+                                          MaxLength="2000" />
+                        </RadzenFormField>
+                    </RadzenStack>
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
+
+        <!-- Buttons -->
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" Style="margin-top: 2rem;">
+            <RadzenButton Text="Cancel" 
+                        ButtonStyle="ButtonStyle.Light" 
+                        Click="@OnCancel"
+                        Style="min-width: 100px;" />
+            <RadzenButton Text="@(IsNew ? "Create Finding" : "Update Finding")" 
+                        ButtonStyle="ButtonStyle.Primary" 
+                        ButtonType="ButtonType.Submit"
+                        IsBusy="@IsSubmitting"
+                        Style="min-width: 120px;" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>
+
+<style>
+    .rz-tabview-panels {
+        padding: 0 !important;
+    }
+    
+    .finding-dialog .rz-card {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+</style>
+
+@code {
+    private RadzenTemplateForm<FindingViewModel>? findingForm;
+    private readonly Variant variant = Variant.Outlined;
+
+    public class FindingViewModel
+    {
+        public string Code { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string Severity { get; set; } = "Minor";
+        public string Category { get; set; } = "Process";
+        public string Status { get; set; } = "Open";
+        public DateTime DiscoveredDate { get; set; } = DateTime.Today;
+        public DateTime? TargetResolutionDate { get; set; }
+        public DateTime? ActualResolutionDate { get; set; }
+        public string? ResponsiblePerson { get; set; }
+        public string? CorrectiveAction { get; set; }
+        public string? RootCauseAnalysis { get; set; }
+        public bool VerificationRequired { get; set; } = false;
+        public string? VerifiedBy { get; set; }
+        public DateTime? VerificationDate { get; set; }
+        public string? Notes { get; set; }
+    }
+
+    public List<string> SeverityOptions { get; } = new()
+    {
+        "Critical", "Major", "Minor", "Observation"
+    };
+
+    public List<string> CategoryOptions { get; } = new()
+    {
+        "Process", "Documentation", "Training", "Equipment", "Facility", "Personnel", "Compliance", "Safety"
+    };
+
+    public List<string> StatusOptions { get; } = new()
+    {
+        "Open", "In Progress", "Pending Verification", "Closed", "Cancelled"
+    };
+}

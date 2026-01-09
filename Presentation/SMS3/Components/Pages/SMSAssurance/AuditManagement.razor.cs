@@ -1,12 +1,18 @@
 using Microsoft.AspNetCore.Components;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Shared.Common;
+
 using Radzen;
 using Radzen.Blazor;
+
+using SMS_Application.Interfaces;
+using SMS_Application.Messaging.CommandHandlers;
+using SMS_Application.Messaging.Commands;
+using SMS_Application.Messaging.Queries;
+
+using SMS_Domain.Entities;
+using SMS_Domain.Enums;
+
+using SMS_Shared.Common;
+
 using SMS3.Components.Pages.SMSAssurance.Components;
 
 namespace SMS3.Components.Pages.SMSAssurance;
@@ -278,7 +284,7 @@ public partial class AuditManagement : ComponentBase
                     { "AuditPlan", new SMSAuditPlan(new SMSAuditPlanID("AP-0000"), "SYSTEM") },
                     { "IsNew", true }
                 },
-                new DialogOptions() { Width = "800px", Height = "600px", Resizable = true });
+                new DialogOptions() { Width = "1200px", Height = "900px", Resizable = true });
 
             if (result != null)
             {
@@ -303,7 +309,7 @@ public partial class AuditManagement : ComponentBase
                     { "AuditPlan", plan },
                     { "IsNew", false }
                 },
-                new DialogOptions() { Width = "800px", Height = "600px", Resizable = true });
+                new DialogOptions() { Width = "1200px", Height = "900px", Resizable = true });
 
             if (result != null)
             {
@@ -322,39 +328,54 @@ public partial class AuditManagement : ComponentBase
     {
         try
         {
-            var newAudit = new SMSAudit(new SMSAuditID("AD-0000"),"SYSTEM")
-            {
-                AuditPlanCode = plan.Code,
-                Name = plan.Name,
-                Description = plan.Description,
-                AuditType = plan.AuditType,
-                Scope = plan.Scope,
-                Objectives = plan.Objectives,
-                ScheduledStartDate = plan.PlannedStartDate,
-                ScheduledEndDate = plan.PlannedEndDate,
-                LeadAuditor = plan.LeadAuditor,
-                AuditorTeam = plan.AuditorTeam,
-                ResponsibleDepartment = plan.ResponsibleDepartment,
-                Status = "Scheduled"
-            };
+            // Simple confirmation dialog instead of full form
+            var confirmMessage = $"Schedule audit '{plan.Name}' for {plan.PlannedStartDate:MM/dd/yyyy} - {plan.PlannedEndDate:MM/dd/yyyy}?";
+            
+            var confirm = await DialogService.Confirm(
+                confirmMessage,
+                "Schedule Audit Confirmation",
+                new ConfirmOptions() 
+                { 
+                    OkButtonText = "Yes, Schedule", 
+                    CancelButtonText = "Cancel",
+                    Width = "500px"
+                });
 
-            var result = await DialogService.OpenAsync<AuditDialog>("Schedule Audit",
-                new Dictionary<string, object>()
+            if (confirm == true)
+            {
+                // Use the domain method to schedule the audit
+                var scheduleResult = plan.ScheduleAudit(plan.PlannedStartDate, "CURRENT_USER");
+                
+                if (scheduleResult.IsFailure)
                 {
-                    { "Audit", newAudit },
-                    { "IsNew", true }
-                },
-                new DialogOptions() { Width = "900px", Height = "700px", Resizable = true });
+                    ShowErrorNotification($"Failed to schedule audit: {scheduleResult.Error?.Message}");
+                    return;
+                }
 
-            if (result != null)
-            {
-                await LoadActiveAuditsAsync();
-                ShowSuccessNotification("Audit scheduled successfully");
+                // Update the audit plan status to "Scheduled"
+                plan.Status = "Scheduled";
+                plan.UpdatedBy = "CURRENT_USER";
+                plan.UpdatedDate = DateTime.UtcNow;
+
+                // Save the updated audit plan
+                var command = new ScheduleSMSAuditPlanCommand(plan);
+                var result = await Mediator.SendAsync(command, CancellationToken.None);
+
+                if (result.IsSuccess)
+                {
+                    await LoadAuditPlansAsync();
+                    await LoadActiveAuditsAsync();
+                    ShowSuccessNotification($"Audit '{plan.Name}' has been scheduled successfully");
+                }
+                else
+                {
+                    ShowErrorNotification($"Failed to update audit plan status: {result.Error?.Message}");
+                }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error scheduling audit");
+            Logger.LogError(ex, "Error scheduling audit from plan: {PlanCode}", plan.Code);
             ShowErrorNotification("Error scheduling audit");
         }
     }
@@ -400,30 +421,13 @@ public partial class AuditManagement : ComponentBase
     {
         try
         {
-            var command = new UpdateSMSAuditCommand(
-                audit.Code!,
-                audit.Name!,
-                audit.Description,
-                audit.AuditPlanCode,
-                audit.AuditType!,
-                audit.Scope!,
-                audit.Objectives,
-                audit.ScheduledStartDate,
-                audit.ScheduledEndDate,
-                DateTime.Now, // ActualStartDate
-                null, // ActualEndDate
-                audit.LeadAuditor!,
-                audit.AuditorTeam,
-                audit.ResponsibleDepartment!,
-                audit.ContactPerson,
-                audit.AuditLocation,
-                "In Progress", // Status
-                audit.Priority!,
-                audit.ExecutiveSummary,
-                audit.Notes,
-                "SYSTEM", // UpdatedBy
-                DateTime.Now
-            );
+                audit.Status = "In Progress"; // Status
+                audit.UpdatedBy = "SYSTEM"; // UpdatedBy
+                audit.UpdatedDate = DateTime.Now;
+
+
+
+            var command = new StartSMSAuditCommand(audit.Code, audit.UpdatedBy);
 
             var result = await Mediator.SendAsync(command, CancellationToken.None);
 
@@ -557,7 +561,7 @@ public partial class AuditManagement : ComponentBase
         {
             "Completed" => BadgeStyle.Success,
             "In Progress" => BadgeStyle.Primary,
-            "Scheduled" => BadgeStyle.Info,
+            "Scheduled" => BadgeStyle.Success,
             "Draft" => BadgeStyle.Secondary,
             "Approved" => BadgeStyle.Success,
             "Overdue" => BadgeStyle.Danger,

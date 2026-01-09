@@ -1,0 +1,49 @@
+@using Radzen
+@using Radzen.Blazor
+
+<!-- Event Console for debugging like Radzen example -->
+@if (showEventConsole)
+{
+    <RadzenCard Style="margin-top: 1rem;">
+        <RadzenText TextStyle="TextStyle.H6">Event Console</RadzenText>
+        <RadzenTextArea @bind-Value="@eventLog" Rows="5" ReadOnly="true" Style="width: 100%; font-family: monospace; font-size: 0.85rem;" />
+        <div style="margin-top: 10px;">
+            <RadzenButton Text="Clear Log" Click="@ClearEventLog" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" />
+            <RadzenSwitch @bind-Value="@showEventConsole" Style="margin-left: 10px;" />
+            <RadzenLabel Text="Show Event Console" Style="margin-left: 5px;" />
+        </div>
+    </RadzenCard>
+}
+else
+{
+    <div style="margin-top: 1rem; text-align: right;">
+        <RadzenSwitch @bind-Value="@showEventConsole" />
+        <RadzenLabel Text="Show Event Console" Style="margin-left: 5px;" />
+    </div>
+}
+
+@code {
+    private bool showEventConsole = false;
+    private string eventLog = string.Empty;
+
+    public void Log(string message)
+    {
+        var timestamp = DateTime.Now.ToString("HH:mm:ss.fff");
+        eventLog += $"[{timestamp}] {message}\n";
+        
+        // Keep log reasonable size
+        var lines = eventLog.Split('\n');
+        if (lines.Length > 50)
+        {
+            eventLog = string.Join("\n", lines.Skip(lines.Length - 40));
+        }
+        
+        StateHasChanged();
+    }
+
+    public void ClearEventLog()
+    {
+        eventLog = string.Empty;
+        StateHasChanged();
+    }
+}

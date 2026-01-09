@@ -16,6 +16,7 @@ using SMS_Domain.Interfaces;
 using SMS_Infrastructure.Interfaces;
 using SMS_Infrastructure.Persistence;
 using Application.Interfaces;
+using SMS_Application.Services;
 
 namespace SMS_Application.Configuration
 {
@@ -37,7 +38,7 @@ namespace SMS_Application.Configuration
             // Alternative: Use the marker interface approach
             // var applicationAssembly = typeof(IApplicationAssemblyMarker).Assembly;
             
-            services.AddMediator(applicationAssembly);
+            services.AddApplicationMediator(applicationAssembly);
             
             // SMS User Application Services - INTERFACE BINDINGS ONLY
             services.AddScoped<ISMSApplicationUserService, SMSApplicationUserService>();
@@ -81,6 +82,38 @@ namespace SMS_Application.Configuration
             // SMS Audit Management Services (NEW) - TEMPORARILY DISABLED UNTIL INFRASTRUCTURE IS READY
             services.AddScoped<SMSAuditPlanService>();
             services.AddScoped<SMSAuditService>();
+            
+            // NOTE: SMS Audit Data Services are registered in Infrastructure layer (ServiceCollectionExtensions.cs)
+            // These services are already available through Infrastructure registration:
+
+            return services;
+        }
+
+        /// <summary>
+        /// Adds mediator and automatically registers all command and query handlers from the specified assembly.
+        /// </summary>
+        /// <param name="services">The service collection to add services to.</param>
+        /// <param name="assembly">The assembly to scan for handlers.</param>
+        /// <returns>The updated service collection.</returns>
+        public static IServiceCollection AddApplicationMediator(this IServiceCollection services, Assembly assembly)
+        {
+            // Register the mediator service
+            services.AddScoped<IMediator, SMS_Application.Services.Mediator>();
+
+            // Register all command handlers
+            var handlerTypes = assembly.GetTypes()
+                .Where(t => t.GetInterfaces()
+                    .Any(i => i.IsGenericType && 
+                             (i.GetGenericTypeDefinition() == typeof(IRequestHandler<,>))))
+                .ToList();
+
+            foreach (var handlerType in handlerTypes)
+            {
+                var interfaceType = handlerType.GetInterfaces()
+                    .First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRequestHandler<,>));
+                
+                services.AddScoped(interfaceType, handlerType);
+            }
 
             return services;
         }
