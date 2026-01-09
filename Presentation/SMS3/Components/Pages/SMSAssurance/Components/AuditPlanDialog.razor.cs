@@ -27,6 +27,7 @@ public partial class AuditPlanDialog : ComponentBase
     private bool IsSubmitting { get; set; } = false;
     private bool IsValid { get; set; } = true;
     private string ValidationMessage { get; set; } = string.Empty;
+    private int selectedTabIndex = 0;
     
     // Form Data
     private string? Code { get; set; }
@@ -216,12 +217,12 @@ public partial class AuditPlanDialog : ComponentBase
             {
                 // TODO: UpdateSMSAuditPlanCommand expects Guid but entity uses string Code
                 // For now, show an error message until the command is fixed
-                ShowErrorNotification("Edit functionality is not yet implemented - command/entity ID mismatch");
-                return;
-                
-                /*
+                //ShowErrorNotification("Edit functionality is not yet implemented - command/entity ID mismatch");
+                //return;
+
+
                 var command = new UpdateSMSAuditPlanCommand(
-                    id: AuditPlan.Code!, // Use Code instead of database Id
+                     // Use Code instead of database Id
                     auditPlanCode: Code!,
                     name: Name!,
                     description: Description,
@@ -258,7 +259,7 @@ public partial class AuditPlanDialog : ComponentBase
                     Logger.LogError("Failed to update audit plan: {Error}", result.Error?.Message);
                     ShowErrorNotification($"Failed to update audit plan: {result.Error?.Message}");
                 }
-                */
+
             }
         }
         catch (Exception ex)

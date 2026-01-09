@@ -66,7 +66,7 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, auditPlan.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, auditPlan.CreatedDate));
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
-            var newCode = new SqlParameter("@pNewAuditPlanCodeCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
+            var newCode = new SqlParameter("@pNewAuditPlanCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
             cmd.Parameters.Add(newID);
             cmd.Parameters.Add(newCode);
 
@@ -97,10 +97,10 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
     {
         try
         {
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_SMSAuditPlan_GetById} ID:{code}", null);
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_SMSAuditPlan_GetByCode} ID:{code}", null);
 
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_SMSAuditPlan_GetById, sql)
+            using SqlCommand cmd = new(StoredProcs.pr_SMSAuditPlan_GetByCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };

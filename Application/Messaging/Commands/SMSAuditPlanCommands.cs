@@ -88,13 +88,13 @@ public class UpdateSMSAuditPlanCommand : BaseCommandBundle, IRequest<Result<SMSA
     public string UpdatedBy { get; set; }
     public DateTime UpdatedDate { get; set; }
 
-    public UpdateSMSAuditPlanCommand(Guid id, string auditPlanCode, string name, string? description, string auditType, string auditScope,
+    public UpdateSMSAuditPlanCommand(string auditPlanCode, string name, string? description, string auditType, string auditScope,
         string? auditObjectives, string responsibleDepartment, string leadAuditor, string? auditorTeam,
         DateTime plannedStartDate, DateTime plannedEndDate, int? estimatedHours, string priority, string status,
         string? notes, string? regulatoryRequirements, string? resources, string? deliverables, string? successCriteria,
         string updatedBy, DateTime updatedDate)
     {
-        Id = id;
+        
         AuditPlanCode = auditPlanCode ?? throw new ArgumentNullException(nameof(auditPlanCode));
         Name = name ?? throw new ArgumentNullException(nameof(name));
         Description = description;
