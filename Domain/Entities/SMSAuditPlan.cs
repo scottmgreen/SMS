@@ -115,4 +115,40 @@ public class SMSAuditPlan : BaseAuditableEntity
             return Result.Failure(new Error("APPROVAL_FAILED", "Failed to approve audit plan"));
         }
     }
+
+    public Result CompleteAuditPlan(string completedBy, string completionNotes = "")
+    {
+        try
+        {
+            if (Status == "Completed")
+                return Result.Failure(new Error("ALREADY_COMPLETED", "Audit plan is already completed"));
+
+            if (Status != "Scheduled" && Status != "Approved")
+                return Result.Failure(new Error("INVALID_STATUS_FOR_COMPLETION", "Audit plan must be scheduled or approved to be completed"));
+
+            Status = "Completed";
+            UpdatedBy = completedBy;
+            UpdatedDate = DateTime.UtcNow;
+            
+            // Add completion notes to existing notes
+            if (!string.IsNullOrEmpty(completionNotes))
+            {
+                Notes = string.IsNullOrEmpty(Notes) 
+                    ? $"Completed: {completionNotes}" 
+                    : $"{Notes}\n\nCompleted: {completionNotes}";
+            }
+
+            return Result.Success();
+        }
+        catch (Exception)
+        {
+            return Result.Failure(new Error("COMPLETION_FAILED", "Failed to complete audit plan"));
+        }
+    }
+
+    public bool IsEditable()
+    {
+        // Audit plans should not be editable once completed
+        return Status != "Completed";
+    }
 }

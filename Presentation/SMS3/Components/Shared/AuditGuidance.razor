@@ -1,0 +1,278 @@
+@using Radzen
+@using Radzen.Blazor
+
+<!-- SMS Audit Detail Guidance Panel -->
+<RadzenCard Variant="Variant.Outlined" Style="position: sticky; top: 1rem;">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+        <!-- Header -->
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+            <RadzenIcon Icon="help_outline" Style="color: var(--rz-primary);" />
+            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-primary);">
+                Audit Workflow Guidance
+            </RadzenText>
+        </RadzenStack>
+
+        <!-- Audit Execution Process -->
+        <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-50);">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="timeline" Style="color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; font-weight: 600;">
+                        Audit Execution Workflow
+                    </RadzenText>
+                </RadzenStack>
+
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Text" Size="AlertSize.Small">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                            <strong>1. Preparation Phase</strong> - Review audit plan, assemble team, gather documentation
+                        </RadzenText>
+                    </RadzenAlert>
+
+                    <RadzenAlert AlertStyle="AlertStyle.Primary" Variant="Variant.Text" Size="AlertSize.Small">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                            <strong>2. Opening Meeting</strong> - Conduct briefing with auditees, confirm scope and schedule
+                        </RadzenText>
+                    </RadzenAlert>
+
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Text" Size="AlertSize.Small">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                            <strong>3. Field Work</strong> - Collect evidence, conduct interviews, document findings
+                        </RadzenText>
+                    </RadzenAlert>
+
+                    <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Text" Size="AlertSize.Small">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                            <strong>4. Analysis & Reporting</strong> - Analyze findings, develop recommendations, prepare report
+                        </RadzenText>
+                    </RadzenAlert>
+
+                    <RadzenAlert AlertStyle="AlertStyle.Secondary" Variant="Variant.Text" Size="AlertSize.Small">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                            <strong>5. Follow-up</strong> - Track corrective actions, verify implementation, close findings
+                        </RadzenText>
+                    </RadzenAlert>
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+
+        <!-- Quick Actions -->
+        <RadzenCard Variant="Variant.Text">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="bolt" Style="color: var(--rz-success);" />
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; font-weight: 600;">
+                        Quick Actions
+                    </RadzenText>
+                </RadzenStack>
+
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenButton Text="Add Finding" 
+                                Icon="bug_report" 
+                                ButtonStyle="ButtonStyle.Danger" 
+                                Size="ButtonSize.Small"
+                                Style="width: 100%;"
+                                Click="@OnAddFinding" />
+                    
+                    <RadzenButton Text="Upload Evidence" 
+                                Icon="cloud_upload" 
+                                ButtonStyle="ButtonStyle.Primary" 
+                                Size="ButtonSize.Small"
+                                Style="width: 100%;"
+                                Click="@OnUploadEvidence" />
+                    
+                    <RadzenButton Text="Generate Report" 
+                                Icon="description" 
+                                ButtonStyle="ButtonStyle.Info" 
+                                Size="ButtonSize.Small"
+                                Style="width: 100%;"
+                                Click="@OnGenerateReport" />
+                    
+                    <RadzenButton Text="Complete Audit" 
+                                Icon="task_alt" 
+                                ButtonStyle="ButtonStyle.Success" 
+                                Size="ButtonSize.Small"
+                                Style="width: 100%;"
+                                Click="@OnCompleteAudit" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+
+        <!-- Finding Management -->
+        <RadzenCard Variant="Variant.Text">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="find_in_page" Style="color: var(--rz-danger);" />
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; font-weight: 600;">
+                        Finding Management
+                    </RadzenText>
+                </RadzenStack>
+
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.5rem">
+                        <RadzenIcon Icon="error" Style="color: var(--rz-danger); font-size: 1rem;" />
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; line-height: 1.3;">
+                            <strong>Critical:</strong> Immediate safety threat requiring urgent action
+                        </RadzenText>
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.5rem">
+                        <RadzenIcon Icon="warning" Style="color: var(--rz-warning); font-size: 1rem;" />
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; line-height: 1.3;">
+                            <strong>Major:</strong> Significant compliance issue affecting operations
+                        </RadzenText>
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.5rem">
+                        <RadzenIcon Icon="info" Style="color: var(--rz-info); font-size: 1rem;" />
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; line-height: 1.3;">
+                            <strong>Minor:</strong> Process improvement opportunity
+                        </RadzenText>
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.5rem">
+                        <RadzenIcon Icon="visibility" Style="color: var(--rz-secondary); font-size: 1rem;" />
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; line-height: 1.3;">
+                            <strong>Observation:</strong> Notable practice or positive finding
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+
+        <!-- Evidence Collection Guidelines -->
+        <RadzenCard Variant="Variant.Text">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="folder_open" Style="color: var(--rz-info);" />
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; font-weight: 600;">
+                        Evidence Collection
+                    </RadzenText>
+                </RadzenStack>
+
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenCard Variant="Variant.Text" Style="padding: 0.5rem; background-color: rgba(var(--rz-primary-rgb), 0.1);">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; font-weight: 600;">Documents</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                            Policies, procedures, training records, certifications
+                        </RadzenText>
+                    </RadzenCard>
+
+                    <RadzenCard Variant="Variant.Text" Style="padding: 0.5rem; background-color: rgba(var(--rz-success-rgb), 0.1);">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; font-weight: 600;">Photographs</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                            Physical conditions, equipment, signage, infrastructure
+                        </RadzenText>
+                    </RadzenCard>
+
+                    <RadzenCard Variant="Variant.Text" Style="padding: 0.5rem; background-color: rgba(var(--rz-warning-rgb), 0.1);">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; font-weight: 600;">Interview Records</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                            Staff interviews, witness statements, expert opinions
+                        </RadzenText>
+                    </RadzenCard>
+
+                    <RadzenCard Variant="Variant.Text" Style="padding: 0.5rem; background-color: rgba(var(--rz-info-rgb), 0.1);">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; font-weight: 600;">Data & Reports</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                            Performance metrics, incident reports, trend analysis
+                        </RadzenText>
+                    </RadzenCard>
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+
+        <!-- Corrective Actions Guide -->
+        <RadzenCard Variant="Variant.Text">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="assignment" Style="color: var(--rz-warning);" />
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; font-weight: 600;">
+                        Corrective Actions
+                    </RadzenText>
+                </RadzenStack>
+
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                        • Assign specific, measurable actions
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                        • Set realistic target completion dates
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                        • Define clear acceptance criteria
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                        • Track progress through to closure
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                        • Verify effectiveness of implementation
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+
+        <!-- Status Reference -->
+        <RadzenCard Variant="Variant.Text">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="track_changes" Style="color: var(--rz-secondary);" />
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; font-weight: 600;">
+                        Audit Status Guide
+                    </RadzenText>
+                </RadzenStack>
+
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="Scheduled" />
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">Ready to begin execution</RadzenText>
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="In Progress" />
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">Currently being executed</RadzenText>
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Completed" />
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">All activities finished</RadzenText>
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="Overdue" />
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">Past scheduled completion</RadzenText>
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+
+        <!-- Contact Information -->
+        <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-100);">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="contact_support" Style="color: var(--rz-text-secondary-color);" />
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; font-weight: 600;">
+                        Need Assistance?
+                    </RadzenText>
+                </RadzenStack>
+                
+                <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color);">
+                    Contact the Lead Auditor or SMS Manager for guidance on audit execution and finding resolution.
+                </RadzenText>
+                
+                <RadzenButton Text="Contact Support" 
+                            Icon="support_agent" 
+                            ButtonStyle="ButtonStyle.Light" 
+                            Size="ButtonSize.ExtraSmall"
+                            Style="margin-top: 0.5rem;" />
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    [Parameter] public EventCallback OnAddFinding { get; set; }
+    [Parameter] public EventCallback OnUploadEvidence { get; set; }
+    [Parameter] public EventCallback OnGenerateReport { get; set; }
+    [Parameter] public EventCallback OnCompleteAudit { get; set; }
+}

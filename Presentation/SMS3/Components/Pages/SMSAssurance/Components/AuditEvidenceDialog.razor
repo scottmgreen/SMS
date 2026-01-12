@@ -90,7 +90,6 @@
                         {
                             <RadzenUpload Url="@GetUploadUrl()" 
                                         Accept="@GetAcceptedFileTypes()"
-                                        MaxFileSize="@(50 * 1024 * 1024)" 
                                         Multiple="false"
                                         Complete="@OnFileUploadComplete"
                                         Error="@OnFileUploadError"

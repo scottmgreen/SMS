@@ -46,7 +46,7 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
             };
 
             // Add parameters - CORRECTED to match stored procedure exactly
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanCode, auditPlan.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanCode, auditPlan.Code)); // Keep original pattern
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanName, auditPlan.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanDescription, auditPlan.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanAuditType, auditPlan.AuditType));
@@ -61,6 +61,8 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanPriority, auditPlan.Priority));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanRecurrencePattern, auditPlan.RecurrencePattern));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanRequiresApproval, auditPlan.RequiresApproval));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanApprovedBy, auditPlan.ApprovedBy)); // MISSING!
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanApprovedDate, auditPlan.ApprovedDate)); // MISSING!
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanExpectedDurationHours, auditPlan.ExpectedDurationHours));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanNotes, auditPlan.Notes));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, auditPlan.CreatedBy));

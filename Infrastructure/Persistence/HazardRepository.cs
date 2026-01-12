@@ -25,9 +25,9 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
 
     #region Interface Implementation
 
-    public async Task<Result<Hazard>> GetByIdAsync(HazardID id)
+    public async Task<Result<Hazard>> GetByIdAsync(HazardID code)
     {
-        return await GetHazardByIdAsync(id);
+        return await GetHazardByCodeAsync(code);
     }
 
     public async Task<Result<Hazard>> AddAsync(Hazard hazard)
@@ -136,10 +136,9 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
             HazardID hazardId = new (newCodeValue);
 
             // 🔥 DEBUG: Log what we got back
-            _logger.LogInformation("🔍 STORED PROC RESULT - NewID: {NewID}, NewCode: '{NewCode}'", 
-                newIdValue, newCodeValue);
+            _logger.LogInformation("🔍 STORED PROC RESULT - NewID: {NewID}, NewCode: '{NewCode}'", newIdValue, newCodeValue);
 
-            return await GetHazardByIdAsync(hazardId, ct).ConfigureAwait(false);
+            return await GetHazardByCodeAsync(hazardId, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -148,24 +147,24 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
         }
     }
 
-    public async Task<Result<Hazard>> GetHazardByIdAsync(HazardID id, CancellationToken ct = default)
+    public async Task<Result<Hazard>> GetHazardByCodeAsync(HazardID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_Hazard_GetById} {id}", null);
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_Hazard_GetByCode} {code}", null);
 
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_Hazard_GetById, sql)
+            using SqlCommand cmd = new(StoredProcs.pr_Hazard_GetByCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             Hazard? response = null;
 
@@ -195,24 +194,24 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
         }
     }
 
-    public async Task<Result<List<Hazard>>> GetHazardsByReportIdAsync(ReportID id, CancellationToken ct = default)
+    public async Task<Result<List<Hazard>>> GetHazardsByReportCodeAsync(ReportID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_Hazard_GetByReportId} {id}", null);
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_Hazard_GetByReportCode} {code}", null);
 
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_Hazard_GetByReportId, sql)
+            using SqlCommand cmd = new(StoredProcs.pr_Hazard_GetByReportCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             List<Hazard> response = new();
 
@@ -245,7 +244,7 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
         try
         {
             // First, get the hazards (clean, no joins)
-            var hazardsResult = await GetHazardsByReportIdAsync(reportId, ct);
+            var hazardsResult = await GetHazardsByReportCodeAsync(reportId, ct);
             if (hazardsResult.IsFailure || hazardsResult.Value == null)
             {
                 return hazardsResult;
@@ -318,7 +317,7 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
                 return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_Hazard_Update} ID:{hazard.Id}", null);
+            _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_Hazard_Update} Code:{hazard.Code}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_Hazard_Update, sql)
@@ -326,8 +325,7 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, hazard.Id.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardCode, hazard.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, hazard.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardName, hazard.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardDescription, hazard.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardCategory, hazard.Category));
@@ -342,7 +340,7 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetHazardByIdAsync((HazardID)hazard.Id, ct).ConfigureAwait(false);
+            return await GetHazardByCodeAsync((HazardID)hazard.Id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

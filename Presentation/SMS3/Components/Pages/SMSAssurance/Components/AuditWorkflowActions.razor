@@ -6,8 +6,8 @@
 <RadzenCard Variant="Variant.Outlined" Style="margin-bottom: 1rem;">
     <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-            <RadzenIcon Icon="bolt" Style="font-size: 1.5rem; color: var(--rz-warning);" />
-            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-warning);">
+            <RadzenIcon Icon="bolt" Style="font-size: 1.5rem; color: var(--sms-blue-dark-bold);" />
+            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--sms-blue-dark-bold);">
                 Audit Workflow Actions
             </RadzenText>
         </RadzenStack>
@@ -16,7 +16,7 @@
         {
             @if (Audit.Status == "Scheduled")
             {
-                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Default">
                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
                         <RadzenIcon Icon="schedule" />
                         <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1;">
@@ -38,7 +38,7 @@
             }
             else if (Audit.Status == "In Progress")
             {
-                <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
+                <RadzenAlert AlertStyle="AlertStyle.Base" Variant="Variant.Flat" Shade="Shade.Default">
                     <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
                             <RadzenIcon Icon="pending_actions" />
@@ -75,7 +75,7 @@
             }
             else if (Audit.Status == "Completed")
             {
-                <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter">
+                <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Default">
                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
                         <RadzenIcon Icon="check_circle" />
                         <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1;">
@@ -102,51 +102,35 @@
             <!-- Quick Stats -->
             <RadzenRow Gap="1rem">
                 <RadzenColumn Size="12" SizeMD="3">
-                    <RadzenCard Variant="Variant.Text" Style="text-align: center; border-left: 4px solid var(--rz-warning);">
-                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" AlignItems="AlignItems.Center">
-                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-warning);">
-                                @TotalFindings
-                            </RadzenText>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                Total Findings
-                            </RadzenText>
-                        </RadzenStack>
+                    <RadzenCard Variant="Variant.Outlined" Style="text-align: center;">
+                        <RadzenCard>
+                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-warning);">@TotalFindings</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Total Findings</RadzenText>
+                        </RadzenCard>
                     </RadzenCard>
                 </RadzenColumn>
                 <RadzenColumn Size="12" SizeMD="3">
-                    <RadzenCard Variant="Variant.Text" Style="text-align: center; border-left: 4px solid var(--rz-danger);">
-                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" AlignItems="AlignItems.Center">
-                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-danger);">
-                                @CriticalFindings
-                            </RadzenText>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                Critical
-                            </RadzenText>
-                        </RadzenStack>
+                    <RadzenCard Variant="Variant.Outlined" Style="text-align: center;">
+                        <RadzenCard>
+                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-danger);">@CriticalFindings</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Critical</RadzenText>
+                        </RadzenCard>
                     </RadzenCard>
                 </RadzenColumn>
                 <RadzenColumn Size="12" SizeMD="3">
-                    <RadzenCard Variant="Variant.Text" Style="text-align: center; border-left: 4px solid var(--rz-info);">
-                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" AlignItems="AlignItems.Center">
-                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-info);">
-                                @TotalEvidence
-                            </RadzenText>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                Evidence Items
-                            </RadzenText>
-                        </RadzenStack>
+                    <RadzenCard Variant="Variant.Outlined" Style="text-align: center;">
+                        <RadzenCard>
+                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-info);">@TotalEvidence</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Evidence Items</RadzenText>
+                        </RadzenCard>
                     </RadzenCard>
                 </RadzenColumn>
                 <RadzenColumn Size="12" SizeMD="3">
-                    <RadzenCard Variant="Variant.Text" Style="text-align: center; border-left: 4px solid var(--rz-success);">
-                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" AlignItems="AlignItems.Center">
-                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-success);">
-                                @ProgressPercentage%
-                            </RadzenText>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                Complete
-                            </RadzenText>
-                        </RadzenStack>
+                    <RadzenCard Variant="Variant.Outlined" Style="text-align: center;">
+                        <RadzenCard>
+                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-success);">@ProgressPercentage%</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Complete</RadzenText>
+                        </RadzenCard>
                     </RadzenCard>
                 </RadzenColumn>
             </RadzenRow>

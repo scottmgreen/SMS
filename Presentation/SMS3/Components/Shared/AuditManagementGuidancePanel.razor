@@ -1,0 +1,218 @@
+@using Radzen
+@using Radzen.Blazor
+
+<!-- SMS Audit Management Guidance Panel -->
+<RadzenCard Variant="Variant.Outlined" Style="position: sticky; top: 1rem;">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+        <!-- Header -->
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+            <RadzenIcon Icon="help_outline" Style="color: var(--rz-primary);" />
+            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-primary);">
+                Audit Management Guidance
+            </RadzenText>
+        </RadzenStack>
+
+        <!-- Regulatory Requirements -->
+        <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-50);">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="gavel" Style="color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; font-weight: 600;">
+                        14 CFR 139 Requirements
+                    </RadzenText>
+                </RadzenStack>
+
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Text" Size="AlertSize.Small">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                            <strong>§139.301(d)</strong> Internal Evaluation Program
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                            Conduct regular self-inspections and audits to assess SMS implementation and effectiveness.
+                        </RadzenText>
+                    </RadzenAlert>
+
+                    <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Text" Size="AlertSize.Small">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                            <strong>§139.301(e)</strong> Management Review
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                            Annual management review of SMS to ensure continuing suitability and effectiveness.
+                        </RadzenText>
+                    </RadzenAlert>
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+
+        <!-- Quick Actions -->
+        <RadzenCard Variant="Variant.Text">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="bolt" Style="color: var(--rz-success);" />
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; font-weight: 600;">
+                        Quick Actions
+                    </RadzenText>
+                </RadzenStack>
+
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenButton Text="Create Annual Plan" 
+                                Icon="event_note" 
+                                ButtonStyle="ButtonStyle.Success" 
+                                Size="ButtonSize.Small"
+                                Style="width: 100%;"
+                                Click="@(() => CreateAnnualAuditPlan())" />
+                    
+                    <RadzenButton Text="Schedule Internal Audit" 
+                                Icon="schedule" 
+                                ButtonStyle="ButtonStyle.Primary" 
+                                Size="ButtonSize.Small"
+                                Style="width: 100%;"
+                                Click="@(() => CreateInternalAudit())" />
+                    
+                    <RadzenButton Text="Upload Evidence" 
+                                Icon="cloud_upload" 
+                                ButtonStyle="ButtonStyle.Info" 
+                                Size="ButtonSize.Small"
+                                Style="width: 100%;"
+                                Click="@(() => NavigateToEvidence())" />
+                    
+                    <RadzenButton Text="Generate Report" 
+                                Icon="assessment" 
+                                ButtonStyle="ButtonStyle.Light" 
+                                Size="ButtonSize.Small"
+                                Style="width: 100%;"
+                                Click="@(() => NavigateToAuditReports())" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+
+        <!-- Best Practices -->
+        <RadzenCard Variant="Variant.Text">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="lightbulb" Style="color: var(--rz-warning);" />
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; font-weight: 600;">
+                        Best Practices
+                    </RadzenText>
+                </RadzenStack>
+
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.5rem">
+                        <RadzenIcon Icon="check_circle" Style="color: var(--rz-success); font-size: 1rem;" />
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; line-height: 1.3;">
+                            Plan audits annually based on risk assessment and operational changes
+                        </RadzenText>
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.5rem">
+                        <RadzenIcon Icon="check_circle" Style="color: var(--rz-success); font-size: 1rem;" />
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; line-height: 1.3;">
+                            Use trained and qualified auditors for all audit activities
+                        </RadzenText>
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.5rem">
+                        <RadzenIcon Icon="check_circle" Style="color: var(--rz-success); font-size: 1rem;" />
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; line-height: 1.3;">
+                            Document all findings and track corrective actions to closure
+                        </RadzenText>
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.5rem">
+                        <RadzenIcon Icon="check_circle" Style="color: var(--rz-success); font-size: 1rem;" />
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; line-height: 1.3;">
+                            Follow up on audit recommendations within specified timeframes
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+
+        <!-- Audit Types Guide -->
+        <RadzenCard Variant="Variant.Text">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="category" Style="color: var(--rz-info);" />
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; font-weight: 600;">
+                        Audit Types
+                    </RadzenText>
+                </RadzenStack>
+
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenCard Variant="Variant.Text" Style="padding: 0.5rem; background-color: rgba(var(--rz-primary-rgb), 0.1);">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; font-weight: 600;">Internal Audits</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                            Self-assessments to evaluate SMS compliance and effectiveness
+                        </RadzenText>
+                    </RadzenCard>
+
+                    <RadzenCard Variant="Variant.Text" Style="padding: 0.5rem; background-color: rgba(var(--rz-info-rgb), 0.1);">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; font-weight: 600;">External Audits</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                            FAA inspections and third-party compliance audits
+                        </RadzenText>
+                    </RadzenCard>
+
+                    <RadzenCard Variant="Variant.Text" Style="padding: 0.5rem; background-color: rgba(var(--rz-success-rgb), 0.1);">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; font-weight: 600;">Management Review</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                            Annual senior management evaluation of SMS performance
+                        </RadzenText>
+                    </RadzenCard>
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+
+        <!-- Key Metrics -->
+        <RadzenCard Variant="Variant.Text">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="trending_up" Style="color: var(--rz-secondary);" />
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; font-weight: 600;">
+                        Key Performance Indicators
+                    </RadzenText>
+                </RadzenStack>
+
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                        • Audit Plan Completion Rate
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                        • Finding Closure Time
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                        • Corrective Action Effectiveness
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                        • Repeat Finding Frequency
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                        • Audit Quality Scores
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+
+        <!-- Contact Information -->
+        <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-100);">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="contact_support" Style="color: var(--rz-text-secondary-color);" />
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; font-weight: 600;">
+                        Need Help?
+                    </RadzenText>
+                </RadzenStack>
+                
+                <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color);">
+                    Contact SMS Manager or Quality Assurance for audit guidance and support.
+                </RadzenText>
+                
+                <RadzenButton Text="Contact Support" 
+                            Icon="support_agent" 
+                            ButtonStyle="ButtonStyle.Light" 
+                            Size="ButtonSize.ExtraSmall"
+                            Style="margin-top: 0.5rem;" />
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenStack>
+</RadzenCard>

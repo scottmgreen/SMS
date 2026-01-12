@@ -38,10 +38,10 @@ public class CreateSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
             _logger.LogInformation("Processing CreateSMSAuditPlanCommand for audit plan: {Name}", request.AuditPlan.Name);
 
             // Generate audit plan code
-            var auditPlanCode = _auditPlanService.GenerateAuditPlanCode(request.AuditPlan.AuditType, request.AuditPlan.PlannedStartDate);
+            
             
             // Create audit plan entity
-            var auditPlan = new SMSAuditPlan(new SMSAuditPlanID(auditPlanCode), request.AuditPlan.CreatedBy)
+            var auditPlan = new SMSAuditPlan(new SMSAuditPlanID("AP-0000"), request.AuditPlan.CreatedBy)
             {
                 Name = request.AuditPlan.Name,
                 Description = request.AuditPlan.Description,
@@ -69,7 +69,7 @@ public class CreateSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS audit plan: {AuditPlanCode}", auditPlanCode);
+                _logger.LogInformation("Successfully created SMS audit plan: {AuditPlanCode}", result.Value.Code);
             }
             else
             {

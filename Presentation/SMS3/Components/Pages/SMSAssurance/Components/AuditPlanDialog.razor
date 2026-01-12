@@ -50,7 +50,7 @@
                 <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" Style="padding: 1rem;">
                     <!-- Code and Name Row -->
                     <RadzenRow Gap="1rem">
-                        <RadzenColumn Size="12" SizeMD="4">
+                        @* <RadzenColumn Size="12" SizeMD="4">
                             <RadzenFormField Text="Audit Plan Code" Variant="Variant.Outlined">
                                 <RadzenTextBox @bind-Value="@Code" 
                                              Placeholder="e.g., INT-2024-001"
@@ -61,12 +61,12 @@
                                         Size="ButtonSize.ExtraSmall"
                                         Click="@GenerateCode" 
                                         Style="margin-top: 0.25rem;" />
-                        </RadzenColumn>
-                        <RadzenColumn Size="12" SizeMD="8">
+                        </RadzenColumn> *@
+                        <RadzenColumn Size="12" SizeMD="12">
                             <RadzenFormField Text="Audit Plan Name" Variant="Variant.Outlined">
                                 <RadzenTextBox @bind-Value="@Name" 
                                              Placeholder="Enter audit plan name"
-                                             Style="width: 100%;" />
+                                             Style="width: 100%;min-width:100%" />
                             </RadzenFormField>
                         </RadzenColumn>
                     </RadzenRow>

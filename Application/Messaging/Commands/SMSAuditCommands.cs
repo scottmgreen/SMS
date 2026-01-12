@@ -34,6 +34,7 @@ public class CreateSMSAuditCommand : BaseCommandBundle, IRequest<Result<SMSAudit
     public string? Notes { get; set; }
     public string CreatedBy { get; set; }
 
+    // Full constructor (existing)
     public CreateSMSAuditCommand(string code, string name, string? description, string? auditPlanCode,
         string auditType, string scope, string? objectives, DateTime scheduledStartDate, DateTime scheduledEndDate,
         DateTime? actualStartDate, DateTime? actualEndDate, string leadAuditor, string? auditorTeam,
@@ -60,6 +61,34 @@ public class CreateSMSAuditCommand : BaseCommandBundle, IRequest<Result<SMSAudit
         Priority = priority ?? throw new ArgumentNullException(nameof(priority));
         ExecutiveSummary = executiveSummary;
         Notes = notes;
+        CreatedBy = createdBy ?? throw new ArgumentNullException(nameof(createdBy));
+    }
+
+    // Simplified constructor for creating from audit plan
+    public CreateSMSAuditCommand(string auditPlanCode, string name, string description, string auditType,
+        DateTime scheduledStartDate, DateTime scheduledEndDate, string leadAuditor,
+        string responsibleDepartment, string createdBy)
+    {
+        Code = "AUTO"; // Will be auto-generated
+        Name = name ?? throw new ArgumentNullException(nameof(name));
+        Description = description;
+        AuditPlanCode = auditPlanCode;
+        AuditType = auditType ?? throw new ArgumentNullException(nameof(auditType));
+        Scope = "TBD"; // Will be set from audit plan
+        Objectives = "TBD"; // Will be set from audit plan
+        ScheduledStartDate = scheduledStartDate;
+        ScheduledEndDate = scheduledEndDate;
+        ActualStartDate = null;
+        ActualEndDate = null;
+        LeadAuditor = leadAuditor ?? throw new ArgumentNullException(nameof(leadAuditor));
+        AuditorTeam = null;
+        ResponsibleDepartment = responsibleDepartment ?? throw new ArgumentNullException(nameof(responsibleDepartment));
+        ContactPerson = null;
+        AuditLocation = "TBD";
+        Status = "Scheduled"; // Default status when created from plan
+        Priority = "Medium"; // Default priority
+        ExecutiveSummary = null;
+        Notes = null;
         CreatedBy = createdBy ?? throw new ArgumentNullException(nameof(createdBy));
     }
 }

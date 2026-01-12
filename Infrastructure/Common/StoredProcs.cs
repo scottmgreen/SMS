@@ -411,11 +411,11 @@
         private static readonly Lazy<string> _pr_Hazard_Insert = new Lazy<string>(() => "pr_Hazard_Insert");
         public static string pr_Hazard_Insert => _pr_Hazard_Insert.Value;
 
-        private static readonly Lazy<string> _pr_Hazard_GetById = new Lazy<string>(() => "pr_Hazard_GetById");
-        public static string pr_Hazard_GetById => _pr_Hazard_GetById.Value;
+        private static readonly Lazy<string> _pr_Hazard_GetByCode = new Lazy<string>(() => "pr_Hazard_GetByCode");
+        public static string pr_Hazard_GetByCode => _pr_Hazard_GetByCode.Value;
 
-        private static readonly Lazy<string> _pr_Hazard_GetByReportId = new Lazy<string>(() => "pr_Hazard_GetByReportId");
-        public static string pr_Hazard_GetByReportId => _pr_Hazard_GetByReportId.Value;
+        private static readonly Lazy<string> _pr_Hazard_GetByReportCode = new Lazy<string>(() => "pr_Hazard_GetByReportCode");
+        public static string pr_Hazard_GetByReportCode => _pr_Hazard_GetByReportCode.Value;
 
         private static readonly Lazy<string> _pr_Hazard_GetAll = new Lazy<string>(() => "pr_Hazard_GetAll");
         public static string pr_Hazard_GetAll => _pr_Hazard_GetAll.Value;

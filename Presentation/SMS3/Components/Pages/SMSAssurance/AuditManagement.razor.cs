@@ -29,42 +29,37 @@ public partial class AuditManagement : ComponentBase
 
     #region Component State
     private bool IsLoading { get; set; } = true;
-    private string? SearchText { get; set; }
-    private string? SelectedStatus { get; set; } = "All";
-    private string? SelectedType { get; set; } = "All";
-    private string? SelectedDepartment { get; set; } = "All";
-    private DateTime? StartDate { get; set; }
-    private DateTime? EndDate { get; set; }
+    private bool IsUpdating { get; set; } = false;
     
-    // Data Lists
+    // Collapsible sections
+    private bool showCategorySummary { get; set; } = true;
+    private bool showFilterPanel { get; set; } = false;
+
+    // Filter State
+    private string SearchText { get; set; } = string.Empty;
+    private string SelectedStatus { get; set; } = "All";
+    private string SelectedType { get; set; } = "All";
+    private string SelectedDepartment { get; set; } = "All";
+    
+    // Filter Options
+    private List<string> StatusOptions { get; set; } = new() { "All", "Draft", "Approved", "Scheduled", "In Progress", "Completed", "Cancelled" };
+    private List<string> TypeOptions { get; set; } = new() { "All", "Internal", "External", "Management Review", "Compliance", "Follow-up" };
+    private List<string> DepartmentOptions { get; set; } = new() { "All", "Operations", "Maintenance", "Safety", "Security", "Management" };
+    
+    // Data Collections
     private List<SMSAuditPlan> AuditPlans { get; set; } = new();
+    private List<SMSAuditPlan> AllAuditPlans { get; set; } = new();
     private List<SMSAudit> ActiveAudits { get; set; } = new();
+    private List<SMSAudit> AllAudits { get; set; } = new(); // Add this for complete audit list
     private List<SMSAuditFinding> RecentFindings { get; set; } = new();
     private List<SMSAuditEvidence> RecentEvidence { get; set; } = new();
-    
-    // Dashboard Statistics
-    private AuditDashboardStats DashboardStats { get; set; } = new();
     
     // Grid References
     private RadzenDataGrid<SMSAuditPlan>? auditPlansGrid;
     private RadzenDataGrid<SMSAudit>? activeAuditsGrid;
-    #endregion
-
-    #region Filter Options
-    public List<string> StatusOptions { get; } = new()
-    {
-        "All", "Draft", "Approved", "Scheduled", "In Progress", "Completed", "Overdue"
-    };
-
-    public List<string> TypeOptions { get; } = new()
-    {
-        "All", "Internal", "External", "Regulatory", "Management Review", "Process Audit", "Compliance"
-    };
-
-    public List<string> DepartmentOptions { get; } = new()
-    {
-        "All", "Airport Operations", "Security", "Maintenance", "Ground Handling", "Air Traffic Control", "Safety"
-    };
+    
+    // Dashboard Statistics
+    private AuditDashboardStats DashboardStats { get; set; } = new();
     #endregion
 
     #region Lifecycle Methods
@@ -117,10 +112,12 @@ public partial class AuditManagement : ComponentBase
             if (result.IsSuccess && result.Value != null)
             {
                 AuditPlans = result.Value.ToList();
+                AllAuditPlans = result.Value.ToList(); // Also load to AllAuditPlans for filtering
             }
             else
             {
                 AuditPlans = new List<SMSAuditPlan>();
+                AllAuditPlans = new List<SMSAuditPlan>();
                 Logger.LogWarning("Failed to load audit plans: {Error}", result.Error?.Message);
             }
         }
@@ -128,6 +125,7 @@ public partial class AuditManagement : ComponentBase
         {
             Logger.LogError(ex, "Error loading audit plans");
             AuditPlans = new List<SMSAuditPlan>();
+            AllAuditPlans = new List<SMSAuditPlan>();
         }
     }
 
@@ -135,12 +133,19 @@ public partial class AuditManagement : ComponentBase
     {
         try
         {
+            // Load ALL audits, not just active ones for proper statistics
             var query = new GetAllSMSAuditsQuery();
             var result = await Mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
-                ActiveAudits = result.Value
+                var allAudits = result.Value.ToList();
+                
+                // Store all audits for statistics calculation
+                AllAudits = allAudits;
+                
+                // Filter for the active audits grid display
+                ActiveAudits = allAudits
                     .Where(a => a.Status == "In Progress" || a.Status == "Scheduled")
                     .OrderBy(a => a.ScheduledStartDate)
                     .ToList();
@@ -148,13 +153,15 @@ public partial class AuditManagement : ComponentBase
             else
             {
                 ActiveAudits = new List<SMSAudit>();
-                Logger.LogWarning("Failed to load active audits: {Error}", result.Error?.Message);
+                AllAudits = new List<SMSAudit>();
+                Logger.LogWarning("Failed to load audits: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading active audits");
+            Logger.LogError(ex, "Error loading audits");
             ActiveAudits = new List<SMSAudit>();
+            AllAudits = new List<SMSAudit>();
         }
     }
 
@@ -162,12 +169,21 @@ public partial class AuditManagement : ComponentBase
     {
         try
         {
-            // Temporarily comment out since query doesn't exist
-            // var query = new GetAllSMSAuditFindingsQuery();
-            // var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var query = new GetAllSMSAuditFindingsQuery();
+            var result = await Mediator.SendAsync(query, CancellationToken.None);
 
-            // For now just use empty list
-            RecentFindings = new List<SMSAuditFinding>();
+            if (result.IsSuccess && result.Value != null)
+            {
+                RecentFindings = result.Value
+                    .OrderByDescending(f => f.DiscoveredDate)
+                    .Take(10)
+                    .ToList();
+            }
+            else
+            {
+                RecentFindings = new List<SMSAuditFinding>();
+                Logger.LogWarning("Failed to load recent findings: {Error}", result.Error?.Message);
+            }
         }
         catch (Exception ex)
         {
@@ -180,21 +196,21 @@ public partial class AuditManagement : ComponentBase
     {
         try
         {
-            //var query = new GetAllSMSAuditEvidenceQuery();
-            //var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var query = new GetAllSMSAuditEvidenceQuery();
+            var result = await Mediator.SendAsync(query, CancellationToken.None);
 
-            //if (result.IsSuccess && result.Value != null)
-            //{
-            //    RecentEvidence = result.Value
-            //        .OrderByDescending(e => e.CollectionDate)
-            //        .Take(5)
-            //        .ToList();
-            //}
-            //else
-            //{
-            //    RecentEvidence = new List<SMSAuditEvidence>();
-            //    Logger.LogWarning("Failed to load recent evidence: {Error}", result.Error?.Message);
-            //}
+            if (result.IsSuccess && result.Value != null)
+            {
+                RecentEvidence = result.Value
+                    .OrderByDescending(e => e.CollectionDate)
+                    .Take(10)
+                    .ToList();
+            }
+            else
+            {
+                RecentEvidence = new List<SMSAuditEvidence>();
+                Logger.LogWarning("Failed to load recent evidence: {Error}", result.Error?.Message);
+            }
         }
         catch (Exception ex)
         {
@@ -207,21 +223,34 @@ public partial class AuditManagement : ComponentBase
     {
         try
         {
-            // Calculate dashboard statistics from loaded data
+            // Calculate dashboard statistics from actual loaded data
             DashboardStats = new AuditDashboardStats
             {
-                TotalAuditPlans = AuditPlans.Count,
-                ApprovedPlans = AuditPlans.Count(p => p.Status == "Approved"),
-                ActiveAudits = ActiveAudits.Count(a => a.Status == "In Progress"),
-                CompletedThisMonth = ActiveAudits.Count(a => a.Status == "Completed" && 
-                    a.ActualEndDate?.Month == DateTime.Now.Month &&
-                    a.ActualEndDate?.Year == DateTime.Now.Year),
-                OverdueAudits = ActiveAudits.Count(a => a.Status == "Overdue" || 
-                    (a.ScheduledEndDate < DateTime.Now && a.ActualEndDate == null)),
+                // Audit Plan Statistics
+                TotalAuditPlans = AllAuditPlans.Count,
+                ApprovedPlans = AllAuditPlans.Count(p => p.Status == "Approved"),
+                
+                // Active Audit Statistics  
+                ActiveAudits = AllAudits.Count(a => a.Status == "In Progress"),
+                CompletedThisMonth = AllAudits.Count(a => a.Status == "Completed" && 
+                    a.ActualEndDate.HasValue &&
+                    a.ActualEndDate.Value.Month == DateTime.Now.Month &&
+                    a.ActualEndDate.Value.Year == DateTime.Now.Year),
+                
+                // Calculate overdue audits (scheduled but past end date and not completed)
+                OverdueAudits = AllAudits.Count(a => 
+                    a.ScheduledEndDate < DateTime.Now && 
+                    a.ActualEndDate == null && 
+                    (a.Status == "Scheduled" || a.Status == "In Progress")),
+                
+                // Finding Statistics
                 CriticalFindings = RecentFindings.Count(f => f.Severity == "Critical"),
                 MajorFindings = RecentFindings.Count(f => f.Severity == "Major"),
                 FindingsAwaitingAction = RecentFindings.Count(f => f.Status == "Open" || f.Status == "In Progress")
             };
+
+            Logger.LogInformation("Dashboard Stats Calculated: Plans={TotalPlans}, ActiveAudits={Active}, Overdue={Overdue}", 
+                DashboardStats.TotalAuditPlans, DashboardStats.ActiveAudits, DashboardStats.OverdueAudits);
         }
         catch (Exception ex)
         {
@@ -288,7 +317,8 @@ public partial class AuditManagement : ComponentBase
 
             if (result != null)
             {
-                await LoadAuditPlansAsync();
+                // Refresh ALL dashboard data after creating a plan
+                await LoadDashboardDataAsync();
                 ShowSuccessNotification("Audit plan created successfully");
             }
         }
@@ -313,7 +343,8 @@ public partial class AuditManagement : ComponentBase
 
             if (result != null)
             {
-                await LoadAuditPlansAsync();
+                // Refresh ALL dashboard data after editing a plan
+                await LoadDashboardDataAsync();
                 ShowSuccessNotification("Audit plan updated successfully");
             }
         }
@@ -343,33 +374,44 @@ public partial class AuditManagement : ComponentBase
 
             if (confirm == true)
             {
-                // Use the domain method to schedule the audit
-                var scheduleResult = plan.ScheduleAudit(plan.PlannedStartDate, "CURRENT_USER");
-                
-                if (scheduleResult.IsFailure)
-                {
-                    ShowErrorNotification($"Failed to schedule audit: {scheduleResult.Error?.Message}");
-                    return;
-                }
-
-                // Update the audit plan status to "Scheduled"
+                // Step 1: Update the audit plan status to "Scheduled"
                 plan.Status = "Scheduled";
                 plan.UpdatedBy = "CURRENT_USER";
                 plan.UpdatedDate = DateTime.UtcNow;
 
-                // Save the updated audit plan
-                var command = new ScheduleSMSAuditPlanCommand(plan);
-                var result = await Mediator.SendAsync(command, CancellationToken.None);
+                var updatePlanCommand = new UpdateSMSAuditPlanCommand(plan);
+                var updateResult = await Mediator.SendAsync(updatePlanCommand, CancellationToken.None);
 
-                if (result.IsSuccess)
+                if (updateResult.IsFailure)
                 {
-                    await LoadAuditPlansAsync();
-                    await LoadActiveAuditsAsync();
-                    ShowSuccessNotification($"Audit '{plan.Name}' has been scheduled successfully");
+                    ShowErrorNotification($"Failed to update audit plan status: {updateResult.Error?.Message}");
+                    return;
+                }
+
+                // Step 2: Create the actual SMS Audit record
+                var createAuditCommand = new CreateSMSAuditCommand(
+                    auditPlanCode: plan.Code,
+                    name: plan.Name,
+                    description: plan.Description ?? "",
+                    auditType: plan.AuditType ?? "Internal",
+                    scheduledStartDate: plan.PlannedStartDate,
+                    scheduledEndDate: plan.PlannedEndDate,
+                    leadAuditor: plan.LeadAuditor ?? "TBD",
+                    responsibleDepartment: plan.ResponsibleDepartment ?? "Operations",
+                    createdBy: "CURRENT_USER"
+                );
+
+                var createAuditResult = await Mediator.SendAsync(createAuditCommand, CancellationToken.None);
+
+                if (createAuditResult.IsSuccess)
+                {
+                    // Refresh ALL dashboard data after scheduling
+                    await LoadDashboardDataAsync();
+                    ShowSuccessNotification($"Audit '{plan.Name}' has been scheduled successfully and audit record created!");
                 }
                 else
                 {
-                    ShowErrorNotification($"Failed to update audit plan status: {result.Error?.Message}");
+                    ShowErrorNotification($"Failed to create audit record: {createAuditResult.Error?.Message}");
                 }
             }
         }
@@ -396,7 +438,8 @@ public partial class AuditManagement : ComponentBase
 
                 if (result.IsSuccess)
                 {
-                    await LoadAuditPlansAsync();
+                    // Refresh ALL dashboard data after deleting a plan
+                    await LoadDashboardDataAsync();
                     ShowSuccessNotification("Audit plan deleted successfully");
                 }
                 else
@@ -421,20 +464,13 @@ public partial class AuditManagement : ComponentBase
     {
         try
         {
-                audit.Status = "In Progress"; // Status
-                audit.UpdatedBy = "SYSTEM"; // UpdatedBy
-                audit.UpdatedDate = DateTime.Now;
-
-
-
-            var command = new StartSMSAuditCommand(audit.Code, audit.UpdatedBy);
-
+            var command = new StartSMSAuditCommand(audit.Code, "CURRENT_USER");
             var result = await Mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
-                await LoadActiveAuditsAsync();
-                await LoadDashboardStatsAsync();
+                // Refresh ALL dashboard data after starting an audit
+                await LoadDashboardDataAsync();
                 ShowSuccessNotification("Audit started successfully");
             }
             else
@@ -453,26 +489,31 @@ public partial class AuditManagement : ComponentBase
     #region Navigation Methods
     private void NavigateToAuditPlans()
     {
-        Navigation.NavigateTo("/SMSAssurance/AuditPlans");
+        // Navigate to the main audit management page with Audit Plans tab selected
+        Navigation.NavigateTo("/SMSAssurance/AuditManagement#audit-plans");
     }
 
     private void NavigateToActiveAudits()
     {
-        Navigation.NavigateTo("/SMSAssurance/ActiveAudits");
+        // Navigate to the main audit management page with Active Audits tab selected
+        Navigation.NavigateTo("/SMSAssurance/AuditManagement#active-audits");
     }
 
     private void NavigateToFindings()
     {
+        // Navigate to audit finding management page (when implemented)
         Navigation.NavigateTo("/SMSAssurance/AuditFindings");
     }
 
     private void NavigateToEvidence()
     {
+        // Navigate to audit evidence management page (when implemented)
         Navigation.NavigateTo("/SMSAssurance/AuditEvidence");
     }
 
     private void NavigateToAuditReports()
     {
+        // Navigate to audit reporting page (when implemented)
         Navigation.NavigateTo("/SMSAssurance/AuditReports");
     }
 
@@ -506,16 +547,6 @@ public partial class AuditManagement : ComponentBase
             query = query.Where(p => p.ResponsibleDepartment == SelectedDepartment);
         }
 
-        if (StartDate.HasValue)
-        {
-            query = query.Where(p => p.PlannedStartDate >= StartDate.Value);
-        }
-
-        if (EndDate.HasValue)
-        {
-            query = query.Where(p => p.PlannedEndDate <= EndDate.Value);
-        }
-
         return query;
     }
 
@@ -540,16 +571,6 @@ public partial class AuditManagement : ComponentBase
         if (SelectedDepartment != "All")
         {
             query = query.Where(a => a.ResponsibleDepartment == SelectedDepartment);
-        }
-
-        if (StartDate.HasValue)
-        {
-            query = query.Where(a => a.ScheduledStartDate >= StartDate.Value);
-        }
-
-        if (EndDate.HasValue)
-        {
-            query = query.Where(a => a.ScheduledEndDate <= EndDate.Value);
         }
 
         return query;
@@ -639,6 +660,162 @@ public partial class AuditManagement : ComponentBase
         public int CriticalFindings { get; set; }
         public int MajorFindings { get; set; }
         public int FindingsAwaitingAction { get; set; }
+    }
+    #endregion
+
+    #region Helper Methods for Category Statistics
+    private int GetInternalAuditsCount()
+    {
+        return AllAudits.Count(a => a.AuditType == "Internal" && 
+            (a.Status == "Scheduled" || a.Status == "In Progress" || a.Status == "Completed"));
+    }
+
+    private int GetExternalAuditsCount()
+    {
+        return AllAudits.Count(a => a.AuditType == "External" && 
+            (a.Status == "Scheduled" || a.Status == "In Progress" || a.Status == "Completed"));
+    }
+
+    private int GetManagementReviewsCount()
+    {
+        return AllAudits.Count(a => a.AuditType == "Management Review" && 
+            (a.Status == "Scheduled" || a.Status == "In Progress" || a.Status == "Completed"));
+    }
+
+    private int GetCompletedInternalAudits()
+    {
+        return AllAudits.Count(a => a.AuditType == "Internal" && a.Status == "Completed");
+    }
+
+    private int GetPlannedInternalAudits()
+    {
+        var currentYear = DateTime.Now.Year;
+        return AllAuditPlans.Count(ap => ap.AuditType == "Internal" && 
+            ap.Status == "Approved" && 
+            ap.PlannedStartDate.Year == currentYear);
+    }
+
+    private int GetCompletedExternalAudits()
+    {
+        return AllAudits.Count(a => a.AuditType == "External" && a.Status == "Completed");
+    }
+
+    private int GetScheduledExternalAudits()
+    {
+        var currentYear = DateTime.Now.Year;
+        return AllAudits.Count(a => a.AuditType == "External" && 
+            (a.Status == "Scheduled" || a.Status == "Completed") &&
+            a.ScheduledStartDate.Year == currentYear);
+    }
+
+    private int GetCompletedManagementReviews()
+    {
+        var currentYear = DateTime.Now.Year;
+        return AllAudits.Count(a => a.AuditType == "Management Review" && 
+            a.Status == "Completed" && 
+            a.ActualEndDate.HasValue &&
+            a.ActualEndDate.Value.Year == currentYear);
+    }
+
+    private int GetRequiredManagementReviews()
+    {
+        return 1; // Annual requirement per 14 CFR 139.301(e)
+    }
+
+    private decimal GetInternalAuditComplianceRate()
+    {
+        var planned = GetPlannedInternalAudits();
+        if (planned == 0) return 100;
+        
+        var completed = GetCompletedInternalAudits();
+        return Math.Round((decimal)completed / planned * 100, 1);
+    }
+
+    private decimal GetExternalAuditComplianceRate()
+    {
+        var scheduled = GetScheduledExternalAudits();
+        if (scheduled == 0) return 100;
+        
+        var completed = GetCompletedExternalAudits();
+        return Math.Round((decimal)completed / scheduled * 100, 1);
+    }
+
+    private decimal GetManagementReviewComplianceRate()
+    {
+        var required = GetRequiredManagementReviews();
+        var completed = GetCompletedManagementReviews();
+        
+        return Math.Round((decimal)completed / required * 100, 1);
+    }
+
+    private string GetComplianceColor(decimal percentage)
+    {
+        return percentage switch
+        {
+            >= 90 => "var(--rz-success)",
+            >= 75 => "var(--rz-warning)",
+            _ => "var(--rz-danger)"
+        };
+    }
+
+    private void ClearFilters()
+    {
+        SearchText = string.Empty;
+        SelectedStatus = "All";
+        SelectedType = "All";
+        SelectedDepartment = "All";
+        ApplyFilters();
+    }
+
+    private void NavigateToOverdueAudits()
+    {
+        // Navigate to filtered audit view showing only overdue audits
+        Navigation.NavigateTo("/SMSAssurance/AuditManagement?status=Overdue");
+    }
+    #endregion
+
+    #region Apply Filters Method
+    private void ApplyFilters()
+    {
+        try
+        {
+            var filteredPlans = AllAuditPlans.AsEnumerable();
+
+            // Apply search text filter
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                filteredPlans = filteredPlans.Where(p => 
+                    (p.Name?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (p.Code?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (p.Description?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
+            }
+
+            // Apply status filter
+            if (SelectedStatus != "All")
+            {
+                filteredPlans = filteredPlans.Where(p => p.Status == SelectedStatus);
+            }
+
+            // Apply type filter
+            if (SelectedType != "All")
+            {
+                filteredPlans = filteredPlans.Where(p => p.AuditType == SelectedType);
+            }
+
+            // Apply department filter
+            if (SelectedDepartment != "All")
+            {
+                filteredPlans = filteredPlans.Where(p => p.ResponsibleDepartment == SelectedDepartment);
+            }
+
+            AuditPlans = filteredPlans.ToList();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error applying filters");
+            ShowErrorNotification("Error applying filters");
+        }
     }
     #endregion
 }

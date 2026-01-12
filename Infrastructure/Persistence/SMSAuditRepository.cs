@@ -1,9 +1,13 @@
+using System.Data;
+
+using Microsoft.Data.SqlClient;
+
 using SMS_Domain.Entities;
 using SMS_Domain.Errors;
+using SMS_Domain.Interfaces;
+
 using SMS_Infrastructure.Common;
 using SMS_Infrastructure.Interfaces;
-using Microsoft.Data.SqlClient;
-using System.Data;
 
 namespace Infrastructure.Persistence;
 
@@ -212,15 +216,12 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, audit.UpdatedDate ?? DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
-            var rowsAffected = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            if (rowsAffected > 0)
-            {
-                return Result.Success(audit);
-            }
 
-            return Result<SMSAudit>.Failure<SMSAudit>(DomainErrors.SMSAuditError.NotFound);
+            return await GetSMSAuditByCodeAsync(audit.Code, ct).ConfigureAwait(false);
+            
         }
         catch (Exception ex)
         {

@@ -252,23 +252,7 @@ public class SMSAuditPlanService
     /// <summary>
     /// Generates audit plan code based on naming convention
     /// </summary>
-    public string GenerateAuditPlanCode(string auditType, DateTime plannedStartDate)
-    {
-        try
-        {
-            var typeCode = GetAuditTypeCode(auditType);
-            var yearMonth = plannedStartDate.ToString("yyyyMM");
-            var sequence = DateTime.UtcNow.ToString("HHmmss");
-            
-            return $"AP-{typeCode}-{yearMonth}-{sequence}";
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error generating audit plan code for type: {AuditType}", auditType);
-            return $"AP-GEN-{DateTime.UtcNow:yyyyMMddHHmmss}";
-        }
-    }
-
+    
     /// <summary>
     /// Calculates recommended audit duration based on scope and type
     /// </summary>

@@ -26,6 +26,7 @@ public partial class AuditPlanDialog : ComponentBase
     #region Form State
     private bool IsSubmitting { get; set; } = false;
     private bool IsValid { get; set; } = true;
+    private bool IsReadOnly => !IsNew && AuditPlan?.Status == "Completed";
     private string ValidationMessage { get; set; } = string.Empty;
     private int selectedTabIndex = 0;
     
@@ -120,7 +121,7 @@ public partial class AuditPlanDialog : ComponentBase
             Priority = AuditPlan.Priority;
             Status = AuditPlan.Status;
             Notes = AuditPlan.Notes;
-            
+                        
             // Approval Workflow Fields - ADDED
             RequiresApproval = AuditPlan.RequiresApproval;
             ApprovedBy = AuditPlan.ApprovedBy;
@@ -213,13 +214,7 @@ public partial class AuditPlanDialog : ComponentBase
             IsSubmitting = true;
             StateHasChanged();
 
-            // DEBUG: Log current form values
-            Logger.LogInformation("DEBUG SaveAuditPlan: Status = {Status}", Status);
-            Logger.LogInformation("DEBUG SaveAuditPlan: Scope = {Scope}", Scope);
-            Logger.LogInformation("DEBUG SaveAuditPlan: Objectives = {Objectives}", Objectives);
-            Logger.LogInformation("DEBUG SaveAuditPlan: ApprovedBy = {ApprovedBy}", ApprovedBy);
-            Logger.LogInformation("DEBUG SaveAuditPlan: ApprovedDate = {ApprovedDate}", ApprovedDate);
-
+            
             // Create or update the audit plan entity with proper property mapping
             SMSAuditPlan auditPlan;
             

@@ -163,13 +163,16 @@ public class StartSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<St
 public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<CompleteSMSAuditCommand, Result<SMSAudit>>
 {
     private readonly SMSAuditService _auditService;
+    private readonly SMSAuditPlanService _auditPlanService; // Add this
     private readonly ILogger<CompleteSMSAuditCommandHandler> _logger;
 
     public CompleteSMSAuditCommandHandler(
         SMSAuditService auditService,
+        SMSAuditPlanService auditPlanService, // Add this
         ILogger<CompleteSMSAuditCommandHandler> logger)
     {
         _auditService = auditService ?? throw new ArgumentNullException(nameof(auditService));
+        _auditPlanService = auditPlanService ?? throw new ArgumentNullException(nameof(auditPlanService)); // Add this
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -214,6 +217,9 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler
             {
                 _logger.LogInformation("Successfully completed SMS audit: {AuditCode} by {CompletedBy}", 
                     request.AuditCode, request.CompletedBy);
+
+                // NEW: Check if associated audit plan should be completed
+                await CheckAndCompleteAuditPlanIfNeeded(audit.AuditPlanCode, cancellationToken);
             }
             else
             {
@@ -231,6 +237,93 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler
         {
             _logger.LogError(ex, "Unexpected error occurred while completing SMS audit: {AuditCode}", request?.AuditCode);
             return Result<SMSAudit>.Failure<SMSAudit>(new Error("COMPLETE_FAILED", "Failed to complete audit"));
+        }
+    }
+
+    /// <summary>
+    /// Checks if all audits for an audit plan are completed, and if so, marks the plan as completed
+    /// </summary>
+    private async Task CheckAndCompleteAuditPlanIfNeeded(string? auditPlanCode, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(auditPlanCode))
+            {
+                _logger.LogInformation("No audit plan code provided, skipping plan completion check");
+                return;
+            }
+
+            _logger.LogInformation("Checking if audit plan {AuditPlanCode} should be completed", auditPlanCode);
+
+            // Get the audit plan
+            var auditPlanResult = await _auditPlanService.GetAuditPlanByCodeAsync(auditPlanCode, cancellationToken);
+            if (auditPlanResult.IsFailure)
+            {
+                _logger.LogWarning("Could not find audit plan {AuditPlanCode} for completion check", auditPlanCode);
+                return;
+            }
+
+            var auditPlan = auditPlanResult.Value!;
+
+            // Skip if already completed
+            if (auditPlan.Status == "Completed")
+            {
+                _logger.LogInformation("Audit plan {AuditPlanCode} is already completed", auditPlanCode);
+                return;
+            }
+
+            // Get all audits associated with this plan
+            var allAuditsResult = await _auditService.GetAuditsByPlanAsync(auditPlanCode, null, false, cancellationToken);
+            if (allAuditsResult.IsFailure || !allAuditsResult.Value.Any())
+            {
+                _logger.LogInformation("No audits found for plan {AuditPlanCode}, cannot complete plan", auditPlanCode);
+                return;
+            }
+
+            var allAudits = allAuditsResult.Value;
+            var completedAudits = allAudits.Count(a => a.Status == "Completed");
+            var totalAudits = allAudits.Count;
+
+            _logger.LogInformation("Audit plan {AuditPlanCode}: {CompletedAudits}/{TotalAudits} audits completed", 
+                auditPlanCode, completedAudits, totalAudits);
+
+            // If all audits are completed, complete the plan
+            if (completedAudits == totalAudits && allAudits.All(a => a.Status == "Completed"))
+            {
+                _logger.LogInformation("All audits completed for plan {AuditPlanCode}, marking plan as completed", auditPlanCode);
+
+                // Complete the audit plan using domain method
+                var completePlanResult = auditPlan.CompleteAuditPlan("SYSTEM", "All associated audits completed");
+                if (completePlanResult.IsSuccess)
+                {
+                    // Save the completed audit plan
+                    var updatePlanResult = await _auditPlanService.UpdateAuditPlanAsync(auditPlan, cancellationToken);
+                    if (updatePlanResult.IsSuccess)
+                    {
+                        _logger.LogInformation("Successfully completed audit plan {AuditPlanCode}", auditPlanCode);
+                    }
+                    else
+                    {
+                        _logger.LogError("Failed to save completed audit plan {AuditPlanCode}: {Error}", 
+                            auditPlanCode, updatePlanResult.Error?.Message);
+                    }
+                }
+                else
+                {
+                    _logger.LogError("Failed to complete audit plan {AuditPlanCode}: {Error}", 
+                        auditPlanCode, completePlanResult.Error?.Message);
+                }
+            }
+            else
+            {
+                _logger.LogInformation("Not all audits completed yet for plan {AuditPlanCode}, keeping plan status as {Status}", 
+                    auditPlanCode, auditPlan.Status);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking audit plan completion for {AuditPlanCode}", auditPlanCode);
+            // Don't throw - this is a secondary operation that shouldn't fail the primary audit completion
         }
     }
 }
