@@ -32,7 +32,7 @@ public class ReportDataService : BaseDataService<ReportDataService>, IReportData
 
     public Task<Result<Report>> GetReportByIdAsync(ReportID id, CancellationToken ct = default)
     {
-        return _repo.GetReportByIdAsync(id, ct);
+        return _repo.GetReportByCodeAsync(id, ct);
     }
 
     public Task<Result<List<Report>>> GetAllReportsAsync(CancellationToken ct = default)

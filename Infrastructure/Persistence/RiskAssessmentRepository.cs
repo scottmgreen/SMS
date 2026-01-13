@@ -81,7 +81,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
             RiskAssessmentID riskAssessmentId = new RiskAssessmentID(newCodeValue);
 
-            return await GetRiskAssessmentByIdAsync(riskAssessmentId, ct).ConfigureAwait(false);
+            return await GetRiskAssessmentByCodeAsync(riskAssessmentId, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -90,19 +90,19 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
         }
     }
 
-    public async Task<Result<RiskAssessment>> GetRiskAssessmentByIdAsync(RiskAssessmentID riskAssessmentId, CancellationToken cancellationToken = default)
+    public async Task<Result<RiskAssessment>> GetRiskAssessmentByCodeAsync(RiskAssessmentID riskAssessmentCode, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Retrieving RiskAssessment by ID: {Id}", riskAssessmentId);
+            _logger.LogInformation("Retrieving RiskAssessment by Code: {Code}", riskAssessmentCode);
 
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_RiskAssessment_GetById, sql)
+            using SqlCommand cmd = new(StoredProcs.pr_RiskAssessment_GetByCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, riskAssessmentId.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, riskAssessmentCode.Value));
 
             RiskAssessment? riskAssessment = null;
 
@@ -118,16 +118,16 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
 
             if (riskAssessment == null)
             {
-                _logger.LogWarning("RiskAssessment not found with ID: {Id}", riskAssessmentId);
+                _logger.LogWarning("RiskAssessment not found with Code: {Code}", riskAssessmentCode);
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NotFound);
             }
 
-            _logger.LogInformation("Successfully retrieved RiskAssessment: {Id}", riskAssessmentId);
+            _logger.LogInformation("Successfully retrieved RiskAssessment: {Code}", riskAssessmentCode);
             return Result<RiskAssessment>.Success(riskAssessment);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to retrieve RiskAssessment by ID: {Id}", riskAssessmentId);
+            _logger.LogError(ex, "Failed to retrieve RiskAssessment by ID: {Code}", riskAssessmentCode);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NotFound);
         }
     }
@@ -287,7 +287,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetRiskAssessmentByIdAsync(new RiskAssessmentID(riskAssessment.Id.Value), ct).ConfigureAwait(false);
+            return await GetRiskAssessmentByCodeAsync(new RiskAssessmentID(riskAssessment.Id.Value), ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -340,7 +340,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetRiskAssessmentByIdAsync(new RiskAssessmentID(riskAssessmentId), ct).ConfigureAwait(false);
+            return await GetRiskAssessmentByCodeAsync(new RiskAssessmentID(riskAssessmentId), ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -378,7 +378,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetRiskAssessmentByIdAsync(new RiskAssessmentID(riskAssessmentId), ct).ConfigureAwait(false);
+            return await GetRiskAssessmentByCodeAsync(new RiskAssessmentID(riskAssessmentId), ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -426,7 +426,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetRiskAssessmentByIdAsync(new RiskAssessmentID(riskAssessmentId), ct).ConfigureAwait(false);
+            return await GetRiskAssessmentByCodeAsync(new RiskAssessmentID(riskAssessmentId), ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -466,7 +466,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetRiskAssessmentByIdAsync(new RiskAssessmentID(riskAssessmentId), ct).ConfigureAwait(false);
+            return await GetRiskAssessmentByCodeAsync(new RiskAssessmentID(riskAssessmentId), ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -510,7 +510,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetRiskAssessmentByIdAsync(new RiskAssessmentID(riskAssessmentId), ct).ConfigureAwait(false);
+            return await GetRiskAssessmentByCodeAsync(new RiskAssessmentID(riskAssessmentId), ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -555,7 +555,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
 
     public async Task<Result<RiskAssessment>> GetByIdAsync(RiskAssessmentID id)
     {
-        return await GetRiskAssessmentByIdAsync(id);
+        return await GetRiskAssessmentByCodeAsync(id);
     }
 
     public async Task<Result<RiskAssessment>> AddAsync(RiskAssessment riskAssessment)

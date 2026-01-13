@@ -95,7 +95,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
     public RiskAssessmentType AssessmentType { get; set; } = RiskAssessmentType.Initial;
     
     /// <summary>
-    /// Risk Assessment Category - BUSINESS RULE: Only "Technical" or "Preliminary"
+    /// Risk Assessment HazardCategory - BUSINESS RULE: Only "Technical" or "Preliminary"
     /// Technical = 5-step process, Preliminary = 1-step process
     /// </summary>
     public RiskAssessmentCategory RiskAssessmentCategory { get; set; } = RiskAssessmentCategory.Technical;
@@ -166,7 +166,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.InvalidLeadAssessor);
         }
 
-        // BUSINESS RULE ENFORCEMENT: Category can only be Technical or Preliminary
+        // BUSINESS RULE ENFORCEMENT: HazardCategory can only be Technical or Preliminary
         var assessmentCategory = category ?? RiskAssessmentCategory.Technical;
 
         var assessment = new RiskAssessment(id, name, leadAssessorId, RiskAssessmentType.Initial, primaryHazardId, hazardCode);

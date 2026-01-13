@@ -26,12 +26,12 @@
     <Columns>
         <RadzenDataGridColumn TItem="Investigation" Property="Code" Title="Code" Width="150px" />
         <RadzenDataGridColumn TItem="Investigation" Property="ReportCode" Title="Report Code" Width="200px" />
-        <RadzenDataGridColumn TItem="Investigation" Property="InvestigationType" Title="Type" Width="150px" />
+        <RadzenDataGridColumn TItem="Investigation" Property="HazardCode" Title="Hazard Code" Width="200px" />
         <RadzenDataGridColumn TItem="Investigation" Property="Status" Title="Status" Width="120px" />
-        <RadzenDataGridColumn TItem="Investigation" Property="Priority" Title="Priority" Width="100px" />
-        <RadzenDataGridColumn TItem="Investigation" Property="AssignedTo" Title="Assigned To" Width="150px" />
-        <RadzenDataGridColumn TItem="Investigation" Property="StartDate" Title="Start Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
-        <RadzenDataGridColumn TItem="Investigation" Property="DueDate" Title="Due Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
+        @* <RadzenDataGridColumn TItem="Investigation" Property="Priority" Title="Priority" Width="100px" /> *@
+        <RadzenDataGridColumn TItem="Investigation" Property="AssignedInvestigatorId" Title="Assigned To" Width="150px" />
+        @* <RadzenDataGridColumn TItem="Investigation" Property="StartDate" Title="Start Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
+        <RadzenDataGridColumn TItem="Investigation" Property="DueDate" Title="Due Date" Width="150px" FormatString="{0:MM/dd/yyyy}" /> *@
         <RadzenDataGridColumn TItem="Investigation" Property="CompletedDate" Title="Completed Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
         <RadzenDataGridColumn TItem="Investigation" Property="CreatedBy" Title="Created By" Width="150px" />
         <RadzenDataGridColumn TItem="Investigation" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />

@@ -309,7 +309,7 @@ public class SPIPerformanceSummary
     public int SPIsAboveCritical { get; set; }
     public decimal OverallComplianceRate { get; set; }
     
-    // By Category
+    // By HazardCategory
     public Dictionary<string, int> SPIsByType { get; set; } = new();
     public Dictionary<string, int> SPIsByDepartment { get; set; } = new();
     public Dictionary<string, decimal> AverageValuesByType { get; set; } = new();

@@ -25,7 +25,7 @@ public interface IAirportSharedDatasetDataService
     /// <param name="id">The airport shared dataset identifier</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result containing the airport shared dataset or error</returns>
-    Task<Result<AirportSharedDataset>> GetAirportSharedDatasetByIdAsync(AirportSharedDatasetID id, CancellationToken ct = default);
+    Task<Result<AirportSharedDataset>> GetAirportSharedDatasetByCodeAsync(AirportSharedDatasetID code, CancellationToken ct = default);
 
     /// <summary>
     /// Retrieves all airport shared datasets asynchronously
@@ -48,5 +48,5 @@ public interface IAirportSharedDatasetDataService
     /// <param name="id">The airport shared dataset identifier</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result containing success status or error</returns>
-    Task<Result<bool>> DeleteAirportSharedDatasetAsync(AirportSharedDatasetID id, CancellationToken ct = default);
+    Task<Result<bool>> DeleteAirportSharedDatasetAsync(AirportSharedDatasetID code, CancellationToken ct = default);
 }

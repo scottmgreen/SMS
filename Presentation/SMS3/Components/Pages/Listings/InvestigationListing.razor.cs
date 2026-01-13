@@ -115,8 +115,8 @@ public partial class InvestigationListing : ComponentBase
         
         // Navigate to Investigation with HazardCode if available
         var navigationUrl = string.IsNullOrWhiteSpace(investigation.HazardCode) 
-            ? $"/SMSRiskManagement/Investigation/{investigation.Code}"
-            : $"/SMSRiskManagement/Investigation/{investigation.Code}/{investigation.HazardCode}";
+            ? $"/SMSRiskManagement/Investigations/{investigation.Code}"
+            : $"/SMSRiskManagement/Investigations/{investigation.Code}/{investigation.HazardCode}";
             
         Logger.LogInformation("Navigating to investigation: {Code} with URL: {Url}", investigation.Code, navigationUrl);
         Navigation.NavigateTo(navigationUrl);
@@ -128,8 +128,8 @@ public partial class InvestigationListing : ComponentBase
         
         // Navigate to Investigation edit mode with HazardCode if available
         var navigationUrl = string.IsNullOrWhiteSpace(investigation.HazardCode) 
-            ? $"/SMSRiskManagement/Investigation/{investigation.Code}"
-            : $"/SMSRiskManagement/Investigation/{investigation.Code}/{investigation.HazardCode}";
+            ? $"/SMSRiskManagement/Investigations/{investigation.Code}"
+            : $"/SMSRiskManagement/Investigations/{investigation.Code}/{investigation.HazardCode}";
             
         Logger.LogInformation("Navigating to edit investigation: {Code} with URL: {Url}", investigation.Code, navigationUrl);
         Navigation.NavigateTo(navigationUrl);

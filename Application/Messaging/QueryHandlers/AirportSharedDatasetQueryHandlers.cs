@@ -8,7 +8,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // AIRPORT SHARED DATASET QUERY HANDLERS
 // =============================================
 
-public class GetAirportSharedDatasetByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetAirportSharedDatasetByIdQuery, Result<AirportSharedDataset>>
+public class GetAirportSharedDatasetByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetAirportSharedDatasetByCodeQuery, Result<AirportSharedDataset>>
 {
     private readonly AirportSharedDatasetDataService _airportSharedDatasetDataService;
     private readonly ILogger<GetAirportSharedDatasetByIdQueryHandler> _logger;
@@ -19,17 +19,17 @@ public class GetAirportSharedDatasetByIdQueryHandler : BaseQueryBundle, IRequest
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<AirportSharedDataset>> HandleAsync(GetAirportSharedDatasetByIdQuery request, CancellationToken ct = default)
+    public async Task<Result<AirportSharedDataset>> HandleAsync(GetAirportSharedDatasetByCodeQuery request, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Processing GetAirportSharedDatasetByIdQuery for ID: {Id}", request.AirportSharedDatasetId);
-            var result = await _airportSharedDatasetDataService.GetAirportSharedDatasetByIdAsync(request.AirportSharedDatasetId, ct).ConfigureAwait(false);
+            _logger.LogInformation("Processing GetAirportSharedDatasetByCodeQuery for Code: {Code}", request.AirportSharedDatasetCode);
+            var result = await _airportSharedDatasetDataService.GetAirportSharedDatasetByCodeAsync(request.AirportSharedDatasetCode, ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAirportSharedDatasetByIdQuery for ID: {Id}", request.AirportSharedDatasetId);
+            _logger.LogError(ex, "Error processing GetAirportSharedDatasetByCodeQuery for Code: {Code}", request.AirportSharedDatasetCode);
             return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.NotFound);
         }
     }

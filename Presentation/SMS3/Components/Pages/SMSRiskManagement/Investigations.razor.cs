@@ -78,48 +78,98 @@ public partial class Investigations : ComponentBase
             if (string.IsNullOrWhiteSpace(InvestigationId))
             {
                 ShowErrorNotification("Investigation ID is required");
+                Logger.LogError("Investigation ID is null or empty");
                 Navigation.NavigateTo("/Listings/Investigations");
                 return;
             }
 
             Logger.LogInformation("Loading investigation: {InvestigationId} with HazardId: {HazardId}", InvestigationId, HazardId);
 
-            // Load investigation
-            var investigationQuery = new GetInvestigationByIdQuery(new InvestigationID(InvestigationId));
-            var investigationResult = await Mediator.SendAsync(investigationQuery, CancellationToken.None);
+            // Debug: Load all investigations to see what's available
+            var allInvestigationsQuery = new GetAllInvestigationsQuery();
+            var allInvestigationsResult = await Mediator.SendAsync(allInvestigationsQuery, CancellationToken.None);
             
-            if (investigationResult.IsSuccess)
+            if (allInvestigationsResult.IsSuccess && allInvestigationsResult.Value != null)
             {
-                InvestigationEntity = investigationResult.Value;
+                Logger.LogInformation("Found {Count} total investigations in database", allInvestigationsResult.Value.Count);
                 
-                // If HazardId is provided in route but not set in entity, set it
-                if (!string.IsNullOrWhiteSpace(HazardId) && string.IsNullOrWhiteSpace(InvestigationEntity.HazardCode))
+                // Log all investigation codes for debugging
+                foreach (var inv in allInvestigationsResult.Value.Take(10)) // Log first 10
                 {
-                    InvestigationEntity.HazardCode = HazardId;
-                    Logger.LogInformation("Set HazardCode from route parameter: {HazardCode}", HazardId);
+                    Logger.LogInformation("Available Investigation: Code={Code}, HazardCode={HazardCode}, Status={Status}", 
+                        inv.Code, inv.HazardCode, inv.Status);
                 }
                 
-                // Validate that HazardCode is set
-                if (string.IsNullOrWhiteSpace(InvestigationEntity.HazardCode) || InvestigationEntity.HazardCode == "HAZ-UNKNOWN")
+                // Try to find the requested investigation
+                InvestigationEntity = allInvestigationsResult.Value.FirstOrDefault(i => 
+                    i.Code.Equals(InvestigationId, StringComparison.OrdinalIgnoreCase));
+                
+                if (InvestigationEntity != null)
                 {
-                    ShowErrorNotification("Investigation has invalid or missing HazardCode. Please check the investigation setup.");
-                    Logger.LogError("Investigation {InvestigationId} has invalid HazardCode: {HazardCode}", 
-                        InvestigationId, InvestigationEntity.HazardCode ?? "NULL");
+                    Logger.LogInformation("Successfully loaded investigation by code: {Code}", InvestigationEntity.Code);
                 }
-                
-                showDecisionForm = InvestigationEntity?.HasDecision == true;
-                
-                Logger.LogInformation("Loaded investigation: {Code} with HazardCode: {HazardCode}", 
-                    InvestigationEntity?.Code, InvestigationEntity?.HazardCode);
+                else
+                {
+                    Logger.LogError("Investigation {InvestigationId} not found. Available codes: {AvailableCodes}", 
+                        InvestigationId, string.Join(", ", allInvestigationsResult.Value.Select(i => i.Code).Take(10)));
+                    
+                    // Try case-insensitive partial match as backup
+                    var partialMatch = allInvestigationsResult.Value.FirstOrDefault(i => 
+                        i.Code.Contains(InvestigationId, StringComparison.OrdinalIgnoreCase));
+                    
+                    if (partialMatch != null)
+                    {
+                        Logger.LogWarning("Found partial match for {InvestigationId}: {ActualCode}", InvestigationId, partialMatch.Code);
+                        InvestigationEntity = partialMatch;
+                    }
+                }
             }
             else
             {
-                ShowErrorNotification($"Failed to load investigation: {investigationResult.Error?.Message}");
-                Logger.LogError("Failed to load investigation {InvestigationId}: {Error}", 
-                    InvestigationId, investigationResult.Error?.Message);
+                Logger.LogError("Failed to load all investigations: {Error}", allInvestigationsResult.Error?.Message);
+                ShowErrorNotification("Failed to load investigations from database. Please check database connectivity.");
                 return;
             }
 
+            // If still not found, show detailed error
+            if (InvestigationEntity == null)
+            {
+                Logger.LogError("Investigation not found. InvestigationId: {InvestigationId}, Database has {Count} investigations", 
+                    InvestigationId, allInvestigationsResult.Value?.Count ?? 0);
+                ShowErrorNotification($"Investigation {InvestigationId} not found in database. Please verify the investigation exists and try again.");
+                return;
+            }
+
+            // If HazardId is provided in route but not set in entity, set it
+            if (!string.IsNullOrWhiteSpace(HazardId) && string.IsNullOrWhiteSpace(InvestigationEntity.HazardCode))
+            {
+                InvestigationEntity.HazardCode = HazardId;
+                Logger.LogInformation("Set HazardCode from route parameter: {HazardCode}", HazardId);
+            }
+            
+            // Check HazardCode validity
+            if (!string.IsNullOrWhiteSpace(HazardId) && !string.IsNullOrWhiteSpace(InvestigationEntity.HazardCode))
+            {
+                if (!InvestigationEntity.HazardCode.Equals(HazardId, StringComparison.OrdinalIgnoreCase))
+                {
+                    Logger.LogWarning("HazardCode mismatch. Route: {RouteHazardId}, Entity: {EntityHazardCode}", 
+                        HazardId, InvestigationEntity.HazardCode);
+                }
+            }
+            
+            // Validate that HazardCode is set
+            if (string.IsNullOrWhiteSpace(InvestigationEntity.HazardCode) || InvestigationEntity.HazardCode == "HAZ-UNKNOWN")
+            {
+                ShowErrorNotification("Investigation has invalid or missing HazardCode. Please check the investigation setup.");
+                Logger.LogError("Investigation {InvestigationId} has invalid HazardCode: {HazardCode}", 
+                    InvestigationId, InvestigationEntity.HazardCode ?? "NULL");
+            }
+            
+            showDecisionForm = InvestigationEntity?.HasDecision == true;
+            
+            Logger.LogInformation("Successfully loaded investigation: {Code} with HazardCode: {HazardCode}, Status: {Status}", 
+                InvestigationEntity?.Code, InvestigationEntity?.HazardCode, InvestigationEntity?.Status);
+                
             // Load available investigators
             await LoadAvailableInvestigators();
 
@@ -133,7 +183,7 @@ public partial class Investigations : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading investigation data for: {InvestigationId}", InvestigationId);
-            ShowErrorNotification("Error loading investigation data");
+            ShowErrorNotification($"Error loading investigation data: {ex.Message}");
         }
         finally
         {
@@ -189,7 +239,7 @@ public partial class Investigations : ComponentBase
         {
             if (InvestigationEntity?.HazardCode != null)
             {
-                // Load ALL files for this hazard, not just those with Category = "Evidence"
+                // Load ALL files for this hazard, not just those with HazardCategory = "Evidence"
                 // This will include both files uploaded during initial reporting and investigation
                 var filesQuery = new GetHazardFilesByHazardCodeQuery(InvestigationEntity.HazardCode, false, null);
                 var filesResult = await Mediator.SendAsync(filesQuery, CancellationToken.None);

@@ -338,13 +338,49 @@ public partial class AuditPlanDialog : ComponentBase
             PlannedEndDate = value.Value.AddDays(7);
         }
         
+        // Calculate estimated hours based on duration
+        CalculateEstimatedHours();
+        
         StateHasChanged();
     }
 
     private void OnEndDateChanged(DateTime? value)
     {
         PlannedEndDate = value;
+        
+        // Calculate estimated hours based on duration
+        CalculateEstimatedHours();
+        
         StateHasChanged();
+    }
+
+    private void CalculateEstimatedHours()
+    {
+        if (PlannedStartDate.HasValue && PlannedEndDate.HasValue && PlannedEndDate.Value > PlannedStartDate.Value)
+        {
+            var duration = PlannedEndDate.Value - PlannedStartDate.Value;
+            var totalDays = (int)duration.TotalDays;
+            
+            // Calculate estimated hours based on audit type and duration
+            var baseHoursPerDay = AuditType switch
+            {
+                "Internal" => 6, // 6 hours per day for internal audits
+                "External" => 8, // 8 hours per day for external audits  
+                "Management Review" => 4, // 4 hours per day for management reviews
+                "Compliance" => 7, // 7 hours per day for compliance audits
+                "Follow-up" => 3, // 3 hours per day for follow-up audits
+                _ => 6 // Default to 6 hours per day
+            };
+            
+            // Calculate total estimated hours
+            var calculatedHours = totalDays * baseHoursPerDay;
+            
+            // Apply reasonable bounds (minimum 2 hours, maximum 200 hours)
+            EstimatedHours = Math.Max(2, Math.Min(200, calculatedHours));
+            
+            Logger.LogInformation("Calculated EstimatedHours: {Hours} for {Days} days of {AuditType} audit", 
+                EstimatedHours, totalDays, AuditType);
+        }
     }
     
     private void OnStatusChanged(string value)
@@ -396,6 +432,22 @@ public partial class AuditPlanDialog : ComponentBase
         }
         
         // Trigger re-render to show/hide the Approval Workflow tab
+        StateHasChanged();
+    }
+
+    private void OnAuditTypeChanged(string value)
+    {
+        AuditType = value;
+        
+        // Auto-generate code if it's empty and we have an audit type
+        if (string.IsNullOrWhiteSpace(Code) && !string.IsNullOrWhiteSpace(AuditType))
+        {
+            GenerateCode();
+        }
+        
+        // Recalculate estimated hours based on new audit type
+        CalculateEstimatedHours();
+        
         StateHasChanged();
     }
     #endregion

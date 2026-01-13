@@ -8,7 +8,6 @@ namespace SMS_Domain.Enums;
 /// </summary>
 public sealed class InterviewStatus : BaseEnum<InterviewStatus>
 {
-    public static readonly InterviewStatus Planned = new("PLANNED", nameof(Planned));
     public static readonly InterviewStatus Scheduled = new("SCHEDULED", nameof(Scheduled));
     public static readonly InterviewStatus InProgress = new("IN_PROGRESS", nameof(InProgress));
     public static readonly InterviewStatus Completed = new("COMPLETED", nameof(Completed));
@@ -23,7 +22,7 @@ public sealed class InterviewStatus : BaseEnum<InterviewStatus>
     /// </summary>
     public static IEnumerable<InterviewStatus> GetActiveStatuses()
     {
-        return new[] { Planned, Scheduled, InProgress };
+        return new[] { Scheduled, InProgress };
     }
 
     /// <summary>
@@ -39,7 +38,7 @@ public sealed class InterviewStatus : BaseEnum<InterviewStatus>
     /// </summary>
     public bool AllowsModifications()
     {
-        return this == Planned || this == Scheduled;
+        return this == Scheduled;
     }
 
     /// <summary>
@@ -87,7 +86,7 @@ public sealed class InterviewStatus : BaseEnum<InterviewStatus>
     /// </summary>
     public bool CanCancel()
     {
-        return this == Planned || this == Scheduled || this == InProgress;
+        return this == Scheduled || this == InProgress;
     }
 
     /// <summary>
@@ -97,7 +96,6 @@ public sealed class InterviewStatus : BaseEnum<InterviewStatus>
     {
         return Value switch
         {
-            "PLANNED" => new[] { Scheduled, Cancelled },
             "SCHEDULED" => new[] { InProgress, Cancelled },
             "IN_PROGRESS" => new[] { Completed, Cancelled },
             _ => new InterviewStatus[] { } // Completed and Cancelled are final
@@ -111,7 +109,6 @@ public sealed class InterviewStatus : BaseEnum<InterviewStatus>
     {
         return Value switch
         {
-            "PLANNED" => "Interview has been planned but not yet scheduled",
             "SCHEDULED" => "Interview has been scheduled with a specific date and time",
             "IN_PROGRESS" => "Interview is currently in progress",
             "COMPLETED" => "Interview has been completed successfully",
@@ -127,7 +124,6 @@ public sealed class InterviewStatus : BaseEnum<InterviewStatus>
     {
         return Value switch
         {
-            "PLANNED" => "status-planned",
             "SCHEDULED" => "status-scheduled",
             "IN_PROGRESS" => "status-in-progress",
             "COMPLETED" => "status-completed",
@@ -143,7 +139,6 @@ public sealed class InterviewStatus : BaseEnum<InterviewStatus>
     {
         return Value switch
         {
-            "PLANNED" => "fas fa-clipboard-list",
             "SCHEDULED" => "fas fa-calendar-check",
             "IN_PROGRESS" => "fas fa-play-circle",
             "COMPLETED" => "fas fa-check-circle",
@@ -159,7 +154,6 @@ public sealed class InterviewStatus : BaseEnum<InterviewStatus>
     {
         return Value switch
         {
-            "PLANNED" => "text-secondary",
             "SCHEDULED" => "text-info",
             "IN_PROGRESS" => "text-warning",
             "COMPLETED" => "text-success",
@@ -173,7 +167,7 @@ public sealed class InterviewStatus : BaseEnum<InterviewStatus>
     /// </summary>
     public bool CanBeRescheduled()
     {
-        return this == Planned || this == Scheduled;
+        return this == Scheduled;
     }
 
     /// <summary>
@@ -181,7 +175,7 @@ public sealed class InterviewStatus : BaseEnum<InterviewStatus>
     /// </summary>
     public bool IsActiveWorkflow()
     {
-        return this == Planned || this == Scheduled || this == InProgress;
+        return this == Scheduled || this == InProgress;
     }
 
     /// <summary>
@@ -191,7 +185,6 @@ public sealed class InterviewStatus : BaseEnum<InterviewStatus>
     {
         return Value switch
         {
-            "PLANNED" => 10,
             "SCHEDULED" => 25,
             "IN_PROGRESS" => 75,
             "COMPLETED" => 100,

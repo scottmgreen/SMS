@@ -217,8 +217,6 @@ public static class ParameterNames
     /// <summary>
     /// Airport Shared Dataset parameters
     /// </summary>
-    private static readonly Lazy<string> _pmAirportSharedDatasetId = new Lazy<string>(() => "@pID");
-    public static string pmAirportSharedDatasetId => _pmAirportSharedDatasetId.Value;
 
     private static readonly Lazy<string> _pmAirportSharedDatasetCode = new Lazy<string>(() => "@pCode");
     public static string pmAirportSharedDatasetCode => _pmAirportSharedDatasetCode.Value;
@@ -347,8 +345,7 @@ public static class ParameterNames
     public static string pmHazardAverageScore => _pmHazardAverageScore.Value;
 
     // Additional Hazard parameters for comprehensive SMS support
-    private static readonly Lazy<string> _pmHazardType = new Lazy<string>(() => "@pHazardType");
-    public static string pmHazardType => _pmHazardType.Value;
+    
 
     private static readonly Lazy<string> _pmHazardReportedBy = new Lazy<string>(() => "@pHazardReportedBy");
     public static string pmHazardReportedBy => _pmHazardReportedBy.Value;
@@ -364,6 +361,14 @@ public static class ParameterNames
 
     private static readonly Lazy<string> _pmHazardIsAnonymous = new Lazy<string>(() => "@pHazardIsAnonymous");
     public static string pmHazardIsAnonymous => _pmHazardIsAnonymous.Value;
+
+    private static readonly Lazy<string> _pmHazardType = new Lazy<string>(() => "@pHazardType");
+    public static string pmHazardType => _pmHazardType.Value;
+
+    //IsInitialHazard
+    private static readonly Lazy<string> _pmHazardIsInitialHazard = new Lazy<string>(() => "@pIsInitialHazard");
+    public static string pmHazardIsInitialHazard => _pmHazardIsInitialHazard.Value;
+
 
     private static readonly Lazy<string> _pmHazardCategory = new Lazy<string>(() => "@pHazardCategory");
     public static string pmHazardCategory => _pmHazardCategory.Value;

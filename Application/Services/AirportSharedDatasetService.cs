@@ -1,6 +1,11 @@
+using System.Reflection.Emit;
+
 using Microsoft.Extensions.Logging;
+
 using SMS_Domain.Entities;
+
 using SMS_Infrastructure.Services;
+
 using SMS_Shared.Common;
 
 namespace SMS_Application.Services;
@@ -73,16 +78,16 @@ public sealed class AirportSharedDatasetService
     /// <summary>
     /// Gets Airport Shared Dataset by ID
     /// </summary>
-    public async Task<Result<AirportSharedDataset>> GetAirportSharedDatasetByIdAsync(AirportSharedDatasetID id, CancellationToken ct = default)
+    public async Task<Result<AirportSharedDataset>> GetAirportSharedDatasetByCodeAsync(AirportSharedDatasetID code, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Retrieving Airport Shared Dataset with ID: {Id}", id);
-            return await _dataService.GetAirportSharedDatasetByIdAsync(id, ct).ConfigureAwait(false);
+            _logger.LogInformation("Retrieving Airport Shared Dataset with ID: {Id}", code);
+            return await _dataService.GetAirportSharedDatasetByCodeAsync(code, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving Airport Shared Dataset with ID: {Id}", id);
+            _logger.LogError(ex, "Unexpected error retrieving Airport Shared Dataset with ID: {Id}", code);
             return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.NotFound);
         }
     }
@@ -120,8 +125,8 @@ public sealed class AirportSharedDatasetService
             }
 
             // Business validation - check if dataset exists
-            var datasetId = new AirportSharedDatasetID(airportSharedDataset.Code);
-            var existingDatasetResult = await _dataService.GetAirportSharedDatasetByIdAsync(datasetId, ct).ConfigureAwait(false);
+            var datasetCode = new AirportSharedDatasetID(airportSharedDataset.Code);
+            var existingDatasetResult = await _dataService.GetAirportSharedDatasetByCodeAsync(datasetCode, ct).ConfigureAwait(false);
             if (existingDatasetResult.IsFailure)
             {
                 _logger.LogWarning("Cannot update non-existent Airport Shared Dataset with Code: {Code}", airportSharedDataset.Code);
@@ -164,25 +169,25 @@ public sealed class AirportSharedDatasetService
     /// <summary>
     /// Deletes an Airport Shared Dataset with business validation
     /// </summary>
-    public async Task<Result<bool>> DeleteAirportSharedDatasetAsync(AirportSharedDatasetID id, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteAirportSharedDatasetAsync(AirportSharedDatasetID code, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Deleting Airport Shared Dataset with ID: {Id}", id);
+            _logger.LogInformation("Deleting Airport Shared Dataset with Code: {Code}", code);
 
             // Business validation - check if dataset exists
-            var existingDatasetResult = await _dataService.GetAirportSharedDatasetByIdAsync(id, ct).ConfigureAwait(false);
+            var existingDatasetResult = await _dataService.GetAirportSharedDatasetByCodeAsync(code, ct).ConfigureAwait(false);
             if (existingDatasetResult.IsFailure)
             {
-                _logger.LogWarning("Cannot delete non-existent Airport Shared Dataset with ID: {Id}", id);
+                _logger.LogWarning("Cannot delete non-existent Airport Shared Dataset with Code: {Code}", code);
                 return Result<bool>.Failure<bool>(DomainErrors.AirportSharedDatasetError.NotFound);
             }
 
-            var result = await _dataService.DeleteAirportSharedDatasetAsync(id, ct).ConfigureAwait(false);
+            var result = await _dataService.DeleteAirportSharedDatasetAsync(code, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted Airport Shared Dataset with ID: {Id}", id);
+                _logger.LogInformation("Successfully deleted Airport Shared Dataset with Code: {Code}", code);
             }
             else
             {
@@ -193,7 +198,7 @@ public sealed class AirportSharedDatasetService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting Airport Shared Dataset with ID: {Id}", id);
+            _logger.LogError(ex, "Unexpected error deleting Airport Shared Dataset with Code: {Code}", code);
             return Result<bool>.Failure<bool>(DomainErrors.AirportSharedDatasetError.DeleteFailed);
         }
     }

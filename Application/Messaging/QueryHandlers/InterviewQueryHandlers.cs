@@ -7,28 +7,28 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // INTERVIEW QUERY HANDLERS
 // =============================================
 
-public class GetInterviewByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetInterviewByIdQuery, Result<Interview>>
+public class GetInterviewByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetInterviewByCodeQuery, Result<Interview>>
 {
     private readonly InterviewDataService _interviewDataService;
-    private readonly ILogger<GetInterviewByIdQueryHandler> _logger;
+    private readonly ILogger<GetInterviewByCodeQueryHandler> _logger;
 
-    public GetInterviewByIdQueryHandler(InterviewDataService interviewDataService, ILogger<GetInterviewByIdQueryHandler> logger)
+    public GetInterviewByCodeQueryHandler(InterviewDataService interviewDataService, ILogger<GetInterviewByCodeQueryHandler> logger)
     {
         _interviewDataService = interviewDataService ?? throw new ArgumentNullException(nameof(interviewDataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<Interview>> HandleAsync(GetInterviewByIdQuery request, CancellationToken ct = default)
+    public async Task<Result<Interview>> HandleAsync(GetInterviewByCodeQuery request, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Processing GetInterviewByIdQuery for ID: {Id}", request.InterviewId);
-            var result = await _interviewDataService.GetInterviewByIdAsync(request.InterviewId, ct).ConfigureAwait(false);
+            _logger.LogInformation("Processing GetInterviewByCodeQuery for Code: {Code}", request.InterviewId);
+            var result = await _interviewDataService.GetInterviewByCodeAsync(request.InterviewId, ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetInterviewByIdQuery for ID: {Id}", request.InterviewId);
+            _logger.LogError(ex, "Error processing GetInterviewByCodeQuery for Code: {Code}", request.InterviewId);
             return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.NotFound);
         }
     }

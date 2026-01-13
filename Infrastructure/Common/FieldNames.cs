@@ -361,6 +361,15 @@ public static class FieldNames
     private static readonly Lazy<string> _fHazardType = new Lazy<string>(() => "fldv_HazardType");
     public static string fHazardType => _fHazardType.Value;
 
+    private static readonly Lazy<string> _fHazardCategory = new Lazy<string>(() => "fldv_HazardCategory");
+    public static string fHazardCategory => _fHazardCategory.Value;
+
+    //fldb_IsInitialHazard
+
+    private static readonly Lazy<string> _fIsInitialHazard = new Lazy<string>(() => "fldb_IsInitialHazard");
+    public static string fIsInitialHazard => _fIsInitialHazard.Value;
+
+
     private static readonly Lazy<string> _fHazardReportedBy = new Lazy<string>(() => "fldv_ReportedBy");
     public static string fHazardReportedBy => _fHazardReportedBy.Value;
 
@@ -375,9 +384,6 @@ public static class FieldNames
 
     private static readonly Lazy<string> _fHazardIsAnonymous = new Lazy<string>(() => "fldb_IsAnonymous");
     public static string fHazardIsAnonymous => _fHazardIsAnonymous.Value;
-
-    private static readonly Lazy<string> _fHazardCategory = new Lazy<string>(() => "fldv_Category");
-    public static string fHazardCategory => _fHazardCategory.Value;
 
     private static readonly Lazy<string> _fHazardFiveMComponent = new Lazy<string>(() => "fldv_FiveMComponent");
     public static string fHazardFiveMComponent => _fHazardFiveMComponent.Value;

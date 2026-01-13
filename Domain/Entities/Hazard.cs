@@ -21,7 +21,7 @@ public sealed class Hazard : BaseAuditableEntity
     //    Code = code;
     //    Name = HazardType;
     //    Description = description;
-    //    Category = category;
+    //    HazardCategory = category;
     //    Status = HazardStatus.Active;
     //    Priority = HazardPriority.Medium;
     //    CreatedDate = DateTime.UtcNow;
@@ -34,15 +34,16 @@ public sealed class Hazard : BaseAuditableEntity
     public string Code { get; set; } = string.Empty;
     public string? Name { get; set; }
     public string Description { get; set; } = string.Empty;
-    public string Category { get; set; } = string.Empty; // Aircraft Operations, Ground Operations, etc.
+    
     public FiveMComponent? FiveMComponent { get; set; } // Man, Machine, Method, Material, Milieu - Smart Enum
     public HazardStatus Status { get; set; } = HazardStatus.Active;
     public HazardPriority Priority { get; set; } = HazardPriority.Medium;
 
+    public bool IsInitialHazard { get; set; }   
     #endregion
 
     #region Hazard Classification Properties
-
+    public string HazardCategory { get; set; } = string.Empty; // Aircraft Operations, Ground Operations, etc.
     public string? HazardType { get; set; }              // Type/category of hazard (e.g., "Operational", "Equipment", etc.)
 
     #endregion

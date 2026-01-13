@@ -443,9 +443,9 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
             var hazard = new Hazard(new HazardID(hazardCode))
             {
                 Code = hazardCode,
-                Name = ConfidentialReport.ReportType,
+                Name = $"{ConfidentialReport.ReportType}",
                 Description = ConfidentialReport.Description,
-                Category = ConfidentialReport.ReportType,
+                HazardCategory = ConfidentialReport.ReportType,
                 HazardType = ConfidentialReport.ReportType,
                 ReportedBy = "CONFIDENTIAL REPORTER",  // Anonymize the reporter
                 ReportedOn = DateTime.Now,

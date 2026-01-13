@@ -13,7 +13,7 @@ public sealed class Interview : BaseAuditableEntity
     // Public constructor for domain usage
     public Interview(InterviewID id) : base(id, "SYSTEM", DateTime.UtcNow) 
     {
-        Status = InterviewStatus.Planned;
+        Status = InterviewStatus.Scheduled; // Default to Scheduled - interview date is required
         Type = InterviewType.Witness;
         CreatedDate = DateTime.UtcNow;
         UpdatedDate = DateTime.UtcNow;
@@ -27,7 +27,7 @@ public sealed class Interview : BaseAuditableEntity
         InvestigationCode = investigationCode;
         PersonInterviewed = personInterviewed;
         SMSInvestigatorCode = investigatorCode;
-        Status = InterviewStatus.Planned;
+        Status = InterviewStatus.Scheduled; // Default to Scheduled
         Type = InterviewType.Witness;
         CreatedDate = DateTime.UtcNow;
         UpdatedDate = DateTime.UtcNow;
@@ -53,8 +53,14 @@ public sealed class Interview : BaseAuditableEntity
 
     #region Interview Management
 
-    public InterviewStatus Status { get; set; } = InterviewStatus.Planned;
+    public InterviewStatus Status { get; set; } = InterviewStatus.Scheduled;
+    
+    /// <summary>
+    /// Interview date and time. This is required for all interviews.
+    /// When this property is set, the interview is considered scheduled.
+    /// </summary>
     public DateTime? InterviewDate { get; set; }
+    
     public int? DurationMinutes { get; set; }
     public string? InterviewLocation { get; set; }
     public InterviewType Type { get; set; } = InterviewType.Witness;
@@ -155,6 +161,34 @@ public sealed class Interview : BaseAuditableEntity
         InterviewLocation = location;
         DurationMinutes = estimatedDurationMinutes ?? Type.GetRecommendedMinimumDurationMinutes();
         Status = InterviewStatus.Scheduled;
+        UpdatedDate = DateTime.UtcNow;
+
+        return Result<bool>.Success(true);
+    }
+
+    /// <summary>
+    /// Update interview date and time (used for rescheduling)
+    /// </summary>
+    public Result<bool> UpdateDateTime(DateTime newInterviewDate, int? newDurationMinutes = null)
+    {
+        if (!Status.AllowsModifications() && !Status.Equals(InterviewStatus.Scheduled))
+        {
+            return Result<bool>.Failure<bool>(DomainErrors.InterviewError.CannotModifyCompleted);
+        }
+
+        // Allow past dates for rescheduling if already scheduled
+        if (newInterviewDate <= DateTime.UtcNow && !Status.Equals(InterviewStatus.Scheduled))
+        {
+            return Result<bool>.Failure<bool>(DomainErrors.InterviewError.InterviewDateMustBeFuture);
+        }
+
+        InterviewDate = newInterviewDate;
+        
+        if (newDurationMinutes.HasValue)
+        {
+            DurationMinutes = newDurationMinutes.Value;
+        }
+        
         UpdatedDate = DateTime.UtcNow;
 
         return Result<bool>.Success(true);

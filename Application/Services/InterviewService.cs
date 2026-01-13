@@ -38,16 +38,16 @@ public sealed class InterviewService
         }
     }
 
-    public async Task<Result<Interview>> GetInterviewByIdAsync(InterviewID id, CancellationToken ct = default)
+    public async Task<Result<Interview>> GetInterviewByCodeAsync(InterviewID code, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Retrieving interview with ID: {Id}", id);
-            return await _dataService.GetInterviewByIdAsync(id, ct).ConfigureAwait(false);
+            _logger.LogInformation("Retrieving interview with Code: {Code}", code);
+            return await _dataService.GetInterviewByCodeAsync(code, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving interview with ID: {Id}", id);
+            _logger.LogError(ex, "Unexpected error retrieving interview with Code: {Code}", code);
             return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.NotFound);
         }
     }

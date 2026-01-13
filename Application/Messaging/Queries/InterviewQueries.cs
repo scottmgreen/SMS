@@ -4,11 +4,11 @@ namespace SMS_Application.Messaging.Queries;
 // INTERVIEW QUERIES
 // =============================================
 
-public class GetInterviewByIdQuery : BaseQueryBundle, IRequest<Result<Interview>>
+public class GetInterviewByCodeQuery : BaseQueryBundle, IRequest<Result<Interview>>
 {
     public InterviewID InterviewId { get; set; }
 
-    public GetInterviewByIdQuery(InterviewID interviewId)
+    public GetInterviewByCodeQuery(InterviewID interviewId)
     {
         InterviewId = interviewId ?? throw new ArgumentNullException(nameof(interviewId));
     }

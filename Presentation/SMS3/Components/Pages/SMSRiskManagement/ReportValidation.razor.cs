@@ -380,7 +380,7 @@ public partial class ReportValidation : ComponentBase
             {
                 // Navigate to existing investigation
                 ShowSuccessNotification($"Loading existing investigation {existingInvestigation.Code}");
-                var navigationUrl = $"/SMSRiskManagement/Investigation/{existingInvestigation.Code}/{ReportHazard.Code}";
+                var navigationUrl = $"/SMSRiskManagement/Investigations/{existingInvestigation.Code}/{ReportHazard.Code}";
                 Logger.LogInformation("Navigating to existing investigation: {Url}", navigationUrl);
                 await Task.Delay(1500);
                 Navigation.NavigateTo(navigationUrl);

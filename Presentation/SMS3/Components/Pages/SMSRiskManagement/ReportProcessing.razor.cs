@@ -1326,20 +1326,20 @@ public partial class ReportProcessing : ComponentBase
             if (report.HasInvestigation && !string.IsNullOrEmpty(report.HazardId))
             {
                 // Navigate to existing investigation
-                navigationUrl = $"/SMSRiskManagement/Investigation/{report.InvestigationId}/{report.HazardId}";
+                navigationUrl = $"/SMSRiskManagement/Investigations/{report.InvestigationId}/{report.HazardId}";
                 Logger.LogInformation("Navigating to existing investigation: {InvestigationId} for hazard: {HazardId}", 
                     report.InvestigationId, report.HazardId);
             }
             else if (!string.IsNullOrEmpty(report.HazardId))
             {
                 // Navigate to investigation page with hazard (will create investigation if needed)
-                navigationUrl = $"/SMSRiskManagement/Investigation/{report.HazardId}";
+                navigationUrl = $"/SMSRiskManagement/Investigations/{report.HazardId}";
                 Logger.LogInformation("Navigating to start investigation for hazard: {HazardId}", report.HazardId);
             }
             else
             {
                 // Navigate to general investigation page
-                navigationUrl = "/SMSRiskManagement/Investigation";
+                navigationUrl = "/SMSRiskManagement/Investigations";
                 Logger.LogInformation("Navigating to general investigation page for report: {ReportId}", report.ReportId);
             }
             
@@ -1405,6 +1405,7 @@ public partial class ReportProcessing : ComponentBase
         
         public string? HazardId { get; set; }
         public string HazardType { get; set; } = string.Empty;
+        public string HazardCategory { get; set; } = string.Empty;
         public string HazardDescription { get; set; } = string.Empty;
         public string Location { get; set; } = string.Empty;
         public string Priority { get; set; } = string.Empty;
@@ -1483,7 +1484,7 @@ public partial class ReportProcessing : ComponentBase
                 {
                     if (HasInvestigation && !string.IsNullOrEmpty(HazardId))
                     {
-                        return $"/SMSRiskManagement/Investigation/{InvestigationId}/{HazardId}";
+                        return $"/SMSRiskManagement/Investigations/{InvestigationId}/{HazardId}";
                     }
                 }
                 

@@ -94,9 +94,9 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
 
             int newIdValue = (int)newID.Value;
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
-            AirportSharedDatasetID datasetId = new (newCodeValue);
+            AirportSharedDatasetID datasetCode = new (newCodeValue);
 
-            return await GetAirportSharedDatasetByIdAsync(datasetId, ct).ConfigureAwait(false);
+            return await GetAirportSharedDatasetByCodeAsync(datasetCode, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -105,24 +105,24 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
         }
     }
 
-    public async Task<Result<AirportSharedDataset>> GetAirportSharedDatasetByIdAsync(AirportSharedDatasetID id, CancellationToken ct = default)
+    public async Task<Result<AirportSharedDataset>> GetAirportSharedDatasetByCodeAsync(AirportSharedDatasetID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_AirportSharedDataset_GetById} {id}", null);
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_AirportSharedDataset_GetByCode} {code}", null);
 
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_AirportSharedDataset_GetById, sql)
+            using SqlCommand cmd = new(StoredProcs.pr_AirportSharedDataset_GetByCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetId, id.Value.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetCode, code.Value.ToString()));
 
             AirportSharedDataset? response = null;
 
@@ -210,7 +210,6 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
             };
 
             // Add all parameters for update
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, airportSharedDataset.Id.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetCode, airportSharedDataset.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetReportCode, airportSharedDataset.ReportCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetHazardCode, airportSharedDataset.HazardCode));
@@ -252,7 +251,7 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetAirportSharedDatasetByIdAsync((AirportSharedDatasetID)airportSharedDataset.Id, ct).ConfigureAwait(false);
+            return await GetAirportSharedDatasetByCodeAsync(new AirportSharedDatasetID(airportSharedDataset.Code), ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -261,16 +260,16 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
         }
     }
 
-    public async Task<Result<bool>> DeleteAirportSharedDatasetAsync(AirportSharedDatasetID id, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteAirportSharedDatasetAsync(AirportSharedDatasetID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<bool>.Failure<bool>(DomainErrors.AirportSharedDatasetError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_AirportSharedDataset_Delete} ID:{id}", null);
+            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_AirportSharedDataset_Delete} Code:{code}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_AirportSharedDataset_Delete, sql)
@@ -278,7 +277,7 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

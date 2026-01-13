@@ -7,20 +7,6 @@
 <PageHeader Title="@(IsNew ? "Create New Audit Plan" : "Edit Audit Plan")"
            Subtitle="@(IsNew ? "Plan and define audit scope, objectives, and requirements" : $"Editing audit plan: {AuditPlan?.Name}")"
            Icon="fas fa-clipboard-list">
-    <AdditionalContent>
-        <div class="d-flex gap-2">
-            <RadzenButton ButtonStyle="ButtonStyle.Light" 
-                         Text="Generate Code" 
-                         Icon="auto_fix_high"
-                         Size="ButtonSize.Small"
-                         Click="@GenerateCode"
-                         Disabled="@(!IsNew)" />
-            <RadzenButton ButtonStyle="ButtonStyle.Info" 
-                         Text="Help" 
-                         Icon="help"
-                         Size="ButtonSize.Small" />
-        </div>
-    </AdditionalContent>
 </PageHeader>
 
 <RadzenStack Orientation="Orientation.Vertical" Gap="1.5rem">
@@ -83,9 +69,10 @@
                     <RadzenRow Gap="1rem">
                         <RadzenColumn Size="12" SizeMD="6">
                             <RadzenFormField Text="Audit Type" Variant="Variant.Outlined">
-                                <RadzenDropDown @bind-Value="@AuditType" 
+                                <RadzenDropDown Value="@AuditType" 
                                               Data="@AuditTypeOptions" 
                                               Placeholder="Select audit type"
+                                              ValueChanged="@((string value) => OnAuditTypeChanged(value))"
                                               Style="width: 100%;" />
                             </RadzenFormField>
                         </RadzenColumn>

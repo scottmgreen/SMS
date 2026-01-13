@@ -113,9 +113,9 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
 
             int newIdValue = (int)newID.Value;
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
-            InterviewID interviewId = new(newCodeValue);
+            InterviewID interviewCode = new(newCodeValue);
 
-            return await GetInterviewByIdAsync(interviewId, ct).ConfigureAwait(false);
+            return await GetInterviewByCodeAsync(interviewCode, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -124,63 +124,63 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
         }
     }
 
-    public async Task<Result<Interview>> GetInterviewByIdAsync(InterviewID id, CancellationToken ct = default)
+    //public async Task<Result<Interview>> GetInterviewByIdAsync(InterviewID id, CancellationToken ct = default)
+    //{
+    //    try
+    //    {
+    //        if (id is null)
+    //        {
+    //            return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.NullOrEmpty);
+    //        }
+
+    //        _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_Interview_GetById} {id}", null);
+
+    //        using SqlConnection sql = new(_connectionString);
+    //        using SqlCommand cmd = new(StoredProcs.pr_Interview_GetById, sql)
+    //        {
+    //            CommandType = CommandType.StoredProcedure
+    //        };
+
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+
+    //        Interview? response = null;
+
+    //        await sql.OpenAsync(ct).ConfigureAwait(false);
+    //        using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
+    //        {
+    //            while (await reader.ReadAsync().ConfigureAwait(false))
+    //            {
+    //                response = Mappers.MapToInterview(reader);
+    //            }
+    //        }
+    //        await sql.CloseAsync().ConfigureAwait(false);
+
+    //        if (response is not null)
+    //        {
+    //            return Result<Interview>.Success(response);
+    //        }
+    //        else
+    //        {
+    //            return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.NotFound);
+    //        }
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogInfrastructureGetItemError($"{_logheader} {ex.Message}", null);
+    //        return Result<Interview>.Failure<Interview>(DomainErrors.GeneralError.UnProcessableRequest);
+    //    }
+    //}
+
+    public async Task<Result<Interview>> GetInterviewByCodeAsync(InterviewID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
-            {
-                return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.NullOrEmpty);
-            }
-
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_Interview_GetById} {id}", null);
-
-            using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_Interview_GetById, sql)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
-
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
-
-            Interview? response = null;
-
-            await sql.OpenAsync(ct).ConfigureAwait(false);
-            using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
-            {
-                while (await reader.ReadAsync().ConfigureAwait(false))
-                {
-                    response = Mappers.MapToInterview(reader);
-                }
-            }
-            await sql.CloseAsync().ConfigureAwait(false);
-
-            if (response is not null)
-            {
-                return Result<Interview>.Success(response);
-            }
-            else
-            {
-                return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.NotFound);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureGetItemError($"{_logheader} {ex.Message}", null);
-            return Result<Interview>.Failure<Interview>(DomainErrors.GeneralError.UnProcessableRequest);
-        }
-    }
-
-    public async Task<Result<Interview>> GetInterviewByCodeAsync(string code, CancellationToken ct = default)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(code))
+            if (string.IsNullOrWhiteSpace(code.Value))
             {
                 return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.CodeRequired);
             }
 
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_Interview_GetByCode} Code:{code}", null);
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_Interview_GetByCode} Code:{code.Value}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_Interview_GetByCode, sql)
@@ -188,7 +188,7 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewCode, code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewCode, code.Value));
 
             Interview? response = null;
 
@@ -416,7 +416,7 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetInterviewByCodeAsync(interview.Code, ct).ConfigureAwait(false);
+            return await GetInterviewByCodeAsync(new InterviewID(interview.Code), ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

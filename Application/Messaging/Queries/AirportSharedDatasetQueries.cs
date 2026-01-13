@@ -4,13 +4,13 @@
 // AIRPORT SHARED DATASET QUERIES
 // =============================================
 
-public class GetAirportSharedDatasetByIdQuery : BaseQueryBundle, IRequest<Result<AirportSharedDataset>>
+public class GetAirportSharedDatasetByCodeQuery : BaseQueryBundle, IRequest<Result<AirportSharedDataset>>
 {
-    public AirportSharedDatasetID AirportSharedDatasetId { get; set; }
+    public AirportSharedDatasetID AirportSharedDatasetCode { get; set; }
 
-    public GetAirportSharedDatasetByIdQuery(AirportSharedDatasetID airportSharedDatasetId)
+    public GetAirportSharedDatasetByCodeQuery(AirportSharedDatasetID airportSharedDatasetCode)
     {
-        AirportSharedDatasetId = airportSharedDatasetId ?? throw new ArgumentNullException(nameof(airportSharedDatasetId));
+        AirportSharedDatasetCode = airportSharedDatasetCode ?? throw new ArgumentNullException(nameof(airportSharedDatasetCode));
     }
 }
 

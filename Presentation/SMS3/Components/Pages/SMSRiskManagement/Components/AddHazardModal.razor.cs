@@ -105,7 +105,7 @@ public partial class AddHazardModal : ComponentBase
             hazard.Code = "HZ-0000";
             hazard.Name = NewHazardDescription.Trim(); 
             hazard.Description = NewHazardDescription.Trim();
-            hazard.Category = NewHazardCategory;
+            hazard.HazardCategory = NewHazardCategory;
             hazard.ReportCode = ReportId ?? ""; 
             hazard.ReportedBy = "Technical Assessment User"; 
             hazard.ReportingDepartment = "Technical Assessment";

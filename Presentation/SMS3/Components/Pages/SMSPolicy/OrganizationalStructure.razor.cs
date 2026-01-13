@@ -27,7 +27,7 @@ public partial class OrganizationalStructure : ComponentBase
     private bool IsSaving { get; set; } = false;
 
     // UI State Properties
-    private bool showCategorySummary { get; set; } = true; // Category Summary collapsible state
+    private bool showCategorySummary { get; set; } = true; // HazardCategory Summary collapsible state
     private bool showOrganizationalHierarchy { get; set; } = true; // Organizational Hierarchy collapsible state
     private bool showAssignmentMatrix { get; set; } = true; // Assignment Matrix collapsible state
 

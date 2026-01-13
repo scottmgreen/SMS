@@ -10,8 +10,7 @@ public interface IInterviewRepository
 {
     // Core CRUD Operations
     Task<Result<Interview>> CreateInterviewAsync(Interview interview, CancellationToken ct = default);
-    Task<Result<Interview>> GetInterviewByIdAsync(InterviewID id, CancellationToken ct = default);
-    Task<Result<Interview>> GetInterviewByCodeAsync(string code, CancellationToken ct = default);
+    Task<Result<Interview>> GetInterviewByCodeAsync(InterviewID code, CancellationToken ct = default);
     Task<Result<List<Interview>>> GetAllInterviewsAsync(CancellationToken ct = default);
     Task<Result<Interview>> UpdateInterviewAsync(Interview interview, CancellationToken ct = default);
     Task<Result<bool>> DeleteInterviewAsync(InterviewID id, CancellationToken ct = default);

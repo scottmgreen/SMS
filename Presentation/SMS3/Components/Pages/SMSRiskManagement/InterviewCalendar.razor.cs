@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Radzen;
 using Radzen.Blazor;
@@ -9,6 +9,7 @@ using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
 using SMS_Domain.Enums;
 using SMS_Shared.Common;
+using SMS3.Components.Pages.SMSAssurance.Components;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -27,6 +28,7 @@ public partial class InterviewCalendar : ComponentBase
     private bool _isLoadingData = false; // Prevent recursive loading
     private bool _handlingAppointmentClick = false; // Prevent multiple appointment clicks
     private RadzenScheduler<InterviewSchedulerItem> scheduler = default!;
+    private EventConsole? console;
     private List<Interview> Interviews { get; set; } = new();
     private List<InterviewSchedulerItem> SchedulerData { get; set; } = new();
     private Interview? SelectedInterview { get; set; }
@@ -34,8 +36,6 @@ public partial class InterviewCalendar : ComponentBase
     // Enhanced UI state properties
     public bool ShowDetailsModal { get; set; } = false;
     private bool showHeader = true;
-    private bool showEventConsole = false;
-    private string eventLog = string.Empty;
     #endregion
 
     #region Lifecycle Methods
@@ -61,7 +61,6 @@ public partial class InterviewCalendar : ComponentBase
             StateHasChanged();
 
             Logger.LogInformation("Loading interviews for calendar display");
-            LogEvent("Loading interviews from database...");
 
             var query = new GetAllInterviewsQuery();
             var result = await Mediator.SendAsync(query, CancellationToken.None);
@@ -70,7 +69,6 @@ public partial class InterviewCalendar : ComponentBase
             {
                 Interviews = result.Value.ToList();
                 Logger.LogInformation("Loaded {Count} interviews for calendar", Interviews.Count);
-                LogEvent($"Loaded {Interviews.Count} interviews successfully");
 
                 // Convert interviews to scheduler items
                 SchedulerData = Interviews.Select(MapInterviewToSchedulerItem).ToList();
@@ -79,7 +77,6 @@ public partial class InterviewCalendar : ComponentBase
             {
                 Logger.LogError("Failed to load interviews: {Error}", result.Error?.Message);
                 ShowErrorNotification("Failed to load interviews for calendar");
-                LogEvent($"Error loading interviews: {result.Error?.Message}");
                 Interviews = new List<Interview>();
                 SchedulerData = new List<InterviewSchedulerItem>();
             }
@@ -88,7 +85,6 @@ public partial class InterviewCalendar : ComponentBase
         {
             Logger.LogError(ex, "Error loading interviews for calendar");
             ShowErrorNotification("Error loading interviews");
-            LogEvent($"Exception loading interviews: {ex.Message}");
         }
         finally
         {
@@ -161,7 +157,6 @@ public partial class InterviewCalendar : ComponentBase
         try
         {
             Logger.LogInformation("Slot selected: {Start} to {End}", args.Start, args.End);
-            LogEvent($"SlotSelect: Start={args.Start:yyyy-MM-dd HH:mm} End={args.End:yyyy-MM-dd HH:mm}");
             
             // Don't create appointments in year view (like Radzen example)
             if (args.View.Text != "Year")
@@ -172,7 +167,6 @@ public partial class InterviewCalendar : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error handling slot selection");
-            LogEvent($"Error in SlotSelect: {ex.Message}");
         }
     }
 
@@ -189,7 +183,6 @@ public partial class InterviewCalendar : ComponentBase
             _handlingAppointmentClick = true;
             var interviewItem = args.Data;
             Logger.LogInformation("Interview appointment selected: {InterviewCode}", interviewItem.InterviewCode);
-            LogEvent($"AppointmentSelect: Interview={interviewItem.InterviewCode}");
 
             // Use a background task to handle the click without blocking the UI thread
             // This prevents the scheduler from trying to manage focus on elements we're about to change
@@ -206,7 +199,6 @@ public partial class InterviewCalendar : ComponentBase
                 catch (Exception ex)
                 {
                     Logger.LogError(ex, "Error in background appointment handling");
-                    LogEvent($"Error in background appointment handling: {ex.Message}");
                     await InvokeAsync(() =>
                     {
                         ShowErrorNotification("Error opening interview details");
@@ -222,7 +214,6 @@ public partial class InterviewCalendar : ComponentBase
         {
             Logger.LogError(ex, "Error handling appointment selection");
             ShowErrorNotification("Error opening interview details");
-            LogEvent($"Error in AppointmentSelect: {ex.Message}");
             _handlingAppointmentClick = false;
         }
     }
@@ -231,52 +222,78 @@ public partial class InterviewCalendar : ComponentBase
     {
         try
         {
+            // Never call StateHasChanged in AppointmentRender - would lead to infinite loop (from Radzen sample)
+            
             // Customize appointment appearance based on interview status
             var interviewItem = args.Data;
             
-            var cssClass = interviewItem.InterviewStatus.Value switch
+            var cssClasses = new List<string>();
+            
+            // Base status class
+            var statusClass = interviewItem.InterviewStatus.Value switch
             {
-                "PLANNED" => "interview-planned",
                 "SCHEDULED" => "interview-scheduled", 
                 "IN_PROGRESS" => "interview-inprogress",
                 "COMPLETED" => "interview-completed",
                 "CANCELLED" => "interview-cancelled",
-                _ => "interview-planned"
+                _ => "interview-scheduled" // Default to scheduled
             };
+            cssClasses.Add(statusClass);
 
             // Add confidential class if needed
             if (interviewItem.IsConfidential)
             {
-                cssClass += " confidential";
+                cssClasses.Add("confidential");
             }
 
-            args.Attributes["class"] = cssClass;
+            // Add high priority class for urgent interviews
+            if (interviewItem.InterviewType.Value == "WITNESS" && 
+                interviewItem.InterviewStatus.Value == "SCHEDULED" &&
+                interviewItem.Start.Date == DateTime.Today)
+            {
+                cssClasses.Add("high-priority");
+            }
+
+            args.Attributes["class"] = string.Join(" ", cssClasses);
+
+            // Set background color based on status for better visibility
+            var backgroundColor = interviewItem.InterviewStatus.Value switch
+            {
+                "SCHEDULED" => "#17a2b8",
+                "IN_PROGRESS" => "#ffc107",
+                "COMPLETED" => "#28a745",
+                "CANCELLED" => "#dc3545",
+                _ => "#17a2b8" // Default to scheduled color
+            };
+
+            args.Attributes["style"] = $"background: {backgroundColor}; color: white;";
 
             // Add enhanced tooltip with additional information
             var tooltip = $"Interview: {interviewItem.InterviewCode}\\n" +
                          $"Person: {interviewItem.PersonInterviewed}\\n" +
                          $"Type: {interviewItem.InterviewType.Name}\\n" +
                          $"Status: {interviewItem.InterviewStatus.Name}\\n" +
+                         $"Investigation: {interviewItem.InvestigationCode}\\n" +
                          $"Investigator: {interviewItem.Investigator}\\n" +
                          $"Location: {interviewItem.Location}";
             
             if (interviewItem.IsConfidential)
-                tooltip += "\\n?? CONFIDENTIAL";
+                tooltip += "\\n🔒 CONFIDENTIAL";
                 
             args.Attributes["title"] = tooltip;
             
             // Add data attributes for better event handling
             args.Attributes["data-interview-code"] = interviewItem.InterviewCode;
             args.Attributes["data-interview-id"] = interviewItem.InterviewId;
+            args.Attributes["data-status"] = interviewItem.InterviewStatus.Value;
             
             // Add style to prevent text selection which can interfere with clicking
             var existingStyle = args.Attributes.ContainsKey("style") ? args.Attributes["style"] : "";
-            args.Attributes["style"] = $"{existingStyle}user-select: none; -webkit-user-select: none; -moz-user-select: none;";
+            args.Attributes["style"] = $"{existingStyle} user-select: none; -webkit-user-select: none; -moz-user-select: none;";
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error rendering appointment");
-            LogEvent($"Error in AppointmentRender: {ex.Message}");
         }
     }
 
@@ -302,7 +319,6 @@ public partial class InterviewCalendar : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error rendering slot");
-            LogEvent($"Error in SlotRender: {ex.Message}");
         }
     }
 
@@ -340,7 +356,6 @@ public partial class InterviewCalendar : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error moving appointment");
-            LogEvent($"Error in AppointmentMove: {ex.Message}");
             ShowErrorNotification("Error rescheduling interview");
         }
     }
@@ -353,14 +368,17 @@ public partial class InterviewCalendar : ComponentBase
             var interview = Interviews.FirstOrDefault(i => i.Code == appointmentData.InterviewCode);
             if (interview != null)
             {
-                // Update the interview date
-                interview.InterviewDate = appointmentData.Start;
-                
                 // Update duration if needed
                 var newDuration = (int)(appointmentData.End - appointmentData.Start).TotalMinutes;
-                if (newDuration != interview.DurationMinutes)
+                
+                // Use the domain method to update date/time which will handle status transitions
+                var updateResult = interview.UpdateDateTime(appointmentData.Start, newDuration);
+                
+                if (updateResult.IsFailure)
                 {
-                    interview.DurationMinutes = newDuration;
+                    Logger.LogError("Domain validation failed for interview datetime update: {Error}", updateResult.Error?.Message);
+                    ShowErrorNotification($"Cannot reschedule interview: {updateResult.Error?.Message}");
+                    return;
                 }
 
                 // Save via CQRS
@@ -370,12 +388,11 @@ public partial class InterviewCalendar : ComponentBase
                 if (result.IsSuccess)
                 {
                     Logger.LogInformation("Interview {InterviewCode} datetime updated successfully", interview.Code);
-                    LogEvent($"Interview {interview.Code} updated in database");
+                    LogEvent($"Interview {interview.Code} rescheduled and status updated to: {interview.Status.Name}");
                 }
                 else
                 {
                     Logger.LogError("Failed to update interview datetime: {Error}", result.Error?.Message);
-                    LogEvent($"Error updating interview: {result.Error?.Message}");
                     ShowErrorNotification("Failed to save interview changes");
                 }
             }
@@ -383,7 +400,6 @@ public partial class InterviewCalendar : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error updating interview datetime");
-            LogEvent($"Exception updating interview: {ex.Message}");
         }
     }
     #endregion
@@ -460,7 +476,6 @@ public partial class InterviewCalendar : ComponentBase
     private async Task ShowInterviewDetails(InterviewSchedulerItem interviewItem)
     {
         Logger.LogInformation("View interview details requested from calendar: {InterviewCode}", interviewItem.InterviewCode);
-        LogEvent($"Opening details for interview: {interviewItem.InterviewCode}");
 
         try
         {
@@ -477,13 +492,12 @@ public partial class InterviewCalendar : ComponentBase
             await Task.Delay(50);
 
             // Get detailed interview information
-            var interviewQuery = new GetInterviewByIdQuery(new InterviewID(interviewItem.InterviewCode));
+            var interviewQuery = new GetInterviewByCodeQuery(new InterviewID(interviewItem.InterviewCode));
             var interviewResult = await Mediator.SendAsync(interviewQuery, CancellationToken.None);
 
             if (interviewResult.IsSuccess && interviewResult.Value != null)
             {
                 SelectedInterview = interviewResult.Value;
-                LogEvent($"Interview details loaded successfully");
             }
             else
             {
@@ -492,7 +506,6 @@ public partial class InterviewCalendar : ComponentBase
                 if (SelectedInterview == null)
                 {
                     ShowErrorNotification($"Interview {interviewItem.InterviewCode} not found");
-                    LogEvent($"Interview {interviewItem.InterviewCode} not found");
                     return;
                 }
             }
@@ -506,7 +519,6 @@ public partial class InterviewCalendar : ComponentBase
         {
             Logger.LogError(ex, "Error showing interview details for {InterviewCode}", interviewItem.InterviewCode);
             ShowErrorNotification("Error opening interview details");
-            LogEvent($"Error loading interview details: {ex.Message}");
         }
         finally
         {
@@ -536,47 +548,6 @@ public partial class InterviewCalendar : ComponentBase
     {
         var today = DateTime.Today;
         return Interviews.Count(i => i.InterviewDate?.Date == today);
-    }
-    #endregion
-
-    #region Event Logging (Debug Helper)
-    private void LogEvent(string message)
-    {
-        if (showEventConsole)
-        {
-            var timestamp = DateTime.Now.ToString("HH:mm:ss");
-            eventLog += $"[{timestamp}] {message}\n";
-            
-            // Keep log reasonable size
-            var lines = eventLog.Split('\n');
-            if (lines.Length > 50)
-            {
-                eventLog = string.Join("\n", lines.Skip(lines.Length - 40));
-            }
-            
-            StateHasChanged();
-        }
-    }
-
-    private void ClearEventLog()
-    {
-        eventLog = string.Empty;
-        StateHasChanged();
-    }
-    #endregion
-
-    #region UI Helpers
-    private BadgeStyle GetStatusBadgeStyle(InterviewStatus status)
-    {
-        return status.Value switch
-        {
-            "PLANNED" => BadgeStyle.Secondary,
-            "SCHEDULED" => BadgeStyle.Info,
-            "IN_PROGRESS" => BadgeStyle.Warning,
-            "COMPLETED" => BadgeStyle.Success,
-            "CANCELLED" => BadgeStyle.Danger,
-            _ => BadgeStyle.Light
-        };
     }
     #endregion
 
@@ -710,6 +681,30 @@ public partial class InterviewCalendar : ComponentBase
             ShowErrorNotification("Failed to open edit dialog");
             LogEvent($"Error opening edit dialog: {ex.Message}");
         }
+    }
+    #endregion
+
+    #region UI Helpers
+    private BadgeStyle GetStatusBadgeStyle(InterviewStatus status)
+    {
+        if (status.Equals(InterviewStatus.Scheduled))
+            return BadgeStyle.Info;
+        if (status.Equals(InterviewStatus.InProgress))
+            return BadgeStyle.Warning;
+        if (status.Equals(InterviewStatus.Completed))
+            return BadgeStyle.Success;
+        if (status.Equals(InterviewStatus.Cancelled))
+            return BadgeStyle.Danger;
+        
+        return BadgeStyle.Light;
+    }
+    #endregion
+
+    #region Event Logging (Debug Helper)
+    private void LogEvent(string message)
+    {
+        // Use the EventConsole for consistent logging like AuditCalendar
+        console?.Log(message);
     }
     #endregion
 }

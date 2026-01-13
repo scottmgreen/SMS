@@ -206,9 +206,9 @@
                                                 <div class="mt-2">
                                                     <small>
                                                         <strong>Reported:</strong> @hazard.ReportedOn.ToString("MM/dd/yyyy") by @(hazard.ReportedBy ?? "Unknown")
-                                                        @if (!string.IsNullOrEmpty(hazard.Category))
+                                                        @if (!string.IsNullOrEmpty(hazard.HazardCategory))
                                                         {
-                                                            <RadzenBadge Text="@hazard.Category" BadgeStyle="BadgeStyle.Light" Class="ms-2" />
+                                                            <RadzenBadge Text="@hazard.HazardCategory" BadgeStyle="BadgeStyle.Light" Class="ms-2" />
                                                         }
                                                     </small>
                                                 </div>

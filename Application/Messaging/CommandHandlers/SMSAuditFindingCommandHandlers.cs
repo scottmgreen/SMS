@@ -62,7 +62,7 @@ public class CreateSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
                 Title = request.FindingDescription, // Use description as title for now
                 Severity = request.Severity,
                 FindingType = request.FindingType,
-                Category = request.FindingType, // ? FIX: Map FindingType to Category for repository
+                Category = request.FindingType, // ? FIX: Map FindingType to HazardCategory for repository
                 AffectedArea = request.AffectedArea,
                 RequirementReference = request.RequirementReference,
                 EvidenceDescription = request.EvidenceDescription,

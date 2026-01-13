@@ -25,7 +25,15 @@ public partial class EditInterviewDialog : ComponentBase
 
     #region State
     private bool IsSaving { get; set; } = false;
+    private int selectedTabIndex = 0;
     public EditInterviewModel Model { get; set; } = new();
+    #endregion
+
+    #region Workflow Properties
+    private bool CanStartInterview => Model.Status.Equals(InterviewStatus.Scheduled) && Model.InterviewDate.HasValue;
+    private bool CanCompleteInterview => Model.Status.Equals(InterviewStatus.InProgress) && !string.IsNullOrWhiteSpace(Model.KeyFindings);
+    private bool IsInterviewInProgress => Model.Status.Equals(InterviewStatus.InProgress);
+    private bool IsInterviewCompleted => Model.Status.Equals(InterviewStatus.Completed);
     #endregion
 
     #region Dropdown Options
@@ -39,7 +47,6 @@ public partial class EditInterviewDialog : ComponentBase
 
     private readonly List<DropdownOption> InterviewStatusOptions = new()
     {
-        new() { Value = InterviewStatus.Planned, Text = "Planned" },
         new() { Value = InterviewStatus.Scheduled, Text = "Scheduled" },
         new() { Value = InterviewStatus.InProgress, Text = "In Progress" },
         new() { Value = InterviewStatus.Completed, Text = "Completed" },
@@ -75,7 +82,164 @@ public partial class EditInterviewDialog : ComponentBase
     }
     #endregion
 
-    #region Methods
+    #region UI Helper Methods
+    private string GetDialogTitle()
+    {
+        //if (Model.Status.Equals(InterviewStatus.Planned))
+        //    return $"Plan Interview: {Model.PersonInterviewed}";
+        if (Model.Status.Equals(InterviewStatus.Scheduled))
+            return $"Scheduled Interview: {Model.PersonInterviewed}";
+        if (Model.Status.Equals(InterviewStatus.InProgress))
+            return $"Conducting Interview: {Model.PersonInterviewed}";
+        if (Model.Status.Equals(InterviewStatus.Completed))
+            return $"Interview Complete: {Model.PersonInterviewed}";
+        if (Model.Status.Equals(InterviewStatus.Cancelled))
+            return $"Cancelled Interview: {Model.PersonInterviewed}";
+        
+        return $"Edit Interview: {Model.PersonInterviewed}";
+    }
+
+    private string GetInterviewIcon()
+    {
+        if (Model.Status.Equals(InterviewStatus.Scheduled))
+            return "schedule";
+        if (Model.Status.Equals(InterviewStatus.InProgress))
+            return "record_voice_over";
+        if (Model.Status.Equals(InterviewStatus.Completed))
+            return "check_circle";
+        if (Model.Status.Equals(InterviewStatus.Cancelled))
+            return "cancel";
+        
+        return "edit";
+    }
+
+    private BadgeStyle GetStatusBadgeStyle()
+    {
+        if (Model.Status.Equals(InterviewStatus.Scheduled))
+            return BadgeStyle.Primary;
+        if (Model.Status.Equals(InterviewStatus.InProgress))
+            return BadgeStyle.Warning;
+        if (Model.Status.Equals(InterviewStatus.Completed))
+            return BadgeStyle.Success;
+        if (Model.Status.Equals(InterviewStatus.Cancelled))
+            return BadgeStyle.Danger;
+        
+        return BadgeStyle.Light;
+    }
+
+    private string GetConductingTabText()
+    {
+        if (Model.Status.Equals(InterviewStatus.InProgress))
+            return "Conducting Interview";
+        if (Model.Status.Equals(InterviewStatus.Completed))
+            return "Interview Results";
+        
+        return "Conduct Interview";
+    }
+    #endregion
+
+    #region Workflow Methods
+    private async Task StartInterview()
+    {
+        try
+        {
+            var result = Interview.StartInterview();
+            if (result.IsSuccess)
+            {
+                Model.Status = InterviewStatus.InProgress;
+                selectedTabIndex = 2; // Switch to conducting tab
+                await UpdateInterview();
+                ShowSuccessNotification("Interview started successfully. You can now begin recording notes and findings.");
+                StateHasChanged();
+            }
+            else
+            {
+                ShowErrorNotification($"Cannot start interview: {result.Error?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error starting interview {Code}", Interview.Code);
+            ShowErrorNotification("Error starting interview");
+        }
+    }
+
+    private async Task CompleteInterview()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(Model.KeyFindings))
+            {
+                ShowErrorNotification("Key findings are required to complete the interview");
+                return;
+            }
+
+            var result = Interview.CompleteInterview(
+                Model.PersonInterviewedNotes,
+                Model.InvestigatorNotes,
+                Model.KeyFindings,
+                Model.FollowUpRequired,
+                Model.AdditionalWitnesses);
+
+            if (result.IsSuccess)
+            {
+                Model.Status = InterviewStatus.Completed;
+                Model.CompletedDate = DateTime.UtcNow;
+                await UpdateInterview();
+                ShowSuccessNotification("Interview completed successfully!");
+                StateHasChanged();
+            }
+            else
+            {
+                ShowErrorNotification($"Cannot complete interview: {result.Error?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error completing interview {Code}", Interview.Code);
+            ShowErrorNotification("Error completing interview");
+        }
+    }
+
+    private async Task CancelInterview()
+    {
+        try
+        {
+            var confirmed = await DialogService.Confirm(
+                "Are you sure you want to cancel this interview? This action cannot be undone.", 
+                "Cancel Interview",
+                new ConfirmOptions() 
+                { 
+                    OkButtonText = "Yes, Cancel Interview", 
+                    CancelButtonText = "No, Keep Interview" 
+                });
+
+            if (confirmed == true)
+            {
+                var reason = "Interview cancelled by user";
+                var result = Interview.CancelInterview(reason);
+                if (result.IsSuccess)
+                {
+                    Model.Status = InterviewStatus.Cancelled;
+                    await UpdateInterview();
+                    ShowSuccessNotification("Interview cancelled successfully");
+                    StateHasChanged();
+                }
+                else
+                {
+                    ShowErrorNotification($"Cannot cancel interview: {result.Error?.Message}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error cancelling interview {Code}", Interview.Code);
+            ShowErrorNotification("Error cancelling interview");
+        }
+    }
+    #endregion
+
+    #region CRUD Methods
     private async Task UpdateInterview()
     {
         await UpdateInterview(Model);
@@ -88,6 +252,13 @@ public partial class EditInterviewDialog : ComponentBase
             if (string.IsNullOrWhiteSpace(model.PersonInterviewed))
             {
                 ShowErrorNotification("Person interviewed is required");
+                return;
+            }
+
+            // Validate interview completion requirements
+            if (model.Status == InterviewStatus.Completed && string.IsNullOrWhiteSpace(model.KeyFindings))
+            {
+                ShowErrorNotification("Key findings are required for completed interviews");
                 return;
             }
 
@@ -113,18 +284,35 @@ public partial class EditInterviewDialog : ComponentBase
             Interview.AdditionalWitnesses = model.AdditionalWitnesses;
             Interview.CompletedDate = model.CompletedDate;
 
-            // Handle interview date changes
+            // Handle interview date changes with domain logic
             if (model.InterviewDate.HasValue && model.InterviewDate != Interview.InterviewDate)
             {
+                // Use the domain method for scheduling/rescheduling
                 var scheduleResult = Interview.ScheduleInterview(
                     model.InterviewDate.Value,
-                    model.InterviewLocation ?? "TBD");
+                    model.InterviewLocation ?? "TBD",
+                    model.DurationMinutes);
                 
                 if (scheduleResult.IsFailure)
                 {
-                    ShowErrorNotification($"Failed to reschedule interview: {scheduleResult.Error?.Message}");
-                    return;
+                    // Try update method for rescheduling
+                    var updateResult = Interview.UpdateDateTime(model.InterviewDate.Value, model.DurationMinutes);
+                    
+                    if (updateResult.IsFailure)
+                    {
+                        ShowErrorNotification($"Failed to update interview: {updateResult.Error?.Message}");
+                        return;
+                    }
+                    
+                    // Update location separately
+                    Interview.InterviewLocation = model.InterviewLocation;
                 }
+            }
+            else
+            {
+                // No date change, just update the location and duration
+                Interview.InterviewLocation = model.InterviewLocation;
+                Interview.DurationMinutes = model.DurationMinutes;
             }
 
             // Set audit fields
@@ -141,7 +329,6 @@ public partial class EditInterviewDialog : ComponentBase
                     Interview.Code, CurrentUserService.UserId);
                 
                 ShowSuccessNotification("Interview updated successfully");
-                DialogService.Close(true);
             }
             else
             {
@@ -161,7 +348,9 @@ public partial class EditInterviewDialog : ComponentBase
             StateHasChanged();
         }
     }
+    #endregion
 
+    #region Notification Methods
     private void ShowSuccessNotification(string message)
     {
         NotificationService.Notify(new NotificationMessage
@@ -194,7 +383,7 @@ public partial class EditInterviewDialog : ComponentBase
         public string? PersonInterviewedNotes { get; set; }
         public string? InvestigatorNotes { get; set; }
         public InterviewType Type { get; set; } = InterviewType.Witness;
-        public InterviewStatus Status { get; set; } = InterviewStatus.Planned;
+        public InterviewStatus Status { get; set; } = InterviewStatus.Scheduled;
         public DateTime? InterviewDate { get; set; }
         public int? DurationMinutes { get; set; }
         public string? InterviewLocation { get; set; }

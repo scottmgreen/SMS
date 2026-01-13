@@ -84,9 +84,9 @@
                                     <div class="col-md-6">
                                         <div><strong>Reported By:</strong> @(hazard.ReportedBy ?? "Unknown")</div>
                                         <div><strong>Reported On:</strong> @hazard.ReportedOn.ToString("MM/dd/yyyy HH:mm")</div>
-                                        @if (!string.IsNullOrEmpty(hazard.Category))
+                                        @if (!string.IsNullOrEmpty(hazard.HazardCategory))
                                         {
-                                            <div><strong>Category:</strong> @hazard.Category</div>
+                                            <div><strong>Category:</strong> @hazard.HazardCategory</div>
                                         }
                                     </div>
                                     <div class="col-md-6">

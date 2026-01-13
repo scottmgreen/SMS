@@ -166,7 +166,7 @@ public partial class Hazards : ComponentBase
 Code: {hazard.Code}
 Name: {hazard.Name ?? "Not specified"}
 Type: {hazard.HazardType ?? "Not specified"}
-Category: {hazard.Category ?? "Not specified"}
+Category: {hazard.HazardCategory ?? "Not specified"}
 Description: {hazard.Description ?? "Not specified"}
 Status: {hazard.Status?.Name ?? "Not specified"}
 Priority: {hazard.Priority?.Name ?? "Not specified"}

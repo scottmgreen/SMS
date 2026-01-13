@@ -84,7 +84,7 @@ public partial class EvidenceFilesManager : ComponentBase
             
             Logger.LogInformation("?? Loading evidence files for HazardCode: {HazardCode}", HazardCode);
             
-            // Load ALL files for this hazard, not just those with Category = "Evidence"
+            // Load ALL files for this hazard, not just those with HazardCategory = "Evidence"
             // This will include both files uploaded during initial reporting and investigation
             var query = new GetHazardFilesByHazardCodeQuery(HazardCode, false, null); // null removes category filter
             var result = await Mediator.SendAsync(query, CancellationToken.None);

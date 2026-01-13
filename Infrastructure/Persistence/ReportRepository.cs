@@ -64,7 +64,7 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
             ReportID reportId = new (newCodeValue);
 
-            return await GetReportByIdAsync(reportId, ct).ConfigureAwait(false);
+            return await GetReportByCodeAsync(reportId, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -73,24 +73,24 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
         }
     }
 
-    public async Task<Result<Report>> GetReportByIdAsync(ReportID id, CancellationToken ct = default)
+    public async Task<Result<Report>> GetReportByCodeAsync(ReportID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<Report>.Failure<Report>(DomainErrors.ReportError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_Report_GetById} {id}", null);
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_Report_GetByCode} {code}", null);
 
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_Report_GetById, sql)
+            using SqlCommand cmd = new(StoredProcs.pr_Report_GetByCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             Report? response = null;
 
@@ -163,7 +163,7 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
                 return Result<Report>.Failure<Report>(DomainErrors.ReportError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_Report_Update} ID:{report.Id}", null);
+            _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_Report_Update} Code:{report.Id}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_Report_Update, sql)
@@ -172,7 +172,6 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, report.Id.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportCode, report.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportName, report.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportDescription, report.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportStatus, report.Status));
@@ -184,7 +183,7 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetReportByIdAsync((ReportID)report.Id, ct).ConfigureAwait(false);
+            return await GetReportByCodeAsync((ReportID)report.Id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -193,16 +192,16 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
         }
     }
 
-    public async Task<Result<bool>> DeleteReportAsync(ReportID id, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteReportAsync(ReportID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<bool>.Failure<bool>(DomainErrors.ReportError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_Report_Delete} ID:{id}", null);
+            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_Report_Delete} Code:{code}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_Report_Delete, sql)
@@ -210,7 +209,7 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

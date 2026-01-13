@@ -271,8 +271,9 @@ public static partial class Mappers
         // Core properties - Basic mapping from tbld_Hazards
         hazard.Code = reader.GetValue<string>(FieldNames.fHazardCode) ?? string.Empty;
         hazard.Name = reader.GetValue<string>(FieldNames.fHazardName);
+        hazard.IsInitialHazard = reader.GetValue<bool>(FieldNames.fIsInitialHazard);
         hazard.Description = reader.GetValue<string>(FieldNames.fHazardDescription).Trim() ?? string.Empty;
-        hazard.Category = reader.GetValue<string>(FieldNames.fHazardCategory).Trim();
+        hazard.HazardCategory = reader.GetValue<string>(FieldNames.fHazardCategory).Trim();
         hazard.ReportCode = reader.GetValue<string>(FieldNames.fHazardReportCode) ?? string.Empty;
         hazard.RiskMatrixCode = reader.GetValue<string>(FieldNames.fHazardScoringPanelRiskMatrixCode);
         
@@ -496,7 +497,7 @@ public static partial class Mappers
         
         // Status and scheduling
         var statusValue = reader.GetValue<string>(FieldNames.fInterviewStatus);
-        interview.Status = InterviewStatus.FromValue(statusValue) ?? InterviewStatus.Planned;
+        interview.Status = InterviewStatus.FromValue(statusValue) ?? InterviewStatus.Scheduled;
         
         interview.InterviewDate = reader.GetValue<DateTime?>(FieldNames.fInterviewDate);
         interview.DurationMinutes = reader.GetValue<int?>(FieldNames.fInterviewDurationMinutes);
@@ -579,7 +580,7 @@ public static partial class Mappers
         riskAssessment.LeadAssessorId = reader.GetValue<string>(FieldNames.fRiskAssessmentLeadAssessorId);
         riskAssessment.PrimaryHazardId = reader.GetValue<string>(FieldNames.fRiskAssessmentPrimaryHazardId);
 
-        // ✅ SmartEnum parsing for Category
+        // ✅ SmartEnum parsing for HazardCategory
         var categoryValue = reader.GetValue<string>(FieldNames.fRiskAssessmentCategory)?.Trim();
         if (!string.IsNullOrEmpty(categoryValue))
         {

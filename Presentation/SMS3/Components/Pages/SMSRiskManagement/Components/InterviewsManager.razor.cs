@@ -199,9 +199,9 @@ public partial class InterviewsManager : ComponentBase
         try
         {
             var confirmed = await DialogService.Confirm(
-                $"Are you ready to start the interview with {interview.PersonInterviewed}?",
+                $"Are you ready to start the interview with {interview.PersonInterviewed}? This will open the interview dialog for conducting the interview.",
                 "Start Interview",
-                new ConfirmOptions() { OkButtonText = "Start", CancelButtonText = "Cancel" });
+                new ConfirmOptions() { OkButtonText = "Start Interview", CancelButtonText = "Cancel" });
 
             if (confirmed == true)
             {
@@ -214,7 +214,10 @@ public partial class InterviewsManager : ComponentBase
                     if (result.IsSuccess)
                     {
                         await RefreshInterviews();
-                        ShowSuccessNotification("Interview started");
+                        ShowSuccessNotification("Interview started - Opening interview dialog for conducting");
+                        
+                        // Immediately open the EditInterviewDialog to conduct the interview
+                        await OpenConductInterviewDialog(interview);
                     }
                     else
                     {
@@ -231,6 +234,38 @@ public partial class InterviewsManager : ComponentBase
         {
             Logger.LogError(ex, "Error starting interview: {Code}", interview.Code);
             ShowErrorNotification("Error starting interview");
+        }
+    }
+
+    private async Task OpenConductInterviewDialog(Interview interview)
+    {
+        var options = new DialogOptions() 
+        { 
+            Width = "100%", 
+            Height = "100%",
+            Resizable = false,
+            Draggable = false,
+            CloseDialogOnOverlayClick = false, // Don't allow overlay click when conducting
+            CloseDialogOnEsc = false, // Don't allow ESC to close when conducting
+            ShowTitle = false,
+            ShowClose = false,
+            CssClass = "custom-modal-dialog"
+        };
+
+        var parameters = new Dictionary<string, object> 
+        { 
+            { "Interview", interview } 
+        };
+
+        var result = await DialogService.OpenAsync<EditInterviewDialog>(
+            "", // No title since our custom modal has its own header
+            parameters,
+            options);
+
+        if (result == true)
+        {
+            await RefreshInterviews();
+            ShowSuccessNotification("Interview session completed");
         }
     }
 
@@ -315,13 +350,30 @@ public partial class InterviewsManager : ComponentBase
     {
         return interview.Status.Value switch
         {
-            "PLANNED" => BadgeStyle.Secondary,
             "SCHEDULED" => BadgeStyle.Info,
             "IN_PROGRESS" => BadgeStyle.Warning,
             "COMPLETED" => BadgeStyle.Success,
             "CANCELLED" => BadgeStyle.Danger,
             _ => BadgeStyle.Light
         };
+    }
+
+    private string GetInterviewCardStyle(Interview interview)
+    {
+        if (interview.IsScheduled && interview.InterviewDate.HasValue)
+        {
+            return "border-left: 4px solid var(--rz-success); background-color: rgba(var(--rz-success-rgb), 0.05);";
+        }
+        else if (interview.IsInProgress)
+        {
+            return "border-left: 4px solid var(--rz-warning); background-color: rgba(var(--rz-warning-rgb), 0.05);";
+        }
+        else if (interview.IsCompleted)
+        {
+            return "border-left: 4px solid var(--rz-info); background-color: rgba(var(--rz-info-rgb), 0.05);";
+        }
+        
+        return "";
     }
     #endregion
 

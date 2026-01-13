@@ -67,7 +67,7 @@ public class SMSAuditFindingStatistics
     public int UnverifiedFindings { get; set; }
     
     /// <summary>
-    /// Category breakdown
+    /// HazardCategory breakdown
     /// </summary>
     public Dictionary<string, int> FindingsByCategory { get; set; } = new();
     

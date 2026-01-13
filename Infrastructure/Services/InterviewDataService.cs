@@ -35,15 +35,12 @@ public class InterviewDataService : BaseDataService<InterviewDataService>, IInte
         return _repo.CreateInterviewAsync(interview, ct);
     }
 
-    public Task<Result<Interview>> GetInterviewByIdAsync(InterviewID id, CancellationToken ct = default)
-    {
-        return _repo.GetInterviewByIdAsync(id, ct);
-    }
-
-    public Task<Result<Interview>> GetInterviewByCodeAsync(string code, CancellationToken ct = default)
+    public Task<Result<Interview>> GetInterviewByCodeAsync(InterviewID code, CancellationToken ct = default)
     {
         return _repo.GetInterviewByCodeAsync(code, ct);
     }
+
+    
 
     public Task<Result<List<Interview>>> GetAllInterviewsAsync(CancellationToken ct = default)
     {

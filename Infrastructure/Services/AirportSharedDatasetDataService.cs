@@ -30,9 +30,9 @@ public class AirportSharedDatasetDataService : BaseDataService<AirportSharedData
         return _repo.CreateAirportSharedDatasetAsync(airportSharedDataset, ct);
     }
 
-    public Task<Result<AirportSharedDataset>> GetAirportSharedDatasetByIdAsync(AirportSharedDatasetID id, CancellationToken ct = default)
+    public Task<Result<AirportSharedDataset>> GetAirportSharedDatasetByCodeAsync(AirportSharedDatasetID code, CancellationToken ct = default)
     {
-        return _repo.GetAirportSharedDatasetByIdAsync(id, ct);
+        return _repo.GetAirportSharedDatasetByCodeAsync(code, ct);
     }
 
     public Task<Result<List<AirportSharedDataset>>> GetAllAirportSharedDatasetsAsync(CancellationToken ct = default)

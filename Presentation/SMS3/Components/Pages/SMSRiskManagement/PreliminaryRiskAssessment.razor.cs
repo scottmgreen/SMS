@@ -27,6 +27,7 @@ public partial class PreliminaryRiskAssessment : ComponentBase
     [Parameter] public string? AssessmentId { get; set; }
     [Parameter] public string? HazardId { get; set; }
     [Parameter] public string? ReportId { get; set; }
+    [Parameter] public int? Step { get; set; }
     #endregion
 
     #region State Properties

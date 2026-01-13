@@ -390,8 +390,8 @@
         private static readonly Lazy<string> _pr_Report_GetAll = new Lazy<string>(() => "pr_Report_GetAll");
         public static string pr_Report_GetAll => _pr_Report_GetAll.Value;
 
-        private static readonly Lazy<string> _pr_Report_GetById = new Lazy<string>(() => "pr_Report_GetById");
-        public static string pr_Report_GetById => _pr_Report_GetById.Value;
+        private static readonly Lazy<string> _pr_Report_GetByCode = new Lazy<string>(() => "pr_Report_GetByCode");
+        public static string pr_Report_GetByCode => _pr_Report_GetByCode.Value;
 
         private static readonly Lazy<string> _pr_Report_Insert = new Lazy<string>(() => "pr_Report_Insert");
         public static string pr_Report_Insert => _pr_Report_Insert.Value;
@@ -579,8 +579,8 @@
         private static readonly Lazy<string> _pr_RiskAssessment_Insert = new Lazy<string>(() => "pr_RiskAssessment_Insert");
         public static string pr_RiskAssessment_Insert => _pr_RiskAssessment_Insert.Value;
 
-        private static readonly Lazy<string> _pr_RiskAssessment_GetById = new Lazy<string>(() => "pr_RiskAssessment_GetById");
-        public static string pr_RiskAssessment_GetById => _pr_RiskAssessment_GetById.Value;
+        private static readonly Lazy<string> _pr_RiskAssessment_GetByCode = new Lazy<string>(() => "pr_RiskAssessment_GetByCode");
+        public static string pr_RiskAssessment_GetByCode => _pr_RiskAssessment_GetByCode.Value;
 
         private static readonly Lazy<string> _pr_RiskAssessment_GetByHazardId = new Lazy<string>(() => "pr_RiskAssessment_GetByHazardId");
         public static string pr_RiskAssessment_GetByHazardId => _pr_RiskAssessment_GetByHazardId.Value;
@@ -718,8 +718,8 @@
         private static readonly Lazy<string> _pr_AirportSharedDataset_Insert = new Lazy<string>(() => "pr_AirportSharedDataset_Insert");
         public static string pr_AirportSharedDataset_Insert => _pr_AirportSharedDataset_Insert.Value;
 
-        private static readonly Lazy<string> _pr_AirportSharedDataset_GetById = new Lazy<string>(() => "pr_AirportSharedDataset_GetById");
-        public static string pr_AirportSharedDataset_GetById => _pr_AirportSharedDataset_GetById.Value;
+        private static readonly Lazy<string> _pr_AirportSharedDataset_GetByCode = new Lazy<string>(() => "pr_AirportSharedDataset_GetByCode");
+        public static string pr_AirportSharedDataset_GetByCode => _pr_AirportSharedDataset_GetByCode.Value;
 
         private static readonly Lazy<string> _pr_AirportSharedDataset_GetAll = new Lazy<string>(() => "pr_AirportSharedDataset_GetAll");
         public static string pr_AirportSharedDataset_GetAll => _pr_AirportSharedDataset_GetAll.Value;

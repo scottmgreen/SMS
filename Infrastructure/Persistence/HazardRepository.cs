@@ -102,11 +102,13 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardCode, hazard.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardName, hazard.Name));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardIsInitialHazard, hazard.IsInitialHazard));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardReportedBy, hazard.ReportedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardReportedOn, hazard.ReportedOn));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardReportingDepartment, hazard.ReportingDepartment));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardDescription, hazard.Description));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardCategory, hazard.Category));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardType, hazard.HazardType));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardCategory, hazard.HazardCategory));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFiveMComponent, hazard.FiveMComponent?.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardReportCode, hazard.ReportCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardScoringPanelRiskMatrixCode, hazard.RiskMatrixCode));
@@ -327,8 +329,10 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, hazard.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardName, hazard.Name));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardIsInitialHazard, hazard.IsInitialHazard));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardDescription, hazard.Description));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardCategory, hazard.Category));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardType, hazard.HazardType));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardCategory, hazard.HazardCategory));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFiveMComponent, hazard.FiveMComponent?.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardReportCode, hazard.ReportCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardScoringPanelRiskMatrixCode, hazard.RiskMatrixCode));
@@ -349,16 +353,16 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
         }
     }
 
-    public async Task<Result<bool>> DeleteHazardAsync(HazardID id, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteHazardAsync(HazardID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<bool>.Failure<bool>(DomainErrors.HazardError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_Hazard_Delete} ID:{id}", null);
+            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_Hazard_Delete} Code:{code}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_Hazard_Delete, sql)
@@ -366,7 +370,7 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

@@ -108,7 +108,7 @@ else
                     <RadzenTemplateForm Data="@ConfidentialReport" Submit="@HandleFormSubmit" TItem="ConfidentialReportForm">
                         <!-- Row 1: Report Type (4 columns) and Priority (4 columns) -->
                         <RadzenRow Gap="2rem" Class="rz-mb-3">
-                            <RadzenColumn Size="6" >
+                            <RadzenColumn Size="6" SizeMD="6">
                                 <RadzenFormField Text="Report Type *" Variant="Variant.Outlined">
                                     <RadzenDropDown @bind-Value="@ConfidentialReport.ReportType" 
                                                   Data="@ReportTypeOptions" 
@@ -120,7 +120,7 @@ else
                                 </RadzenFormField>
                                 <RadzenRequiredValidator Component="ReportType" Text="Report type is required" />
                             </RadzenColumn>
-                            <RadzenColumn Size="6">
+                            <RadzenColumn Size="6" SizeMD="6">
                                 <RadzenFormField Text="Urgency Level" Variant="Variant.Outlined">
                                     <RadzenDropDown @bind-Value="@ConfidentialReport.Priority" 
                                                   Data="@PriorityOptions" 
@@ -972,6 +972,3 @@ else
     }
 }
 </style>
-/* =============================================================================
-   END SMS CONFIDENTIAL REPORTING STYLING
-   ============================================================================= */

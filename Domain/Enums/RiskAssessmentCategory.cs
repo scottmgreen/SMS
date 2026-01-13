@@ -4,7 +4,7 @@ using SMS_Domain.Common;
 namespace SMS_Domain.Enums;
 
 /// <summary>
-/// Risk Assessment Category Enumeration - BUSINESS RULE ENFORCED
+/// Risk Assessment HazardCategory Enumeration - BUSINESS RULE ENFORCED
 /// ONLY these values are allowed: Technical, Preliminary
 /// </summary>
 public abstract class RiskAssessmentCategory : BaseEnum<RiskAssessmentCategory>

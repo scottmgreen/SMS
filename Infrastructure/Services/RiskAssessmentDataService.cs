@@ -44,7 +44,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
         {
             _logger.LogInformation("Retrieving RiskAssessment by ID: {Id}", riskAssessmentId);
 
-            var result = await _repo.GetRiskAssessmentByIdAsync(riskAssessmentId, cancellationToken).ConfigureAwait(false);
+            var result = await _repo.GetRiskAssessmentByCodeAsync(riskAssessmentId, cancellationToken).ConfigureAwait(false);
 
             if (result.IsFailure)
             {
