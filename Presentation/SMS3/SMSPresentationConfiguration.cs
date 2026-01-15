@@ -21,7 +21,7 @@ public static class SMSPresentationConfiguration
         services.AddDistributedMemoryCache();
         services.AddSession(options =>
         {
-            options.IdleTimeout = TimeSpan.FromHours(8); // Full work day
+            options.IdleTimeout = TimeSpan.FromHours(8);
             options.Cookie.HttpOnly = true;
             options.Cookie.IsEssential = true;
             options.Cookie.Name = "SMS.Session";
@@ -29,10 +29,10 @@ public static class SMSPresentationConfiguration
             options.Cookie.SameSite = SameSiteMode.Strict;
         });
 
-        // Only add HTTP context accessor - no helper services
         services.AddHttpContextAccessor();
-        
-        // Add the audit services for the pipeline system
+
+        // **REGISTER BOTH SESSION-RELATED SERVICES HERE**
+        services.AddScoped<ISMSSessionService, SMSSessionService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         return services;

@@ -171,7 +171,7 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, report.Id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, report.Id.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportName, report.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportDescription, report.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportStatus, report.Status));

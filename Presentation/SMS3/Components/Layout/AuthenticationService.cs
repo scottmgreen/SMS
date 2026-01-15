@@ -10,6 +10,22 @@ namespace SMS3.Components.Layout;
 /// </summary>
 public class AuthenticationService
 {
+    /// <summary>
+    /// Current user display name - ALWAYS AVAILABLE
+    /// </summary>
+    public string CurrentUserDisplayName => _authState.DisplayName ?? "System User";
+
+    /// <summary>
+    /// Current user ID - ALWAYS AVAILABLE
+    /// </summary>
+    public string CurrentUserId => _authState.UserId ?? "SYSTEM";
+
+    /// <summary>
+    /// Is user authenticated - ALWAYS AVAILABLE
+    /// </summary>
+    public bool IsAuthenticated => _authState.IsAuthenticated;
+
+
     private AuthenticationState _authState = new();
     private readonly List<Func<Task>> _authStateChangedCallbacks = new();
 

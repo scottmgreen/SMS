@@ -76,15 +76,19 @@ else
         <RadzenColumn Size="8">
             <RadzenCard>
                 <RadzenStack Gap="1rem" Class="rz-p-3">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Class="rz-mb-3 rz-pb-2 rz-border-bottom-1">
-                        <RadzenIcon Icon="edit" Style="color: var(--rz-primary); font-size: 1.2rem;" />
-                        <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">Hazard Report Details</RadzenText>
-                    </RadzenStack>
-
+                    @if (ShowConfidentialInfo)
+                    {
+                        <RadzenAlert Size="AlertSize.Small" Variant="Variant.Flat">
+                            @* <RadzenIcon Icon="security" /> *@
+                            <strong>Confidential Protection:</strong> Your identity will be protected and access to this report will be restricted to authorized SMS personnel only.
+                            <br><strong>Benefits:</strong> Enhanced protection from retaliation, restricted access, anonymous follow-up options.
+                            <br><strong>Note:</strong> Confidential reports may take longer to process due to additional security measures.
+                        </RadzenAlert>
+                    }
                     <RadzenTemplateForm Data="@HazardReport" Submit="@HandleFormSubmit" TItem="HazardReportForm">
-                        <!-- Row 1: Reported On and Reported By -->
+                        <!-- Row 1: Reported On and Reported By and Reporting Department, -->
                         <RadzenRow Gap="1rem" Class="rz-mb-3">
-                            <RadzenColumn Size="4">
+                            <RadzenColumn Size="2">
                                 <RadzenFormField Text="Reported On *" Variant="Variant.Outlined">
                                     <RadzenDatePicker @bind-Value="@HazardReport.ReportedOn" 
                                                     ShowTime="true"
@@ -92,38 +96,42 @@ else
                                                     Style="width: 100%;" />
                                 </RadzenFormField>
                             </RadzenColumn>
-                            <RadzenColumn Size="8">
-                                <RadzenFormField Text="Reported By *" Variant="Variant.Outlined">
+                            <RadzenColumn Size="4">
+                                <RadzenFormField Text="Reported By *" Variant="Variant.Outlined" Style="width: 100%;">
                                     <RadzenTextBox @bind-Value="@HazardReport.ReportedBy" 
                                                  Placeholder="Name and position (e.g., 'John Smith - Ground Operations Supervisor')"
                                                  Name="ReportedBy"
-                                                   Style="width: 100%;min-width: 100%;" />
+                                                 MaxLength="60"
+                                                 Style="width: 100%;min-width: 100%;" />
                                 </RadzenFormField>
                                 <RadzenRequiredValidator Component="ReportedBy" Text="Reported by is required" />
                             </RadzenColumn>
-                        </RadzenRow>
-
-                        <!-- Row 2: Reporting Department, Hazard Category and Hazard Type -->
-                        <RadzenRow Gap="1rem" Class="rz-mb-3">
-                            <RadzenColumn Size="4">
-                                <RadzenFormField Text="Reporting Department" Variant="Variant.Outlined" Style="width: 100%;">
-                                    <RadzenTextBox @bind-Value="@HazardReport.ReportingDepartment" 
-                                                 Placeholder="Enter reporting department or organization..."
-                                                 MaxLength="200"
-                                                 Style="width: 100%; min-width: 100%;" />
+                            <RadzenColumn Size="6">
+                                <RadzenFormField Text="Reporting Department *" Variant="Variant.Outlined" Style="width: 100%;">
+                                        <RadzenTextBox @bind-Value="@HazardReport.ReportingDepartment"
+                                                Placeholder="Enter reporting department or organization..."
+                                                Name="ReportingDepartment"
+                                                MaxLength="200"
+                                                Style="width: 100%; min-width: 100%;" />
                                 </RadzenFormField>
-                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Class="rz-mt-1">
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="rz-color-base-500">
+                                <RadzenRequiredValidator Component="ReportingDepartment" Text="Reporting Department by is required" />
+                                @* <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Class="rz-mt-1">
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="rz-color-info rz-mt-1">
                                         <RadzenIcon Icon="info" Style="font-size: 0.8rem;" />
                                         Enter the department, organization, or unit submitting this report
                                     </RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Caption" 
-                                              Class="@(ReportingDepartmentCharacterCount > 180 ? "rz-color-warning" : ReportingDepartmentCharacterCount > 200 ? "rz-color-danger" : "rz-color-base-500")">
+                                    <RadzenText TextStyle="TextStyle.Caption"
+                                                Class="@(ReportingDepartmentCharacterCount > 180 ? "rz-color-warning" : ReportingDepartmentCharacterCount > 200 ? "rz-color-danger" : "rz-color-info rz-mt-1")">
                                         @ReportingDepartmentCharacterCount/200 characters
                                     </RadzenText>
-                                </RadzenStack>
+                                </RadzenStack> *@
                             </RadzenColumn>
-                            <RadzenColumn Size="4">
+                        </RadzenRow>
+
+                        <!-- Row 2: Hazard Category and Hazard Type -->
+                        <RadzenRow Gap="1rem" Class="rz-mb-3">
+                            
+                            <RadzenColumn Size="3">
                                 <RadzenFormField Text="Hazard Category *" Variant="Variant.Outlined" Style="width: 100%;">
                                     <RadzenDropDown @bind-Value="@HazardReport.HazardCategory"
                                                   Data="@HazardCategoryOptions" 
@@ -137,7 +145,7 @@ else
                                 </RadzenFormField>
                                 <RadzenRequiredValidator Component="HazardCategory" Text="Hazard category is required" />
                             </RadzenColumn>
-                            <RadzenColumn Size="4">
+                            <RadzenColumn Size="3">
                                 <RadzenFormField Text="Hazard Type *" Variant="Variant.Outlined" Style="width: 100%;">
                                     <RadzenDropDown @bind-Value="@HazardReport.HazardType" 
                                                   Data="@HazardTypeOptions" 
@@ -159,17 +167,85 @@ else
                                     </RadzenText>
                                 }
                             </RadzenColumn>
+                            <RadzenRow>
+                                <RadzenColumn Size="12">
+                                    @* Guidance Panel for Selected Hazard Type *@
+                                    @if (!string.IsNullOrEmpty(HazardReport.HazardType))
+                                    {
+                                        <RadzenCard Variant="Variant.Text" Class="sms-guidance-mini">
+                                            <RadzenStack Gap="0.5rem" Class="rz-p-2">
+                                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                    <RadzenIcon Icon="info" Style="color: var(--rz-primary); font-size: 1rem;" />
+                                                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; color: var(--rz-primary);">Hazard Type Guidance</RadzenText>
+                                                </RadzenStack>
+
+                                                @if (RequiresRegulatoryReporting(HazardReport.HazardType))
+                                                {
+                                                    <RadzenAlert AlertStyle="AlertStyle.Warning" Size="AlertSize.Small" Variant="Variant.Flat">
+                                                        @* <RadzenIcon Icon="report_problem" /> *@
+                                                        <strong>Regulatory Reporting Required</strong>
+                                                    </RadzenAlert>
+                                                }
+
+                                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-size: 0.85rem;">
+                                                    @GetHazardTypeGuidance(HazardReport.HazardType)
+                                                </RadzenText>
+
+                                                @if (!string.IsNullOrEmpty(SelectedHazardCategory))
+                                                {
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; font-style: italic; color: var(--rz-text-secondary-color);">
+                                                        Category: @GetHazardCategoryDescription(SelectedHazardCategory)
+                                                    </RadzenText>
+                                                }
+                                            </RadzenStack>
+                                        </RadzenCard>
+                                    }
+                                    else if (!string.IsNullOrEmpty(SelectedHazardCategory))
+                                    {
+                                        <RadzenCard Variant="Variant.Text" Class="sms-guidance-mini">
+                                            <RadzenStack Gap="0.5rem" Class="rz-p-2">
+                                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                    <RadzenIcon Icon="category" Style="color: var(--rz-primary); font-size: 1rem;" />
+                                                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; color: var(--rz-primary);">Category Information</RadzenText>
+                                                </RadzenStack>
+                                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-size: 0.85rem;">
+                                                    @GetHazardCategoryDescription(SelectedHazardCategory)
+                                                </RadzenText>
+                                                <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-info);">
+                                                    <RadzenIcon Icon="arrow_forward" Style="font-size: 0.8rem;" />
+                                                    Select a hazard type for specific guidance
+                                                </RadzenText>
+                                            </RadzenStack>
+                                        </RadzenCard>
+                                    }
+                                    else
+                                    {
+                                        @* <RadzenCard Variant="Variant.Text" Class="sms-guidance-mini">
+                                            <RadzenStack Gap="0.5rem" Class="rz-p-2">
+                                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                    <RadzenIcon Icon="help_outline" Style="color: var(--rz-secondary); font-size: 1rem;" />
+                                                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; color: var(--rz-secondary);">Get Started</RadzenText>
+                                                </RadzenStack>
+                                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-size: 0.85rem;">
+                                                    Select a hazard category to see relevant hazard types and guidance information.
+                                                </RadzenText>
+                                            </RadzenStack>
+                                        </RadzenCard> *@
+                                    }
+                                </RadzenColumn>
+                            </RadzenRow>
+                            
                         </RadzenRow>
 
-                        <!-- Row 3: Hazard Description and Guidance Panel -->
+                        <!-- Row 3: Hazard Description  -->
                         <RadzenRow Gap="1rem" Class="rz-mb-3">
-                            <RadzenColumn Size="8">
+                            <RadzenColumn Size="12">
                                 <RadzenFormField Text="Hazard Description *" Variant="Variant.Outlined">
                                     <RadzenTextArea @bind-Value="@HazardReport.Description" 
-                                                  Rows="6" Cols="200"
+                                                  Rows="4" Cols="200"
                                                   Name="Description"
                                                   Placeholder="Provide a detailed description of the hazard including what happened, when, who was involved, conditions, immediate actions taken, and potential consequences..."
-                                                  Style="width: 100%;" />
+                                                  Style="width: 100%;min-width:100%" />
                                 </RadzenFormField>
                                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Class="rz-mt-1">
                                     <RadzenRequiredValidator Component="Description" Text="Description is required" />
@@ -179,125 +255,74 @@ else
                                     </RadzenText>
                                 </RadzenStack>
                             </RadzenColumn>
-                            <RadzenColumn Size="4">
-                                @* Guidance Panel for Selected Hazard Type *@
-                                @if (!string.IsNullOrEmpty(HazardReport.HazardType))
-                                {
-                                    <RadzenCard Variant="Variant.Outlined" Class="sms-guidance-mini">
-                                        <RadzenStack Gap="0.5rem" Class="rz-p-2">
-                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                                <RadzenIcon Icon="info" Style="color: var(--rz-primary); font-size: 1rem;" />
-                                                <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; color: var(--rz-primary);">Hazard Type Guidance</RadzenText>
-                                            </RadzenStack>
-                                            
-                                            @if (RequiresRegulatoryReporting(HazardReport.HazardType))
-                                            {
-                                                <RadzenAlert AlertStyle="AlertStyle.Warning" Size="AlertSize.Small" Variant="Variant.Flat">
-                                                    <RadzenIcon Icon="report_problem" />
-                                                    <strong>Regulatory Reporting Required</strong>
-                                                </RadzenAlert>
-                                            }
-                                            
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-size: 0.85rem;">
-                                                @GetHazardTypeGuidance(HazardReport.HazardType)
-                                            </RadzenText>
-                                            
-                                            @if (!string.IsNullOrEmpty(SelectedHazardCategory))
-                                            {
-                                                <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; font-style: italic; color: var(--rz-text-secondary-color);">
-                                                    Category: @GetHazardCategoryDescription(SelectedHazardCategory)
-                                                </RadzenText>
-                                            }
-                                        </RadzenStack>
-                                    </RadzenCard>
-                                }
-                                else if (!string.IsNullOrEmpty(SelectedHazardCategory))
-                                {
-                                    <RadzenCard Variant="Variant.Outlined" Class="sms-guidance-mini">
-                                        <RadzenStack Gap="0.5rem" Class="rz-p-2">
-                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                                <RadzenIcon Icon="category" Style="color: var(--rz-primary); font-size: 1rem;" />
-                                                <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; color: var(--rz-primary);">Category Information</RadzenText>
-                                            </RadzenStack>
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-size: 0.85rem;">
-                                                @GetHazardCategoryDescription(SelectedHazardCategory)
-                                            </RadzenText>
-                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-info);">
-                                                <RadzenIcon Icon="arrow_forward" Style="font-size: 0.8rem;" />
-                                                Select a hazard type for specific guidance
-                                            </RadzenText>
-                                        </RadzenStack>
-                                    </RadzenCard>
-                                }
-                                else
-                                {
-                                    <RadzenCard Variant="Variant.Outlined" Class="sms-guidance-mini">
-                                        <RadzenStack Gap="0.5rem" Class="rz-p-2">
-                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                                <RadzenIcon Icon="help_outline" Style="color: var(--rz-secondary); font-size: 1rem;" />
-                                                <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; color: var(--rz-secondary);">Get Started</RadzenText>
-                                            </RadzenStack>
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-size: 0.85rem;">
-                                                Select a hazard category to see relevant hazard types and guidance information.
-                                            </RadzenText>
-                                        </RadzenStack>
-                                    </RadzenCard>
-                                }
-                            </RadzenColumn>
                         </RadzenRow>
 
+                        
                         <!-- Row 4: Location Selection -->
-                        <RadzenRow Class="rz-mb-3" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem">
-                            
-                                <RadzenFormField Text="Location *" style="width: 100%;" Variant="Variant.Outlined">
-                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Stretch">
-                                        <RadzenButton ButtonStyle="ButtonStyle.Primary" 
-                                                    Click="OpenMapSelector"
-                                                    Text="Select on Map" 
-                                                    Icon="map" 
-                                                    Size="ButtonSize.Medium"
-                                                    Style="width: 200px; min-width: 200px; flex-shrink: 0;" />
-                                        <RadzenTextBox Value="@LocationDisplayText" 
-                                                     ReadOnly="true"
-                                                     Placeholder="No location selected - click 'Select on Map'"
-                                                   Style="width: 100%; min-width: 900px" />
-                                    </RadzenStack>
-                                </RadzenFormField>
-                            
-                        </RadzenRow>
+                        <RadzenFieldset Text="Location Selection" Style="margin-bottom: 1rem;">
+                            <div class="location-row rz-mt-1">
+                                <div class="location-button">
+                                    <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                                  Click="OpenMapSelector"
+                                                  Text="Select on Map"
+                                                  Icon="map"
+                                                  Size="ButtonSize.Medium"
+                                                  Style="width: 100%; height: 42px;" />
+                                </div>
 
-                        <!-- Row 5: Supporting Documents -->
+                                <div class="location-coordinate">
+                                    <RadzenFormField Text="Latitude" Variant="Variant.Outlined">
+                                        <RadzenTextBox Value="@SelectedLatitudeText"
+                                                       ReadOnly="true"
+                                                       Placeholder="Select location first"
+                                                       Style="background-color: #f8f9fa; border-color: #dee2e6; width: 100%;" />
+                                    </RadzenFormField>
+                                </div>
+
+                                <div class="location-coordinate">
+                                    <RadzenFormField Text="Longitude" Variant="Variant.Outlined">
+                                        <RadzenTextBox Value="@SelectedLongitudeText"
+                                                       ReadOnly="true"
+                                                       Placeholder="Select location first"
+                                                       Style="background-color: #f8f9fa; border-color: #dee2e6; width: 100%;" />
+                                    </RadzenFormField>
+                                </div>
+
+                                <div class="location-description">
+                                    <RadzenFormField Text="Description" Variant="Variant.Outlined" Style="width: 100%;">
+                                        <RadzenTextBox @bind-Value="@LocationDescription"
+                                                       Placeholder="Optional description (e.g., 'Terminal A, Gate 5, near security checkpoint')"
+                                                       Style="width: 100%;" />
+                                    </RadzenFormField>
+                                </div>
+                            </div>
+                        </RadzenFieldset>
+
+
+                        <!-- Row 5: Supporting Documents @* Change=@OnInputFileChange  *@-->
                         <RadzenRow Gap="1rem" Class="rz-mb-3">
                             <RadzenColumn Size="12">
-                                <RadzenFormField Text="Supporting Documents" Variant="Variant.Outlined">
-                                    <InputFile OnChange="OnInputFileChange" 
-                                             multiple 
-                                             accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt"
-                                             style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem;" />
+                                <RadzenFormField Text="Supporting Documents" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenUpload Multiple="true"
+                                                  Change=@OnInputFileChange
+                                        Style="width: 100%;padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem;"
+                                        Accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt"
+                                        MaxFileSize="10485760"/>
+                                            
                                 </RadzenFormField>
+                                <br />
                                 <RadzenText TextStyle="TextStyle.Caption" Class="rz-color-base-500 rz-mt-1">
                                     <RadzenIcon Icon="attach_file" Style="font-size: 0.9rem;" /> 
                                     Supported: JPG, PNG, PDF, DOC, DOCX, TXT (Max 10MB per file)
-                                    @if (AttachedFiles.Any())
-                                    {
-                                        <span style="margin-left: 1rem; color: var(--rz-success);">
-                                            <RadzenIcon Icon="check_circle" Style="font-size: 0.9rem;" />
-                                            @AttachedFiles.Count file(s) queued
-                                        </span>
-                                    }
-                                    <br />
-                                    <small class="text-muted">
-                                        <RadzenIcon Icon="info" Style="font-size: 0.8rem;" />
-                                        Tip: You can select multiple files at once or add files multiple times to build your queue.
-                                    </small>
+                                    
                                 </RadzenText>
                                 @if (AttachedFiles.Any())
                                 {
-                                    <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small" Variant="Variant.Flat" Class="rz-mt-2">
+                                    <RadzenAlert AlertStyle="AlertStyle.Base" Size="AlertSize.Small" Variant="Variant.Flat" Class="rz-mt-6">
                                         <RadzenStack Gap="1rem">
                                             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
                                                 <strong>Queued files (@AttachedFiles.Count):</strong>
-                                                <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                                <RadzenButton ButtonStyle="ButtonStyle.Base" 
                                                             Variant="Variant.Text"
                                                             Icon="clear_all" 
                                                             Text="Clear All"
@@ -313,7 +338,7 @@ else
                                                     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" 
                                                                Style="padding: 0.25rem 0.5rem; border: 1px solid #dee2e6; border-radius: 0.25rem; background-color: #f8f9fa;">
                                                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
-                                                            <RadzenIcon Icon="attach_file" Style="color: var(--rz-info); font-size: 0.9rem;" />
+                                                            <RadzenIcon Icon="attach_file" Style="color: var(--sms-blue-dark-bold); font-size: 0.9rem;" />
                                                             <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
                                                                 @file.FileName (@file.SizeDisplay)
                                                             </RadzenText>
@@ -323,7 +348,7 @@ else
                                                                     Icon="close" 
                                                                     Size="ButtonSize.ExtraSmall"
                                                                     Click="@(() => RemoveFile(fileIndex))"
-                                                                    title="Remove this file" />
+                                                                    Text="" />
                                                     </RadzenStack>
                                                 }
                                             </RadzenStack>
@@ -333,51 +358,28 @@ else
                             </RadzenColumn>
                         </RadzenRow>
 
-                        <!-- Row 6: Confidential Flag at Bottom -->
-                        <RadzenRow Gap="1rem" Class="rz-mb-3">
-                            <RadzenColumn Size="12">
-                                <RadzenCard Variant="Variant.Text" Class="rz-border rz-border-info">
-                                    <RadzenStack Gap="1rem" Class="rz-p-3">
-                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                            <RadzenCheckBox @bind-Value="@HazardReport.IsConfidential" 
-                                                          Name="IsConfidential" 
-                                                          TriState="false" />
-                                            <RadzenLabel Text="Submit as Confidential Report" Component="IsConfidential" />
-                                            <RadzenButton ButtonStyle="ButtonStyle.Light" 
-                                                        Variant="Variant.Text"
-                                                        Icon="info"
-                                                        Size="ButtonSize.ExtraSmall"
-                                                        Click="ToggleConfidentialInfo" />
-                                        </RadzenStack>
-                                        @if (ShowConfidentialInfo)
-                                        {
-                                            <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small" Variant="Variant.Flat">
-                                                <RadzenIcon Icon="security" /> 
-                                                <strong>Confidential Protection:</strong> Your identity will be protected and access to this report will be restricted to authorized SMS personnel only.
-                                                <br><strong>Benefits:</strong> Enhanced protection from retaliation, restricted access, anonymous follow-up options.
-                                                <br><strong>Note:</strong> Confidential reports may take longer to process due to additional security measures.
-                                            </RadzenAlert>
-                                        }
-                                    </RadzenStack>
-                                </RadzenCard>
-                            </RadzenColumn>
-                        </RadzenRow>
+                        
+                        
 
                         <!-- Form Actions -->
+                        <!-- Row 6: Confidential Flag at Bottom -->
                         <RadzenRow Gap="1rem" Class="rz-border-top-1 rz-pt-3">
                             <RadzenColumn>
-                                <RadzenButton ButtonStyle="ButtonStyle.Info" 
-                                            Variant="Variant.Outlined"
-                                            Icon="preview"
-                                            Text="Preview Report"
-                                            Size="ButtonSize.Medium"
-                                            Click="ShowPreviewModal"
-                                            Disabled="@(!IsFormValidForPreview)" />
+                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="0.5rem">
+                                    <RadzenCheckBox @bind-Value="@HazardReport.IsConfidential"
+                                                    Name="IsConfidential"
+                                                    TriState="false" />
+                                    <RadzenLabel Style="font-weight:600"  Text="Submit as Confidential Report" Component="IsConfidential" />
+                                </RadzenStack>
                             </RadzenColumn>
+                            
+                            
+                            
                             <RadzenColumn>
                                 @if (!ShowSubmissionConfirmation && !ShowFinalSuccessConfirmation)
                                 {
                                     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                                        
                                         <RadzenButton ButtonStyle="ButtonStyle.Warning" 
                                                     Icon="clear"
                                                     Text="Clear Form"
@@ -407,9 +409,9 @@ else
 
         <!-- Guidance Panel -->
         <RadzenColumn Size="4">
-            <RadzenCard Variant="Variant.Outlined" Class="sms-guidance-panel">
+            <RadzenCard Variant="Variant.Outlined" Class="sms-guidance-panel" >
                 <RadzenStack Gap="1rem" Class="rz-p-3">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Class="rz-mb-3 rz-pb-2 rz-border-bottom-1">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Class="rz-mb-3 rz-pb-2 rz-border-bottom-1" Style="border-bottom: 1px solid var(--rz-border-color); padding-bottom: 0.5rem; background: var(--rz-warning-lighter); margin: -1rem -1rem 1rem -1rem; padding: 1rem;">
                         <RadzenIcon Icon="help" Style="color: var(--rz-primary);" />
                         <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Reporting Guidelines</RadzenText>
                     </RadzenStack>
@@ -472,7 +474,7 @@ else
                             </RadzenStack>
                         </RadzenStack>
 
-                        <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small" Variant="Variant.Flat">
+                        <RadzenAlert AlertStyle="AlertStyle.Base" Size="AlertSize.Small" Variant="Variant.Flat">
                             <RadzenStack Gap="0.5rem" AlignItems="AlignItems.Center">
                                 <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">Need Help?</RadzenText>
                                 <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; text-align: center;">SMS Team: (503) 555-0100</RadzenText>
@@ -498,11 +500,6 @@ else
                             <i class="fas fa-map-marked-alt"></i> Select Hazard Location
                         </h5>
                         <div class="d-flex align-items-center gap-2">
-                            <RadzenButton ButtonStyle="ButtonStyle.Warning" 
-                                        Text="Get Current Location" 
-                                        Icon="my_location"
-                                        Size="ButtonSize.Small"
-                                        Click="GetCurrentLocation" />
                             <RadzenButton ButtonStyle="ButtonStyle.Light" 
                                         Variant="Variant.Text"
                                         Icon="close"
@@ -519,25 +516,33 @@ else
                     <div class="p-4">
                         <!-- Selected Coordinates Display -->
                         <div class="row mb-3">
-                            <div class="col-md-4">
+                            <div class="rz-w-25">
                                 <RadzenFormField Text="Selected Latitude" Variant="Variant.Outlined">
-                                    <RadzenNumeric @bind-Value="@SelectedLatitude" 
+                                    @* <RadzenNumeric @bind-Value="@SelectedLatitude" 
                                                  ReadOnly="true"
                                                  Step="0.000001M"
                                                  Format="0.000000"
-                                                 Style="width: 100%;" />
+                                                 Style="width: 100%;" /> *@
+                                    <RadzenTextBox Value="@SelectedLatitudeText"
+                                                   ReadOnly="true"
+                                                   Placeholder="Select location first"
+                                                   Style="background-color: #f8f9fa; border-color: #dee2e6; width: 100%;" />
                                 </RadzenFormField>
                             </div>
-                            <div class="col-md-4">
+                            <div class="rz-w-25">
                                 <RadzenFormField Text="Selected Longitude" Variant="Variant.Outlined">
-                                    <RadzenNumeric @bind-Value="@SelectedLongitude" 
+                                    @* <RadzenNumeric @bind-Value="@SelectedLongitude" 
                                                  ReadOnly="true"
                                                  Step="0.000001M"
                                                  Format="0.000000"
-                                                 Style="width: 100%;" />
+                                                 Style="width: 100%;" /> *@
+                                    <RadzenTextBox Value="@SelectedLongitudeText"
+                                                   ReadOnly="true"
+                                                   Placeholder="Select location first"
+                                                   Style="background-color: #f8f9fa; border-color: #dee2e6; width: 100%;" />
                                 </RadzenFormField>
                             </div>
-                            <div class="col-md-4">
+                            <div class="rz-w-50">
                                 <RadzenFormField Text="Location Description" Variant="Variant.Outlined">
                                     <RadzenTextBox @bind-Value="@LocationDescription" 
                                                  Placeholder="Optional description"
@@ -620,6 +625,17 @@ else
                     </div>
                     
                     <div class="d-flex justify-content-center gap-3">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenCheckBox @bind-Value="@HazardReport.IsConfidential"
+                                            Name="IsConfidential"
+                                            TriState="false" />
+                            <RadzenLabel Text="Submit as Confidential Report" Component="IsConfidential" />
+                            <RadzenButton ButtonStyle="ButtonStyle.Base"
+                                          Variant="Variant.Text"
+                                          Icon="info"
+                                          Size="ButtonSize.ExtraSmall"
+                                          Click="ToggleConfidentialInfo" />
+                        </RadzenStack>
                         <RadzenButton ButtonStyle="ButtonStyle.Warning"
                                       Text="No, Continue Editing"
                                       Icon="edit"
@@ -906,7 +922,7 @@ else
 }
 
 .sms-modal-lg {
-    max-width: 900px;
+    max-width: 1100px;
     width: 100%;
 }
 
@@ -1059,9 +1075,25 @@ else
     width: 100% !important;
 }
 
-/* =============================================================================
-   END SMS HAZARD REPORTING STYLING
-   ============================================================================= */
+    .location-row {
+        display: flex !important;
+        align-items: flex-end !important;
+        gap: 1rem !important;
+        width: 100% !important;
+    }
+
+    .location-button {
+        flex: 0 0 180px !important;
+    }
+
+    .location-coordinate {
+        flex: 0 0 120px !important;
+    }
+
+    .location-description {
+        flex: 1 !important;
+        min-width: 0 !important;
+    }
 </style>
 
 <!-- Leaflet.js CSS -->

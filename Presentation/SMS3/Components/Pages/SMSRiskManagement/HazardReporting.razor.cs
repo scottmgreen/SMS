@@ -15,6 +15,7 @@ using SMS_Domain.ValueObjects;
 using SMS_Domain.Enums; // <-- Added using for Smart Enums
 
 using SMS_Shared.Common;
+using SMS3.Components.Layout;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -24,9 +25,9 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 /// </summary>
 public partial class HazardReporting : ComponentBase, IDisposable
 {
+    [Inject] AuthenticationService AuthService { get; set; } = default!;
     #region Dependencies
     [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ISMSSessionService SessionService { get; set; } = default!;
     [Inject] private ILogger<HazardReporting> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
@@ -35,6 +36,22 @@ public partial class HazardReporting : ComponentBase, IDisposable
     #endregion
 
     #region Properties and Fields
+
+    ///Test
+    ///
+
+    /// <summary>
+    /// Formatted latitude text for display
+    /// </summary>
+    public string SelectedLatitudeText => SelectedLatitude != 0 ? SelectedLatitude.ToString("F6") : "";
+
+    /// <summary>
+    /// Formatted longitude text for display
+    /// </summary>
+    public string SelectedLongitudeText => SelectedLongitude != 0 ? SelectedLongitude.ToString("F6") : "";
+
+
+
 
     /// <summary>
     /// Main form data object
@@ -204,7 +221,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     // Airport coordinates
     private double AirportCenterLatitude => 45.5898;
     private double AirportCenterLongitude => -122.5951;
-    private int DefaultZoomLevel => 15;
+    private int DefaultZoomLevel => 20;
 
     private IJSObjectReference? _mapModule;
     private DotNetObjectReference<HazardReporting>? _dotNetRef;
@@ -223,6 +240,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         if (!IsEditMode)
         {
             InitializeFormDefaults();
+            Console.Write(AuthService.CurrentUserDisplayName);
         }
         
         // Create DotNet reference for JavaScript callbacks
@@ -415,7 +433,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 {
                     HazardType = EditingReport.Name,
                     Description = EditingReport.Description,
-                    ReportedBy = SessionService.GetCurrentUserDisplayName() ?? "Unknown User",
+                    ReportedBy = AuthService.CurrentUserDisplayName ?? "Unknown User",
                     ReportedOn = DateTime.Now
                 };
                 
@@ -652,9 +670,9 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// <summary>
     /// Handle InputFile change event - this will accumulate files properly
     /// </summary>
-    public async Task OnInputFileChange(InputFileChangeEventArgs e)
+    public async Task OnInputFileChange(UploadChangeEventArgs args)
     {
-        var newFiles = e.GetMultipleFiles(10); // Allow up to 10 files at once
+        var newFiles = args.Files; // Allow up to 10 files at once
         Logger.LogInformation("🔄 OnInputFileChange called with {Count} new files", newFiles?.Count() ?? 0);
         
         if (newFiles?.Any() == true)
@@ -663,7 +681,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             var successfullyProcessedFiles = new List<AttachedFile>();
             var failedFiles = new List<string>();
             
-            foreach (var newFile in newFiles)
+            foreach (var newFile in args.Files)
             {
                 try
                 {
@@ -865,8 +883,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             Latitude = SelectedLatitude,
             Longitude = SelectedLongitude,
-            Description = string.IsNullOrEmpty(LocationDescription) ? 
-                $"Map Location ({SelectedLatitude:F6}, {SelectedLongitude:F6})" : LocationDescription,
+            Description = LocationDescription,// string.IsNullOrEmpty(LocationDescription) ? 
+                //$"Map Location ({SelectedLatitude:F6}, {SelectedLongitude:F6})" : LocationDescription,
             SelectedDateTime = DateTime.UtcNow
         };
 
@@ -1210,7 +1228,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         // ===============================
         EditingHazard!.Name = $"{HazardReport.HazardCategory} - {HazardReport.HazardType}";
         EditingHazard.Description = HazardReport.Description;
-        EditingHazard.HazardCategory = HazardReport.HazardCategory ?? HazardReport.HazardType;
+        EditingHazard.HazardCategory = HazardReport.HazardCategory;
         EditingHazard.HazardType = HazardReport.HazardType; // This is the actual selected hazard type, not "Initial"
         EditingHazard.ReportedBy = HazardReport.ReportedBy;
         EditingHazard.ReportedOn = HazardReport.ReportedOn;
@@ -1298,8 +1316,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
             Code = "HZ-0000",
             Name = $"{HazardReport.HazardCategory} - {HazardReport.HazardType}",
             Description = HazardReport.Description,
-            HazardCategory = HazardReport.HazardCategory ?? HazardReport.HazardType,
-            HazardType = HazardReport.HazardType, // This is the actual selected hazard type, not "Initial"
+            HazardCategory = HazardReport.HazardCategory,
+            HazardType = HazardReport.HazardType,
             ReportedBy = HazardReport.ReportedBy,
             ReportedOn = HazardReport.ReportedOn,
             ReportingDepartment = HazardReport.ReportingDepartment,
@@ -1605,10 +1623,19 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
     private void InitializeFormDefaults()
     {
+        var currentUser = AuthService.CurrentUserDisplayName;
+        var userId = AuthService.CurrentUserId;
+        var isAuth = AuthService.IsAuthenticated;
+
+        // For complex scenarios:
+        var email = AuthService.AuthState.Email;
+        var userType = AuthService.AuthState.UserType;
+
+
         var tenMinutesAgo = DateTime.Now.AddMinutes(-10);
         HazardReport = new HazardReportForm
         {
-            ReportedBy = SessionService.GetCurrentUserDisplayName() ?? "Unknown User",
+            ReportedBy = currentUser ?? "Unknown User",
             ReportedOn = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day,
                 tenMinutesAgo.Hour, tenMinutesAgo.Minute, 0)
         };

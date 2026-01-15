@@ -52,16 +52,13 @@ namespace SMS_Application.Configuration
             // SMS Workflow Services - SINGLE REGISTRATION ONLY
             services.AddScoped<ISMSRiskAssessmentWorkflowService, SMSRiskAssessmentWorkflowService>();
             services.AddScoped<ISMSInvestigationWorkflowService, SMSInvestigationWorkflowService>();
-            //services.AddScoped<ISMSWorkflowService, SMSWorkflowService>();
-            //services.AddScoped<ISMSAuthorizationService, SMSAuthorizationService>();
-            //services.AddScoped<ISMSRoleService, SMSRoleService>();
+           
             
             // Application Services - INTERFACE BINDINGS ONLY
             services.AddScoped<IHazardFileService, HazardFileService>();
             services.AddScoped<IReportValidationService, ReportValidationService>();
 
-            // **NEW**: SMS Session Service - Direct Session Management
-            services.AddScoped<ISMSSessionService, SMSSessionService>();
+            
             
             // Concrete Application Services (where no interface exists)
             services.AddScoped<SystemService>();
