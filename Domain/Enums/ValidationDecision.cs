@@ -56,7 +56,7 @@ public abstract class ValidationDecision : BaseEnum<ValidationDecision>
     {
         public NeedsInvestigationDecision() : base("NEEDS_INVESTIGATION", "Needs Investigation",
             "Additional information required to determine SMS risk classification",
-            "Gather additional information before making final determination", false)
+            "Gather more information before making final determination", false)
         {
         }
     }

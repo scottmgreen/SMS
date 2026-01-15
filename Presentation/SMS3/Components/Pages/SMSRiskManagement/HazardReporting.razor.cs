@@ -15,7 +15,7 @@ using SMS_Domain.ValueObjects;
 using SMS_Domain.Enums; // <-- Added using for Smart Enums
 
 using SMS_Shared.Common;
-using SMS3.Components.Layout;
+using SMS3.Components.Pages.SMSRiskManagement.Models; // <-- Using shared data models
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -49,9 +49,6 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// Formatted longitude text for display
     /// </summary>
     public string SelectedLongitudeText => SelectedLongitude != 0 ? SelectedLongitude.ToString("F6") : "";
-
-
-
 
     /// <summary>
     /// Main form data object
@@ -1628,8 +1625,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
         var isAuth = AuthService.IsAuthenticated;
 
         // For complex scenarios:
-        var email = AuthService.AuthState.Email;
-        var userType = AuthService.AuthState.UserType;
+        //var email = AuthService.AuthState.Email;
+        //var userType = AuthService.AuthState.UserType;
 
 
         var tenMinutesAgo = DateTime.Now.AddMinutes(-10);
@@ -1805,63 +1802,3 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
     #endregion
 }
-
-#region Data Classes
-
-/// <summary>
-/// Form data for hazard report creation
-/// </summary>
-public class HazardReportForm
-{
-    public string? HazardCategory { get; set; }
-    public string? HazardType { get; set; }
-    public string? Description { get; set; }
-    public string? ReportedBy { get; set; }
-    public DateTime ReportedOn { get; set; } = DateTime.Now;
-    public string? ReportingDepartment { get; set; }
-    public string? Location { get; set; }
-    public bool IsConfidential { get; set; }
-}
-
-/// <summary>
-/// Geographic location data
-/// </summary>
-public class GeoLocationData
-{
-    public decimal Latitude { get; set; }
-    public decimal Longitude { get; set; }
-    public string Description { get; set; } = string.Empty;
-    public DateTime SelectedDateTime { get; set; }
-    public bool IsValid => Latitude != 0 && Longitude != 0;
-}
-
-/// <summary>
-/// Dropdown option for form controls
-/// </summary>
-public class DropdownOption
-{
-    public string Value { get; set; } = string.Empty;
-    public string Text { get; set; } = string.Empty;
-    
-    public DropdownOption() { }
-    public DropdownOption(string value, string text)
-    {
-        Value = value;
-        Text = text;
-    }
-}
-
-/// <summary>
-/// File attachment information
-/// </summary>
-public class AttachedFile
-{
-    public string FileName { get; set; } = string.Empty;
-    public long FileSizeBytes { get; set; }
-    public string SizeDisplay { get; set; } = string.Empty;
-    public string ContentType { get; set; } = string.Empty;
-    public byte[] Data { get; set; } = Array.Empty<byte>();
-    public long Size { get; set; }
-}
-
-#endregion

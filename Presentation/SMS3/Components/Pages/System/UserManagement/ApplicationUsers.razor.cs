@@ -35,6 +35,14 @@ public partial class ApplicationUsers : ComponentBase
     private string PasswordUserCode { get; set; } = string.Empty;
     private string PasswordUserDisplayName { get; set; } = string.Empty;
 
+    // ?? NEW: Role Assignment Properties
+    private bool ShowRoleAssignmentModal { get; set; }
+    private string RoleAssignmentUserCode { get; set; } = string.Empty;
+    private string RoleAssignmentUserDisplayName { get; set; } = string.Empty;
+    private string? CurrentUserRoleCode { get; set; }
+    private string? SelectedRoleCode { get; set; }
+    private List<SMSUserRole> AvailableRoles { get; set; } = new();
+
     // Group Management Properties
     private bool ShowGroupsModal { get; set; } = false;
     private string GroupManagementUserCode { get; set; } = string.Empty;
@@ -98,18 +106,15 @@ public partial class ApplicationUsers : ComponentBase
                 groupsResult.Value?.ToList() ?? new List<SMSApplicationGroup>() : 
                 new List<SMSApplicationGroup>();
 
-            Logger.LogInformation("Loaded {UserCount} application users and {GroupCount} application groups", 
-                ApplicationUsersList.Count, AllApplicationGroups.Count);
-
-            // Load User Roles
+            // ?? NEW: Load User Roles for assignment
             var userRolesQuery = new GetAllSMSUserRolesQuery();
             var userRolesResult = await Mediator.SendAsync(userRolesQuery, CancellationToken.None);
-            UserRoles = userRolesResult.IsSuccess ? 
+            AvailableRoles = userRolesResult.IsSuccess ? 
                 userRolesResult.Value?.ToList() ?? new List<SMSUserRole>() : 
                 new List<SMSUserRole>();
 
-            Logger.LogInformation("Loaded {UserCount} application users and {RoleCount} user roles", 
-                ApplicationUsersList.Count, UserRoles.Count);
+            Logger.LogInformation("Loaded {UserCount} application users, {GroupCount} groups, and {RoleCount} roles", 
+                ApplicationUsersList.Count, AllApplicationGroups.Count, AvailableRoles.Count);
 
             StateHasChanged();
         }
@@ -155,6 +160,156 @@ public partial class ApplicationUsers : ComponentBase
 
     #endregion
 
+    #region ?? NEW: Role Assignment Methods
+
+    private void OpenRoleAssignmentModal(string userCode, string userDisplayName, string? currentRoleCode = null)
+    {
+        RoleAssignmentUserCode = userCode;
+        RoleAssignmentUserDisplayName = userDisplayName;
+        CurrentUserRoleCode = currentRoleCode;
+        SelectedRoleCode = currentRoleCode;
+        ShowRoleAssignmentModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseRoleAssignmentModal()
+    {
+        ShowRoleAssignmentModal = false;
+        RoleAssignmentUserCode = string.Empty;
+        RoleAssignmentUserDisplayName = string.Empty;
+        CurrentUserRoleCode = null;
+        SelectedRoleCode = null;
+        StateHasChanged();
+    }
+
+    private async Task AssignUserRole()
+    {
+        if (string.IsNullOrEmpty(RoleAssignmentUserCode) || string.IsNullOrEmpty(SelectedRoleCode))
+        {
+            ShowErrorNotification("Invalid user or role selection.");
+            return;
+        }
+
+        try
+        {
+            IsSaving = true;
+            StateHasChanged();
+
+            // Get the user
+            var userQuery = new GetSMSApplicationUserByCodeQuery(RoleAssignmentUserCode);
+            var userResult = await Mediator.SendAsync(userQuery, CancellationToken.None);
+            
+            if (userResult.IsFailure || userResult.Value == null)
+            {
+                ShowErrorNotification("User not found.");
+                return;
+            }
+
+            var user = userResult.Value;
+
+            // Get the selected role
+            var selectedRole = AvailableRoles.FirstOrDefault(r => r.Code == SelectedRoleCode);
+            if (selectedRole == null)
+            {
+                ShowErrorNotification("Selected role not found.");
+                return;
+            }
+
+            // Update user role
+            user.UserRole = selectedRole;
+            user.UpdatedBy = SessionService.GetCurrentUserId() ?? "SYSTEM";
+            user.UpdatedDate = DateTime.UtcNow;
+
+            // Update user
+            var updateCommand = new UpdateSMSApplicationUserCommand(user);
+            var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+
+            if (updateResult.IsSuccess)
+            {
+                ShowSuccessNotification($"Role '{selectedRole.Name}' successfully assigned to {RoleAssignmentUserDisplayName}.");
+                
+                // Refresh data and close modal
+                await LoadDataAsync();
+                CloseRoleAssignmentModal();
+            }
+            else
+            {
+                ShowErrorNotification($"Failed to assign role: {updateResult.Error?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error assigning role to user {UserCode}", RoleAssignmentUserCode);
+            ShowErrorNotification("An error occurred while assigning the role. Please try again.");
+        }
+        finally
+        {
+            IsSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RemoveUserRole()
+    {
+        if (string.IsNullOrEmpty(RoleAssignmentUserCode))
+        {
+            ShowErrorNotification("Invalid user selection.");
+            return;
+        }
+
+        try
+        {
+            IsSaving = true;
+            StateHasChanged();
+
+            // Get the user
+            var userQuery = new GetSMSApplicationUserByCodeQuery(RoleAssignmentUserCode);
+            var userResult = await Mediator.SendAsync(userQuery, CancellationToken.None);
+            
+            if (userResult.IsFailure || userResult.Value == null)
+            {
+                ShowErrorNotification("User not found.");
+                return;
+            }
+
+            var user = userResult.Value;
+
+            // Remove role
+            user.UserRole = null;
+            user.UpdatedBy = SessionService.GetCurrentUserId() ?? "SYSTEM";
+            user.UpdatedDate = DateTime.UtcNow;
+
+            // Update user
+            var updateCommand = new UpdateSMSApplicationUserCommand(user);
+            var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+
+            if (updateResult.IsSuccess)
+            {
+                ShowSuccessNotification($"Role successfully removed from {RoleAssignmentUserDisplayName}.");
+                
+                // Refresh data and close modal
+                await LoadDataAsync();
+                CloseRoleAssignmentModal();
+            }
+            else
+            {
+                ShowErrorNotification($"Failed to remove role: {updateResult.Error?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error removing role from user {UserCode}", RoleAssignmentUserCode);
+            ShowErrorNotification("An error occurred while removing the role. Please try again.");
+        }
+        finally
+        {
+            IsSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    #endregion
+
     #region CRUD Operations
 
     private async Task ShowCreateDialog()
@@ -177,6 +332,13 @@ public partial class ApplicationUsers : ComponentBase
             IsSaving = true;
             StateHasChanged();
 
+            // ?? NEW: Get selected role if provided
+            SMSUserRole? selectedRole = null;
+            if (!string.IsNullOrEmpty(NewUser.UserRoleCode))
+            {
+                selectedRole = AvailableRoles.FirstOrDefault(r => r.Code == NewUser.UserRoleCode);
+            }
+
             // Create user entity
             var userId = new SMSApplicationUserID($"AU-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}");
             var user = new SMSApplicationUser(userId)
@@ -186,6 +348,7 @@ public partial class ApplicationUsers : ComponentBase
                 LastName = LastName.Create(NewUser.LastName).Value,
                 UserName = UserName.Create(NewUser.UserName).Value,
                 Password = Password.Create(NewUser.Password).Value,
+                UserRole = selectedRole, // ?? NEW: Assign role during creation
                 IsActive = true,
                 SMSUserType = "Application",
                 CreatedBy = SessionService.GetCurrentUserId() ?? "SYSTEM",
@@ -197,7 +360,8 @@ public partial class ApplicationUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification($"Application user '{NewUser.FirstName} {NewUser.LastName}' created successfully.");
+                var roleText = selectedRole != null ? $" with role '{selectedRole.Name}'" : "";
+                ShowSuccessNotification($"Application user '{NewUser.FirstName} {NewUser.LastName}' created successfully{roleText}!");
                 CloseCreateModal();
                 await LoadDataAsync();
             }
@@ -418,12 +582,14 @@ public partial class ApplicationUsers : ComponentBase
         public string LastName { get; set; } = "";
     }
 
+    // ?? UPDATED: CreateUserModel with role assignment support
     public class CreateUserModel
     {
         public string FirstName { get; set; } = "";
         public string LastName { get; set; } = "";
         public string UserName { get; set; } = "";
         public string Password { get; set; } = "";
+        public string? UserRoleCode { get; set; } // NEW: Role assignment during creation
     }
 
     #endregion

@@ -11,15 +11,17 @@ using SMS_Application.Messaging.Queries;
 
 using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
+using SMS_Domain.Enums; // <-- Added using for Smart Enums
 
 using SMS_Shared.Common;
+using SMS3.Components.Pages.SMSRiskManagement.Models; // <-- Updated to use the correct shared models namespace
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
 /// <summary>
 /// Confidential Reporting page - Enhanced security for sensitive safety reports
-/// Provides anonymous/confidential reporting with special protection measures
-/// Based on HazardReporting but adapted for confidential submissions
+/// Based on HazardReporting but adapted for confidential submissions with identical layout
+/// Removed Report Type and Urgency level, added cascading Hazard Category/Type dropdowns
 /// </summary>
 public partial class ConfidentialReporting : ComponentBase, IDisposable
 {
@@ -36,9 +38,24 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     #region Properties and Fields
 
     /// <summary>
-    /// Main form data object
+    /// Formatted latitude text for display
     /// </summary>
-    public ConfidentialReportForm ConfidentialReport { get; set; } = new();
+    public string SelectedLatitudeText => SelectedLatitude != 0 ? SelectedLatitude.ToString("F6") : "";
+
+    /// <summary>
+    /// Formatted longitude text for display
+    /// </summary>
+    public string SelectedLongitudeText => SelectedLongitude != 0 ? SelectedLongitude.ToString("F6") : "";
+
+    /// <summary>
+    /// Main form data object - using HazardReportForm like HazardReporting
+    /// </summary>
+    public HazardReportForm HazardReport { get; set; } = new();
+
+    /// <summary>
+    /// Geographic location data
+    /// </summary>
+    public GeoLocationData SelectedGeoLocation { get; set; } = new();
 
     /// <summary>
     /// File selection for attachments
@@ -48,7 +65,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     /// <summary>
     /// Processed file attachments for display
     /// </summary>
-    public List<ConfidentialAttachedFile> AttachedFiles { get; set; } = new();
+    public List<AttachedFile> AttachedFiles { get; set; } = new();
 
     /// <summary>
     /// Loading state indicator
@@ -66,6 +83,11 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     public bool ShowPreview { get; set; }
 
     /// <summary>
+    /// Show map modal
+    /// </summary>
+    public bool ShowMapModal { get; set; }
+
+    /// <summary>
     /// Show submission confirmation modal
     /// </summary>
     public bool ShowSubmissionConfirmation { get; set; }
@@ -76,38 +98,78 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     public string? GeneratedTrackingId { get; set; }
 
     /// <summary>
+    /// Generated Hazard ID after successful submission
+    /// </summary>
+    public string? GeneratedHazardId { get; set; }
+
+    /// <summary>
     /// Submission timestamp
     /// </summary>
     public DateTime? SubmissionDateTime { get; set; }
 
     /// <summary>
-    /// Report type dropdown options
+    /// Map coordinates
     /// </summary>
-    public List<ConfidentialDropdownOption> ReportTypeOptions { get; set; } = new();
+    public decimal SelectedLatitude { get; set; }
+    public decimal SelectedLongitude { get; set; }
+    public string LocationDescription { get; set; } = string.Empty;
 
     /// <summary>
-    /// Priority dropdown options
+    /// Hazard category dropdown options
     /// </summary>
-    public List<ConfidentialDropdownOption> PriorityOptions { get; set; } = new();
+    public List<DropdownOption> HazardCategoryOptions { get; set; } = new();
+
+    /// <summary>
+    /// Hazard type dropdown options (filtered by selected category)
+    /// </summary>
+    public List<DropdownOption> HazardTypeOptions { get; set; } = new();
+
+    /// <summary>
+    /// Currently selected hazard category
+    /// </summary>
+    public string? SelectedHazardCategory { get; set; }
+
+    /// <summary>
+    /// Display text for selected location
+    /// </summary>
+    public string LocationDisplayText => HasGeoLocation ? GetSelectedLocationText() : "No location selected";
+
+    /// <summary>
+    /// Check if geographic location has been selected
+    /// </summary>
+    public bool HasGeoLocation => SelectedGeoLocation?.IsValid == true;
+
+    /// <summary>
+    /// Check if valid coordinates are selected
+    /// </summary>
+    public bool HasValidCoordinates => SelectedLatitude != 0 && SelectedLongitude != 0;
+
+    /// <summary>
+    /// Geographic location display string
+    /// </summary>
+    public string GeoLocationDisplay => HasGeoLocation ? 
+        $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}" : 
+        "No coordinates selected";
 
     /// <summary>
     /// Character count for description field
     /// </summary>
-    public int DescriptionCharacterCount => ConfidentialReport?.Description?.Length ?? 0;
+    public int DescriptionCharacterCount => HazardReport?.Description?.Length ?? 0;
 
     /// <summary>
     /// Check if form has minimum required fields for preview
     /// </summary>
     public bool IsFormValidForPreview => 
-        !string.IsNullOrEmpty(ConfidentialReport.ReportType) &&
-        !string.IsNullOrEmpty(ConfidentialReport.Location) &&
-        !string.IsNullOrEmpty(ConfidentialReport.Description);
+        !string.IsNullOrEmpty(HazardReport.HazardType) &&
+        !string.IsNullOrEmpty(HazardReport.ReportedBy) &&
+        !string.IsNullOrEmpty(HazardReport.Description);
 
     /// <summary>
     /// Check if form is valid for submission
     /// </summary>
     public bool IsFormValidForSubmission => 
         IsFormValidForPreview && 
+        (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) &&
         DescriptionCharacterCount <= 2000;
 
     /// <summary>
@@ -120,83 +182,10 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     /// </summary>
     public string PageSubtitle => "Enhanced protection for sensitive safety reports with reporter anonymity";
 
-    #endregion
-
-    #region Map/Location Properties
-
-    /// <summary>
-    /// Show map modal for location selection
-    /// </summary>
-    public bool ShowMapModal { get; set; }
-
-    /// <summary>
-    /// Selected latitude from map
-    /// </summary>
-    public decimal SelectedLatitude { get; set; }
-
-    /// <summary>
-    /// Selected longitude from map  
-    /// </summary>
-    public decimal SelectedLongitude { get; set; }
-
-    /// <summary>
-    /// Location description for map selection
-    /// </summary>
-    public string LocationDescription { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Geographic location data
-    /// </summary>
-    public GeoLocationData SelectedGeoLocation { get; set; } = new();
-
-    /// <summary>
-    /// Check if we have valid coordinates
-    /// </summary>
-    public bool HasValidCoordinates => SelectedLatitude != 0 && SelectedLongitude != 0;
-
-    /// <summary>
-    /// Check if we have geographic location data
-    /// </summary>
-    public bool HasGeoLocation => SelectedGeoLocation?.IsValid == true;
-
-    /// <summary>
-    /// Display text for geographic location
-    /// </summary>
-    public string GeoLocationDisplay => HasGeoLocation ? 
-        $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}" : 
-        "No coordinates selected";
-
-    /// <summary>
-    /// Display text for location field
-    /// </summary>
-    public string LocationDisplayText
-    {
-        get
-        {
-            if (HasGeoLocation)
-            {
-                var locationText = GeoLocationDisplay;
-                if (!string.IsNullOrEmpty(SelectedGeoLocation.Description))
-                {
-                    locationText += $" - {SelectedGeoLocation.Description}";
-                }
-                return locationText;
-            }
-
-            if (!string.IsNullOrEmpty(ConfidentialReport.Location) && ConfidentialReport.Location != "MAP_LOCATION")
-            {
-                return ConfidentialReport.Location;
-            }
-
-            return "No location selected - click 'Select on Map'";
-        }
-    }
-
-    // CRITICAL MISSING PROPERTIES FOR MAP FUNCTIONALITY:
     // Airport coordinates
     private double AirportCenterLatitude => 45.5898;
     private double AirportCenterLongitude => -122.5951;
-    private int DefaultZoomLevel => 15;
+    private int DefaultZoomLevel => 20;
 
     private IJSObjectReference? _mapModule;
     private DotNetObjectReference<ConfidentialReporting>? _dotNetRef;
@@ -232,9 +221,6 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                 Logger.LogWarning(ex, "Could not load JavaScript map module for confidential reporting");
             }
         }
-        
-        // Don't auto-initialize the map here - let OpenMapSelector handle it
-        // This prevents conflicts between automatic and manual initialization
     }
 
     public void Dispose()
@@ -250,12 +236,12 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     /// <summary>
     /// Handle form submission
     /// </summary>
-    public async Task HandleFormSubmit(ConfidentialReportForm formData)
+    public async Task HandleFormSubmit(HazardReportForm formData)
     {
         try
         {
-            Logger.LogInformation("Confidential form submit triggered with data: ReportType={ReportType}, Location={Location}", 
-                formData.ReportType, formData.Location);
+            Logger.LogInformation("Confidential form submit triggered with data: HazardType={HazardType}, ReportedBy={ReportedBy}", 
+                formData.HazardType, formData.ReportedBy);
 
             if (!IsFormValidForSubmission)
             {
@@ -286,13 +272,371 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     }
 
     /// <summary>
-    /// Handle file selection
+    /// Handle file selection with proper event callback signature - now accumulates files
     /// </summary>
-    public void OnFilesSelected(IReadOnlyList<IBrowserFile> files)
+    public async Task OnFilesSelected(IReadOnlyList<IBrowserFile> newFiles)
     {
-        SelectedFiles = files;
-        ProcessAttachedFiles();
+        Logger.LogInformation("?? OnFilesSelected called with {Count} new files", newFiles?.Count ?? 0);
+        
+        if (newFiles?.Any() == true)
+        {
+            // Process files immediately to avoid JavaScript interop issues
+            var successfullyProcessedFiles = new List<AttachedFile>();
+            var failedFiles = new List<string>();
+            
+            foreach (var newFile in newFiles)
+            {
+                try
+                {
+                    // Check for duplicate first (before processing)
+                    var isDuplicate = AttachedFiles.Any(existing => 
+                        existing.FileName.Equals(newFile.Name, StringComparison.OrdinalIgnoreCase) && 
+                        existing.Size == newFile.Size);
+                    
+                    if (isDuplicate)
+                    {
+                        Logger.LogInformation("?? Skipped duplicate file: {FileName}", newFile.Name);
+                        continue;
+                    }
+
+                    // Read file data immediately to avoid JavaScript interop issues
+                    byte[] fileData;
+                    using (var stream = newFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024))
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await stream.CopyToAsync(memoryStream);
+                        fileData = memoryStream.ToArray();
+                    }
+                    
+                    // Create the attached file object with cached data
+                    var attachedFile = new AttachedFile
+                    {
+                        FileName = newFile.Name,
+                        ContentType = newFile.ContentType ?? "application/octet-stream",
+                        Size = newFile.Size,
+                        Data = fileData,
+                        SizeDisplay = FormatFileSize(newFile.Size)
+                    };
+                    
+                    successfullyProcessedFiles.Add(attachedFile);
+                    Logger.LogInformation("? Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "? Error processing file: {FileName}", newFile.Name);
+                    failedFiles.Add(newFile.Name);
+                }
+            }
+            
+            // Add successfully processed files to the collection
+            if (successfullyProcessedFiles.Any())
+            {
+                AttachedFiles.AddRange(successfullyProcessedFiles);
+                
+                // Update SelectedFiles to maintain compatibility
+                var allFiles = SelectedFiles?.ToList() ?? new List<IBrowserFile>();
+                foreach (var file in newFiles.Where(f => successfullyProcessedFiles.Any(sf => sf.FileName == f.Name && sf.Size == f.Size)))
+                {
+                    allFiles.Add(file);
+                }
+                SelectedFiles = allFiles.AsReadOnly();
+            }
+            
+            // Show notification about results
+            if (successfullyProcessedFiles.Any())
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Files Added",
+                    Detail = $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.",
+                    Duration = 3000
+                });
+            }
+        }
+        else
+        {
+            Logger.LogInformation("?? No files provided to OnFilesSelected");
+        }
+        
         StateHasChanged();
+    }
+
+    /// <summary>
+    /// Handle InputFile change event - this will accumulate files properly
+    /// </summary>
+    public async Task OnInputFileChange(InputFileChangeEventArgs args)
+    {
+        var newFiles = args.GetMultipleFiles(10); // Allow up to 10 files at once
+        Logger.LogInformation("?? OnInputFileChange called with {Count} new files", newFiles?.Count() ?? 0);
+        
+        if (newFiles?.Any() == true)
+        {
+            // Process files immediately to avoid the "file list may have changed" error
+            var successfullyProcessedFiles = new List<AttachedFile>();
+            var failedFiles = new List<string>();
+            
+            foreach (var newFile in newFiles)
+            {
+                try
+                {
+                    // Check for duplicate first (before processing)
+                    var isDuplicate = AttachedFiles.Any(existing => 
+                        existing.FileName.Equals(newFile.Name, StringComparison.OrdinalIgnoreCase) && 
+                        existing.Size == newFile.Size);
+                    
+                    if (isDuplicate)
+                    {
+                        Logger.LogInformation("?? Skipped duplicate file: {FileName}", newFile.Name);
+                        continue;
+                    }
+
+                    // Read file data immediately to avoid JavaScript interop issues
+                    byte[] fileData;
+                    using (var stream = newFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024))
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await stream.CopyToAsync(memoryStream);
+                        fileData = memoryStream.ToArray();
+                    }
+                    
+                    // Create the attached file object with cached data
+                    var attachedFile = new AttachedFile
+                    {
+                        FileName = newFile.Name,
+                        ContentType = newFile.ContentType ?? "application/octet-stream",
+                        Size = newFile.Size,
+                        Data = fileData,
+                        SizeDisplay = FormatFileSize(newFile.Size)
+                    };
+                    
+                    successfullyProcessedFiles.Add(attachedFile);
+                    Logger.LogInformation("? Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "? Error processing file: {FileName}", newFile.Name);
+                    failedFiles.Add(newFile.Name);
+                }
+            }
+            
+            // Add successfully processed files to the collection
+            if (successfullyProcessedFiles.Any())
+            {
+                AttachedFiles.AddRange(successfullyProcessedFiles);
+                
+                // Update SelectedFiles to maintain compatibility (though we won't use it for reading data)
+                var allFiles = SelectedFiles?.ToList() ?? new List<IBrowserFile>();
+                foreach (var file in newFiles.Where(f => successfullyProcessedFiles.Any(sf => sf.FileName == f.Name && sf.Size == f.Size)))
+                {
+                    allFiles.Add(file);
+                }
+                SelectedFiles = allFiles.AsReadOnly();
+            }
+            
+            // Show notification about results
+            if (successfullyProcessedFiles.Any() && failedFiles.Any())
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "Partial Success",
+                    Detail = $"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued.",
+                    Duration = 4000
+                });
+            }
+            else if (successfullyProcessedFiles.Any())
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Files Added",
+                    Detail = $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.",
+                    Duration = 3000
+                });
+            }
+            else if (failedFiles.Any())
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "File Processing Failed",
+                    Detail = $"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.",
+                    Duration = 5000
+                });
+            }
+            
+            Logger.LogInformation("?? File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}", 
+                successfullyProcessedFiles.Count, failedFiles.Count, AttachedFiles.Count);
+        }
+        else
+        {
+            Logger.LogInformation("?? No files provided to OnInputFileChange");
+        }
+        
+        StateHasChanged();
+    }
+
+    #endregion
+
+    #region Location Methods
+
+    /// <summary>
+    /// Open map selector modal
+    /// </summary>
+    public async Task OpenMapSelector()
+    {
+        ShowMapModal = true;
+        StateHasChanged();
+        
+        // Give DOM time to render the modal
+        await Task.Delay(300);
+        
+        if (_mapModule != null)
+        {
+            try
+            {
+                await _mapModule.InvokeVoidAsync("initializeMap", 
+                    AirportCenterLatitude, AirportCenterLongitude, DefaultZoomLevel, _dotNetRef);
+                
+                Logger.LogInformation("Map reinitialized for confidential reporting modal");
+                
+                if (HasGeoLocation)
+                {
+                    await Task.Delay(100);
+                    
+                    await _mapModule.InvokeVoidAsync("setLocationFromCoordinates",
+                        (double)SelectedGeoLocation.Latitude, (double)SelectedGeoLocation.Longitude,
+                        SelectedGeoLocation.Description);
+                    
+                    SelectedLatitude = SelectedGeoLocation.Latitude;
+                    SelectedLongitude = SelectedGeoLocation.Longitude;
+                    LocationDescription = SelectedGeoLocation.Description ?? "";
+                    
+                    Logger.LogInformation("Existing location restored in confidential reporting: {Lat}, {Lng}", 
+                        SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
+                    
+                    StateHasChanged();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error initializing map in confidential reporting OpenMapSelector");
+                
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "Map Error",
+                    Detail = "Could not initialize map. Please try refreshing the page.",
+                    Duration = 5000
+                });
+            }
+        }
+        
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = "Map Selector",
+            Detail = "Click on the map to select the incident location.",
+            Duration = 3000
+        });
+    }
+
+    /// <summary>
+    /// Close map selector modal
+    /// </summary>
+    public void CloseMapSelector()
+    {
+        ShowMapModal = false;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Use selected location from map
+    /// </summary>
+    public async Task UseSelectedLocation()
+    {
+        if (!HasValidCoordinates)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "No Location Selected",
+                Detail = "Please click on the map to select a location first.",
+                Duration = 3000
+            });
+            return;
+        }
+
+        SelectedGeoLocation = new GeoLocationData
+        {
+            Latitude = SelectedLatitude,
+            Longitude = SelectedLongitude,
+            Description = LocationDescription,
+            SelectedDateTime = DateTime.UtcNow
+        };
+
+        HazardReport.Location = "MAP_LOCATION";
+        
+        ShowMapModal = false;
+        StateHasChanged();
+        
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Location Set",
+            Detail = $"Location selected: {GeoLocationDisplay}",
+            Duration = 3000
+        });
+    }
+
+    /// <summary>
+    /// Clear map selection
+    /// </summary>
+    public async Task ClearMapSelection()
+    {
+        SelectedLatitude = 0;
+        SelectedLongitude = 0;
+        LocationDescription = string.Empty;
+        SelectedGeoLocation = new GeoLocationData();
+        HazardReport.Location = "";
+        
+        if (_mapModule != null)
+        {
+            try
+            {
+                await _mapModule.InvokeVoidAsync("clearSelection");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Error clearing map selection in confidential reporting");
+            }
+        }
+        
+        StateHasChanged();
+        
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = "Selection Cleared",
+            Detail = "Map selection has been cleared.",
+            Duration = 2000
+        });
+    }
+
+    /// <summary>
+    /// JavaScript callback for map location selection
+    /// </summary>
+    [JSInvokable]
+    public async Task OnMapLocationSelected(double latitude, double longitude, string description)
+    {
+        SelectedLatitude = (decimal)latitude;
+        SelectedLongitude = (decimal)longitude;
+        LocationDescription = description;
+        
+        await InvokeAsync(StateHasChanged);
+        
+        Logger.LogInformation("Confidential reporting map location selected: {Lat}, {Lng}, {Desc}", latitude, longitude, description);
     }
 
     #endregion
@@ -352,49 +696,27 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     }
 
     /// <summary>
-    /// Cancel submission
-    /// </summary>
-    public void CancelSubmission()
-    {
-        ShowSubmissionConfirmation = false;
-        StateHasChanged();
-        
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Info,
-            Summary = "Submission Cancelled",
-            Detail = "You can continue editing your report.",
-            Duration = 3000
-        });
-    }
-
-    /// <summary>
-    /// Close final confirmation and reset form
+    /// Close final confirmation and navigate back to home page for anonymous users
     /// </summary>
     public void CloseFinalConfirmation()
     {
         // Clear all form data after successful submission
-        ConfidentialReport = new ConfidentialReportForm();
-        SelectedFiles = new List<IBrowserFile>();
-        AttachedFiles.Clear();
-        GeneratedTrackingId = null;
-        SubmissionDateTime = null;
-        
-        // Reset all UI state flags
-        ShowPreview = false;
-        ShowSubmissionConfirmation = false;
-        ShowFinalSuccessConfirmation = false;
-
         InitializeFormDefaults();
-        StateHasChanged();
-
-        NotificationService.Notify(new NotificationMessage
+        
+        // Clear the form changed flag to prevent browser warning
+        try
         {
-            Severity = NotificationSeverity.Info,
-            Summary = "Form Cleared",
-            Detail = "Form cleared successfully. Ready for new confidential report.",
-            Duration = 3000
-        });
+            JSRuntime.InvokeVoidAsync("clearFormChanged");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Could not clear form changed flag");
+        }
+        
+        StateHasChanged();
+        
+        // Navigate to home page for anonymous users (not ReportProcessing)
+        Navigation.NavigateTo("/", forceLoad: true);
     }
 
     #endregion
@@ -402,15 +724,12 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     #region Business Logic Methods
 
     /// <summary>
-    /// Submit the confidential report confirmed
+    /// Submit the confidential report
     /// </summary>
     public async Task SubmitReportConfirmed()
     {
         try
         {
-            // ??????????????????????????????????????????????????????????????????????????
-            // STEP 1: VALIDATION
-            // ??????????????????????????????????????????????????????????????????????????
             if (!IsFormValidForSubmission)
             {
                 ShowSubmissionConfirmation = true;
@@ -430,224 +749,149 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
             ShowSubmissionConfirmation = false;
             StateHasChanged();
 
-            var currentUser = SessionService.GetCurrentUserDisplayName() ?? "Anonymous User";
-            Logger.LogInformation("Starting confidential report submission for user: {User}", currentUser);
+            Logger.LogInformation("Starting confidential report submission");
 
-            // Generate anonymous tracking ID
+            // Generate tracking ID
             GeneratedTrackingId = GenerateAnonymousTrackingId();
-
-            // ??????????????????????????????????????????????????????????????????????????
-            // STEP 2: CREATE CONFIDENTIAL HAZARD OBJECT
-            // ??????????????????????????????????????????????????????????????????????????
-            var hazardCode = "HZ-0000";
-            var hazard = new Hazard(new HazardID(hazardCode))
-            {
-                Code = hazardCode,
-                Name = $"{ConfidentialReport.ReportType}",
-                Description = ConfidentialReport.Description,
-                HazardCategory = ConfidentialReport.ReportType,
-                HazardType = ConfidentialReport.ReportType,
-                ReportedBy = "CONFIDENTIAL REPORTER",  // Anonymize the reporter
-                ReportedOn = DateTime.Now,
-                ReportingDepartment = "Confidential",
-                IsConfidential = true,  // Always confidential
-                IsAnonymous = true,     // Always anonymous
-                LocationArea = ConfidentialReport.Location,
-                // Store additional confidential data in appropriate fields
-                AdditionalComments = $"Priority: {ConfidentialReport.Priority}"
-            };
-
-            // Add special circumstances to the description if any are selected
-            var circumstances = GetSpecialCircumstancesText();
-            if (!string.IsNullOrEmpty(circumstances))
-            {
-                hazard.Description += $"\n\nSpecial Circumstances: {circumstances}";
-            }
-
-            if (!string.IsNullOrEmpty(ConfidentialReport.AdditionalProtection))
-            {
-                hazard.Description += $"\n\nAdditional Protection Needed: {ConfidentialReport.AdditionalProtection}";
-            }
-
-            Logger.LogInformation("Confidential hazard object created - Type: '{Type}', Tracking: '{TrackingId}'",
-                hazard.HazardType, GeneratedTrackingId);
-
-            // ??????????????????????????????????????????????????????????????????????????
-            // PHASE 1: CREATE PARENT REPORT (CONFIDENTIAL)
-            // ??????????????????????????????????????????????????????????????????????????
+            
+            // ===============================
+            // STEP 1: CREATE PARENT REPORT
+            // ===============================
             var report = new Report(new ReportID("RP-0000"))
             {
                 Code = "RP-0000",
-                Name = $"Confidential Report - {ConfidentialReport.ReportType}",
-                ReportedBy = "CONFIDENTIAL REPORTER",
-                ReportedOn = DateTime.Now,
-                Department = "Confidential",  
-                Description = hazard.Description,
-                Stage = "Confidential",
-                Status = "Confidential"
+                Name = GetHazardTypeDisplay(HazardReport.HazardType),
+                Description = HazardReport.Description,
+                Stage = "Initial",
+                Status = "Active",
+                ReportedBy = "CONFIDENTIAL_USER",
+                Department = "CONFIDENTIAL"
             };
 
             var reportResult = await Mediator.SendAsync(new CreateReportCommand(report), CancellationToken.None);
             
             if (reportResult.IsFailure)
             {
-                throw new Exception($"Failed to create confidential report: {reportResult.Error?.Message}");
+                Logger.LogError("Failed to create report for confidential submission: {Error}", reportResult.Error?.Message);
+                throw new Exception($"Failed to create report: {reportResult.Error?.Message}");
             }
-            
+
             var actualReportCode = reportResult.Value.Code;
-            Logger.LogInformation("Confidential report created with Code: {ReportCode}, Tracking: {TrackingId}", 
-                actualReportCode, GeneratedTrackingId);
+            Logger.LogInformation("Confidential report created with Code: {ReportCode}", actualReportCode);
 
-            // ??????????????????????????????????????????????????????????????????????????
-            // PHASE 2: CREATE CONFIDENTIAL HAZARD WITH REPORT LINKAGE
-            // ??????????????????????????????????????????????????????????????????????????
+            // ===============================
+            // STEP 2: CREATE CONFIDENTIAL HAZARD
+            // ===============================
+            var hazardCode = "HZ-0000";
+            var hazard = new Hazard(new HazardID(hazardCode))
+            {
+                Code = hazardCode,
+                Name = GetHazardTypeDisplay(HazardReport.HazardType),
+                Description = HazardReport.Description,
+                HazardCategory = HazardReport.HazardType ?? "OTHER",
+                HazardType = HazardReport.HazardType,
+                ReportedBy = "CONFIDENTIAL_USER",
+                ReportedOn = HazardReport.ReportedOn,
+                ReportingDepartment = "CONFIDENTIAL",
+                IsConfidential = true, // Always confidential
+                IsAnonymous = true,
+                ReportCode = actualReportCode,
+                IsInitialHazard = true
+            };
 
-            hazard.ReportCode = actualReportCode;
-            hazard.RiskMatrixCode = null;
-            hazard.HazardType = "Confidential";
-            
-            // Store tracking ID in a field for reference (without exposing user identity)
-            hazard.AdditionalComments = $"Tracking ID: {GeneratedTrackingId}; Priority: {ConfidentialReport.Priority}";
+            // Handle location data
+            if (HasGeoLocation)
+            {
+                hazard.LocationArea = "Coordinates Provided";
+                hazard.LocationSubArea = $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}";
+            }
+            else if (!string.IsNullOrEmpty(HazardReport.Location))
+            {
+                hazard.LocationArea = HazardReport.Location;
+            }
 
             var createHazardCommand = new CreateHazardCommand(hazard);
             var createdHazardResult = await Mediator.SendAsync(createHazardCommand, CancellationToken.None);
             
             if (createdHazardResult.IsFailure)
             {
-                throw new Exception($"Failed to create confidential hazard: {createdHazardResult.Error?.Message}");
+                Logger.LogError("Failed to create hazard for confidential submission: {Error}", createdHazardResult.Error?.Message);
+                throw new Exception($"Failed to create hazard: {createdHazardResult.Error?.Message}");
             }
             
             var createdHazard = createdHazardResult.Value;
-            Logger.LogInformation("Confidential hazard created with Code: {HazardCode}, linked to Report: {ReportCode}, Tracking: {TrackingId}", 
-                createdHazard.Code, actualReportCode, GeneratedTrackingId);
+            GeneratedHazardId = createdHazard.Code;
+            Logger.LogInformation("Confidential hazard created with Code: {HazardCode}", createdHazard.Code);
 
-            // ??????????????????????????????????????????????????????????????????????????
-            // PHASE 3: PROCESS CONFIDENTIAL FILES (IF PROVIDED)
-            // ??????????????????????????????????????????????????????????????????????????
-            try
+            // ===============================
+            // STEP 3: PROCESS FILE ATTACHMENTS
+            // ===============================
+            if (AttachedFiles.Any())
             {
-                if (SelectedFiles?.Any() == true)
+                foreach (var attachedFile in AttachedFiles)
                 {
-                    Logger.LogInformation("?? Processing {Count} confidential files for Hazard: {HazardCode}, Tracking: {TrackingId}", 
-                        SelectedFiles.Count, createdHazard.Code, GeneratedTrackingId);
-
-                    var createdFileIds = new List<string>();
-
-                    foreach (var browserFile in SelectedFiles.Where(f => f?.Size > 0))
+                    try
                     {
-                        try
+                        var hazardFile = new HazardFile(new HazardFileID("HF-0000"))
                         {
-                            // Read file data from Blazor IBrowserFile
-                            byte[] fileData;
-                            using (var stream = browserFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024))
-                            using (var memoryStream = new MemoryStream())
-                            {
-                                await stream.CopyToAsync(memoryStream);
-                                fileData = memoryStream.ToArray();
-                            }
+                            Code = "HF-0000",
+                            HazardCode = createdHazard.Code,
+                            ReportCode = actualReportCode,
+                            FileName = attachedFile.FileName,
+                            FileType = Path.GetExtension(attachedFile.FileName)?.TrimStart('.') ?? "unknown",
+                            ContentType = attachedFile.ContentType,
+                            FileSizeBytes = (int)attachedFile.Size,
+                            StorageType = "Database",
+                            FileData = attachedFile.Data,
+                            UploadedBy = "CONFIDENTIAL_USER",
+                            UploadedDate = DateTime.UtcNow,
+                            IsActive = true,
+                            IsConfidential = true
+                        };
 
-                            // Generate unique file code
-                            var fileCode = "HF-0000";
-
-                            // Create HazardFile entity for confidential file
-                            var hazardFile = new HazardFile(new HazardFileID(fileCode))
-                            {
-                                Code = fileCode,
-                                HazardCode = createdHazard.Code,
-                                ReportCode = createdHazard.ReportCode ?? string.Empty,
-                                FileName = browserFile.Name,
-                                FileType = Path.GetExtension(browserFile.Name)?.TrimStart('.') ?? "unknown",
-                                ContentType = browserFile.ContentType ?? "application/octet-stream",
-                                FileSizeBytes = browserFile.Size,
-                                StorageType = "Database",
-                                FileData = fileData,
-                                UploadedBy = "CONFIDENTIAL REPORTER", // Anonymize uploader
-                                UploadedDate = DateTime.UtcNow,
-                                IsActive = true,
-                                IsConfidential = true // Always confidential
-                            };
-
-                            // Send CreateHazardFileCommand for each file
-                            Logger.LogInformation("Creating confidential HazardFile: {FileName} with Code: {FileCode}, Tracking: {TrackingId}", 
-                                browserFile.Name, fileCode, GeneratedTrackingId);
-
-                            var createHazardFileCommand = new CreateHazardFileCommand(hazardFile);
-                            var hazardFileResult = await Mediator.SendAsync(createHazardFileCommand, CancellationToken.None);
-
-                            if (hazardFileResult.IsSuccess)
-                            {
-                                var createdFileId = hazardFileResult.Value.Code;
-                                createdFileIds.Add(createdFileId);
-
-                                // Add HazardFile ID to Hazard's collection
-                                createdHazard.AddHazardFile(new HazardFileID(createdFileId));
-
-                                Logger.LogInformation("? Created confidential HazardFile: {FileName} with ID: {FileId} for Hazard: {HazardCode}", 
-                                    browserFile.Name, createdFileId, createdHazard.Code);
-                            }
-                            else
-                            {
-                                Logger.LogError("? Failed to create confidential HazardFile: {FileName} for Hazard: {HazardCode}. Error: {Error}", 
-                                    browserFile.Name, createdHazard.Code, hazardFileResult.Error?.Message);
-                            }
-                        }
-                        catch (Exception fileEx)
-                        {
-                            Logger.LogError(fileEx, "? Exception creating confidential HazardFile: {FileName} for Hazard: {HazardCode}", 
-                                browserFile.Name, createdHazard.Code);
-                        }
+                        var createFileCommand = new CreateHazardFileCommand(hazardFile);
+                        await Mediator.SendAsync(createFileCommand, CancellationToken.None);
+                        
+                        Logger.LogInformation("Confidential file attachment processed: {FileName}", attachedFile.FileName);
                     }
-
-                    Logger.LogInformation("?? Confidential file processing completed: {CreatedCount} HazardFiles created for Hazard: {HazardCode}", 
-                        createdFileIds.Count, createdHazard.Code);
+                    catch (Exception fileEx)
+                    {
+                        Logger.LogWarning(fileEx, "Failed to process confidential attachment: {FileName}", attachedFile.FileName);
+                        // Continue processing other files
+                    }
                 }
             }
-            catch (Exception fileEx)
-            {
-                Logger.LogError(fileEx, "?? Error processing confidential files, but continuing with hazard creation");
-            }
 
-            // ??????????????????????????????????????????????????????????????????????????
-            // PHASE 4: FINAL UPDATE
-            // ??????????????????????????????????????????????????????????????????????????
-            var updatedHazardResult = await Mediator.SendAsync(new UpdateHazardCommand(createdHazard), CancellationToken.None);
-
-            if (updatedHazardResult.IsFailure)
-            {
-                throw new Exception($"Failed to update confidential hazard: {updatedHazardResult.Error?.Message}");
-            }
-
-            // ??????????????????????????????????????????????????????????????????????????
-            // SUCCESS
-            // ??????????????????????????????????????????????????????????????????????????
+            // ===============================
+            // SUCCESS - SHOW CONFIRMATION
+            // ===============================
             SubmissionDateTime = DateTime.Now;
-            ShowSubmissionConfirmation = false;
             ShowFinalSuccessConfirmation = true;
-            
-            // Clear the form changed flag to prevent navigation warnings
+
+            // Clear the form changed flag to prevent browser warning
             try
             {
                 await JSRuntime.InvokeVoidAsync("clearFormChanged");
             }
-            catch (Exception jsEx)
+            catch (Exception ex)
             {
-                Logger.LogWarning(jsEx, "Could not clear form changed flag via JavaScript");
+                Logger.LogWarning(ex, "Could not clear form changed flag");
             }
-            
-            Logger.LogInformation("? Confidential report submission completed successfully - HazardCode: {HazardCode}, ReportCode: {ReportCode}, Tracking: {TrackingId}", 
-                createdHazard.Code, createdHazard.ReportCode, GeneratedTrackingId);
 
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Success,
-                Summary = "Confidential Report Submitted Successfully",
-                Detail = $"Your confidential report has been submitted with tracking ID {GeneratedTrackingId}.",
-                Duration = 5000
+                Summary = "Confidential Report Submitted",
+                Detail = $"Your confidential report has been securely submitted. Tracking ID: {GeneratedTrackingId}",
+                Duration = 8000
             });
+
+            Logger.LogInformation("? Confidential report successfully submitted - TrackingId: {TrackingId}, HazardId: {HazardId}, ReportId: {ReportId}", 
+                GeneratedTrackingId, GeneratedHazardId, actualReportCode);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Error during confidential report submission, Tracking: {TrackingId}", GeneratedTrackingId);
+            Logger.LogError(ex, "? Error during confidential report submission");
             
             ShowSubmissionConfirmation = false;
             
@@ -655,7 +899,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
             {
                 Severity = NotificationSeverity.Error,
                 Summary = "Submission Failed",
-                Detail = "An error occurred while saving your confidential report. Please try again or contact the confidential hotline.",
+                Detail = "An error occurred while submitting your confidential report. Please try again or contact support.",
                 Duration = 5000
             });
         }
@@ -666,86 +910,172 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         }
     }
 
+    /// <summary>
+    /// Cancel submission
+    /// </summary>
+    public void CancelSubmission()
+    {
+        ShowSubmissionConfirmation = false;
+        StateHasChanged();
+        
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = "Submission Cancelled",
+            Detail = "You can continue editing your confidential report.",
+            Duration = 3000
+        });
+    }
+
     #endregion
 
-    #region Helpers
+    #region Dropdown and Smart Enum Methods
 
     private void InitializeDropdownOptions()
     {
-        // Report type options for confidential reports
-        ReportTypeOptions = new List<ConfidentialDropdownOption>
-        {
-            new ConfidentialDropdownOption("Safety Concern", "General Safety Concern"),
-            new ConfidentialDropdownOption("Retaliation", "Retaliation or Intimidation"),
-            new ConfidentialDropdownOption("Personnel Issue", "Personnel Safety Issue"),
-            new ConfidentialDropdownOption("Compliance Violation", "Regulatory Compliance Violation"),
-            new ConfidentialDropdownOption("Management Issue", "Management Safety Issue"),
-            new ConfidentialDropdownOption("System Failure", "Safety System Failure"),
-            new ConfidentialDropdownOption("Cover-up", "Attempted Cover-up"),
-            new ConfidentialDropdownOption("Other", "Other Sensitive Matter")
-        };
-
-        // Priority options
-        PriorityOptions = new List<ConfidentialDropdownOption>
-        {
-            new ConfidentialDropdownOption("Low", "Low - General concern"),
-            new ConfidentialDropdownOption("Medium", "Medium - Moderate safety impact"),
-            new ConfidentialDropdownOption("High", "High - Significant safety risk"),
-            new ConfidentialDropdownOption("Critical", "Critical - Imminent danger")
-        };
+        HazardCategoryOptions = HazardCategory.GetAllValues()
+            .Select(hc => new DropdownOption(hc.Value, hc.Name))
+            .ToList();
+        HazardTypeOptions = new List<DropdownOption>();
     }
+
+    public async Task OnHazardCategoryChanged(string? categoryValue)
+    {
+        Logger.LogInformation("Hazard category changed to: {Category}", categoryValue);
+        SelectedHazardCategory = categoryValue;
+        HazardReport.HazardType = null;
+        await LoadHazardTypesForCategory(categoryValue ?? "", preserveSelectedType: false);
+    }
+
+    public async Task OnHazardTypeChanged(string? hazardTypeValue)
+    {
+        HazardReport.HazardType = hazardTypeValue;
+        
+        if (!string.IsNullOrEmpty(hazardTypeValue))
+        {
+            var hazardType = HazardType.FromValue(hazardTypeValue);
+            if (hazardType != null)
+            {
+                Logger.LogInformation("Hazard type changed to: {HazardType}, requires regulatory: {RequiresRegulatory}", 
+                    hazardType.Name, hazardType.RequiresRegulatoryReporting);
+                
+                if (hazardType.RequiresRegulatoryReporting)
+                {
+                    NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Info,
+                        Summary = "Regulatory Reporting Required",
+                        Detail = $"This hazard type ({hazardType.Name}) requires regulatory reporting to appropriate authorities.",
+                        Duration = 5000
+                    });
+                }
+            }
+        }
+        
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadHazardTypesForCategory(string categoryValue, bool preserveSelectedType = false)
+    {
+        if (string.IsNullOrEmpty(categoryValue))
+        {
+            HazardTypeOptions.Clear();
+            return;
+        }
+
+        var category = HazardCategory.FromValue(categoryValue);
+        if (category != null)
+        {
+            var currentSelectedType = preserveSelectedType ? HazardReport.HazardType : null;
+            
+            HazardTypeOptions = HazardType.GetByCategory(category)
+                .Select(ht => new DropdownOption(ht.Value, ht.Name))
+                .ToList();
+            
+            if (preserveSelectedType && !string.IsNullOrEmpty(currentSelectedType))
+            {
+                var typeExists = HazardTypeOptions.Any(ht => ht.Value == currentSelectedType);
+                if (typeExists)
+                {
+                    HazardReport.HazardType = currentSelectedType;
+                }
+            }
+            
+            Logger.LogInformation("Loaded {Count} hazard types for category: {Category}", 
+                HazardTypeOptions.Count, category.Name);
+        }
+        else
+        {
+            HazardTypeOptions.Clear();
+        }
+        
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public string GetHazardTypeGuidance(string? hazardTypeValue)
+    {
+        if (string.IsNullOrEmpty(hazardTypeValue)) return string.Empty;
+        var hazardType = HazardType.FromValue(hazardTypeValue);
+        return hazardType?.GuidanceText ?? string.Empty;
+    }
+
+    public bool RequiresRegulatoryReporting(string? hazardTypeValue)
+    {
+        if (string.IsNullOrEmpty(hazardTypeValue)) return false;
+        var hazardType = HazardType.FromValue(hazardTypeValue);
+        return hazardType?.RequiresRegulatoryReporting ?? false;
+    }
+
+    public string GetHazardCategoryDescription(string? categoryValue)
+    {
+        if (string.IsNullOrEmpty(categoryValue)) return string.Empty;
+        var category = HazardCategory.FromValue(categoryValue);
+        return category?.Description ?? string.Empty;
+    }
+
+    #endregion
+
+    #region Helpers and Utility Methods
 
     private void InitializeFormDefaults()
     {
-        ConfidentialReport = new ConfidentialReportForm
+        var currentUser = SessionService.GetCurrentUserDisplayName();
+        var tenMinutesAgo = DateTime.Now.AddMinutes(-10);
+        
+        HazardReport = new HazardReportForm
         {
-            Priority = "Medium" // Default priority
+            ReportedBy = currentUser ?? "Anonymous User",
+            ReportedOn = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day,
+                tenMinutesAgo.Hour, tenMinutesAgo.Minute, 0),
+            IsConfidential = true
         };
 
-        SelectedFiles = new List<IBrowserFile>();
-        AttachedFiles.Clear();
+        SelectedGeoLocation = new GeoLocationData
+        {
+            Latitude = 0,
+            Longitude = 0,
+            Description = "Not set",
+            SelectedDateTime = DateTime.UtcNow
+        };
 
+        SelectedFiles = new List<IBrowserFile>().AsReadOnly();
+        AttachedFiles.Clear();
+        SelectedHazardCategory = null;
+        HazardTypeOptions.Clear();
         ShowPreview = false;
+        ShowMapModal = false;
         ShowSubmissionConfirmation = false;
         ShowFinalSuccessConfirmation = false;
     }
 
-    private async Task ProcessAttachedFiles()
+    private string GetSelectedLocationText()
     {
-        AttachedFiles = new List<ConfidentialAttachedFile>();
-
-        if (SelectedFiles != null)
-        {
-            foreach (var file in SelectedFiles)
-            {
-                try
-                {
-                    var buffer = new byte[file.Size];
-                    using (var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024))
-                    {
-                        await stream.ReadAsync(buffer, 0, (int)file.Size);
-                    }
-                    
-                    AttachedFiles.Add(new ConfidentialAttachedFile
-                    {
-                        FileName = file.Name,
-                        ContentType = file.ContentType,
-                        Size = file.Size,
-                        Data = buffer,
-                        SizeDisplay = FormatFileSize(file.Size)
-                    });
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex, "Error processing confidential file: {FileName}", file.Name);
-                }
-            }
-        }
+        if (!HasGeoLocation) return "No location selected";
+        var lat = SelectedGeoLocation.Latitude;
+        var lng = SelectedGeoLocation.Longitude;
+        return $"Lat: {lat:F6}, Lng: {lng:F6} - {SelectedGeoLocation.Description}";
     }
 
-    /// <summary>
-    /// Format file size for display
-    /// </summary>
     private string FormatFileSize(long bytes)
     {
         const int scale = 1024;
@@ -761,36 +1091,68 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         return "0 Bytes";
     }
 
-    /// <summary>
-    /// Generate anonymous tracking ID for confidential reports
-    /// </summary>
+    private string GetHazardTypeDisplay(string? key)
+    {
+        if (string.IsNullOrEmpty(key)) return "UNKNOWN";
+        var hazardType = HazardType.FromValue(key);
+        return hazardType?.Name ?? key;
+    }
+
+    private string GetHazardCategoryDisplay(string? key)
+    {
+        if (string.IsNullOrEmpty(key)) return "UNKNOWN";
+        var category = HazardCategory.FromValue(key);
+        return category?.Name ?? key;
+    }
+
     private string GenerateAnonymousTrackingId()
     {
-        // Generate a secure anonymous tracking ID with timestamp and random component
         var timestamp = DateTime.UtcNow.ToString("yyyyMMdd");
         var randomComponent = Random.Shared.Next(1000, 9999);
         var checksum = (timestamp.GetHashCode() + randomComponent).ToString().Substring(0, 2);
-        
         return $"CONF-{timestamp}-{randomComponent}-{checksum}";
     }
 
-    /// <summary>
-    /// Get special circumstances text for display
-    /// </summary>
-    private string GetSpecialCircumstancesText()
-    {
-        var circumstances = new List<string>();
-        
-        if (ConfidentialReport.IsRetaliation)
-            circumstances.Add("Retaliation Concern");
-            
-        if (ConfidentialReport.IsPersonnelIssue)
-            circumstances.Add("Personnel Issue");
-            
-        if (ConfidentialReport.IsComplianceViolation)
-            circumstances.Add("Compliance Violation");
+    #endregion
 
-        return circumstances.Any() ? string.Join(", ", circumstances) : "None";
+    #region File Management Methods
+
+    /// <summary>
+    /// Remove a specific file from the queue
+    /// </summary>
+    public async Task RemoveFile(int index)
+    {
+        if (index >= 0 && index < AttachedFiles.Count)
+        {
+            var fileToRemove = AttachedFiles[index];
+            
+            AttachedFiles.RemoveAt(index);
+            
+            var selectedFilesList = SelectedFiles.ToList();
+            var selectedFileToRemove = selectedFilesList.FirstOrDefault(sf => 
+                sf.Name == fileToRemove.FileName && sf.Size == fileToRemove.Size);
+            
+            if (selectedFileToRemove != null)
+            {
+                selectedFilesList.Remove(selectedFileToRemove);
+                SelectedFiles = selectedFilesList.AsReadOnly();
+            }
+            
+            Logger.LogInformation("Removed file from confidential report: {FileName}", fileToRemove.FileName);
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Clear all queued files
+    /// </summary>
+    public async Task ClearAllFiles()
+    {
+        AttachedFiles.Clear();
+        SelectedFiles = new List<IBrowserFile>().AsReadOnly();
+        
+        Logger.LogInformation("Cleared all files from confidential report queue");
+        StateHasChanged();
     }
 
     /// <summary>
@@ -809,28 +1171,8 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
 
         if (confirmed == true)
         {
-            // Clear all form data
-            ConfidentialReport = new ConfidentialReportForm();
-            SelectedFiles = new List<IBrowserFile>();
-            AttachedFiles.Clear();
-            
-            // Reset UI state
-            ShowPreview = false;
-            ShowSubmissionConfirmation = false;
-            ShowFinalSuccessConfirmation = false;
-            
             InitializeFormDefaults();
             StateHasChanged();
-            
-            // Clear the form changed flag to prevent navigation warnings
-            try
-            {
-                await JSRuntime.InvokeVoidAsync("clearFormChanged");
-            }
-            catch (Exception jsEx)
-            {
-                Logger.LogWarning(jsEx, "Could not clear form changed flag via JavaScript during form clear");
-            }
             
             NotificationService.Notify(new NotificationMessage
             {
@@ -840,202 +1182,6 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                 Duration = 2000
             });
         }
-    }
-
-    #endregion
-
-    #region Map/Location Methods
-
-    /// <summary>
-    /// Open map selector modal
-    /// </summary>
-    public async Task OpenMapSelector()
-    {
-        ShowMapModal = true;
-        StateHasChanged();
-        
-        // Give DOM time to render the modal
-        await Task.Delay(300);
-        
-        // Always try to initialize the map when modal opens
-        if (_mapModule != null)
-        {
-            try
-            {
-                // Always reinitialize the map since the DOM element is recreated
-                await _mapModule.InvokeVoidAsync("initializeMap", 
-                    AirportCenterLatitude, AirportCenterLongitude, DefaultZoomLevel, _dotNetRef);
-                
-                Logger.LogInformation("Map reinitialized for confidential modal opening");
-                
-                // Restore existing location if we have one
-                if (HasGeoLocation)
-                {
-                    await Task.Delay(100); // Give map time to initialize
-                    
-                    await _mapModule.InvokeVoidAsync("setLocationFromCoordinates",
-                        (double)SelectedGeoLocation.Latitude, (double)SelectedGeoLocation.Longitude,
-                        SelectedGeoLocation.Description);
-                    
-                    // Update the form fields to match the restored location
-                    SelectedLatitude = SelectedGeoLocation.Latitude;
-                    SelectedLongitude = SelectedGeoLocation.Longitude;
-                    LocationDescription = SelectedGeoLocation.Description ?? "";
-                    
-                    Logger.LogInformation("Existing location restored: {Lat}, {Lng}", 
-                        SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
-                    
-                    StateHasChanged();
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Error initializing map in OpenMapSelector");
-                
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Warning,
-                    Summary = "Map Error",
-                    Detail = "Could not initialize map. Please try refreshing the page.",
-                    Duration = 5000
-                });
-            }
-        }
-        
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Info,
-            Summary = "Map Selector",
-            Detail = "Click on the map to select the hazard location.",
-            Duration = 3000
-        });
-    }
-
-    /// <summary>
-    /// Close map selector modal
-    /// </summary>
-    public void CloseMapSelector()
-    {
-        ShowMapModal = false;
-        // Don't reset map initialization state here to preserve the pin
-        StateHasChanged();
-    }
-
-    /// <summary>
-    /// Get current location
-    /// </summary>
-    public async Task GetCurrentLocation()
-    {
-        if (_mapModule != null)
-        {
-            try
-            {
-                await _mapModule.InvokeVoidAsync("getCurrentLocation");
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Error getting current location");
-                
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Location Error",
-                    Detail = "Unable to get current location. Please check your device settings.",
-                    Duration = 3000
-                });
-            }
-        }
-    }
-
-    /// <summary>
-    /// Clear map selection
-    /// </summary>
-    public async Task ClearMapSelection()
-    {
-        SelectedLatitude = 0;
-        SelectedLongitude = 0;
-        LocationDescription = string.Empty;
-        SelectedGeoLocation = new GeoLocationData();
-        ConfidentialReport.Location = "";
-        
-        if (_mapModule != null)
-        {
-            try
-            {
-                await _mapModule.InvokeVoidAsync("clearSelection");
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning(ex, "Error clearing map selection");
-            }
-        }
-        
-        StateHasChanged();
-        
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Info,
-            Summary = "Selection Cleared",
-            Detail = "Map selection has been cleared.",
-            Duration = 2000
-        });
-    }
-
-    /// <summary>
-    /// Use selected location from map
-    /// </summary>
-    public async Task UseSelectedLocation()
-    {
-        if (!HasValidCoordinates)
-        {
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Warning,
-                Summary = "No Location Selected",
-                Detail = "Please click on the map to select a location first.",
-                Duration = 3000
-            });
-            return;
-        }
-
-        // Set the geolocation data
-        SelectedGeoLocation = new GeoLocationData
-        {
-            Latitude = SelectedLatitude,
-            Longitude = SelectedLongitude,
-            Description = string.IsNullOrEmpty(LocationDescription) ? 
-                $"Map Location ({SelectedLatitude:F6}, {SelectedLongitude:F6})" : LocationDescription,
-            SelectedDateTime = DateTime.UtcNow
-        };
-
-        // Update the form location to indicate map location is selected
-        ConfidentialReport.Location = "MAP_LOCATION";
-        
-        ShowMapModal = false;
-        StateHasChanged();
-        
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Location Set",
-            Detail = $"Location selected: {GeoLocationDisplay}",
-            Duration = 3000
-        });
-    }
-
-    /// <summary>
-    /// JavaScript callback for map location selection
-    /// </summary>
-    [JSInvokable]
-    public async Task OnMapLocationSelected(double latitude, double longitude, string description)
-    {
-        SelectedLatitude = (decimal)latitude;
-        SelectedLongitude = (decimal)longitude;
-        LocationDescription = description;
-        
-        await InvokeAsync(StateHasChanged);
-        
-        Logger.LogInformation("Map location selected: {Lat}, {Lng}, {Desc}", latitude, longitude, description);
     }
 
     #endregion

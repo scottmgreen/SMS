@@ -22,12 +22,12 @@
             <RadzenCard Variant="Variant.Outlined">
                 <!-- Card Header Section -->
                 <RadzenStack Gap="0.5rem" Style="padding: 0.5rem;">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="border-bottom: 1px solid var(--rz-border-color); padding-bottom: 1rem;">
+                    @* <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="border-bottom: 1px solid var(--rz-border-color); padding-bottom: 1rem;">
                         <RadzenIcon Icon="assignment" Style="color: var(--rz-primary);" />
                         <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
                             SMS Report Validation Decision
                         </RadzenText>
-                    </RadzenStack>
+                    </RadzenStack> *@
 
                     <!-- Report Description Display with Metadata in 3 Columns -->
                     <RadzenCard Variant="Variant.Outlined" Style="background: var(--rz-base-50);">
@@ -48,11 +48,11 @@
 
                                 <!-- Column 2: Field Labels -->
                                 <RadzenColumn Size="12" SizeLG="3">
-                                    <RadzenStack Gap="0.75rem">
+                                    <RadzenStack Gap="0.25rem">
                                         <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;">Report Code:</RadzenText>
                                         <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;">Status:</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;">Created On:</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;">Created By:</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;">Observed On:</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;">Reported By:</RadzenText>
                                         @if (IsUpdate)
                                         {
                                             <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;">Validation Code:</RadzenText>
@@ -62,11 +62,11 @@
 
                                 <!-- Column 3: Field Values -->
                                 <RadzenColumn Size="12" SizeLG="3">
-                                    <RadzenStack Gap="0.75rem" AlignItems="AlignItems.Start">
+                                    <RadzenStack Gap="0.25rem" AlignItems="AlignItems.Start">
                                         <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@(ReportId ?? "N/A")</RadzenText>
                                         <RadzenBadge BadgeStyle="@GetStatusBadgeStyle()" Text="@CurrentStatus" />
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@(ReportDetails?.CreatedDate?.ToString("MM/dd/yyyy HH:mm") ?? "N/A")</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@(ReportDetails?.CreatedBy ?? "N/A")</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@(ReportDetails?.ReportedOn.ToString("MM/dd/yyyy HH:mm") ?? "N/A")</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@(ReportDetails?.ReportedBy ?? "N/A")</RadzenText>
                                         @if (IsUpdate)
                                         {
                                             <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@ValidationCode</RadzenText>

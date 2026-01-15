@@ -2,22 +2,21 @@
 @using SMS3.Components.Layout
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
-@inject AuthenticationService AuthService
-@inject NavigationManager Navigation
+
 
 <div class="d-flex flex-column min-vh-100 sms-main-layout">
     <!-- Cascading Authentication State to all child components -->
-    <CascadingValue Value="@AuthService.AuthState" Name="AuthState">
+    <CascadingValue Value="@AuthService" Name="AuthService">
         <!-- Horizontal Navigation -->
         <header class="sms-main-header">
-            <NavMenu OnLogoutRequested="@HandleLogout" />
+            <NavMenu OnLogoutRequested="@OnLogoutRequested" />
         </header>
-
+        
         <!-- Main Content Area -->
         <main class="flex-grow-1 sms-main-content">
-            <div class="container-fluid py-3">
+            <article class="content px-4">
                 @Body
-            </div>
+            </article>
         </main>
     </CascadingValue>
 </div>
@@ -38,30 +37,20 @@
 </div>
 
 @code {
-    protected override void OnInitialized()
-    {
-        // Subscribe to auth state changes with proper async handling
-        AuthService.OnAuthStateChanged(async () => {
-            await InvokeAsync(StateHasChanged);
-        });
-    }
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private IWebHostEnvironment Environment { get; set; } = default!;
 
     /// <summary>
-    /// Handle logout - called by NavMenu
+    /// Handle logout request from NavMenu
     /// </summary>
-    public void HandleLogout()
+    private async Task OnLogoutRequested()
     {
+        // Clear authentication
         AuthService.ClearAuthentication();
         
-        // Navigate to login after clearing authentication
-        Navigation.NavigateTo("/Login", forceLoad: true);
-    }
-
-    public void Dispose()
-    {
-        // Note: We can't easily remove the callback since it's a lambda
-        // In a production app, you might want to store the callback reference
-        // For now, this is acceptable since MainLayout lives for the app lifetime
+        // Navigate to login page
+        Navigation.NavigateTo("/login", forceLoad: true);
     }
 }
 

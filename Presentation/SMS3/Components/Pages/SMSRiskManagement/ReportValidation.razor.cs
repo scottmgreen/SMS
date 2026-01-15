@@ -556,7 +556,7 @@ public partial class ReportValidation : ComponentBase
         {
             "Completed" => BadgeStyle.Success,
             "Draft" => BadgeStyle.Warning,
-            _ => BadgeStyle.Info
+            _ => BadgeStyle.Success
         };
     }
 

@@ -1,165 +1,118 @@
 @inherits LayoutComponentBase
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <base href="/" />
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
-    <!-- SMS COLOR SYSTEM - EXACT PALETTE COMPLIANCE -->
-    <link rel="stylesheet" href="css/sms-colors.css" />
-    
-    <!-- Global App CSS -->
-    <link rel="stylesheet" href="app.css" />
-    
-    <!-- Radzen Theme -->
-    <RadzenTheme Theme="material" />
-    
-    <title>Anonymous Confidential Reporting - SMS3</title>
-</head>
+<div class="sms-anonymous-layout">
+    <!-- SMS Header - Uses shared navigation styling -->
+    <nav class="navbar navbar-expand-lg sms-nav">
+        <div class="container-fluid">
+            <a class="navbar-brand sms-brand" href="/">
+                <i class="fas fa-plane-departure me-2"></i>
+                PDX SMS
+            </a>
+            <div class="navbar-text sms-anonymous-subtitle">
+                <small>Anonymous Confidential Reporting</small>
+            </div>
+            <!-- Security Notice for Anonymous Users -->
+            <div class="navbar-text sms-anonymous-notice">
+                <small>
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Secure Anonymous Session
+                </small>
+            </div>
+        </div>
+    </nav>
 
-<body class="sms-anonymous-body">
-    <div class="sms-anonymous-layout">
-        <!-- SMS Header - Uses shared navigation styling -->
-        <nav class="navbar navbar-expand-lg sms-nav">
-            <div class="container-fluid">
-                <a class="navbar-brand sms-brand" href="/">
-                    <i class="fas fa-plane-departure me-2"></i>
-                    PDX SMS
-                </a>
-                <div class="navbar-text sms-anonymous-subtitle">
-                    <small>Anonymous Confidential Reporting</small>
-                </div>
-                <!-- Security Notice for Anonymous Users -->
-                <div class="navbar-text sms-anonymous-notice">
+    <!-- Main Content -->
+    <main class="sms-anonymous-container">
+        @Body
+    </main>
+
+    <!-- Security Footer for Anonymous Users -->
+    <footer class="sms-anonymous-footer">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6">
                     <small>
-                        <i class="fas fa-shield-alt me-1"></i>
-                        Secure Anonymous Session
+                        <i class="fas fa-lock me-1"></i>
+                        This is an anonymous session. Your identity is protected and no login information is stored.
                     </small>
                 </div>
-            </div>
-        </nav>
-
-        <!-- Main Content -->
-        <main class="sms-anonymous-container">
-            @Body
-        </main>
-
-        <!-- Security Footer for Anonymous Users -->
-        <footer class="sms-anonymous-footer">
-            <div class="container-fluid">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <small>
-                            <i class="fas fa-lock me-1"></i>
-                            This is an anonymous session. Your identity is protected and no login information is stored.
-                        </small>
-                    </div>
-                    <div class="col-md-3 text-center">
-                        <small>
-                            Need help? Call: <strong>(503) 555-0199</strong>
-                        </small>
-                    </div>
-                    <div class="col-md-3 text-end">
-                        <a href="/login" class="btn btn-outline-light btn-sm">
-                            <i class="fas fa-sign-in-alt me-1"></i>
-                            Return to Login
-                        </a>
-                    </div>
+                <div class="col-md-3 text-center">
+                    <small>
+                        Need help? Call: <strong>(503) 555-0199</strong>
+                    </small>
+                </div>
+                <div class="col-md-3 text-end">
+                    <a href="/login" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-sign-in-alt me-1"></i>
+                        Return to Login
+                    </a>
                 </div>
             </div>
-        </footer>
-    </div>
-
-    <!-- Radzen Dialog Components - Required for dialogs to work -->
-    <RadzenDialog />
-    <RadzenNotification />
-    <RadzenTooltip />
-    <RadzenContextMenu />
-
-    <div id="blazor-error-ui" class="sms-error-ui">
-        <div class="sms-error-content">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            An unhandled error has occurred.
-            <a href="" class="reload sms-error-reload">Reload</a>
-            <a class="dismiss sms-error-dismiss">??</a>
         </div>
-    </div>
+    </footer>
+</div>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
-    <script src="_framework/blazor.web.js"></script>
-    
-    <!-- Anonymous Session Security Script -->
-    <script type="text/javascript">
-        // Anonymous session security and form protection - only initialize once
-        (function() {
-            'use strict';
+<!-- Anonymous Session Security Script -->
+<script type="text/javascript">
+    // Anonymous session security and form protection - only initialize once
+    (function() {
+        'use strict';
+        
+        // Check if already initialized to prevent double initialization
+        if (window.anonymousSessionInitialized) {
+            return;
+        }
+        
+        // Mark as initialized immediately
+        window.anonymousSessionInitialized = true;
+        
+        // Wait for DOM to be fully loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeAnonymousSession);
+        } else {
+            // DOM already loaded
+            initializeAnonymousSession();
+        }
+        
+        function initializeAnonymousSession() {
+            console.log('Anonymous confidential reporting session started');
             
-            // Check if already initialized to prevent double initialization
-            if (window.anonymousSessionInitialized) {
-                return;
-            }
+            // Form change tracking for navigation warnings
+            let formChanged = false;
             
-            // Wait for DOM to be fully loaded
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initializeAnonymousSession);
-            } else {
-                // DOM already loaded
-                initializeAnonymousSession();
-            }
+            // Monitor form changes
+            document.addEventListener('change', function(e) {
+                if (e.target && e.target.matches && e.target.matches('input, textarea, select')) {
+                    formChanged = true;
+                }
+            }, true);
             
-            function initializeAnonymousSession() {
-                console.log('Anonymous confidential reporting session started');
-                
-                // Mark as initialized
-                window.anonymousSessionInitialized = true;
-                
-                // Form change tracking for navigation warnings
-                let formChanged = false;
-                
-                // Monitor form changes
-                document.addEventListener('change', function(e) {
-                    if (e.target && e.target.matches && e.target.matches('input, textarea, select')) {
-                        formChanged = true;
-                    }
-                }, true);
-                
-                document.addEventListener('input', function(e) {
-                    if (e.target && e.target.matches && e.target.matches('input, textarea')) {
-                        formChanged = true;
-                    }
-                }, true);
-                
-                // Show warning when leaving page if form has been modified
-                window.addEventListener('beforeunload', function(e) {
-                    if (formChanged) {
-                        const message = 'You have unsaved changes in your confidential report. Are you sure you want to leave?';
-                        e.preventDefault();
-                        e.returnValue = message;
-                        return message;
-                    }
-                });
-                
-                // Global function to clear form changed flag when form is submitted successfully
-                window.clearFormChanged = function() {
-                    formChanged = false;
-                };
-                
-                // Initialize complete
-                console.log('Anonymous session security initialized');
-            }
-        })();
-    </script>
-</body>
+            document.addEventListener('input', function(e) {
+                if (e.target && e.target.matches && e.target.matches('input, textarea')) {
+                    formChanged = true;
+                }
+            }, true);
+            
+            // Show warning when leaving page if form has been modified
+            window.addEventListener('beforeunload', function(e) {
+                if (formChanged) {
+                    const message = 'You have unsaved changes in your confidential report. Are you sure you want to leave?';
+                    e.preventDefault();
+                    e.returnValue = message;
+                    return message;
+                }
+            });
+            
+            // Global function to clear form changed flag when form is submitted successfully
+            window.clearFormChanged = function() {
+                formChanged = false;
+            };
+            
+            // Initialize complete
+            console.log('Anonymous session security initialized');
+        }
+    })();
+</script>
 
 <style>
 /* =============================================================================
@@ -167,7 +120,7 @@
    Navigation styling is shared from app.css
    ============================================================================= */
 
-.sms-anonymous-body {
+body.sms-anonymous-body {
     margin: 0;
     padding: 0;
     min-height: 100vh;
@@ -318,38 +271,9 @@
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Responsive Design */
-@@media (max-width: 768px) {
-    .sms-nav .container-fluid {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .sms-anonymous-notice {
-        margin-left: 0 !important;
-        margin-top: 0.5rem;
-    }
-    
-    .sms-anonymous-footer .row {
-        text-align: center !important;
-        flex-direction: column;
-    }
-    
-    .sms-anonymous-footer .col-md-6,
-    .sms-anonymous-footer .col-md-3 {
-        text-align: center !important;
-        margin-top: 0.5rem;
-    }
-    
-    .sms-anonymous-footer .btn-outline-light {
-        margin-top: 0.75rem;
-    }
-}
-
 /* Content Area Styling - WHITE BACKGROUND SUPPORT */
 .sms-anonymous-container .container-fluid {
     max-width: 1400px;
     background: white !important;
 }
 </style>
-</html>

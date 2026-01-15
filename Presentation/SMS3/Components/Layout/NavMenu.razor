@@ -2,14 +2,17 @@
 @using Microsoft.AspNetCore.Components.Web
 @using SMS_Application.Interfaces
 @using SMS_Domain.Enums
+@using SMS_Domain.Entities
 @using SMS3.Components.Layout
+@using SMS3.Components.Shared
 @using Radzen
 @using Radzen.Blazor
 @inject IJSRuntime JSRuntime
 @inject ILogger<NavMenu> Logger
 @inject NavigationManager Navigation
+@inject Radzen.DialogService DialogService
 
-<!-- SMS Navigation with Radzen Components -->
+<!-- SMS Navigation with FULL Original Menu Structure -->
 <nav class="navbar navbar-expand-lg sms-nav">
     <div class="container-fluid">
         <!-- Brand Logo -->
@@ -25,33 +28,29 @@
 
         <!-- Navigation Links -->
         <div class="collapse navbar-collapse" id="navbarNav">
-            @if (AuthState?.IsAuthenticated == true)
+            @if (AuthService?.IsAuthenticated == true)
             {
                 <div class="navbar-nav me-auto d-flex flex-row align-items-center">
                     <!-- Dashboard -->
-                    <div class="nav-item me-3">
-                        <a class="nav-link sms-nav-link" href="/dashboard">
-                            <i class="fas fa-tachometer-alt me-1"></i> Dashboard
-                        </a>
-                    </div>
+                    
 
                     <!-- SMS Risk Management Menu -->
-                    <div class="nav-item me-3">
-                        <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
-                            <RadzenMenuItem Text="SMS Risk Management" Icon="shield" class="sms-menu-item">
-                                <RadzenMenuItem Text="Create Hazard Report" Path="/SMSRiskManagement/HazardReporting" Icon="add_circle"></RadzenMenuItem>
-                               @*  <RadzenMenuItem Text="Reports" Path="/SMSRiskManagement/Reports" Icon="assignment"></RadzenMenuItem> *@
-                                <RadzenMenuItem Text="Report Processing" Path="/SMSRiskManagement/ReportProcessing" Icon="settings"></RadzenMenuItem>
-                               @*  <RadzenMenuItem Text="Hazards" Path="/SMSRiskManagement/Hazards" Icon="warning"></RadzenMenuItem> *@
-                                <!-- Investigations -->
-                                <RadzenMenuItem Text="Investigate" Icon="search">
-                                    <RadzenMenuItem Text="Active Investigations" Path="/Listings/Investigations" Icon="assignment"></RadzenMenuItem>
-                                    <RadzenMenuItem Text="Interview Calendar" Path="/SMSRiskManagement/InterviewCalendar" Icon="diversity_3"></RadzenMenuItem>
+                    @if (AuthService.User.CanAccess("SMS_RiskManagement"))
+                    {
+                        <div class="nav-item me-3">
+                            <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
+                                <RadzenMenuItem Text="SMS Risk Management" Icon="shield" class="sms-menu-item">
+                                    <RadzenMenuItem Text="Create Hazard Report" Path="/SMSRiskManagement/HazardReporting" Icon="add_circle"></RadzenMenuItem>
+                                    <RadzenMenuItem Text="Report Processing" Path="/SMSRiskManagement/ReportProcessing" Icon="settings"></RadzenMenuItem>
+                                    <!-- Investigations -->
+                                    <RadzenMenuItem Text="Investigate" Icon="search">
+                                        <RadzenMenuItem Text="Active Investigations" Path="/Listings/Investigations" Icon="assignment"></RadzenMenuItem>
+                                        <RadzenMenuItem Text="Interview Calendar" Path="/SMSRiskManagement/InterviewCalendar" Icon="diversity_3"></RadzenMenuItem>
+                                    </RadzenMenuItem>
                                 </RadzenMenuItem>
-
-                            </RadzenMenuItem>
-                        </RadzenMenu>
-                    </div>
+                            </RadzenMenu>
+                        </div>
+                    }
 
                     <!-- Listings Menu -->
                     <div class="nav-item me-3">
@@ -74,40 +73,48 @@
                     </div>
 
                     <!-- SMS Assurance Menu -->
-                    <div class="nav-item me-3">
-                        <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
-                            <RadzenMenuItem Text="SMS Assurance" Icon="verified_user" class="sms-menu-item">
-                                <RadzenMenuItem Text="SPI Dashboard" Path="/SMSAssurance/SPIDashboard" Icon="dashboard"></RadzenMenuItem>
-                                <RadzenMenuItem Text="SPI Configuration" Path="/SMSAssurance/SPIConfiguration" Icon="settings"></RadzenMenuItem>
-                                <RadzenMenuItem Text="Audit Management" Path="/SMSAssurance/AuditManagement" Icon="assignment"></RadzenMenuItem>
-                                <RadzenMenuItem Text="Audit Calendar" Path="/SMSAssurance/AuditCalendar" Icon="event"></RadzenMenuItem>
-                                <RadzenMenuItem Text="Audit Workflow Demo" Path="/SMSAssurance/AuditWorkflowDemo" Icon="trending_up"></RadzenMenuItem>
-                                <!-- Add more pages as they are implemented -->
-                            </RadzenMenuItem>
-                        </RadzenMenu>
-                    </div>
+                    @if (AuthService.User.CanAccess("SMS_Assurance"))
+                    {
+                        <div class="nav-item me-3">
+                            <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
+                                <RadzenMenuItem Text="SMS Assurance" Icon="verified_user" class="sms-menu-item">
+                                    <RadzenMenuItem Text="SPI Dashboard" Path="/SMSAssurance/SPIDashboard" Icon="dashboard"></RadzenMenuItem>
+                                    <RadzenMenuItem Text="SPI Configuration" Path="/SMSAssurance/SPIConfiguration" Icon="settings"></RadzenMenuItem>
+                                    <RadzenMenuItem Text="Audit Management" Path="/SMSAssurance/AuditManagement" Icon="assignment"></RadzenMenuItem>
+                                    <RadzenMenuItem Text="Audit Calendar" Path="/SMSAssurance/AuditCalendar" Icon="event"></RadzenMenuItem>
+                                    <RadzenMenuItem Text="Audit Workflow Demo" Path="/SMSAssurance/AuditWorkflowDemo" Icon="trending_up"></RadzenMenuItem>
+                                </RadzenMenuItem>
+                            </RadzenMenu>
+                        </div>
+                    }
 
                     <!-- SMS Policy Menu -->
-                    <div class="nav-item me-3">
-                        <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
-                            <RadzenMenuItem Text="SMS Policy" Icon="policy" class="sms-menu-item">
-                                <RadzenMenuItem Text="Safety Policy" Path="/SMSPolicy/SafetyPolicy" Icon="description"></RadzenMenuItem>
-                                <RadzenMenuItem Text="Organizational Structure" Path="/SMSPolicy/OrganizationalStructure" Icon="account_tree"></RadzenMenuItem>
-                            </RadzenMenuItem>
-                        </RadzenMenu>
-                    </div>
+                    @if (AuthService.User.CanAccess("SMS_Policy"))
+                    {
+                        <div class="nav-item me-3">
+                            <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
+                                <RadzenMenuItem Text="SMS Policy" Icon="policy" class="sms-menu-item">
+                                    <RadzenMenuItem Text="Safety Policy" Path="/SMSPolicy/SafetyPolicy" Icon="description"></RadzenMenuItem>
+                                    <RadzenMenuItem Text="Organizational Structure" Path="/SMSPolicy/OrganizationalStructure" Icon="account_tree"></RadzenMenuItem>
+                                </RadzenMenuItem>
+                            </RadzenMenu>
+                        </div>
+                    }
 
                     <!-- SMS Promotion Menu -->
-                    <div class="nav-item me-3">
-                        <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
-                            <RadzenMenuItem Text="SMS Promotion" Icon="trending_up" class="sms-menu-item">
-                                <!-- Add pages when they exist -->
-                            </RadzenMenuItem>
-                        </RadzenMenu>
-                    </div>
+                    @if (AuthService.User.CanAccess("SMS_Promotion"))
+                    {
+                        <div class="nav-item me-3">
+                            <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
+                                <RadzenMenuItem Text="SMS Promotion" Icon="trending_up" class="sms-menu-item">
+                                    <!-- Add pages when they exist -->
+                                </RadzenMenuItem>
+                            </RadzenMenu>
+                        </div>
+                    }
 
                     <!-- System Administration Menu -->
-                    @if (AuthState.HasAdministrativeAccess())
+                    @if (AuthService.User.HasAdministrativeAccess())
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
@@ -118,14 +125,14 @@
                                         <RadzenMenuItem Text="Stakeholder Users" Path="/System/UserManagement/StakeholderUsers" Icon="group"></RadzenMenuItem>
                                         <RadzenMenuItem Text="Organizational Users" Path="/System/UserManagement/OrganizationalUsers" Icon="corporate_fare"></RadzenMenuItem>
                                     </RadzenMenuItem>
-                                    
+
                                     <!-- User Groups -->
                                     <RadzenMenuItem Text="User Groups" Icon="groups">
                                         <RadzenMenuItem Text="Application Groups" Path="/System/UserGroups/ApplicationGroups" Icon="corporate_fare"></RadzenMenuItem>
                                         <RadzenMenuItem Text="Stakeholder Groups" Path="/System/UserGroups/StakeholderGroups" Icon="diversity_3"></RadzenMenuItem>
                                         <RadzenMenuItem Text="Organizational Groups" Path="/System/UserGroups/OrganizationalGroups" Icon="diversity_3"></RadzenMenuItem>
                                     </RadzenMenuItem>
-                                    
+
                                     <!-- User Roles -->
                                     <RadzenMenuItem Text="User Roles" Icon="admin_panel_settings">
                                         <RadzenMenuItem Text="User Roles" Path="/System/UserRoles/UserRoles" Icon="badge"></RadzenMenuItem>
@@ -136,46 +143,59 @@
                     }
 
                     <!-- Analytics -->
-                    <div class="nav-item me-3">
-                        <a class="nav-link sms-nav-link" href="/Reports">
-                            <i class="fas fa-chart-bar me-1"></i> Analytics
-                        </a>
-                    </div>
+                   
                 </div>
 
-                <!-- User Profile Menu using RadzenProfileMenu -->
-                <div class="navbar-nav ms-auto">
+                <!-- User Profile Section with Session Info -->
+                <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                    <!-- Session Timer -->
+                    <div class="nav-item me-3">
+                        <span class="text-white small">Session: @SessionDurationDisplay</span>
+                    </div>
+
+                    <!-- User Profile Menu -->
                     <div class="nav-item">
                         <RadzenProfileMenu class="sms-profile-menu">
                             <Template>
-                                <div class="d-flex align-items-center p-2">
-                                    @if (!string.IsNullOrEmpty(AuthState.Email))
+                                <div class="d-flex align-items-center p-2 user-profile-template" style="cursor: pointer;">
+                                    @if (!string.IsNullOrEmpty(AuthService.User.Email))
                                     {
-                                        <RadzenGravatar Email="@AuthState.Email" class="me-2" Size="32" />
+                                        <RadzenGravatar Email="@AuthService.User.Email" class="me-2" Size="32" />
                                     }
                                     else
                                     {
                                         <RadzenIcon Icon="account_circle" class="me-2" Style="font-size: 32px; color: white;" />
                                     }
                                     <div class="d-flex flex-column align-items-start">
-                                        <small class="mb-0 fw-bold" style="color: white;">@AuthState.DisplayName</small>
-                                        <small style="color: white; opacity: 0.7;">@AuthState.UserType User</small>
+                                        <small class="mb-0 fw-bold text-white">@AuthService.CurrentUserDisplayName</small>
+                                        <small class="text-white opacity-75">@AuthService.User.UserType User</small>
                                     </div>
                                 </div>
                             </Template>
                             <ChildContent>
-                                <RadzenProfileMenuItem Text="Profile" Path="/Profile" Icon="person" />
+                                <!-- CUSTOM USER PROFILE MODAL TRIGGER -->
+                                <div class="rz-menuitem">
+                                    <RadzenButton Text="My Profile & Permissions"
+                                                  Icon="account_circle"
+                                                  ButtonStyle="ButtonStyle.Base"
+                                                  Variant="Variant.Text"
+                                                  Click="@ShowUserProfileModal"
+                                                  Style="width: 100%; justify-content: flex-start;" />
+                                </div>
+                                <div class="rz-separator"></div>
                                 <RadzenProfileMenuItem Text="My Dashboard" Path="/dashboard" Icon="dashboard" />
                                 <RadzenProfileMenuItem Text="Settings" Path="/Settings" Icon="settings" />
                                 <RadzenProfileMenuItem Text="Help" Path="/Help" Icon="help" />
                                 <RadzenProfileMenuItem Text="About" Path="/About" Icon="info" />
                                 <div class="rz-separator"></div>
-                                <!-- Custom Logout using Radzen structure -->
+                                <!-- Custom Logout -->
                                 <div class="rz-menuitem">
-                                    <a class="logout-menuitem-link " href="javascript:void(0)" @onclick="OnLogoutClick" @onclick:preventDefault="true">
-                                        <i class="fas fa-sign-out-alt me-2"></i>
-                                        Logout
-                                    </a>
+                                    <RadzenButton Text="Logout"
+                                                  Icon="logout"
+                                                  ButtonStyle="ButtonStyle.Danger"
+                                                  Variant="Variant.Text"
+                                                  Click="@OnLogoutClick"
+                                                  Style="width: 100%; justify-content: flex-start;" />
                                 </div>
                             </ChildContent>
                         </RadzenProfileMenu>
@@ -198,23 +218,45 @@
 </nav>
 
 @code {
-    [CascadingParameter(Name = "AuthState")]
-    public AuthenticationState? AuthState { get; set; }
+    [CascadingParameter(Name = "AuthService")]
+    public AuthenticationService AuthService { get; set; } = default!;
 
     [Parameter]
     public EventCallback OnLogoutRequested { get; set; }
+
+    // Session Timer
+    private string SessionDurationDisplay => $"{_sessionDuration:mm\\:ss}";
+    private TimeSpan _sessionDuration = TimeSpan.Zero;
+    private DateTime _sessionStartTime = DateTime.Now;
+    private bool _timerRunning = true;
+    private CancellationTokenSource _cancellationTokenSource = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _sessionStartTime = DateTime.Now;
+        _ = Task.Run(StartSessionTimer);
+    }
+
+    private async Task StartSessionTimer()
+    {
+        try
+        {
+            while (_timerRunning && !_cancellationTokenSource.Token.IsCancellationRequested)
+            {
+                _sessionDuration = DateTime.Now - _sessionStartTime;
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(1000, _cancellationTokenSource.Token);
+            }
+        }
+        catch (OperationCanceledException) { }
+    }
 
     private async Task OnMenuClick(MenuItemEventArgs args)
     {
         if (!string.IsNullOrEmpty(args.Value?.ToString()))
         {
             var value = args.Value.ToString();
-            
-            if (value == "logout")
-            {
-                await Logout();
-            }
-            else if (value.StartsWith("/"))
+            if (value.StartsWith("/"))
             {
                 Navigation.NavigateTo(value);
             }
@@ -223,15 +265,94 @@
 
     private async Task OnLogoutClick()
     {
-        await Logout();
+        await OnLogoutRequested.InvokeAsync();
+        _timerRunning = false;
+        _cancellationTokenSource?.Cancel();
     }
 
-    private async Task Logout()
+    // **🔥 USER PROFILE MODAL - USING COMPONENT**
+    private async Task ShowUserProfileModal()
     {
-        // Trigger logout callback to parent layout - let it handle navigation
-        await OnLogoutRequested.InvokeAsync();
-        
-        // Don't navigate here - let HandleLogout in MainLayout handle it
+        if (AuthService?.IsAuthenticated != true) return;
+
+        var options = new DialogOptions()
+        {
+            Width = "900px",
+            Height = "700px",
+            Resizable = true,
+            Draggable = true,
+            CloseDialogOnOverlayClick = true,
+            ShowTitle = true,
+            ShowClose = true
+        };
+
+        await DialogService.OpenAsync<UserProfileDialog>("User Profile & Permissions",
+            new Dictionary<string, object>()
+            {
+                { "User", AuthService.User },
+                { "SessionDuration", SessionDurationDisplay }
+            },
+            options);
+    }
+
+    public void Dispose()
+    {
+        _timerRunning = false;
+        _cancellationTokenSource?.Cancel();
+        _cancellationTokenSource?.Dispose();
     }
 }
 
+<style>
+    /* SMS Navigation Styling */
+    .sms-nav {
+        background-color: #212e61 !important;
+        padding: 0.75rem 0;
+    }
+
+    .sms-brand {
+        color: white !important;
+        font-weight: 600;
+        font-size: 1.5rem;
+    }
+
+    .sms-brand-icon {
+        color: #fa9a46;
+    }
+
+    .sms-nav-link {
+        color: white !important;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+        transition: background-color 0.2s;
+    }
+
+        .sms-nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white !important;
+        }
+
+    .sms-radzen-menu {
+        background: transparent !important;
+    }
+
+    .sms-menu-item {
+        color: white !important;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+    }
+
+    .user-profile-template:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 0.25rem;
+    }
+
+    .text-white {
+        color: white !important;
+    }
+
+    .opacity-75 {
+        opacity: 0.75;
+    }
+</style>

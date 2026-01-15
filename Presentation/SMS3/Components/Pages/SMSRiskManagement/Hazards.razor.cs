@@ -3,7 +3,6 @@ using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Queries;
 using SMS_Domain.Entities;
 using SMS_Shared.Common;
-using SMS3.Components.Layout;
 using Radzen;
 using Radzen.Blazor;
 
