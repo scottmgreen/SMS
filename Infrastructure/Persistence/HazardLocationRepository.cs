@@ -114,16 +114,16 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
         }
     }
 
-    public async Task<Result<HazardLocation>> GetHazardLocationByCodeAsync(HazardLocationID id, CancellationToken ct = default)
+    public async Task<Result<HazardLocation>> GetHazardLocationByCodeAsync(HazardLocationID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<HazardLocation>.Failure<HazardLocation>(DomainErrors.HazardLocationError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_HazardLocation_GetByCode} {id}", null);
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_HazardLocation_GetByCode} {code}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_HazardLocation_GetByCode, sql)
@@ -131,7 +131,7 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             HazardLocation? response = null;
 
