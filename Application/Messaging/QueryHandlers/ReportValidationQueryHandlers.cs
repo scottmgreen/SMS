@@ -28,7 +28,7 @@ public class GetReportValidationByIdQueryHandler : BaseQueryBundle, IRequestHand
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetReportValidationByIdQuery for ID: {Id}", request.ReportValidationId);
+            _logger.LogApplicationError("Error processing GetReportValidationByIdQuery for ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.NotFound);
         }
     }
@@ -56,24 +56,11 @@ public class GetReportValidationByReportIdQueryHandler : BaseQueryBundle, IReque
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetReportValidationByIdQuery for ID: {Id}", request.ReportId);
+            _logger.LogApplicationError("Error processing GetReportValidationByIdQuery for ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.NotFound);
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 public class GetAllReportValidationsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllReportValidationsQuery, Result<List<ReportValidation>>>
 {
@@ -96,7 +83,7 @@ public class GetAllReportValidationsQueryHandler : BaseQueryBundle, IRequestHand
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllReportValidationsQuery");
+            _logger.LogApplicationError("Error processing GetAllReportValidationsQuery", ApplicationEventIds.Error, ex);
             return Result<List<ReportValidation>>.Failure<List<ReportValidation>>(DomainErrors.ReportError.NullOrEmpty);
         }
     }

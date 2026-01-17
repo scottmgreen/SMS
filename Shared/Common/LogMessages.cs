@@ -10,55 +10,55 @@ namespace SMS_Shared.Configuration;
 public static class LogMessages
 {
 
-    private static readonly Action<ILogger,int, string,  Exception?> _CBTLoggerInformation =
+    private static readonly Action<ILogger,int, string,  Exception?> _SMSLoggerInformation =
             LoggerMessage.Define<int,string >(LogLevel.Information, LoggingEventIds.SMS_ApplicationEventIds.Information, "{message} {CBTEventId} ");
 
-    public static void CBTLogInformation(this ILogger logger, int CBTEventId, string message, params object[] args )
+    public static void SMSLogInformation(this ILogger logger, int CBTEventId, string message, params object[] args )
     {
-        _CBTLoggerInformation(logger, CBTEventId, message,  null);
+        _SMSLoggerInformation(logger, CBTEventId, message,  null);
     }
 
 
-    private static readonly Action<ILogger, string, int, Exception?> _CBTLoggerDebug =
+    private static readonly Action<ILogger, string, int, Exception?> _SMSLoggerDebug =
             LoggerMessage.Define<string, int>(LogLevel.Debug, LoggingEventIds.SMS_ApplicationEventIds.Debug, "{message} {CBTEventId} ");
 
-    public static void CBTLoggerDebug(this ILogger logger, string message, int CBTEventId)
+    public static void SMSLoggerDebug(this ILogger logger, string message, int CBTEventId)
     {
-        _CBTLoggerDebug(logger, message, CBTEventId, null);
+        _SMSLoggerDebug(logger, message, CBTEventId, null);
     }
 
 
-    private static readonly Action<ILogger, string, int, Exception?> _CBTLoggerError =
+    private static readonly Action<ILogger, string, int, Exception?> _SMSLoggerError =
             LoggerMessage.Define<string, int>(LogLevel.Error, LoggingEventIds.SMS_ApplicationEventIds.Error, "{message} {CBTEventId} ");
 
-    public static void CBTLoggerError(this ILogger logger, string message, int CBTEventId)
+    public static void SMSLoggerError(this ILogger logger, string message, int CBTEventId)
     {
-        _CBTLoggerError(logger, message, CBTEventId, null);
+        _SMSLoggerError(logger, message, CBTEventId, null);
     }
 
 
-    private static readonly Action<ILogger, string, int, Exception?> _CBTLoggerNone =
+    private static readonly Action<ILogger, string, int, Exception?> _SMSLoggerNone =
             LoggerMessage.Define<string, int>(LogLevel.None, LoggingEventIds.SMS_ApplicationEventIds.Error, "{message} {CBTEventId} ");
 
-    public static void CBTLoggerNone(this ILogger logger, string message, int CBTEventId)
+    public static void SMSLoggerNone(this ILogger logger, string message, int CBTEventId)
     {
-        _CBTLoggerNone(logger, message, CBTEventId, null);
+        _SMSLoggerNone(logger, message, CBTEventId, null);
     }
 
-    private static readonly Action<ILogger, string, int, Exception?> _CBTLoggerTrace =
+    private static readonly Action<ILogger, string, int, Exception?> _SMSLoggerTrace =
             LoggerMessage.Define<string, int>(LogLevel.Trace, LoggingEventIds.SMS_ApplicationEventIds.Trace, "{message} {CBTEventId} ");
 
-    public static void CBTLoggerTrace(this ILogger logger, string message, int CBTEventId)
+    public static void SMSLoggerTrace(this ILogger logger, string message, int CBTEventId)
     {
-        _CBTLoggerTrace(logger, message, CBTEventId, null);
+        _SMSLoggerTrace(logger, message, CBTEventId, null);
     }
 
-    private static readonly Action<ILogger, string, int, Exception?> _CBTLoggerWarning =
+    private static readonly Action<ILogger, string, int, Exception?> _SMSLoggerWarning =
             LoggerMessage.Define<string, int>(LogLevel.Warning, LoggingEventIds.SMS_ApplicationEventIds.Warning, "{message} {CBTEventId} ");
 
-    public static void CBTLoggerWarning(this ILogger logger, string message, int CBTEventId)
+    public static void SMSLoggerWarning(this ILogger logger, string message, int CBTEventId)
     {
-        _CBTLoggerWarning(logger, message, CBTEventId, null);
+        _SMSLoggerWarning(logger, message, CBTEventId, null);
     }
 
 

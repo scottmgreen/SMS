@@ -9,32 +9,6 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // HAZARD FILE QUERY HANDLERS - Following Exact SMS Pattern
 // =============================================
 
-public class GetHazardFileByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardFileByIdQuery, Result<HazardFile>>
-{
-    private readonly HazardFileDataService _hazardFileDataService;
-    private readonly ILogger<GetHazardFileByIdQueryHandler> _logger;
-
-    public GetHazardFileByIdQueryHandler(HazardFileDataService hazardFileDataService, ILogger<GetHazardFileByIdQueryHandler> logger)
-    {
-        _hazardFileDataService = hazardFileDataService ?? throw new ArgumentNullException(nameof(hazardFileDataService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<HazardFile>> HandleAsync(GetHazardFileByIdQuery request, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Processing GetHazardFileByIdQuery for FileId: {FileId}", request.HazardFileId);
-            var result = await _hazardFileDataService.GetHazardFileByIdAsync(request.HazardFileId, ct).ConfigureAwait(false);
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing GetHazardFileByIdQuery for FileId: {FileId}", request.HazardFileId);
-            return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.NotFound);
-        }
-    }
-}
 
 public class GetHazardFileByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardFileByCodeQuery, Result<HazardFile>>
 {
@@ -57,7 +31,7 @@ public class GetHazardFileByCodeQueryHandler : BaseQueryBundle, IRequestHandler<
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetHazardFileByCodeQuery for Code: {Code}", request.Code);
+            _logger.LogApplicationError("Error processing GetHazardFileByCodeQuery for Code: {Code}", ApplicationEventIds.Error, ex);
             return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.NotFound);
         }
     }
@@ -84,7 +58,7 @@ public class GetHazardFilesByHazardCodeQueryHandler : BaseQueryBundle, IRequestH
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetHazardFilesByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
+            _logger.LogApplicationError("Error processing GetHazardFilesByHazardCodeQuery for HazardCode: {HazardCode}", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<HazardFile>>.Failure<IEnumerable<HazardFile>>(DomainErrors.HazardFileError.NotFound);
         }
     }
@@ -111,7 +85,7 @@ public class GetHazardFilesByReportCodeQueryHandler : BaseQueryBundle, IRequestH
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetHazardFilesByReportCodeQuery for ReportCode: {ReportCode}", request.ReportCode);
+            _logger.LogApplicationError("Error processing GetHazardFilesByReportCodeQuery for ReportCode: {ReportCode}", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<HazardFile>>.Failure<IEnumerable<HazardFile>>(DomainErrors.HazardFileError.NotFound);
         }
     }
@@ -138,7 +112,7 @@ public class GetHazardFileDataQueryHandler : BaseQueryBundle, IRequestHandler<Ge
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetHazardFileDataQuery for Code: {Code}", request.Code);
+            _logger.LogApplicationError("Error processing GetHazardFileDataQuery for Code: {Code}", ApplicationEventIds.Error, ex);
             return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.NotFound);
         }
     }
@@ -165,7 +139,7 @@ public class GetActiveHazardFilesQueryHandler : BaseQueryBundle, IRequestHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetActiveHazardFilesQuery");
+            _logger.LogApplicationError("Error processing GetActiveHazardFilesQuery", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<HazardFile>>.Failure<IEnumerable<HazardFile>>(DomainErrors.HazardFileError.NotFound);
         }
     }
@@ -195,7 +169,7 @@ public class SearchHazardFilesQueryHandler : BaseQueryBundle, IRequestHandler<Se
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing SearchHazardFilesQuery");
+            _logger.LogApplicationError("Error processing SearchHazardFilesQuery", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<HazardFile>>.Failure<IEnumerable<HazardFile>>(DomainErrors.HazardFileError.NotFound);
         }
     }
@@ -224,7 +198,7 @@ public class GetHazardPhotosQueryHandler : BaseQueryBundle, IRequestHandler<GetH
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetHazardPhotosQuery for HazardCode: {HazardCode}", request.HazardCode);
+            _logger.LogApplicationError("Error processing GetHazardPhotosQuery for HazardCode: {HazardCode}", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<HazardFile>>.Failure<IEnumerable<HazardFile>>(DomainErrors.HazardFileError.NotFound);
         }
     }
@@ -251,7 +225,7 @@ public class GetHazardDocumentsQueryHandler : BaseQueryBundle, IRequestHandler<G
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetHazardDocumentsQuery for HazardCode: {HazardCode}", request.HazardCode);
+            _logger.LogApplicationError("Error processing GetHazardDocumentsQuery for HazardCode: {HazardCode}", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<HazardFile>>.Failure<IEnumerable<HazardFile>>(DomainErrors.HazardFileError.NotFound);
         }
     }
@@ -278,7 +252,7 @@ public class GetHazardVideosQueryHandler : BaseQueryBundle, IRequestHandler<GetH
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetHazardVideosQuery for HazardCode: {HazardCode}", request.HazardCode);
+            _logger.LogApplicationError("Error processing GetHazardVideosQuery for HazardCode: {HazardCode}", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<HazardFile>>.Failure<IEnumerable<HazardFile>>(DomainErrors.HazardFileError.NotFound);
         }
     }
@@ -305,7 +279,7 @@ public class GetConfidentialHazardFilesQueryHandler : BaseQueryBundle, IRequestH
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetConfidentialHazardFilesQuery for HazardCode: {HazardCode}", request.HazardCode);
+            _logger.LogApplicationError("Error processing GetConfidentialHazardFilesQuery for HazardCode: {HazardCode}", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<HazardFile>>.Failure<IEnumerable<HazardFile>>(DomainErrors.HazardFileError.NotFound);
         }
     }

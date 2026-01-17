@@ -23,7 +23,7 @@ public class CreateReportCommandHandler : BaseCommandBundle, IRequestHandler<Cre
         {
             if (request?.Report is null)
             {
-                _logger.LogError("CreateReportCommand received with null Report");
+                _logger.LogApplicationError("CreateReportCommand received with null Report", ApplicationEventIds.Error, null);
                 return Result<Report>.Failure<Report>(DomainErrors.ReportError.NullOrEmpty);
             }
 
@@ -38,8 +38,8 @@ public class CreateReportCommandHandler : BaseCommandBundle, IRequestHandler<Cre
             }
             else
             {
-                _logger.LogError("Failed to create Report with Code: {Code}. Error: {Error}",
-                    request.Report.Code, result.Error?.Message);
+                _logger.LogApplicationError("Failed to create Report with Code: {Code}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -51,7 +51,7 @@ public class CreateReportCommandHandler : BaseCommandBundle, IRequestHandler<Cre
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating Report");
+            _logger.LogApplicationError("Unexpected error occurred while creating Report", ApplicationEventIds.Error, ex);
             return Result<Report>.Failure<Report>(DomainErrors.ReportError.CreateFailed);
         }
     }
@@ -74,7 +74,7 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IRequestHandler<Upd
         {
             if (request?.Report is null)
             {
-                _logger.LogError("UpdateReportCommand received with null Report");
+                _logger.LogApplicationError("UpdateReportCommand received with null Report", ApplicationEventIds.Error, null);
                 return Result<Report>.Failure<Report>(DomainErrors.ReportError.NullOrEmpty);
             }
 
@@ -89,8 +89,8 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IRequestHandler<Upd
             }
             else
             {
-                _logger.LogError("Failed to update Report with ID: {Id}. Error: {Error}",
-                    request.Report.Id, result.Error?.Message);
+                _logger.LogApplicationError("Failed to update Report with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -102,7 +102,7 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IRequestHandler<Upd
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating Report with ID: {Id}", request.Report?.Id);
+            _logger.LogApplicationError("Unexpected error occurred while updating Report with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<Report>.Failure<Report>(DomainErrors.ReportError.UpdateFailed);
         }
     }
@@ -125,7 +125,7 @@ public class DeleteReportCommandHandler : BaseCommandBundle, IRequestHandler<Del
         {
             if (request?.ReportId is null)
             {
-                _logger.LogError("DeleteReportCommand received with null ReportId");
+                _logger.LogApplicationError("DeleteReportCommand received with null ReportId", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.ReportError.NullOrEmpty);
             }
 
@@ -139,8 +139,8 @@ public class DeleteReportCommandHandler : BaseCommandBundle, IRequestHandler<Del
             }
             else
             {
-                _logger.LogError("Failed to delete Report with ID: {Id}. Error: {Error}",
-                    request.ReportId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete Report with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -152,7 +152,7 @@ public class DeleteReportCommandHandler : BaseCommandBundle, IRequestHandler<Del
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deleting Report with ID: {Id}", request.ReportId);
+            _logger.LogApplicationError("Unexpected error occurred while deleting Report with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.ReportError.DeleteFailed);
         }
     }

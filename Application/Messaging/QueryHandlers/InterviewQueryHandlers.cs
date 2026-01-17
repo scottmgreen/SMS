@@ -28,7 +28,7 @@ public class GetInterviewByCodeQueryHandler : BaseQueryBundle, IRequestHandler<G
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetInterviewByCodeQuery for Code: {Code}", request.InterviewId);
+            _logger.LogApplicationError("Error processing GetInterviewByCodeQuery for Code: {Code}", ApplicationEventIds.Error, ex);
             return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.NotFound);
         }
     }
@@ -55,7 +55,7 @@ public class GetAllInterviewsQueryHandler : BaseQueryBundle, IRequestHandler<Get
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllInterviewsQuery");
+            _logger.LogApplicationError("Error processing GetAllInterviewsQuery", ApplicationEventIds.Error, ex);
             return Result<List<Interview>>.Failure<List<Interview>>(DomainErrors.InterviewError.NullOrEmpty);
         }
     }

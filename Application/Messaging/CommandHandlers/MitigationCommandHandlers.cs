@@ -23,7 +23,7 @@ public class CreateMitigationCommandHandler : BaseCommandBundle, IRequestHandler
         {
             if (request?.Mitigation is null)
             {
-                _logger.LogError("CreateMitigationCommand received with null Mitigation");
+                _logger.LogApplicationError("CreateMitigationCommand received with null Mitigation", ApplicationEventIds.Error, null);
                 return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.NullOrEmpty);
             }
 
@@ -38,8 +38,8 @@ public class CreateMitigationCommandHandler : BaseCommandBundle, IRequestHandler
             }
             else
             {
-                _logger.LogError("Failed to create Mitigation with Code: {Code}. Error: {Error}",
-                    request.Mitigation.Code, result.Error?.Message);
+                _logger.LogApplicationError("Failed to create Mitigation with Code: {Code}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -51,7 +51,7 @@ public class CreateMitigationCommandHandler : BaseCommandBundle, IRequestHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating Mitigation");
+            _logger.LogApplicationError("Unexpected error occurred while creating Mitigation", ApplicationEventIds.Error, ex);
             return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.CreateFailed);
         }
     }
@@ -74,7 +74,7 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IRequestHandler
         {
             if (request?.Mitigation is null)
             {
-                _logger.LogError("UpdateMitigationCommand received with null Mitigation");
+                _logger.LogApplicationError("UpdateMitigationCommand received with null Mitigation", ApplicationEventIds.Error, null);
                 return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.NullOrEmpty);
             }
 
@@ -89,8 +89,8 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IRequestHandler
             }
             else
             {
-                _logger.LogError("Failed to update Mitigation with ID: {Id}. Error: {Error}",
-                    request.Mitigation.Id, result.Error?.Message);
+                _logger.LogApplicationError("Failed to update Mitigation with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -102,7 +102,7 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IRequestHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating Mitigation with ID: {Id}", request.Mitigation?.Id);
+            _logger.LogApplicationError("Unexpected error occurred while updating Mitigation with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.UpdateFailed);
         }
     }
@@ -125,7 +125,7 @@ public class DeleteMitigationCommandHandler : BaseCommandBundle, IRequestHandler
         {
             if (request?.MitigationId is null)
             {
-                _logger.LogError("DeleteMitigationCommand received with null MitigationId");
+                _logger.LogApplicationError("DeleteMitigationCommand received with null MitigationId", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.MitigationError.NullOrEmpty);
             }
 
@@ -139,8 +139,8 @@ public class DeleteMitigationCommandHandler : BaseCommandBundle, IRequestHandler
             }
             else
             {
-                _logger.LogError("Failed to delete Mitigation with ID: {Id}. Error: {Error}",
-                    request.MitigationId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete Mitigation with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -152,7 +152,7 @@ public class DeleteMitigationCommandHandler : BaseCommandBundle, IRequestHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deleting Mitigation with ID: {Id}", request.MitigationId);
+            _logger.LogApplicationError("Unexpected error occurred while deleting Mitigation with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.MitigationError.DeleteFailed);
         }
     }

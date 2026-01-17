@@ -31,11 +31,7 @@ public class HazardFileDataService : BaseDataService<HazardFileDataService>, IHa
         return _repo.AddAsync(hazardFile, ct);
     }
 
-    public Task<Result<HazardFile>> GetHazardFileByIdAsync(HazardFileID id, CancellationToken ct = default)
-    {
-        return _repo.GetByIdAsync(id, ct);
-    }
-
+    
     public Task<Result<HazardFile>> GetHazardFileByCodeAsync(string code, CancellationToken ct = default)
     {
         return _repo.GetByCodeAsync(code, ct);

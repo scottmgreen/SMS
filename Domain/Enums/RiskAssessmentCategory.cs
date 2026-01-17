@@ -51,18 +51,6 @@ public abstract class RiskAssessmentCategory : BaseEnum<RiskAssessmentCategory>
     #endregion
 
     /// <summary>
-    /// Gets all available risk assessment category values
-    /// </summary>
-    public static IEnumerable<RiskAssessmentCategory> GetAllValues()
-    {
-        return typeof(RiskAssessmentCategory)
-            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
-            .Where(f => f.FieldType == typeof(RiskAssessmentCategory))
-            .Select(f => (RiskAssessmentCategory)f.GetValue(null)!)
-            .Where(rac => rac != null);
-    }
-
-    /// <summary>
     /// Gets categories that use the full SMS process
     /// </summary>
     public static IEnumerable<RiskAssessmentCategory> GetFullProcessCategories()
@@ -87,22 +75,22 @@ public abstract class RiskAssessmentCategory : BaseEnum<RiskAssessmentCategory>
     }
 
     /// <summary>
-    /// Checks if this is a technical assessment category
+    /// Checks if this is a technical assessment
     /// </summary>
     public bool IsTechnical => this == Technical;
 
     /// <summary>
-    /// Checks if this is a preliminary assessment category
+    /// Checks if this is a preliminary assessment
     /// </summary>
     public bool IsPreliminary => this == Preliminary;
 
     /// <summary>
-    /// Gets the completion percentage for a given current step
+    /// Gets the maximum allowed step for this category
     /// </summary>
-    public decimal GetCompletionPercentage(int currentStep)
-    {
-        if (currentStep <= 0) return 0m;
-        if (currentStep >= MaxSteps) return 100m;
-        return (decimal)currentStep / MaxSteps * 100m;
-    }
+    public int GetMaxStep() => MaxSteps;
+
+    /// <summary>
+    /// Checks if this category requires multiple steps
+    /// </summary>
+    public bool IsMultiStep => MaxSteps > 1;
 }

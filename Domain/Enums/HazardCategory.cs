@@ -164,22 +164,22 @@ public abstract class HazardCategory : BaseEnum<HazardCategory>
     /// <summary>
     /// Gets hazard categories that typically require immediate attention
     /// </summary>
-    public static IEnumerable<HazardCategory> GetHighPriorityCategories()
-    {
-        return GetAllValues().Where(hc =>
-            hc == Incident ||
-            hc == HazardousSubstances ||
-            hc == Wildlife);
-    }
+    //public static IEnumerable<HazardCategory> GetHighPriorityCategories()
+    //{
+    //    return GetAllValues().Where(hc =>
+    //        hc == Incident ||
+    //        hc == HazardousSubstances ||
+    //        hc == Wildlife);
+    //}
 
     /// <summary>
     /// Gets hazard categories related to operational changes
     /// </summary>
-    public static IEnumerable<HazardCategory> GetOperationalCategories()
-    {
-        return GetAllValues().Where(hc =>
-            hc == NonStandardOperation ||
-            hc == OperationalChange ||
-            hc == SafetyReview);
-    }
+    //public static IEnumerable<HazardCategory> GetOperationalCategories()
+    //{
+    //    return GetAllValues().Where(hc =>
+    //        hc == NonStandardOperation ||
+    //        hc == OperationalChange ||
+    //        hc == SafetyReview);
+    //}
 }

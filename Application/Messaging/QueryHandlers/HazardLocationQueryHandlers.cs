@@ -12,28 +12,28 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // HAZARD LOCATION QUERY HANDLERS - Following Exact SMS Pattern
 // =============================================
 
-public class GetHazardLocationByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardLocationByIdQuery, Result<HazardLocation>>
+public class GetHazardLocationByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardLocationByCodeQuery, Result<HazardLocation>>
 {
     private readonly HazardLocationDataService _hazardLocationDataService;
-    private readonly ILogger<GetHazardLocationByIdQueryHandler> _logger;
+    private readonly ILogger<GetHazardLocationByCodeQueryHandler> _logger;
 
-    public GetHazardLocationByIdQueryHandler(HazardLocationDataService hazardLocationDataService, ILogger<GetHazardLocationByIdQueryHandler> logger)
+    public GetHazardLocationByCodeQueryHandler(HazardLocationDataService hazardLocationDataService, ILogger<GetHazardLocationByCodeQueryHandler> logger)
     {
         _hazardLocationDataService = hazardLocationDataService ?? throw new ArgumentNullException(nameof(hazardLocationDataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<HazardLocation>> HandleAsync(GetHazardLocationByIdQuery request, CancellationToken ct = default)
+    public async Task<Result<HazardLocation>> HandleAsync(GetHazardLocationByCodeQuery request, CancellationToken ct = default)
     {
         try
         {
             _logger.LogInformation("Processing GetHazardLocationByIdQuery for HazardLocationId: {HazardLocationId}", request.HazardLocationId);
-            var result = await _hazardLocationDataService.GetHazardLocationByIdAsync(request.HazardLocationId, ct).ConfigureAwait(false);
+            var result = await _hazardLocationDataService.GetHazardLocationByCodeAsync(request.HazardLocationId, ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetHazardLocationByIdQuery for HazardLocationId: {HazardLocationId}", request.HazardLocationId);
+            _logger.LogApplicationError("Error processing GetHazardLocationByIdQuery for HazardLocationId: {HazardLocationId}", ApplicationEventIds.Error, ex);
             return Result<HazardLocation>.Failure<HazardLocation>(DomainErrors.HazardLocationError.NotFound);
         }
     }
@@ -60,7 +60,7 @@ public class GetAllHazardLocationsQueryHandler : BaseQueryBundle, IRequestHandle
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllHazardLocationsQuery");
+            _logger.LogApplicationError("Error processing GetAllHazardLocationsQuery", ApplicationEventIds.Error, ex);
             return Result<List<HazardLocation>>.Failure<List<HazardLocation>>(DomainErrors.HazardLocationError.NullOrEmpty);
         }
     }
@@ -87,7 +87,7 @@ public class GetHazardLocationsByHazardCodeQueryHandler : BaseQueryBundle, IRequ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetHazardLocationsByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
+            _logger.LogApplicationError("Error processing GetHazardLocationsByHazardCodeQuery for HazardCode: {HazardCode}", ApplicationEventIds.Error, ex);
             return Result<List<HazardLocation>>.Failure<List<HazardLocation>>(DomainErrors.HazardLocationError.NullOrEmpty);
         }
     }

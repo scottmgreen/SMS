@@ -31,7 +31,7 @@ public class CreateSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<C
         {
             if (request is null)
             {
-                _logger.LogError("CreateSMSAuditCommand received with null request");
+                _logger.LogApplicationError("CreateSMSAuditCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<SMSAudit>.Failure<SMSAudit>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
@@ -58,7 +58,7 @@ public class CreateSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<C
             var validationResult = _auditService.ValidateAudit(audit);
             if (validationResult.IsFailure)
             {
-                _logger.LogError("Audit validation failed: {Error}", validationResult.Error?.Message);
+                _logger.LogApplicationError("Audit validation failed: {Error}", ApplicationEventIds.Error, null);
                 return Result<SMSAudit>.Failure<SMSAudit>(validationResult.Error);
             }
 
@@ -71,7 +71,7 @@ public class CreateSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<C
             }
             else
             {
-                _logger.LogError("Failed to create SMS audit: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create SMS audit: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -83,7 +83,7 @@ public class CreateSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<C
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating SMS audit");
+            _logger.LogApplicationError("Unexpected error occurred while creating SMS audit", ApplicationEventIds.Error, ex);
             return Result<SMSAudit>.Failure<SMSAudit>(new Error("CREATE_FAILED", "Failed to create audit"));
         }
     }
@@ -108,7 +108,7 @@ public class StartSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<St
         {
             if (request is null)
             {
-                _logger.LogError("StartSMSAuditCommand received with null request");
+                _logger.LogApplicationError("StartSMSAuditCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<SMSAudit>.Failure<SMSAudit>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
@@ -118,7 +118,7 @@ public class StartSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<St
            var existingAuditResult = await _auditService.GetAuditByCodeAsync(request.AuditCode, cancellationToken);
             if (existingAuditResult.IsFailure)
             {
-                _logger.LogError("Audit not found: {AuditCode}", request.AuditCode);
+                _logger.LogApplicationError("Audit not found: {AuditCode}", ApplicationEventIds.Error, null);
                 return Result<SMSAudit>.Failure<SMSAudit>(existingAuditResult.Error);
             }
 
@@ -128,7 +128,7 @@ public class StartSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<St
             var startResult = audit.StartAudit(request.StartedBy);
             if (startResult.IsFailure)
             {
-                _logger.LogError("Failed to start audit: {Error}", startResult.Error?.Message);
+                _logger.LogApplicationError("Failed to start audit: {Error}", ApplicationEventIds.Error, null);
                 return Result<SMSAudit>.Failure<SMSAudit>(startResult.Error);
             }
 
@@ -142,7 +142,7 @@ public class StartSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<St
             }
             else
             {
-                _logger.LogError("Failed to save started SMS audit: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to save started SMS audit: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -154,7 +154,7 @@ public class StartSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<St
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while starting SMS audit: {AuditCode}", request?.AuditCode);
+            _logger.LogApplicationError("Unexpected error occurred while starting SMS audit: {AuditCode}", ApplicationEventIds.Error, ex);
             return Result<SMSAudit>.Failure<SMSAudit>(new Error("START_FAILED", "Failed to start audit"));
         }
     }
@@ -182,7 +182,7 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler
         {
             if (request is null)
             {
-                _logger.LogError("CompleteSMSAuditCommand received with null request");
+                _logger.LogApplicationError("CompleteSMSAuditCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<SMSAudit>.Failure<SMSAudit>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
@@ -192,7 +192,7 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler
             var existingAuditResult = await _auditService.GetAuditByCodeAsync(request.AuditCode, cancellationToken, includeFindings: true);
             if (existingAuditResult.IsFailure)
             {
-                _logger.LogError("Audit not found: {AuditCode}", request.AuditCode);
+                _logger.LogApplicationError("Audit not found: {AuditCode}", ApplicationEventIds.Error, null);
                 return Result<SMSAudit>.Failure<SMSAudit>(existingAuditResult.Error);
             }
 
@@ -202,7 +202,7 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler
             var completeResult = audit.CompleteAudit(request.CompletedBy, request.AuditSummary, request.KeyFindings);
             if (completeResult.IsFailure)
             {
-                _logger.LogError("Failed to complete audit: {Error}", completeResult.Error?.Message);
+                _logger.LogApplicationError("Failed to complete audit: {Error}", ApplicationEventIds.Error, null);
                 return Result<SMSAudit>.Failure<SMSAudit>(completeResult.Error);
             }
 
@@ -223,7 +223,7 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler
             }
             else
             {
-                _logger.LogError("Failed to save completed SMS audit: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to save completed SMS audit: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -235,7 +235,7 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while completing SMS audit: {AuditCode}", request?.AuditCode);
+            _logger.LogApplicationError("Unexpected error occurred while completing SMS audit: {AuditCode}", ApplicationEventIds.Error, ex);
             return Result<SMSAudit>.Failure<SMSAudit>(new Error("COMPLETE_FAILED", "Failed to complete audit"));
         }
     }
@@ -304,14 +304,14 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler
                     }
                     else
                     {
-                        _logger.LogError("Failed to save completed audit plan {AuditPlanCode}: {Error}", 
-                            auditPlanCode, updatePlanResult.Error?.Message);
+                        _logger.LogApplicationError("Failed to save completed audit plan {AuditPlanCode}: {Error}", 
+                            ApplicationEventIds.Error, null);
                     }
                 }
                 else
                 {
-                    _logger.LogError("Failed to complete audit plan {AuditPlanCode}: {Error}", 
-                        auditPlanCode, completePlanResult.Error?.Message);
+                    _logger.LogApplicationError("Failed to complete audit plan {AuditPlanCode}: {Error}", 
+                        ApplicationEventIds.Error, null);
                 }
             }
             else
@@ -347,7 +347,7 @@ public class AddSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHandl
         {
             if (request is null)
             {
-                _logger.LogError("AddSMSAuditFindingCommand received with null request");
+                _logger.LogApplicationError("AddSMSAuditFindingCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
@@ -357,7 +357,7 @@ public class AddSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHandl
             var existingAuditResult = await _auditService.GetAuditByCodeAsync(request.AuditCode, cancellationToken, includeFindings: true);
             if (existingAuditResult.IsFailure)
             {
-                _logger.LogError("Audit not found: {AuditCode}", request.AuditCode);
+                _logger.LogApplicationError("Audit not found: {AuditCode}", ApplicationEventIds.Error, null);
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(existingAuditResult.Error);
             }
 
@@ -367,7 +367,7 @@ public class AddSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHandl
             var addFindingResult = audit.AddFinding(request.FindingDescription, request.Severity, request.FoundBy);
             if (addFindingResult.IsFailure)
             {
-                _logger.LogError("Failed to add finding to audit: {Error}", addFindingResult.Error?.Message);
+                _logger.LogApplicationError("Failed to add finding to audit: {Error}", ApplicationEventIds.Error, null);
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(addFindingResult.Error);
             }
 
@@ -384,7 +384,7 @@ public class AddSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHandl
             var updateResult = await _auditService.UpdateAuditAsync(audit, cancellationToken);
             if (updateResult.IsFailure)
             {
-                _logger.LogError("Failed to save audit with new finding: {Error}", updateResult.Error?.Message);
+                _logger.LogApplicationError("Failed to save audit with new finding: {Error}", ApplicationEventIds.Error, null);
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(updateResult.Error);
             }
 
@@ -406,7 +406,7 @@ public class AddSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHandl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while adding SMS audit finding: {AuditCode}", request?.AuditCode);
+            _logger.LogApplicationError("Unexpected error occurred while adding SMS audit finding: {AuditCode}", ApplicationEventIds.Error, ex);
             return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("ADD_FINDING_FAILED", "Failed to add audit finding"));
         }
     }
@@ -431,7 +431,7 @@ public class UpdateSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<U
         {
             if (request is null)
             {
-                _logger.LogError("UpdateSMSAuditCommand received with null request");
+                _logger.LogApplicationError("UpdateSMSAuditCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<SMSAudit>.Failure<SMSAudit>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
@@ -441,7 +441,7 @@ public class UpdateSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<U
             var validationResult = _auditService.ValidateAudit(request.Audit);
             if (validationResult.IsFailure)
             {
-                _logger.LogError("Audit validation failed: {Error}", validationResult.Error?.Message);
+                _logger.LogApplicationError("Audit validation failed: {Error}", ApplicationEventIds.Error, null);
                 return Result<SMSAudit>.Failure<SMSAudit>(validationResult.Error);
             }
 
@@ -454,7 +454,7 @@ public class UpdateSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<U
             }
             else
             {
-                _logger.LogError("Failed to create SMS audit: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create SMS audit: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -466,7 +466,7 @@ public class UpdateSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<U
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating SMS audit");
+            _logger.LogApplicationError("Unexpected error occurred while creating SMS audit", ApplicationEventIds.Error, ex);
             return Result<SMSAudit>.Failure<SMSAudit>(new Error("CREATE_FAILED", "Failed to create audit"));
         }
     }

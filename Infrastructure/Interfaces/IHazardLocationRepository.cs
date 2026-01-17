@@ -5,10 +5,10 @@ namespace SMS_Infrastructure.Interfaces;
 /// </summary>
 public interface IHazardLocationRepository
 {
-    Task<Result<HazardLocation>> GetByIdAsync(HazardLocationID id);
+    Task<Result<HazardLocation>> GetByCodeAsync(HazardLocationID code);
     Task<Result<HazardLocation>> AddAsync(HazardLocation hazardLocation);
     Task<Result<bool>> UpdateAsync(HazardLocation hazardLocation);
-    Task<Result<bool>> DeleteAsync(HazardLocationID id);
+    Task<Result<bool>> DeleteAsync(HazardLocationID code);
     Task<Result<IEnumerable<HazardLocation>>> GetAllAsync();
     Task<Result<IEnumerable<HazardLocation>>> GetByHazardCodeAsync(string hazardCode);
 }

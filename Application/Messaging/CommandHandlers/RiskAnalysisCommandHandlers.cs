@@ -23,7 +23,7 @@ public class CreateRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandl
         {
             if (request?.RiskAnalysis is null)
             {
-                _logger.LogError("CreateRiskAnalysisCommand received with null RiskAnalysis");
+                _logger.LogApplicationError("CreateRiskAnalysisCommand received with null RiskAnalysis", ApplicationEventIds.Error, null);
                 return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NullOrEmpty);
             }
 
@@ -38,8 +38,8 @@ public class CreateRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandl
             }
             else
             {
-                _logger.LogError("Failed to create RiskAnalysis with Code: {Code}. Error: {Error}",
-                    request.RiskAnalysis.Code, result.Error?.Message);
+                _logger.LogApplicationError("Failed to create RiskAnalysis with Code: {Code}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -51,7 +51,7 @@ public class CreateRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating RiskAnalysis");
+            _logger.LogApplicationError("Unexpected error occurred while creating RiskAnalysis", ApplicationEventIds.Error, ex);
             return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.CreateFailed);
         }
     }
@@ -74,7 +74,7 @@ public class UpdateRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandl
         {
             if (request?.RiskAnalysis is null)
             {
-                _logger.LogError("UpdateRiskAnalysisCommand received with null RiskAnalysis");
+                _logger.LogApplicationError("UpdateRiskAnalysisCommand received with null RiskAnalysis", ApplicationEventIds.Error, null);
                 return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NullOrEmpty);
             }
 
@@ -89,8 +89,8 @@ public class UpdateRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandl
             }
             else
             {
-                _logger.LogError("Failed to update RiskAnalysis with ID: {Id}. Error: {Error}",
-                    request.RiskAnalysis.Id, result.Error?.Message);
+                _logger.LogApplicationError("Failed to update RiskAnalysis with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -102,7 +102,7 @@ public class UpdateRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating RiskAnalysis with ID: {Id}", request.RiskAnalysis?.Id);
+            _logger.LogApplicationError("Unexpected error occurred while updating RiskAnalysis with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.UpdateFailed);
         }
     }
@@ -125,7 +125,7 @@ public class DeleteRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandl
         {
             if (request?.RiskAnalysisId is null)
             {
-                _logger.LogError("DeleteRiskAnalysisCommand received with null RiskAnalysisId");
+                _logger.LogApplicationError("DeleteRiskAnalysisCommand received with null RiskAnalysisId", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.RiskAnalysisError.NullOrEmpty);
             }
 
@@ -139,8 +139,8 @@ public class DeleteRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandl
             }
             else
             {
-                _logger.LogError("Failed to delete RiskAnalysis with ID: {Id}. Error: {Error}",
-                    request.RiskAnalysisId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete RiskAnalysis with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -152,7 +152,7 @@ public class DeleteRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deleting RiskAnalysis with ID: {Id}", request.RiskAnalysisId);
+            _logger.LogApplicationError("Unexpected error occurred while deleting RiskAnalysis with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.RiskAnalysisError.DeleteFailed);
         }
     }

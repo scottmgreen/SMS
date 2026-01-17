@@ -79,7 +79,7 @@ public class GetAllSMSAuditsQueryHandler : BaseQueryBundle, IRequestHandler<GetA
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllSMSAuditsQuery");
+            _logger.LogApplicationError("Error processing GetAllSMSAuditsQuery", ApplicationEventIds.Error, ex);
             return Result<List<SMSAudit>>.Failure<List<SMSAudit>>(new Error("QUERY_FAILED", "Failed to get audits"));
         }
     }
@@ -113,7 +113,7 @@ public class GetSMSAuditByCodeQueryHandler : BaseQueryBundle, IRequestHandler<Ge
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSAuditByCodeQuery for Code: {AuditCode}", request.AuditCode);
+            _logger.LogApplicationError("Error processing GetSMSAuditByCodeQuery for Code: {AuditCode}", ApplicationEventIds.Error, ex);
             return Result<SMSAudit>.Failure<SMSAudit>(new Error("QUERY_FAILED", "Failed to get audit"));
         }
     }
@@ -147,7 +147,7 @@ public class GetSMSAuditsByPlanQueryHandler : BaseQueryBundle, IRequestHandler<G
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSAuditsByPlanQuery for Plan: {AuditPlanCode}", request.AuditPlanCode);
+            _logger.LogApplicationError("Error processing GetSMSAuditsByPlanQuery for Plan: {AuditPlanCode}", ApplicationEventIds.Error, ex);
             return Result<List<SMSAudit>>.Failure<List<SMSAudit>>(new Error("QUERY_FAILED", "Failed to get audits by plan"));
         }
     }
@@ -181,7 +181,7 @@ public class GetSMSAuditsByStatusQueryHandler : BaseQueryBundle, IRequestHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSAuditsByStatusQuery for Status: {Status}", request.Status);
+            _logger.LogApplicationError("Error processing GetSMSAuditsByStatusQuery for Status: {Status}", ApplicationEventIds.Error, ex);
             return Result<List<SMSAudit>>.Failure<List<SMSAudit>>(new Error("QUERY_FAILED", "Failed to get audits by status"));
         }
     }
@@ -220,7 +220,7 @@ public class GetSMSAuditsByAuditorQueryHandler : BaseQueryBundle, IRequestHandle
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSAuditsByAuditorQuery for Auditor: {Auditor}", request.Auditor);
+            _logger.LogApplicationError("Error processing GetSMSAuditsByAuditorQuery for Auditor: {Auditor}", ApplicationEventIds.Error, ex);
             return Result<List<SMSAudit>>.Failure<List<SMSAudit>>(new Error("QUERY_FAILED", "Failed to get audits by auditor"));
         }
     }
@@ -254,7 +254,7 @@ public class GetOverdueSMSAuditsQueryHandler : BaseQueryBundle, IRequestHandler<
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetOverdueSMSAuditsQuery");
+            _logger.LogApplicationError("Error processing GetOverdueSMSAuditsQuery", ApplicationEventIds.Error, ex);
             return Result<List<SMSAudit>>.Failure<List<SMSAudit>>(new Error("QUERY_FAILED", "Failed to get overdue audits"));
         }
     }
@@ -300,7 +300,7 @@ public class GetSMSAuditExecutionDashboardQueryHandler : BaseQueryBundle, IReque
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSAuditExecutionDashboardQuery");
+            _logger.LogApplicationError("Error processing GetSMSAuditExecutionDashboardQuery", ApplicationEventIds.Error, ex);
             return Result<SMSAuditExecutionDashboard>.Failure<SMSAuditExecutionDashboard>(new Error("QUERY_FAILED", "Failed to get audit execution dashboard"));
         }
     }
@@ -356,7 +356,7 @@ public class GetSMSAuditFindingsByAuditCodeQueryHandler : BaseQueryBundle, IRequ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSAuditFindingsByAuditCodeQuery for AuditCode: {AuditCode}", request.AuditCode);
+            _logger.LogApplicationError("Error processing GetSMSAuditFindingsByAuditCodeQuery for AuditCode: {AuditCode}", ApplicationEventIds.Error, ex);
             return Result<List<SMSAuditFinding>>.Failure<List<SMSAuditFinding>>(new Error("QUERY_FAILED", "Failed to get audit findings"));
         }
     }
@@ -390,7 +390,7 @@ public class GetAllSMSAuditFindingsQueryHandler : BaseQueryBundle, IRequestHandl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllSMSAuditFindingsQuery");
+            _logger.LogApplicationError("Error processing GetAllSMSAuditFindingsQuery", ApplicationEventIds.Error, ex);
             return Result<List<SMSAuditFinding>>.Failure<List<SMSAuditFinding>>(new Error("QUERY_FAILED", "Failed to get all audit findings"));
         }
     }
@@ -424,7 +424,7 @@ public class GetSMSAuditFindingByCodeQueryHandler : BaseQueryBundle, IRequestHan
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSAuditFindingByCodeQuery for FindingCode: {FindingCode}", request.FindingCode);
+            _logger.LogApplicationError("Error processing GetSMSAuditFindingByCodeQuery for FindingCode: {FindingCode}", ApplicationEventIds.Error, ex);
             return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("QUERY_FAILED", "Failed to get audit finding"));
         }
     }
@@ -458,7 +458,7 @@ public class GetOverdueSMSAuditFindingsQueryHandler : BaseQueryBundle, IRequestH
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetOverdueSMSAuditFindingsQuery");
+            _logger.LogApplicationError("Error processing GetOverdueSMSAuditFindingsQuery", ApplicationEventIds.Error, ex);
             return Result<List<SMSAuditFinding>>.Failure<List<SMSAuditFinding>>(new Error("QUERY_FAILED", "Failed to get overdue audit findings"));
         }
     }
@@ -509,7 +509,7 @@ public class GetSMSAuditEvidenceByAuditCodeQueryHandler : BaseQueryBundle, IRequ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSAuditEvidenceByAuditCodeQuery for AuditCode: {AuditCode}", request.AuditCode);
+            _logger.LogApplicationError("Error processing GetSMSAuditEvidenceByAuditCodeQuery for AuditCode: {AuditCode}", ApplicationEventIds.Error, ex);
             return Result<List<SMSAuditEvidence>>.Failure<List<SMSAuditEvidence>>(new Error("QUERY_FAILED", "Failed to get audit evidence"));
         }
     }
@@ -543,7 +543,7 @@ public class GetAllSMSAuditEvidenceQueryHandler : BaseQueryBundle, IRequestHandl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllSMSAuditEvidenceQuery");
+            _logger.LogApplicationError("Error processing GetAllSMSAuditEvidenceQuery", ApplicationEventIds.Error, ex);
             return Result<List<SMSAuditEvidence>>.Failure<List<SMSAuditEvidence>>(new Error("QUERY_FAILED", "Failed to get all audit evidence"));
         }
     }
@@ -577,7 +577,7 @@ public class GetSMSAuditEvidenceByCodeQueryHandler : BaseQueryBundle, IRequestHa
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSAuditEvidenceByCodeQuery for EvidenceCode: {EvidenceCode}", request.EvidenceCode);
+            _logger.LogApplicationError("Error processing GetSMSAuditEvidenceByCodeQuery for EvidenceCode: {EvidenceCode}", ApplicationEventIds.Error, ex);
             return Result<SMSAuditEvidence>.Failure<SMSAuditEvidence>(new Error("QUERY_FAILED", "Failed to get audit evidence"));
         }
     }
@@ -611,7 +611,7 @@ public class GetSMSAuditEvidenceByFindingCodeQueryHandler : BaseQueryBundle, IRe
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSAuditEvidenceByFindingCodeQuery for FindingCode: {FindingCode}", request.FindingCode);
+            _logger.LogApplicationError("Error processing GetSMSAuditEvidenceByFindingCodeQuery for FindingCode: {FindingCode}", ApplicationEventIds.Error, ex);
             return Result<List<SMSAuditEvidence>>.Failure<List<SMSAuditEvidence>>(new Error("QUERY_FAILED", "Failed to get audit evidence by finding"));
         }
     }
@@ -642,7 +642,7 @@ public class GetSMSAuditChecklistItemsByAuditCodeQueryHandler : BaseQueryBundle,
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSAuditChecklistItemsByAuditCodeQuery for AuditCode: {AuditCode}", request.AuditCode);
+            _logger.LogApplicationError("Error processing GetSMSAuditChecklistItemsByAuditCodeQuery for AuditCode: {AuditCode}", ApplicationEventIds.Error, ex);
             return Result<List<SMSAuditChecklistItem>>.Failure<List<SMSAuditChecklistItem>>(new Error("QUERY_FAILED", "Failed to get audit checklist items"));
         }
     }

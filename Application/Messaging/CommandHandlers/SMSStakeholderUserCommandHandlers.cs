@@ -32,7 +32,7 @@ public class CreateSMSStakeholderUserCommandHandler : BaseCommandBundle, IReques
         {
             if (request?.SMSStakeholderUser is null)
             {
-                _logger.LogError("CreateSMSStakeholderUserCommand received with null request or user");
+                _logger.LogApplicationError("CreateSMSStakeholderUserCommand received with null request or user", ApplicationEventIds.Error, null);
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
@@ -47,8 +47,8 @@ public class CreateSMSStakeholderUserCommandHandler : BaseCommandBundle, IReques
             }
             else
             {
-                _logger.LogError("Failed to create SMS Stakeholder User with UserName: {UserName}. Error: {Error}",
-                    request.SMSStakeholderUser.UserName, result.Error?.Message);
+                _logger.LogApplicationError("Failed to create SMS Stakeholder User with UserName: {UserName}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -60,7 +60,7 @@ public class CreateSMSStakeholderUserCommandHandler : BaseCommandBundle, IReques
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating SMS Stakeholder User");
+            _logger.LogApplicationError("Unexpected error occurred while creating SMS Stakeholder User", ApplicationEventIds.Error, ex);
             return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.CreateFailed);
         }
     }
@@ -83,7 +83,7 @@ public class UpdateSMSStakeholderUserCommandHandler : BaseCommandBundle, IReques
         {
             if (request?.SMSStakeholderUser is null)
             {
-                _logger.LogError("UpdateSMSStakeholderUserCommand received with null request or user");
+                _logger.LogApplicationError("UpdateSMSStakeholderUserCommand received with null request or user", ApplicationEventIds.Error, null);
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
@@ -97,8 +97,8 @@ public class UpdateSMSStakeholderUserCommandHandler : BaseCommandBundle, IReques
             }
             else
             {
-                _logger.LogError("Failed to update SMS Stakeholder User with ID: {UserId}. Error: {Error}",
-                    request.SMSStakeholderUser.UserId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to update SMS Stakeholder User with ID: {UserId}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -110,7 +110,7 @@ public class UpdateSMSStakeholderUserCommandHandler : BaseCommandBundle, IReques
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating SMS Stakeholder User with ID: {UserId}", request?.SMSStakeholderUser?.UserId);
+            _logger.LogApplicationError("Unexpected error occurred while updating SMS Stakeholder User with ID: {UserId}", ApplicationEventIds.Error, ex);
             return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.UpdateFailed);
         }
     }
@@ -133,7 +133,7 @@ public class UpdateSMSStakeholderUserPasswordCommandHandler : BaseCommandBundle,
         {
             if (request is null)
             {
-                _logger.LogError("UpdateSMSStakeholderUserPasswordCommand received with null request");
+                _logger.LogApplicationError("UpdateSMSStakeholderUserPasswordCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
@@ -169,8 +169,8 @@ public class UpdateSMSStakeholderUserPasswordCommandHandler : BaseCommandBundle,
             }
             else
             {
-                _logger.LogError("Failed to update password for SMS Stakeholder User with ID: {UserId}. Error: {Error}",
-                    request.UserId, updateResult.Error?.Message);
+                _logger.LogApplicationError("Failed to update password for SMS Stakeholder User with ID: {UserId}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(updateResult.Error);
             }
         }
@@ -181,7 +181,7 @@ public class UpdateSMSStakeholderUserPasswordCommandHandler : BaseCommandBundle,
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating password for SMS Stakeholder User with ID: {UserId}", request.UserId);
+            _logger.LogApplicationError("Unexpected error occurred while updating password for SMS Stakeholder User with ID: {UserId}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.PasswordUpdateFailed);
         }
     }
@@ -204,7 +204,7 @@ public class AuthenticateSMSStakeholderUserCommandHandler : BaseCommandBundle, I
         {
             if (request is null)
             {
-                _logger.LogError("AuthenticateSMSStakeholderUserCommand received with null request");
+                _logger.LogApplicationError("AuthenticateSMSStakeholderUserCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
@@ -230,7 +230,7 @@ public class AuthenticateSMSStakeholderUserCommandHandler : BaseCommandBundle, I
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred during authentication for user: {UserName}", request.UserName);
+            _logger.LogApplicationError("Unexpected error occurred during authentication for user: {UserName}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.LoginFailed);
         }
     }
@@ -253,7 +253,7 @@ public class RecordSMSStakeholderUserLoginCommandHandler : BaseCommandBundle, IR
         {
             if (request is null)
             {
-                _logger.LogError("RecordSMSStakeholderUserLoginCommand received with null request");
+                _logger.LogApplicationError("RecordSMSStakeholderUserLoginCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
@@ -280,8 +280,8 @@ public class RecordSMSStakeholderUserLoginCommandHandler : BaseCommandBundle, IR
             }
             else
             {
-                _logger.LogError("Failed to record login for SMS Stakeholder User with ID: {UserId}. Error: {Error}",
-                    request.UserId, updateResult.Error?.Message);
+                _logger.LogApplicationError("Failed to record login for SMS Stakeholder User with ID: {UserId}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(updateResult.Error);
             }
         }
@@ -292,7 +292,7 @@ public class RecordSMSStakeholderUserLoginCommandHandler : BaseCommandBundle, IR
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while recording login for SMS Stakeholder User with ID: {UserId}", request.UserId);
+            _logger.LogApplicationError("Unexpected error occurred while recording login for SMS Stakeholder User with ID: {UserId}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.UpdateFailed);
         }
     }
@@ -315,7 +315,7 @@ public class DeleteSMSStakeholderUserCommandHandler : BaseCommandBundle, IReques
         {
             if (request is null)
             {
-                _logger.LogError("DeleteSMSStakeholderUserCommand received with null request");
+                _logger.LogApplicationError("DeleteSMSStakeholderUserCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
@@ -329,8 +329,8 @@ public class DeleteSMSStakeholderUserCommandHandler : BaseCommandBundle, IReques
             }
             else
             {
-                _logger.LogError("Failed to delete SMS Stakeholder User with ID: {UserId}. Error: {Error}",
-                    request.SMSStakeholderUserId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete SMS Stakeholder User with ID: {UserId}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -342,7 +342,7 @@ public class DeleteSMSStakeholderUserCommandHandler : BaseCommandBundle, IReques
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deleting SMS Stakeholder User with ID: {UserId}", request?.SMSStakeholderUserId);
+            _logger.LogApplicationError("Unexpected error occurred while deleting SMS Stakeholder User with ID: {UserId}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.DeleteFailed);
         }
     }

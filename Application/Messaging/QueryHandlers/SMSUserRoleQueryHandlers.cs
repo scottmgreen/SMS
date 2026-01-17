@@ -40,7 +40,7 @@ public class GetAllSMSUserRolesQueryHandler : BaseQueryBundle, IRequestHandler<G
             }
             else
             {
-                _logger.LogError("Failed to retrieve SMS User Roles: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to retrieve SMS User Roles: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -52,7 +52,7 @@ public class GetAllSMSUserRolesQueryHandler : BaseQueryBundle, IRequestHandler<G
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while retrieving all SMS User Roles");
+            _logger.LogApplicationError("Unexpected error occurred while retrieving all SMS User Roles", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -83,7 +83,7 @@ public class GetAllActiveSMSUserRolesQueryHandler : BaseQueryBundle, IRequestHan
             }
             else
             {
-                _logger.LogError("Failed to retrieve active SMS User Roles: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to retrieve active SMS User Roles: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -95,7 +95,7 @@ public class GetAllActiveSMSUserRolesQueryHandler : BaseQueryBundle, IRequestHan
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while retrieving active SMS User Roles");
+            _logger.LogApplicationError("Unexpected error occurred while retrieving active SMS User Roles", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -118,7 +118,7 @@ public class GetSMSUserRoleByIdQueryHandler : BaseQueryBundle, IRequestHandler<G
         {
             if (request?.UserRoleId is null)
             {
-                _logger.LogError("GetSMSUserRoleByIdQuery received with null request or ID");
+                _logger.LogApplicationError("GetSMSUserRoleByIdQuery received with null request or ID", ApplicationEventIds.Error, null);
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
@@ -144,111 +144,11 @@ public class GetSMSUserRoleByIdQueryHandler : BaseQueryBundle, IRequestHandler<G
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while retrieving SMS User Role with ID: {Id}", request?.UserRoleId?.Value);
+            _logger.LogApplicationError("Unexpected error occurred while retrieving SMS User Role with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
 }
-
-//public class GetSMSUserRolesByUserIdQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSUserRolesByUserIdQuery, Result<IEnumerable<SMSUserRole>>>
-//{
-//    private readonly SMSUserRoleDataService _userRoleDataService;
-//    private readonly ILogger<GetSMSUserRolesByUserIdQueryHandler> _logger;
-
-//    public GetSMSUserRolesByUserIdQueryHandler(SMSUserRoleDataService userRoleDataService, ILogger<GetSMSUserRolesByUserIdQueryHandler> logger)
-//    {
-//        _userRoleDataService = userRoleDataService ?? throw new ArgumentNullException(nameof(userRoleDataService));
-//        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-//    }
-
-//    public async Task<Result<IEnumerable<SMSUserRole>>> HandleAsync(GetSMSUserRolesByUserIdQuery request, CancellationToken cancellationToken)
-//    {
-//        try
-//        {
-//            if (request is null || string.IsNullOrWhiteSpace(request.UserId))
-//            {
-//                _logger.LogError("GetSMSUserRolesByUserIdQuery received with null request or UserId");
-//                return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
-//            }
-
-//            _logger.LogInformation("Processing GetSMSUserRolesByUserIdQuery for User ID: {UserId}", request.UserId);
-
-//            var result = await _userRoleDataService.GetSMSUserRolesByUserIdAsync(request.UserId);
-
-//            if (result.IsSuccess)
-//            {
-//                _logger.LogInformation("Successfully retrieved {Count} SMS User Roles for User ID: {UserId}", 
-//                    result.Value?.Count() ?? 0, request.UserId);
-//            }
-//            else
-//            {
-//                _logger.LogWarning("No SMS User Roles found for User ID: {UserId}", request.UserId);
-//            }
-
-//            return result;
-//        }
-//        catch (OperationCanceledException)
-//        {
-//            _logger.LogWarning("GetSMSUserRolesByUserIdQuery operation was cancelled");
-//            throw;
-//        }
-//        catch (Exception ex)
-//        {
-//            _logger.LogError(ex, "Unexpected error occurred while retrieving SMS User Roles for User ID: {UserId}", request?.UserId);
-//            return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
-//        }
-//    }
-//}
-
-//public class GetActiveSMSUserRolesByUserIdQueryHandler : BaseQueryBundle, IRequestHandler<GetActiveSMSUserRolesByUserIdQuery, Result<IEnumerable<SMSUserRole>>>
-//{
-//    private readonly SMSUserRoleDataService _userRoleDataService;
-//    private readonly ILogger<GetActiveSMSUserRolesByUserIdQueryHandler> _logger;
-
-//    public GetActiveSMSUserRolesByUserIdQueryHandler(SMSUserRoleDataService userRoleDataService, ILogger<GetActiveSMSUserRolesByUserIdQueryHandler> logger)
-//    {
-//        _userRoleDataService = userRoleDataService ?? throw new ArgumentNullException(nameof(userRoleDataService));
-//        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-//    }
-
-//    public async Task<Result<IEnumerable<SMSUserRole>>> HandleAsync(GetActiveSMSUserRolesByUserIdQuery request, CancellationToken cancellationToken)
-//    {
-//        try
-//        {
-//            if (request is null || string.IsNullOrWhiteSpace(request.UserId))
-//            {
-//                _logger.LogError("GetActiveSMSUserRolesByUserIdQuery received with null request or UserId");
-//                return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
-//            }
-
-//            _logger.LogInformation("Processing GetActiveSMSUserRolesByUserIdQuery for User ID: {UserId}", request.UserId);
-
-//            var result = await _userRoleDataService.GetActiveSMSUserRolesByUserIdAsync(request.UserId);
-
-//            if (result.IsSuccess)
-//            {
-//                _logger.LogInformation("Successfully retrieved {Count} active SMS User Roles for User ID: {UserId}", 
-//                    result.Value?.Count() ?? 0, request.UserId);
-//            }
-//            else
-//            {
-//                _logger.LogWarning("No active SMS User Roles found for User ID: {UserId}", request.UserId);
-//            }
-
-//            return result;
-//        }
-//        catch (OperationCanceledException)
-//        {
-//            _logger.LogWarning("GetActiveSMSUserRolesByUserIdQuery operation was cancelled");
-//            throw;
-//        }
-//        catch (Exception ex)
-//        {
-//            _logger.LogError(ex, "Unexpected error occurred while retrieving active SMS User Roles for User ID: {UserId}", request?.UserId);
-//            return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
-//        }
-//    }
-//}
 
 public class GetSMSUserRolesByRoleValueQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSUserRolesByRoleValueQuery, Result<IEnumerable<SMSUserRole>>>
 {
@@ -267,7 +167,7 @@ public class GetSMSUserRolesByRoleValueQueryHandler : BaseQueryBundle, IRequestH
         {
             if (request is null || string.IsNullOrWhiteSpace(request.RoleValue))
             {
-                _logger.LogError("GetSMSUserRolesByRoleValueQuery received with null request or RoleValue");
+                _logger.LogApplicationError("GetSMSUserRolesByRoleValueQuery received with null request or RoleValue", ApplicationEventIds.Error, null);
                 return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
@@ -290,7 +190,7 @@ public class GetSMSUserRolesByRoleValueQueryHandler : BaseQueryBundle, IRequestH
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while retrieving SMS User Roles for Role: {RoleValue}", request?.RoleValue);
+            _logger.LogApplicationError("Unexpected error occurred while retrieving SMS User Roles for Role: {RoleValue}", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -313,7 +213,7 @@ public class GetSMSUserRolesByDepartmentQueryHandler : BaseQueryBundle, IRequest
         {
             if (request is null || string.IsNullOrWhiteSpace(request.Department))
             {
-                _logger.LogError("GetSMSUserRolesByDepartmentQuery received with null request or Department");
+                _logger.LogApplicationError("GetSMSUserRolesByDepartmentQuery received with null request or Department", ApplicationEventIds.Error, null);
                 return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
@@ -336,7 +236,7 @@ public class GetSMSUserRolesByDepartmentQueryHandler : BaseQueryBundle, IRequest
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while retrieving SMS User Roles for Department: {Department}", request?.Department);
+            _logger.LogApplicationError("Unexpected error occurred while retrieving SMS User Roles for Department: {Department}", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -359,7 +259,7 @@ public class GetSMSUserRolesByUserTypeQueryHandler : BaseQueryBundle, IRequestHa
         {
             if (request is null || string.IsNullOrWhiteSpace(request.UserType))
             {
-                _logger.LogError("GetSMSUserRolesByUserTypeQuery received with null request or UserType");
+                _logger.LogApplicationError("GetSMSUserRolesByUserTypeQuery received with null request or UserType", ApplicationEventIds.Error, null);
                 return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
@@ -382,58 +282,8 @@ public class GetSMSUserRolesByUserTypeQueryHandler : BaseQueryBundle, IRequestHa
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while retrieving SMS User Roles for UserType: {UserType}", request?.UserType);
+            _logger.LogApplicationError("Unexpected error occurred while retrieving SMS User Roles for UserType: {UserType}", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
 }
-
-
-
-
-
-//public class ValidateUserHasRoleQueryHandler : BaseQueryBundle, IRequestHandler<ValidateUserHasRoleQuery, Result<bool>>
-//{
-//    private readonly SMSUserRoleDataService _userRoleDataService;
-//    private readonly ILogger<ValidateUserHasRoleQueryHandler> _logger;
-
-//    public ValidateUserHasRoleQueryHandler(SMSUserRoleDataService userRoleDataService, ILogger<ValidateUserHasRoleQueryHandler> logger)
-//    {
-//        _userRoleDataService = userRoleDataService ?? throw new ArgumentNullException(nameof(userRoleDataService));
-//        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-//    }
-
-//    public async Task<Result<bool>> HandleAsync(ValidateUserHasRoleQuery request, CancellationToken cancellationToken)
-//    {
-//        try
-//        {
-//            if (request is null || string.IsNullOrWhiteSpace(request.UserId) || string.IsNullOrWhiteSpace(request.RoleValue))
-//            {
-//                _logger.LogError("ValidateUserHasRoleQuery received with null or invalid parameters");
-//                return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
-//            }
-
-//            _logger.LogInformation("Processing ValidateUserHasRoleQuery for User: {UserId}, Role: {RoleValue}", 
-//                request.UserId, request.RoleValue);
-
-//            var result = await _userRoleDataService.ValidateUserRoleAsync(request.UserId, request.RoleValue);
-
-//            if (result.IsSuccess)
-//            {
-//                _logger.LogInformation("User {UserId} role validation result: {HasRole}", request.UserId, result.Value);
-//            }
-
-//            return result;
-//        }
-//        catch (OperationCanceledException)
-//        {
-//            _logger.LogWarning("ValidateUserHasRoleQuery operation was cancelled");
-//            throw;
-//        }
-//        catch (Exception ex)
-//        {
-//            _logger.LogError(ex, "Unexpected error occurred while validating user role");
-//            return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
-//        }
-//    }
-//}

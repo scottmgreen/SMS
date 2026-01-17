@@ -434,8 +434,8 @@
         private static readonly Lazy<string> _pr_HazardLocation_Insert = new Lazy<string>(() => "pr_HazardLocation_Insert");
         public static string pr_HazardLocation_Insert => _pr_HazardLocation_Insert.Value;
 
-        private static readonly Lazy<string> _pr_HazardLocation_GetById = new Lazy<string>(() => "pr_HazardLocation_GetById");
-        public static string pr_HazardLocation_GetById => _pr_HazardLocation_GetById.Value;
+        private static readonly Lazy<string> _pr_HazardLocation_GetByCode = new Lazy<string>(() => "_pr_HazardLocation_GetByCode");
+        public static string pr_HazardLocation_GetByCode => _pr_HazardLocation_GetByCode.Value;
 
         private static readonly Lazy<string> _pr_HazardLocation_GetAll = new Lazy<string>(() => "pr_HazardLocation_GetAll");
         public static string pr_HazardLocation_GetAll => _pr_HazardLocation_GetAll.Value;
@@ -758,9 +758,7 @@
         private static readonly Lazy<string> _pr_HazardFile_Insert = new Lazy<string>(() => "pr_HazardFile_Insert");
         public static string pr_HazardFile_Insert => _pr_HazardFile_Insert.Value;
 
-        private static readonly Lazy<string> _pr_HazardFile_GetById = new Lazy<string>(() => "pr_HazardFile_GetById");
-        public static string pr_HazardFile_GetById => _pr_HazardFile_GetById.Value;
-
+       
         private static readonly Lazy<string> _pr_HazardFile_GetByCode = new Lazy<string>(() => "pr_HazardFile_GetByCode");
         public static string pr_HazardFile_GetByCode => _pr_HazardFile_GetByCode.Value;
 

@@ -23,21 +23,21 @@ public class CreateAirportSharedDatasetCommandHandler : BaseCommandBundle, IRequ
         {
             if (request?.AirportSharedDataset is null)
             {
-                _logger.LogError("CreateAirportSharedDatasetCommand received with null AirportSharedDataset");
+                _logger.LogApplicationError("CreateAirportSharedDatasetCommand received with null AirportSharedDataset", ApplicationEventIds.Error, null);
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.NullOrEmpty);
             }
 
             // Validate Airport Shared Dataset Code
             if (string.IsNullOrWhiteSpace(request.AirportSharedDataset.Code))
             {
-                _logger.LogError("CreateAirportSharedDatasetCommand received with null or empty Code");
+                _logger.LogApplicationError("CreateAirportSharedDatasetCommand received with null or empty Code",ApplicationEventIds.Error,null);
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.CodeRequired);
             }
 
             // Validate REQUIRED ReportID 
             if (string.IsNullOrWhiteSpace(request.AirportSharedDataset.ReportCode))
             {
-                _logger.LogError("CreateAirportSharedDatasetCommand received with null or empty ReportCode");
+                _logger.LogApplicationError("CreateAirportSharedDatasetCommand received with null or empty ReportCode", ApplicationEventIds.Error, null);
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.ReportIDRequired);
             }
 
@@ -53,8 +53,8 @@ public class CreateAirportSharedDatasetCommandHandler : BaseCommandBundle, IRequ
             }
             else
             {
-                _logger.LogError("Failed to create AirportSharedDataset with Code: {Code}, ReportID: {ReportCode}. Error: {Error}",
-                    request.AirportSharedDataset.Code, request.AirportSharedDataset.ReportCode, result.Error?.Message);
+                _logger.LogApplicationError("Failed to create AirportSharedDataset with Code: {Code}, ReportID: {ReportCode}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -66,8 +66,8 @@ public class CreateAirportSharedDatasetCommandHandler : BaseCommandBundle, IRequ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating AirportSharedDataset with Code: {Code}, ReportID: {ReportCode}",
-                request.AirportSharedDataset?.Code, request.AirportSharedDataset?.ReportCode);
+            _logger.LogApplicationError("Unexpected error occurred while creating AirportSharedDataset with Code: {Code}, ReportID: {ReportCode}",
+                ApplicationEventIds.Error, ex);
             return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.CreateFailed);
         }
     }
@@ -90,21 +90,21 @@ public class UpdateAirportSharedDatasetCommandHandler : BaseCommandBundle, IRequ
         {
             if (request?.AirportSharedDataset is null)
             {
-                _logger.LogError("UpdateAirportSharedDatasetCommand received with null AirportSharedDataset");
+                _logger.LogApplicationError("UpdateAirportSharedDatasetCommand received with null AirportSharedDataset", ApplicationEventIds.Error, null);
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.NullOrEmpty);
             }
 
             // Validate Airport Shared Dataset Code
             if (string.IsNullOrWhiteSpace(request.AirportSharedDataset.Code))
             {
-                _logger.LogError("UpdateAirportSharedDatasetCommand received with null or empty Code");
+                _logger.LogApplicationError("UpdateAirportSharedDatasetCommand received with null or empty Code", ApplicationEventIds.Error, null);
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.CodeRequired);
             }
 
             // Validate REQUIRED ReportID 
             if (string.IsNullOrWhiteSpace(request.AirportSharedDataset.ReportCode))
             {
-                _logger.LogError("UpdateAirportSharedDatasetCommand received with null or empty ReportCode");
+                _logger.LogApplicationError("UpdateAirportSharedDatasetCommand received with null or empty ReportCode", ApplicationEventIds.Error, null);
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.ReportIDRequired);
             }
 
@@ -119,8 +119,8 @@ public class UpdateAirportSharedDatasetCommandHandler : BaseCommandBundle, IRequ
             }
             else
             {
-                _logger.LogError("Failed to update AirportSharedDataset with ID: {Id}, Code: {Code}, ReportID: {ReportCode}. Error: {Error}",
-                    request.AirportSharedDataset.Id, request.AirportSharedDataset.Code, request.AirportSharedDataset.ReportCode, result.Error?.Message);
+                _logger.LogApplicationError("Failed to update AirportSharedDataset with ID: {Id}, Code: {Code}, ReportID: {ReportCode}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -132,8 +132,8 @@ public class UpdateAirportSharedDatasetCommandHandler : BaseCommandBundle, IRequ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating AirportSharedDataset with ID: {Id}, Code: {Code}, ReportID: {ReportCode}",
-                request.AirportSharedDataset?.Id, request.AirportSharedDataset?.Code, request.AirportSharedDataset?.ReportCode);
+            _logger.LogApplicationError("Unexpected error occurred while updating AirportSharedDataset with ID: {Id}, Code: {Code}, ReportID: {ReportCode}",
+                ApplicationEventIds.Error, ex);
             return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.UpdateFailed);
         }
     }
@@ -156,7 +156,7 @@ public class DeleteAirportSharedDatasetCommandHandler : BaseCommandBundle, IRequ
         {
             if (request?.AirportSharedDatasetId is null)
             {
-                _logger.LogError("DeleteAirportSharedDatasetCommand received with null AirportSharedDatasetId");
+                _logger.LogApplicationError("DeleteAirportSharedDatasetCommand received with null AirportSharedDatasetId", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.AirportSharedDatasetError.NullOrEmpty);
             }
 
@@ -170,8 +170,8 @@ public class DeleteAirportSharedDatasetCommandHandler : BaseCommandBundle, IRequ
             }
             else
             {
-                _logger.LogError("Failed to delete AirportSharedDataset with ID: {Id}. Error: {Error}",
-                    request.AirportSharedDatasetId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete AirportSharedDataset with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -183,7 +183,7 @@ public class DeleteAirportSharedDatasetCommandHandler : BaseCommandBundle, IRequ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deleting AirportSharedDataset with ID: {Id}", request.AirportSharedDatasetId);
+            _logger.LogApplicationError("Unexpected error occurred while deleting AirportSharedDataset with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.AirportSharedDatasetError.DeleteFailed);
         }
     }

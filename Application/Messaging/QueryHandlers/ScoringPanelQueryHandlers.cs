@@ -28,7 +28,7 @@ public class GetScoringPanelByIdQueryHandler : BaseQueryBundle, IRequestHandler<
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetScoringPanelByIdQuery for ID: {Id}", request.ScoringPanelId);
+            _logger.LogApplicationError("Error processing GetScoringPanelByIdQuery for ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<ScoringPanel>.Failure<ScoringPanel>(DomainErrors.ScoringPanelError.NotFound);
         }
     }
@@ -55,7 +55,7 @@ public class GetAllScoringPanelsQueryHandler : BaseQueryBundle, IRequestHandler<
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllScoringPanelsQuery");
+            _logger.LogApplicationError("Error processing GetAllScoringPanelsQuery", ApplicationEventIds.Error, ex);
             return Result<List<ScoringPanel>>.Failure<List<ScoringPanel>>(DomainErrors.ScoringPanelError.NullOrEmpty);
         }
     }
@@ -82,7 +82,7 @@ public class GetScoringPanelsByHazardCodeQueryHandler : BaseQueryBundle, IReques
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetScoringPanelsByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
+            _logger.LogApplicationError("Error processing GetScoringPanelsByHazardCodeQuery for HazardCode: {HazardCode}", ApplicationEventIds.Error, ex);
             return Result<List<ScoringPanel>>.Failure<List<ScoringPanel>>(DomainErrors.ScoringPanelError.NullOrEmpty);
         }
     }

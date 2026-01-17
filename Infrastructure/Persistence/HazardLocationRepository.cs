@@ -25,9 +25,9 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
 
     #region Interface Implementation
 
-    public async Task<Result<HazardLocation>> GetByIdAsync(HazardLocationID id)
+    public async Task<Result<HazardLocation>> GetByCodeAsync(HazardLocationID code)
     {
-        return await GetHazardLocationByIdAsync(id);
+        return await GetHazardLocationByCodeAsync(code);
     }
 
     public async Task<Result<HazardLocation>> AddAsync(HazardLocation hazardLocation)
@@ -105,7 +105,7 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
             HazardLocationID hazardLocationId = new(newCodeValue);
 
-            return await GetHazardLocationByIdAsync(hazardLocationId, ct).ConfigureAwait(false);
+            return await GetHazardLocationByCodeAsync(hazardLocationId, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -114,7 +114,7 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
         }
     }
 
-    public async Task<Result<HazardLocation>> GetHazardLocationByIdAsync(HazardLocationID id, CancellationToken ct = default)
+    public async Task<Result<HazardLocation>> GetHazardLocationByCodeAsync(HazardLocationID id, CancellationToken ct = default)
     {
         try
         {
@@ -123,10 +123,10 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
                 return Result<HazardLocation>.Failure<HazardLocation>(DomainErrors.HazardLocationError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_HazardLocation_GetById} {id}", null);
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_HazardLocation_GetByCode} {id}", null);
 
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_HazardLocation_GetById, sql)
+            using SqlCommand cmd = new(StoredProcs.pr_HazardLocation_GetByCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
@@ -266,7 +266,7 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetHazardLocationByIdAsync((HazardLocationID)hazardLocation.Id, ct).ConfigureAwait(false);
+            return await GetHazardLocationByCodeAsync((HazardLocationID)hazardLocation.Id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

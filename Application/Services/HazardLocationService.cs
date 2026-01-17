@@ -50,16 +50,16 @@ public sealed class HazardLocationService
         }
     }
 
-    public async Task<Result<HazardLocation>> GetHazardLocationByIdAsync(HazardLocationID id, CancellationToken ct = default)
+    public async Task<Result<HazardLocation>> GetHazardLocationByCodeAsync(HazardLocationID code, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Retrieving hazard location with ID: {Id}", id);
-            return await _dataService.GetHazardLocationByIdAsync(id, ct).ConfigureAwait(false);
+            _logger.LogInformation("Retrieving hazard location with Code: {Code}", code);
+            return await _dataService.GetHazardLocationByCodeAsync(code, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving hazard location with ID: {Id}", id);
+            _logger.LogError(ex, "Unexpected error retrieving hazard location with Code:{Code}", code);
             return Result<HazardLocation>.Failure<HazardLocation>(DomainErrors.HazardLocationError.NotFound);
         }
     }

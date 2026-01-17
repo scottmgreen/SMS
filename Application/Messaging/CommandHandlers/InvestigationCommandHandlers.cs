@@ -23,7 +23,7 @@ public class CreateInvestigationCommandHandler : BaseCommandBundle, IRequestHand
         {
             if (request?.Investigation is null)
             {
-                _logger.LogError("CreateInvestigationCommand received with null Investigation");
+                _logger.LogApplicationError("CreateInvestigationCommand received with null Investigation", ApplicationEventIds.Error, null);
                 return Result<Investigation>.Failure<Investigation>(DomainErrors.InvestigationError.NullOrEmpty);
             }
 
@@ -38,8 +38,8 @@ public class CreateInvestigationCommandHandler : BaseCommandBundle, IRequestHand
             }
             else
             {
-                _logger.LogError("Failed to create Investigation with Code: {Code}. Error: {Error}",
-                    request.Investigation.Code, result.Error?.Message);
+                _logger.LogApplicationError("Failed to create Investigation with Code: {Code}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -51,7 +51,7 @@ public class CreateInvestigationCommandHandler : BaseCommandBundle, IRequestHand
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating Investigation");
+            _logger.LogApplicationError("Unexpected error occurred while creating Investigation", ApplicationEventIds.Error, ex);
             return Result<Investigation>.Failure<Investigation>(DomainErrors.InvestigationError.CreateFailed);
         }
     }
@@ -74,7 +74,7 @@ public class UpdateInvestigationCommandHandler : BaseCommandBundle, IRequestHand
         {
             if (request?.Investigation is null)
             {
-                _logger.LogError("UpdateInvestigationCommand received with null Investigation");
+                _logger.LogApplicationError("UpdateInvestigationCommand received with null Investigation", ApplicationEventIds.Error, null);
                 return Result<Investigation>.Failure<Investigation>(DomainErrors.InvestigationError.NullOrEmpty);
             }
 
@@ -89,8 +89,8 @@ public class UpdateInvestigationCommandHandler : BaseCommandBundle, IRequestHand
             }
             else
             {
-                _logger.LogError("Failed to update Investigation with ID: {Id}. Error: {Error}",
-                    request.Investigation.Id, result.Error?.Message);
+                _logger.LogApplicationError("Failed to update Investigation with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -102,7 +102,7 @@ public class UpdateInvestigationCommandHandler : BaseCommandBundle, IRequestHand
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating Investigation with ID: {Id}", request.Investigation?.Id);
+            _logger.LogApplicationError("Unexpected error occurred while updating Investigation with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<Investigation>.Failure<Investigation>(DomainErrors.InvestigationError.UpdateFailed);
         }
     }
@@ -125,7 +125,7 @@ public class DeleteInvestigationCommandHandler : BaseCommandBundle, IRequestHand
         {
             if (request?.InvestigationId is null)
             {
-                _logger.LogError("DeleteInvestigationCommand received with null InvestigationId");
+                _logger.LogApplicationError("DeleteInvestigationCommand received with null InvestigationId", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.InvestigationError.NullOrEmpty);
             }
 
@@ -139,8 +139,8 @@ public class DeleteInvestigationCommandHandler : BaseCommandBundle, IRequestHand
             }
             else
             {
-                _logger.LogError("Failed to delete Investigation with ID: {Id}. Error: {Error}",
-                    request.InvestigationId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete Investigation with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -152,7 +152,7 @@ public class DeleteInvestigationCommandHandler : BaseCommandBundle, IRequestHand
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deleting Investigation with ID: {Id}", request.InvestigationId);
+            _logger.LogApplicationError("Unexpected error occurred while deleting Investigation with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.InvestigationError.DeleteFailed);
         }
     }

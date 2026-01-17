@@ -36,7 +36,7 @@ public class GetAllSMSStakeholderGroupsQueryHandler : BaseQueryBundle, IRequestH
             }
             else
             {
-                _logger.LogError("Failed to retrieve SMS stakeholder groups: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to retrieve SMS stakeholder groups: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -48,7 +48,7 @@ public class GetAllSMSStakeholderGroupsQueryHandler : BaseQueryBundle, IRequestH
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllSMSStakeholderGroupsQuery");
+            _logger.LogApplicationError("Error processing GetAllSMSStakeholderGroupsQuery", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSStakeholderGroup>>.Failure<IEnumerable<SMSStakeholderGroup>>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -96,7 +96,7 @@ public class GetSMSStakeholderGroupByCodeQueryHandler : BaseQueryBundle, IReques
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSStakeholderGroupByCodeQuery for group: {GroupCode}", request.GroupCode);
+            _logger.LogApplicationError("Error processing GetSMSStakeholderGroupByCodeQuery for group: {GroupCode}", ApplicationEventIds.Error, ex);
             return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -133,8 +133,8 @@ public class GetSMSStakeholderGroupsByUserCodeQueryHandler : BaseQueryBundle, IR
             }
             else
             {
-                _logger.LogError("Failed to retrieve SMS stakeholder groups for user {UserCode}: {Error}", 
-                    request.UserCode, result.Error?.Message);
+                _logger.LogApplicationError("Failed to retrieve SMS stakeholder groups for user {UserCode}: {Error}", 
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -146,7 +146,7 @@ public class GetSMSStakeholderGroupsByUserCodeQueryHandler : BaseQueryBundle, IR
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSStakeholderGroupsByUserCodeQuery for user: {UserCode}", request.UserCode);
+            _logger.LogApplicationError("Error processing GetSMSStakeholderGroupsByUserCodeQuery for user: {UserCode}", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSStakeholderGroup>>.Failure<IEnumerable<SMSStakeholderGroup>>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }

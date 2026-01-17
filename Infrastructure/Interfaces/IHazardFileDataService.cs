@@ -11,7 +11,6 @@ namespace SMS_Infrastructure.Interfaces;
 public interface IHazardFileDataService
 {
     Task<Result<HazardFile>> CreateHazardFileAsync(HazardFile hazardFile, CancellationToken ct = default);
-    Task<Result<HazardFile>> GetHazardFileByIdAsync(HazardFileID id, CancellationToken ct = default);
     Task<Result<HazardFile>> GetHazardFileByCodeAsync(string code, CancellationToken ct = default);
     Task<Result<IEnumerable<HazardFile>>> GetHazardFilesByHazardCodeAsync(string hazardCode, bool includeFileData = false, string? category = null, CancellationToken ct = default);
     Task<Result<IEnumerable<HazardFile>>> GetHazardFilesByReportCodeAsync(string reportCode, bool includeFileData = false, CancellationToken ct = default);

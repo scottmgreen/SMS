@@ -28,7 +28,7 @@ public class GetMitigationAssignmentByIdQueryHandler : BaseQueryBundle, IRequest
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetMitigationAssignmentByIdQuery for ID: {Id}", request.MitigationAssignmentId);
+            _logger.LogApplicationError("Error processing GetMitigationAssignmentByIdQuery for ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<MitigationAssignment>.Failure<MitigationAssignment>(DomainErrors.MitigationAssignmentError.NotFound);
         }
     }
@@ -55,7 +55,7 @@ public class GetAllMitigationAssignmentsQueryHandler : BaseQueryBundle, IRequest
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllMitigationAssignmentsQuery");
+            _logger.LogApplicationError("Error processing GetAllMitigationAssignmentsQuery", ApplicationEventIds.Error, ex);
             return Result<List<MitigationAssignment>>.Failure<List<MitigationAssignment>>(DomainErrors.MitigationAssignmentError.NullOrEmpty);
         }
     }

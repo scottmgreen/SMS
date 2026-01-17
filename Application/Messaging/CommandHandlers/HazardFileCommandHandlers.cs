@@ -29,7 +29,7 @@ public class CreateHazardFileCommandHandler : BaseCommandBundle, IRequestHandler
         {
             if (request?.HazardFile is null)
             {
-                _logger.LogError("CreateHazardFileCommand received with null HazardFile");
+                _logger.LogApplicationError("CreateHazardFileCommand received with null HazardFile", ApplicationEventIds.Error, null);
                 return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.NullOrEmpty);
             }
 
@@ -45,8 +45,8 @@ public class CreateHazardFileCommandHandler : BaseCommandBundle, IRequestHandler
             }
             else
             {
-                _logger.LogError("Failed to create HazardFile with Code: {Code}. Error: {Error}",
-                    request.HazardFile.Code, result.Error?.Message);
+                _logger.LogApplicationError("Failed to create HazardFile with Code: {Code}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -58,7 +58,7 @@ public class CreateHazardFileCommandHandler : BaseCommandBundle, IRequestHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating HazardFile");
+            _logger.LogApplicationError("Unexpected error occurred while creating HazardFile", ApplicationEventIds.Error, ex);
             return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.CreateFailed);
         }
     }
@@ -81,7 +81,7 @@ public class UpdateHazardFileCommandHandler : BaseCommandBundle, IRequestHandler
         {
             if (request?.HazardFile is null)
             {
-                _logger.LogError("UpdateHazardFileCommand received with null HazardFile");
+                _logger.LogApplicationError("UpdateHazardFileCommand received with null HazardFile", ApplicationEventIds.Error, null);
                 return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.NullOrEmpty);
             }
 
@@ -96,8 +96,8 @@ public class UpdateHazardFileCommandHandler : BaseCommandBundle, IRequestHandler
             }
             else
             {
-                _logger.LogError("Failed to update HazardFile with Code: {Code}. Error: {Error}",
-                    request.HazardFile.Code, result.Error?.Message);
+                _logger.LogApplicationError("Failed to update HazardFile with Code: {Code}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -109,7 +109,7 @@ public class UpdateHazardFileCommandHandler : BaseCommandBundle, IRequestHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating HazardFile with Code: {Code}", request.HazardFile?.Code);
+            _logger.LogApplicationError("Unexpected error occurred while updating HazardFile with Code: {Code}", ApplicationEventIds.Error, ex);
             return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.UpdateFailed);
         }
     }
@@ -132,7 +132,7 @@ public class DeactivateHazardFileCommandHandler : BaseCommandBundle, IRequestHan
         {
             if (request?.FileId <= 0)
             {
-                _logger.LogError("DeactivateHazardFileCommand received with invalid FileId");
+                _logger.LogApplicationError("DeactivateHazardFileCommand received with invalid FileId", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.NullOrEmpty);
             }
 
@@ -147,8 +147,8 @@ public class DeactivateHazardFileCommandHandler : BaseCommandBundle, IRequestHan
             }
             else
             {
-                _logger.LogError("Failed to deactivate HazardFile with FileId: {FileId}. Error: {Error}",
-                    request.FileId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to deactivate HazardFile with FileId: {FileId}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -160,7 +160,7 @@ public class DeactivateHazardFileCommandHandler : BaseCommandBundle, IRequestHan
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deactivating HazardFile with FileId: {FileId}", request.FileId);
+            _logger.LogApplicationError("Unexpected error occurred while deactivating HazardFile with FileId: {FileId}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.DeleteFailed);
         }
     }
@@ -183,7 +183,7 @@ public class ReactivateHazardFileCommandHandler : BaseCommandBundle, IRequestHan
         {
             if (request?.FileId <= 0)
             {
-                _logger.LogError("ReactivateHazardFileCommand received with invalid FileId");
+                _logger.LogApplicationError("ReactivateHazardFileCommand received with invalid FileId", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.NullOrEmpty);
             }
 
@@ -197,8 +197,8 @@ public class ReactivateHazardFileCommandHandler : BaseCommandBundle, IRequestHan
             }
             else
             {
-                _logger.LogError("Failed to reactivate HazardFile with FileId: {FileId}. Error: {Error}",
-                    request.FileId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to reactivate HazardFile with FileId: {FileId}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -210,7 +210,7 @@ public class ReactivateHazardFileCommandHandler : BaseCommandBundle, IRequestHan
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while reactivating HazardFile with FileId: {FileId}", request.FileId);
+            _logger.LogApplicationError("Unexpected error occurred while reactivating HazardFile with FileId: {FileId}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.UpdateFailed);
         }
     }
@@ -233,7 +233,7 @@ public class SetHazardFileConfidentialityCommandHandler : BaseCommandBundle, IRe
         {
             if (string.IsNullOrWhiteSpace(request?.FileCode))
             {
-                _logger.LogError("SetHazardFileConfidentialityCommand received with null FileCode");
+                _logger.LogApplicationError("SetHazardFileConfidentialityCommand received with null FileCode", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.NullOrEmpty);
             }
 
@@ -248,8 +248,8 @@ public class SetHazardFileConfidentialityCommandHandler : BaseCommandBundle, IRe
             }
             else
             {
-                _logger.LogError("Failed to set confidentiality for HazardFile with FileCode: {FileCode}. Error: {Error}",
-                    request.FileCode, result.Error?.Message);
+                _logger.LogApplicationError("Failed to set confidentiality for HazardFile with FileCode: {FileCode}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -261,7 +261,7 @@ public class SetHazardFileConfidentialityCommandHandler : BaseCommandBundle, IRe
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while setting confidentiality for HazardFile with FileCode: {FileCode}", request.FileCode);
+            _logger.LogApplicationError("Unexpected error occurred while setting confidentiality for HazardFile with FileCode: {FileCode}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.UpdateFailed);
         }
     }

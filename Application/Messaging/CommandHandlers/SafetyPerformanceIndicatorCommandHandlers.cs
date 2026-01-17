@@ -30,7 +30,7 @@ public class CreateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
         {
             if (request is null)
             {
-                _logger.LogError("CreateSafetyPerformanceIndicatorCommand received with null request");
+                _logger.LogApplicationError("CreateSafetyPerformanceIndicatorCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(
                     DomainErrors.SPIError.NullOrEmpty);
             }
@@ -72,8 +72,8 @@ public class CreateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
             }
             else
             {
-                _logger.LogError("Failed to create Safety Performance Indicator with Name: {Name}. Error: {Error}",
-                    request.Name, result.Error?.Message);
+                _logger.LogApplicationError("Failed to create Safety Performance Indicator with Name: {Name}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -85,7 +85,7 @@ public class CreateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating Safety Performance Indicator with Name: {Name}", request?.Name);
+            _logger.LogApplicationError("Unexpected error occurred while creating Safety Performance Indicator with Name: {Name}", ApplicationEventIds.Error, ex);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.CreateFailed);
         }
     }
@@ -112,7 +112,7 @@ public class UpdateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
         {
             if (request is null)
             {
-                _logger.LogError("UpdateSafetyPerformanceIndicatorCommand received with null request");
+                _logger.LogApplicationError("UpdateSafetyPerformanceIndicatorCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(
                     DomainErrors.SPIError.NullOrEmpty);
             }
@@ -164,9 +164,9 @@ public class UpdateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
             }
             else
             {
-                _logger.LogError(
+                _logger.LogApplicationError(
                     "Failed to update Safety Performance Indicator with ID: {Id}. Error: {Error}",
-                    request.Id?.Value, result.Error?.Message);
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -178,9 +178,7 @@ public class UpdateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, 
-                "Unexpected error occurred while updating Safety Performance Indicator with ID: {Id}", 
-                request?.Id?.Value);
+            _logger.LogApplicationError("Unexpected error occurred while updating Safety Performance Indicator with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.UpdateFailed);
         }
     }
@@ -207,7 +205,7 @@ public class DeleteSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
         {
             if (request?.SafetyPerformanceIndicatorId is null)
             {
-                _logger.LogError("DeleteSafetyPerformanceIndicatorCommand received with null request or ID");
+                _logger.LogApplicationError("DeleteSafetyPerformanceIndicatorCommand received with null request or ID", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.SPIError.NullOrEmpty);
             }
 
@@ -226,9 +224,9 @@ public class DeleteSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
             }
             else
             {
-                _logger.LogError(
+                _logger.LogApplicationError(
                     "Failed to delete Safety Performance Indicator with ID: {Id}. Error: {Error}",
-                    request.SafetyPerformanceIndicatorId?.Value, result.Error?.Message);
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -240,9 +238,7 @@ public class DeleteSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, 
-                "Unexpected error occurred while deleting Safety Performance Indicator with ID: {Id}", 
-                request?.SafetyPerformanceIndicatorId?.Value);
+            _logger.LogApplicationError("Unexpected error occurred while deleting Safety Performance Indicator with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SPIError.DeleteFailed);
         }
     }
@@ -265,7 +261,7 @@ public class AddSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandler<
         {
             if (request is null)
             {
-                _logger.LogError("AddSPIDataPointCommand received with null request");
+                _logger.LogApplicationError("AddSPIDataPointCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(
                     DomainErrors.SPIError.NullOrEmpty);
             }
@@ -277,7 +273,7 @@ public class AddSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandler<
             var getSpiResult = await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(request.DataPoint.SPIId, cancellationToken);
             if (!getSpiResult.IsSuccess || getSpiResult.Value == null)
             {
-                _logger.LogError("Could not find SPI with code: {SPIId}", request.DataPoint.SPIId);
+                _logger.LogApplicationError("Could not find SPI with code: {SPIId}", ApplicationEventIds.Error, null);
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(
                     DomainErrors.SPIError.NotFound);
             }
@@ -292,7 +288,7 @@ public class AddSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandler<
 
             if (addResult.IsFailure)
             {
-                _logger.LogError("Failed to add data point to SPI: {Error}", addResult.Error?.Message);
+                _logger.LogApplicationError("Failed to add data point to SPI: {Error}", ApplicationEventIds.Error, null);
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(addResult.Error);
             }
 
@@ -308,7 +304,7 @@ public class AddSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandler<
             var refreshedSpiResult = await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(request.DataPoint.SPIId, cancellationToken);
             if (!refreshedSpiResult.IsSuccess)
             {
-                _logger.LogError("Failed to refresh SPI after adding data point");
+                _logger.LogApplicationError("Failed to refresh SPI after adding data point", ApplicationEventIds.Error, null);
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(refreshedSpiResult.Error);
             }
 
@@ -324,8 +320,7 @@ public class AddSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandler<
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while adding data point to SPI with ID: {SPIId}", 
-                request?.DataPoint.SPIId);
+            _logger.LogApplicationError("Unexpected error occurred while adding data point to SPI with ID: {SPIId}", ApplicationEventIds.Error, ex);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.UpdateFailed);
         }
     }
@@ -377,7 +372,7 @@ public class UpdateSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandl
         {
             if (request is null)
             {
-                _logger.LogError("UpdateSPIDataPointCommand received with null request");
+                _logger.LogApplicationError("UpdateSPIDataPointCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(
                     DomainErrors.SPIError.NullOrEmpty);
             }
@@ -389,7 +384,7 @@ public class UpdateSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandl
             var getSpiResult = await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(request.DataPoint.SPIId, cancellationToken);
             if (!getSpiResult.IsSuccess || getSpiResult.Value == null)
             {
-                _logger.LogError("Could not find SPI with code: {SPIId}", request.DataPoint.SPIId);
+                _logger.LogApplicationError("Could not find SPI with code: {SPIId}", ApplicationEventIds.Error, null);
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(
                     DomainErrors.SPIError.NotFound);
             }
@@ -415,7 +410,7 @@ public class UpdateSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandl
 
             if (!updateResult.IsSuccess)
             {
-                _logger.LogError("Failed to update data point in database: {Error}", updateResult.Error?.Message);
+                _logger.LogApplicationError("Failed to update data point in database: {Error}", ApplicationEventIds.Error, null);
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(updateResult.Error);
             }
 
@@ -423,7 +418,7 @@ public class UpdateSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandl
             var refreshedSpiResult = await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(request.DataPoint.SPIId, cancellationToken);
             if (!refreshedSpiResult.IsSuccess)
             {
-                _logger.LogError("Failed to refresh SPI after updating data point");
+                _logger.LogApplicationError("Failed to refresh SPI after updating data point", ApplicationEventIds.Error, null);
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(refreshedSpiResult.Error);
             }
 
@@ -439,8 +434,7 @@ public class UpdateSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating data point for SPI with ID: {SPIId}", 
-                request?.DataPoint.SPIId);
+            _logger.LogApplicationError("Unexpected error occurred while updating data point for SPI with ID: {SPIId}", ApplicationEventIds.Error, ex);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.UpdateFailed);
         }
     }
@@ -492,7 +486,7 @@ public class DeleteSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandl
         {
             if (request is null)
             {
-                _logger.LogError("DeleteSPIDataPointCommand received with null request");
+                _logger.LogApplicationError("DeleteSPIDataPointCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(
                     DomainErrors.SPIError.NullOrEmpty);
             }
@@ -505,7 +499,7 @@ public class DeleteSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandl
 
             if (!deleteResult.IsSuccess)
             {
-                _logger.LogError("Failed to delete data point from database: {Error}", deleteResult.Error?.Message);
+                _logger.LogApplicationError("Failed to delete data point from database: {Error}", ApplicationEventIds.Error, null);
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(deleteResult.Error);
             }
 
@@ -513,7 +507,7 @@ public class DeleteSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandl
             var refreshedSpiResult = await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(request.DataPoint.SPIId, cancellationToken);
             if (!refreshedSpiResult.IsSuccess)
             {
-                _logger.LogError("Failed to refresh SPI after deleting data point");
+                _logger.LogApplicationError("Failed to refresh SPI after deleting data point", ApplicationEventIds.Error, null);
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(refreshedSpiResult.Error);
             }
 
@@ -529,8 +523,7 @@ public class DeleteSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deleting data point for SPI with ID: {SPIId}", 
-                request?.DataPoint.SPIId);
+            _logger.LogApplicationError("Unexpected error occurred while deleting data point for SPI with ID: {SPIId}", ApplicationEventIds.Error, ex);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.DeleteFailed);
         }
     }

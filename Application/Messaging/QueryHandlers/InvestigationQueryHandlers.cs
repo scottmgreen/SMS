@@ -28,7 +28,7 @@ public class GetInvestigationByIdQueryHandler : BaseQueryBundle, IRequestHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetInvestigationByIdQuery for ID: {Id}", request.InvestigationId);
+            _logger.LogApplicationError("Error processing GetInvestigationByIdQuery for ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<Investigation>.Failure<Investigation>(DomainErrors.InvestigationError.NotFound);
         }
     }
@@ -55,7 +55,7 @@ public class GetAllInvestigationsQueryHandler : BaseQueryBundle, IRequestHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllInvestigationsQuery");
+            _logger.LogApplicationError("Error processing GetAllInvestigationsQuery", ApplicationEventIds.Error, ex);
             return Result<List<Investigation>>.Failure<List<Investigation>>(DomainErrors.InvestigationError.NullOrEmpty);
         }
     }

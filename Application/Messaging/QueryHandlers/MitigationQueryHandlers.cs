@@ -26,7 +26,7 @@ public class GetMitigationByIdQueryHandler : BaseQueryBundle, IRequestHandler<Ge
         {
             if (request?.MitigationId is null)
             {
-                _logger.LogError("GetMitigationByIdQuery received with null MitigationId");
+                _logger.LogApplicationError("GetMitigationByIdQuery received with null MitigationId", ApplicationEventIds.Error, null);
                 return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.NotFound);
             }
 
@@ -40,8 +40,8 @@ public class GetMitigationByIdQueryHandler : BaseQueryBundle, IRequestHandler<Ge
             }
             else
             {
-                _logger.LogError("Failed to retrieve Mitigation with ID: {Id}. Error: {Error}",
-                    request.MitigationId.Value, result.Error?.Message);
+                _logger.LogApplicationError("Failed to retrieve Mitigation with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -53,7 +53,7 @@ public class GetMitigationByIdQueryHandler : BaseQueryBundle, IRequestHandler<Ge
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while retrieving Mitigation");
+            _logger.LogApplicationError("Unexpected error occurred while retrieving Mitigation", ApplicationEventIds.Error, ex);
             return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.NotFound);
         }
     }
@@ -84,7 +84,7 @@ public class GetAllMitigationsQueryHandler : BaseQueryBundle, IRequestHandler<Ge
             }
             else
             {
-                _logger.LogError("Failed to retrieve Mitigations. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to retrieve Mitigations. Error: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -96,7 +96,7 @@ public class GetAllMitigationsQueryHandler : BaseQueryBundle, IRequestHandler<Ge
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while retrieving all Mitigations");
+            _logger.LogApplicationError("Unexpected error occurred while retrieving all Mitigations", ApplicationEventIds.Error, ex);
             return Result<List<Mitigation>>.Failure<List<Mitigation>>(DomainErrors.MitigationError.NotFound);
         }
     }
@@ -126,7 +126,7 @@ public class GetMitigationsByHazardCodeQueryHandler : BaseQueryBundle, IRequestH
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetMitigationsByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
+            _logger.LogApplicationError("Error processing GetMitigationsByHazardCodeQuery for HazardCode: {HazardCode}", ApplicationEventIds.Error, ex);
             return Result<List<Mitigation>>.Failure<List<Mitigation>>(DomainErrors.MitigationError.NullOrEmpty);
         }
     }

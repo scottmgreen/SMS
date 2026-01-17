@@ -81,18 +81,6 @@ public abstract class AttendanceType : BaseEnum<AttendanceType>
     #endregion
 
     /// <summary>
-    /// Gets all available attendance types
-    /// </summary>
-    public static IEnumerable<AttendanceType> GetAllValues()
-    {
-        return typeof(AttendanceType)
-            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
-            .Where(f => f.FieldType == typeof(AttendanceType))
-            .Select(f => (AttendanceType)f.GetValue(null)!)
-            .Where(at => at != null);
-    }
-
-    /// <summary>
     /// Gets attendance types that count as present
     /// </summary>
     public static IEnumerable<AttendanceType> GetPresentTypes()
@@ -101,12 +89,25 @@ public abstract class AttendanceType : BaseEnum<AttendanceType>
     }
 
     /// <summary>
-    /// Checks if this attendance type counts toward quorum
+    /// Gets attendance types that count as absent
     /// </summary>
-    public bool CountsTowardQuorum => CountsAsPresent;
+    public static IEnumerable<AttendanceType> GetAbsentTypes()
+    {
+        return GetAllValues().Where(at => !at.CountsAsPresent);
+    }
 
     /// <summary>
-    /// Checks if this is an absence
+    /// Checks if this attendance type counts as present
     /// </summary>
-    public bool IsAbsence => !CountsAsPresent;
+    public bool IsPresent => CountsAsPresent;
+
+    /// <summary>
+    /// Checks if this is a physical presence
+    /// </summary>
+    public bool IsPhysicalPresence => this == Present;
+
+    /// <summary>
+    /// Checks if this is a virtual attendance
+    /// </summary>
+    public bool IsVirtualAttendance => this == Virtual;
 }

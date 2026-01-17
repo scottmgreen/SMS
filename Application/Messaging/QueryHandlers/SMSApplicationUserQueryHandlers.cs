@@ -44,7 +44,7 @@ public class GetAllSMSApplicationUsersQueryHandler : BaseQueryBundle, IRequestHa
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllSMSApplicationUsersQuery");
+            _logger.LogApplicationError("Error processing GetAllSMSApplicationUsersQuery", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.SMSApplicationUserError.NotFound);
         }
     }
@@ -81,7 +81,7 @@ public class GetSMSApplicationUserByIdQueryHandler : BaseQueryBundle, IRequestHa
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSApplicationUserByIdQuery for ID: {UserId}", request.UserId);
+            _logger.LogApplicationError("Error processing GetSMSApplicationUserByIdQuery for ID: {UserId}", ApplicationEventIds.Error, ex);
             return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NotFound);
         }
     }
@@ -118,7 +118,7 @@ public class GetSMSApplicationUserByCodeQueryHandler : BaseQueryBundle, IRequest
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSApplicationUserByCodeQuery for Code: {UserCode}", request.UserCode);
+            _logger.LogApplicationError("Error processing GetSMSApplicationUserByCodeQuery for Code: {UserCode}", ApplicationEventIds.Error, ex);
             return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NotFound);
         }
     }
@@ -163,7 +163,7 @@ public class GetSMSApplicationUserByUserNameQueryHandler : BaseQueryBundle, IReq
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSApplicationUserByUserNameQuery for UserName: {UserName}", request.UserName);
+            _logger.LogApplicationError("Error processing GetSMSApplicationUserByUserNameQuery for UserName: {UserName}", ApplicationEventIds.Error, ex);
             return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NotFound);
         }
     }
@@ -200,7 +200,7 @@ public class GetActiveSMSApplicationUsersQueryHandler : BaseQueryBundle, IReques
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetActiveSMSApplicationUsersQuery");
+            _logger.LogApplicationError("Error processing GetActiveSMSApplicationUsersQuery", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.SMSApplicationUserError.NotFound);
         }
     }
@@ -319,7 +319,7 @@ public class CheckSMSApplicationUserNameExistsQueryHandler : BaseQueryBundle, IR
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing CheckSMSApplicationUserNameExistsQuery for UserName: {UserName}", request.UserName);
+            _logger.LogApplicationError("Error processing CheckSMSApplicationUserNameExistsQuery for UserName: {UserName}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -363,7 +363,7 @@ public class ValidateSMSApplicationUserCredentialsQueryHandler : BaseQueryBundle
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing ValidateSMSApplicationUserCredentialsQuery for UserName: {UserName}", request.UserName);
+            _logger.LogApplicationError("Error processing ValidateSMSApplicationUserCredentialsQuery for UserName: {UserName}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.LoginFailed);
         }
     }
@@ -401,7 +401,7 @@ public class GetSMSApplicationUsersRequiringPasswordChangeQueryHandler : BaseQue
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSApplicationUsersRequiringPasswordChangeQuery");
+            _logger.LogApplicationError("Error processing GetSMSApplicationUsersRequiringPasswordChangeQuery", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.SMSApplicationUserError.NotFound);
         }
     }
@@ -442,7 +442,7 @@ public class GetStaleSMSApplicationUsersQueryHandler : BaseQueryBundle, IRequest
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetStaleSMSApplicationUsersQuery for {StaleDays} days", request.StaleDays);
+            _logger.LogApplicationError("Error processing GetStaleSMSApplicationUsersQuery for {StaleDays} days", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.SMSApplicationUserError.NotFound);
         }
     }
@@ -490,7 +490,7 @@ public class GetSMSApplicationUserStatisticsQueryHandler : BaseQueryBundle, IReq
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSApplicationUserStatisticsQuery");
+            _logger.LogApplicationError("Error processing GetSMSApplicationUserStatisticsQuery", ApplicationEventIds.Error, ex);
             return Result<Dictionary<string, object>>.Failure<Dictionary<string, object>>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }

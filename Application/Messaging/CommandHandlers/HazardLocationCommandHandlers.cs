@@ -7,7 +7,7 @@ using SMS_Application.Interfaces;
 using SMS_Shared.Common;
 
 // =============================================
-// INTERVIEW COMMAND HANDLERS
+// HAZARD LOCATION COMMAND HANDLERS  
 // =============================================
 
 public class CreateHazardLocationCommandHandler : BaseCommandBundle, IRequestHandler<CreateHazardLocationCommand, Result<HazardLocation>>
@@ -27,7 +27,7 @@ public class CreateHazardLocationCommandHandler : BaseCommandBundle, IRequestHan
         {
             if (request?.HazardLocation is null)
             {
-                _logger.LogError("CreateHazardLocationCommand received with null Interview");
+                _logger.LogApplicationError("CreateHazardLocationCommand received with null HazardLocation", ApplicationEventIds.Error, null);
                 return Result<HazardLocation>.Failure<HazardLocation>(DomainErrors.HazardLocationError.NullOrEmpty);
             }
 
@@ -42,8 +42,8 @@ public class CreateHazardLocationCommandHandler : BaseCommandBundle, IRequestHan
             }
             else
             {
-                _logger.LogError("Failed to create HazardLocation with Code: {Code}. Error: {Error}",
-                    request.HazardLocation.Code, result.Error?.Message);
+                _logger.LogApplicationError("Failed to create HazardLocation with Code: {Code}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -55,7 +55,7 @@ public class CreateHazardLocationCommandHandler : BaseCommandBundle, IRequestHan
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating HazardLocation");
+            _logger.LogApplicationError("Unexpected error occurred while creating HazardLocation", ApplicationEventIds.Error, ex);
             return Result<HazardLocation>.Failure<HazardLocation>(DomainErrors.HazardLocationError.CreateFailed);
         }
     }
@@ -78,11 +78,11 @@ public class UpdateHazardLocationCommandHandler : BaseCommandBundle, IRequestHan
         {
             if (request?.HazardLocation is null)
             {
-                _logger.LogError("UpdateInterviewCommand received with null Interview");
+                _logger.LogApplicationError("UpdateHazardLocationCommand received with null HazardLocation", ApplicationEventIds.Error, null);
                 return Result<HazardLocation>.Failure<HazardLocation>(DomainErrors.HazardLocationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateInterviewCommand for ID: {Id}, Code: {Code}",
+            _logger.LogInformation("Processing UpdateHazardLocationCommand for ID: {Id}, Code: {Code}",
                 request.HazardLocation.Id, request.HazardLocation.Code);
 
             var result = await _dataService.UpdateHazardLocationAsync(request.HazardLocation, ct).ConfigureAwait(false);
@@ -93,8 +93,8 @@ public class UpdateHazardLocationCommandHandler : BaseCommandBundle, IRequestHan
             }
             else
             {
-                _logger.LogError("Failed to update HazardLocation with ID: {Id}. Error: {Error}",
-                    request.HazardLocation.Id, result.Error?.Message);
+                _logger.LogApplicationError("Failed to update HazardLocation with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -106,7 +106,7 @@ public class UpdateHazardLocationCommandHandler : BaseCommandBundle, IRequestHan
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating Interview with ID: {Id}", request.HazardLocation?.Id);
+            _logger.LogApplicationError("Unexpected error occurred while updating HazardLocation with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<HazardLocation>.Failure<HazardLocation>(DomainErrors.HazardLocationError.UpdateFailed);
         }
     }
@@ -129,7 +129,7 @@ public class DeleteHazardLocationCommandHandler : BaseCommandBundle, IRequestHan
         {
             if (request?.HazardLocationId is null)
             {
-                _logger.LogError("DeleteInterviewCommand received with null HazardLocationId");
+                _logger.LogApplicationError("DeleteHazardLocationCommand received with null HazardLocationId", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.HazardLocationError.NullOrEmpty);
             }
 
@@ -143,8 +143,8 @@ public class DeleteHazardLocationCommandHandler : BaseCommandBundle, IRequestHan
             }
             else
             {
-                _logger.LogError("Failed to delete Interview with ID: {Id}. Error: {Error}",
-                    request.HazardLocationId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete HazardLocation with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -156,7 +156,7 @@ public class DeleteHazardLocationCommandHandler : BaseCommandBundle, IRequestHan
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deleting HazardLocation with ID: {Id}", request.HazardLocationId);
+            _logger.LogApplicationError("Unexpected error occurred while deleting HazardLocation with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.HazardLocationError.DeleteFailed);
         }
     }

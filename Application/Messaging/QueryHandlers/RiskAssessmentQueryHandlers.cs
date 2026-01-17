@@ -24,7 +24,7 @@ public class GetRiskAssessmentByIdQueryHandler : BaseQueryBundle, IRequestHandle
         {
             if (request?.RiskAssessmentId is null)
             {
-                _logger.LogError("GetRiskAssessmentByIdQuery received with null RiskAssessmentId");
+                _logger.LogApplicationError("GetRiskAssessmentByIdQuery received with null RiskAssessmentId", ApplicationEventIds.Error, null);
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NotFound);
             }
 
@@ -38,8 +38,8 @@ public class GetRiskAssessmentByIdQueryHandler : BaseQueryBundle, IRequestHandle
             }
             else
             {
-                _logger.LogError("Failed to retrieve RiskAssessment with ID: {Id}. Error: {Error}",
-                    request.RiskAssessmentId.Value, result.Error?.Message);
+                _logger.LogApplicationError("Failed to retrieve RiskAssessment with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -51,7 +51,7 @@ public class GetRiskAssessmentByIdQueryHandler : BaseQueryBundle, IRequestHandle
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while retrieving RiskAssessment");
+            _logger.LogApplicationError("Unexpected error occurred while retrieving RiskAssessment", ApplicationEventIds.Error, ex);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NotFound);
         }
     }
@@ -74,7 +74,7 @@ public class GetRiskAssessmentByHazardIdQueryHandler : BaseQueryBundle, IRequest
         {
             if (request?.HazardId is null)
             {
-                _logger.LogError("GetRiskAssessmentByIdQuery received with null RiskAssessmentId");
+                _logger.LogApplicationError("GetRiskAssessmentByIdQuery received with null RiskAssessmentId", ApplicationEventIds.Error, null);
                 return Result<List<RiskAssessment>>.Failure<List<RiskAssessment>>(DomainErrors.RiskAssessmentError.NotFound);
             }
 
@@ -88,8 +88,8 @@ public class GetRiskAssessmentByHazardIdQueryHandler : BaseQueryBundle, IRequest
             }
             else
             {
-                _logger.LogError("Failed to retrieve RiskAssessment with ID: {Id}. Error: {Error}",
-                    request.HazardId.Value, result.Error?.Message);
+                _logger.LogApplicationError("Failed to retrieve RiskAssessment with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -101,7 +101,7 @@ public class GetRiskAssessmentByHazardIdQueryHandler : BaseQueryBundle, IRequest
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while retrieving RiskAssessment");
+            _logger.LogApplicationError("Unexpected error occurred while retrieving RiskAssessment", ApplicationEventIds.Error, ex);
             return Result<List<RiskAssessment>>.Failure<List<RiskAssessment>>(DomainErrors.RiskAssessmentError.NotFound);
         }
     }
@@ -134,7 +134,7 @@ public class GetAllRiskAssessmentsQueryHandler : BaseQueryBundle, IRequestHandle
             }
             else
             {
-                _logger.LogError("Failed to retrieve RiskAssessments. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to retrieve RiskAssessments. Error: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -146,7 +146,7 @@ public class GetAllRiskAssessmentsQueryHandler : BaseQueryBundle, IRequestHandle
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while retrieving all RiskAssessments");
+            _logger.LogApplicationError("Unexpected error occurred while retrieving all RiskAssessments", ApplicationEventIds.Error, ex);
             return Result<List<RiskAssessment>>.Failure<List<RiskAssessment>>(DomainErrors.RiskAssessmentError.NotFound);
         }
     }

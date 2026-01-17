@@ -28,7 +28,7 @@ public class GetReportByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetRep
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetReportByIdQuery for ID: {Id}", request.ReportId);
+            _logger.LogApplicationError("Error processing GetReportByIdQuery for ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<Report>.Failure<Report>(DomainErrors.ReportError.NotFound);
         }
     }
@@ -55,7 +55,7 @@ public class GetAllReportsQueryHandler : BaseQueryBundle, IRequestHandler<GetAll
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllReportsQuery");
+            _logger.LogApplicationError("Error processing GetAllReportsQuery", ApplicationEventIds.Error, ex);
             return Result<List<Report>>.Failure<List<Report>>(DomainErrors.ReportError.NullOrEmpty);
         }
     }

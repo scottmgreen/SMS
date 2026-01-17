@@ -39,7 +39,7 @@ public class CreateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRe
             }
             else
             {
-                _logger.LogError("Failed to create SMS organizational group: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create SMS organizational group: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -51,7 +51,7 @@ public class CreateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRe
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing CreateSMSOrganizationalGroupCommand");
+            _logger.LogApplicationError("Error processing CreateSMSOrganizationalGroupCommand", ApplicationEventIds.Error, ex);
             return Result<SMSOrganizationalGroup>.Failure<SMSOrganizationalGroup>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -87,7 +87,7 @@ public class UpdateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRe
             }
             else
             {
-                _logger.LogError("Failed to update SMS organizational group: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update SMS organizational group: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -99,7 +99,7 @@ public class UpdateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRe
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing UpdateSMSOrganizationalGroupCommand for group: {GroupCode}", request.OrganizationalGroup?.Code);
+            _logger.LogApplicationError("Error processing UpdateSMSOrganizationalGroupCommand for group: {GroupCode}", ApplicationEventIds.Error, ex);
             return Result<SMSOrganizationalGroup>.Failure<SMSOrganizationalGroup>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -135,7 +135,7 @@ public class DeleteSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRe
             }
             else
             {
-                _logger.LogError("Failed to delete SMS organizational group: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete SMS organizational group: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -147,7 +147,7 @@ public class DeleteSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRe
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing DeleteSMSOrganizationalGroupCommand for group: {GroupCode}", request.OrganizationalGroup?.Code);
+            _logger.LogApplicationError("Error processing DeleteSMSOrganizationalGroupCommand for group: {GroupCode}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -185,7 +185,7 @@ public class AssignUserToOrganizationalGroupCommandHandler : BaseCommandBundle, 
             }
             else
             {
-                _logger.LogError("Failed to assign user to organizational group: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to assign user to organizational group: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -197,8 +197,7 @@ public class AssignUserToOrganizationalGroupCommandHandler : BaseCommandBundle, 
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing AssignUserToOrganizationalGroupCommand for user: {UserCode} to group: {GroupId}", 
-                request.UserCode, request.GroupId?.Value);
+            _logger.LogApplicationError("Error processing AssignUserToOrganizationalGroupCommand for user: {UserCode} to group: {GroupId}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -236,7 +235,7 @@ public class RemoveUserFromOrganizationalGroupCommandHandler : BaseCommandBundle
             }
             else
             {
-                _logger.LogError("Failed to remove user from organizational group: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to remove user from organizational group: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -248,8 +247,7 @@ public class RemoveUserFromOrganizationalGroupCommandHandler : BaseCommandBundle
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing RemoveUserFromOrganizationalGroupCommand for user: {UserCode} from group: {GroupId}", 
-                request.UserCode, request.GroupId?.Value);
+            _logger.LogApplicationError("Error processing RemoveUserFromOrganizationalGroupCommand for user: {UserCode} from group: {GroupId}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -285,7 +283,7 @@ public class ClearUserOrganizationalGroupsCommandHandler : BaseCommandBundle, IR
             }
             else
             {
-                _logger.LogError("Failed to clear user organizational group memberships: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to clear user organizational group memberships: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -297,7 +295,7 @@ public class ClearUserOrganizationalGroupsCommandHandler : BaseCommandBundle, IR
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing ClearUserOrganizationalGroupsCommand for user: {UserCode}", request.UserCode);
+            _logger.LogApplicationError("Error processing ClearUserOrganizationalGroupsCommand for user: {UserCode}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }

@@ -31,7 +31,7 @@ public class CreateInterviewCommandHandler : BaseCommandBundle, IRequestHandler<
         {
             if (request?.Interview is null)
             {
-                _logger.LogError("CreateInterviewCommand received with null Interview");
+                _logger.LogApplicationError("CreateInterviewCommand received with null Interview", ApplicationEventIds.Error, null);
                 return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.NullOrEmpty);
             }
 
@@ -46,8 +46,8 @@ public class CreateInterviewCommandHandler : BaseCommandBundle, IRequestHandler<
             }
             else
             {
-                _logger.LogError("Failed to create Interview with Code: {Code}. Error: {Error}",
-                    request.Interview.Code, result.Error?.Message);
+                _logger.LogApplicationError("Failed to create Interview with Code: {Code}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -59,7 +59,7 @@ public class CreateInterviewCommandHandler : BaseCommandBundle, IRequestHandler<
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating Interview");
+            _logger.LogApplicationError("Unexpected error occurred while creating Interview", ApplicationEventIds.Error, ex);
             return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.CreateFailed);
         }
     }
@@ -82,7 +82,7 @@ public class UpdateInterviewCommandHandler : BaseCommandBundle, IRequestHandler<
         {
             if (request?.Interview is null)
             {
-                _logger.LogError("UpdateInterviewCommand received with null Interview");
+                _logger.LogApplicationError("UpdateInterviewCommand received with null Interview", ApplicationEventIds.Error, null);
                 return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.NullOrEmpty);
             }
 
@@ -97,8 +97,8 @@ public class UpdateInterviewCommandHandler : BaseCommandBundle, IRequestHandler<
             }
             else
             {
-                _logger.LogError("Failed to update Interview with ID: {Id}. Error: {Error}",
-                    request.Interview.Id, result.Error?.Message);
+                _logger.LogApplicationError("Failed to update Interview with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -110,7 +110,7 @@ public class UpdateInterviewCommandHandler : BaseCommandBundle, IRequestHandler<
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating Interview with ID: {Id}", request.Interview?.Id);
+            _logger.LogApplicationError("Unexpected error occurred while updating Interview with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.UpdateFailed);
         }
     }
@@ -133,7 +133,7 @@ public class DeleteInterviewCommandHandler : BaseCommandBundle, IRequestHandler<
         {
             if (request?.InterviewId is null)
             {
-                _logger.LogError("DeleteInterviewCommand received with null InterviewId");
+                _logger.LogApplicationError("DeleteInterviewCommand received with null InterviewId", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.InterviewError.NullOrEmpty);
             }
 
@@ -147,8 +147,8 @@ public class DeleteInterviewCommandHandler : BaseCommandBundle, IRequestHandler<
             }
             else
             {
-                _logger.LogError("Failed to delete Interview with ID: {Id}. Error: {Error}",
-                    request.InterviewId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete Interview with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -160,7 +160,7 @@ public class DeleteInterviewCommandHandler : BaseCommandBundle, IRequestHandler<
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deleting Interview with ID: {Id}", request.InterviewId);
+            _logger.LogApplicationError("Unexpected error occurred while deleting Interview with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.InterviewError.DeleteFailed);
         }
     }

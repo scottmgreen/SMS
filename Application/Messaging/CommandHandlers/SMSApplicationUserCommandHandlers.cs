@@ -32,7 +32,7 @@ public class CreateSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
         {
             if (request?.SMSApplicationUser is null)
             {
-                _logger.LogError("CreateSMSApplicationUserCommand received with null request or user");
+                _logger.LogApplicationError("CreateSMSApplicationUserCommand received with null request or user", ApplicationEventIds.Error, null);
                 return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
@@ -47,8 +47,8 @@ public class CreateSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
             }
             else
             {
-                _logger.LogError("Failed to create SMS Application User with UserName: {UserName}. Error: {Error}",
-                    request.SMSApplicationUser.UserName, result.Error?.Message);
+                _logger.LogApplicationError("Failed to create SMS Application User with UserName: {UserName}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -60,7 +60,7 @@ public class CreateSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating SMS Application User");
+            _logger.LogApplicationError("Unexpected error occurred while creating SMS Application User", ApplicationEventIds.Error, ex);
             return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.CreateFailed);
         }
     }
@@ -83,7 +83,7 @@ public class UpdateSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
         {
             if (request?.SMSApplicationUser is null)
             {
-                _logger.LogError("UpdateSMSApplicationUserCommand received with null request or user");
+                _logger.LogApplicationError("UpdateSMSApplicationUserCommand received with null request or user", ApplicationEventIds.Error, null);
                 return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
@@ -97,8 +97,8 @@ public class UpdateSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
             }
             else
             {
-                _logger.LogError("Failed to update SMS Application User with ID: {UserId}. Error: {Error}",
-                    request.SMSApplicationUser.UserId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to update SMS Application User with ID: {UserId}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -110,7 +110,7 @@ public class UpdateSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating SMS Application User with ID: {UserId}", request?.SMSApplicationUser?.UserId);
+            _logger.LogApplicationError("Unexpected error occurred while updating SMS Application User with ID: {UserId}", ApplicationEventIds.Error, ex);
             return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.UpdateFailed);
         }
     }
@@ -133,7 +133,7 @@ public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle,
         {
             if (request is null)
             {
-                _logger.LogError("UpdateSMSApplicationUserPasswordCommand received with null request");
+                _logger.LogApplicationError("UpdateSMSApplicationUserPasswordCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
@@ -168,8 +168,8 @@ public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle,
             }
             else
             {
-                _logger.LogError("Failed to update password for SMS Application User with ID: {UserId}. Error: {Error}",
-                    request.UserId, updateResult.Error?.Message);
+                _logger.LogApplicationError("Failed to update password for SMS Application User with ID: {UserId}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(updateResult.Error);
             }
         }
@@ -180,7 +180,7 @@ public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle,
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating password for SMS Application User with ID: {UserId}", request.UserId);
+            _logger.LogApplicationError("Unexpected error occurred while updating password for SMS Application User with ID: {UserId}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.PasswordUpdateFailed);
         }
     }
@@ -203,7 +203,7 @@ public class AuthenticateSMSApplicationUserCommandHandler : BaseCommandBundle, I
         {
             if (request is null)
             {
-                _logger.LogError("AuthenticateSMSApplicationUserCommand received with null request");
+                _logger.LogApplicationError("AuthenticateSMSApplicationUserCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
@@ -229,7 +229,7 @@ public class AuthenticateSMSApplicationUserCommandHandler : BaseCommandBundle, I
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred during authentication for user: {UserName}", request.UserName);
+            _logger.LogApplicationError("Unexpected error occurred during authentication for user: {UserName}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.LoginFailed);
         }
     }
@@ -252,7 +252,7 @@ public class RecordSMSApplicationUserLoginCommandHandler : BaseCommandBundle, IR
         {
             if (request is null)
             {
-                _logger.LogError("RecordSMSApplicationUserLoginCommand received with null request");
+                _logger.LogApplicationError("RecordSMSApplicationUserLoginCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
@@ -267,8 +267,8 @@ public class RecordSMSApplicationUserLoginCommandHandler : BaseCommandBundle, IR
             }
             else
             {
-                _logger.LogError("Failed to record login for SMS Application User with ID: {UserId}. Error: {Error}",
-                    request.UserId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to record login for SMS Application User with ID: {UserId}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -280,7 +280,7 @@ public class RecordSMSApplicationUserLoginCommandHandler : BaseCommandBundle, IR
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while recording login for SMS Application User with ID: {UserId}", request.UserId);
+            _logger.LogApplicationError("Unexpected error occurred while recording login for SMS Application User with ID: {UserId}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.UpdateFailed);
         }
     }
@@ -303,7 +303,7 @@ public class DeleteSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
         {
             if (request is null)
             {
-                _logger.LogError("DeleteSMSApplicationUserCommand received with null request");
+                _logger.LogApplicationError("DeleteSMSApplicationUserCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
@@ -317,8 +317,8 @@ public class DeleteSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
             }
             else
             {
-                _logger.LogError("Failed to delete SMS Application User with ID: {UserId}. Error: {Error}",
-                    request.SMSApplicationUserId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete SMS Application User with ID: {UserId}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -330,7 +330,7 @@ public class DeleteSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deleting SMS Application User with ID: {UserId}", request?.SMSApplicationUserId);
+            _logger.LogApplicationError("Unexpected error occurred while deleting SMS Application User with ID: {UserId}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.DeleteFailed);
         }
     }

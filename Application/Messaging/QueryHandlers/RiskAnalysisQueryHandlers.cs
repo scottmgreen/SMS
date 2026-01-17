@@ -28,7 +28,7 @@ public class GetRiskAnalysisByIdQueryHandler : BaseQueryBundle, IRequestHandler<
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetRiskAnalysisByIdQuery for ID: {Id}", request.RiskAnalysisId);
+            _logger.LogApplicationError("Error processing GetRiskAnalysisByIdQuery for ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NotFound);
         }
     }
@@ -55,16 +55,11 @@ public class GetRiskAnalysisByHazardIdQueryHandler : BaseQueryBundle, IRequestHa
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetRiskAnalysisByIdQuery for ID: {Id}", request.HazardId);
+            _logger.LogApplicationError("Error processing GetRiskAnalysisByIdQuery for ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NotFound);
         }
     }
 }
-
-
-
-
-
 
 public class GetAllRiskAnalysisQueryHandler : BaseQueryBundle, IRequestHandler<GetAllRiskAnalysisQuery, Result<List<RiskAnalysis>>>
 {
@@ -87,7 +82,7 @@ public class GetAllRiskAnalysisQueryHandler : BaseQueryBundle, IRequestHandler<G
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllRiskAnalysisQuery");
+            _logger.LogApplicationError("Error processing GetAllRiskAnalysisQuery", ApplicationEventIds.Error, ex);
             return Result<List<RiskAnalysis>>.Failure<List<RiskAnalysis>>(DomainErrors.RiskAnalysisError.NullOrEmpty);
         }
     }

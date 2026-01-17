@@ -23,7 +23,7 @@ public class CreateRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHan
         {
             if (request?.RiskAssessment is null)
             {
-                _logger.LogError("CreateRiskAssessmentCommand received with null RiskAssessment");
+                _logger.LogApplicationError("CreateRiskAssessmentCommand received with null RiskAssessment", ApplicationEventIds.Error, null);
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
@@ -38,8 +38,8 @@ public class CreateRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHan
             }
             else
             {
-                _logger.LogError("Failed to create RiskAssessment with Code: {Code}. Error: {Error}",
-                    request.RiskAssessment.Code, result.Error?.Message);
+                _logger.LogApplicationError("Failed to create RiskAssessment with Code: {Code}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -51,7 +51,7 @@ public class CreateRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHan
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating RiskAssessment");
+            _logger.LogApplicationError("Unexpected error occurred while creating RiskAssessment", ApplicationEventIds.Error, ex);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.CreateFailed);
         }
     }
@@ -74,7 +74,7 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHan
         {
             if (request?.RiskAssessment is null)
             {
-                _logger.LogError("UpdateRiskAssessmentCommand received with null RiskAssessment");
+                _logger.LogApplicationError("UpdateRiskAssessmentCommand received with null RiskAssessment", ApplicationEventIds.Error, null);
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
@@ -89,8 +89,8 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHan
             }
             else
             {
-                _logger.LogError("Failed to update RiskAssessment with ID: {Id}. Error: {Error}",
-                    request.RiskAssessment.Id, result.Error?.Message);
+                _logger.LogApplicationError("Failed to update RiskAssessment with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -102,7 +102,7 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHan
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating RiskAssessment with ID: {Id}", request.RiskAssessment?.Id);
+            _logger.LogApplicationError("Unexpected error occurred while updating RiskAssessment with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -125,7 +125,7 @@ public class DeleteRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHan
         {
             if (request?.RiskAssessmentId is null)
             {
-                _logger.LogError("DeleteRiskAssessmentCommand received with null RiskAssessmentId");
+                _logger.LogApplicationError("DeleteRiskAssessmentCommand received with null RiskAssessmentId", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
@@ -139,8 +139,8 @@ public class DeleteRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHan
             }
             else
             {
-                _logger.LogError("Failed to delete RiskAssessment with ID: {Id}. Error: {Error}",
-                    request.RiskAssessmentId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete RiskAssessment with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -152,7 +152,7 @@ public class DeleteRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHan
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deleting RiskAssessment with ID: {Id}", request.RiskAssessmentId);
+            _logger.LogApplicationError("Unexpected error occurred while deleting RiskAssessment with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.RiskAssessmentError.DeleteFailed);
         }
     }
@@ -179,7 +179,7 @@ public class SaveStep1CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
         {
             if (request is null)
             {
-                _logger.LogError("SaveStep1Command received with null request");
+                _logger.LogApplicationError("SaveStep1Command received with null request", ApplicationEventIds.Error, null);
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
@@ -206,8 +206,8 @@ public class SaveStep1CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
             }
             else
             {
-                _logger.LogError("Failed to save Step 1 for RiskAssessment: {Id}. Error: {Error}",
-                    request.RiskAssessmentId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to save Step 1 for RiskAssessment: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -219,7 +219,7 @@ public class SaveStep1CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while saving Step 1 for RiskAssessment: {Id}", request?.RiskAssessmentId);
+            _logger.LogApplicationError("Unexpected error occurred while saving Step 1 for RiskAssessment: {Id}", ApplicationEventIds.Error, ex);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -242,7 +242,7 @@ public class SaveStep3CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
         {
             if (request is null)
             {
-                _logger.LogError("SaveStep3Command received with null request");
+                _logger.LogApplicationError("SaveStep3Command received with null request", ApplicationEventIds.Error, null);
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
@@ -261,8 +261,8 @@ public class SaveStep3CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
             }
             else
             {
-                _logger.LogError("Failed to save Step 3 for RiskAssessment: {Id}. Error: {Error}",
-                    request.RiskAssessmentId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to save Step 3 for RiskAssessment: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -274,7 +274,7 @@ public class SaveStep3CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while saving Step 3 for RiskAssessment: {Id}", request?.RiskAssessmentId);
+            _logger.LogApplicationError("Unexpected error occurred while saving Step 3 for RiskAssessment: {Id}", ApplicationEventIds.Error, ex);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -297,7 +297,7 @@ public class SaveStep4CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
         {
             if (request is null)
             {
-                _logger.LogError("SaveStep4Command received with null request");
+                _logger.LogApplicationError("SaveStep4Command received with null request", ApplicationEventIds.Error, null);
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
@@ -321,8 +321,8 @@ public class SaveStep4CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
             }
             else
             {
-                _logger.LogError("Failed to save Step 4 for RiskAssessment: {Id}. Error: {Error}",
-                    request.RiskAssessmentId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to save Step 4 for RiskAssessment: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -334,7 +334,7 @@ public class SaveStep4CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while saving Step 4 for RiskAssessment: {Id}", request?.RiskAssessmentId);
+            _logger.LogApplicationError("Unexpected error occurred while saving Step 4 for RiskAssessment: {Id}", ApplicationEventIds.Error, ex);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -357,7 +357,7 @@ public class SaveStep5CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
         {
             if (request is null)
             {
-                _logger.LogError("SaveStep5Command received with null request");
+                _logger.LogApplicationError("SaveStep5Command received with null request", ApplicationEventIds.Error, null);
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
@@ -377,8 +377,8 @@ public class SaveStep5CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
             }
             else
             {
-                _logger.LogError("Failed to save Step 5 for RiskAssessment: {Id}. Error: {Error}",
-                    request.RiskAssessmentId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to save Step 5 for RiskAssessment: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -390,7 +390,7 @@ public class SaveStep5CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while saving Step 5 for RiskAssessment: {Id}", request?.RiskAssessmentId);
+            _logger.LogApplicationError("Unexpected error occurred while saving Step 5 for RiskAssessment: {Id}", ApplicationEventIds.Error, ex);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -413,7 +413,7 @@ public class UpdateProgressCommandHandler : BaseCommandBundle, IRequestHandler<U
         {
             if (request is null)
             {
-                _logger.LogError("UpdateProgressCommand received with null request");
+                _logger.LogApplicationError("UpdateProgressCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
@@ -436,8 +436,8 @@ public class UpdateProgressCommandHandler : BaseCommandBundle, IRequestHandler<U
             }
             else
             {
-                _logger.LogError("Failed to update progress for RiskAssessment: {Id}. Error: {Error}",
-                    request.RiskAssessmentId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to update progress for RiskAssessment: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -449,7 +449,7 @@ public class UpdateProgressCommandHandler : BaseCommandBundle, IRequestHandler<U
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating progress for RiskAssessment: {Id}", request?.RiskAssessmentId);
+            _logger.LogApplicationError("Unexpected error occurred while updating progress for RiskAssessment: {Id}", ApplicationEventIds.Error, ex);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }

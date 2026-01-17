@@ -73,7 +73,7 @@ public class GetAllSMSAuditPlansQueryHandler : BaseQueryBundle, IRequestHandler<
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllSMSAuditPlansQuery");
+            _logger.LogApplicationError("Error processing GetAllSMSAuditPlansQuery", ApplicationEventIds.Error, ex);
             return Result<List<SMSAuditPlan>>.Failure<List<SMSAuditPlan>>(new Error("QUERY_FAILED", "Failed to get audit plans"));
         }
     }
@@ -107,7 +107,7 @@ public class GetSMSAuditPlanByCodeQueryHandler : BaseQueryBundle, IRequestHandle
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSAuditPlanByCodeQuery for Code: {AuditPlanCode}", request.AuditPlanCode);
+            _logger.LogApplicationError("Error processing GetSMSAuditPlanByCodeQuery for Code: {AuditPlanCode}", ApplicationEventIds.Error, ex);
             return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("QUERY_FAILED", "Failed to get audit plan"));
         }
     }
@@ -141,7 +141,7 @@ public class GetSMSAuditPlansByTypeQueryHandler : BaseQueryBundle, IRequestHandl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSAuditPlansByTypeQuery for Type: {AuditType}", request.AuditType);
+            _logger.LogApplicationError("Error processing GetSMSAuditPlansByTypeQuery for Type: {AuditType}", ApplicationEventIds.Error, ex);
             return Result<List<SMSAuditPlan>>.Failure<List<SMSAuditPlan>>(new Error("QUERY_FAILED", "Failed to get audit plans by type"));
         }
     }
@@ -175,7 +175,7 @@ public class GetSMSAuditPlansByDepartmentQueryHandler : BaseQueryBundle, IReques
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSAuditPlansByDepartmentQuery for Department: {Department}", request.Department);
+            _logger.LogApplicationError("Error processing GetSMSAuditPlansByDepartmentQuery for Department: {Department}", ApplicationEventIds.Error, ex);
             return Result<List<SMSAuditPlan>>.Failure<List<SMSAuditPlan>>(new Error("QUERY_FAILED", "Failed to get audit plans by department"));
         }
     }
@@ -209,7 +209,7 @@ public class GetSMSAuditPlansRequiringApprovalQueryHandler : BaseQueryBundle, IR
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSAuditPlansRequiringApprovalQuery");
+            _logger.LogApplicationError("Error processing GetSMSAuditPlansRequiringApprovalQuery", ApplicationEventIds.Error, ex);
             return Result<List<SMSAuditPlan>>.Failure<List<SMSAuditPlan>>(new Error("QUERY_FAILED", "Failed to get audit plans requiring approval"));
         }
     }
@@ -257,7 +257,7 @@ public class GetSMSAuditCalendarQueryHandler : BaseQueryBundle, IRequestHandler<
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSAuditCalendarQuery");
+            _logger.LogApplicationError("Error processing GetSMSAuditCalendarQuery", ApplicationEventIds.Error, ex);
             return Result<SMSAuditCalendarData>.Failure<SMSAuditCalendarData>(new Error("QUERY_FAILED", "Failed to get audit calendar data"));
         }
     }

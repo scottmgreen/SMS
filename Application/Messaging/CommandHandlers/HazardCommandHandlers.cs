@@ -9,6 +9,8 @@ using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 using SMS_Domain.ValueObjects;
 
+using SMS_Infrastructure.Common;
+using SMS_Infrastructure.Configuration;
 using SMS_Infrastructure.Interfaces;
 using SMS_Infrastructure.Services;
 
@@ -32,11 +34,13 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
     private readonly RiskAssessmentDataService _riskAssessmentDataService;
     private readonly RiskAnalysisDataService _riskAnalysisDataService;  
     private readonly ILogger<CreateHazardCommandHandler> _logger;
+    private readonly ILogSupport _logsupport;
+    private readonly string _logheader = string.Empty;
 
     public CreateHazardCommandHandler(
         HazardDataService hazardDataService, ScoringPanelDataService scoringPanelDataService,
         HazardLocationDataService locationDataService,
-        RiskAssessmentDataService riskAssessmentDataService, RiskAnalysisDataService riskAnalysisDataService,
+        RiskAssessmentDataService riskAssessmentDataService, RiskAnalysisDataService riskAnalysisDataService, ILogSupport logsupport,
     ILogger<CreateHazardCommandHandler> logger)
     {
         _hazardDataService = hazardDataService ?? throw new ArgumentNullException(nameof(hazardDataService));
@@ -44,6 +48,8 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
         _locationDataService = locationDataService ?? throw new ArgumentNullException(nameof(locationDataService));
         _riskAssessmentDataService = riskAssessmentDataService ?? throw new ArgumentNullException(nameof(riskAssessmentDataService));
         _riskAnalysisDataService = riskAnalysisDataService ?? throw new ArgumentNullException(nameof(riskAnalysisDataService));
+        _logsupport = logsupport;
+        _logheader = _logsupport.GenerateLogHeader();
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -59,7 +65,7 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
             var hazardResult = await _hazardDataService.CreateHazardAsync(hazard, ct);
             if (hazardResult.IsFailure)
             {
-                _logger.LogError("? SMS Backend: Failed to save hazard via both data service");
+                _logger.LogApplicationError($"{_logheader} SMS Backend: Failed to save hazard via both data service", ApplicationEventIds.Error, null);
                 return Result<Hazard>.Failure<Hazard>(hazardResult.Error);
             }
             else
@@ -71,8 +77,7 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
                     
                 };
                 
-                //var scoringpanel = await _scoringPanelDataService.CreateScoringPanelAsync(scoringPanel, ct);
-
+               
                 var hazardLocation = new HazardLocation(new HazardLocationID("HL-0000"))
                 {
                     HazardCode = hazard.Code,
@@ -113,19 +118,15 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
                 var riskanalysisresult  = _riskAnalysisDataService.CreateRiskAnalysisAsync(riskanalysis, ct); 
 
             }
-             
+                        
             
-            
-            
-            
-            
-            _logger.LogInformation("? SMS Backend: Hazard saved via data service - {Code}", hazard.Code);
+            _logger.LogApplicationInformation(ApplicationEventIds.Information,"? SMS Backend: Hazard saved via data service - {Code}", hazard.Code);
             return Result<Hazard>.Success(hazardResult.Value);
         
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? SMS Backend: Exception creating hazard - {Name}", request.Hazard.Name);
+            _logger.LogApplicationError("? SMS Backend: Exception creating hazard - {Name}", ApplicationEventIds.Error, ex);
             return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.CreateFailed); // Use the correct error constant
         }
     }
@@ -149,7 +150,7 @@ public class UpdateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Upd
         {
             if (request?.Hazard is null)
             {
-                _logger.LogError("UpdateHazardCommand received with null Hazard");
+                _logger.LogApplicationError("UpdateHazardCommand received with null Hazard", ApplicationEventIds.Error, null);
                 return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NullOrEmpty);
             }
 
@@ -160,17 +161,12 @@ public class UpdateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Upd
 
             if (result.IsSuccess)
             {
-                
-
-
-
-
                 _logger.LogInformation("Successfully updated Hazard with ID: {Id}", request.Hazard.Id);
             }
             else
             {
-                _logger.LogError("Failed to update Hazard with ID: {Id}. Error: {Error}",
-                    request.Hazard.Id, result.Error?.Message);
+                _logger.LogApplicationError("Failed to update Hazard with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -182,7 +178,7 @@ public class UpdateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Upd
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating Hazard with ID: {Id}", request.Hazard?.Id);
+            _logger.LogApplicationError("Unexpected error occurred while updating Hazard with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.UpdateFailed);
         }
     }
@@ -205,7 +201,7 @@ public class DeleteHazardCommandHandler : BaseCommandBundle, IRequestHandler<Del
         {
             if (request?.HazardId is null)
             {
-                _logger.LogError("DeleteHazardCommand received with null HazardId");
+                _logger.LogApplicationError("DeleteHazardCommand received with null HazardId", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.HazardError.NullOrEmpty);
             }
 
@@ -219,8 +215,8 @@ public class DeleteHazardCommandHandler : BaseCommandBundle, IRequestHandler<Del
             }
             else
             {
-                _logger.LogError("Failed to delete Hazard with ID: {Id}. Error: {Error}",
-                    request.HazardId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete Hazard with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -232,7 +228,7 @@ public class DeleteHazardCommandHandler : BaseCommandBundle, IRequestHandler<Del
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deleting Hazard with ID: {Id}", request.HazardId);
+            _logger.LogApplicationError("Unexpected error occurred while deleting Hazard with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.HazardError.DeleteFailed);
         }
     }

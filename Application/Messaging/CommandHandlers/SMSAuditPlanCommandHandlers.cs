@@ -31,7 +31,7 @@ public class CreateSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
         {
             if (request is null)
             {
-                _logger.LogError("CreateSMSAuditPlanCommand received with null request");
+                _logger.LogApplicationError("CreateSMSAuditPlanCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
@@ -60,7 +60,7 @@ public class CreateSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
             var validationResult = _auditPlanService.ValidateAuditPlan(auditPlan);
             if (validationResult.IsFailure)
             {
-                _logger.LogError("Audit plan validation failed: {Error}", validationResult.Error?.Message);
+                _logger.LogApplicationError("Audit plan validation failed: {Error}", ApplicationEventIds.Error, null);
                 return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(validationResult.Error);
             }
 
@@ -73,7 +73,7 @@ public class CreateSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
             }
             else
             {
-                _logger.LogError("Failed to create SMS audit plan: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create SMS audit plan: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -85,7 +85,7 @@ public class CreateSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating SMS audit plan");
+            _logger.LogApplicationError("Unexpected error occurred while creating SMS audit plan", ApplicationEventIds.Error, ex);
             return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("CREATE_FAILED", "Failed to create audit plan"));
         }
     }
@@ -110,7 +110,7 @@ public class UpdateSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
         {
             if (request is null)
             {
-                _logger.LogError("UpdateSMSAuditPlanCommand received with null request");
+                _logger.LogApplicationError("UpdateSMSAuditPlanCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
@@ -122,7 +122,7 @@ public class UpdateSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
             var validationResult = _auditPlanService.ValidateAuditPlan(auditPlan);
             if (validationResult.IsFailure)
             {
-                _logger.LogError("Audit plan validation failed: {Error}", validationResult.Error?.Message);
+                _logger.LogApplicationError("Audit plan validation failed: {Error}", ApplicationEventIds.Error, null);
                 return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(validationResult.Error);
             }
 
@@ -135,7 +135,7 @@ public class UpdateSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
             }
             else
             {
-                _logger.LogError("Failed to update SMS audit plan: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update SMS audit plan: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -147,7 +147,7 @@ public class UpdateSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating SMS audit plan: {AuditPlanCode}", request?.AuditPlan.Code);
+            _logger.LogApplicationError("Unexpected error occurred while updating SMS audit plan: {AuditPlanCode}", ApplicationEventIds.Error, ex);
             return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("UPDATE_FAILED", "Failed to update audit plan"));
         }
     }
@@ -172,7 +172,7 @@ public class ApproveSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHand
         {
             if (request is null)
             {
-                _logger.LogError("ApproveSMSAuditPlanCommand received with null request");
+                _logger.LogApplicationError("ApproveSMSAuditPlanCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
@@ -182,7 +182,7 @@ public class ApproveSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHand
             var existingPlanResult = await _auditPlanService.GetAuditPlanByCodeAsync(request.AuditPlanCode, cancellationToken);
             if (existingPlanResult.IsFailure)
             {
-                _logger.LogError("Audit plan not found: {AuditPlanCode}", request.AuditPlanCode);
+                _logger.LogApplicationError("Audit plan not found: {AuditPlanCode}", ApplicationEventIds.Error, null);
                 return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(existingPlanResult.Error);
             }
 
@@ -192,7 +192,7 @@ public class ApproveSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHand
             var authorityValidation = _auditPlanService.ValidateApprovalAuthority(auditPlan, "AuditManager");
             if (authorityValidation.IsFailure)
             {
-                _logger.LogError("Approval authority validation failed: {Error}", authorityValidation.Error?.Message);
+                _logger.LogApplicationError("Approval authority validation failed: {Error}", ApplicationEventIds.Error, null);
                 return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(authorityValidation.Error);
             }
 
@@ -200,7 +200,7 @@ public class ApproveSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHand
             var approvalResult = auditPlan.ApproveAuditPlan(request.ApprovedBy, request.ApprovalNotes);
             if (approvalResult.IsFailure)
             {
-                _logger.LogError("Failed to approve audit plan: {Error}", approvalResult.Error?.Message);
+                _logger.LogApplicationError("Failed to approve audit plan: {Error}", ApplicationEventIds.Error, null);
                 return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(approvalResult.Error);
             }
 
@@ -214,7 +214,7 @@ public class ApproveSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHand
             }
             else
             {
-                _logger.LogError("Failed to save approved SMS audit plan: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to save approved SMS audit plan: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -226,7 +226,7 @@ public class ApproveSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHand
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while approving SMS audit plan: {AuditPlanCode}", request?.AuditPlanCode);
+            _logger.LogApplicationError("Unexpected error occurred while approving SMS audit plan: {AuditPlanCode}", ApplicationEventIds.Error, ex);
             return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("APPROVAL_FAILED", "Failed to approve audit plan"));
         }
     }
@@ -251,7 +251,7 @@ public class DeleteSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
         {
             if (request is null)
             {
-                _logger.LogError("DeleteSMSAuditPlanCommand received with null request");
+                _logger.LogApplicationError("DeleteSMSAuditPlanCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
@@ -266,7 +266,7 @@ public class DeleteSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
             }
             else
             {
-                _logger.LogError("Failed to delete SMS audit plan: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete SMS audit plan: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -278,7 +278,7 @@ public class DeleteSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deleting SMS audit plan: {AuditPlanCode}", request?.AuditPlanCode);
+            _logger.LogApplicationError("Unexpected error occurred while deleting SMS audit plan: {AuditPlanCode}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(new Error("DELETE_FAILED", "Failed to delete audit plan"));
         }
     }
@@ -303,7 +303,7 @@ public class ScheduleSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHan
         {
             if (request is null)
             {
-                _logger.LogError("ScheduleSMSAuditPlanCommand received with null request");
+                _logger.LogApplicationError("ScheduleSMSAuditPlanCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
@@ -322,7 +322,7 @@ public class ScheduleSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHan
             }
             else
             {
-                _logger.LogError("Failed to update SMS audit plan: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update SMS audit plan: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -334,7 +334,7 @@ public class ScheduleSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHan
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating SMS audit plan: {AuditPlanCode}", request?.AuditPlan.Code);
+            _logger.LogApplicationError("Unexpected error occurred while updating SMS audit plan: {AuditPlanCode}", ApplicationEventIds.Error, ex);
             return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("UPDATE_FAILED", "Failed to update audit plan"));
         }
     }

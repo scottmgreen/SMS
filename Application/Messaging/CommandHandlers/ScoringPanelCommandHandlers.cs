@@ -23,7 +23,7 @@ public class CreateScoringPanelCommandHandler : BaseCommandBundle, IRequestHandl
         {
             if (request?.ScoringPanel is null)
             {
-                _logger.LogError("CreateScoringPanelCommand received with null ScoringPanel");
+                _logger.LogApplicationError("CreateScoringPanelCommand received with null ScoringPanel", ApplicationEventIds.Error, null);
                 return Result<ScoringPanel>.Failure<ScoringPanel>(DomainErrors.ScoringPanelError.NullOrEmpty);
             }
 
@@ -38,8 +38,8 @@ public class CreateScoringPanelCommandHandler : BaseCommandBundle, IRequestHandl
             }
             else
             {
-                _logger.LogError("Failed to create ScoringPanel with Code: {Code}. Error: {Error}",
-                    request.ScoringPanel.Code, result.Error?.Message);
+                _logger.LogApplicationError("Failed to create ScoringPanel with Code: {Code}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -51,7 +51,7 @@ public class CreateScoringPanelCommandHandler : BaseCommandBundle, IRequestHandl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating ScoringPanel");
+            _logger.LogApplicationError("Unexpected error occurred while creating ScoringPanel", ApplicationEventIds.Error, ex);
             return Result<ScoringPanel>.Failure<ScoringPanel>(DomainErrors.ScoringPanelError.CreateFailed);
         }
     }
@@ -74,7 +74,7 @@ public class UpdateScoringPanelCommandHandler : BaseCommandBundle, IRequestHandl
         {
             if (request?.ScoringPanel is null)
             {
-                _logger.LogError("UpdateScoringPanelCommand received with null ScoringPanel");
+                _logger.LogApplicationError("UpdateScoringPanelCommand received with null ScoringPanel", ApplicationEventIds.Error, null);
                 return Result<ScoringPanel>.Failure<ScoringPanel>(DomainErrors.ScoringPanelError.NullOrEmpty);
             }
 
@@ -89,8 +89,8 @@ public class UpdateScoringPanelCommandHandler : BaseCommandBundle, IRequestHandl
             }
             else
             {
-                _logger.LogError("Failed to update ScoringPanel with ID: {Id}. Error: {Error}",
-                    request.ScoringPanel.Id, result.Error?.Message);
+                _logger.LogApplicationError("Failed to update ScoringPanel with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -102,7 +102,7 @@ public class UpdateScoringPanelCommandHandler : BaseCommandBundle, IRequestHandl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating ScoringPanel with ID: {Id}", request.ScoringPanel?.Id);
+            _logger.LogApplicationError("Unexpected error occurred while updating ScoringPanel with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<ScoringPanel>.Failure<ScoringPanel>(DomainErrors.ScoringPanelError.UpdateFailed);
         }
     }
@@ -125,7 +125,7 @@ public class DeleteScoringPanelCommandHandler : BaseCommandBundle, IRequestHandl
         {
             if (request?.ScoringPanelId is null)
             {
-                _logger.LogError("DeleteScoringPanelCommand received with null ScoringPanelId");
+                _logger.LogApplicationError("DeleteScoringPanelCommand received with null ScoringPanelId", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.ScoringPanelError.NullOrEmpty);
             }
 
@@ -139,8 +139,8 @@ public class DeleteScoringPanelCommandHandler : BaseCommandBundle, IRequestHandl
             }
             else
             {
-                _logger.LogError("Failed to delete ScoringPanel with ID: {Id}. Error: {Error}",
-                    request.ScoringPanelId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete ScoringPanel with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -152,7 +152,7 @@ public class DeleteScoringPanelCommandHandler : BaseCommandBundle, IRequestHandl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deleting ScoringPanel with ID: {Id}", request.ScoringPanelId);
+            _logger.LogApplicationError("Unexpected error occurred while deleting ScoringPanel with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.ScoringPanelError.DeleteFailed);
         }
     }

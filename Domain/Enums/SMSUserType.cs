@@ -59,16 +59,33 @@ public abstract class SMSUserType : BaseEnum<SMSUserType>
     #endregion
 
     /// <summary>
-    /// Gets all available SMS user types
+    /// Gets user types by minimum authorization level
     /// </summary>
-    public static IEnumerable<SMSUserType> GetAllValues()
+    public static IEnumerable<SMSUserType> GetUserTypesByAuthLevel(int minLevel)
     {
-        return typeof(SMSUserType)
-            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
-            .Where(f => f.FieldType == typeof(SMSUserType))
-            .Select(f => (SMSUserType)f.GetValue(null)!)
-            .Where(ut => ut != null);
+        return GetAllValues().Where(ut => ut.AuthorizationLevel >= minLevel);
     }
 
- 
+    /// <summary>
+    /// Gets the highest authorization level user type
+    /// </summary>
+    public static SMSUserType GetHighestAuthType()
+    {
+        return GetAllValues().OrderByDescending(ut => ut.AuthorizationLevel).First();
+    }
+
+    /// <summary>
+    /// Checks if this user type has administrative privileges
+    /// </summary>
+    public bool IsAdministrator => AuthorizationLevel >= 8;
+
+    /// <summary>
+    /// Checks if this user type is internal to the organization
+    /// </summary>
+    public bool IsInternal => this == Application || this == Organizational;
+
+    /// <summary>
+    /// Checks if this user type is external to the organization
+    /// </summary>
+    public bool IsExternal => this == Stakeholder;
 }

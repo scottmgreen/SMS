@@ -37,7 +37,7 @@ public class GetHazardByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetHaz
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetHazardByIdQuery for ID: {Id}", request.HazardId);
+            _logger.LogApplicationError("Error processing GetHazardByIdQuery for ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NotFound);
         }
     }
@@ -75,7 +75,7 @@ public class GetAllHazardsQueryHandler : BaseQueryBundle, IRequestHandler<GetAll
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllHazardsQuery");
+            _logger.LogApplicationError("Error processing GetAllHazardsQuery", ApplicationEventIds.Error, ex);
             return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
         }
     }
@@ -116,7 +116,7 @@ public class GetHazardsByReportIdQueryHandler : BaseQueryBundle, IRequestHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllHazardsQuery");
+            _logger.LogApplicationError("Error processing GetAllHazardsQuery", ApplicationEventIds.Error, ex);
             return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
         }
     }
@@ -172,7 +172,7 @@ public class GetHazardsByReportCodeQueryHandler : BaseQueryBundle, IRequestHandl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetHazardsByReportCodeQuery for ReportCode: {ReportCode}", request.ReportCode);
+            _logger.LogApplicationError("Error processing GetHazardsByReportCodeQuery for ReportCode: {ReportCode}", ApplicationEventIds.Error, ex);
             return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
         }
     }

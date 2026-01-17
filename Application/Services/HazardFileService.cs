@@ -48,20 +48,6 @@ public sealed class HazardFileService : IHazardFileService
         }
     }
 
-    public async Task<Result<HazardFile>> GetHazardFileByIdAsync(HazardFileID id, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving hazard file with ID: {Id}", id);
-            return await _dataService.GetHazardFileByIdAsync(id, ct).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error retrieving hazard file with ID: {Id}", id);
-            return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.NotFound);
-        }
-    }
-
     public async Task<Result<HazardFile>> GetHazardFileByCodeAsync(string code, CancellationToken ct = default)
     {
         try

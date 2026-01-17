@@ -42,8 +42,8 @@ public class CreateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
             }
             else
             {
-                _logger.LogError("Failed to create SMS stakeholder group: {GroupCode}, Error: {Error}", 
-                    request.StakeholderGroup.Code, result.Error?.Message);
+                _logger.LogApplicationError("Failed to create SMS stakeholder group: {GroupCode}, Error: {Error}", 
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -55,8 +55,8 @@ public class CreateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing CreateSMSStakeholderGroupCommand for group: {GroupCode}", 
-                request.StakeholderGroup?.Code);
+            _logger.LogApplicationError("Error processing CreateSMSStakeholderGroupCommand for group: {GroupCode}", 
+                ApplicationEventIds.Error, ex);
             return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.CreateFailed);
         }
     }
@@ -98,8 +98,8 @@ public class UpdateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
             }
             else
             {
-                _logger.LogError("Failed to update SMS stakeholder group: {GroupCode}, Error: {Error}", 
-                    request.StakeholderGroup.Code, result.Error?.Message);
+                _logger.LogApplicationError("Failed to update SMS stakeholder group: {GroupCode}, Error: {Error}", 
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -111,8 +111,8 @@ public class UpdateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing UpdateSMSStakeholderGroupCommand for group: {GroupCode}", 
-                request.StakeholderGroup?.Code);
+            _logger.LogApplicationError("Error processing UpdateSMSStakeholderGroupCommand for group: {GroupCode}", 
+                ApplicationEventIds.Error, ex);
             return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.UpdateFailed);
         }
     }
@@ -154,8 +154,8 @@ public class DeleteSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
             }
             else
             {
-                _logger.LogError("Failed to delete SMS stakeholder group: {GroupCode}, Error: {Error}", 
-                    request.StakeholderGroup.Code, result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete SMS stakeholder group: {GroupCode}, Error: {Error}", 
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -167,7 +167,7 @@ public class DeleteSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing DeleteSMSStakeholderGroupCommand for group: {GroupCode}", request.StakeholderGroup.Code);
+            _logger.LogApplicationError("Error processing DeleteSMSStakeholderGroupCommand for group: {GroupCode}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.DeleteFailed);
         }
     }
@@ -210,8 +210,8 @@ public class AssignUserToStakeholderGroupCommandHandler : BaseCommandBundle, IRe
             }
             else
             {
-                _logger.LogError("Failed to assign user {UserCode} to group {GroupCode}, Error: {Error}", 
-                    request.UserCode, request.StakeholderGroupID.Value, result.Error?.Message);
+                _logger.LogApplicationError("Failed to assign user {UserCode} to group {GroupCode}, Error: {Error}", 
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -223,8 +223,8 @@ public class AssignUserToStakeholderGroupCommandHandler : BaseCommandBundle, IRe
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing AssignUserToStakeholderGroupCommand for user: {UserCode} to group: {GroupCode}", 
-                request.UserCode, request.StakeholderGroupID.Value);
+            _logger.LogApplicationError("Error processing AssignUserToStakeholderGroupCommand for user: {UserCode} to group: {GroupCode}", 
+                ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.AssignmentFailed);
         }
     }
@@ -267,8 +267,8 @@ public class RemoveUserFromStakeholderGroupCommandHandler : BaseCommandBundle, I
             }
             else
             {
-                _logger.LogError("Failed to remove user {UserCode} from group {GroupCode}, Error: {Error}", 
-                    request.UserCode, request.StakeholderGroupID.Value, result.Error?.Message);
+                _logger.LogApplicationError("Failed to remove user {UserCode} from group {GroupCode}, Error: {Error}", 
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -280,8 +280,8 @@ public class RemoveUserFromStakeholderGroupCommandHandler : BaseCommandBundle, I
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing RemoveUserFromStakeholderGroupCommand for user: {UserCode} from group: {GroupCode}", 
-                request.UserCode, request.StakeholderGroupID.Value);
+            _logger.LogApplicationError("Error processing RemoveUserFromStakeholderGroupCommand for user: {UserCode} from group: {GroupCode}", 
+                ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.RemovalFailed);
         }
     }
@@ -323,8 +323,8 @@ public class ClearUserStakeholderGroupsCommandHandler : BaseCommandBundle, IRequ
             }
             else
             {
-                _logger.LogError("Failed to clear group memberships for user {UserCode}, Error: {Error}", 
-                    request.UserCode, result.Error?.Message);
+                _logger.LogApplicationError("Failed to clear group memberships for user {UserCode}, Error: {Error}", 
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -336,7 +336,7 @@ public class ClearUserStakeholderGroupsCommandHandler : BaseCommandBundle, IRequ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing ClearUserStakeholderGroupsCommand for user: {UserCode}", request.UserCode);
+            _logger.LogApplicationError("Error processing ClearUserStakeholderGroupsCommand for user: {UserCode}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.ClearGroupsFailed);
         }
     }

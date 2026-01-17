@@ -50,7 +50,7 @@ namespace SMS_Application.Configuration
             services.AddScoped<ISMSApplicationGroupService, SMSApplicationGroupService>();
             
             // SMS Workflow Services - SINGLE REGISTRATION ONLY
-            services.AddScoped<ISMSRiskAssessmentWorkflowService, SMSRiskAssessmentWorkflowService>();
+            //services.AddScoped<ISMSRiskAssessmentWorkflowService, SMSRiskAssessmentWorkflowService>();
             services.AddScoped<ISMSInvestigationWorkflowService, SMSInvestigationWorkflowService>();
            
             

@@ -36,7 +36,7 @@ public class GetAllSMSApplicationGroupsQueryHandler : BaseQueryBundle, IRequestH
             }
             else
             {
-                _logger.LogError("Failed to retrieve SMS application groups: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to retrieve SMS application groups: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -48,7 +48,7 @@ public class GetAllSMSApplicationGroupsQueryHandler : BaseQueryBundle, IRequestH
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllSMSApplicationGroupsQuery");
+            _logger.LogApplicationError("Error processing GetAllSMSApplicationGroupsQuery", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -96,7 +96,7 @@ public class GetSMSApplicationGroupByCodeQueryHandler : BaseQueryBundle, IReques
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSApplicationGroupByCodeQuery for group: {GroupCode}", request.GroupCode);
+            _logger.LogApplicationError("Error processing GetSMSApplicationGroupByCodeQuery for group: {GroupCode}", ApplicationEventIds.Error, ex);
             return Result<SMSApplicationGroup>.Failure<SMSApplicationGroup>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -133,8 +133,8 @@ public class GetSMSApplicationGroupsByUserCodeQueryHandler : BaseQueryBundle, IR
             }
             else
             {
-                _logger.LogError("Failed to retrieve SMS application groups for user {UserCode}: {Error}",
-                    request.UserCode, result.Error?.Message);
+                _logger.LogApplicationError("Failed to retrieve SMS application groups for user {UserCode}: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -146,7 +146,7 @@ public class GetSMSApplicationGroupsByUserCodeQueryHandler : BaseQueryBundle, IR
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSApplicationGroupsByUserCodeQuery for user: {UserCode}", request.UserCode);
+            _logger.LogApplicationError("Error processing GetSMSApplicationGroupsByUserCodeQuery for user: {UserCode}", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -187,8 +187,8 @@ public class GetUsersByApplicationGroupCodeQueryHandler : BaseQueryBundle, IRequ
             }
             else
             {
-                _logger.LogError("Failed to retrieve users for application group {GroupCode}: {Error}",
-                    request.GroupCode, result.Error?.Message);
+                _logger.LogApplicationError("Failed to retrieve users for application group {GroupCode}: {Error}",
+                    ApplicationEventIds.Error, null);
                 return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(result.Error);
             }
         }
@@ -199,7 +199,7 @@ public class GetUsersByApplicationGroupCodeQueryHandler : BaseQueryBundle, IRequ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetUsersByApplicationGroupCodeQuery for group: {GroupCode}", request.GroupCode);
+            _logger.LogApplicationError("Error processing GetUsersByApplicationGroupCodeQuery for group: {GroupCode}", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }

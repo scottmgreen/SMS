@@ -44,7 +44,7 @@ public class GetAllSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IReques
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllSMSOrganizationalUsersQuery");
+            _logger.LogApplicationError("Error processing GetAllSMSOrganizationalUsersQuery", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
         }
     }
@@ -81,7 +81,7 @@ public class GetSMSOrganizationalUserByIdQueryHandler : BaseQueryBundle, IReques
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSOrganizationalUserByIdQuery for ID: {UserId}", request.UserId);
+            _logger.LogApplicationError("Error processing GetSMSOrganizationalUserByIdQuery for ID: {UserId}", ApplicationEventIds.Error, ex);
             return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NotFound);
         }
     }
@@ -118,7 +118,7 @@ public class GetSMSOrganizationalUserByCodeQueryHandler : BaseQueryBundle, IRequ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSOrganizationalUserByCodeQuery for Code: {UserCode}", request.UserCode);
+            _logger.LogApplicationError("Error processing GetSMSOrganizationalUserByCodeQuery for Code: {UserCode}", ApplicationEventIds.Error, ex);
             return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NotFound);
         }
     }
@@ -163,7 +163,7 @@ public class GetSMSOrganizationalUserByUserNameQueryHandler : BaseQueryBundle, I
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSOrganizationalUserByUserNameQuery for UserName: {UserName}", request.UserName);
+            _logger.LogApplicationError("Error processing GetSMSOrganizationalUserByUserNameQuery for UserName: {UserName}", ApplicationEventIds.Error, ex);
             return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NotFound);
         }
     }
@@ -200,7 +200,7 @@ public class GetActiveSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IReq
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetActiveSMSOrganizationalUsersQuery");
+            _logger.LogApplicationError("Error processing GetActiveSMSOrganizationalUsersQuery", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
         }
     }
@@ -233,7 +233,7 @@ public class GetSMSOrganizationalUsersByDepartmentQueryHandler : BaseQueryBundle
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSOrganizationalUsersByDepartmentQuery for Department: {Department}", request.Department);
+            _logger.LogApplicationError("Error processing GetSMSOrganizationalUsersByDepartmentQuery for Department: {Department}", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
         }
     }
@@ -266,7 +266,7 @@ public class GetSMSOrganizationalUsersByPositionQueryHandler : BaseQueryBundle, 
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSOrganizationalUsersByPositionQuery for Position: {Position}", request.Position);
+            _logger.LogApplicationError("Error processing GetSMSOrganizationalUsersByPositionQuery for Position: {Position}", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
         }
     }
@@ -303,7 +303,7 @@ public class GetSMSOrganizationalUsersByOrganizationLevelQueryHandler : BaseQuer
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSOrganizationalUsersByOrganizationLevelQuery for OrganizationLevel: {OrganizationLevel}", request.OrganizationLevel);
+            _logger.LogApplicationError("Error processing GetSMSOrganizationalUsersByOrganizationLevelQuery for OrganizationLevel: {OrganizationLevel}", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
         }
     }
@@ -334,7 +334,7 @@ public class CheckSMSOrganizationalUserNameExistsQueryHandler : BaseQueryBundle,
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing CheckSMSOrganizationalUserNameExistsQuery for UserName: {UserName}", request.UserName);
+            _logger.LogApplicationError("Error processing CheckSMSOrganizationalUserNameExistsQuery for UserName: {UserName}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -382,7 +382,7 @@ public class GetSMSOrganizationalUserStatisticsQueryHandler : BaseQueryBundle, I
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSOrganizationalUserStatisticsQuery");
+            _logger.LogApplicationError("Error processing GetSMSOrganizationalUserStatisticsQuery", ApplicationEventIds.Error, ex);
             return Result<Dictionary<string, object>>.Failure<Dictionary<string, object>>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -426,7 +426,7 @@ public class ValidateSMSOrganizationalUserCredentialsQueryHandler : BaseQueryBun
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing ValidateSMSOrganizationalUserCredentialsQuery for UserName: {UserName}", request.UserName);
+            _logger.LogApplicationError("Error processing ValidateSMSOrganizationalUserCredentialsQuery for UserName: {UserName}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.LoginFailed);
         }
     }

@@ -35,48 +35,7 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
         _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent, $"{_logHeader} Hazard File Repository Initialized");
     }
 
-    public async Task<Result<HazardFile>> GetByIdAsync(HazardFileID id, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            _logger.LogInfrastructureGetItem($"{_logHeader} {StoredProcs.pr_HazardFile_GetById} ID:{id}", null);
-
-            using var sql = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(StoredProcs.pr_HazardFile_GetById, sql)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
-
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileId, id.Value));
-
-            HazardFile? response = null;
-
-            await sql.OpenAsync(cancellationToken).ConfigureAwait(false);
-            using (SqlDataReader reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
-            {
-                while (await reader.ReadAsync().ConfigureAwait(false))
-                {
-                    response = Mappers.MapToHazardFile(reader);
-                }
-            }
-            await sql.CloseAsync().ConfigureAwait(false);
-
-            if (response is not null)
-            {
-                return Result<Hazard>.Success(response);
-            }
-            else
-            {
-                return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.NotFound);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureGetItemError($"{_logHeader} {ex.Message}", null);
-            return Result<HazardFile>.Failure<HazardFile>(DomainErrors.GeneralError.UnProcessableRequest);
-        }
-    }
-
+    
     public async Task<Result<HazardFile>> GetByCodeAsync(string code, CancellationToken cancellationToken = default)
     {
         try
@@ -173,7 +132,7 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
             HazardFileID hazardId = new(newCodeValue);
 
-            return await GetByIdAsync(hazardId, cancellationToken).ConfigureAwait(false);
+            return await GetByCodeAsync(hazardId.Value, cancellationToken).ConfigureAwait(false);
 
         }
         catch (Exception ex)

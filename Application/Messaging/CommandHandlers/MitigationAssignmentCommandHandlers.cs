@@ -23,7 +23,7 @@ public class CreateMitigationAssignmentCommandHandler : BaseCommandBundle, IRequ
         {
             if (request?.MitigationAssignment is null)
             {
-                _logger.LogError("CreateMitigationAssignmentCommand received with null MitigationAssignment");
+                _logger.LogApplicationError("CreateMitigationAssignmentCommand received with null MitigationAssignment", ApplicationEventIds.Error, null);
                 return Result<MitigationAssignment>.Failure<MitigationAssignment>(DomainErrors.MitigationAssignmentError.NullOrEmpty);
             }
 
@@ -38,8 +38,8 @@ public class CreateMitigationAssignmentCommandHandler : BaseCommandBundle, IRequ
             }
             else
             {
-                _logger.LogError("Failed to create MitigationAssignment with Code: {Code}. Error: {Error}",
-                    request.MitigationAssignment.Code, result.Error?.Message);
+                _logger.LogApplicationError("Failed to create MitigationAssignment with Code: {Code}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -51,7 +51,7 @@ public class CreateMitigationAssignmentCommandHandler : BaseCommandBundle, IRequ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating MitigationAssignment");
+            _logger.LogApplicationError("Unexpected error occurred while creating MitigationAssignment", ApplicationEventIds.Error, ex);
             return Result<MitigationAssignment>.Failure<MitigationAssignment>(DomainErrors.MitigationAssignmentError.CreateFailed);
         }
     }
@@ -74,7 +74,7 @@ public class UpdateMitigationAssignmentCommandHandler : BaseCommandBundle, IRequ
         {
             if (request?.MitigationAssignment is null)
             {
-                _logger.LogError("UpdateMitigationAssignmentCommand received with null MitigationAssignment");
+                _logger.LogApplicationError("UpdateMitigationAssignmentCommand received with null MitigationAssignment", ApplicationEventIds.Error, null);
                 return Result<MitigationAssignment>.Failure<MitigationAssignment>(DomainErrors.MitigationAssignmentError.NullOrEmpty);
             }
 
@@ -89,8 +89,8 @@ public class UpdateMitigationAssignmentCommandHandler : BaseCommandBundle, IRequ
             }
             else
             {
-                _logger.LogError("Failed to update MitigationAssignment with ID: {Id}. Error: {Error}",
-                    request.MitigationAssignment.Id, result.Error?.Message);
+                _logger.LogApplicationError("Failed to update MitigationAssignment with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -102,7 +102,7 @@ public class UpdateMitigationAssignmentCommandHandler : BaseCommandBundle, IRequ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating MitigationAssignment with ID: {Id}", request.MitigationAssignment?.Id);
+            _logger.LogApplicationError("Unexpected error occurred while updating MitigationAssignment with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<MitigationAssignment>.Failure<MitigationAssignment>(DomainErrors.MitigationAssignmentError.UpdateFailed);
         }
     }
@@ -125,7 +125,7 @@ public class DeleteMitigationAssignmentCommandHandler : BaseCommandBundle, IRequ
         {
             if (request?.MitigationAssignmentId is null)
             {
-                _logger.LogError("DeleteMitigationAssignmentCommand received with null MitigationAssignmentId");
+                _logger.LogApplicationError("DeleteMitigationAssignmentCommand received with null MitigationAssignmentId", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.MitigationAssignmentError.NullOrEmpty);
             }
 
@@ -139,8 +139,8 @@ public class DeleteMitigationAssignmentCommandHandler : BaseCommandBundle, IRequ
             }
             else
             {
-                _logger.LogError("Failed to delete MitigationAssignment with ID: {Id}. Error: {Error}",
-                    request.MitigationAssignmentId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete MitigationAssignment with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -152,7 +152,7 @@ public class DeleteMitigationAssignmentCommandHandler : BaseCommandBundle, IRequ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deleting MitigationAssignment with ID: {Id}", request.MitigationAssignmentId);
+            _logger.LogApplicationError("Unexpected error occurred while deleting MitigationAssignment with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.MitigationAssignmentError.DeleteFailed);
         }
     }

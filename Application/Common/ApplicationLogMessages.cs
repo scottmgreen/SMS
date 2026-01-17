@@ -10,58 +10,58 @@ public static class ApplicationLogMessages
 {
 
     private static readonly Action<ILogger, int, string, Exception?> _LogInformation =
-            LoggerMessage.Define<int, string>(LogLevel.Information, LoggingEventIds.SMS_ApplicationEventIds.Information, "{message} {CBTEventId} ");
+            LoggerMessage.Define<int, string>(LogLevel.Information, LoggingEventIds.SMS_ApplicationEventIds.Information, "{message} {ApplicationEventId} ");
 
-    public static void LogApplicationInformation(this ILogger logger, int? CBTEventId, string message, params object[] args)
+    public static void LogApplicationInformation(this ILogger logger, int? ApplicationEventId, string message, params object[] args)
     {
         _LogInformation(logger, LoggingEventIds.SMS_ApplicationEventIds.Information, message, null);
     }
 
 
     private static readonly Action<ILogger, string, int, Exception?> _LogDebug =
-            LoggerMessage.Define<string, int>(LogLevel.Debug, LoggingEventIds.SMS_ApplicationEventIds.Debug, "{message} {CBTEventId} ");
+            LoggerMessage.Define<string, int>(LogLevel.Debug, LoggingEventIds.SMS_ApplicationEventIds.Debug, "{message} {ApplicationEventId} ");
 
-    public static void LogApplicationDebug(this ILogger logger, string message, int? CBTEventId)
+    public static void LogApplicationDebug(this ILogger logger, string message, int? ApplicationEventId)
     {
         _LogDebug(logger, message, LoggingEventIds.SMS_ApplicationEventIds.Debug, null);
     }
 
 
     private static readonly Action<ILogger, string, int, Exception?> _LogError =
-            LoggerMessage.Define<string, int>(LogLevel.Error, LoggingEventIds.SMS_ApplicationEventIds.Error, "{message} {CBTEventId} ");
+            LoggerMessage.Define<string, int>(LogLevel.Error, LoggingEventIds.SMS_ApplicationEventIds.Error, "{message} {ApplicationEventId} ");
 
-    public static void LogApplicationError(this ILogger logger, string message, int? CBTEventId, Exception ex)
+    public static void LogApplicationError(this ILogger logger, string message, int? ApplicationEventId, Exception ex)
     {
         _LogError(logger, message, LoggingEventIds.SMS_ApplicationEventIds.Error, ex);
     }
 
     private static readonly Action<ILogger, string, int, Exception?> _LogCritical =
-            LoggerMessage.Define<string, int>(LogLevel.Error, LoggingEventIds.SMS_ApplicationEventIds.Error, "{message} {CBTEventId} ");
+            LoggerMessage.Define<string, int>(LogLevel.Error, LoggingEventIds.SMS_ApplicationEventIds.Error, "{message} {ApplicationEventId} ");
 
-    public static void LogApplicationCritical(this ILogger logger, string message, int? CBTEventId, Exception ex)
+    public static void LogApplicationCritical(this ILogger logger, string message, int? ApplicationEventId, Exception ex)
     {
         _LogCritical(logger, message, LoggingEventIds.SMS_ApplicationEventIds.Error, ex);
     }
     private static readonly Action<ILogger, string, int, Exception?> _LogNone =
-            LoggerMessage.Define<string, int>(LogLevel.None, LoggingEventIds.SMS_ApplicationEventIds.None, "{message} {CBTEventId} ");
+            LoggerMessage.Define<string, int>(LogLevel.None, LoggingEventIds.SMS_ApplicationEventIds.None, "{message} {ApplicationEventId} ");
 
-    public static void LogApplicationNone(this ILogger logger, string message, int? CBTEventId)
+    public static void LogApplicationNone(this ILogger logger, string message, int? ApplicationEventId)
     {
         _LogNone(logger, message, LoggingEventIds.SMS_ApplicationEventIds.None, null);
     }
 
     private static readonly Action<ILogger, string, int, Exception?> _LogTrace =
-            LoggerMessage.Define<string, int>(LogLevel.Trace, LoggingEventIds.SMS_ApplicationEventIds.Trace, "{message} {CBTEventId} ");
+            LoggerMessage.Define<string, int>(LogLevel.Trace, LoggingEventIds.SMS_ApplicationEventIds.Trace, "{message} {ApplicationEventId} ");
 
-    public static void LogApplicationTrace(this ILogger logger, string message, int? CBTEventId)
+    public static void LogApplicationTrace(this ILogger logger, string message, int? ApplicationEventId)
     {
         _LogTrace(logger, message, LoggingEventIds.SMS_ApplicationEventIds.Trace, null);
     }
 
     private static readonly Action<ILogger, string, int, Exception?> _LogWarning =
-            LoggerMessage.Define<string, int>(LogLevel.Warning, LoggingEventIds.SMS_ApplicationEventIds.Warning, "{message} {CBTEventId} ");
+            LoggerMessage.Define<string, int>(LogLevel.Warning, LoggingEventIds.SMS_ApplicationEventIds.Warning, "{message} {ApplicationEventId} ");
 
-    public static void LogApplicationWarning(this ILogger logger, string message, int? CBTEventId)
+    public static void LogApplicationWarning(this ILogger logger, string message, int? ApplicationEventId)
     {
         _LogWarning(logger, message, LoggingEventIds.SMS_ApplicationEventIds.Warning, null);
     }

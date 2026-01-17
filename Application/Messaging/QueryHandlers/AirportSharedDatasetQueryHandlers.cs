@@ -29,7 +29,7 @@ public class GetAirportSharedDatasetByIdQueryHandler : BaseQueryBundle, IRequest
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAirportSharedDatasetByCodeQuery for Code: {Code}", request.AirportSharedDatasetCode);
+            _logger.LogApplicationError("Error processing GetAirportSharedDatasetByCodeQuery for Code: {Code}", ApplicationEventIds.Error, ex);
             return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.NotFound);
         }
     }
@@ -56,7 +56,7 @@ public class GetAllAirportSharedDatasetsQueryHandler : BaseQueryBundle, IRequest
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllAirportSharedDatasetsQuery");
+            _logger.LogApplicationError("Error processing GetAllAirportSharedDatasetsQuery", ApplicationEventIds.Error, ex);
             return Result<List<AirportSharedDataset>>.Failure<List<AirportSharedDataset>>(DomainErrors.AirportSharedDatasetError.NullOrEmpty);
         }
     }

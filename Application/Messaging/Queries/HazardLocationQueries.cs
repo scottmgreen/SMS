@@ -10,11 +10,11 @@ namespace SMS_Application.Messaging.Queries;
 // HAZARD LOCATION QUERIES
 // =============================================
 
-public class GetHazardLocationByIdQuery : BaseQueryBundle, IRequest<Result<HazardLocation>>
+public class GetHazardLocationByCodeQuery : BaseQueryBundle, IRequest<Result<HazardLocation>>
 {
     public HazardLocationID HazardLocationId { get; set; }
 
-    public GetHazardLocationByIdQuery(HazardLocationID hazardLocationId)
+    public GetHazardLocationByCodeQuery(HazardLocationID hazardLocationId)
     {
         HazardLocationId = hazardLocationId ?? throw new ArgumentNullException(nameof(hazardLocationId));
     }

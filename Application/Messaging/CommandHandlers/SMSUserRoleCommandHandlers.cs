@@ -32,7 +32,7 @@ public class CreateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandle
         {
             if (request?.SMSUserRole is null)
             {
-                _logger.LogError("CreateSMSUserRoleCommand received with null request or user role");
+                _logger.LogApplicationError("CreateSMSUserRoleCommand received with null request or user role", ApplicationEventIds.Error, null);
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
@@ -46,8 +46,8 @@ public class CreateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandle
             }
             else
             {
-                _logger.LogError("Failed to create SMS User Role with Code: {Code}. Error: {Error}",
-                    request.SMSUserRole.Code, result.Error?.Message);
+                _logger.LogApplicationError("Failed to create SMS User Role with Code: {Code}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -59,7 +59,7 @@ public class CreateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandle
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating SMS User Role");
+            _logger.LogApplicationError("Unexpected error occurred while creating SMS User Role", ApplicationEventIds.Error, ex);
             return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.CreateFailed);
         }
     }
@@ -82,7 +82,7 @@ public class UpdateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandle
         {
             if (request?.SMSUserRole is null)
             {
-                _logger.LogError("UpdateSMSUserRoleCommand received with null request or user role");
+                _logger.LogApplicationError("UpdateSMSUserRoleCommand received with null request or user role", ApplicationEventIds.Error, null);
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
@@ -96,8 +96,8 @@ public class UpdateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandle
             }
             else
             {
-                _logger.LogError("Failed to update SMS User Role with ID: {Id}. Error: {Error}",
-                    request.SMSUserRole.Id, result.Error?.Message);
+                _logger.LogApplicationError("Failed to update SMS User Role with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -109,7 +109,7 @@ public class UpdateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandle
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating SMS User Role with ID: {Id}", request?.SMSUserRole?.Id);
+            _logger.LogApplicationError("Unexpected error occurred while updating SMS User Role with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.UpdateFailed);
         }
     }
@@ -132,7 +132,7 @@ public class DeleteSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandle
         {
             if (request is null)
             {
-                _logger.LogError("DeleteSMSUserRoleCommand received with null request");
+                _logger.LogApplicationError("DeleteSMSUserRoleCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
@@ -146,8 +146,8 @@ public class DeleteSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandle
             }
             else
             {
-                _logger.LogError("Failed to delete SMS User Role with ID: {Id}. Error: {Error}",
-                    request.SMSUserRoleId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete SMS User Role with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -159,7 +159,7 @@ public class DeleteSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandle
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deleting SMS User Role with ID: {Id}", request?.SMSUserRoleId);
+            _logger.LogApplicationError("Unexpected error occurred while deleting SMS User Role with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.DeleteFailed);
         }
     }
@@ -182,7 +182,7 @@ public class AssignRoleToUserCommandHandler : BaseCommandBundle, IRequestHandler
         {
             if (request is null)
             {
-                _logger.LogError("AssignRoleToUserCommand received with null request");
+                _logger.LogApplicationError("AssignRoleToUserCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
@@ -207,8 +207,8 @@ public class AssignRoleToUserCommandHandler : BaseCommandBundle, IRequestHandler
             }
             else
             {
-                _logger.LogError("Failed to assign role {RoleCode} to user {UserId}. Error: {Error}",
-                    request.RoleCode, request.UserId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to assign role {RoleCode} to user {UserId}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -220,7 +220,7 @@ public class AssignRoleToUserCommandHandler : BaseCommandBundle, IRequestHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while assigning role to user");
+            _logger.LogApplicationError("Unexpected error occurred while assigning role to user", ApplicationEventIds.Error, ex);
             return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.CreateFailed);
         }
     }
@@ -311,7 +311,7 @@ public class ActivateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHand
         {
             if (request is null)
             {
-                _logger.LogError("ActivateSMSUserRoleCommand received with null request");
+                _logger.LogApplicationError("ActivateSMSUserRoleCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
@@ -338,8 +338,8 @@ public class ActivateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHand
             }
             else
             {
-                _logger.LogError("Failed to activate SMS User Role with ID: {Id}. Error: {Error}",
-                    request.UserRoleId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to activate SMS User Role with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(result.Error);
             }
         }
@@ -350,7 +350,7 @@ public class ActivateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHand
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while activating SMS User Role with ID: {Id}", request.UserRoleId);
+            _logger.LogApplicationError("Unexpected error occurred while activating SMS User Role with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.UpdateFailed);
         }
     }
@@ -373,7 +373,7 @@ public class DeactivateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHa
         {
             if (request is null)
             {
-                _logger.LogError("DeactivateSMSUserRoleCommand received with null request");
+                _logger.LogApplicationError("DeactivateSMSUserRoleCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
@@ -400,8 +400,8 @@ public class DeactivateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHa
             }
             else
             {
-                _logger.LogError("Failed to deactivate SMS User Role with ID: {Id}. Error: {Error}",
-                    request.UserRoleId, result.Error?.Message);
+                _logger.LogApplicationError("Failed to deactivate SMS User Role with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(result.Error);
             }
         }
@@ -412,7 +412,7 @@ public class DeactivateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHa
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deactivating SMS User Role with ID: {Id}", request.UserRoleId);
+            _logger.LogApplicationError("Unexpected error occurred while deactivating SMS User Role with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.UpdateFailed);
         }
     }

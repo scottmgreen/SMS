@@ -51,18 +51,6 @@ public abstract class RiskAssessmentType : BaseEnum<RiskAssessmentType>
     #endregion
 
     /// <summary>
-    /// Gets all available risk assessment type values
-    /// </summary>
-    public static IEnumerable<RiskAssessmentType> GetAllValues()
-    {
-        return typeof(RiskAssessmentType)
-            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
-            .Where(f => f.FieldType == typeof(RiskAssessmentType))
-            .Select(f => (RiskAssessmentType)f.GetValue(null)!)
-            .Where(rat => rat != null);
-    }
-
-    /// <summary>
     /// Gets types that require a primary hazard
     /// </summary>
     public static IEnumerable<RiskAssessmentType> GetTypesRequiringPrimaryHazard()

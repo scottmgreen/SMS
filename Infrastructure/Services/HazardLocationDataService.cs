@@ -27,9 +27,9 @@ public class HazardLocationDataService : BaseDataService<HazardLocationDataServi
         return _repo.CreateHazardLocationAsync(hazardLocation, ct);
     }
 
-    public Task<Result<HazardLocation>> GetHazardLocationByIdAsync(HazardLocationID id, CancellationToken ct = default)
+    public Task<Result<HazardLocation>> GetHazardLocationByCodeAsync(HazardLocationID code, CancellationToken ct = default)
     {
-        return _repo.GetHazardLocationByIdAsync(id, ct);
+        return _repo.GetHazardLocationByCodeAsync(code, ct);
     }
 
     public Task<Result<List<HazardLocation>>> GetAllHazardLocationsAsync(CancellationToken ct = default)

@@ -62,18 +62,6 @@ public abstract class RiskAssessmentStatus : BaseEnum<RiskAssessmentStatus>
     #endregion
 
     /// <summary>
-    /// Gets all available risk assessment status values
-    /// </summary>
-    public static IEnumerable<RiskAssessmentStatus> GetAllValues()
-    {
-        return typeof(RiskAssessmentStatus)
-            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
-            .Where(f => f.FieldType == typeof(RiskAssessmentStatus))
-            .Select(f => (RiskAssessmentStatus)f.GetValue(null)!)
-            .Where(ras => ras != null);
-    }
-
-    /// <summary>
     /// Gets status values that allow modifications
     /// </summary>
     public static IEnumerable<RiskAssessmentStatus> GetModifiableStatuses()
@@ -92,15 +80,15 @@ public abstract class RiskAssessmentStatus : BaseEnum<RiskAssessmentStatus>
     /// <summary>
     /// Checks if this status allows step completion
     /// </summary>
-    public bool AllowsStepCompletion => this != Completed;
+    public bool CanCompleteSteps => AllowsModification;
 
     /// <summary>
-    /// Checks if this status indicates completion
+    /// Checks if this status is final
     /// </summary>
-    public bool IsCompleted => this == Completed;
+    public bool IsCompleted => IsFinal;
 
     /// <summary>
-    /// Checks if this status indicates active work
+    /// Checks if work can be done in this status
     /// </summary>
-    public bool IsActive => this == Created || this == InProgress;
+    public bool IsWorkable => AllowsModification;
 }

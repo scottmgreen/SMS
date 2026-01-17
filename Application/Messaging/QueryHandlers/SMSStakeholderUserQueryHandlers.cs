@@ -44,7 +44,7 @@ public class GetAllSMSStakeholderUsersQueryHandler : BaseQueryBundle, IRequestHa
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllSMSStakeholderUsersQuery");
+            _logger.LogApplicationError("Error processing GetAllSMSStakeholderUsersQuery", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
         }
     }
@@ -81,7 +81,7 @@ public class GetSMSStakeholderUserByIdQueryHandler : BaseQueryBundle, IRequestHa
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSStakeholderUserByIdQuery for ID: {UserId}", request.UserId);
+            _logger.LogApplicationError("Error processing GetSMSStakeholderUserByIdQuery for ID: {UserId}", ApplicationEventIds.Error, ex);
             return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NotFound);
         }
     }
@@ -118,7 +118,7 @@ public class GetSMSStakeholderUserByCodeQueryHandler : BaseQueryBundle, IRequest
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSStakeholderUserByCodeQuery for Code: {UserCode}", request.UserCode);
+            _logger.LogApplicationError("Error processing GetSMSStakeholderUserByCodeQuery for Code: {UserCode}", ApplicationEventIds.Error, ex);
             return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NotFound);
         }
     }
@@ -163,7 +163,7 @@ public class GetSMSStakeholderUserByUserNameQueryHandler : BaseQueryBundle, IReq
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSStakeholderUserByUserNameQuery for UserName: {UserName}", request.UserName);
+            _logger.LogApplicationError("Error processing GetSMSStakeholderUserByUserNameQuery for UserName: {UserName}", ApplicationEventIds.Error, ex);
             return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NotFound);
         }
     }
@@ -200,7 +200,7 @@ public class GetActiveSMSStakeholderUsersQueryHandler : BaseQueryBundle, IReques
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetActiveSMSStakeholderUsersQuery");
+            _logger.LogApplicationError("Error processing GetActiveSMSStakeholderUsersQuery", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
         }
     }
@@ -237,7 +237,7 @@ public class GetSMSStakeholderUsersByTypeQueryHandler : BaseQueryBundle, IReques
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSStakeholderUsersByTypeQuery for Type: {StakeholderType}", request.StakeholderType);
+            _logger.LogApplicationError("Error processing GetSMSStakeholderUsersByTypeQuery for Type: {StakeholderType}", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
         }
     }
@@ -274,7 +274,7 @@ public class GetSMSStakeholderUsersByOrganizationQueryHandler : BaseQueryBundle,
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSStakeholderUsersByOrganizationQuery for Organization: {Organization}", request.Organization);
+            _logger.LogApplicationError("Error processing GetSMSStakeholderUsersByOrganizationQuery for Organization: {Organization}", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
         }
     }
@@ -310,15 +310,15 @@ public class GetSMSStakeholderUsersByGroupCodeQueryHandler : BaseQueryBundle, IR
             }
             else
             {
-                _logger.LogError("Failed to retrieve SMS Stakeholder Users for GroupCode {GroupCode}: {Error}", 
-                    request.GroupCode, result.Error?.Message);
+                _logger.LogApplicationError("Failed to retrieve SMS Stakeholder Users for GroupCode {GroupCode}: {Error}", 
+                    ApplicationEventIds.Error, null);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSMSStakeholderUsersByGroupCodeQuery for GroupCode: {GroupCode}", request.GroupCode);
+            _logger.LogApplicationError("Error processing GetSMSStakeholderUsersByGroupCodeQuery for GroupCode: {GroupCode}", ApplicationEventIds.Error, ex);
             return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
         }
     }
@@ -362,7 +362,7 @@ public class ValidateSMSStakeholderUsersCredentialsQueryHandler : BaseQueryBundl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing ValidateSMSOrganizationalUserCredentialsQuery for UserName: {UserName}", request.UserName);
+            _logger.LogApplicationError("Error processing ValidateSMSOrganizationalUserCredentialsQuery for UserName: {UserName}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.LoginFailed);
         }
     }

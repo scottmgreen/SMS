@@ -35,7 +35,7 @@ public class CreateSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
         {
             if (request is null)
             {
-                _logger.LogError("CreateSMSAuditFindingCommand received with null request");
+                _logger.LogApplicationError("CreateSMSAuditFindingCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
@@ -45,7 +45,7 @@ public class CreateSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
             var auditResult = await _auditService.GetAuditByCodeAsync(request.AuditCode, cancellationToken);
             if (auditResult.IsFailure)
             {
-                _logger.LogError("Audit not found: {AuditCode}", request.AuditCode);
+                _logger.LogApplicationError("Audit not found: {AuditCode}", ApplicationEventIds.Error, null);
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(auditResult.Error);
             }
 
@@ -81,7 +81,7 @@ public class CreateSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
             }
             else
             {
-                _logger.LogError("Failed to create SMS audit finding: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create SMS audit finding: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -93,7 +93,7 @@ public class CreateSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating SMS audit finding");
+            _logger.LogApplicationError("Unexpected error occurred while creating SMS audit finding", ApplicationEventIds.Error, ex);
             return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("CREATE_FINDING_FAILED", "Failed to create audit finding"));
         }
     }
@@ -133,7 +133,7 @@ public class UpdateSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
         {
             if (request is null)
             {
-                _logger.LogError("UpdateSMSAuditFindingCommand received with null request");
+                _logger.LogApplicationError("UpdateSMSAuditFindingCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
@@ -143,7 +143,7 @@ public class UpdateSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
             var existingResult = await _auditFindingDataService.GetAuditFindingByCodeAsync(request.FindingCode, cancellationToken);
             if (existingResult.IsFailure)
             {
-                _logger.LogError("Finding not found: {FindingCode}", request.FindingCode);
+                _logger.LogApplicationError("Finding not found: {FindingCode}", ApplicationEventIds.Error, null);
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(existingResult.Error);
             }
 
@@ -169,7 +169,7 @@ public class UpdateSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
             }
             else
             {
-                _logger.LogError("Failed to update SMS audit finding: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update SMS audit finding: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -181,7 +181,7 @@ public class UpdateSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating SMS audit finding: {FindingCode}", request?.FindingCode);
+            _logger.LogApplicationError("Unexpected error occurred while updating SMS audit finding: {FindingCode}", ApplicationEventIds.Error, ex);
             return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("UPDATE_FINDING_FAILED", "Failed to update audit finding"));
         }
     }
@@ -206,7 +206,7 @@ public class AssignSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle, I
         {
             if (request is null)
             {
-                _logger.LogError("AssignSMSAuditCorrectiveActionCommand received with null request");
+                _logger.LogApplicationError("AssignSMSAuditCorrectiveActionCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
@@ -216,7 +216,7 @@ public class AssignSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle, I
             var existingResult = await _auditFindingDataService.GetAuditFindingByCodeAsync(request.FindingCode, cancellationToken);
             if (existingResult.IsFailure)
             {
-                _logger.LogError("Finding not found: {FindingCode}", request.FindingCode);
+                _logger.LogApplicationError("Finding not found: {FindingCode}", ApplicationEventIds.Error, null);
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(existingResult.Error);
             }
 
@@ -232,7 +232,7 @@ public class AssignSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle, I
 
             if (assignResult.IsFailure)
             {
-                _logger.LogError("Failed to assign corrective action using domain method: {Error}", assignResult.Error?.Message);
+                _logger.LogApplicationError("Failed to assign corrective action using domain method: {Error}", ApplicationEventIds.Error, null);
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(assignResult.Error);
             }
 
@@ -246,7 +246,7 @@ public class AssignSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle, I
             }
             else
             {
-                _logger.LogError("Failed to save corrective action assignment: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to save corrective action assignment: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -258,7 +258,7 @@ public class AssignSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle, I
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while assigning corrective action: {FindingCode}", request?.FindingCode);
+            _logger.LogApplicationError("Unexpected error occurred while assigning corrective action: {FindingCode}", ApplicationEventIds.Error, ex);
             return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("ASSIGN_ACTION_FAILED", "Failed to assign corrective action"));
         }
     }
@@ -283,7 +283,7 @@ public class CompleteSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle,
         {
             if (request is null)
             {
-                _logger.LogError("CompleteSMSAuditCorrectiveActionCommand received with null request");
+                _logger.LogApplicationError("CompleteSMSAuditCorrectiveActionCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
@@ -293,7 +293,7 @@ public class CompleteSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle,
             var existingResult = await _auditFindingDataService.GetAuditFindingByCodeAsync(request.FindingCode, cancellationToken);
             if (existingResult.IsFailure)
             {
-                _logger.LogError("Finding not found: {FindingCode}", request.FindingCode);
+                _logger.LogApplicationError("Finding not found: {FindingCode}", ApplicationEventIds.Error, null);
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(existingResult.Error);
             }
 
@@ -307,7 +307,7 @@ public class CompleteSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle,
 
             if (completeResult.IsFailure)
             {
-                _logger.LogError("Failed to complete corrective action using domain method: {Error}", completeResult.Error?.Message);
+                _logger.LogApplicationError("Failed to complete corrective action using domain method: {Error}", ApplicationEventIds.Error, null);
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(completeResult.Error);
             }
 
@@ -320,7 +320,7 @@ public class CompleteSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle,
             }
             else
             {
-                _logger.LogError("Failed to save corrective action completion: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to save corrective action completion: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -332,7 +332,7 @@ public class CompleteSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle,
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while completing corrective action: {FindingCode}", request?.FindingCode);
+            _logger.LogApplicationError("Unexpected error occurred while completing corrective action: {FindingCode}", ApplicationEventIds.Error, ex);
             return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("COMPLETE_ACTION_FAILED", "Failed to complete corrective action"));
         }
     }
@@ -357,7 +357,7 @@ public class VerifySMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
         {
             if (request is null)
             {
-                _logger.LogError("VerifySMSAuditFindingCommand received with null request");
+                _logger.LogApplicationError("VerifySMSAuditFindingCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
@@ -367,7 +367,7 @@ public class VerifySMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
             var existingResult = await _auditFindingDataService.GetAuditFindingByCodeAsync(request.FindingCode, cancellationToken);
             if (existingResult.IsFailure)
             {
-                _logger.LogError("Finding not found: {FindingCode}", request.FindingCode);
+                _logger.LogApplicationError("Finding not found: {FindingCode}", ApplicationEventIds.Error, null);
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(existingResult.Error);
             }
 
@@ -381,7 +381,7 @@ public class VerifySMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
 
             if (verifyResult.IsFailure)
             {
-                _logger.LogError("Failed to verify finding using domain method: {Error}", verifyResult.Error?.Message);
+                _logger.LogApplicationError("Failed to verify finding using domain method: {Error}", ApplicationEventIds.Error, null);
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(verifyResult.Error);
             }
 
@@ -395,7 +395,7 @@ public class VerifySMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
             }
             else
             {
-                _logger.LogError("Failed to save finding verification: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to save finding verification: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -407,7 +407,7 @@ public class VerifySMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while verifying finding: {FindingCode}", request?.FindingCode);
+            _logger.LogApplicationError("Unexpected error occurred while verifying finding: {FindingCode}", ApplicationEventIds.Error, ex);
             return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("VERIFY_FINDING_FAILED", "Failed to verify finding"));
         }
     }
@@ -432,7 +432,7 @@ public class DeleteSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
         {
             if (request is null)
             {
-                _logger.LogError("DeleteSMSAuditFindingCommand received with null request");
+                _logger.LogApplicationError("DeleteSMSAuditFindingCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
@@ -452,7 +452,7 @@ public class DeleteSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
             }
             else
             {
-                _logger.LogError("Failed to delete finding: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete finding: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -464,7 +464,7 @@ public class DeleteSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deleting finding: {FindingCode}", request?.FindingCode);
+            _logger.LogApplicationError("Unexpected error occurred while deleting finding: {FindingCode}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(new Error("DELETE_FINDING_FAILED", "Failed to delete finding"));
         }
     }

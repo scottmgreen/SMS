@@ -127,18 +127,6 @@ public abstract class AgendaItemType : BaseEnum<AgendaItemType>
     #endregion
 
     /// <summary>
-    /// Gets all available agenda item types
-    /// </summary>
-    public static IEnumerable<AgendaItemType> GetAllValues()
-    {
-        return typeof(AgendaItemType)
-            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
-            .Where(f => f.FieldType == typeof(AgendaItemType))
-            .Select(f => (AgendaItemType)f.GetValue(null)!)
-            .Where(ait => ait != null);
-    }
-
-    /// <summary>
     /// Gets agenda item types that require voting
     /// </summary>
     public static IEnumerable<AgendaItemType> GetVotingItemTypes()

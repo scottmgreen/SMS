@@ -11,7 +11,6 @@ namespace SMS_Infrastructure.Interfaces;
 public interface IHazardFileRepository
 {
     // Core CRUD operations
-    Task<Result<HazardFile>> GetByIdAsync(HazardFileID id, CancellationToken cancellationToken = default);
     Task<Result<HazardFile>> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
     Task<Result<HazardFile>> AddAsync(HazardFile hazardFile, CancellationToken cancellationToken = default);
     Task<Result<HazardFile>> UpdateAsync(HazardFile hazardFile, CancellationToken cancellationToken = default);

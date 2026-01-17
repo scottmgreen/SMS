@@ -63,7 +63,7 @@ public class GetAllSafetyPerformanceIndicatorsQueryHandler : BaseQueryBundle, IR
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetAllSafetyPerformanceIndicatorsQuery");
+            _logger.LogApplicationError("Error processing GetAllSafetyPerformanceIndicatorsQuery", ApplicationEventIds.Error, ex);
             return Result<List<SafetyPerformanceIndicator>>.Failure<List<SafetyPerformanceIndicator>>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -97,7 +97,7 @@ public class GetSafetyPerformanceIndicatorByIdQueryHandler : BaseQueryBundle, IR
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSafetyPerformanceIndicatorByIdQuery for ID: {Id}", request.SPIId);
+            _logger.LogApplicationError("Error processing GetSafetyPerformanceIndicatorByIdQuery for ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -131,7 +131,7 @@ public class GetSafetyPerformanceIndicatorByCodeQueryHandler : BaseQueryBundle, 
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSafetyPerformanceIndicatorByCodeQuery for Code: {Code}", request.Code);
+            _logger.LogApplicationError("Error processing GetSafetyPerformanceIndicatorByCodeQuery for Code: {Code}", ApplicationEventIds.Error, ex);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -171,7 +171,7 @@ public class GetSPIsByTypeQueryHandler : BaseQueryBundle, IRequestHandler<GetSPI
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSPIsByTypeQuery for Type: {Type}", request.IndicatorType);
+            _logger.LogApplicationError("Error processing GetSPIsByTypeQuery for Type: {Type}", ApplicationEventIds.Error, ex);
             return Result<List<SafetyPerformanceIndicator>>.Failure<List<SafetyPerformanceIndicator>>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -211,7 +211,7 @@ public class GetSPIsByDepartmentQueryHandler : BaseQueryBundle, IRequestHandler<
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSPIsByDepartmentQuery for Department: {Department}", request.Department);
+            _logger.LogApplicationError("Error processing GetSPIsByDepartmentQuery for Department: {Department}", ApplicationEventIds.Error, ex);
             return Result<List<SafetyPerformanceIndicator>>.Failure<List<SafetyPerformanceIndicator>>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -253,7 +253,7 @@ public class GetSPIDashboardDataQueryHandler : BaseQueryBundle, IRequestHandler<
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSPIDashboardDataQuery");
+            _logger.LogApplicationError("Error processing GetSPIDashboardDataQuery", ApplicationEventIds.Error, ex);
             return Result<SPIDashboardData>.Failure<SPIDashboardData>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -291,7 +291,7 @@ public class GetSPITrendAnalysisQueryHandler : BaseQueryBundle, IRequestHandler<
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSPITrendAnalysisQuery");
+            _logger.LogApplicationError("Error processing GetSPITrendAnalysisQuery", ApplicationEventIds.Error, ex);
             return Result<List<SPITrendAnalysis>>.Failure<List<SPITrendAnalysis>>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -330,7 +330,7 @@ public class GetSPIPerformanceSummaryQueryHandler : BaseQueryBundle, IRequestHan
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSPIPerformanceSummaryQuery");
+            _logger.LogApplicationError("Error processing GetSPIPerformanceSummaryQuery", ApplicationEventIds.Error, ex);
             return Result<SPIPerformanceSummary>.Failure<SPIPerformanceSummary>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -369,7 +369,7 @@ public class GetSPIAlertsQueryHandler : BaseQueryBundle, IRequestHandler<GetSPIA
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSPIAlertsQuery");
+            _logger.LogApplicationError("Error processing GetSPIAlertsQuery", ApplicationEventIds.Error, ex);
             return Result<List<SPIAlert>>.Failure<List<SPIAlert>>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -406,7 +406,7 @@ public class GetSPIComplianceStatusQueryHandler : BaseQueryBundle, IRequestHandl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSPIComplianceStatusQuery");
+            _logger.LogApplicationError("Error processing GetSPIComplianceStatusQuery", ApplicationEventIds.Error, ex);
             return Result<List<SPIComplianceStatus>>.Failure<List<SPIComplianceStatus>>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -444,7 +444,7 @@ public class GetSPIReviewScheduleQueryHandler : BaseQueryBundle, IRequestHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSPIReviewScheduleQuery");
+            _logger.LogApplicationError("Error processing GetSPIReviewScheduleQuery", ApplicationEventIds.Error, ex);
             return Result<List<SPIReviewItem>>.Failure<List<SPIReviewItem>>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -502,7 +502,7 @@ public class GetSPIDataPointsQueryHandler : BaseQueryBundle, IRequestHandler<Get
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing GetSPIDataPointsQuery for SPI: {SPIId}", request.SPIId);
+            _logger.LogApplicationError("Error processing GetSPIDataPointsQuery for SPI: {SPIId}", ApplicationEventIds.Error, ex);
             return Result<List<SPIDataPoint>>.Failure<List<SPIDataPoint>>(DomainErrors.SPIError.NotFound);
         }
     }
