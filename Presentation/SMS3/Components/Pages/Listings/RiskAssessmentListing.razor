@@ -2,12 +2,19 @@
 @using SMS_Domain.Entities
 @using SMS_Domain.ValueObjects
 @using SMS_Application.Messaging.Queries
+@using SMS_Application.Messaging.Commands
 @using SMS_Application.Interfaces
 @using SMS_Shared.Common
 @using Radzen
 @using Radzen.Blazor
+@using SMS3.Components.Shared
 
 <PageTitle>Risk Assessments</PageTitle>
+
+<!-- SMS Page Header using reusable component -->
+<PageHeader Title="Risk Assessments"
+           Subtitle="Manage and view preliminary and technical risk assessments"
+           Icon="fas fa-chart-line" />
 
 <RadzenDataGrid @ref="assessmentsGrid" 
                 Data="@assessments" 
@@ -25,21 +32,295 @@
     
     <Columns>
         <RadzenDataGridColumn TItem="RiskAssessment" Property="Code" Title="Code" Width="150px" />
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="Name" Title="Name" Width="250px" />
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="AssessmentType" Title="Type" Width="120px" />
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="Category" Title="Category" Width="150px" />
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="Status" Title="Status" Width="120px" />
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="HazardCode" Title="Hazard Code" Width="120px" />
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="AssignedTo" Title="Assigned To" Width="150px" />
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="CreatedBy" Title="Created By" Width="150px" />
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="CompletedDate" Title="Completed Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
-        
-        <RadzenDataGridColumn TItem="RiskAssessment" Title="Actions" Width="100px" Sortable="false" Filterable="false">
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="HazardCode" Title="Hazard Code" Width="150px">
             <Template Context="assessment">
-                <RadzenButton Icon="more_vert" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
-                            Click="@(() => ShowActions(assessment))" Disabled="true" />
+                @if (!string.IsNullOrEmpty(assessment.HazardCode))
+                {
+                    <RadzenLink Path="@($"/SMSRiskManagement/HazardDetails/{assessment.HazardCode}")" Text="@assessment.HazardCode" />
+                }
+                else
+                {
+                    <span class="text-muted">-</span>
+                }
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="Name" Title="Name" Width="300px" />
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="AssessmentType" Title="Type" Width="120px">
+            <Template Context="assessment">
+                @if (assessment.AssessmentType != null)
+                {
+                    <RadzenBadge Text="@assessment.AssessmentType.ToString()"
+                                 BadgeStyle="@(assessment.AssessmentType.ToString().Contains("Initial") ? BadgeStyle.Success : BadgeStyle.Primary)" />
+                }
+                else
+                {
+                    <span class="text-muted">-</span>
+                }
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="RiskAssessmentCategory" Title="Category" Width="150px">
+            <Template Context="assessment">
+                @if (assessment.RiskAssessmentCategory != null)
+                {
+                    <RadzenBadge Text="@assessment.RiskAssessmentCategory.ToString()" BadgeStyle="BadgeStyle.Base" />
+                }
+                else
+                {
+                    <span class="text-muted">-</span>
+                }
+            </Template>
+        </RadzenDataGridColumn>
+       @*  <RadzenDataGridColumn TItem="RiskAssessment" Property="Status" Title="Status" Width="120px">
+            <Template Context="assessment">
+                @if (assessment.Status != null)
+                {
+                    <RadzenBadge Text="@assessment.Status.ToString()" BadgeStyle="@GetStatusBadgeStyle(assessment.Status.ToString())" />
+                }
+                else
+                {
+                    <span class="text-muted">-</span>
+                }
+            </Template>
+        </RadzenDataGridColumn> *@
+        
+        @* <RadzenDataGridColumn TItem="RiskAssessment" Property="LeadAssessorId" Title="Lead Assessor" Width="150px" /> *@
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="CreatedBy" Title="Created By" Width="150px" />
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy HH:mm}" />
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="CompletedDate" Title="Completed Date" Width="150px" FormatString="{0:MM/dd/yyyy HH:mm}" />
+        
+        <RadzenDataGridColumn TItem="RiskAssessment" Title="Actions" Width="250px" Sortable="false" Filterable="false">
+            <Template Context="assessment">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                    <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" 
+                                Tooltip="View Assessment Details"
+                                Click="@(() => ViewAssessment(assessment))" />
+                    
+                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" 
+                                Tooltip="Edit Assessment"
+                                Click="@(() => EditAssessment(assessment))" />
+                    
+                    @* <RadzenButton Icon="content_copy" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" 
+                                Tooltip="Duplicate Assessment"
+                                Click="@(() => DuplicateAssessment(assessment))" />
+                                
+                    <RadzenButton Icon="history" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small" 
+                                Tooltip="View History"
+                                Click="@(() => ViewHistory(assessment))" /> *@
+                    
+                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
+                                Tooltip="Delete Assessment"
+                                Click="@(() => DeleteAssessment(assessment))" />
+                </RadzenStack>
             </Template>
         </RadzenDataGridColumn>
     </Columns>
 </RadzenDataGrid>
+
+<!-- Confirmation Dialog -->
+<RadzenDialog />
+
+<!-- View Assessment Modal Dialog -->
+@if (ShowViewDialog && SelectedAssessment != null)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-lg">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-primary">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <h5 class="sms-modal-title mb-0">
+                            <i class="fas fa-chart-line"></i> Risk Assessment Details
+                        </h5>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                    Variant="Variant.Text"
+                                    Icon="close"
+                                    Size="ButtonSize.Small"
+                                    Click="@(() => { ShowViewDialog = false; SelectedAssessment = null; })" />
+                    </div>
+                </div>
+                <div class="sms-modal-body">
+                    
+                    <!-- Basic Information -->
+                    <RadzenCard Variant="Variant.Outlined" Class="mb-3">
+                        <div class="p-3">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-info-circle"></i> Basic Information
+                            </h6>
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <strong>Code:</strong> @SelectedAssessment.Code<br>
+                                    <strong>Name:</strong> @SelectedAssessment.Name<br>
+                                    <strong>Type:</strong> @SelectedAssessment.AssessmentType<br>
+                                    <strong>Category:</strong> @SelectedAssessment.RiskAssessmentCategory<br>
+                                </div>
+                                <div class="col-sm-6">
+                                    <strong>Status:</strong> <RadzenBadge Text="@SelectedAssessment.Status.ToString()" BadgeStyle="@GetStatusBadgeStyle(SelectedAssessment.Status.ToString())" /><br>
+                                    <strong>Final Risk Level:</strong> @(SelectedAssessment.FinalRiskLevel ?? "Not determined")<br>
+                                    <strong>Risk Score:</strong> @(SelectedAssessment.FinalSeverityScore?.ToString() ?? "N/A")<br>
+                                </div>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(SelectedAssessment.Description))
+                            {
+                                <div class="mt-3">
+                                    <strong>Description:</strong><br>
+                                    <div class="bg-light p-2 rounded" style="white-space: pre-wrap;">@SelectedAssessment.Description</div>
+                                </div>
+                            }
+                        </div>
+                    </RadzenCard>
+
+                    <!-- Assessment Details -->
+                    <RadzenCard Variant="Variant.Outlined" Class="mb-3">
+                        <div class="p-3">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-clipboard-list"></i> Assessment Details
+                            </h6>
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    @if (!string.IsNullOrWhiteSpace(SelectedAssessment.HazardCode))
+                                    {
+                                        <strong>Hazard Code:</strong> @SelectedAssessment.HazardCode<br>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(SelectedAssessment.LeadAssessorId))
+                                    {
+                                        <strong>Lead Assessor:</strong> @SelectedAssessment.LeadAssessorId<br>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(SelectedAssessment.AssessmentRationale))
+                                    {
+                                        <strong>Method:</strong> @SelectedAssessment.RiskAnalysisMethod<br>
+                                    }
+                                </div>
+                                <div class="col-sm-6">
+                                    @if (SelectedAssessment.OverallTargetDate.HasValue)
+                                    {
+                                        <strong>Target Date:</strong> @SelectedAssessment.OverallTargetDate.Value.ToString("MMM dd, yyyy")<br>
+                                    }
+                                    @if (SelectedAssessment.CompletedDate.HasValue)
+                                    {
+                                        <strong>Completed:</strong> @SelectedAssessment.CompletedDate.Value.ToString("MMM dd, yyyy")<br>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(SelectedAssessment.CompletedBy))
+                                    {
+                                        <strong>Completed By:</strong> @SelectedAssessment.CompletedBy<br>
+                                    }
+                                </div>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(SelectedAssessment.AssessmentRationale))
+                            {
+                                <div class="mt-3">
+                                    <strong>Assessment Rationale:</strong><br>
+                                    <div class="bg-light p-2 rounded" style="white-space: pre-wrap;">@SelectedAssessment.AssessmentRationale</div>
+                                </div>
+                            }
+                        </div>
+                    </RadzenCard>
+
+                    <!-- Creation & Update Info -->
+                    <RadzenCard Variant="Variant.Outlined" Class="mb-3">
+                        <div class="p-3">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-history"></i> Timeline
+                            </h6>
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <strong>Created:</strong> @SelectedAssessment.CreatedDate?.ToString("MMM dd, yyyy HH:mm")<br>
+                                    <strong>Created By:</strong> @SelectedAssessment.CreatedBy<br>
+                                </div>
+                                <div class="col-sm-6">
+                                    @if (SelectedAssessment.UpdatedDate.HasValue)
+                                    {
+                                        <strong>Last Updated:</strong> @SelectedAssessment.UpdatedDate.Value.ToString("MMM dd, yyyy HH:mm")<br>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(SelectedAssessment.UpdatedBy))
+                                    {
+                                        <strong>Updated By:</strong> @SelectedAssessment.UpdatedBy<br>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </RadzenCard>
+                    
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end gap-2">
+                        <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
+                                    Text="Close" 
+                                    Icon="close"
+                                    Click="@(() => { ShowViewDialog = false; SelectedAssessment = null; })"
+                                    Size="ButtonSize.Medium" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Primary" 
+                                    Text="Edit Assessment" 
+                                    Icon="edit"
+                                    Click="@(() => { ShowViewDialog = false; EditAssessment(SelectedAssessment); })"
+                                    Size="ButtonSize.Medium" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .text-muted {
+        color: var(--rz-text-disabled-color);
+        font-style: italic;
+    }
+
+    /* Modal Overlay and Dialog */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1050;
+        padding: 1rem;
+    }
+
+    .sms-modal-dialog {
+        position: relative;
+        margin: 0 auto;
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+    }
+
+    .sms-modal-lg {
+        max-width: 900px;
+        width: 100%;
+    }
+
+    .sms-modal-content {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+    }
+
+    .sms-modal-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .sms-header-primary {
+        background-color: #212e61; /* SMS Blue Dark Bold */
+        color: white;
+    }
+
+    .sms-modal-title {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .sms-modal-body {
+        padding: 1.5rem;
+    }
+
+    .sms-modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e9ecef;
+        border-radius: 0 0 0.5rem 0.5rem;
+    }
+</style>

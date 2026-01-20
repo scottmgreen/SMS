@@ -7,6 +7,7 @@ using SMS_Application.Messaging.Commands;
 using SMS_Application.Interfaces;
 using SMS_Shared.Common;
 using Radzen;
+using SMS3.Components.Shared;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 

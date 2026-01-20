@@ -1,0 +1,52 @@
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenCard Variant="Variant.Outlined" Class="sms-guidance-panel">
+    <RadzenStack Gap="1rem" Class="rz-p-3">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Class="rz-mb-3 rz-pb-2 rz-border-bottom-1" Style="border-bottom: 1px solid var(--rz-border-color); padding-bottom: 0.5rem; background: var(--rz-warning-lighter); margin: -1rem -1rem 1rem -1rem; padding: 1rem;">
+            <RadzenIcon Icon="@Icon" Style="color: var(--rz-primary);" />
+            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">@Title</RadzenText>
+        </RadzenStack>
+
+        <RadzenStack Gap="1rem">
+            @ChildContent
+        </RadzenStack>
+    </RadzenStack>
+</RadzenCard>
+
+<style>
+    /* Guidance Panel - Consistent with SMS pages */
+    .sms-guidance-panel {
+        background: linear-gradient(135deg, rgba(201, 227, 237, 0.05) 0%, rgba(205, 235, 241, 0.05) 100%);
+        border-color: #c9e3ed !important; /* SMS Blue Light */
+        height: fit-content;
+        position: sticky;
+        top: 1rem;
+    }
+
+    .sms-guidance-panel .text-primary {
+        color: #212e61 !important; /* SMS Blue Dark Bold */
+    }
+
+    .sms-guidance-panel .text-success {
+        color: #0d8944 !important; /* SMS Green Primary */
+    }
+
+    .sms-guidance-panel .text-info {
+        color: #006AA9 !important; /* SMS Blue Primary */
+    }
+
+    .sms-guidance-panel .text-warning {
+        color: #fa9a46 !important; /* SMS Orange Accent */
+    }
+
+    .sms-guidance-panel .text-danger {
+        color: #d91e3e !important; /* SMS Red Primary */
+    }
+</style>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Guidance";
+    [Parameter] public string Icon { get; set; } = "help";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

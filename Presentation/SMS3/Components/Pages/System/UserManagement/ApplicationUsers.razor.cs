@@ -11,6 +11,10 @@ using SMS3.Components.Pages.System.Components;
 
 namespace SMS3.Components.Pages.System.UserManagement;
 
+/// <summary>
+/// Code-behind for Application Users management page
+/// Provides comprehensive user management capabilities for SMS Application Users
+/// </summary>
 public partial class ApplicationUsers : ComponentBase
 {
     [Inject] private IMediator Mediator { get; set; } = default!;
@@ -98,7 +102,6 @@ public partial class ApplicationUsers : ComponentBase
             ApplicationUsersList = applicationUsersResult.IsSuccess ? 
                 applicationUsersResult.Value?.ToList() ?? new List<SMSApplicationUser>() : 
                 new List<SMSApplicationUser>();
-
             // Load Application Groups for group management
             var groupsQuery = new GetAllSMSApplicationGroupsQuery();
             var groupsResult = await Mediator.SendAsync(groupsQuery, CancellationToken.None);

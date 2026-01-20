@@ -2,10 +2,13 @@ using Microsoft.AspNetCore.Components;
 using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
 using SMS_Application.Messaging.Queries;
+using SMS_Application.Messaging.Commands;
 using SMS_Application.Interfaces;
 using SMS_Shared.Common;
 using Radzen;
 using Radzen.Blazor;
+using System.Linq.Expressions;
+using SMS3.Components.Shared;
 
 namespace SMS3.Components.Pages.Listings;
 
@@ -14,11 +17,15 @@ public partial class MitigationListing : ComponentBase
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<MitigationListing> Logger { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
 
     private RadzenDataGrid<Mitigation>? mitigationsGrid;
     private IEnumerable<Mitigation> mitigations = new List<Mitigation>();
     private int totalCount;
     private bool isLoading = false;
+    private bool ShowViewDialog = false;
+    private Mitigation? SelectedMitigation = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -102,9 +109,109 @@ public partial class MitigationListing : ComponentBase
         return Expression.Lambda<Func<Mitigation, object>>(conversion, parameter);
     }
 
-    private void ShowActions(Mitigation mitigation)
+    private async Task ViewMitigation(Mitigation mitigation)
     {
-        Logger.LogInformation("Actions requested for mitigation: {Code}", mitigation.Code);
+        try
+        {
+            Logger.LogInformation("Viewing mitigation: {Code}", mitigation.Code);
+            SelectedMitigation = mitigation;
+            ShowViewDialog = true;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error viewing mitigation {Code}", mitigation.Code);
+            ShowErrorNotification("Error viewing mitigation");
+        }
+    }
+
+    private async Task EditMitigation(Mitigation mitigation)
+    {
+        try
+        {
+            Logger.LogInformation("Editing mitigation: {Code}", mitigation.Code);
+            
+            // Navigate to HazardMitigation edit page
+            Navigation.NavigateTo($"/SMSRiskManagement/HazardMitigation/Edit/{mitigation.Code}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error editing mitigation {Code}", mitigation.Code);
+            ShowErrorNotification("Error opening mitigation editor");
+        }
+    }
+
+    private async Task ViewHistory(Mitigation mitigation)
+    {
+        try
+        {
+            Logger.LogInformation("Viewing history for mitigation: {Code}", mitigation.Code);
+            ShowInfoNotification($"History functionality for mitigation {mitigation.Code} needs to be implemented");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error viewing history for mitigation {Code}", mitigation.Code);
+            ShowErrorNotification("Error viewing mitigation history");
+        }
+    }
+
+    private async Task DeleteMitigation(Mitigation mitigation)
+    {
+        try
+        {
+            var confirmResult = await DialogService.Confirm(
+                message: $"Are you sure you want to delete mitigation '{mitigation.Name}' ({mitigation.Code})?\n\nThis action cannot be undone.",
+                title: "Confirm Deletion",
+                options: new ConfirmOptions
+                {
+                    OkButtonText = "Yes, Delete",
+                    CancelButtonText = "Cancel",
+                    Width = "400px"
+                });
+
+            if (confirmResult == true)
+            {
+                Logger.LogInformation("Deleting mitigation: {Code}", mitigation.Code);
+
+                var deleteCommand = new DeleteMitigationCommand(new MitigationID(mitigation.Id.Value));
+                var result = await Mediator.SendAsync(deleteCommand, CancellationToken.None);
+
+                if (result.IsSuccess)
+                {
+                    ShowSuccessNotification($"Mitigation '{mitigation.Name}' deleted successfully");
+                    Logger.LogInformation("Successfully deleted mitigation: {Code}", mitigation.Code);
+                    
+                    // Refresh the data grid
+                    await LoadInitialData();
+                    if (mitigationsGrid != null)
+                    {
+                        await mitigationsGrid.Reload();
+                    }
+                    StateHasChanged();
+                }
+                else
+                {
+                    ShowErrorNotification($"Failed to delete mitigation: {result.Error?.Message}");
+                    Logger.LogError("Failed to delete mitigation {Code}: {Error}", mitigation.Code, result.Error?.Message);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error deleting mitigation {Code}", mitigation.Code);
+            ShowErrorNotification("Error deleting mitigation");
+        }
+    }
+
+    private void ShowSuccessNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Success",
+            Detail = message,
+            Duration = 4000
+        });
     }
 
     private void ShowErrorNotification(string message)
@@ -116,5 +223,41 @@ public partial class MitigationListing : ComponentBase
             Detail = message,
             Duration = 6000
         });
+    }
+
+    private void ShowInfoNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = "Information",
+            Detail = message,
+            Duration = 5000
+        });
+    }
+
+    private BadgeStyle GetStatusBadgeStyle(string status)
+    {
+        return status switch
+        {
+            "Completed" => BadgeStyle.Success,
+            "InProgress" => BadgeStyle.Info,
+            "Approved" => BadgeStyle.Primary,
+            "OnHold" => BadgeStyle.Warning,
+            "Cancelled" => BadgeStyle.Danger,
+            _ => BadgeStyle.Secondary
+        };
+    }
+
+    private BadgeStyle GetPriorityBadgeStyle(string priority)
+    {
+        return priority switch
+        {
+            "Critical" => BadgeStyle.Danger,
+            "High" => BadgeStyle.Warning,
+            "Medium" => BadgeStyle.Info,
+            "Low" => BadgeStyle.Success,
+            _ => BadgeStyle.Secondary
+        };
     }
 }

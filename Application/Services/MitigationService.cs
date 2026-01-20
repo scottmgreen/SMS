@@ -38,16 +38,16 @@ public sealed class MitigationService
         }
     }
 
-    public async Task<Result<Mitigation>> GetMitigationByIdAsync(MitigationID id, CancellationToken ct = default)
+    public async Task<Result<Mitigation>> GetMitigationByCodeAsync(MitigationID code, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Retrieving mitigation with ID: {Id}", id);
-            return await _dataService.GetMitigationByIdAsync(id, ct).ConfigureAwait(false);
+            _logger.LogInformation("Retrieving mitigation with Code: {Code}", code);
+            return await _dataService.GetMitigationByCodeAsync(code, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving mitigation with ID: {Id}", id);
+            _logger.LogError(ex, "Unexpected error retrieving mitigation with Code: {Code}", code);
             return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.NotFound);
         }
     }

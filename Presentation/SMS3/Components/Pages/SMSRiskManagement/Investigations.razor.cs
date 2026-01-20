@@ -197,11 +197,14 @@ public partial class Investigations : ComponentBase
     {
         try
         {
-            var usersQuery = new GetAllSMSApplicationUsersQuery();
+            //var usersQuery = new GetAllSMSApplicationUsersQuery();
+            var usersQuery = new GetUsersByApplicationGroupCodeQuery("AG-0006");
+
             var usersResult = await Mediator.SendAsync(usersQuery, CancellationToken.None);
             
             if (usersResult.IsSuccess && usersResult.Value != null)
             {
+                
                 AvailableInvestigators = usersResult.Value.ToList();
                 Logger.LogInformation("Loaded {Count} available investigators", AvailableInvestigators.Count);
             }

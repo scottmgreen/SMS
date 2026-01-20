@@ -12,6 +12,10 @@ using SMS3.Components.Pages.System.Components;
 
 namespace SMS3.Components.Pages.System.UserManagement;
 
+/// <summary>
+/// Code-behind for Stakeholder Users management page  
+/// Handles external stakeholder user management
+/// </summary>
 public partial class StakeholderUsers : ComponentBase
 {
     [Inject] private IMediator Mediator { get; set; } = default!;

@@ -1037,10 +1037,10 @@ public static class FieldNames
     private static readonly Lazy<string> _fMitigationProgressUpdatedBy = new Lazy<string>(() => "fldv_ProgressUpdatedBy");
     public static string fMitigationProgressUpdatedBy => _fMitigationProgressUpdatedBy.Value;
 
-    private static readonly Lazy<string> _fMitigationEstimatedCost = new Lazy<string>(() => "fldm_EstimatedCost");
+    private static readonly Lazy<string> _fMitigationEstimatedCost = new Lazy<string>(() => "fldd_EstimatedCost");
     public static string fMitigationEstimatedCost => _fMitigationEstimatedCost.Value;
 
-    private static readonly Lazy<string> _fMitigationActualCost = new Lazy<string>(() => "fldm_ActualCost");
+    private static readonly Lazy<string> _fMitigationActualCost = new Lazy<string>(() => "fldd_ActualCost");
     public static string fMitigationActualCost => _fMitigationActualCost.Value;
 
     private static readonly Lazy<string> _fMitigationResourceRequirements = new Lazy<string>(() => "fldv_ResourceRequirements");

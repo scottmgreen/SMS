@@ -4,11 +4,11 @@ namespace SMS_Application.Messaging.Queries;
 // MITIGATION QUERIES
 // =============================================
 
-public class GetMitigationByIdQuery : BaseQueryBundle, IRequest<Result<Mitigation>>
+public class GetMitigationByCodeQuery : BaseQueryBundle, IRequest<Result<Mitigation>>
 {
     public MitigationID MitigationId { get; set; }
 
-    public GetMitigationByIdQuery(MitigationID mitigationId)
+    public GetMitigationByCodeQuery(MitigationID mitigationId)
     {
         MitigationId = mitigationId ?? throw new ArgumentNullException(nameof(mitigationId));
     }

@@ -30,9 +30,9 @@ public class MitigationDataService : BaseDataService<MitigationDataService>
         return _repo.CreateMitigationAsync(mitigation, ct);
     }
 
-    public Task<Result<Mitigation>> GetMitigationByIdAsync(MitigationID id, CancellationToken ct = default)
+    public Task<Result<Mitigation>> GetMitigationByCodeAsync(MitigationID code, CancellationToken ct = default)
     {
-        return _repo.GetMitigationByIdAsync(id, ct);
+        return _repo.GetMitigationByCodeAsync(code, ct);
     }
 
     public Task<Result<List<Mitigation>>> GetAllMitigationsAsync(CancellationToken ct = default)

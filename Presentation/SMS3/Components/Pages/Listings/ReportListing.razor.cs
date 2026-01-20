@@ -139,7 +139,7 @@ public partial class ReportListing : ComponentBase
 
     /// <summary>
     /// Handle view report details - Show comprehensive read-only modal
-    /// </summary>
+    /// /// </summary>
     /// <param name="report">Report to view</param>
     public async Task OnViewReportAsync(Report report)
     {

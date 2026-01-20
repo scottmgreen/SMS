@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.Components;
-using Radzen;
+using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
 using SMS_Application.Messaging.Queries;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Domain.Common;
-using SMS_Domain.Errors;
 using SMS_Shared.Common;
+using Radzen;
+using SMS3.Components.Shared;
+using SMS_Domain.Errors;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -142,7 +142,7 @@ public partial class ReportValidation : ComponentBase
     {
         try
         {
-            var usersQuery = new GetAllSMSApplicationUsersQuery();
+            var usersQuery = new GetUsersByApplicationGroupCodeQuery("AG-0007");
             var usersResult = await Mediator.SendAsync(usersQuery, CancellationToken.None);
             if (usersResult.IsSuccess)
             {

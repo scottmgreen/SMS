@@ -434,7 +434,7 @@
         private static readonly Lazy<string> _pr_HazardLocation_Insert = new Lazy<string>(() => "pr_HazardLocation_Insert");
         public static string pr_HazardLocation_Insert => _pr_HazardLocation_Insert.Value;
 
-        private static readonly Lazy<string> _pr_HazardLocation_GetByCode = new Lazy<string>(() => "_pr_HazardLocation_GetByCode");
+        private static readonly Lazy<string> _pr_HazardLocation_GetByCode = new Lazy<string>(() => "pr_HazardLocation_GetByCode");
         public static string pr_HazardLocation_GetByCode => _pr_HazardLocation_GetByCode.Value;
 
         private static readonly Lazy<string> _pr_HazardLocation_GetAll = new Lazy<string>(() => "pr_HazardLocation_GetAll");
@@ -624,8 +624,8 @@
         private static readonly Lazy<string> _pr_Mitigation_Insert = new Lazy<string>(() => "pr_Mitigation_Insert");
         public static string pr_Mitigation_Insert => _pr_Mitigation_Insert.Value;
 
-        private static readonly Lazy<string> _pr_Mitigation_GetById = new Lazy<string>(() => "pr_Mitigation_GetById");
-        public static string pr_Mitigation_GetById => _pr_Mitigation_GetById.Value;
+        private static readonly Lazy<string> _pr_Mitigation_GetByCode = new Lazy<string>(() => "pr_Mitigation_GetByCode");
+        public static string pr_Mitigation_GetByCode => _pr_Mitigation_GetByCode.Value;
 
         private static readonly Lazy<string> _pr_Mitigation_GetAll = new Lazy<string>(() => "pr_Mitigation_GetAll");
         public static string pr_Mitigation_GetAll => _pr_Mitigation_GetAll.Value;

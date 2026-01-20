@@ -6,10 +6,11 @@ using SMS_Shared.Common;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using Radzen.Blazor;
+using SMS3.Components.Shared;
 
 namespace SMS3.Components.Pages.SMSAssurance;
 
-public partial class SPIConfiguration
+public partial class SPIConfiguration 
 {
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;

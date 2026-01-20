@@ -1,21 +1,46 @@
+using Microsoft.AspNetCore.Components;
+using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
+using SMS_Application.Messaging.Queries;
+using SMS_Application.Messaging.Commands;
+using SMS_Application.Interfaces;
+using SMS_Shared.Common;
+using Radzen;
+using Radzen.Blazor;
+using System.Linq.Expressions;
+using SMS3.Components.Shared;
+
 namespace SMS3.Components.Pages.Listings;
 
+/// <summary>
+/// Airport Shared Dataset Listing page component
+/// Displays ADAM datasets with full CRUD operations and export capabilities
+/// </summary>
 public partial class AirportSharedDatasetListing : ComponentBase
 {
+    #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<AirportSharedDatasetListing> Logger { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    #endregion
 
+    #region State Properties
     private RadzenDataGrid<AirportSharedDataset>? datasetsGrid;
     private IEnumerable<AirportSharedDataset> datasets = new List<AirportSharedDataset>();
     private int totalCount;
     private bool isLoading = false;
+    #endregion
 
+    #region Lifecycle Methods
     protected override async Task OnInitializedAsync()
     {
         await LoadInitialData();
     }
+    #endregion
 
+    #region Data Loading
     private async Task LoadInitialData()
     {
         try
@@ -92,10 +117,172 @@ public partial class AirportSharedDatasetListing : ComponentBase
         var conversion = Expression.Convert(property, typeof(object));
         return Expression.Lambda<Func<AirportSharedDataset, object>>(conversion, parameter);
     }
+    #endregion
 
-    private void ShowActions(AirportSharedDataset dataset)
+    #region Action Methods
+    private async Task ViewDataset(AirportSharedDataset dataset)
     {
-        Logger.LogInformation("Actions requested for dataset: {Code}", dataset.Code);
+        try
+        {
+            Logger.LogInformation("Viewing dataset: {Code}", dataset.Code);
+            
+            // Navigate to dataset details page
+            Navigation.NavigateTo($"/DatasetDetails/{dataset.Code}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error viewing dataset {Code}", dataset.Code);
+            ShowErrorNotification("Error opening dataset details");
+        }
+    }
+
+    private async Task EditDataset(AirportSharedDataset dataset)
+    {
+        try
+        {
+            Logger.LogInformation("Editing dataset: {Code}", dataset.Code);
+            
+            // Navigate to edit dataset page with DatasetCode parameter
+            Navigation.NavigateTo($"/SMSRiskManagement/AirportSharedDataset/Edit/{dataset.Code}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error editing dataset {Code}", dataset.Code);
+            ShowErrorNotification("Error opening dataset editor");
+        }
+    }
+
+    private async Task ExportDataset(AirportSharedDataset dataset)
+    {
+        try
+        {
+            Logger.LogInformation("Exporting dataset: {Code}", dataset.Code);
+            
+            // TODO: Implement export functionality
+            ShowInfoNotification("Export functionality will be available in a future update");
+            
+            // Future implementation could include:
+            // - Export to Excel/CSV
+            // - Export to PDF report
+            // - Export to ADAM standard format
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error exporting dataset {Code}", dataset.Code);
+            ShowErrorNotification("Error exporting dataset");
+        }
+    }
+
+    private async Task DuplicateDataset(AirportSharedDataset dataset)
+    {
+        try
+        {
+            Logger.LogInformation("Duplicating dataset: {Code}", dataset.Code);
+            
+            // TODO: Implement duplication functionality
+            ShowInfoNotification("Duplicate functionality will be available in a future update");
+            
+            // Future implementation:
+            // - Create new dataset with same data but new ID
+            // - Navigate to edit page for the duplicated dataset
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error duplicating dataset {Code}", dataset.Code);
+            ShowErrorNotification("Error duplicating dataset");
+        }
+    }
+
+    private async Task ViewHistory(AirportSharedDataset dataset)
+    {
+        try
+        {
+            Logger.LogInformation("Viewing history for dataset: {Code}", dataset.Code);
+            
+            // TODO: Implement history viewing functionality
+            ShowInfoNotification("History functionality will be available in a future update");
+            
+            // Future implementation:
+            // - Show audit trail of changes
+            // - Show version history
+            // - Show access logs
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error viewing dataset history {Code}", dataset.Code);
+            ShowErrorNotification("Error viewing dataset history");
+        }
+    }
+
+    private async Task DeleteDataset(AirportSharedDataset dataset)
+    {
+        try
+        {
+            Logger.LogInformation("Delete requested for dataset: {Code}", dataset.Code);
+            
+            // Show confirmation dialog
+            var confirmed = await DialogService.Confirm(
+                message: $"Are you sure you want to delete dataset '{dataset.Code}'? This action cannot be undone.",
+                title: "Confirm Delete",
+                options: new ConfirmOptions
+                {
+                    OkButtonText = "Delete",
+                    CancelButtonText = "Cancel",
+                    AutoFocusFirstElement = false
+                });
+
+            if (confirmed == true)
+            {
+                await PerformDelete(dataset);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error initiating delete for dataset {Code}", dataset.Code);
+            ShowErrorNotification("Error deleting dataset");
+        }
+    }
+
+    private async Task PerformDelete(AirportSharedDataset dataset)
+    {
+        try
+        {
+            Logger.LogInformation("Performing delete for dataset: {Code}", dataset.Code);
+            
+            var datasetId = new AirportSharedDatasetID(dataset.Code);
+            var deleteCommand = new DeleteAirportSharedDatasetCommand(datasetId);
+            var result = await Mediator.SendAsync(deleteCommand, CancellationToken.None);
+
+            if (result.IsSuccess)
+            {
+                ShowSuccessNotification($"Dataset '{dataset.Code}' deleted successfully");
+                await LoadInitialData(); // Refresh the grid
+                await datasetsGrid?.Reload(); // Refresh the grid display
+            }
+            else
+            {
+                ShowErrorNotification($"Failed to delete dataset: {result.Error?.Message}");
+                Logger.LogError("Failed to delete dataset {Code}: {Error}", dataset.Code, result.Error?.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error performing delete for dataset {Code}", dataset.Code);
+            ShowErrorNotification("Error deleting dataset");
+        }
+    }
+    #endregion
+
+    #region Notification Methods
+    private void ShowSuccessNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Success",
+            Detail = message,
+            Duration = 4000
+        });
     }
 
     private void ShowErrorNotification(string message)
@@ -108,4 +295,16 @@ public partial class AirportSharedDatasetListing : ComponentBase
             Duration = 6000
         });
     }
+
+    private void ShowInfoNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = "Information",
+            Detail = message,
+            Duration = 4000
+        });
+    }
+    #endregion
 }

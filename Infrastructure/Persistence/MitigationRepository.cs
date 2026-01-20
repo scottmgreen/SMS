@@ -135,7 +135,7 @@ public sealed class MitigationRepository : BaseRepository<MitigationRepository, 
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
             MitigationID mitigationId = new (newCodeValue);
 
-            return await GetMitigationByIdAsync(mitigationId, ct).ConfigureAwait(false);
+            return await GetMitigationByCodeAsync(mitigationId, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -144,24 +144,24 @@ public sealed class MitigationRepository : BaseRepository<MitigationRepository, 
         }
     }
 
-    public async Task<Result<Mitigation>> GetMitigationByIdAsync(MitigationID id, CancellationToken ct = default)
+    public async Task<Result<Mitigation>> GetMitigationByCodeAsync(MitigationID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_Mitigation_GetById} {id}", null);
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_Mitigation_GetByCode} {code}", null);
 
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_Mitigation_GetById, sql)
+            using SqlCommand cmd = new(StoredProcs.pr_Mitigation_GetByCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             Mitigation? response = null;
 
@@ -331,7 +331,7 @@ public sealed class MitigationRepository : BaseRepository<MitigationRepository, 
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetMitigationByIdAsync((MitigationID)mitigation.Id, ct).ConfigureAwait(false);
+            return await GetMitigationByCodeAsync((MitigationID)mitigation.Id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

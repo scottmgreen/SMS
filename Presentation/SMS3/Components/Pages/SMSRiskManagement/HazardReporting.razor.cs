@@ -16,6 +16,7 @@ using SMS_Domain.Enums; // <-- Added using for Smart Enums
 
 using SMS_Shared.Common;
 using SMS3.Components.Pages.SMSRiskManagement.Models; // <-- Using shared data models
+using SMS3.Components.Shared;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 

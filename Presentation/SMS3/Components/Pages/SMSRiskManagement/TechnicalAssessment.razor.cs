@@ -1,17 +1,19 @@
 ﻿using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using Radzen;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
 using SMS_Domain.ValueObjects;
-using SMS_Domain.Common;
+using SMS_Application.Messaging.Queries;
+using SMS_Application.Messaging.Commands;
+using SMS_Application.Interfaces;
 using SMS_Shared.Common;
+using Radzen;
+using SMS3.Components.Shared;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
+/// <summary>
+/// Technical Assessment - Comprehensive 5-step SMS risk assessment methodology
+/// </summary>
 public partial class TechnicalAssessment : ComponentBase
 {
     #region Parameters and Injection

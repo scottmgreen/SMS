@@ -9,18 +9,18 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // MITIGATION QUERY HANDLERS
 // =============================================
 
-public class GetMitigationByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetMitigationByIdQuery, Result<Mitigation>>
+public class GetMitigationByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetMitigationByCodeQuery, Result<Mitigation>>
 {
     private readonly MitigationService _appService;
-    private readonly ILogger<GetMitigationByIdQueryHandler> _logger;
+    private readonly ILogger<GetMitigationByCodeQueryHandler> _logger;
 
-    public GetMitigationByIdQueryHandler(MitigationService appService, ILogger<GetMitigationByIdQueryHandler> logger)
+    public GetMitigationByCodeQueryHandler(MitigationService appService, ILogger<GetMitigationByCodeQueryHandler> logger)
     {
         _appService = appService ?? throw new ArgumentNullException(nameof(appService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<Mitigation>> HandleAsync(GetMitigationByIdQuery request, CancellationToken ct = default)
+    public async Task<Result<Mitigation>> HandleAsync(GetMitigationByCodeQuery request, CancellationToken ct = default)
     {
         try
         {
@@ -32,7 +32,7 @@ public class GetMitigationByIdQueryHandler : BaseQueryBundle, IRequestHandler<Ge
 
             _logger.LogInformation("Processing GetMitigationByIdQuery for ID: {Id}", request.MitigationId.Value);
 
-            var result = await _appService.GetMitigationByIdAsync(request.MitigationId, ct).ConfigureAwait(false);
+            var result = await _appService.GetMitigationByCodeAsync(request.MitigationId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {

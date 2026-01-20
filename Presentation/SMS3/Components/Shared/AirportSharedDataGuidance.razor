@@ -1,0 +1,190 @@
+@using Radzen
+@using Radzen.Blazor
+
+<!-- Airport Shared Data Guidance Component -->
+<RadzenCard Variant="Variant.Outlined">
+    <RadzenStack Gap="1rem" Style="padding: 1rem;">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="border-bottom: 1px solid var(--rz-border-color); padding-bottom: 0.5rem; background: var(--rz-info-lighter); margin: -1rem -1rem 1rem -1rem; padding: 1rem;">
+            <RadzenIcon Icon="help" Style="color: var(--rz-info-dark);" />
+            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">ADAM Dataset Guidance</RadzenText>
+        </RadzenStack>
+        
+        <RadzenStack Gap="1rem">
+            <!-- Purpose Section -->
+            <RadzenStack Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; color: var(--rz-info-dark);">
+                    <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
+                    Purpose
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; line-height: 1.5;">
+                    The Airport Data Aggregation and Monitoring (ADAM) dataset captures standardized safety information for sharing across the aviation community to enhance safety awareness and learning.
+                </RadzenText>
+            </RadzenStack>
+
+            <!-- Key Guidelines -->
+            <RadzenStack Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; color: var(--rz-success-dark);">
+                    <RadzenIcon Icon="check_circle" Style="margin-right: 0.5rem;" />
+                    Key Guidelines
+                </RadzenText>
+                <RadzenStack Gap="0.25rem">
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                        • Use <strong>shared narrative</strong> for information visible to all ADAM users
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                        • Use <strong>private narrative</strong> for airport-specific details
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                        • Anonymize using [brackets] for individuals, airlines, vendors
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                        • Include relevant weather and operational context
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenStack>
+
+            <!-- Location Categories -->
+            <RadzenStack Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; color: var(--rz-warning-dark);">
+                    <RadzenIcon Icon="place" Style="margin-right: 0.5rem;" />
+                    Location Categories
+                </RadzenText>
+                <RadzenStack Gap="0.25rem">
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                        <strong>Movement Area:</strong> Runways, taxiways, controlled areas
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                        <strong>Ramp:</strong> Aircraft parking, gate areas, baggage handling
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                        <strong>Baggage Tunnel:</strong> Underground baggage transfer systems
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                        <strong>Fuel Farm:</strong> Fuel storage and distribution facilities
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenStack>
+
+            <!-- Contributing Factors -->
+            <RadzenStack Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; color: var(--rz-danger-dark);">
+                    <RadzenIcon Icon="warning" Style="margin-right: 0.5rem;" />
+                    Common Contributing Factors
+                </RadzenText>
+                <RadzenStack Gap="0.25rem">
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                        <strong>Human Factors:</strong> Fatigue, training, communication issues
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                        <strong>Environmental:</strong> Weather, lighting, construction impacts
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                        <strong>Operational:</strong> Speed, signage, administrative controls
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                        <strong>Technical:</strong> Engineering, mechanical, equipment failures
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenStack>
+
+            <!-- Category Path Examples -->
+            <RadzenStack Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; color: var(--rz-secondary-dark);">
+                    <RadzenIcon Icon="category" Style="margin-right: 0.5rem;" />
+                    Category Path Examples
+                </RadzenText>
+                <RadzenStack Gap="0.25rem">
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                        <strong>12.2:</strong> Ground handling equipment incidents
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                        <strong>15.1:</strong> Airport surface incidents
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                        <strong>8.3:</strong> Communication-related events
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                        <strong>11.4:</strong> Weather-related operational issues
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenStack>
+
+            <!-- Data Privacy Notice -->
+            <RadzenAlert Variant="Variant.Outlined" AlertStyle="AlertStyle.Info" AllowClose="false" Style="margin-top: 1rem;">
+                <RadzenStack Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;">
+                        <RadzenIcon Icon="security" Style="margin-right: 0.5rem;" />
+                        Data Privacy & Sharing
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; line-height: 1.4;">
+                        Private narrative remains confidential to your organization. Shared narrative and metadata contribute to industry-wide safety analysis while protecting sensitive operational details.
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenAlert>
+
+            <!-- Best Practices -->
+            <RadzenAccordion Style="margin-top: 1rem;">
+                <Items>
+                    <RadzenAccordionItem Text="Best Practices & Tips" Icon="tips_and_updates">
+                        <RadzenStack Gap="1rem">
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600;">Writing Effective Narratives:</RadzenText>
+                                <RadzenStack Gap="0.25rem">
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                                        • Focus on facts, not opinions or assumptions
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                                        • Include sequence of events and timeline
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                                        • Describe conditions that may have contributed
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                                        • Use clear, professional language
+                                    </RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600;">Anonymization Examples:</RadzenText>
+                                <RadzenStack Gap="0.25rem">
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                                        "The [airline] aircraft..." instead of "Delta aircraft..."
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                                        "The [ground crew member]..." instead of names
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                                        "[Airport authority] personnel..." for internal staff
+                                    </RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600;">Quality Checklist:</RadzenText>
+                                <RadzenStack Gap="0.25rem">
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                                        ? All required fields completed
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                                        ? Contributing factors accurately selected
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                                        ? Operational impact properly documented
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
+                                        ? Sensitive information anonymized
+                                    </RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenAccordionItem>
+                </Items>
+            </RadzenAccordion>
+        </RadzenStack>
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    // No code-behind needed for this guidance component
+}
