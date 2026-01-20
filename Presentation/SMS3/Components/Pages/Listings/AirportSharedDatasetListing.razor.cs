@@ -140,10 +140,42 @@ public partial class AirportSharedDatasetListing : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Editing dataset: {Code}", dataset.Code);
+            Logger.LogInformation("Editing dataset: {Code} with HazardCode: {HazardCode}", dataset.Code, dataset.HazardCode);
             
-            // Navigate to edit dataset page with DatasetCode parameter
-            Navigation.NavigateTo($"/SMSRiskManagement/AirportSharedDataset/Edit/{dataset.Code}");
+            // We need to look up the ReportCode from the Hazard since the dataset only has HazardCode
+            if (string.IsNullOrEmpty(dataset.HazardCode))
+            {
+                ShowErrorNotification("Dataset does not have an associated hazard code for editing");
+                return;
+            }
+
+            // Get the hazard to find the report code
+            var hazardQuery = new GetHazardByIdQuery(new HazardID(dataset.HazardCode));
+            var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
+
+            if (hazardResult.IsSuccess && hazardResult.Value != null)
+            {
+                var hazard = hazardResult.Value;
+                var reportCode = hazard.ReportCode;
+
+                if (string.IsNullOrEmpty(reportCode))
+                {
+                    ShowErrorNotification("Associated hazard does not have a report code");
+                    return;
+                }
+
+                // Navigate to the dataset edit page using the original routing pattern
+                var editUrl = $"/SMSRiskManagement/AirportSharedDataset/{reportCode}/{dataset.HazardCode}";
+                Logger.LogInformation("Navigating to edit dataset: {Url}", editUrl);
+                
+                Navigation.NavigateTo(editUrl);
+            }
+            else
+            {
+                ShowErrorNotification($"Could not find hazard {dataset.HazardCode} associated with this dataset");
+                Logger.LogError("Failed to find hazard {HazardCode} for dataset {DatasetCode}: {Error}", 
+                    dataset.HazardCode, dataset.Code, hazardResult.Error?.Message);
+            }
         }
         catch (Exception ex)
         {

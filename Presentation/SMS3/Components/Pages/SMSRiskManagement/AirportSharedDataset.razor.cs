@@ -24,7 +24,7 @@ public partial class AirportSharedDataset : ComponentBase
     #endregion
 
     #region Parameters
-    [Parameter] public string ReportId { get; set; } = default!;
+    [Parameter] public string? ReportId { get; set; }
     [Parameter] public string? HazardId { get; set; }
     #endregion
 
@@ -35,6 +35,10 @@ public partial class AirportSharedDataset : ComponentBase
     public AirportSharedDatasetModel Model { get; set; } = new();
     public Report? ReportDetails { get; set; }
     public Hazard? HazardDetails { get; set; }
+    public SMS_Domain.Entities.AirportSharedDataset? ExistingDataset { get; set; } // Store existing dataset for updates
+    
+    // Edit mode detection - we're in edit mode if we have both ReportId and HazardId and an existing dataset
+    public bool IsEditMode => ExistingDataset != null;
     #endregion
 
     #region Dropdown Options
@@ -88,7 +92,6 @@ public partial class AirportSharedDataset : ComponentBase
                 // Initialize model with report data
                 Model.DateTime = ReportDetails.CreatedDate ?? DateTime.Now;
                 Model.PrivateNarrative = ReportDetails.Description;
-                // Set other relevant fields from report
             }
 
             // Load hazard details if HazardId provided
@@ -104,22 +107,88 @@ public partial class AirportSharedDataset : ComponentBase
                     // Initialize model with hazard data
                     Model.Location = HazardDetails.LocationArea ?? "";
                     Model.SharedNarrative = HazardDetails.Description ?? "";
-                    // Set other relevant fields from hazard
+                    
+                    // Check if there's an existing dataset for this report/hazard combination
+                    await CheckForExistingDataset();
                 }
             }
 
-            Logger.LogInformation("Loaded dataset creation page for Report: {ReportId}, Hazard: {HazardId}", 
-                ReportId, HazardId ?? "None");
+            Logger.LogInformation("Loaded dataset page for Report: {ReportId}, Hazard: {HazardId}, EditMode: {IsEditMode}", 
+                ReportId, HazardId ?? "None", IsEditMode);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading dataset creation page for Report: {ReportId}", ReportId);
-            ShowErrorNotification("Error loading dataset creation page");
+            Logger.LogError(ex, "Error loading dataset page for Report: {ReportId}", ReportId);
+            ShowErrorNotification("Error loading dataset page");
         }
         finally
         {
             IsLoading = false;
             StateHasChanged();
+        }
+    }
+
+    private async Task CheckForExistingDataset()
+    {
+        try
+        {
+            // Look for existing dataset with this HazardCode
+            // Note: This is a simplified approach - in production, you might want a more specific query
+            var datasetsQuery = new GetAllAirportSharedDatasetsQuery();
+            var datasetsResult = await Mediator.SendAsync(datasetsQuery, CancellationToken.None);
+            
+            if (datasetsResult.IsSuccess && datasetsResult.Value != null)
+            {
+                ExistingDataset = datasetsResult.Value.FirstOrDefault(d => 
+                    d.HazardCode == HazardId && 
+                    (string.IsNullOrEmpty(d.ReportCode) || d.ReportCode == ReportId));
+                
+                if (ExistingDataset != null)
+                {
+                    Logger.LogInformation("Found existing dataset {DatasetCode} for Report: {ReportId}, Hazard: {HazardId}", 
+                        ExistingDataset.Code, ReportId, HazardId);
+                    
+                    // Map existing dataset to form - using only available properties
+                    MapDatasetToModel(ExistingDataset);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error checking for existing dataset for Report: {ReportId}, Hazard: {HazardId}", ReportId, HazardId);
+            // Don't show error to user - just log it and continue in create mode
+        }
+    }
+
+    private void MapDatasetToModel(SMS_Domain.Entities.AirportSharedDataset dataset)
+    {
+        try
+        {
+            // Map only the properties that exist in the domain model
+            // This is a conservative approach to avoid property mismatch errors
+            
+            Model.PrivateNarrative = dataset.PrivateNarrative;
+            Model.SharedNarrative = dataset.SharedNarrative;
+            Model.Weather = dataset.Weather;
+            Model.TriggeringEvent = dataset.TriggeringEvent;
+            
+            // Handle location mapping safely
+            if (!string.IsNullOrEmpty(dataset.LocationArea))
+            {
+                Model.Location = dataset.LocationArea;
+            }
+            else if (!string.IsNullOrEmpty(dataset.LocationOther))
+            {
+                Model.Location = "Other";
+                Model.LocationOther = dataset.LocationOther;
+            }
+
+            Logger.LogInformation("Mapped existing dataset {Code} to edit form", dataset.Code);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error mapping dataset {Code} to form model", dataset.Code);
+            // Continue with default values if mapping fails
         }
     }
     #endregion
@@ -260,9 +329,19 @@ public partial class AirportSharedDataset : ComponentBase
         }
     }
 
-    private async Task CancelAndReturnToAssessment()
+    private async Task CancelAndReturn()
     {
         await NavigateToAssessment();
+    }
+
+    private string GetSaveButtonText()
+    {
+        return IsEditMode ? "Update Dataset" : "Save Dataset";
+    }
+
+    private string GetSaveButtonIcon()
+    {
+        return IsEditMode ? "save" : "save";
     }
 
     private async Task NavigateToAssessment()
