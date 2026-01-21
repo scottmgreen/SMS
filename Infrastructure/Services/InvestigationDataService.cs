@@ -35,11 +35,6 @@ public class InvestigationDataService : BaseDataService<InvestigationDataService
         return _repo.CreateInvestigationAsync(investigation, ct);
     }
 
-    public Task<Result<Investigation>> GetInvestigationByIdAsync(InvestigationID id, CancellationToken ct = default)
-    {
-        return _repo.GetInvestigationByIdAsync(id, ct);
-    }
-
     public Task<Result<Investigation>> GetInvestigationByCodeAsync(string code, CancellationToken ct = default)
     {
         return _repo.GetInvestigationByCodeAsync(code, ct);

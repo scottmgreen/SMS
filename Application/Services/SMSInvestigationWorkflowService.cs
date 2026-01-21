@@ -101,7 +101,7 @@ public class SMSInvestigationWorkflowService : ISMSInvestigationWorkflowService
             _logger.LogInformation("Retrieving investigation {InvestigationId}", investigationId);
 
             var id = new InvestigationID(investigationId);
-            var query = new GetInvestigationByIdQuery(id);
+            var query = new GetInvestigationByCodeQuery(id);
             var result = await _mediator.SendAsync(query, cancellationToken);
 
             if (result.IsFailure)

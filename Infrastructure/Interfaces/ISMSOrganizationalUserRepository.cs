@@ -8,7 +8,7 @@ public interface ISMSOrganizationalUserRepository
     Task<Result<IEnumerable<SMSOrganizationalUser>>> GetActiveUsersAsync();
     Task<Result<IEnumerable<SMSOrganizationalUser>>> GetAllAsync();
     Task<Result<IEnumerable<SMSOrganizationalUser>>> GetByDepartmentAsync(string department);
-    Task<Result<SMSOrganizationalUser>> GetByIdAsync(SMSOrganizationalUserID id);
+    Task<Result<SMSOrganizationalUser>> GetByCodeAsync(SMSOrganizationalUserID id);
     Task<Result<IEnumerable<SMSOrganizationalUser>>> GetByPositionAsync(string position);
     Task<Result<IEnumerable<SMSOrganizationalUser>>> GetBySMSOrganizationalUserLevelAsync(string organizationLevel);
     Task<Result<SMSOrganizationalUser>> GetByUserNameAsync(string userName);

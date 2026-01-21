@@ -242,7 +242,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
             var rowsAffected = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            if (rowsAffected > 0)
+            if (rowsAffected > 0)  
             {
                 return await GetReportValidationByIdAsync((ReportValidationID)reportValidation.Id, ct).ConfigureAwait(false);
             }

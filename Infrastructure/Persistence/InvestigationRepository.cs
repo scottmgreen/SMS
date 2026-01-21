@@ -80,7 +80,7 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
             InvestigationID investigationId = new(newCodeValue);
 
-            return await GetInvestigationByIdAsync(investigationId, ct).ConfigureAwait(false);
+            return await GetInvestigationByCodeAsync(investigationId.Value, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -89,52 +89,52 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
         }
     }
 
-    public async Task<Result<Investigation>> GetInvestigationByIdAsync(InvestigationID id, CancellationToken ct = default)
-    {
-        try
-        {
-            if (id is null)
-            {
-                return Result<Investigation>.Failure<Investigation>(DomainErrors.InvestigationError.NullOrEmpty);
-            }
+    //public async Task<Result<Investigation>> GetInvestigationByIdAsync(InvestigationID id, CancellationToken ct = default)
+    //{
+    //    try
+    //    {
+    //        if (id is null)
+    //        {
+    //            return Result<Investigation>.Failure<Investigation>(DomainErrors.InvestigationError.NullOrEmpty);
+    //        }
 
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_Investigation_GetById} {id}", null);
+    //        _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_Investigation_GetById} {id}", null);
 
-            using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_Investigation_GetById, sql)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
+    //        using SqlConnection sql = new(_connectionString);
+    //        using SqlCommand cmd = new(StoredProcs.pr_Investigation_GetById, sql)
+    //        {
+    //            CommandType = CommandType.StoredProcedure
+    //        };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
 
-            Investigation? response = null;
+    //        Investigation? response = null;
 
-            await sql.OpenAsync(ct).ConfigureAwait(false);
-            using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
-            {
-                while (await reader.ReadAsync().ConfigureAwait(false))
-                {
-                    response = Mappers.MapToInvestigation(reader);
-                }
-            }
-            await sql.CloseAsync().ConfigureAwait(false);
+    //        await sql.OpenAsync(ct).ConfigureAwait(false);
+    //        using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
+    //        {
+    //            while (await reader.ReadAsync().ConfigureAwait(false))
+    //            {
+    //                response = Mappers.MapToInvestigation(reader);
+    //            }
+    //        }
+    //        await sql.CloseAsync().ConfigureAwait(false);
 
-            if (response is not null)
-            {
-                return Result<Investigation>.Success(response);
-            }
-            else
-            {
-                return Result<Investigation>.Failure<Investigation>(DomainErrors.InvestigationError.NotFound);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureGetItemError($"{_logheader} {ex.Message}", null);
-            return Result<Investigation>.Failure<Investigation>(DomainErrors.GeneralError.UnProcessableRequest);
-        }
-    }
+    //        if (response is not null)
+    //        {
+    //            return Result<Investigation>.Success(response);
+    //        }
+    //        else
+    //        {
+    //            return Result<Investigation>.Failure<Investigation>(DomainErrors.InvestigationError.NotFound);
+    //        }
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogInfrastructureGetItemError($"{_logheader} {ex.Message}", null);
+    //        return Result<Investigation>.Failure<Investigation>(DomainErrors.GeneralError.UnProcessableRequest);
+    //    }
+    //}
 
     public async Task<Result<Investigation>> GetInvestigationByCodeAsync(string code, CancellationToken ct = default)
     {

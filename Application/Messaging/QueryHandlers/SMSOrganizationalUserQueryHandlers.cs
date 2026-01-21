@@ -50,43 +50,6 @@ public class GetAllSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IReques
     }
 }
 
-public class GetSMSOrganizationalUserByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalUserByIdQuery, Result<SMSOrganizationalUser>>
-{
-    private readonly SMSOrganizationalUserDataService _dataService;
-    private readonly ILogger<GetSMSOrganizationalUserByIdQueryHandler> _logger;
-
-    public GetSMSOrganizationalUserByIdQueryHandler(SMSOrganizationalUserDataService dataService, ILogger<GetSMSOrganizationalUserByIdQueryHandler> logger)
-    {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<SMSOrganizationalUser>> HandleAsync(GetSMSOrganizationalUserByIdQuery request, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Processing GetSMSOrganizationalUserByIdQuery for ID: {UserId}", request.UserId);
-            var result = await _dataService.GetSMSOrganizationalUserByIdAsync(request.UserId, ct);
-            
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Successfully retrieved SMS Organizational User with ID: {UserId}", request.UserId);
-            }
-            else
-            {
-                _logger.LogWarning("SMS Organizational User not found with ID: {UserId}", request.UserId);
-            }
-            
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError("Error processing GetSMSOrganizationalUserByIdQuery for ID: {UserId}", ApplicationEventIds.Error, ex);
-            return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NotFound);
-        }
-    }
-}
-
 public class GetSMSOrganizationalUserByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalUserByCodeQuery, Result<SMSOrganizationalUser>>
 {
     private readonly SMSOrganizationalUserDataService _dataService;
@@ -102,27 +65,28 @@ public class GetSMSOrganizationalUserByCodeQueryHandler : BaseQueryBundle, IRequ
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSOrganizationalUserByCodeQuery for Code: {UserCode}", request.UserCode);
-            var result = await _dataService.GetSMSOrganizationalUserByIdAsync(request.UserCode, ct);
+            _logger.LogInformation("Processing GetSMSOrganizationalUserByCodeQuery for Code: {Code}", request.UserCode);
+            var result = await _dataService.GetSMSOrganizationalUserByCodeAsync(request.UserCode, ct);
             
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved SMS Organizational User with Code: {UserCode}", request.UserCode);
+                _logger.LogInformation("Successfully retrieved SMS Organizational User with Code: {Code}", request.UserCode);
             }
             else
             {
-                _logger.LogWarning("SMS Organizational User not found with Code: {UserCode}", request.UserCode);
+                _logger.LogWarning("SMS Organizational User not found with Code: {Code}", request.UserCode);
             }
             
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("Error processing GetSMSOrganizationalUserByCodeQuery for Code: {UserCode}", ApplicationEventIds.Error, ex);
+            _logger.LogApplicationError("Error processing GetSMSOrganizationalUserByCodeQuery for Code: {Code}", ApplicationEventIds.Error, ex);
             return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NotFound);
         }
     }
 }
+
 
 public class GetSMSOrganizationalUserByUserNameQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalUserByUserNameQuery, Result<SMSOrganizationalUser>>
 {

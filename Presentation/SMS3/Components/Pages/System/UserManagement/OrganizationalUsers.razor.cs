@@ -349,7 +349,7 @@ public partial class OrganizationalUsers : ComponentBase
 
         try
         {
-            var getUserQuery = new GetSMSOrganizationalUserByIdQuery(userId);
+            var getUserQuery = new GetSMSOrganizationalUserByCodeQuery(userId);
             var userResult = await Mediator.SendAsync(getUserQuery, CancellationToken.None);
             
             if (userResult.IsFailure)

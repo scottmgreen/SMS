@@ -28,9 +28,9 @@ public sealed class Investigation : BaseAuditableEntity
     public DateTime? CompletedDate { get; set; }
     public string? InvestigationPlan { get; set; }
     public string? InvestigationObjectives { get; set; }
-    public string? DecisionType { get; set; }
-    public string? DecisionRationale { get; set; }
-    public string? DecisionMaker { get; set; }
+    public string? DecisionType { get; set; } = string.Empty;
+    public string? DecisionRationale { get; set; } = string.Empty;
+    public string? DecisionMaker { get; set; } = string.Empty;
     public DateTime? DecisionDate { get; set; }
     public string? NextSteps { get; set; }
     public string? ReferralDetails { get; set; }
@@ -79,17 +79,17 @@ public sealed class Investigation : BaseAuditableEntity
 
     public void Start()
     {
-        Status = "InProgress";
+        Status = "IN_PROGRESS";
     }
 
     public void PutOnHold()
     {
-        Status = "OnHold";
+        Status = "ON_HOLD";
     }
 
     public void Cancel()
     {
-        Status = "Cancelled";
+        Status = "CANCELLED";
     }
 
     public void RecordDecision(string decisionType, string rationale, string decisionMaker, string? nextSteps = null, string? referralDetails = null)
@@ -104,7 +104,7 @@ public sealed class Investigation : BaseAuditableEntity
 
     public void Complete()
     {
-        Status = "Completed";
+        Status = "COMPLETED";  // ✅ Fixed to match Smart Enum
         CompletedDate = DateTime.UtcNow;
     }
 
@@ -116,19 +116,19 @@ public sealed class Investigation : BaseAuditableEntity
     #region Query Properties
 
     public bool HasDecision => !string.IsNullOrWhiteSpace(DecisionType);
-    public bool IsCompleted => Status == "Completed";
-    public bool IsInProgress => Status == "InProgress";
-    public bool IsAssigned => Status == "Assigned";
-    public bool IsOnHold => Status == "OnHold";
-    public bool IsCancelled => Status == "Cancelled";
+    public bool IsCompleted => Status == "COMPLETED";  // ✅ Fixed to match Smart Enum
+    public bool IsInProgress => Status == "IN_PROGRESS";  // ✅ Fixed to match Smart Enum
+    public bool IsAssigned => Status == "Assigned";  // Note: Assigned is not in Smart Enum
+    public bool IsOnHold => Status == "ON_HOLD";  // ✅ Fixed to match Smart Enum
+    public bool IsCancelled => Status == "CANCELLED";  // ✅ Fixed to match Smart Enum
 
     public string StatusDisplay => Status switch
     {
         "Assigned" => "Assigned",
-        "InProgress" => "In Progress",
-        "OnHold" => "On Hold",
-        "Completed" => "Completed",
-        "Cancelled" => "Cancelled",
+        "IN_PROGRESS" => "In Progress",  // ✅ Fixed to match Smart Enum
+        "ON_HOLD" => "On Hold",  // ✅ Fixed to match Smart Enum
+        "COMPLETED" => "Completed",  // ✅ Fixed to match Smart Enum
+        "CANCELLED" => "Cancelled",  // ✅ Fixed to match Smart Enum
         _ => Status
     };
 
@@ -138,6 +138,7 @@ public sealed class Investigation : BaseAuditableEntity
         "ContinueMonitoring" => "Hazard will continue to be monitored.",
         "RequiresMitigation" => "Hazard requires mitigation measures.",
         "EscalateToRiskAssessment" => "Hazard escalated to risk assessment.",
+        "ReturnToValidation" => "Investigation completed and returned to validation workflow.",
         "ReferToExternalAgency" => "Hazard referred to external agency.",
         _ => "Investigation decision pending."
     };

@@ -80,8 +80,8 @@
         private static readonly Lazy<string> _pr_SMSOrganizationalUser_GetAll = new(() => "pr_SMSOrganizationalUser_GetAll");
         public static string pr_SMSOrganizationalUser_GetAll => _pr_SMSOrganizationalUser_GetAll.Value;
         
-        private static readonly Lazy<string> _pr_SMSOrganizationalUser_GetById = new(() => "pr_SMSOrganizationalUser_GetById");
-        public static string pr_SMSOrganizationalUser_GetById => _pr_SMSOrganizationalUser_GetById.Value;
+        private static readonly Lazy<string> _pr_SMSOrganizationalUser_GetByCode = new(() => "pr_SMSOrganizationalUser_GetByCode");
+        public static string pr_SMSOrganizationalUser_GetByCode => _pr_SMSOrganizationalUser_GetByCode.Value;
         
         private static readonly Lazy<string> _pr_SMSOrganizationalUser_GetByUserName = new(() => "pr_SMSOrganizationalUser_GetByUserName");
         public static string pr_SMSOrganizationalUser_GetByUserName => _pr_SMSOrganizationalUser_GetByUserName.Value;
@@ -478,7 +478,7 @@
         private static readonly Lazy<string> _pr_Investigation_GetByStatus = new Lazy<string>(() => "pr_Investigation_GetByStatus");
         public static string pr_Investigation_GetByStatus => _pr_Investigation_GetByStatus.Value;
 
-        private static readonly Lazy<string> _pr_Investigation_Update = new Lazy<string>(() => "pr_Investigation_Update");
+        private static readonly Lazy<string> _pr_Investigation_Update = new Lazy<string>(() => "pr_Investigation_Update_Enhanced");
         public static string pr_Investigation_Update => _pr_Investigation_Update.Value;
 
         private static readonly Lazy<string> _pr_Investigation_Delete = new Lazy<string>(() => "pr_Investigation_Delete");

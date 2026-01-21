@@ -451,8 +451,27 @@ public static partial class Mappers
         // Management properties
         investigation.AssignedInvestigatorId = reader.GetValue<string>(FieldNames.fInvestigationAssignedInvestigatorId) ?? string.Empty;
         
+        // ✅ ENHANCED: Handle both old and new status format during transition
         var statusValue = reader.GetValue<string>(FieldNames.fInvestigationStatus);
-        investigation.Status = InvestigationStatus.FromValue(statusValue) ?? InvestigationStatus.InProgress;
+        var mappedStatus = InvestigationStatus.FromValue(statusValue);
+        
+        // If Smart Enum mapping fails, try legacy format conversion
+        if (mappedStatus == null && !string.IsNullOrEmpty(statusValue))
+        {
+            var legacyStatusConverted = statusValue.Trim() switch
+            {
+                "Completed" => "COMPLETED",
+                "InProgress" or "In Progress" => "IN_PROGRESS", 
+                "OnHold" or "On Hold" => "ON_HOLD",
+                "Cancelled" => "CANCELLED",
+                "Assigned" => "IN_PROGRESS", // Map legacy "Assigned" to IN_PROGRESS
+                _ => statusValue.ToUpperInvariant().Replace(" ", "_")
+            };
+            
+            mappedStatus = InvestigationStatus.FromValue(legacyStatusConverted);
+        }
+        
+        investigation.Status = mappedStatus?.Value ?? InvestigationStatus.InProgress.Value;
         
         investigation.CompletedDate = reader.GetValue<DateTime?>(FieldNames.fInvestigationCompletedDate);
         investigation.InvestigationPlan = reader.GetValue<string>(FieldNames.fInvestigationPlan);

@@ -8,7 +8,6 @@ public interface IInvestigationDataService
 {
     // Core CRUD Operations
     Task<Result<Investigation>> CreateInvestigationAsync(Investigation investigation, CancellationToken ct = default);
-    Task<Result<Investigation>> GetInvestigationByIdAsync(InvestigationID id, CancellationToken ct = default);
     Task<Result<Investigation>> GetInvestigationByCodeAsync(string code, CancellationToken ct = default);
     Task<Result<List<Investigation>>> GetAllInvestigationsAsync(CancellationToken ct = default);
     Task<Result<Investigation>> UpdateInvestigationAsync(Investigation investigation, CancellationToken ct = default);

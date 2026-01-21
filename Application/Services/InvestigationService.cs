@@ -38,16 +38,16 @@ public sealed class InvestigationService
         }
     }
 
-    public async Task<Result<Investigation>> GetInvestigationByIdAsync(InvestigationID id, CancellationToken ct = default)
+    public async Task<Result<Investigation>> GetInvestigationByCodeAsync(InvestigationID code, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Retrieving investigation with ID: {Id}", id);
-            return await _dataService.GetInvestigationByIdAsync(id, ct).ConfigureAwait(false);
+            _logger.LogInformation("Retrieving investigation with Code: {Code}", code.Value);
+            return await _dataService.GetInvestigationByCodeAsync(code.Value, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving investigation with ID: {Id}", id);
+            _logger.LogError(ex, "Unexpected error retrieving investigation with Code: {Code}", code.Value);
             return Result<Investigation>.Failure<Investigation>(DomainErrors.InvestigationError.NotFound);
         }
     }

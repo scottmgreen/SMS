@@ -63,24 +63,24 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
         }
     }
 
-    public async Task<Result<SMSOrganizationalUser>> GetByIdAsync(SMSOrganizationalUserID id)
+    public async Task<Result<SMSOrganizationalUser>> GetByCodeAsync(SMSOrganizationalUserID code)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (string.IsNullOrWhiteSpace(code))
             {
                 return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureGetItem($"{_logHeader} {StoredProcs.pr_SMSOrganizationalUser_GetById} ID:{id}", null);
+            _logger.LogInfrastructureGetItem($"{_logHeader} {StoredProcs.pr_SMSOrganizationalUser_GetByCode} Code:{code}", null);
 
             using var sql = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(StoredProcs.pr_SMSOrganizationalUser_GetById, sql)
+            using var cmd = new SqlCommand(StoredProcs.pr_SMSOrganizationalUser_GetByCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             SMSOrganizationalUser? user = null;
 
@@ -233,7 +233,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
 
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
 
-            return await GetByIdAsync(newCodeValue).ConfigureAwait(false);
+            return await GetByCodeAsync(newCodeValue).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

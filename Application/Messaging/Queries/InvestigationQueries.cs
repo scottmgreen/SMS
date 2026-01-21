@@ -4,13 +4,13 @@ namespace SMS_Application.Messaging.Queries;
 // INVESTIGATION QUERIES
 // =============================================
 
-public class GetInvestigationByIdQuery : BaseQueryBundle, IRequest<Result<Investigation>>
+public class GetInvestigationByCodeQuery : BaseQueryBundle, IRequest<Result<Investigation>>
 {
     public InvestigationID InvestigationId { get; set; }
 
-    public GetInvestigationByIdQuery(InvestigationID investigationId)
+    public GetInvestigationByCodeQuery(InvestigationID code)
     {
-        InvestigationId = investigationId ?? throw new ArgumentNullException(nameof(investigationId));
+        InvestigationId = code ?? throw new ArgumentNullException(nameof(code));
     }
 }
 

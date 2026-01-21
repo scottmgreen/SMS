@@ -255,36 +255,81 @@ public partial class ReportValidation : ComponentBase
     }
 
     /// <summary>
-    /// Create the validation record using CQRS
+    /// Smart validation record creation - reuses existing validation if available, creates new if needed
     /// </summary>
     private async Task CreateValidationRecord()
     {
-        var validationId = new ReportValidationID($"RV-0000");
-        
-        var validation = new SMS_Domain.Entities.ReportValidation(validationId)
+        try
         {
-            Code = validationId.Value,
-            ReportCode = ReportId,
-            ValidatedBy = GetCurrentUserCode(),
-            ValidationDecision = ValidationDecisionValue,
-            ValidationComments = ValidationComments,
-            ValidationType = ValidationType ?? "Technical",
-            Status = "Completed",
-            Stage = "Complete",
-            ValidatedDate = DateTime.UtcNow,
-            CreatedBy = GetCurrentUserCode(),
-            CreatedDate = DateTime.UtcNow
-        };
+            Logger.LogInformation("Smart validation record processing for ReportId: {ReportId}, HasExisting: {HasExisting}", 
+                ReportId, ExistingValidation != null);
 
-        var createCommand = new CreateReportValidationCommand(validation);
-        var result = await Mediator.SendAsync(createCommand, CancellationToken.None);
+            if (ExistingValidation != null)
+            {
+                // ? UPDATE EXISTING VALIDATION
+                Logger.LogInformation("Updating existing ReportValidation: {ValidationCode}", ExistingValidation.Code);
+                
+                // Update the existing validation with new values
+                ExistingValidation.ValidationDecision = ValidationDecisionValue;
+                ExistingValidation.ValidationComments = ValidationComments;
+                ExistingValidation.ValidationType = ValidationType ?? "Technical";
+                ExistingValidation.ValidatedBy = GetCurrentUserCode();
+                ExistingValidation.Status = "Completed";
+                ExistingValidation.Stage = "Complete";
+                ExistingValidation.ValidatedDate = DateTime.UtcNow;
+                ExistingValidation.UpdatedBy = GetCurrentUserCode();
+                ExistingValidation.UpdatedDate = DateTime.UtcNow;
 
-        if (!result.IsSuccess)
-        {
-            throw new Exception($"Failed to create validation: {result.Error?.Message ?? DomainErrors.ReportValidationError.CreateFailed.Message}");
+                var updateCommand = new UpdateReportValidationCommand(ExistingValidation);
+                var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+
+                if (!result.IsSuccess)
+                {
+                    throw new Exception($"Failed to update existing validation: {result.Error?.Message ?? DomainErrors.ReportValidationError.UpdateFailed.Message}");
+                }
+
+                Logger.LogInformation("Successfully updated existing ReportValidation: {ValidationCode}", ExistingValidation.Code);
+                ShowSuccessNotification($"Validation updated successfully. Decision: {SelectedValidationDecision?.Name}");
+            }
+            else
+            {
+                // ? CREATE NEW VALIDATION (only if none exists)
+                Logger.LogInformation("Creating new ReportValidation for ReportId: {ReportId}", ReportId);
+                
+                var validationId = new ReportValidationID($"RV-0000");
+                
+                var validation = new SMS_Domain.Entities.ReportValidation(validationId)
+                {
+                    Code = validationId.Value,
+                    ReportCode = ReportId,
+                    ValidatedBy = GetCurrentUserCode(),
+                    ValidationDecision = ValidationDecisionValue,
+                    ValidationComments = ValidationComments,
+                    ValidationType = ValidationType ?? "Technical",
+                    Status = "Completed",
+                    Stage = "Complete",
+                    ValidatedDate = DateTime.UtcNow,
+                    CreatedBy = GetCurrentUserCode(),
+                    CreatedDate = DateTime.UtcNow
+                };
+
+                var createCommand = new CreateReportValidationCommand(validation);
+                var result = await Mediator.SendAsync(createCommand, CancellationToken.None);
+
+                if (!result.IsSuccess)
+                {
+                    throw new Exception($"Failed to create new validation: {result.Error?.Message ?? DomainErrors.ReportValidationError.CreateFailed.Message}");
+                }
+
+                Logger.LogInformation("Successfully created new ReportValidation: {ValidationCode}", result.Value.Code);
+                ShowSuccessNotification($"Validation recorded successfully. Decision: {SelectedValidationDecision?.Name}");
+            }
         }
-
-        ShowSuccessNotification($"Validation recorded successfully. Decision: {SelectedValidationDecision.Name}");
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error in smart validation record processing for ReportId: {ReportId}", ReportId);
+            throw; // Re-throw to be handled by HandleSubmit
+        }
     }
 
     /// <summary>
@@ -495,36 +540,6 @@ public partial class ReportValidation : ComponentBase
     private string GetCurrentUserCode()
     {
         return "SYSTEM_USER"; // Replace with actual user identification logic
-    }
-
-    #endregion
-
-    #region Validation Entity Management
-
-    private SMS_Domain.Entities.ReportValidation CreateValidationEntity()
-    {
-        if (IsUpdate && ExistingValidation != null)
-        {
-            var validation = ExistingValidation;
-            validation.ValidationDecision = SelectedValidationDecision?.Value; // Store the enum Value
-            validation.ValidationComments = ValidationComments;
-            validation.ValidationType = ValidationType;
-            validation.ValidatedBy = string.IsNullOrEmpty(ValidatedBy) ? "SYSTEM" : ValidatedBy;
-            validation.Status = "Completed";
-            
-            return validation;
-        }
-        else
-        {
-            var validatedByValue = string.IsNullOrEmpty(ValidatedBy) ? "SYSTEM" : ValidatedBy;
-            var validation = SMS_Domain.Entities.ReportValidation.Create(ReportId, validatedByValue);
-            validation.ValidationDecision = SelectedValidationDecision?.Value; // Store the enum Value
-            validation.ValidationComments = ValidationComments;
-            validation.ValidationType = ValidationType;
-            validation.Status = "Completed";
-            
-            return validation;
-        }
     }
 
     #endregion

@@ -140,7 +140,7 @@ public class UpdateSMSOrganizationalUserPasswordCommandHandler : BaseCommandBund
             _logger.LogInformation("Processing UpdateSMSOrganizationalUserPasswordCommand for UserID: {UserId}", request.UserId);
 
             // Get the existing user
-            var userResult = await _dataService.GetSMSOrganizationalUserByIdAsync(request.UserId, cancellationToken);
+            var userResult = await _dataService.GetSMSOrganizationalUserByCodeAsync(request.UserId, cancellationToken);
             if (userResult.IsFailure)
             {
                 return Result<bool>.Failure<bool>(userResult.Error);
@@ -260,7 +260,7 @@ public class RecordSMSOrganizationalUserLoginCommandHandler : BaseCommandBundle,
             _logger.LogInformation("Processing RecordSMSOrganizationalUserLoginCommand for UserID: {UserId}", request.UserId);
 
             // Get the existing user
-            var userResult = await _dataService.GetSMSOrganizationalUserByIdAsync(request.UserId, cancellationToken);
+            var userResult = await _dataService.GetSMSOrganizationalUserByCodeAsync(request.UserId, cancellationToken);
             if (userResult.IsFailure)
             {
                 return Result<bool>.Failure<bool>(userResult.Error);

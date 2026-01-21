@@ -76,17 +76,17 @@ public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrgani
     /// <summary>
     /// Gets SMS Organizational User by ID
     /// </summary>
-    public async Task<Result<SMSOrganizationalUser>> GetSMSOrganizationalUserByIdAsync(string id, CancellationToken ct = default)
+    public async Task<Result<SMSOrganizationalUser>> GetSMSOrganizationalUserByCodeAsync(string code, CancellationToken ct = default)
     {
         try
         {
-            SMSOrganizationalUserID orgid = new SMSOrganizationalUserID(id);
-            _logger.LogInformation("Retrieving SMS Organizational User with ID: {Id}", id);
-            return await _repository.GetByIdAsync(orgid);
+            SMSOrganizationalUserID orgid = new SMSOrganizationalUserID(code);
+            _logger.LogInformation("Retrieving SMS Organizational User with Code: {Code}", code);
+            return await _repository.GetByCodeAsync(orgid);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Organizational User with ID: {Id}", id);
+            _logger.LogError(ex, "Unexpected error retrieving SMS Organizational User with Code: {Code}", code);
             return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NotFound);
         }
     }
@@ -216,11 +216,11 @@ public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrgani
             }
 
             // Return the updated user
-            return await _repository.GetByIdAsync(new (user.Code));
+            return await _repository.GetByCodeAsync(new (user.Code));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating SMS Organizational User with ID: {Id}", user?.UserId);
+            _logger.LogError(ex, "Unexpected error updating SMS Organizational User with Code: {Code}", user?.UserId);
             return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.UpdateFailed);
         }
     }

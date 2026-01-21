@@ -24,29 +24,6 @@ public class GetAllSMSOrganizationalUsersQuery : BaseQueryBundle, IRequest<Resul
     }
 }
 
-/// <summary>
-/// Query to get SMS Organizational User by ID
-/// </summary>
-public class GetSMSOrganizationalUserByIdQuery : BaseQueryBundle, IRequest<Result<SMSOrganizationalUser>>
-{
-    /// <summary>
-    /// The ID of the organizational user to retrieve
-    /// </summary>
-    public string UserId { get; set; }
-
-    /// <summary>
-    /// Initializes a new instance of the GetSMSOrganizationalUserByIdQuery class.
-    /// </summary>
-    /// <param name="userId">The ID of the organizational user to retrieve</param>
-    /// <exception cref="ArgumentException">Thrown when userId is null or empty</exception>
-    public GetSMSOrganizationalUserByIdQuery(string userId)
-    {
-        if (string.IsNullOrWhiteSpace(userId))
-            throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
-
-        UserId = userId;
-    }
-}
 
 /// <summary>
 /// Query to get SMS Organizational User by Code

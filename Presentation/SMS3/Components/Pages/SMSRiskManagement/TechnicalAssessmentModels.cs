@@ -925,8 +925,8 @@ public class Step5Model
 
     #region Hazard Mitigation Strategies
 
-    // Dictionary of HazardCode to List of Mitigation Strategies (using proper domain entities)
-    public Dictionary<string, List<MitigationStrategy>> HazardMitigations { get; set; } = new();
+    // ? UPDATED: Dictionary of HazardCode to List of Mitigation entities (using proper domain entities)
+    public Dictionary<string, List<Mitigation>> HazardMitigations { get; set; } = new();
     
     // Dictionary of HazardCode to List of Panel Member IDs for residual risk assessment
     public Dictionary<string, List<string>> ResidualRiskPanels { get; set; } = new();
@@ -936,30 +936,11 @@ public class Step5Model
 
     #endregion
 
-    #region Helper Methods
+    #region Apply To Assessment String Helper
 
-    public void AddResidualRiskScore(string hazardCode, ResidualRiskScoreData scoreData)
+    public string ApplyToAssessmentString(List<string> appliedMitigations)
     {
-        if (!ResidualRiskScores.ContainsKey(hazardCode))
-        {
-            ResidualRiskScores[hazardCode] = new List<ResidualRiskScoreData>();
-        }
-
-        // Remove existing score from same member
-        ResidualRiskScores[hazardCode].RemoveAll(s => s.MemberId == scoreData.MemberId);
-        
-        // Add new score
-        ResidualRiskScores[hazardCode].Add(scoreData);
-    }
-
-    public void AddMitigationStrategy(string hazardCode, MitigationStrategy strategy)
-    {
-        if (!HazardMitigations.ContainsKey(hazardCode))
-        {
-            HazardMitigations[hazardCode] = new List<MitigationStrategy>();
-        }
-
-        HazardMitigations[hazardCode].Add(strategy);
+        return string.Join("; ", appliedMitigations ?? new List<string>());
     }
 
     #endregion
@@ -983,7 +964,36 @@ public class Step5Model
         assessment.CompleteStep(5);
     }
 
+    /// <summary>
+    /// Load Step 5 data from RiskAssessment and associated mitigation entities
+    /// ? ENHANCED: Now loads both assessment data AND mitigation entities
+    /// </summary>
+    public async Task LoadFromAssessmentAsync(RiskAssessment assessment, IMediator mediator, List<Hazard> availableHazards)
+    {
+        if (assessment == null) return;
+
+        // Load implementation data from assessment (existing functionality)
+        LoadBasicAssessmentData(assessment);
+        
+        // ? NEW: Load mitigation entities for all hazards
+        if (mediator != null && availableHazards?.Any() == true)
+        {
+            await LoadMitigationEntitiesAsync(mediator, availableHazards);
+        }
+    }
+
+    /// <summary>
+    /// Load basic assessment implementation data (original functionality)
+    /// </summary>
     public void LoadFromAssessment(RiskAssessment assessment)
+    {
+        LoadBasicAssessmentData(assessment);
+    }
+
+    /// <summary>
+    /// ? Helper method to load basic assessment data (refactored from original method)
+    /// </summary>
+    private void LoadBasicAssessmentData(RiskAssessment assessment)
     {
         if (assessment == null) return;
 
@@ -1004,13 +1014,55 @@ public class Step5Model
         }
     }
 
-    #endregion
-
-    #region Apply To Assessment String Helper
-
-    public string ApplyToAssessmentString(List<string> appliedMitigations)
+    /// <summary>
+    /// ? NEW: Load mitigation entities from database for all hazards
+    /// </summary>
+    private async Task LoadMitigationEntitiesAsync(IMediator mediator, List<Hazard> availableHazards)
     {
-        return string.Join("; ", appliedMitigations ?? new List<string>());
+        try
+        {
+            // Initialize dictionaries if needed
+            if (HazardMitigations == null)
+                HazardMitigations = new Dictionary<string, List<Mitigation>>();
+            if (SavedMitigationStrategies == null)
+                SavedMitigationStrategies = new Dictionary<string, List<string>>();
+
+            // Load mitigations for each hazard
+            foreach (var hazard in availableHazards)
+            {
+                try
+                {
+                    var query = new GetMitigationsByHazardCodeQuery(hazard.Code);
+                    var result = await mediator.SendAsync(query, CancellationToken.None);
+
+                    if (result.IsSuccess && result.Value?.Any() == true)
+                    {
+                        var mitigations = result.Value.ToList();
+                        
+                        // Populate both dictionaries
+                        HazardMitigations[hazard.Code] = mitigations;
+                        SavedMitigationStrategies[hazard.Code] = mitigations.Select(m => m.Name ?? "Unnamed Mitigation").ToList();
+                        
+                        // Log successful loading
+                        global::System.Console.WriteLine($"? Step5Model: Loaded {mitigations.Count} mitigations for hazard {hazard.Code}");
+                    }
+                    else
+                    {
+                        global::System.Console.WriteLine($"??  Step5Model: No mitigations found for hazard {hazard.Code}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    global::System.Console.WriteLine($"? Step5Model: Error loading mitigations for hazard {hazard.Code}: {ex.Message}");
+                }
+            }
+
+            global::System.Console.WriteLine($"? Step5Model: Completed loading mitigations for {availableHazards.Count} hazards");
+        }
+        catch (Exception ex)
+        {
+            global::System.Console.WriteLine($"? Step5Model: Error in LoadMitigationEntitiesAsync: {ex.Message}");
+        }
     }
 
     #endregion

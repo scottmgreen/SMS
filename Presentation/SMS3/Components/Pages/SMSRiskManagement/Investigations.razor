@@ -51,11 +51,11 @@ else
                                     Hazard Code: @(InvestigationEntity.HazardCode ?? "Not Set")
                                 </RadzenText>
                             </RadzenStack>
-                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                           @*  <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
                                 <RadzenBadge Text="@GetStatusBadgeText()" BadgeStyle="@GetStatusBadgeStyle()" />
                                 <RadzenButton Text="Back to List" Icon="list" ButtonStyle="ButtonStyle.Light" 
                                               Click="NavigateToListings" Size="ButtonSize.Small" />
-                            </RadzenStack>
+                            </RadzenStack> *@
                         </RadzenStack>
 
                         <!-- Main Form Tabs -->
@@ -64,7 +64,7 @@ else
                                 <!-- Investigation Details Tab -->
                                 <RadzenTabsItem Text="Investigation Details" Style="font-size:larger;font-weight:500;">
                                     <RadzenStack Gap="1rem" Style="padding: 1rem;">
-                                        <RadzenRow Gap="1rem">
+                                       @*  <RadzenRow Gap="1rem">
                                             <RadzenColumn Size="6">
                                                 <RadzenFormField Text="Investigation Code" Variant="Variant.Outlined">
                                                     <RadzenTextBox @bind-Value="InvestigationEntity.Code" ReadOnly="true" />
@@ -75,7 +75,7 @@ else
                                                     <RadzenTextBox @bind-Value="InvestigationEntity.HazardCode" ReadOnly="true" />
                                                 </RadzenFormField>
                                             </RadzenColumn>
-                                        </RadzenRow>
+                                        </RadzenRow> *@
 
                                         <RadzenRow Gap="1rem">
                                             <RadzenColumn Size="6">
@@ -125,26 +125,40 @@ else
                                 <!-- Decision Tab -->
                                 <RadzenTabsItem Text="Investigation Decision">
                                     <RadzenStack Gap="1rem" Style="padding: 1rem;">
-                                        @if (InvestigationEntity.HasDecision)
+                                        @if (InvestigationEntity.DecisionDate.HasValue)
                                         {
-                                            <!-- Existing Decision Display -->
+                                            <!-- Existing Decision Display - Only show when decision is actually recorded -->
                                             <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat">
                                                 <RadzenText TextStyle="TextStyle.H6">Decision Recorded</RadzenText>
                                                 <RadzenText><strong>Decision:</strong> @InvestigationEntity.DecisionType</RadzenText>
                                                 <RadzenText><strong>Decision Maker:</strong> @InvestigationEntity.DecisionMaker</RadzenText>
                                                 <RadzenText><strong>Decision Date:</strong> @InvestigationEntity.DecisionDate?.ToString("yyyy-MM-dd HH:mm")</RadzenText>
                                                 <RadzenText><strong>Rationale:</strong> @InvestigationEntity.DecisionRationale</RadzenText>
+                                                @if (!string.IsNullOrEmpty(InvestigationEntity.NextSteps))
+                                                {
+                                                    <RadzenText><strong>Next Steps:</strong> @InvestigationEntity.NextSteps</RadzenText>
+                                                }
+                                                @if (!string.IsNullOrEmpty(InvestigationEntity.ReferralDetails))
+                                                {
+                                                    <RadzenText><strong>Referral Details:</strong> @InvestigationEntity.ReferralDetails</RadzenText>
+                                                }
                                             </RadzenAlert>
+                                            
+                                            <!-- Allow editing of recorded decision if needed -->
+                                            <RadzenButton Text="Edit Decision" Icon="edit" ButtonStyle="ButtonStyle.Secondary" 
+                                                         Click="EditDecision" Size="ButtonSize.Small" />
                                         }
                                         else
                                         {
-                                            <!-- Decision Form -->
+                                            <!-- Decision Form - Always shown unless decision is recorded -->
                                             <RadzenFormField Text="Decision Type" Variant="Variant.Outlined">
                                                 <RadzenDropDown @bind-Value="InvestigationEntity.DecisionType" 
                                                                Data="DecisionTypeOptions" 
                                                                TextProperty="Text" 
                                                                ValueProperty="Value"
-                                                               AllowClear="false" />
+                                                               AllowClear="true"
+                                                               Placeholder="Select a decision type..."
+                                                               Style="width: 100%;" />
                                             </RadzenFormField>
 
                                             <RadzenFormField Text="Decision Rationale" Variant="Variant.Outlined">

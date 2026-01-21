@@ -71,16 +71,16 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
     /// <summary>
     /// Gets SMS Organizational User by ID
     /// </summary>
-    public async Task<Result<SMSOrganizationalUser>> GetSMSOrganizationalUserByIdAsync(string id, CancellationToken ct = default)
+    public async Task<Result<SMSOrganizationalUser>> GetSMSOrganizationalUserByCodeAsync(string code, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Organizational User with ID: {Id}", id);
-            return await _dataService.GetSMSOrganizationalUserByIdAsync(id, ct).ConfigureAwait(false);
+            _logger.LogInformation("Retrieving SMS Organizational User with Code: {Code}", code);
+            return await _dataService.GetSMSOrganizationalUserByCodeAsync(code, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Organizational User with ID: {Id}", id);
+            _logger.LogError(ex, "Unexpected error retrieving SMS Organizational User with Code: {Code}", code);
             return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NotFound);
         }
     }
@@ -176,7 +176,7 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
             }
 
             // Business validation - check if user exists
-            var existingUserResult = await _dataService.GetSMSOrganizationalUserByIdAsync(user.UserId.Value, ct).ConfigureAwait(false);
+            var existingUserResult = await _dataService.GetSMSOrganizationalUserByCodeAsync(user.UserId.Value, ct).ConfigureAwait(false);
             if (existingUserResult.IsFailure)
             {
                 _logger.LogWarning("Cannot update non-existent SMS Organizational User with ID: {Id}", user.UserId);

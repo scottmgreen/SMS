@@ -313,26 +313,47 @@ public partial class ReportProcessing : ComponentBase
 
     private ProcessingStatusCategory DetermineStatusCategory(Report report, Hazard? hazard, RiskAssessment? riskAssessment, SMS_Domain.Entities.ReportValidation? reportValidation, Investigation? investigation)
     {
-        Logger.LogWarning("?? CATEGORIZING Report: {ReportCode} | HasValidation: {HasValidation} | HasRiskAssessment: {HasRA} | HasInvestigation: {HasInv}", 
-            report.Code, reportValidation != null, riskAssessment != null, investigation != null);
+        Logger.LogWarning("?? CATEGORIZING Report: {ReportCode} | HasValidation: {HasValidation} | ValidationType: {ValidationType} | ValidationDecision: {ValidationDecision} | HasRiskAssessment: {HasRA} | HasInvestigation: {HasInv} | InvStatus: {InvStatus} | InvDecision: {InvDecision}", 
+            report.Code, reportValidation != null, reportValidation?.ValidationType ?? "NULL", reportValidation?.ValidationDecision ?? "NULL", riskAssessment != null, investigation != null, investigation?.Status ?? "NULL", investigation?.DecisionType ?? "NULL");
 
         // CRITICAL DESIGN CONCEPT: 
-        // 1. If no ReportValidation exists -> VALIDATION tab (needs initial validation)
-        // 2. If ReportValidation exists but no RiskAssessment -> RISK ASSESSMENT tab (validated, needs risk assessment)  
-        // 3. If RiskAssessment exists and in progress -> RISK ASSESSMENT tab (assessment in progress)
-        // 4. If RiskAssessment complete -> MITIGATION tab
-        // 5. NEW: If Investigation exists and is active -> INVESTIGATION tab
+        // 1. If Investigation exists and is active -> INVESTIGATION tab (HIGHEST PRIORITY)
+        // 2. If no ReportValidation exists -> VALIDATION tab (needs initial validation)
+        // 3. If ReportValidation exists but ValidationType is NULL or ValidationDecision is NULL -> VALIDATION tab (reset validation)
+        // 4. If ReportValidation exists with decision but no RiskAssessment -> RISK ASSESSMENT tab (validated, needs risk assessment)  
+        // 5. If RiskAssessment exists and in progress -> RISK ASSESSMENT tab (assessment in progress)
+        // 6. If RiskAssessment complete -> MITIGATION tab
         
-        // NEW: Check for active investigation first - this takes priority
+        // HIGHEST PRIORITY: Check for active investigation first - but exclude completed investigations that returned to validation
         if (investigation != null)
         {
-            // Check if investigation is active (not completed) - Use Smart Enum comparison
-            if (investigation.Status == InvestigationStatus.InProgress || 
-                investigation.Status == InvestigationStatus.OnHold)
+            // FIXED: Use more robust status checking to handle different status formats
+            var status = investigation.Status?.ToUpperInvariant() ?? "";
+            var isActiveInvestigation = status == "INPROGRESS" || 
+                                      status == "IN_PROGRESS" || 
+                                      status == "ONHOLD" || 
+                                      status == "ON_HOLD" || 
+                                      status == "ASSIGNED";
+            
+            // NEW: Check if investigation completed with ReturnToValidation - SKIP active investigation logic
+            if (status == "COMPLETED" && 
+                string.Equals(investigation.DecisionType, "ReturnToValidation", StringComparison.OrdinalIgnoreCase))
             {
-                Logger.LogWarning("? Report {ReportId} -> INVESTIGATION (active investigation {InvestigationId} with status {Status})", 
+                Logger.LogWarning("? Report {ReportId} -> Investigation {InvestigationId} completed with ReturnToValidation decision, continuing with validation logic ?", 
+                    report.Code, investigation.Code);
+                // Continue with validation logic below - do NOT return Investigation
+            }
+            else if (isActiveInvestigation)
+            {
+                Logger.LogWarning("? Report {ReportId} -> INVESTIGATION (active investigation {InvestigationId} with status '{Status}') - HIGHEST PRIORITY", 
                     report.Code, investigation.Code, investigation.Status);
                 return ProcessingStatusCategory.Investigation;
+            }
+            else if (status == "COMPLETED")
+            {
+                Logger.LogWarning("? Report {ReportId} -> Investigation {InvestigationId} completed with decision {Decision}, continuing with normal flow", 
+                    report.Code, investigation.Code, investigation.DecisionType ?? "NULL");
+                // Continue with normal flow below
             }
         }
         
@@ -343,7 +364,15 @@ public partial class ReportProcessing : ComponentBase
             return ProcessingStatusCategory.Validation;
         }
 
-        // Has validation but no risk assessment = validated, needs risk assessment
+        // ENHANCED: Check if validation was reset (ValidationType or ValidationDecision is null) - THIS SHOULD CATCH IT!
+        if (string.IsNullOrEmpty(reportValidation.ValidationType) || string.IsNullOrEmpty(reportValidation.ValidationDecision))
+        {
+            Logger.LogWarning("? Report {ReportId} -> VALIDATION (reset validation - ValidationType: {ValidationType}, ValidationDecision: {ValidationDecision}) ? EXPECTED PATH", 
+                report.Code, reportValidation.ValidationType ?? "NULL", reportValidation.ValidationDecision ?? "NULL");
+            return ProcessingStatusCategory.Validation;
+        }
+
+        // Has validation with decision but no risk assessment = validated, needs risk assessment
         if (riskAssessment == null)
         {
             Logger.LogWarning("? Report {ReportId} -> RISK ASSESSMENT (validated but no assessment)", report.Code);

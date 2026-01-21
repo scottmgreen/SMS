@@ -7,28 +7,29 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // INVESTIGATION QUERY HANDLERS
 // =============================================
 
-public class GetInvestigationByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetInvestigationByIdQuery, Result<Investigation>>
+public class GetInvestigationByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetInvestigationByCodeQuery, Result<Investigation>>
 {
     private readonly InvestigationDataService _investigationDataService;
-    private readonly ILogger<GetInvestigationByIdQueryHandler> _logger;
+    private readonly ILogger<GetInvestigationByCodeQueryHandler> _logger;
 
-    public GetInvestigationByIdQueryHandler(InvestigationDataService investigationDataService, ILogger<GetInvestigationByIdQueryHandler> logger)
+    public GetInvestigationByCodeQueryHandler(InvestigationDataService investigationDataService, ILogger<GetInvestigationByCodeQueryHandler> logger)
     {
         _investigationDataService = investigationDataService ?? throw new ArgumentNullException(nameof(investigationDataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<Investigation>> HandleAsync(GetInvestigationByIdQuery request, CancellationToken ct = default)
+    public async Task<Result<Investigation>> HandleAsync(GetInvestigationByCodeQuery request, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Processing GetInvestigationByIdQuery for ID: {Id}", request.InvestigationId);
-            var result = await _investigationDataService.GetInvestigationByIdAsync(request.InvestigationId, ct).ConfigureAwait(false);
+            _logger.LogInformation("Processing GetInvestigationByCodeQuery for Code: {Code}", request.InvestigationId.Value);
+            // Use the string overload since that's what the service has implemented
+            var result = await _investigationDataService.GetInvestigationByCodeAsync(request.InvestigationId.Value, ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("Error processing GetInvestigationByIdQuery for ID: {Id}", ApplicationEventIds.Error, ex);
+            _logger.LogApplicationError($"Error processing GetInvestigationByCodeQuery for Code: {request.InvestigationId.Value}", ApplicationEventIds.Error, ex);
             return Result<Investigation>.Failure<Investigation>(DomainErrors.InvestigationError.NotFound);
         }
     }

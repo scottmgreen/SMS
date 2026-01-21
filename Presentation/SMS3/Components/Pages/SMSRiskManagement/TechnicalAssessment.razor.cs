@@ -471,9 +471,10 @@ public partial class TechnicalAssessment : ComponentBase
             // Load existing scoring panel data for Step 4 using CQRS
             await Step4.LoadExistingScoringPanelsAsync(Mediator, ReportHazards);
             
-            Step5.LoadFromAssessment(InitialRiskAssessment);
+            // ✅ ENHANCED: Load Step 5 with comprehensive mitigation loading
+            await Step5.LoadFromAssessmentAsync(InitialRiskAssessment, Mediator, ReportHazards);
 
-            Logger.LogInformation("Step models loaded from assessment, including scoring panel data");
+            Logger.LogInformation("Step models loaded from assessment, including scoring panel data and mitigations");
         }
         catch (Exception ex)
         {
