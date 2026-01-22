@@ -1,10 +1,6 @@
-using Microsoft.Data.SqlClient;
-using SMS_Domain.Entities;
-using SMS_Infrastructure.Common;
-using SMS_Infrastructure.Interfaces;
-using SMS_Shared.Common;
-using System.Data;
 using SMS_Domain.Errors;
+
+using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Persistence;
 
@@ -95,7 +91,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupIsActive, applicationGroup.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, applicationGroup.UpdatedBy ?? "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, applicationGroup.UpdatedDate ?? DateTime.UtcNow));
-            cmd.Parameters.Add(DataAccess.Parameter("@pRowsAffected",0, null));
+            cmd.Parameters.Add(DataAccess.Parameter("@pRowsAffected", 0, null));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -132,7 +128,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, groupCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, "SYSTEM"));
-            cmd.Parameters.Add(DataAccess.Parameter("@pRowsAffected", 0,null));
+            cmd.Parameters.Add(DataAccess.Parameter("@pRowsAffected", 0, null));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -346,7 +342,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupUserCode, userCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupCode, groupCode));
             cmd.Parameters.Add(DataAccess.Parameter("@pRemovedBy", "SYSTEM"));
-            cmd.Parameters.Add(DataAccess.Parameter("@pRowsAffected", 0,null));
+            cmd.Parameters.Add(DataAccess.Parameter("@pRowsAffected", 0, null));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -573,7 +569,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
             List<SMSApplicationUser> members = new();
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
-            
+
             using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
             {
                 // First dataset: Group details
@@ -592,7 +588,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
                     }
                 }
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             if (group is not null)

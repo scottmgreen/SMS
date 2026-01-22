@@ -19,19 +19,19 @@ public class SMSAudit : BaseAuditableEntity
     public string Description { get; set; } = string.Empty;
     public string AuditType { get; set; } = string.Empty; // Internal, External, Regulatory, Management
     public string Status { get; set; } = string.Empty; // Scheduled, In Progress, Completed, Cancelled, Postponed
-    
+
     // Schedule Information
     public DateTime ScheduledStartDate { get; set; }
     public DateTime ScheduledEndDate { get; set; }
     public DateTime? ActualStartDate { get; set; }
     public DateTime? ActualEndDate { get; set; }
-    
+
     // Audit Team
     public string LeadAuditor { get; set; } = string.Empty;
     public string AuditorTeam { get; set; } = string.Empty; // JSON array of auditor names/IDs
     public string ResponsibleDepartment { get; set; } = string.Empty;
     public string ContactPerson { get; set; } = string.Empty;
-    
+
     // Execution Details - ADDED MISSING PROPERTIES
     public string Scope { get; set; } = string.Empty; // Added for repository compatibility
     public string Objectives { get; set; } = string.Empty; // Added for repository compatibility
@@ -39,25 +39,25 @@ public class SMSAudit : BaseAuditableEntity
     public string AuditObjectives { get; set; } = string.Empty;
     public string AuditCriteria { get; set; } = string.Empty;
     public string AuditMethodology { get; set; } = string.Empty;
-    
+
     // Location and Logistics
     public string AuditLocation { get; set; } = string.Empty;
     public string LocationArea { get; set; } = string.Empty;
     public string LocationSubArea { get; set; } = string.Empty;
     public string SpecialRequirements { get; set; } = string.Empty;
-    
+
     // Progress Tracking
     public int ProgressPercentage { get; set; } = 0;
     public string CurrentPhase { get; set; } = string.Empty; // Planning, Opening, Fieldwork, Reporting, Closure
     public string ExecutionNotes { get; set; } = string.Empty;
-    
+
     // Results Summary
     public int TotalFindings { get; set; } = 0;
     public int CriticalFindings { get; set; } = 0;
     public int MajorFindings { get; set; } = 0;
     public int MinorFindings { get; set; } = 0;
     public int Observations { get; set; } = 0;
-    
+
     // Report Information - ADDED MISSING PROPERTIES
     public string Priority { get; set; } = string.Empty; // Added for repository compatibility
     public string ExecutiveSummary { get; set; } = string.Empty; // Added for repository compatibility
@@ -68,12 +68,12 @@ public class SMSAudit : BaseAuditableEntity
     public string Conclusions { get; set; } = string.Empty;
     public DateTime? ReportSubmittedDate { get; set; }
     public string ReportSubmittedBy { get; set; } = string.Empty;
-    
+
     // Follow-up
     public DateTime? FollowUpDate { get; set; }
     public string FollowUpRequired { get; set; } = string.Empty; // Yes, No, Conditional
     public string FollowUpNotes { get; set; } = string.Empty;
-    
+
     // Navigation Properties
     public List<SMSAuditFinding> Findings { get; set; }
     public List<SMSAuditEvidence> Evidence { get; set; }

@@ -1,7 +1,4 @@
-﻿using SMS_Shared.Common;
-using SMS_Domain.Enums;
-
-namespace SMS_Domain.Entities;
+﻿namespace SMS_Domain.Entities;
 
 /// <summary>
 /// Interview Domain Entity - Enhanced for comprehensive investigation interviews
@@ -9,9 +6,9 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public sealed class Interview : BaseAuditableEntity
 {
-    
+
     // Public constructor for domain usage
-    public Interview(InterviewID id) : base(id, "SYSTEM", DateTime.UtcNow) 
+    public Interview(InterviewID id) : base(id, "SYSTEM", DateTime.UtcNow)
     {
         Status = InterviewStatus.Scheduled; // Default to Scheduled - interview date is required
         Type = InterviewType.Witness;
@@ -54,13 +51,13 @@ public sealed class Interview : BaseAuditableEntity
     #region Interview Management
 
     public InterviewStatus Status { get; set; } = InterviewStatus.Scheduled;
-    
+
     /// <summary>
     /// Interview date and time. This is required for all interviews.
     /// When this property is set, the interview is considered scheduled.
     /// </summary>
     public DateTime? InterviewDate { get; set; }
-    
+
     public int? DurationMinutes { get; set; }
     public string? InterviewLocation { get; set; }
     public InterviewType Type { get; set; } = InterviewType.Witness;
@@ -120,7 +117,7 @@ public sealed class Interview : BaseAuditableEntity
     /// <summary>
     /// Create interview from existing data (for migration/import)
     /// </summary>
-    public static Result<Interview> CreateFromData(string code, string investigationCode, string personInterviewed, 
+    public static Result<Interview> CreateFromData(string code, string investigationCode, string personInterviewed,
         string investigatorCode, string? personInterviewedNotes = null, string? investigatorNotes = null)
     {
         if (string.IsNullOrWhiteSpace(code))
@@ -183,12 +180,12 @@ public sealed class Interview : BaseAuditableEntity
         }
 
         InterviewDate = newInterviewDate;
-        
+
         if (newDurationMinutes.HasValue)
         {
             DurationMinutes = newDurationMinutes.Value;
         }
-        
+
         UpdatedDate = DateTime.UtcNow;
 
         return Result<bool>.Success(true);
@@ -231,7 +228,7 @@ public sealed class Interview : BaseAuditableEntity
     /// <summary>
     /// Complete the interview with results
     /// </summary>
-    public Result<bool> CompleteInterview(string? personInterviewedNotes, string? investigatorNotes, 
+    public Result<bool> CompleteInterview(string? personInterviewedNotes, string? investigatorNotes,
         string? keyFindings = null, string? followUpRequired = null, string? additionalWitnesses = null)
     {
         if (!Status.CanComplete())
@@ -244,7 +241,7 @@ public sealed class Interview : BaseAuditableEntity
         KeyFindings = keyFindings;
         FollowUpRequired = followUpRequired;
         AdditionalWitnesses = additionalWitnesses;
-        
+
         Status = InterviewStatus.Completed;
         CompletedDate = DateTime.UtcNow;
         UpdatedDate = DateTime.UtcNow;
@@ -297,7 +294,7 @@ public sealed class Interview : BaseAuditableEntity
     public Result<bool> SetConfidentiality(bool isConfidential, string? reason = null)
     {
         IsConfidential = isConfidential;
-        
+
         if (isConfidential && !string.IsNullOrWhiteSpace(reason))
         {
             InvestigatorNotes = $"{InvestigatorNotes}\n\n[CONFIDENTIAL]: {reason}";

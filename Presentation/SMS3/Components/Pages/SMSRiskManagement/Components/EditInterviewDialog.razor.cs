@@ -1,12 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Domain.Enums;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-using Radzen;
-
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
 public partial class EditInterviewDialog : ComponentBase
@@ -95,7 +86,7 @@ public partial class EditInterviewDialog : ComponentBase
             return $"Interview Complete: {Model.PersonInterviewed}";
         if (Model.Status.Equals(InterviewStatus.Cancelled))
             return $"Cancelled Interview: {Model.PersonInterviewed}";
-        
+
         return $"Edit Interview: {Model.PersonInterviewed}";
     }
 
@@ -109,7 +100,7 @@ public partial class EditInterviewDialog : ComponentBase
             return "check_circle";
         if (Model.Status.Equals(InterviewStatus.Cancelled))
             return "cancel";
-        
+
         return "edit";
     }
 
@@ -123,7 +114,7 @@ public partial class EditInterviewDialog : ComponentBase
             return BadgeStyle.Success;
         if (Model.Status.Equals(InterviewStatus.Cancelled))
             return BadgeStyle.Danger;
-        
+
         return BadgeStyle.Light;
     }
 
@@ -133,7 +124,7 @@ public partial class EditInterviewDialog : ComponentBase
             return "Conducting Interview";
         if (Model.Status.Equals(InterviewStatus.Completed))
             return "Interview Results";
-        
+
         return "Conduct Interview";
     }
     #endregion
@@ -206,12 +197,12 @@ public partial class EditInterviewDialog : ComponentBase
         try
         {
             var confirmed = await DialogService.Confirm(
-                "Are you sure you want to cancel this interview? This action cannot be undone.", 
+                "Are you sure you want to cancel this interview? This action cannot be undone.",
                 "Cancel Interview",
-                new ConfirmOptions() 
-                { 
-                    OkButtonText = "Yes, Cancel Interview", 
-                    CancelButtonText = "No, Keep Interview" 
+                new ConfirmOptions()
+                {
+                    OkButtonText = "Yes, Cancel Interview",
+                    CancelButtonText = "No, Keep Interview"
                 });
 
             if (confirmed == true)
@@ -244,7 +235,7 @@ public partial class EditInterviewDialog : ComponentBase
     {
         await UpdateInterview(Model);
     }
-    
+
     private async Task UpdateInterview(EditInterviewModel model)
     {
         try
@@ -292,18 +283,18 @@ public partial class EditInterviewDialog : ComponentBase
                     model.InterviewDate.Value,
                     model.InterviewLocation ?? "TBD",
                     model.DurationMinutes);
-                
+
                 if (scheduleResult.IsFailure)
                 {
                     // Try update method for rescheduling
                     var updateResult = Interview.UpdateDateTime(model.InterviewDate.Value, model.DurationMinutes);
-                    
+
                     if (updateResult.IsFailure)
                     {
                         ShowErrorNotification($"Failed to update interview: {updateResult.Error?.Message}");
                         return;
                     }
-                    
+
                     // Update location separately
                     Interview.InterviewLocation = model.InterviewLocation;
                 }
@@ -325,15 +316,15 @@ public partial class EditInterviewDialog : ComponentBase
 
             if (result.IsSuccess)
             {
-                Logger.LogInformation("Interview updated successfully: {Code} by user {UserId}", 
+                Logger.LogInformation("Interview updated successfully: {Code} by user {UserId}",
                     Interview.Code, CurrentUserService.UserId);
-                
+
                 ShowSuccessNotification("Interview updated successfully");
             }
             else
             {
                 ShowErrorNotification($"Failed to update interview: {result.Error?.Message}");
-                Logger.LogError("Failed to update interview {Code}: {Error}", 
+                Logger.LogError("Failed to update interview {Code}: {Error}",
                     Interview.Code, result.Error?.Message);
             }
         }

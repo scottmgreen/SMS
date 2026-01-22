@@ -1,12 +1,5 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using SMS_Domain.Entities;
-using SMS_Domain.Interfaces;
 using SMS_Domain.Errors;
-using SMS_Infrastructure.Common;
-using SMS_Infrastructure.Interfaces;
-using SMS_Shared.Common;
-using Infrastructure.Interfaces;
+using SMS_Domain.Interfaces;
 
 namespace SMS_Infrastructure.Services;
 
@@ -44,7 +37,7 @@ public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrgani
             }
 
             _logger.LogInformation("Creating SMS Organizational User with code: {Code}", user.Code);
-            
+
             // Check if username already exists
             var existsResult = await _repository.UserNameExistsAsync(user.UserName.Value);
             if (existsResult.IsSuccess && existsResult.Value)
@@ -207,7 +200,7 @@ public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrgani
             }
 
             _logger.LogInformation("Updating SMS Organizational User with ID: {Id}", user.UserId);
-            
+
             var updateResult = await _repository.UpdateAsync(user);
             if (updateResult.IsFailure)
             {
@@ -216,7 +209,7 @@ public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrgani
             }
 
             // Return the updated user
-            return await _repository.GetByCodeAsync(new (user.Code));
+            return await _repository.GetByCodeAsync(new(user.Code));
         }
         catch (Exception ex)
         {
@@ -261,7 +254,7 @@ public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrgani
         try
         {
             _logger.LogInformation("Authenticating SMS Organizational User: {UserName}", userName);
-            
+
             var userResult = await _repository.GetByUserNameAsync(userName);
             if (userResult.IsFailure)
             {
@@ -270,7 +263,7 @@ public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrgani
             }
 
             var user = userResult.Value;
-            
+
             if (!user.Authenticate(plainTextPassword))
             {
                 _logger.LogWarning("Authentication failed - invalid password for user: {UserName}", userName);

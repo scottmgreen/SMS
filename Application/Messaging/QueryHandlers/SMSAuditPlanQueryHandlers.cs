@@ -1,10 +1,6 @@
 using Microsoft.Extensions.Logging;
+
 using SMS_Application.Messaging.Queries;
-using SMS_Application.Services;
-using SMS_Domain.Entities;
-using SMS_Infrastructure.Services;
-using SMS_Shared.Common;
-using SMS_Application.Common;
 
 namespace SMS_Application.Messaging.QueryHandlers;
 
@@ -235,7 +231,7 @@ public class GetSMSAuditCalendarQueryHandler : BaseQueryBundle, IRequestHandler<
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSAuditCalendarQuery for date range: {StartDate} to {EndDate}", 
+            _logger.LogInformation("Processing GetSMSAuditCalendarQuery for date range: {StartDate} to {EndDate}",
                 request.StartDate, request.EndDate);
 
             var result = await _dataService.GetAuditCalendarDataAsync(

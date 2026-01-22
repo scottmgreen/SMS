@@ -1,9 +1,6 @@
-using SMS_Domain.Entities;
 using SMS_Domain.Errors;
-using SMS_Infrastructure.Common;
+
 using SMS_Infrastructure.Interfaces;
-using Microsoft.Data.SqlClient;
-using System.Data;
 
 namespace Infrastructure.Persistence;
 
@@ -14,15 +11,15 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
     private readonly string _connectionString;
 
     public SMSAuditPlanRepository(
-        ILogger<SMSAuditPlanRepository> logger, 
-        ILogSupport logsupport, 
+        ILogger<SMSAuditPlanRepository> logger,
+        ILogSupport logsupport,
         IConfiguration configuration)
         : base(logger, logsupport, configuration)
     {
         _logger = Logger;
         _logheader = LogHeader;
         _connectionString = ConnectionString;
-        _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent, 
+        _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent,
             $"{_logheader} SMSAuditPlan Repository Initialized");
     }
 
@@ -67,7 +64,7 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanNotes, auditPlan.Notes));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, auditPlan.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, auditPlan.CreatedDate));
-            
+
             // Output parameters
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             var newCode = new SqlParameter("@pNewAuditPlanCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
@@ -114,12 +111,12 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            
+
             if (await reader.ReadAsync(ct).ConfigureAwait(false))
             {
                 auditPlan = Mappers.MapToSMSAuditPlan(reader);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             if (auditPlan != null)
@@ -154,13 +151,13 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            
+
             while (await reader.ReadAsync(ct).ConfigureAwait(false))
             {
                 var auditPlan = Mappers.MapToSMSAuditPlan(reader);
                 auditPlans.Add(auditPlan);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result.Success(auditPlans);
@@ -219,15 +216,15 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
             }
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
-            
+
             // DEBUG: Add a test to see what's actually happening
             _logger.LogInformation("DEBUG: About to execute stored procedure");
-            
+
             try
             {
                 var rowsAffected = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
                 _logger.LogInformation("DEBUG: Stored procedure returned: {RowsAffected}", rowsAffected);
-                
+
                 // Even if it returns -1, let's check if the record was actually updated
                 if (rowsAffected == -1)
                 {
@@ -241,7 +238,7 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
                         return Result.Success(auditPlan);
                     }
                 }
-                
+
                 await sql.CloseAsync().ConfigureAwait(false);
 
                 if (rowsAffected > 0)

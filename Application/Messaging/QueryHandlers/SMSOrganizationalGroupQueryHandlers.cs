@@ -1,9 +1,6 @@
-using SMS_Application.Messaging.Queries;
-using SMS_Domain.Entities;
-using SMS_Infrastructure.Services;
-using SMS_Shared.Common;
 using Microsoft.Extensions.Logging;
-using SMS_Domain.Errors;
+
+using SMS_Application.Messaging.Queries;
 
 namespace SMS_Application.Messaging.QueryHandlers;
 

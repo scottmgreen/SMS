@@ -1,6 +1,4 @@
-﻿using SMS_Infrastructure.Configuration;
-using SMS_Infrastructure.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
+﻿using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Common;
 
@@ -27,7 +25,7 @@ public abstract class BaseRepository<TEntity, TModel> : IBaseRepository<TEntity,
         _connectionString = _configuration.GetConnectionString("DefaultConnectionString") ?? throw new InvalidOperationException("Database connection string is missing.");
         _logsupport = logsupport;
         _logheader = _logsupport.GenerateLogHeader();
-                
+
     }
 
     //public abstract Task<List<TModel>> GetAllAsync();

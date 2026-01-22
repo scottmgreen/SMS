@@ -2,7 +2,7 @@
 
 public abstract class BaseDomainEvent : IBaseDomainEvent //, INotification
 {
-    public BaseDomainEvent( DateTime datetime)
+    public BaseDomainEvent(DateTime datetime)
     {
         OccurredOn = datetime;
     }

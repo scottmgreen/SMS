@@ -1,9 +1,3 @@
-using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Infrastructure.Common;
-using Microsoft.Data.SqlClient;
-using System.Data;
-
 namespace SMS_Infrastructure.Common;
 
 /// <summary>

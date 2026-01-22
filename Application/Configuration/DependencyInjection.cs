@@ -6,17 +6,7 @@
 // </copyright>
 // ----------------------------------------------------------------------------->
 
-using Microsoft.Extensions.DependencyInjection;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.QueryHandlers;
-using SMS_Application.Messaging.CommandHandlers;
-using System.Reflection;
-
-using SMS_Domain.Interfaces;
-using SMS_Infrastructure.Interfaces;
-using SMS_Infrastructure.Persistence;
 using Application.Interfaces;
-using SMS_Application.Services;
 
 namespace SMS_Application.Configuration
 {
@@ -34,32 +24,32 @@ namespace SMS_Application.Configuration
         {
             // 🔥 CLEANER: Use the Assembly class itself instead of a random handler
             var applicationAssembly = Assembly.GetExecutingAssembly(); // Gets current assembly (Application)
-            
+
             // Alternative: Use the marker interface approach
             // var applicationAssembly = typeof(IApplicationAssemblyMarker).Assembly;
-            
+
             services.AddApplicationMediator(applicationAssembly);
-            
+
             // SMS User Application Services - INTERFACE BINDINGS ONLY
             services.AddScoped<ISMSApplicationUserService, SMSApplicationUserService>();
             services.AddScoped<ISMSOrganizationalUserService, SMSOrganizationalUserService>();
             services.AddScoped<ISMSStakeholderUserService, SMSStakeholderUserService>();
-            
+
             // SMS Group Application Services - INTERFACE BINDINGS ONLY
             services.AddScoped<ISMSOrganizationalGroupService, SMSOrganizationalGroupService>();
             services.AddScoped<ISMSApplicationGroupService, SMSApplicationGroupService>();
-            
+
             // SMS Workflow Services - SINGLE REGISTRATION ONLY
             //services.AddScoped<ISMSRiskAssessmentWorkflowService, SMSRiskAssessmentWorkflowService>();
             services.AddScoped<ISMSInvestigationWorkflowService, SMSInvestigationWorkflowService>();
-           
-            
+
+
             // Application Services - INTERFACE BINDINGS ONLY
             services.AddScoped<IHazardFileService, HazardFileService>();
             services.AddScoped<IReportValidationService, ReportValidationService>();
+            services.AddScoped<IHazardReportTrackingService, HazardReportTrackingService>();
 
-            
-            
+
             // Concrete Application Services (where no interface exists)
             services.AddScoped<SystemService>();
             services.AddScoped<MessengerService>();
@@ -67,6 +57,8 @@ namespace SMS_Application.Configuration
             services.AddScoped<HazardLocationService>();
             services.AddScoped<AirportSharedDatasetService>();
             services.AddScoped<ReportService>();
+            services.AddScoped<HazardReportTrackingService>();
+
             services.AddScoped<InterviewService>();
             services.AddScoped<InvestigationService>();
             services.AddScoped<RiskAnalysisService>();
@@ -79,7 +71,7 @@ namespace SMS_Application.Configuration
             // SMS Audit Management Services (NEW) - TEMPORARILY DISABLED UNTIL INFRASTRUCTURE IS READY
             services.AddScoped<SMSAuditPlanService>();
             services.AddScoped<SMSAuditService>();
-            
+
             // NOTE: SMS Audit Data Services are registered in Infrastructure layer (ServiceCollectionExtensions.cs)
             // These services are already available through Infrastructure registration:
 
@@ -100,7 +92,7 @@ namespace SMS_Application.Configuration
             // Register all command handlers
             var handlerTypes = assembly.GetTypes()
                 .Where(t => t.GetInterfaces()
-                    .Any(i => i.IsGenericType && 
+                    .Any(i => i.IsGenericType &&
                              (i.GetGenericTypeDefinition() == typeof(IRequestHandler<,>))))
                 .ToList();
 
@@ -108,7 +100,7 @@ namespace SMS_Application.Configuration
             {
                 var interfaceType = handlerType.GetInterfaces()
                     .First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRequestHandler<,>));
-                
+
                 services.AddScoped(interfaceType, handlerType);
             }
 

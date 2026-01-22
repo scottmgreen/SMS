@@ -1,15 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-using Radzen;
-using Radzen.Blazor;
-using System.Linq.Expressions;
-using SMS3.Components.Shared;
-
 namespace SMS3.Components.Pages.Listings;
 
 /// <summary>
@@ -77,10 +65,10 @@ public partial class AirportSharedDatasetListing : ComponentBase
             await LoadInitialData();
 
             var query = datasets.AsQueryable();
-            
+
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
-                query = args.OrderBy.Contains("desc") 
+                query = args.OrderBy.Contains("desc")
                     ? query.OrderByDescending(GetPropertyExpression(args.OrderBy.Replace(" desc", "")))
                     : query.OrderBy(GetPropertyExpression(args.OrderBy));
             }
@@ -125,7 +113,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
         try
         {
             Logger.LogInformation("Viewing dataset: {Code}", dataset.Code);
-            
+
             // Navigate to dataset details page
             Navigation.NavigateTo($"/DatasetDetails/{dataset.Code}");
         }
@@ -141,7 +129,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
         try
         {
             Logger.LogInformation("Editing dataset: {Code} with HazardCode: {HazardCode}", dataset.Code, dataset.HazardCode);
-            
+
             // We need to look up the ReportCode from the Hazard since the dataset only has HazardCode
             if (string.IsNullOrEmpty(dataset.HazardCode))
             {
@@ -167,13 +155,13 @@ public partial class AirportSharedDatasetListing : ComponentBase
                 // Navigate to the dataset edit page using the original routing pattern
                 var editUrl = $"/SMSRiskManagement/AirportSharedDataset/{reportCode}/{dataset.HazardCode}";
                 Logger.LogInformation("Navigating to edit dataset: {Url}", editUrl);
-                
+
                 Navigation.NavigateTo(editUrl);
             }
             else
             {
                 ShowErrorNotification($"Could not find hazard {dataset.HazardCode} associated with this dataset");
-                Logger.LogError("Failed to find hazard {HazardCode} for dataset {DatasetCode}: {Error}", 
+                Logger.LogError("Failed to find hazard {HazardCode} for dataset {DatasetCode}: {Error}",
                     dataset.HazardCode, dataset.Code, hazardResult.Error?.Message);
             }
         }
@@ -189,10 +177,10 @@ public partial class AirportSharedDatasetListing : ComponentBase
         try
         {
             Logger.LogInformation("Exporting dataset: {Code}", dataset.Code);
-            
+
             // TODO: Implement export functionality
             ShowInfoNotification("Export functionality will be available in a future update");
-            
+
             // Future implementation could include:
             // - Export to Excel/CSV
             // - Export to PDF report
@@ -210,10 +198,10 @@ public partial class AirportSharedDatasetListing : ComponentBase
         try
         {
             Logger.LogInformation("Duplicating dataset: {Code}", dataset.Code);
-            
+
             // TODO: Implement duplication functionality
             ShowInfoNotification("Duplicate functionality will be available in a future update");
-            
+
             // Future implementation:
             // - Create new dataset with same data but new ID
             // - Navigate to edit page for the duplicated dataset
@@ -230,10 +218,10 @@ public partial class AirportSharedDatasetListing : ComponentBase
         try
         {
             Logger.LogInformation("Viewing history for dataset: {Code}", dataset.Code);
-            
+
             // TODO: Implement history viewing functionality
             ShowInfoNotification("History functionality will be available in a future update");
-            
+
             // Future implementation:
             // - Show audit trail of changes
             // - Show version history
@@ -251,7 +239,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
         try
         {
             Logger.LogInformation("Delete requested for dataset: {Code}", dataset.Code);
-            
+
             // Show confirmation dialog
             var confirmed = await DialogService.Confirm(
                 message: $"Are you sure you want to delete dataset '{dataset.Code}'? This action cannot be undone.",
@@ -280,7 +268,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
         try
         {
             Logger.LogInformation("Performing delete for dataset: {Code}", dataset.Code);
-            
+
             var datasetId = new AirportSharedDatasetID(dataset.Code);
             var deleteCommand = new DeleteAirportSharedDatasetCommand(datasetId);
             var result = await Mediator.SendAsync(deleteCommand, CancellationToken.None);

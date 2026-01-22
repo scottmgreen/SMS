@@ -1,15 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-
-namespace SMS_Application.Messaging.Commands;
+﻿namespace SMS_Application.Messaging.Commands;
 
 /// <summary>
 /// Command to create a new Airport Shared Dataset.

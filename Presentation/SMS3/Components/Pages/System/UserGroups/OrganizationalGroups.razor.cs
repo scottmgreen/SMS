@@ -1,15 +1,5 @@
 using Domain.Entities;
 
-using Microsoft.AspNetCore.Components;
-using Radzen;
-using Radzen.Blazor;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Messaging.Queries;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Shared.Common;
-
 namespace SMS3.Components.Pages.System.UserGroups;
 
 public partial class OrganizationalGroups : ComponentBase
@@ -125,18 +115,18 @@ public partial class OrganizationalGroups : ComponentBase
             // Load Organizational Groups
             var groupsQuery = new GetAllSMSOrganizationalGroupsQuery();
             var groupsResult = await Mediator.SendAsync(groupsQuery, CancellationToken.None);
-            SMSOrganizationalGroups = groupsResult.IsSuccess ? 
-                groupsResult.Value?.ToList() ?? new List<SMSOrganizationalGroup>() : 
+            SMSOrganizationalGroups = groupsResult.IsSuccess ?
+                groupsResult.Value?.ToList() ?? new List<SMSOrganizationalGroup>() :
                 new List<SMSOrganizationalGroup>();
 
             // Load Organizational Users for potential group assignments
             var usersQuery = new GetAllSMSOrganizationalUsersQuery();
             var usersResult = await Mediator.SendAsync(usersQuery, CancellationToken.None);
-            SMSOrganizationalUsers = usersResult.IsSuccess ? 
-                usersResult.Value?.ToList() ?? new List<SMSOrganizationalUser>() : 
+            SMSOrganizationalUsers = usersResult.IsSuccess ?
+                usersResult.Value?.ToList() ?? new List<SMSOrganizationalUser>() :
                 new List<SMSOrganizationalUser>();
 
-            Logger.LogInformation("Loaded {GroupCount} organizational groups and {UserCount} organizational users", 
+            Logger.LogInformation("Loaded {GroupCount} organizational groups and {UserCount} organizational users",
                 SMSOrganizationalGroups.Count, SMSOrganizationalUsers.Count);
         }
         catch (Exception ex)
@@ -162,7 +152,7 @@ public partial class OrganizationalGroups : ComponentBase
         {
             var getGroupQuery = new GetSMSOrganizationalGroupByCodeQuery(groupCode);
             var groupResult = await Mediator.SendAsync(getGroupQuery, CancellationToken.None);
-            
+
             if (groupResult.IsFailure)
             {
                 ShowErrorNotification("Group not found.");
@@ -170,14 +160,14 @@ public partial class OrganizationalGroups : ComponentBase
             }
 
             CurrentGroup = groupResult.Value;
-            
+
             // Set edit form values
             EditGroupName = CurrentGroup.Name ?? string.Empty;
             EditDescription = CurrentGroup.Description ?? string.Empty;
             EditGroupType = CurrentGroup.GroupType ?? string.Empty;
             EditAuthorityLevel = CurrentGroup.AuthorityLevel ?? string.Empty;
             EditIsActive = CurrentGroup.IsActive;
-            
+
             // Open edit modal
             ShowEditModal = true;
         }
@@ -331,7 +321,7 @@ public partial class OrganizationalGroups : ComponentBase
             // Get existing group to pass to delete command
             var getGroupQuery = new GetSMSOrganizationalGroupByCodeQuery(DeleteGroupCode);
             var groupResult = await Mediator.SendAsync(getGroupQuery, CancellationToken.None);
-            
+
             if (groupResult.IsFailure)
             {
                 ShowErrorNotification("Group not found.");
@@ -347,7 +337,7 @@ public partial class OrganizationalGroups : ComponentBase
                 CloseDeleteModal();
                 await LoadDataAsync();
                 await groupsGrid?.Reload();
-                
+
                 // If we're editing the deleted group, cancel edit mode
                 if (CurrentGroup?.Code == DeleteGroupCode)
                 {
@@ -452,7 +442,7 @@ public partial class OrganizationalGroups : ComponentBase
             CurrentGroup = SMSOrganizationalGroups.FirstOrDefault(g => g.Code == groupCode);
 
             await LoadGroupMembersAsync(groupCode);
-            
+
             // Show modal instead of navigating
             ShowMembersModal = true;
         }
@@ -470,8 +460,8 @@ public partial class OrganizationalGroups : ComponentBase
             // Get users in this group
             var groupMembersQuery = new GetUsersByOrganizationalGroupCodeQuery(groupCode);
             var membersResult = await Mediator.SendAsync(groupMembersQuery, CancellationToken.None);
-            GroupMembers = membersResult.IsSuccess ? 
-                membersResult.Value?.ToList() ?? new List<SMSOrganizationalUser>() : 
+            GroupMembers = membersResult.IsSuccess ?
+                membersResult.Value?.ToList() ?? new List<SMSOrganizationalUser>() :
                 new List<SMSOrganizationalUser>();
 
             // Load available users (users not in this group)
@@ -496,7 +486,7 @@ public partial class OrganizationalGroups : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading group members for group: {GroupCode}", groupCode);
-            
+
             // For now, if the query fails, just load empty collections
             GroupMembers = new List<SMSOrganizationalUser>();
             AvailableUsers = SMSOrganizationalUsers?.ToList() ?? new List<SMSOrganizationalUser>();
@@ -597,7 +587,7 @@ public partial class OrganizationalGroups : ComponentBase
                 if (failureCount > 0)
                     message += $" {failureCount} assignment(s) failed.";
                 ShowSuccessNotification(message);
-                
+
                 await LoadGroupMembersAsync(CurrentGroupCode);
                 StateHasChanged(); // Refresh the modal
             }

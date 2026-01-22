@@ -1,12 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
-using SMS_Infrastructure.Interfaces;
+﻿using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Configuration;
 
 public static class DependencyInjection
 {
-       
+
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
 
@@ -20,5 +18,5 @@ public static class DependencyInjection
 
         return services;
     }
-    
+
 }

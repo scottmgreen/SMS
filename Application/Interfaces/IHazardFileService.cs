@@ -1,6 +1,4 @@
-﻿using SMS_Domain.Models;
-
-namespace SMS_Application.Interfaces;
+﻿namespace SMS_Application.Interfaces;
 public interface IHazardFileService
 {
     Task<Result<HazardFile>> CreateHazardFileAsync(HazardFile hazardFile, CancellationToken ct = default);

@@ -1,10 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using SMS_Infrastructure.Services;
-using SMS_Application.Messaging.Commands;
-using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
 
 // =============================================
 // HAZARD LOCATION COMMAND HANDLERS  

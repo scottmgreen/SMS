@@ -1,12 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Domain.Enums;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-using Radzen;
-
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
 public partial class CreateInterviewDialog : ComponentBase
@@ -37,7 +28,7 @@ public partial class CreateInterviewDialog : ComponentBase
         {
             InvestigationCode = InvestigationCode == "UNKNOWN" ? "" : InvestigationCode
         };
-        
+
         if (PresetDateTime.HasValue)
         {
             Model.InterviewDate = PresetDateTime.Value;
@@ -60,7 +51,7 @@ public partial class CreateInterviewDialog : ComponentBase
     {
         await CreateInterview(Model);
     }
-    
+
     private async Task CreateInterview(CreateInterviewModel model)
     {
         try
@@ -95,7 +86,7 @@ public partial class CreateInterviewDialog : ComponentBase
             }
 
             var interview = interviewResult.Value;
-            
+
             // Set additional properties to support all database parameters
             interview.PersonInterviewedRole = model.PersonInterviewedRole;
             interview.PersonInterviewedDepartment = model.PersonInterviewedDepartment;
@@ -110,7 +101,7 @@ public partial class CreateInterviewDialog : ComponentBase
                 var scheduleResult = interview.ScheduleInterview(
                     model.InterviewDate.Value,
                     model.InterviewLocation ?? "TBD");
-                
+
                 if (scheduleResult.IsFailure)
                 {
                     ShowErrorNotification($"Failed to schedule interview: {scheduleResult.Error?.Message}");
@@ -124,16 +115,16 @@ public partial class CreateInterviewDialog : ComponentBase
 
             if (result.IsSuccess)
             {
-                Logger.LogInformation("Interview created successfully: {Code} by user {UserId}", 
+                Logger.LogInformation("Interview created successfully: {Code} by user {UserId}",
                     interview.Code, currentUserId);
-                
+
                 ShowSuccessNotification("Interview scheduled successfully");
                 DialogService.Close(true);
             }
             else
             {
                 ShowErrorNotification($"Failed to save interview: {result.Error?.Message}");
-                Logger.LogError("Failed to save interview {Code}: {Error}", 
+                Logger.LogError("Failed to save interview {Code}: {Error}",
                     interview.Code, result.Error?.Message);
             }
         }

@@ -77,7 +77,7 @@ public class InvestigationDataService : BaseDataService<InvestigationDataService
         return _repo.UpdateStatusAsync(investigationCode, status, ct);
     }
 
-    public Task<Result<bool>> RecordDecisionAsync(string investigationCode, string decisionType, string rationale, 
+    public Task<Result<bool>> RecordDecisionAsync(string investigationCode, string decisionType, string rationale,
         string decisionMaker, string? nextSteps = null, string? referralDetails = null, CancellationToken ct = default)
     {
         return _repo.RecordDecisionAsync(investigationCode, decisionType, rationale, decisionMaker, nextSteps, referralDetails, ct);

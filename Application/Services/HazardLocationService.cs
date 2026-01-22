@@ -1,9 +1,4 @@
 using Microsoft.Extensions.Logging;
-using SMS_Infrastructure.Services;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Domain.Errors;
-using SMS_Shared.Common;
 
 namespace SMS_Application.Services;
 
@@ -16,7 +11,7 @@ public sealed class HazardLocationService
     private readonly ILogger<HazardLocationService> _logger;
 
     public HazardLocationService(
-        HazardLocationDataService dataService, 
+        HazardLocationDataService dataService,
         ILogger<HazardLocationService> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));

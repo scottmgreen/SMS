@@ -1,7 +1,3 @@
-using SMS_Domain.Common;
-using SMS_Shared.Common;
-using SMS_Domain.Errors;
-
 namespace SMS_Domain.ValueObjects;
 
 /// <summary>
@@ -37,10 +33,10 @@ public sealed class UserName : BaseValueObject
 
         // Allow alphanumeric characters, dots, hyphens, underscores, and @ symbol
         // Common for email-like usernames or simple usernames
-        return userName.All(c => char.IsLetterOrDigit(c) || 
-                                c == '.' || 
-                                c == '-' || 
-                                c == '_' || 
+        return userName.All(c => char.IsLetterOrDigit(c) ||
+                                c == '.' ||
+                                c == '-' ||
+                                c == '_' ||
                                 c == '@');
     }
 

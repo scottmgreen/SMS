@@ -1,7 +1,3 @@
-using SMS_Domain.Common;
-using SMS_Domain.Enums;
-using SMS_Shared.Common;
-
 namespace SMS_Domain.Entities;
 
 /// <summary>
@@ -31,14 +27,14 @@ public sealed class SMSCommittee : BaseAuditableEntity
     public string Purpose { get; private set; }
     public string ChairPersonId { get; private set; }
     public bool IsActive { get; private set; }
-    
+
     // Optional Properties
     public string? Description { get; private set; }
     public string? MeetingSchedule { get; private set; }
     public string? Location { get; private set; }
     public int? MaxMembers { get; private set; }
     public int? QuorumRequired { get; private set; }
-    
+
     // Collections
     //public IReadOnlyList<CommitteeMembership> Memberships => _memberships.AsReadOnly();
     public IReadOnlyList<CommitteeMeeting> Meetings => _meetings.AsReadOnly();
@@ -205,7 +201,7 @@ public sealed class SMSCommittee : BaseAuditableEntity
 
     public IEnumerable<CommitteeMeeting> GetUpcomingMeetings()
     {
-        return _meetings.Where(m => m.MeetingDate > DateTime.UtcNow && 
+        return _meetings.Where(m => m.MeetingDate > DateTime.UtcNow &&
                                   (m.Status == MeetingStatus.Scheduled || m.Status == MeetingStatus.Postponed));
     }
 

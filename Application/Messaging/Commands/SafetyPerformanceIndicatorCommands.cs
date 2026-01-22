@@ -1,9 +1,3 @@
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-
 namespace SMS_Application.Messaging.Commands;
 
 // =============================================
@@ -164,8 +158,8 @@ public class UpdateSPIConfigurationCommand : BaseCommandBundle, IRequest<Result<
     public string DataSource { get; set; }
     public string UpdatedBy { get; set; }
 
-    public UpdateSPIConfigurationCommand(string spiId, string name, string description, 
-        string indicatorType, string measurementUnit, string frequency, 
+    public UpdateSPIConfigurationCommand(string spiId, string name, string description,
+        string indicatorType, string measurementUnit, string frequency,
         string calculationMethod, string dataSource, string updatedBy)
     {
         SPIId = spiId ?? throw new ArgumentNullException(nameof(spiId));
@@ -223,10 +217,10 @@ public class AddSPIDataPointCommand : BaseCommandBundle, IRequest<Result<SafetyP
 {
     public SPIDataPoint DataPoint { get; set; }
 
-        public AddSPIDataPointCommand(SPIDataPoint dataPoint)
-        {
-            DataPoint = dataPoint;
-        }
+    public AddSPIDataPointCommand(SPIDataPoint dataPoint)
+    {
+        DataPoint = dataPoint;
+    }
 }
 
 public class UpdateSPIDataPointCommand : BaseCommandBundle, IRequest<Result<SafetyPerformanceIndicator>>

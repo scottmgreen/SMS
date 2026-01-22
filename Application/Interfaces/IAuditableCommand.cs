@@ -18,7 +18,7 @@ public interface IHasAuditFields : IAuditableCommand
     /// <param name="userId">The user performing the action</param>
     /// <param name="timestamp">The timestamp of the action</param>
     void SetCreatedBy(string userId, DateTime timestamp);
-    
+
     /// <summary>
     /// Set audit fields for updates
     /// </summary>

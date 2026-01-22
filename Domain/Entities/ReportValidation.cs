@@ -1,6 +1,3 @@
-using SMS_Domain.Common;
-using SMS_Domain.Interfaces;
-
 namespace SMS_Domain.Entities;
 
 /// <summary>
@@ -10,7 +7,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public class ReportValidation : BaseAuditableEntity, IReportValidation
 {
-    
+
     // Public constructor for domain usage
     public ReportValidation(ReportValidationID id) : base(id, "SYSTEM", DateTime.UtcNow)
     {
@@ -72,10 +69,10 @@ public class ReportValidation : BaseAuditableEntity, IReportValidation
 
     #region Interface Implementation
 
-    ReportValidationID IReportValidation.Id 
-    { 
-        get => (ReportValidationID)Id; 
-        set => throw new NotSupportedException("Id cannot be set directly"); 
+    ReportValidationID IReportValidation.Id
+    {
+        get => (ReportValidationID)Id;
+        set => throw new NotSupportedException("Id cannot be set directly");
     }
 
     #endregion
@@ -114,7 +111,7 @@ public class ReportValidation : BaseAuditableEntity, IReportValidation
         ValidationComments = comments;
         ValidatedDate = DateTime.UtcNow;
         Status = "Completed";
-        
+
         if (!string.IsNullOrWhiteSpace(validationType))
         {
             ValidationType = validationType;

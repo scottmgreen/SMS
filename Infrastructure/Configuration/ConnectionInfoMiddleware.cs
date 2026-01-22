@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Linq;
+﻿using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
-using SMS_Infrastructure.Interfaces;
+
 using Microsoft.AspNetCore.Http;
 
 namespace SMS_Infrastructure.Configuration;
@@ -26,13 +24,13 @@ public class ConnectionInfoMiddleware
         var connectionId = httpContext.Connection.Id;
 
         // Store connection info
-        ConnectionInfoMap[connectionId] = (connectionId,ipAddress, hostName);
+        ConnectionInfoMap[connectionId] = (connectionId, ipAddress, hostName);
         //connectionService.SetConnectionInfo(ipAddress, hostName);
 
         await _next(httpContext);
     }
 
-    public static (string connectionid,string ip, string host) GetConnectionInfo(string connectionId)
+    public static (string connectionid, string ip, string host) GetConnectionInfo(string connectionId)
     {
         return ConnectionInfoMap.TryGetValue(connectionId, out var info) ? info : ("Unknown Connection ID", "Unknown IP", "Unknown Host");
     }

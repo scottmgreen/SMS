@@ -1,7 +1,5 @@
 ﻿// Create a new file: Infrastructure/Security/ApiKeyAuthenticationFilter.cs
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace SMS_Infrastructure.Security;
 

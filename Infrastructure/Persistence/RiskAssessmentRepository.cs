@@ -1,10 +1,6 @@
-﻿using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Domain.ValueObjects;
-using SMS_Infrastructure.Common;
+﻿using SMS_Domain.Errors;
+
 using SMS_Infrastructure.Interfaces;
-using Microsoft.Data.SqlClient;
-using System.Data;
 
 namespace SMS_Infrastructure.Persistence;
 
@@ -62,7 +58,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmLeadAssessorId, riskAssessment.LeadAssessorId ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCurrentStep, riskAssessment.CurrentStep));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCategory, riskAssessment.RiskAssessmentCategory.ToString()));
-            
+
             // Audit fields
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
@@ -158,7 +154,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
                     response.Add(riskAssessment);
                 }
 
-                
+
             }
             await sql.CloseAsync().ConfigureAwait(false);
 
@@ -234,7 +230,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentType, riskAssessment.AssessmentType.ToString()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentStatus, riskAssessment.Status.ToString()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentStage, riskAssessment.Stage ?? (object)DBNull.Value));
-            
+
             // Enhanced core fields
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmLeadAssessorId, riskAssessment.LeadAssessorId ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmPrimaryHazardId, riskAssessment.PrimaryHazardId ?? (object)DBNull.Value));
@@ -243,7 +239,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletedDate, riskAssessment.CompletedDate ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletedBy, riskAssessment.CompletedBy ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmParentAssessmentId, riskAssessment.ParentAssessmentId ?? (object)DBNull.Value));
-            
+
             // Step 1 - System Description Fields
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSystemDescription, riskAssessment.SystemDescription ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSystemBoundaries, riskAssessment.SystemBoundaries ?? (object)DBNull.Value));
@@ -253,11 +249,11 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmProcedureFactors, riskAssessment.FiveMProcedures ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmResourceFactors, riskAssessment.FiveMResources ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEnvironmentFactors, riskAssessment.FiveMPhysicalEnvironment ?? (object)DBNull.Value));
-            
+
             // Step 3 - Risk Analysis Fields
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisMethod, riskAssessment.RiskAnalysisMethod ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskCriteria, riskAssessment.RiskCriteria ?? (object)DBNull.Value));
-            
+
             // Step 4 - Risk Assessment Fields
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmTolerabilityFramework, riskAssessment.TolerabilityFramework ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAcceptanceCriteria, riskAssessment.RiskAcceptanceCriteria ?? (object)DBNull.Value));
@@ -266,19 +262,19 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalRiskLevel, riskAssessment.FinalRiskLevel ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskTolerability, riskAssessment.RiskTolerability ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssessmentRationale, riskAssessment.AssessmentRationale ?? (object)DBNull.Value));
-            
+
             // Step 5 - Implementation Fields
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmImplementationStrategy, riskAssessment.ImplementationStrategy ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmOverallTargetDate, riskAssessment.OverallTargetDate ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmImplementationNotes, riskAssessment.ImplementationNotes ?? (object)DBNull.Value));
-            
+
             // Progress Tracking Fields
             var completedStepsString = string.Join(",", riskAssessment.CompletedSteps);
             var completionPercentage = riskAssessment.CompletedSteps.Count * 20; // 5 steps = 100%
-            
+
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletedSteps, completedStepsString));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletionPercentage, completionPercentage));
-            
+
             // Audit fields
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
@@ -577,7 +573,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
     public async Task<Result<IEnumerable<RiskAssessment>>> GetAllAsync()
     {
         var result = await GetAllRiskAssessmentsAsync();
-        return result.IsSuccess 
+        return result.IsSuccess
             ? Result<IEnumerable<RiskAssessment>>.Success(result.Value.AsEnumerable())
             : Result<IEnumerable<RiskAssessment>>.Failure<IEnumerable<RiskAssessment>>(result.Error);
     }

@@ -1,6 +1,3 @@
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-
 namespace SMS_Domain.Interfaces;
 
 /// <summary>
@@ -11,7 +8,7 @@ public interface ISMSRoleService
     /// <summary>
     /// Assigns a role to a user with full audit trail
     /// </summary>
-    
+
 
     /// <summary>
     /// Removes a role assignment from a user

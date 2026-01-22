@@ -1,8 +1,6 @@
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Messaging.Queries;
-using SMS_Domain.Entities;
-using SMS_Shared.Common;
 using Microsoft.Extensions.Logging;
+
+using SMS_Application.Messaging.Queries;
 
 namespace SMS_Application.Services;
 
@@ -41,25 +39,25 @@ public class SMSStakeholderGroupService
 
             // Generate a code for the group (could be enhanced with proper code generation)
             var code = $"SG-0000";
-            SMSStakeholderGroupID id = new (code);
+            SMSStakeholderGroupID id = new(code);
             SMSStakeholderGroup smsgroup = new SMSStakeholderGroup(id);
 
             smsgroup.Code = code;
-            smsgroup.Name = groupName;  
-            smsgroup.Description = description; 
-            smsgroup.CreatedBy = createdBy; 
+            smsgroup.Name = groupName;
+            smsgroup.Description = description;
+            smsgroup.CreatedBy = createdBy;
 
             var command = new CreateSMSStakeholderGroupCommand(smsgroup);
             var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created stakeholder group: {GroupName} with code: {Code}", 
+                _logger.LogInformation("Successfully created stakeholder group: {GroupName} with code: {Code}",
                     groupName, code);
             }
             else
             {
-                _logger.LogError("Failed to create stakeholder group: {GroupName}, Error: {Error}", 
+                _logger.LogError("Failed to create stakeholder group: {GroupName}, Error: {Error}",
                     groupName, result.Error?.Message);
             }
 
@@ -108,7 +106,7 @@ public class SMSStakeholderGroupService
             }
             else
             {
-                _logger.LogError("Failed to update stakeholder group: {GroupCode}, Error: {Error}", 
+                _logger.LogError("Failed to update stakeholder group: {GroupCode}, Error: {Error}",
                     groupCode, result.Error?.Message);
             }
 
@@ -139,7 +137,7 @@ public class SMSStakeholderGroupService
             }
             else
             {
-                _logger.LogError("Failed to delete stakeholder group: {GroupCode}, Error: {Error}", 
+                _logger.LogError("Failed to delete stakeholder group: {GroupCode}, Error: {Error}",
                     groupCode, result.Error?.Message);
             }
 
@@ -166,7 +164,7 @@ public class SMSStakeholderGroupService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} stakeholder groups", 
+                _logger.LogInformation("Successfully retrieved {Count} stakeholder groups",
                     result.Value?.Count() ?? 0);
             }
             else
@@ -227,12 +225,12 @@ public class SMSStakeholderGroupService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} stakeholder groups for user: {UserCode}", 
+                _logger.LogInformation("Successfully retrieved {Count} stakeholder groups for user: {UserCode}",
                     result.Value?.Count() ?? 0, userCode);
             }
             else
             {
-                _logger.LogError("Failed to retrieve stakeholder groups for user {UserCode}: {Error}", 
+                _logger.LogError("Failed to retrieve stakeholder groups for user {UserCode}: {Error}",
                     userCode, result.Error?.Message);
             }
 
@@ -250,7 +248,7 @@ public class SMSStakeholderGroupService
     /// </summary>
     public async Task<Result<bool>> AssignUserToGroupAsync(
         string userCode,
-        SMSStakeholderGroupID groupCode, 
+        SMSStakeholderGroupID groupCode,
         string assignedBy = "SYSTEM")
     {
         try
@@ -266,7 +264,7 @@ public class SMSStakeholderGroupService
             }
             else
             {
-                _logger.LogError("Failed to assign user {UserCode} to group {GroupCode}: {Error}", 
+                _logger.LogError("Failed to assign user {UserCode} to group {GroupCode}: {Error}",
                     userCode, groupCode, result.Error?.Message);
             }
 
@@ -297,7 +295,7 @@ public class SMSStakeholderGroupService
             }
             else
             {
-                _logger.LogError("Failed to remove user {UserCode} from group {GroupCode}: {Error}", 
+                _logger.LogError("Failed to remove user {UserCode} from group {GroupCode}: {Error}",
                     userCode, groupCode, result.Error?.Message);
             }
 
@@ -328,7 +326,7 @@ public class SMSStakeholderGroupService
             }
             else
             {
-                _logger.LogError("Failed to clear group memberships for user {UserCode}: {Error}", 
+                _logger.LogError("Failed to clear group memberships for user {UserCode}: {Error}",
                     userCode, result.Error?.Message);
             }
 
@@ -345,8 +343,8 @@ public class SMSStakeholderGroupService
     /// Updates a user's group memberships (clears existing and assigns new ones)
     /// </summary>
     public async Task<Result<bool>> UpdateUserGroupMembershipsAsync(
-        string userCode, 
-        IEnumerable<SMSStakeholderGroupID> groupCodes, 
+        string userCode,
+        IEnumerable<SMSStakeholderGroupID> groupCodes,
         string assignedBy = "SYSTEM")
     {
         try
@@ -366,7 +364,7 @@ public class SMSStakeholderGroupService
                 var assignResult = await AssignUserToGroupAsync(userCode, groupCode, assignedBy);
                 if (!assignResult.IsSuccess)
                 {
-                    _logger.LogError("Failed to assign user {UserCode} to group {GroupCode} during batch update: {Error}", 
+                    _logger.LogError("Failed to assign user {UserCode} to group {GroupCode} during batch update: {Error}",
                         userCode, groupCode, assignResult.Error?.Message);
                     // Continue with other assignments rather than failing completely
                 }

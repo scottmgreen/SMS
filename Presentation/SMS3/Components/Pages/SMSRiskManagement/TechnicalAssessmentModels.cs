@@ -1,12 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json;
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Domain.ValueObjects;
-using SMS_Shared.Common;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -179,7 +171,7 @@ public class Step1Model
         {
             SelectedStakeholderGroupIds = new List<string>();
         }
-        
+
         if (SelectedIndividualStakeholderIds == null)
         {
             SelectedIndividualStakeholderIds = new List<string>();
@@ -242,11 +234,11 @@ public class Step2Model
         if (assessment.IdentifiedHazardIds?.Any() == true)
         {
             HazardIds = assessment.IdentifiedHazardIds.ToList();
-            
+
             // Initialize descriptions and categories lists to match hazard IDs count
             HazardDescriptions = new List<string>(new string[HazardIds.Count]);
             HazardCategories = new List<string>(new string[HazardIds.Count]);
-            
+
             // Fill with placeholder data - actual hazard data will be loaded separately
             for (int i = 0; i < HazardIds.Count; i++)
             {
@@ -267,19 +259,19 @@ public class Step2Model
     {
         // ? FIXED: Update assessment with all identified hazards
         assessment.ClearIdentifiedHazards(); // Clear existing hazards first
-        
+
         foreach (var hazardId in HazardIds)
         {
             if (!string.IsNullOrEmpty(hazardId))
             {
-                var hazardDescription = HazardDescriptions.Count > HazardIds.IndexOf(hazardId) 
-                    ? HazardDescriptions[HazardIds.IndexOf(hazardId)] 
+                var hazardDescription = HazardDescriptions.Count > HazardIds.IndexOf(hazardId)
+                    ? HazardDescriptions[HazardIds.IndexOf(hazardId)]
                     : $"Hazard {hazardId}";
-                    
+
                 assessment.AddIdentifiedHazard(hazardId, hazardDescription);
             }
         }
-        
+
         assessment.CompleteStep(2);
     }
 }
@@ -411,7 +403,7 @@ public class Step3Model
             assessment.RiskAnalysisMethod = RiskAnalysisMethod;
             assessment.RiskCriteria = RiskCriteria;
             assessment.CompleteStep(3);
-                        
+
             await UpdateHazardsWithAnalysisDataAsync(assessment, availableHazards, mediator);
         }
         catch (Exception ex)
@@ -420,11 +412,11 @@ public class Step3Model
         }
     }
 
-    
+
     /// <summary>
     /// Update individual hazards with analysis data (WorstCredibleOutcome, RootCauseAnalysis, etc.)
     /// </summary>
-    private async Task UpdateHazardsWithAnalysisDataAsync(RiskAssessment assessment,List<Hazard> availableHazards, IMediator mediator)
+    private async Task UpdateHazardsWithAnalysisDataAsync(RiskAssessment assessment, List<Hazard> availableHazards, IMediator mediator)
     {
         foreach (var hazard in availableHazards)
         {
@@ -432,20 +424,20 @@ public class Step3Model
             {
                 if (HazardAnalyses.TryGetValue(hazard.Code, out var analysis))
                 {
-                    
+
                     var getRiskAnalysisQuery = new GetRiskAnalysisByHazardIdQuery(new HazardID(hazard.Code));
                     var result = await mediator.SendAsync(getRiskAnalysisQuery, CancellationToken.None);
-                     if (result.IsSuccess)
-                        {
-                            RiskAnalysis ra = result.Value;
-                            ra.HazardCode = hazard.Code;
-                            ra.RiskAssessmentCode = assessment.Code;
-                            ra.RootCause = hazard.RootCause;
-                            ra.WorstCredibleOutcome = hazard.WorstCredibleOutcome;
-                            ra.AdditionalComments = hazard.AdditionalComments;
-                            var updateRa = new UpdateRiskAnalysisCommand(ra);
-                            result = await mediator.SendAsync(updateRa, CancellationToken.None);
-                        }
+                    if (result.IsSuccess)
+                    {
+                        RiskAnalysis ra = result.Value;
+                        ra.HazardCode = hazard.Code;
+                        ra.RiskAssessmentCode = assessment.Code;
+                        ra.RootCause = hazard.RootCause;
+                        ra.WorstCredibleOutcome = hazard.WorstCredibleOutcome;
+                        ra.AdditionalComments = hazard.AdditionalComments;
+                        var updateRa = new UpdateRiskAnalysisCommand(ra);
+                        result = await mediator.SendAsync(updateRa, CancellationToken.None);
+                    }
 
                     if (result.IsSuccess)
                     {
@@ -598,7 +590,7 @@ public class Step4Model
     {
         // CRITICAL: Save Step 4 Risk Assessment data with calculated scores
         await SaveStep4RiskAssessmentAsync(assessment, mediator, availableHazards);
-        
+
         // Apply to assessment
         assessment.TolerabilityFramework = TolerabilityFramework;
         assessment.RiskAcceptanceCriteria = RiskAcceptanceCriteria;
@@ -659,7 +651,7 @@ public class Step4Model
     private (int? finalSeverity, int? finalLikelihood, string finalRiskLevel, string assessmentRationale) CalculateOverallRiskAssessment(List<Hazard> availableHazards)
     {
         var completedHazards = HazardAverageScores.Keys.ToList();
-        
+
         if (!completedHazards.Any())
         {
             return (null, null, "Unknown", "No hazard assessments completed yet.");
@@ -675,15 +667,15 @@ public class Step4Model
         var highestRiskHazardCode = highestRiskHazard.Key;
 
         // Get the matrix code for the highest risk hazard
-        var highestRiskMatrixCode = HazardMatrixCodes.ContainsKey(highestRiskHazardCode) 
-            ? HazardMatrixCodes[highestRiskHazardCode] 
+        var highestRiskMatrixCode = HazardMatrixCodes.ContainsKey(highestRiskHazardCode)
+            ? HazardMatrixCodes[highestRiskHazardCode]
             : "Unknown";
 
         // Parse matrix code back to severity/likelihood
         var (severity, likelihood) = ParseMatrixCode(highestRiskMatrixCode);
-        
+
         // Determine final risk level
-        var finalRiskLevel = severity.HasValue && likelihood.HasValue 
+        var finalRiskLevel = severity.HasValue && likelihood.HasValue
             ? GetAviationRiskLevel(severity.Value, likelihood.Value)
             : "Unknown";
 
@@ -702,7 +694,7 @@ public class Step4Model
     /// </summary>
     private (int? severity, int? likelihood) ParseMatrixCode(string matrixCode)
     {
-        if (string.IsNullOrEmpty(matrixCode) || matrixCode.Length < 2) 
+        if (string.IsNullOrEmpty(matrixCode) || matrixCode.Length < 2)
             return (null, null);
 
         // Extract severity (first part) and likelihood letter (last part)
@@ -715,7 +707,7 @@ public class Step4Model
         var likelihood = likelihoodLetter.ToUpper() switch
         {
             "A" => 1,
-            "B" => 2, 
+            "B" => 2,
             "C" => 3,
             "D" => 4,
             "E" => 5,
@@ -927,10 +919,10 @@ public class Step5Model
 
     // ? UPDATED: Dictionary of HazardCode to List of Mitigation entities (using proper domain entities)
     public Dictionary<string, List<Mitigation>> HazardMitigations { get; set; } = new();
-    
+
     // Dictionary of HazardCode to List of Panel Member IDs for residual risk assessment
     public Dictionary<string, List<string>> ResidualRiskPanels { get; set; } = new();
-    
+
     // Dictionary of HazardCode to List of Residual Risk Scores
     public Dictionary<string, List<ResidualRiskScoreData>> ResidualRiskScores { get; set; } = new();
 
@@ -974,7 +966,7 @@ public class Step5Model
 
         // Load implementation data from assessment (existing functionality)
         LoadBasicAssessmentData(assessment);
-        
+
         // ? NEW: Load mitigation entities for all hazards
         if (mediator != null && availableHazards?.Any() == true)
         {
@@ -1038,11 +1030,11 @@ public class Step5Model
                     if (result.IsSuccess && result.Value?.Any() == true)
                     {
                         var mitigations = result.Value.ToList();
-                        
+
                         // Populate both dictionaries
                         HazardMitigations[hazard.Code] = mitigations;
                         SavedMitigationStrategies[hazard.Code] = mitigations.Select(m => m.Name ?? "Unnamed Mitigation").ToList();
-                        
+
                         // Log successful loading
                         global::System.Console.WriteLine($"? Step5Model: Loaded {mitigations.Count} mitigations for hazard {hazard.Code}");
                     }

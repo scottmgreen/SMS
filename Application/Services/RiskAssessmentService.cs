@@ -13,7 +13,7 @@ public sealed class RiskAssessmentService
     private readonly ILogger<RiskAssessmentService> _logger;
 
     public RiskAssessmentService(
-        RiskAssessmentDataService dataService, 
+        RiskAssessmentDataService dataService,
         IMediator mediator,
         ILogger<RiskAssessmentService> logger)
     {
@@ -29,7 +29,7 @@ public sealed class RiskAssessmentService
         try
         {
             _logger.LogInformation("Creating risk assessment with code: {Code}", riskAssessment?.Code);
-            
+
             var command = new CreateRiskAssessmentCommand(riskAssessment);
             var result = await _mediator.SendAsync(command, ct).ConfigureAwait(false);
 
@@ -96,7 +96,7 @@ public sealed class RiskAssessmentService
         try
         {
             _logger.LogInformation("Updating risk assessment with ID: {Id}", riskAssessment?.Id);
-            
+
             var command = new UpdateRiskAssessmentCommand(riskAssessment);
             var result = await _mediator.SendAsync(command, ct).ConfigureAwait(false);
 
@@ -123,7 +123,7 @@ public sealed class RiskAssessmentService
         try
         {
             _logger.LogInformation("Deleting risk assessment with ID: {Id}", id);
-            
+
             var command = new DeleteRiskAssessmentCommand(id);
             var result = await _mediator.SendAsync(command, ct).ConfigureAwait(false);
 
@@ -191,7 +191,7 @@ public sealed class RiskAssessmentService
             }
             else
             {
-                _logger.LogError("Failed to save Step 1 for RiskAssessment: {Id}. Error: {Error}", 
+                _logger.LogError("Failed to save Step 1 for RiskAssessment: {Id}. Error: {Error}",
                     riskAssessmentId, result.Error?.Message);
             }
 
@@ -230,7 +230,7 @@ public sealed class RiskAssessmentService
             }
             else
             {
-                _logger.LogError("Failed to save Step 3 for RiskAssessment: {Id}. Error: {Error}", 
+                _logger.LogError("Failed to save Step 3 for RiskAssessment: {Id}. Error: {Error}",
                     riskAssessmentId, result.Error?.Message);
             }
 
@@ -279,7 +279,7 @@ public sealed class RiskAssessmentService
             }
             else
             {
-                _logger.LogError("Failed to save Step 4 for RiskAssessment: {Id}. Error: {Error}", 
+                _logger.LogError("Failed to save Step 4 for RiskAssessment: {Id}. Error: {Error}",
                     riskAssessmentId, result.Error?.Message);
             }
 
@@ -320,7 +320,7 @@ public sealed class RiskAssessmentService
             }
             else
             {
-                _logger.LogError("Failed to save Step 5 for RiskAssessment: {Id}. Error: {Error}", 
+                _logger.LogError("Failed to save Step 5 for RiskAssessment: {Id}. Error: {Error}",
                     riskAssessmentId, result.Error?.Message);
             }
 
@@ -347,7 +347,7 @@ public sealed class RiskAssessmentService
     {
         try
         {
-            _logger.LogInformation("Updating progress for RiskAssessment: {Id}, Step: {Step}, Completion: {Percentage}%", 
+            _logger.LogInformation("Updating progress for RiskAssessment: {Id}, Step: {Step}, Completion: {Percentage}%",
                 riskAssessmentId, currentStep, completionPercentage);
 
             var command = new UpdateProgressCommand(
@@ -366,7 +366,7 @@ public sealed class RiskAssessmentService
             }
             else
             {
-                _logger.LogError("Failed to update progress for RiskAssessment: {Id}. Error: {Error}", 
+                _logger.LogError("Failed to update progress for RiskAssessment: {Id}. Error: {Error}",
                     riskAssessmentId, result.Error?.Message);
             }
 
@@ -387,8 +387,8 @@ public sealed class RiskAssessmentService
     /// Validates if a step can be saved
     /// </summary>
     public async Task<Result<bool>> ValidateStepCanBeSavedAsync(
-        string riskAssessmentId, 
-        int stepNumber, 
+        string riskAssessmentId,
+        int stepNumber,
         CancellationToken ct = default)
     {
         try
@@ -407,7 +407,7 @@ public sealed class RiskAssessmentService
     /// Gets step completion status for an assessment
     /// </summary>
     public async Task<Result<Dictionary<int, bool>>> GetStepCompletionStatusAsync(
-        string riskAssessmentId, 
+        string riskAssessmentId,
         CancellationToken ct = default)
     {
         try

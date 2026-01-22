@@ -1,11 +1,4 @@
 using Microsoft.Extensions.Logging;
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
-using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Infrastructure.Services;
-using SMS_Shared.Common;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 
@@ -23,7 +16,7 @@ public class CreateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
     }
 
     public async Task<Result<SafetyPerformanceIndicator>> HandleAsync(
-        CreateSafetyPerformanceIndicatorCommand request, 
+        CreateSafetyPerformanceIndicatorCommand request,
         CancellationToken cancellationToken)
     {
         try
@@ -105,7 +98,7 @@ public class UpdateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
     }
 
     public async Task<Result<SafetyPerformanceIndicator>> HandleAsync(
-        UpdateSafetyPerformanceIndicatorCommand request, 
+        UpdateSafetyPerformanceIndicatorCommand request,
         CancellationToken cancellationToken)
     {
         try
@@ -198,7 +191,7 @@ public class DeleteSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
     }
 
     public async Task<Result<bool>> HandleAsync(
-        DeleteSafetyPerformanceIndicatorCommand request, 
+        DeleteSafetyPerformanceIndicatorCommand request,
         CancellationToken cancellationToken)
     {
         try
@@ -249,7 +242,7 @@ public class AddSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandler<
     private readonly SafetyPerformanceIndicatorDataService _dataService;
     private readonly ILogger<AddSPIDataPointCommandHandler> _logger;
 
-    public AddSPIDataPointCommandHandler(SafetyPerformanceIndicatorDataService dataService,ILogger<AddSPIDataPointCommandHandler> logger)
+    public AddSPIDataPointCommandHandler(SafetyPerformanceIndicatorDataService dataService, ILogger<AddSPIDataPointCommandHandler> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -341,7 +334,7 @@ public class AddSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandler<
     private int GetWeekNumber(DateTime date)
     {
         var culture = System.Globalization.CultureInfo.CurrentCulture;
-        return culture.Calendar.GetWeekOfYear(date, 
+        return culture.Calendar.GetWeekOfYear(date,
             System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Monday);
     }
 
@@ -365,7 +358,7 @@ public class UpdateSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandl
     }
 
     public async Task<Result<SafetyPerformanceIndicator>> HandleAsync(
-        UpdateSPIDataPointCommand request, 
+        UpdateSPIDataPointCommand request,
         CancellationToken cancellationToken)
     {
         try
@@ -455,7 +448,7 @@ public class UpdateSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandl
     private int GetWeekNumber(DateTime date)
     {
         var culture = System.Globalization.CultureInfo.CurrentCulture;
-        return culture.Calendar.GetWeekOfYear(date, 
+        return culture.Calendar.GetWeekOfYear(date,
             System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Monday);
     }
 
@@ -479,7 +472,7 @@ public class DeleteSPIDataPointCommandHandler : BaseCommandBundle, IRequestHandl
     }
 
     public async Task<Result<SafetyPerformanceIndicator>> HandleAsync(
-        DeleteSPIDataPointCommand request, 
+        DeleteSPIDataPointCommand request,
         CancellationToken cancellationToken)
     {
         try

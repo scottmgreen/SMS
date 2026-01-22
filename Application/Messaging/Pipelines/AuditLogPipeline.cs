@@ -19,7 +19,7 @@ public class AuditLogPipeline<TRequest, TResult> : IPipeline<TRequest, TResult> 
         cancellation.ThrowIfCancellationRequested();
 
         //Execute command Handler
-        var result = await next().ConfigureAwait(true); 
+        var result = await next().ConfigureAwait(true);
 
         // Log after executing the command handler
 
@@ -45,7 +45,7 @@ public class AuditLogPipeline<TRequest, TResult> : IPipeline<TRequest, TResult> 
                 logentry.Severity = "SMS_ApplicationEventIds.Critical";
             }
 
-            _ = Task.Run(()=> _systemService.AddAuditLogEntryAsync(logentry, cancellation));
+            _ = Task.Run(() => _systemService.AddAuditLogEntryAsync(logentry, cancellation));
         }
 
 

@@ -1,6 +1,4 @@
-using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using Radzen;
 
 namespace SMS3.Components.Pages.SMSPolicy;
 
@@ -28,10 +26,10 @@ public partial class SafetyPolicy : ComponentBase
         try
         {
             var documentUrl = $"/Documents/Viewer?file={Uri.EscapeDataString(filename)}&category={Uri.EscapeDataString(category)}";
-            
+
             // Log document access for analytics
             Logger.LogInformation("Document viewer opened: {Filename} in category {Category}", filename, category);
-            
+
             // Navigate to document viewer
             Navigation.NavigateTo(documentUrl);
         }
@@ -46,10 +44,10 @@ public partial class SafetyPolicy : ComponentBase
         try
         {
             var downloadUrl = $"/documents/{documentPath}";
-            
+
             // Log download activity
             Logger.LogInformation("Document download initiated: {DocumentPath}", documentPath);
-            
+
             // Trigger download using JavaScript
             await JSRuntime.InvokeVoidAsync("open", downloadUrl, "_blank");
         }

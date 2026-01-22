@@ -1,5 +1,3 @@
-using SMS_Shared.Common;
-
 namespace SMS_Domain.Entities;
 
 /// <summary>
@@ -16,15 +14,15 @@ public sealed class HazardLocation : BaseAuditableEntity
     public HazardLocation(HazardLocationID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
 
     // Private constructor for creation with validation
-    private HazardLocation(HazardLocationID id, string code, string hazardCode) 
+    private HazardLocation(HazardLocationID id, string code, string hazardCode)
         : base(id, "SYSTEM", DateTime.UtcNow)
     {
         Code = code;
         HazardCode = hazardCode;
-        
+
         DateSelected = DateTime.UtcNow;
-        
-        
+
+
     }
 
     #region Core Properties
@@ -47,7 +45,7 @@ public sealed class HazardLocation : BaseAuditableEntity
 
     #region Map Visualization Properties
 
-    
+
 
     #endregion
 
@@ -58,19 +56,19 @@ public sealed class HazardLocation : BaseAuditableEntity
 
     #region Airport Reference Properties
 
-  
+
 
     #endregion
 
     #region Status and Validation Properties
 
-   
+
 
     #endregion
 
     #region Additional Properties
 
-            // Comma-separated tags for categorization
+    // Comma-separated tags for categorization
 
     #endregion
 
@@ -79,11 +77,11 @@ public sealed class HazardLocation : BaseAuditableEntity
     /// <summary>
     /// Create a new hazard location with basic information
     /// </summary>
-   
+
     /// <summary>
     /// Create hazard location with GPS data
     /// </summary>
-    
+
 
     #endregion
 
@@ -92,15 +90,15 @@ public sealed class HazardLocation : BaseAuditableEntity
     /// <summary>
     /// Update location coordinates
     /// </summary>
-    
-    
+
+
     /// <summary>
     /// Update location description and area information
     /// </summary>
-    
-   
 
-    
+
+
+
 
     #endregion
 
@@ -117,17 +115,17 @@ public sealed class HazardLocation : BaseAuditableEntity
     /// <summary>
     /// Check if location is GPS sourced
     /// </summary>
-    
+
 
     /// <summary>
     /// Check if location needs validation
     /// </summary>
-    
+
 
     /// <summary>
     /// Get location accuracy category
     /// </summary>
-    
+
 
     /// <summary>
     /// Calculate approximate distance to another location in meters
@@ -138,7 +136,7 @@ public sealed class HazardLocation : BaseAuditableEntity
 
         // Haversine formula for great circle distance
         const double earthRadius = 6371000; // meters
-        
+
         var lat1Rad = (double)(Latitude!.Value * (decimal)Math.PI / 180);
         var lat2Rad = (double)(otherLat * (decimal)Math.PI / 180);
         var deltaLatRad = (double)((otherLat - Latitude.Value) * (decimal)Math.PI / 180);
@@ -147,7 +145,7 @@ public sealed class HazardLocation : BaseAuditableEntity
         var a = Math.Sin(deltaLatRad / 2) * Math.Sin(deltaLatRad / 2) +
                 Math.Cos(lat1Rad) * Math.Cos(lat2Rad) *
                 Math.Sin(deltaLonRad / 2) * Math.Sin(deltaLonRad / 2);
-                
+
         var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
 
         return earthRadius * c;
@@ -159,20 +157,20 @@ public sealed class HazardLocation : BaseAuditableEntity
     public string GetFormattedCoordinates()
     {
         if (!HasCoordinates()) return "No coordinates";
-        
+
         return $"{Latitude:F6}°, {Longitude:F6}°";
     }
 
     /// <summary>
     /// Get full location display name
-    
+
     #endregion
 
     #region Private Helper Methods
 
-   
 
-  
+
+
 
     #endregion
 }

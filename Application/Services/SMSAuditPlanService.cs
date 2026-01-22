@@ -1,9 +1,6 @@
-using SMS_Infrastructure.Services;
-using SMS_Domain.Entities;
-using SMS_Shared.Common;
 using Microsoft.Extensions.Logging;
+
 using SMS_Application.Messaging.Queries;
-using SMS_Application.Common;
 
 namespace SMS_Application.Services;
 
@@ -117,7 +114,7 @@ public class SMSAuditPlanService
     {
         try
         {
-            _logger.LogInformation("Getting SMS audit calendar data for date range: {StartDate} to {EndDate}", 
+            _logger.LogInformation("Getting SMS audit calendar data for date range: {StartDate} to {EndDate}",
                 startDate, endDate);
 
             var result = await _auditPlanDataService.GetAuditCalendarDataAsync(
@@ -127,11 +124,11 @@ public class SMSAuditPlanService
             {
                 // Convert Domain model to Application model
                 var calendarData = result.Value.ToApplicationModel();
-                
+
                 // Apply additional business logic or calculations here if needed
                 // For example: calculate workload distribution, resource conflicts, etc.
-                
-                _logger.LogInformation("Successfully retrieved SMS audit calendar data with {ScheduledAudits} scheduled audits", 
+
+                _logger.LogInformation("Successfully retrieved SMS audit calendar data with {ScheduledAudits} scheduled audits",
                     calendarData.ScheduledAudits?.Count ?? 0);
 
                 return Result<SMSAuditCalendarData>.Success(calendarData);
@@ -149,7 +146,7 @@ public class SMSAuditPlanService
     /// <summary>
     /// Gets audit plans by type with business filtering
     /// </summary>
-    public async Task<Result<List<SMSAuditPlan>>> GetAuditPlansByTypeAsync(string auditType, 
+    public async Task<Result<List<SMSAuditPlan>>> GetAuditPlansByTypeAsync(string auditType,
         string? statusFilter = null, CancellationToken ct = default)
     {
         try
@@ -167,7 +164,7 @@ public class SMSAuditPlanService
     /// <summary>
     /// Gets audit plans by department with business filtering
     /// </summary>
-    public async Task<Result<List<SMSAuditPlan>>> GetAuditPlansByDepartmentAsync(string department, 
+    public async Task<Result<List<SMSAuditPlan>>> GetAuditPlansByDepartmentAsync(string department,
         string? statusFilter = null, CancellationToken ct = default)
     {
         try
@@ -190,22 +187,22 @@ public class SMSAuditPlanService
         try
         {
             _logger.LogInformation("Getting audit plans requiring approval");
-            
+
             var result = await _auditPlanDataService.GetAuditPlansRequiringApprovalAsync(ct);
-            
+
             if (result.IsSuccess)
             {
                 var plans = result.Value;
-                
+
                 // Sort by priority: Regulatory > External > Management > Internal
                 var prioritizedPlans = plans
                     .OrderBy(p => GetApprovalPriority(p.AuditType))
                     .ThenBy(p => p.PlannedStartDate)
                     .ToList();
-                
+
                 return Result<List<SMSAuditPlan>>.Success(prioritizedPlans);
             }
-            
+
             return result;
         }
         catch (Exception ex)
@@ -252,7 +249,7 @@ public class SMSAuditPlanService
     /// <summary>
     /// Generates audit plan code based on naming convention
     /// </summary>
-    
+
     /// <summary>
     /// Calculates recommended audit duration based on scope and type
     /// </summary>
@@ -318,7 +315,7 @@ public class SMSAuditPlanService
     /// <summary>
     /// Validates audit scheduling constraints
     /// </summary>
-    public Result ValidateAuditScheduling(SMSAuditPlan auditPlan, DateTime proposedDate, 
+    public Result ValidateAuditScheduling(SMSAuditPlan auditPlan, DateTime proposedDate,
         List<SMSAudit> existingAudits)
     {
         try
@@ -330,14 +327,14 @@ public class SMSAuditPlanService
                 return Result.Failure(new Error("PAST_DATE", "Cannot schedule audit in the past"));
 
             // Check for auditor availability (simplified check)
-            var conflictingAudits = existingAudits?.Where(a => 
+            var conflictingAudits = existingAudits?.Where(a =>
                 a.LeadAuditor == auditPlan.LeadAuditor &&
                 a.Status == "Scheduled" &&
                 Math.Abs((a.ScheduledStartDate - proposedDate).TotalDays) < 1
             ).ToList();
 
             if (conflictingAudits?.Any() == true)
-                return Result.Failure(new Error("AUDITOR_CONFLICT", 
+                return Result.Failure(new Error("AUDITOR_CONFLICT",
                     $"Lead auditor {auditPlan.LeadAuditor} has conflicting audit scheduled"));
 
             return Result.Success();
@@ -359,7 +356,7 @@ public class SMSAuditPlanService
             var requiredRole = auditPlan.AuditType switch
             {
                 "Regulatory" => "QualityManager",
-                "Management" => "AuditManager", 
+                "Management" => "AuditManager",
                 "External" => "QualityManager",
                 _ => "AuditSupervisor"
             };
@@ -379,7 +376,7 @@ public class SMSAuditPlanService
     }
 
     #region Private Helper Methods
-    
+
     /// <summary>
     /// Gets audit type code for code generation
     /// </summary>

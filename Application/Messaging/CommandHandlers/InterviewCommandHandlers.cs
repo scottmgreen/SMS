@@ -1,12 +1,4 @@
 using Microsoft.Extensions.Logging;
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Domain.Errors;
-using SMS_Infrastructure.Services;
-using SMS_Shared.Common;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 

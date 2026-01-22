@@ -1,6 +1,3 @@
-using System.Reflection;
-using SMS_Domain.Common;
-
 namespace SMS_Domain.Enums;
 
 /// <summary>
@@ -11,7 +8,7 @@ public abstract class SMSStakeholderType : BaseEnum<SMSStakeholderType>
     protected SMSStakeholderType(string value, string name, string description) : base(value, name)
     {
         Description = description;
-        
+
     }
 
     public string Description { get; }
@@ -57,7 +54,7 @@ public abstract class SMSStakeholderType : BaseEnum<SMSStakeholderType>
 
     #endregion
 
-   
+
     /// <summary>
     /// Gets all stakeholder type values as string array for dropdowns
     /// </summary>

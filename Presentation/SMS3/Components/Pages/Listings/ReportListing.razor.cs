@@ -1,14 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-using Radzen;
-using Radzen.Blazor;
-using System.Linq.Expressions;
-
 namespace SMS3.Components.Pages.Listings;
 
 /// <summary>
@@ -169,7 +158,7 @@ public partial class ReportListing : ComponentBase
             // Show the details modal
             ShowDetailsModal = true;
 
-            Logger.LogInformation("Displaying details for report: {ReportCode} with {HazardCount} hazards", 
+            Logger.LogInformation("Displaying details for report: {ReportCode} with {HazardCount} hazards",
                 report.Code, AssociatedHazards.Count);
 
             NotificationService.Notify(new NotificationMessage
@@ -204,12 +193,12 @@ public partial class ReportListing : ComponentBase
         try
         {
             var confirmed = await DialogService.Confirm(
-                $"Edit report '{report.Code} - {report.Name}'?\n\nThis will navigate to the hazard reporting form in edit mode.", 
-                "Edit Report", 
-                new ConfirmOptions() 
-                { 
-                    OkButtonText = "Yes, Edit Report", 
-                    CancelButtonText = "Cancel" 
+                $"Edit report '{report.Code} - {report.Name}'?\n\nThis will navigate to the hazard reporting form in edit mode.",
+                "Edit Report",
+                new ConfirmOptions()
+                {
+                    OkButtonText = "Yes, Edit Report",
+                    CancelButtonText = "Cancel"
                 });
 
             if (confirmed == true)
@@ -259,10 +248,10 @@ public partial class ReportListing : ComponentBase
 
             var confirmed = await DialogService.Confirm(
                 confirmationMessage,
-                "Confirm Delete Report", 
-                new ConfirmOptions() 
-                { 
-                    OkButtonText = "Yes, Delete Report", 
+                "Confirm Delete Report",
+                new ConfirmOptions()
+                {
+                    OkButtonText = "Yes, Delete Report",
                     CancelButtonText = "Cancel",
                     AutoFocusFirstElement = false
                 });
@@ -343,13 +332,13 @@ public partial class ReportListing : ComponentBase
             if (hazardsResult.IsSuccess && hazardsResult.Value != null)
             {
                 AssociatedHazards = hazardsResult.Value.ToList();
-                Logger.LogInformation("Loaded {Count} hazards for report {ReportCode}", 
+                Logger.LogInformation("Loaded {Count} hazards for report {ReportCode}",
                     AssociatedHazards.Count, reportCode);
             }
             else
             {
                 AssociatedHazards = new List<Hazard>();
-                Logger.LogWarning("No hazards found for report {ReportCode}: {Error}", 
+                Logger.LogWarning("No hazards found for report {ReportCode}: {Error}",
                     reportCode, hazardsResult.Error?.Message);
             }
         }

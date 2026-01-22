@@ -1,13 +1,4 @@
 using Microsoft.Extensions.Logging;
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
-using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Domain.Interfaces;
-using SMS_Domain.ValueObjects;
-using SMS_Infrastructure.Services;
-using SMS_Shared.Common;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 
@@ -159,7 +150,7 @@ public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle,
             user.UpdatedBy = request.UpdatedBy;
             user.UpdatedDate = DateTime.UtcNow;
 
-            var updateResult = await _dataService.UpdateSMSApplicationUserPasswordAsync(user.Code,user.Password.HashedValue, cancellationToken);
+            var updateResult = await _dataService.UpdateSMSApplicationUserPasswordAsync(user.Code, user.Password.HashedValue, cancellationToken);
 
             if (updateResult.IsSuccess)
             {
@@ -219,7 +210,7 @@ public class AuthenticateSMSApplicationUserCommandHandler : BaseCommandBundle, I
             {
                 _logger.LogWarning("Authentication failed for user: {UserName}", request.UserName);
             }
-            
+
             return result.Value;
         }
         catch (OperationCanceledException)

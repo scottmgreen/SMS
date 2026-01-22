@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-
-namespace SMS_Infrastructure.Common;
+﻿namespace SMS_Infrastructure.Common;
 
 
 public static class InfrastructureLogMessages

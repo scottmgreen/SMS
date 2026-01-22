@@ -1,9 +1,4 @@
-using Application.Interfaces;
 using Microsoft.Extensions.Logging;
-using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Infrastructure.Services;
-using SMS_Shared.Common;
 
 namespace SMS_Application.Services;
 
@@ -373,8 +368,8 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
             var allGroups = await _dataService.GetAllAsync().ConfigureAwait(false);
             if (allGroups.IsSuccess)
             {
-                var existingGroup = allGroups.Value.FirstOrDefault(g => 
-                    g.Name.Equals(groupName, StringComparison.OrdinalIgnoreCase) && 
+                var existingGroup = allGroups.Value.FirstOrDefault(g =>
+                    g.Name.Equals(groupName, StringComparison.OrdinalIgnoreCase) &&
                     g.Code != excludeCode);
 
                 if (existingGroup != null)
@@ -407,7 +402,7 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
 
         // Check for prohibited characters or patterns
         var prohibitedPatterns = new[] { "admin", "system", "root", "test" };
-        return !prohibitedPatterns.Any(pattern => 
+        return !prohibitedPatterns.Any(pattern =>
             groupName.Contains(pattern, StringComparison.OrdinalIgnoreCase));
     }
 
@@ -423,10 +418,10 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
             {
                 const int maxMembersPerGroup = 100; // Business rule
                 var currentMemberCount = usersResult.Value.Count();
-                
+
                 if (currentMemberCount >= maxMembersPerGroup)
                 {
-                    _logger.LogWarning("Group {GroupCode} has reached maximum member limit: {Count}", 
+                    _logger.LogWarning("Group {GroupCode} has reached maximum member limit: {Count}",
                         groupCode, currentMemberCount);
                     return false;
                 }

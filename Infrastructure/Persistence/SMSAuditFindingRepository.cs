@@ -1,9 +1,6 @@
-using SMS_Domain.Entities;
 using SMS_Domain.Errors;
-using SMS_Infrastructure.Common;
+
 using SMS_Infrastructure.Interfaces;
-using Microsoft.Data.SqlClient;
-using System.Data;
 
 namespace Infrastructure.Persistence;
 
@@ -14,15 +11,15 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
     private readonly string _connectionString;
 
     public SMSAuditFindingRepository(
-        ILogger<SMSAuditFindingRepository> logger, 
-        ILogSupport logsupport, 
+        ILogger<SMSAuditFindingRepository> logger,
+        ILogSupport logsupport,
         IConfiguration configuration)
         : base(logger, logsupport, configuration)
     {
         _logger = Logger;
         _logheader = LogHeader;
         _connectionString = ConnectionString;
-        _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent, 
+        _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent,
             $"{_logheader} SMSAuditFinding Repository Initialized");
     }
 
@@ -62,7 +59,7 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingNotes, finding.Notes));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, finding.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, finding.CreatedDate));
-            
+
             // ? FIXED: Use correct output parameter names to match stored procedure exactly
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             var newCode = new SqlParameter("@pNewAuditFindingCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
@@ -110,12 +107,12 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            
+
             if (await reader.ReadAsync(ct).ConfigureAwait(false))
             {
                 finding = Mappers.MapToSMSAuditFinding(reader);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             if (finding != null)
@@ -150,13 +147,13 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            
+
             while (await reader.ReadAsync(ct).ConfigureAwait(false))
             {
                 var finding = Mappers.MapToSMSAuditFinding(reader);
                 findings.Add(finding);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result.Success(findings.AsEnumerable());
@@ -186,7 +183,7 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
             };
 
             // ? FIXED: Use correct ID parameter name for UPDATE operations
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingId, finding.Id.Value)); 
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingId, finding.Id.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingCode, finding.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingAuditCode, finding.AuditCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingTitle, finding.Title));
@@ -275,13 +272,13 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            
+
             while (await reader.ReadAsync(ct).ConfigureAwait(false))
             {
                 var finding = Mappers.MapToSMSAuditFinding(reader);
                 findings.Add(finding);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result.Success(findings.AsEnumerable());
@@ -309,13 +306,13 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            
+
             while (await reader.ReadAsync(ct).ConfigureAwait(false))
             {
                 var finding = Mappers.MapToSMSAuditFinding(reader);
                 findings.Add(finding);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result.Success(findings.AsEnumerable());

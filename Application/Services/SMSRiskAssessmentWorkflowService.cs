@@ -1,8 +1,5 @@
-using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Shared.Common;
 using Microsoft.Extensions.Logging;
+
 using SMS_Infrastructure.Interfaces;
 using SMS_Infrastructure.Persistence;
 
@@ -235,14 +232,14 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
 
             // Update system description using Domain Entity methods
             //var updateResult = assessment.UpdateSystemDescription(
-                //assessment.SystemDescription,
-                //data.SystemBoundaries,
-                //data.SystemPurpose,
-                //data.PersonnelFactors,
-                //data.EquipmentFactors,
-                //data.ProcedureFactors,
-                //data.ResourceFactors,
-                //data.EnvironmentFactors
+            //assessment.SystemDescription,
+            //data.SystemBoundaries,
+            //data.SystemPurpose,
+            //data.PersonnelFactors,
+            //data.EquipmentFactors,
+            //data.ProcedureFactors,
+            //data.ResourceFactors,
+            //data.EnvironmentFactors
             //);
 
             //if (updateResult.IsFailure)
@@ -283,7 +280,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
     {
         try
         {
-            _logger.LogInformation("Updating Step 2 Hazard Identification for assessment {AssessmentId} with {HazardCount} hazards", 
+            _logger.LogInformation("Updating Step 2 Hazard Identification for assessment {AssessmentId} with {HazardCount} hazards",
                 assessmentId, identifiedHazards.Count);
 
             // Get existing risk assessment
@@ -311,10 +308,10 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
                 // Create or update hazard in the system using CQRS
                 var createHazardCommand = new CreateHazardCommand(hazard);
                 var hazardResult = await _mediator.SendAsync(createHazardCommand, CancellationToken.None);
-                
+
                 if (hazardResult.IsFailure)
                 {
-                    _logger.LogError("Failed to create hazard {HazardCode}: {Error}", 
+                    _logger.LogError("Failed to create hazard {HazardCode}: {Error}",
                         hazard.Code, hazardResult.Error.Message);
                     continue; // Skip this hazard but continue with others
                 }
@@ -337,12 +334,12 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
 
             if (updateResult.IsFailure)
             {
-                _logger.LogError("Failed to update risk assessment {AssessmentId}: {Error}", 
+                _logger.LogError("Failed to update risk assessment {AssessmentId}: {Error}",
                     assessmentId, updateResult.Error.Message);
                 return updateResult;
             }
 
-            _logger.LogInformation("Successfully updated Step 2 for assessment {AssessmentId} with {HazardCount} hazards", 
+            _logger.LogInformation("Successfully updated Step 2 for assessment {AssessmentId} with {HazardCount} hazards",
                 assessmentId, identifiedHazards.Count);
 
             return updateResult;
@@ -427,7 +424,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
 
                 foreach (var memberId in panelMemberIds)
                 {
-                   // assessment.AssignPanelMember(hazardId, memberId);
+                    // assessment.AssignPanelMember(hazardId, memberId);
                 }
             }
 
@@ -489,14 +486,14 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
 
                 foreach (var strategyId in strategyIds)
                 {
-                   // assessment.LinkMitigationStrategy(hazardId, strategyId);
+                    // assessment.LinkMitigationStrategy(hazardId, strategyId);
                 }
             }
 
             // Update monitoring requirements
             foreach (var monitoring in data.MonitoringRequirements)
             {
-               // assessment.UpdateMonitoringRequirement(monitoring.Key, monitoring.Value);
+                // assessment.UpdateMonitoringRequirement(monitoring.Key, monitoring.Value);
             }
 
             assessment.CompleteStep(5);
@@ -598,4 +595,5 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
             _logger.LogError(ex, "Error retrieving available hazards for assessment");
             return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NotFound);
         }
-    }}
+    }
+}

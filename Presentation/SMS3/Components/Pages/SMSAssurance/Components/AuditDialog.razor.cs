@@ -1,12 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Shared.Common;
-using Radzen;
-using Radzen.Blazor;
-
 namespace SMS3.Components.Pages.SMSAssurance.Components;
 
 public partial class AuditDialog : ComponentBase
@@ -27,7 +18,7 @@ public partial class AuditDialog : ComponentBase
     private bool IsSubmitting { get; set; } = false;
     private bool IsValid { get; set; } = true;
     private string ValidationMessage { get; set; } = string.Empty;
-    
+
     // Form Data
     private string? Code { get; set; }
     private string? Name { get; set; }
@@ -59,7 +50,7 @@ public partial class AuditDialog : ComponentBase
 
     public List<string> DepartmentOptions { get; } = new()
     {
-        "Airport Operations", "Security", "Maintenance", "Ground Handling", "Air Traffic Control", 
+        "Airport Operations", "Security", "Maintenance", "Ground Handling", "Air Traffic Control",
         "Safety", "Administration", "Emergency Services", "Environmental"
     };
 
@@ -284,13 +275,13 @@ public partial class AuditDialog : ComponentBase
     private void OnScheduledStartDateChanged(DateTime? value)
     {
         ScheduledStartDate = value;
-        
+
         // Automatically adjust end date if start date changes
         if (value.HasValue && (!ScheduledEndDate.HasValue || ScheduledEndDate.Value <= value.Value))
         {
             ScheduledEndDate = value.Value.AddDays(5);
         }
-        
+
         StateHasChanged();
     }
 
@@ -315,7 +306,7 @@ public partial class AuditDialog : ComponentBase
     private void OnStatusChanged(object args)
     {
         Status = args?.ToString();
-        
+
         // Set actual dates based on status
         if (Status == "In Progress" && !ActualStartDate.HasValue)
         {
@@ -325,7 +316,7 @@ public partial class AuditDialog : ComponentBase
         {
             ActualEndDate = DateTime.Now;
         }
-        
+
         StateHasChanged();
     }
     #endregion
@@ -338,7 +329,7 @@ public partial class AuditDialog : ComponentBase
             var prefix = AuditType switch
             {
                 "Internal" => "AUD-INT",
-                "External" => "AUD-EXT", 
+                "External" => "AUD-EXT",
                 "Regulatory" => "AUD-REG",
                 "Management Review" => "AUD-MGT",
                 "Process Audit" => "AUD-PRC",
@@ -350,7 +341,7 @@ public partial class AuditDialog : ComponentBase
             var year = DateTime.Now.Year.ToString()[2..];
             var month = DateTime.Now.Month.ToString("D2");
             var random = new Random().Next(100, 999);
-            
+
             Code = $"{prefix}-{year}{month}-{random}";
             StateHasChanged();
         }

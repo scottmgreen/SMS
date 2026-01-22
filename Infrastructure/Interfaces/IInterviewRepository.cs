@@ -1,5 +1,3 @@
-using SMS_Domain.Entities;
-
 namespace SMS_Infrastructure.Interfaces;
 
 /// <summary>
@@ -22,8 +20,8 @@ public interface IInterviewRepository
 
     // Interview Workflow Operations
     Task<Result<bool>> UpdateStatusAsync(string interviewCode, InterviewStatus status, CancellationToken ct = default);
-    Task<Result<bool>> ScheduleInterviewAsync(string interviewCode, DateTime interviewDate, string location, 
+    Task<Result<bool>> ScheduleInterviewAsync(string interviewCode, DateTime interviewDate, string location,
         int? durationMinutes = null, CancellationToken ct = default);
-    Task<Result<bool>> CompleteInterviewAsync(string interviewCode, string? personNotes, string? investigatorNotes, 
+    Task<Result<bool>> CompleteInterviewAsync(string interviewCode, string? personNotes, string? investigatorNotes,
         string? keyFindings = null, CancellationToken ct = default);
 }

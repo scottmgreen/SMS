@@ -417,7 +417,7 @@ public class UpdateProgressCommandHandler : BaseCommandBundle, IRequestHandler<U
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateProgressCommand for RiskAssessment: {Id}, Step: {Step}", 
+            _logger.LogInformation("Processing UpdateProgressCommand for RiskAssessment: {Id}, Step: {Step}",
                 request.RiskAssessmentId, request.CurrentStep);
 
             var result = await _dataService.UpdateProgressAsync(

@@ -1,9 +1,5 @@
-using Microsoft.Extensions.Logging;
-using SMS_Domain.Entities;
-using SMS_Infrastructure.Common;
-using SMS_Infrastructure.Persistence;
-using SMS_Shared.Common;
 using Domain.Models;
+
 using Infrastructure.Persistence;
 
 namespace SMS_Infrastructure.Services;

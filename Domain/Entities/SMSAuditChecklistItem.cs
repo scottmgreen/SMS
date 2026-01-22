@@ -1,5 +1,3 @@
-using SMS_Shared.Common;
-
 namespace SMS_Domain.Entities;
 
 /// <summary>
@@ -23,19 +21,19 @@ public class SMSAuditChecklistItem : BaseAuditableEntity
     public string? Requirement { get; set; }
     public bool IsRequired { get; set; }
     public string? Status { get; set; } = "Pending"; // Pending, In Progress, Completed, N/A, Skipped
-    
+
     // Completion Information
     public DateTime? CompletedDate { get; set; }
     public string? CompletedBy { get; set; }
     public string? Notes { get; set; }
     public string? Evidence { get; set; }
-    
+
     // Review Information
     public DateTime? ReviewedDate { get; set; }
     public string? ReviewedBy { get; set; }
     public string? ReviewNotes { get; set; }
     public bool? IsAcceptable { get; set; }
-    
+
     // Reference Information
     public string? ReferenceDocument { get; set; }
     public string? RegulatoryReference { get; set; }
@@ -225,14 +223,14 @@ public class SMSAuditChecklistItem : BaseAuditableEntity
         ReviewedBy = null;
         ReviewNotes = null;
         IsAcceptable = null;
-        
+
         if (!string.IsNullOrWhiteSpace(reason))
         {
-            Notes = string.IsNullOrWhiteSpace(Notes) 
-                ? $"Reset: {reason}" 
+            Notes = string.IsNullOrWhiteSpace(Notes)
+                ? $"Reset: {reason}"
                 : $"{Notes}\nReset: {reason}";
         }
-        
+
         UpdatedBy = updatedBy;
         UpdatedDate = DateTime.UtcNow;
 
@@ -269,7 +267,7 @@ public class SMSAuditChecklistItem : BaseAuditableEntity
         {
             "Pending" => "Pending",
             "In Progress" => "In Progress",
-            "Completed" => IsAcceptableReview ? "Completed (Approved)" : 
+            "Completed" => IsAcceptableReview ? "Completed (Approved)" :
                           IsUnacceptableReview ? "Completed (Rejected)" : "Completed",
             "N/A" => "Not Applicable",
             "Skipped" => "Skipped",

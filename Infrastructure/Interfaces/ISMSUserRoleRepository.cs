@@ -1,10 +1,3 @@
-using System.Threading.Tasks;
-
-using SMS_Domain.Entities;
-using SMS_Domain.Models;
-
-using SMS_Shared.Common;
-
 namespace SMS_Infrastructure.Interfaces;
 
 /// <summary>

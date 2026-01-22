@@ -1,12 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using SMS_Domain.Entities;
-using SMS_Domain.Interfaces;
 using SMS_Domain.Errors;
-using SMS_Infrastructure.Common;
-using SMS_Infrastructure.Interfaces;
-using SMS_Infrastructure.Persistence;
-using SMS_Shared.Common;
 
 namespace SMS_Infrastructure.Services;
 
@@ -44,7 +36,7 @@ public sealed class SMSStakeholderGroupDataService : BaseDataService<SMSStakehol
             }
 
             _logger.LogInformation("Creating SMS Stakeholder Group with code: {Code}", group.Code);
-            
+
             var result = await _repository.CreateAsync(group, ct);
 
             if (result.IsSuccess)
@@ -142,7 +134,7 @@ public sealed class SMSStakeholderGroupDataService : BaseDataService<SMSStakehol
             }
 
             _logger.LogInformation("Updating SMS Stakeholder Group with code: {Code}", group.Code);
-            
+
             var result = await _repository.UpdateAsync(group, ct);
 
             if (result.IsSuccess)
@@ -177,7 +169,7 @@ public sealed class SMSStakeholderGroupDataService : BaseDataService<SMSStakehol
             }
 
             _logger.LogInformation("Deleting SMS Stakeholder Group with code: {Code}", groupCode);
-            
+
             var result = await _repository.DeleteAsync(groupCode, ct);
 
             if (result.IsSuccess)
@@ -212,7 +204,7 @@ public sealed class SMSStakeholderGroupDataService : BaseDataService<SMSStakehol
             }
 
             _logger.LogInformation("Assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
-            
+
             var result = await _repository.AssignUserToGroupAsync(userCode, groupCode, assignedBy, ct);
 
             if (result.IsSuccess)
@@ -247,7 +239,7 @@ public sealed class SMSStakeholderGroupDataService : BaseDataService<SMSStakehol
             }
 
             _logger.LogInformation("Removing user {UserCode} from group {GroupCode}", userCode, groupCode);
-            
+
             var result = await _repository.RemoveUserFromGroupAsync(userCode, groupCode, ct);
 
             if (result.IsSuccess)
@@ -282,7 +274,7 @@ public sealed class SMSStakeholderGroupDataService : BaseDataService<SMSStakehol
             }
 
             _logger.LogInformation("Clearing all group memberships for user {UserCode}", userCode);
-            
+
             var result = await _repository.ClearUserGroupsAsync(userCode, ct);
 
             if (result.IsSuccess)

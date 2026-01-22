@@ -1,10 +1,6 @@
-﻿using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Domain.ValueObjects;
-using SMS_Infrastructure.Common;
+﻿using SMS_Domain.Errors;
+
 using SMS_Infrastructure.Interfaces;
-using Microsoft.Data.SqlClient;
-using System.Data;
 
 namespace SMS_Infrastructure.Persistence;
 
@@ -62,7 +58,7 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
 
             int newIdValue = (int)newID.Value;
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
-            ReportID reportId = new (newCodeValue);
+            ReportID reportId = new(newCodeValue);
 
             return await GetReportByCodeAsync(reportId, ct).ConfigureAwait(false);
         }

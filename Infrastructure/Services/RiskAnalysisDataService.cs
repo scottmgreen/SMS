@@ -4,8 +4,6 @@
 // =============================================
 
 // 1. HazardDataService.cs
-using SMS_Infrastructure.Persistence;
-
 namespace SMS_Infrastructure.Services;
 
 // 5. RiskAnalysisDataService.cs

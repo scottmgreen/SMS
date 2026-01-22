@@ -8,7 +8,7 @@ public class SPIDataPoint : BaseAuditableEntity
     public SPIDataPoint(SPIDataPointID id) : base(id, "SYSTEM", DateTime.UtcNow)
     {
         Code = id.Value;
-        
+
     }
 
 

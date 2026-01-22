@@ -1,6 +1,3 @@
-using SMS_Domain.Common;
-using SMS_Domain.ValueObjects;
-
 namespace SMS_Domain.Entities;
 
 /// <summary>
@@ -12,14 +9,14 @@ public abstract class BaseUser : BaseAuditableEntity
     {
     }
 
-    public BaseUserID UserId { get;  set; }
-    public string Code { get;  set; }
-    public FirstName FirstName { get;  set; }
-    public LastName LastName { get;  set; }
-    public UserName UserName { get;  set; }
-    public Password Password { get;  set; }
-    public bool IsActive { get;  set; }
-    public DateTime? LastLoginDate { get;  set; }
+    public BaseUserID UserId { get; set; }
+    public string Code { get; set; }
+    public FirstName FirstName { get; set; }
+    public LastName LastName { get; set; }
+    public UserName UserName { get; set; }
+    public Password Password { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime? LastLoginDate { get; set; }
     public string SMSUserType { get; set; }
 
     public SMSUserRole UserRole { get; set; }

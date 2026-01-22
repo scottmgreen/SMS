@@ -2,7 +2,7 @@
 
 public class AuditLogEntry : BaseEntity
 {
-    public AuditLogEntry(AuditLogEntryID id):base(id)
+    public AuditLogEntry(AuditLogEntryID id) : base(id)
     {
     }
     public string UserID { get; set; }
@@ -14,5 +14,5 @@ public class AuditLogEntry : BaseEntity
     public string Function { get; set; }
     public string Description { get; set; }
 
-    
+
 }

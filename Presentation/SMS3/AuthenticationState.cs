@@ -1,7 +1,4 @@
-﻿using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-
-namespace SMS3;
+﻿namespace SMS3;
 
 /// <summary>
 /// CLEAN Authentication state with full user and permission support

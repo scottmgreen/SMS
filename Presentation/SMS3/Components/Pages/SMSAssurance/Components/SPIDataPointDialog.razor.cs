@@ -1,9 +1,6 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Application.Common;
-using SMS_Domain.Entities;
-using SMS_Shared.Common;
-using Radzen;
 using System.Globalization;
+
+using SMS_Application.Common;
 
 namespace SMS3.Components.Pages.SMSAssurance.Components;
 
@@ -26,7 +23,7 @@ public partial class SPIDataPointDialog : ComponentBase
     private SPIDataPoint currentDataPoint = default!;
     private bool IsSaving { get; set; } = false;
 
-    private bool IsValid => 
+    private bool IsValid =>
         currentDataPoint.Value >= 0 &&
         currentDataPoint.MeasurementDate != default &&
         !string.IsNullOrWhiteSpace(currentDataPoint.DataSource) &&
@@ -59,7 +56,7 @@ public partial class SPIDataPointDialog : ComponentBase
                 VerifiedBy = DataPoint.VerifiedBy,
                 VerifiedDate = DataPoint.VerifiedDate
             };
-            
+
             // Preserve audit fields from original
             currentDataPoint.CreatedDate = DataPoint.CreatedDate;
             currentDataPoint.UpdatedBy = DataPoint.UpdatedBy;
@@ -70,12 +67,12 @@ public partial class SPIDataPointDialog : ComponentBase
             // Add mode - create new data point
             currentDataPoint = new SPIDataPoint(
                 new SPIDataPointID("DP-0000")) // TODO: Get current user
-                {
-                    SPIId = SPI?.Code ?? string.Empty,
-                    MeasurementDate = DateTime.Today,
-                    DataSource = SPI?.DataSource ?? SPIConstants.DataSources.ManualEntry,
-                    Period = string.Empty
-                };
+            {
+                SPIId = SPI?.Code ?? string.Empty,
+                MeasurementDate = DateTime.Today,
+                DataSource = SPI?.DataSource ?? SPIConstants.DataSources.ManualEntry,
+                Period = string.Empty
+            };
         }
 
         UpdatePeriod();
@@ -107,7 +104,7 @@ public partial class SPIDataPointDialog : ComponentBase
     private int GetWeekNumber(DateTime date)
     {
         var culture = CultureInfo.CurrentCulture;
-        return culture.Calendar.GetWeekOfYear(date, 
+        return culture.Calendar.GetWeekOfYear(date,
             CalendarWeekRule.FirstDay, DayOfWeek.Monday);
     }
 
@@ -121,7 +118,7 @@ public partial class SPIDataPointDialog : ComponentBase
     private async Task SubmitForm()
     {
         if (!IsValid || IsSaving) return;
-        
+
         IsSaving = true;
         try
         {

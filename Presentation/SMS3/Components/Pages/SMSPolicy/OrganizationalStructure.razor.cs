@@ -1,15 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
-using Radzen;
-using Radzen.Blazor;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Domain.ValueObjects;
-using SMS_Shared.Common;
-
 namespace SMS3.Components.Pages.SMSPolicy;
 
 public partial class OrganizationalStructure : ComponentBase
@@ -52,9 +40,9 @@ public partial class OrganizationalStructure : ComponentBase
             // Load organizational users using existing CQRS - only active users
             var organizationalUsersQuery = new GetAllSMSOrganizationalUsersQuery();
             var usersResult = await Mediator.SendAsync(organizationalUsersQuery, CancellationToken.None);
-            
-            var allUsers = usersResult.IsSuccess ? 
-                usersResult.Value?.ToList() ?? new List<SMSOrganizationalUser>() : 
+
+            var allUsers = usersResult.IsSuccess ?
+                usersResult.Value?.ToList() ?? new List<SMSOrganizationalUser>() :
                 new List<SMSOrganizationalUser>();
 
             // Filter for active users only
@@ -100,7 +88,7 @@ public partial class OrganizationalStructure : ComponentBase
     private List<SMSOrganizationalUser> GetUsersForLevel(SMSOrganizationalLevel level)
     {
         return OrganizationalUsers
-            .Where(user => !string.IsNullOrEmpty(user.OrganizationLevel) && 
+            .Where(user => !string.IsNullOrEmpty(user.OrganizationLevel) &&
                           user.OrganizationLevel.Equals(level.Name, StringComparison.OrdinalIgnoreCase))
             .OrderBy(user => user.DisplayName)
             .ToList();
@@ -283,60 +271,60 @@ public partial class OrganizationalStructure : ComponentBase
             var hasAssignments = roleInfo.AssignedUsers.Any();
             var borderColor = hasAssignments ? "var(--rz-success)" : "var(--rz-warning)";
             var indentLevel = (roleInfo.HierarchyPosition - 1) * 30;
-            
+
             builder.OpenElement(0, "div");
             builder.AddAttribute(1, "class", "rz-card rz-variant-outlined");
             builder.AddAttribute(2, "style", $"border-left: 4px solid {borderColor}; margin-bottom: 1rem; margin-left: {indentLevel}px;");
-            
+
             builder.OpenElement(3, "div");
             builder.AddAttribute(4, "class", "rz-card-content");
             builder.AddAttribute(5, "style", "padding: 1rem;");
-            
+
             // Header with role info and assign button
             builder.OpenElement(6, "div");
             builder.AddAttribute(7, "style", "display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;");
-            
+
             // Left side - Role info
             builder.OpenElement(8, "div");
             builder.AddAttribute(9, "style", "flex: 1;");
-            
+
             // Title row
             builder.OpenElement(10, "div");
             builder.AddAttribute(11, "style", "display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;");
-            
+
             builder.OpenElement(12, "h6");
             builder.AddAttribute(13, "style", "margin: 0; font-weight: 600;");
             builder.AddContent(14, roleInfo.Level.Name);
             builder.CloseElement();
-            
+
             builder.OpenComponent<RadzenBadge>(15);
             builder.AddAttribute(16, "Text", $"Authority {roleInfo.Level.AuthorityLevel}");
             builder.AddAttribute(17, "BadgeStyle", BadgeStyle.Info);
             builder.AddAttribute(18, "Variant", Variant.Text);
             builder.AddAttribute(19, "Style", "font-size: 0.75em;");
             builder.CloseComponent();
-            
+
             builder.OpenComponent<RadzenBadge>(20);
             builder.AddAttribute(21, "Text", roleInfo.Level.Category);
             builder.AddAttribute(22, "BadgeStyle", BadgeStyle.Secondary);
             builder.AddAttribute(23, "Variant", Variant.Text);
             builder.AddAttribute(24, "Style", "font-size: 0.75em;");
             builder.CloseComponent();
-            
+
             builder.CloseElement(); // Title row
-            
+
             // Description
             builder.OpenElement(25, "p");
             builder.AddAttribute(26, "style", "margin: 0; color: var(--rz-text-secondary-color); font-size: 0.875rem; margin-bottom: 0.75rem;");
             builder.AddContent(27, roleInfo.Level.Description);
             builder.CloseElement();
-            
+
             builder.CloseElement(); // Left side
-            
+
             // Right side - Assign button
             builder.OpenElement(28, "div");
             builder.AddAttribute(29, "style", "display: flex; flex-direction: column; gap: 0.5rem;");
-            
+
             if (roleInfo.EligibleUsers.Any())
             {
                 builder.OpenComponent<RadzenButton>(30);
@@ -349,48 +337,48 @@ public partial class OrganizationalStructure : ComponentBase
                 builder.AddAttribute(37, "title", "Assign a user to this role");
                 builder.CloseComponent();
             }
-            
+
             builder.CloseElement(); // Right side
             builder.CloseElement(); // Header
-            
+
             // Assigned users section
             if (hasAssignments)
             {
                 builder.OpenElement(40, "div");
                 builder.AddAttribute(41, "style", "margin-top: 0.5rem;");
-                
+
                 foreach (var user in roleInfo.AssignedUsers.Take(3))
                 {
                     builder.OpenElement(42, "div");
                     builder.AddAttribute(43, "style", "display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: var(--rz-success-lighter); border-radius: 4px; margin-bottom: 0.25rem;");
-                    
+
                     builder.OpenComponent<RadzenGravatar>(44);
                     builder.AddAttribute(45, "Email", $"{user.FirstName?.Value?.ToLower()}.{user.LastName?.Value?.ToLower()}@organization.com");
                     builder.AddAttribute(46, "Size", 32);
                     builder.CloseComponent();
-                    
+
                     builder.OpenElement(47, "div");
                     builder.AddAttribute(48, "style", "flex: 1;");
-                    
+
                     builder.OpenElement(49, "div");
                     builder.AddAttribute(50, "style", "font-weight: 600; margin: 0; font-size: 0.875rem;");
                     builder.AddContent(51, user.DisplayName);
                     builder.CloseElement();
-                    
+
                     builder.OpenElement(52, "div");
                     builder.AddAttribute(53, "style", "color: var(--rz-text-secondary-color); font-size: 0.75rem; margin: 0;");
                     builder.AddContent(54, $"{user.Department} - {user.Position}");
                     builder.CloseElement();
-                    
+
                     builder.CloseElement(); // User info
-                    
+
                     builder.OpenComponent<RadzenBadge>(55);
                     builder.AddAttribute(56, "Text", "Assigned");
                     builder.AddAttribute(57, "BadgeStyle", BadgeStyle.Success);
                     builder.AddAttribute(58, "Variant", Variant.Filled);
                     builder.AddAttribute(59, "Style", "font-size: 0.75em;");
                     builder.CloseComponent();
-                    
+
                     builder.OpenComponent<RadzenButton>(60);
                     builder.AddAttribute(61, "Icon", "close");
                     builder.AddAttribute(62, "ButtonStyle", ButtonStyle.Danger);
@@ -399,10 +387,10 @@ public partial class OrganizationalStructure : ComponentBase
                     builder.AddAttribute(65, "title", "Remove user from this role");
                     builder.AddAttribute(66, "Disabled", IsSaving);
                     builder.CloseComponent();
-                    
+
                     builder.CloseElement(); // User row
                 }
-                
+
                 if (roleInfo.AssignedUsers.Count > 3)
                 {
                     builder.OpenElement(70, "div");
@@ -410,27 +398,27 @@ public partial class OrganizationalStructure : ComponentBase
                     builder.AddContent(72, $"+{roleInfo.AssignedUsers.Count - 3} more assigned to this role");
                     builder.CloseElement();
                 }
-                
+
                 builder.CloseElement(); // Assigned users section
             }
             else
             {
                 builder.OpenElement(80, "div");
                 builder.AddAttribute(81, "style", "display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: var(--rz-warning-lighter); border-radius: 4px; margin-top: 0.5rem;");
-                
+
                 builder.OpenComponent<RadzenIcon>(82);
                 builder.AddAttribute(83, "Icon", "person_off");
                 builder.AddAttribute(84, "Style", "color: var(--rz-warning);");
                 builder.CloseComponent();
-                
+
                 builder.OpenElement(85, "span");
                 builder.AddAttribute(86, "style", "color: var(--rz-warning); font-weight: 500; font-size: 0.875rem;");
                 builder.AddContent(87, "No personnel assigned to this role");
                 builder.CloseElement();
-                
+
                 builder.CloseElement(); // No assignment section
             }
-            
+
             builder.CloseElement(); // Card content
             builder.CloseElement(); // Card
         };
@@ -461,8 +449,8 @@ public partial class OrganizationalStructure : ComponentBase
 
     private string GetCoverageColor(double fillPercentage)
     {
-        return fillPercentage >= 100 ? "var(--rz-success)" : 
-               fillPercentage >= 50 ? "var(--rz-warning)" : 
+        return fillPercentage >= 100 ? "var(--rz-success)" :
+               fillPercentage >= 50 ? "var(--rz-warning)" :
                "var(--rz-danger)";
     }
 
@@ -477,7 +465,7 @@ public partial class OrganizationalStructure : ComponentBase
             "Executive" => "Strategic leadership and ultimate accountability for SMS performance",
             "Management" => "Operational oversight and day-to-day SMS management",
             "Operational" => "Subject matter expertise and operational SMS activities",
-            "Committee" => "Collaborative decision-making and governance activities", 
+            "Committee" => "Collaborative decision-making and governance activities",
             "External" => "External stakeholder representation and consultation",
             _ => "SMS organizational role"
         };

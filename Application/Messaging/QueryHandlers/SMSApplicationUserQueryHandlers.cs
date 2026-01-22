@@ -1,11 +1,6 @@
 using Microsoft.Extensions.Logging;
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
+
 using SMS_Application.Messaging.Queries;
-using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Infrastructure.Services;
-using SMS_Shared.Common;
 
 namespace SMS_Application.Messaging.QueryHandlers;
 
@@ -30,7 +25,7 @@ public class GetAllSMSApplicationUsersQueryHandler : BaseQueryBundle, IRequestHa
         {
             _logger.LogInformation("Processing GetAllSMSApplicationUsersQuery");
             var result = await _dataService.GetAllSMSApplicationUsersAsync(ct);
-            
+
             if (result.IsSuccess)
             {
                 _logger.LogInformation("Successfully retrieved {Count} SMS Application Users", result.Value?.Count() ?? 0);
@@ -39,7 +34,7 @@ public class GetAllSMSApplicationUsersQueryHandler : BaseQueryBundle, IRequestHa
             {
                 _logger.LogWarning("Failed to retrieve SMS Application Users");
             }
-            
+
             return result;
         }
         catch (Exception ex)
@@ -67,7 +62,7 @@ public class GetSMSApplicationUserByIdQueryHandler : BaseQueryBundle, IRequestHa
         {
             _logger.LogInformation("Processing GetSMSApplicationUserByIdQuery for ID: {UserId}", request.UserId);
             var result = await _dataService.GetSMSApplicationUserByIdAsync(request.UserId, ct);
-            
+
             if (result.IsSuccess)
             {
                 _logger.LogInformation("Successfully retrieved SMS Application User with ID: {UserId}", request.UserId);
@@ -76,7 +71,7 @@ public class GetSMSApplicationUserByIdQueryHandler : BaseQueryBundle, IRequestHa
             {
                 _logger.LogWarning("SMS Application User not found with ID: {UserId}", request.UserId);
             }
-            
+
             return result;
         }
         catch (Exception ex)
@@ -104,7 +99,7 @@ public class GetSMSApplicationUserByCodeQueryHandler : BaseQueryBundle, IRequest
         {
             _logger.LogInformation("Processing GetSMSApplicationUserByCodeQuery for Code: {UserCode}", request.UserCode);
             var result = await _dataService.GetSMSApplicationUserByIdAsync(request.UserCode, ct); // Assuming Code and ID are the same
-            
+
             if (result.IsSuccess)
             {
                 _logger.LogInformation("Successfully retrieved SMS Application User with Code: {UserCode}", request.UserCode);
@@ -113,7 +108,7 @@ public class GetSMSApplicationUserByCodeQueryHandler : BaseQueryBundle, IRequest
             {
                 _logger.LogWarning("SMS Application User not found with Code: {UserCode}", request.UserCode);
             }
-            
+
             return result;
         }
         catch (Exception ex)
@@ -140,7 +135,7 @@ public class GetSMSApplicationUserByUserNameQueryHandler : BaseQueryBundle, IReq
         try
         {
             _logger.LogInformation("Processing GetSMSApplicationUserByUserNameQuery for UserName: {UserName}", request.UserName);
-            
+
             // Get all users and filter by username (or implement a specific method in the service)
             var allUsersResult = await _dataService.GetAllSMSApplicationUsersAsync(ct);
             if (allUsersResult.IsFailure)
@@ -149,7 +144,7 @@ public class GetSMSApplicationUserByUserNameQueryHandler : BaseQueryBundle, IReq
             }
 
             var user = allUsersResult.Value?.FirstOrDefault(u => u.UserName.Value.Equals(request.UserName, StringComparison.OrdinalIgnoreCase));
-            
+
             if (user != null)
             {
                 _logger.LogInformation("Successfully retrieved SMS Application User with UserName: {UserName}", request.UserName);
@@ -186,7 +181,7 @@ public class GetActiveSMSApplicationUsersQueryHandler : BaseQueryBundle, IReques
         {
             _logger.LogInformation("Processing GetActiveSMSApplicationUsersQuery");
             var result = await _dataService.GetActiveSMSApplicationUsersAsync(ct);
-            
+
             if (result.IsSuccess)
             {
                 _logger.LogInformation("Successfully retrieved {Count} active SMS Application Users", result.Value?.Count() ?? 0);
@@ -195,7 +190,7 @@ public class GetActiveSMSApplicationUsersQueryHandler : BaseQueryBundle, IReques
             {
                 _logger.LogWarning("Failed to retrieve active SMS Application Users");
             }
-            
+
             return result;
         }
         catch (Exception ex)
@@ -223,7 +218,7 @@ public class GetActiveSMSApplicationUsersQueryHandler : BaseQueryBundle, IReques
 //        {
 //            _logger.LogInformation("Processing GetSMSApplicationUsersByPermissionLevelQuery for Permission Level: {PermissionLevel}", request.PermissionLevel);
 //            var result = await _repository.GetSMSApplicationUserByPermissionLevelAsync(request.PermissionLevel);
-            
+
 //            if (result.IsSuccess)
 //            {
 //                _logger.LogInformation("Successfully retrieved {Count} SMS Application Users with Permission Level: {PermissionLevel}", 
@@ -234,7 +229,7 @@ public class GetActiveSMSApplicationUsersQueryHandler : BaseQueryBundle, IReques
 //                _logger.LogWarning("Failed to retrieve SMS Application Users with Permission Level: {PermissionLevel}: {Error}", 
 //                    request.PermissionLevel, result.Error?.Message);
 //            }
-            
+
 //            return result;
 //        }
 //        catch (Exception ex)
@@ -261,20 +256,20 @@ public class GetActiveSMSApplicationUsersQueryHandler : BaseQueryBundle, IReques
 //        try
 //        {
 //            _logger.LogInformation("Processing GetSMSApplicationUsersWithMinimumPermissionQuery for Minimum Permission: {MinimumPermissionLevel}", request.MinimumPermissionLevel);
-            
+
 //            // Get all users and filter by minimum permission level
 //            var allUsersResult = await _repository.GetAllAsync();
 //            if (allUsersResult.IsSuccess)
 //            {
 //                var levels = new[] { "Read", "Write", "Admin", "System" };
 //                var requiredLevelIndex = Array.IndexOf(levels, request.MinimumPermissionLevel);
-                
+
 //                var filteredUsers = allUsersResult.Value?.Where(u =>
 //                {
 //                    var userLevelIndex = Array.IndexOf(levels, u.PermissionLevel);
 //                    return userLevelIndex >= requiredLevelIndex;
 //                }) ?? new List<SMSApplicationUser>();
-                
+
 //                _logger.LogInformation("Successfully retrieved {Count} SMS Application Users with minimum permission: {MinimumPermissionLevel}", 
 //                    filteredUsers.Count(), request.MinimumPermissionLevel);
 //                return Result<IEnumerable<SMSApplicationUser>>.Success<IEnumerable<SMSApplicationUser>>(filteredUsers);
@@ -314,7 +309,7 @@ public class CheckSMSApplicationUserNameExistsQueryHandler : BaseQueryBundle, IR
 
 
             _logger.LogInformation("Username {UserName} exists: {Exists}", request.UserName, result.Value);
-            
+
             return checkresult;
         }
         catch (Exception ex)
@@ -341,7 +336,7 @@ public class ValidateSMSApplicationUserCredentialsQueryHandler : BaseQueryBundle
         try
         {
             _logger.LogInformation("Processing ValidateSMSApplicationUserCredentialsQuery for UserName: {UserName}", request.UserName);
-            
+
             var userResult = await _dataService.GetSMSApplicationUserByUserNameAsync(request.UserName);
             if (userResult.IsFailure)
             {
@@ -358,7 +353,7 @@ public class ValidateSMSApplicationUserCredentialsQueryHandler : BaseQueryBundle
 
 
             _logger.LogInformation("Credential validation for {UserName}: {IsValid}", request.UserName, isValid);
-            
+
             return Result<bool>.Success(isValid);
         }
         catch (Exception ex)
@@ -385,7 +380,7 @@ public class GetSMSApplicationUsersRequiringPasswordChangeQueryHandler : BaseQue
         try
         {
             _logger.LogInformation("Processing GetSMSApplicationUsersRequiringPasswordChangeQuery");
-            
+
             var allUsersResult = await _dataService.GetAllSMSApplicationUsersAsync(ct);
             if (allUsersResult.IsSuccess)
             {
@@ -423,14 +418,14 @@ public class GetStaleSMSApplicationUsersQueryHandler : BaseQueryBundle, IRequest
         try
         {
             _logger.LogInformation("Processing GetStaleSMSApplicationUsersQuery for {StaleDays} days", request.StaleDays);
-            
+
             var allUsersResult = await _dataService.GetAllSMSApplicationUsersAsync(ct);
             if (allUsersResult.IsSuccess)
             {
                 var cutoffDate = DateTime.UtcNow.AddDays(-request.StaleDays);
-                var staleUsers = allUsersResult.Value?.Where(u => 
+                var staleUsers = allUsersResult.Value?.Where(u =>
                     !u.LastLoginDate.HasValue || u.LastLoginDate < cutoffDate) ?? new List<SMSApplicationUser>();
-                
+
                 _logger.LogInformation("Successfully retrieved {Count} stale users (>{StaleDays} days)", staleUsers.Count(), request.StaleDays);
                 return Result<IEnumerable<SMSApplicationUser>>.Success<IEnumerable<SMSApplicationUser>>(staleUsers);
             }
@@ -464,7 +459,7 @@ public class GetSMSApplicationUserStatisticsQueryHandler : BaseQueryBundle, IReq
         try
         {
             _logger.LogInformation("Processing GetSMSApplicationUserStatisticsQuery");
-            
+
             var statsResult = await _dataService.GetSMSApplicationUserStatisticsAsync();
             if (statsResult.IsSuccess)
             {
@@ -478,7 +473,7 @@ public class GetSMSApplicationUserStatisticsQueryHandler : BaseQueryBundle, IReq
                     ["StaleUsers"] = userStats.StaleUsers,
                     ["LastLoginDate"] = userStats.LastLoginDate
                 };
-                
+
                 _logger.LogInformation("Successfully retrieved SMS Application User statistics");
                 return Result<Dictionary<string, object>>.Success<Dictionary<string, object>>(stats);
             }

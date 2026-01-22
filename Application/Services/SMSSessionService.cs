@@ -1,9 +1,5 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 
 namespace SMS_Application.Services;
 
@@ -59,7 +55,8 @@ public class SMSSessionService : ISMSSessionService
 
                 if (user.UserRole.Permissions != null && user.UserRole.Permissions.Any())
                 {
-                    var permissionsData = user.UserRole.Permissions.Select(p => new {
+                    var permissionsData = user.UserRole.Permissions.Select(p => new
+                    {
                         Module = p.SMSModule ?? string.Empty,
                         Create = p.Create,
                         Read = p.Read,
@@ -110,7 +107,7 @@ public class SMSSessionService : ISMSSessionService
     public async Task ClearSMSSessionAsync()
     {
         var context = _httpContextAccessor.HttpContext;
-        if (context == null) 
+        if (context == null)
         {
             _logger.LogWarning("HttpContext is null - cannot clear SMS session");
             return;
@@ -120,10 +117,10 @@ public class SMSSessionService : ISMSSessionService
         {
             var session = context.Session;
             var userId = session.GetString("SMS_UserId");
-            
+
             // Simple session clear
             session.Clear();
-            
+
             _logger.LogInformation("Cleared session for user: {UserId}", userId);
         }
         catch (Exception ex)
@@ -147,7 +144,7 @@ public class SMSSessionService : ISMSSessionService
             var session = context.Session;
             var isAuth = session.GetString("IsAuthenticated") == "true" &&
                         !string.IsNullOrEmpty(session.GetString("SMS_UserId"));
-            
+
             _logger.LogInformation("Simple session auth check: {IsAuth}", isAuth);
             return isAuth;
         }

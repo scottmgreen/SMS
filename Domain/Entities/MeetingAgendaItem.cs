@@ -1,6 +1,3 @@
-using SMS_Domain.Common;
-using SMS_Domain.Enums;
-
 namespace SMS_Domain.Entities;
 
 /// <summary>
@@ -27,13 +24,13 @@ public sealed class MeetingAgendaItem : BaseEntity
     public string? HazardId { get; private set; }
     public bool IsCompleted { get; private set; }
     public DateTime CreatedDate { get; private set; }
-    
+
     // Content Properties
     public string? Description { get; private set; }
     public string? Discussion { get; private set; }
     public string? Decision { get; private set; }
     public string? ActionItems { get; private set; }
-    
+
     // Optional Properties
     public int? OrderSequence { get; private set; }
     public string? Presenter { get; private set; }
@@ -59,8 +56,8 @@ public sealed class MeetingAgendaItem : BaseEntity
         if (string.IsNullOrWhiteSpace(discussion))
             throw new ArgumentException("Discussion cannot be null or empty", nameof(discussion));
 
-        Discussion = string.IsNullOrWhiteSpace(Discussion) 
-            ? discussion 
+        Discussion = string.IsNullOrWhiteSpace(Discussion)
+            ? discussion
             : $"{Discussion}\n\n{discussion}";
     }
 
@@ -77,8 +74,8 @@ public sealed class MeetingAgendaItem : BaseEntity
         if (string.IsNullOrWhiteSpace(actionItems))
             throw new ArgumentException("Action items cannot be null or empty", nameof(actionItems));
 
-        ActionItems = string.IsNullOrWhiteSpace(ActionItems) 
-            ? actionItems 
+        ActionItems = string.IsNullOrWhiteSpace(ActionItems)
+            ? actionItems
             : $"{ActionItems}\n\n{actionItems}";
     }
 
@@ -112,8 +109,8 @@ public sealed class MeetingAgendaItem : BaseEntity
     // Query Methods
     public bool IsHazardRelated()
     {
-        return !string.IsNullOrWhiteSpace(HazardId) || 
-               ItemType == AgendaItemType.HazardReview || 
+        return !string.IsNullOrWhiteSpace(HazardId) ||
+               ItemType == AgendaItemType.HazardReview ||
                ItemType == AgendaItemType.RiskAssessment;
     }
 
@@ -167,7 +164,7 @@ public sealed class MeetingAgendaItem : BaseEntity
             summary += " with Decision";
         if (HasActionItems())
             summary += " with Action Items";
-        
+
         return summary;
     }
 }

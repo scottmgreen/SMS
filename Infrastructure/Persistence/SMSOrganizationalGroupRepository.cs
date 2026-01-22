@@ -1,12 +1,7 @@
-using SMS_Domain.Entities;
 using SMS_Domain.Errors;
 using SMS_Domain.Interfaces;
-using SMS_Infrastructure.Common;
+
 using SMS_Infrastructure.Interfaces;
-using SMS_Shared.Common;
-using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Logging;
-using System.Data;
 
 namespace SMS_Infrastructure.Persistence;
 
@@ -375,7 +370,7 @@ public sealed class SMSOrganizationalGroupRepository : BaseRepository<SMSOrganiz
         catch (Exception ex)
         {
             _logger.LogInfrastructureGetItemsError($"{_logHeader} {ex.Message}", null);
-            return Result<IEnumerable<SMSOrganizationalGroup>>.Failure<IEnumerable<SMSOrganizationalGroup >>(DomainErrors.SMSOrganizationalGroupError.NotFound);
+            return Result<IEnumerable<SMSOrganizationalGroup>>.Failure<IEnumerable<SMSOrganizationalGroup>>(DomainErrors.SMSOrganizationalGroupError.NotFound);
         }
     }
 

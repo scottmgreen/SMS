@@ -1,15 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using Radzen;
-using Radzen.Blazor;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Domain.Enums;
-using SMS_Shared.Common;
-using SMS3.Components.Pages.SMSAssurance.Components;
+﻿using SMS3.Components.Pages.SMSAssurance.Components;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -98,13 +87,13 @@ public partial class InterviewCalendar : ComponentBase
     {
         LogEvent("Refreshing calendar data...");
         await LoadInterviewsAsync();
-        
+
         // Reload the scheduler
         if (scheduler != null)
         {
             await scheduler.Reload();
         }
-        
+
         ShowSuccessNotification("Calendar data refreshed");
         LogEvent("Calendar refresh completed");
     }
@@ -115,7 +104,7 @@ public partial class InterviewCalendar : ComponentBase
     {
         var interviewDate = interview.InterviewDate ?? interview.CreatedDate ?? DateTime.Now;
         var duration = interview.DurationMinutes ?? 60; // Default 1 hour
-        
+
         return new InterviewSchedulerItem
         {
             InterviewId = interview.Id?.Value ?? "",
@@ -137,16 +126,16 @@ public partial class InterviewCalendar : ComponentBase
     private string GetInterviewDescription(Interview interview)
     {
         var parts = new List<string>();
-        
+
         if (!string.IsNullOrEmpty(interview.PersonInterviewedRole))
             parts.Add($"Role: {interview.PersonInterviewedRole}");
-        
+
         if (!string.IsNullOrEmpty(interview.InterviewLocation))
             parts.Add($"Location: {interview.InterviewLocation}");
-        
+
         if (interview.IsConfidential)
             parts.Add("CONFIDENTIAL");
-            
+
         return string.Join(" | ", parts);
     }
     #endregion
@@ -157,7 +146,7 @@ public partial class InterviewCalendar : ComponentBase
         try
         {
             Logger.LogInformation("Slot selected: {Start} to {End}", args.Start, args.End);
-            
+
             // Don't create appointments in year view (like Radzen example)
             if (args.View.Text != "Year")
             {
@@ -223,16 +212,16 @@ public partial class InterviewCalendar : ComponentBase
         try
         {
             // Never call StateHasChanged in AppointmentRender - would lead to infinite loop (from Radzen sample)
-            
+
             // Customize appointment appearance based on interview status
             var interviewItem = args.Data;
-            
+
             var cssClasses = new List<string>();
-            
+
             // Base status class
             var statusClass = interviewItem.InterviewStatus.Value switch
             {
-                "SCHEDULED" => "interview-scheduled", 
+                "SCHEDULED" => "interview-scheduled",
                 "IN_PROGRESS" => "interview-inprogress",
                 "COMPLETED" => "interview-completed",
                 "CANCELLED" => "interview-cancelled",
@@ -247,7 +236,7 @@ public partial class InterviewCalendar : ComponentBase
             }
 
             // Add high priority class for urgent interviews
-            if (interviewItem.InterviewType.Value == "WITNESS" && 
+            if (interviewItem.InterviewType.Value == "WITNESS" &&
                 interviewItem.InterviewStatus.Value == "SCHEDULED" &&
                 interviewItem.Start.Date == DateTime.Today)
             {
@@ -276,17 +265,17 @@ public partial class InterviewCalendar : ComponentBase
                          $"Investigation: {interviewItem.InvestigationCode}\\n" +
                          $"Investigator: {interviewItem.Investigator}\\n" +
                          $"Location: {interviewItem.Location}";
-            
+
             if (interviewItem.IsConfidential)
                 tooltip += "\\n🔒 CONFIDENTIAL";
-                
+
             args.Attributes["title"] = tooltip;
-            
+
             // Add data attributes for better event handling
             args.Attributes["data-interview-code"] = interviewItem.InterviewCode;
             args.Attributes["data-interview-id"] = interviewItem.InterviewId;
             args.Attributes["data-status"] = interviewItem.InterviewStatus.Value;
-            
+
             // Add style to prevent text selection which can interfere with clicking
             var existingStyle = args.Attributes.ContainsKey("style") ? args.Attributes["style"] : "";
             args.Attributes["style"] = $"{existingStyle} user-select: none; -webkit-user-select: none; -moz-user-select: none;";
@@ -309,7 +298,7 @@ public partial class InterviewCalendar : ComponentBase
             }
 
             // Highlight working hours (9-18) in week and day views
-            if ((args.View.Text == "Week" || args.View.Text == "Day") && 
+            if ((args.View.Text == "Week" || args.View.Text == "Day") &&
                 args.Start.Hour >= 9 && args.Start.Hour < 18)
             {
                 args.Attributes["class"] = "business-hours";
@@ -370,10 +359,10 @@ public partial class InterviewCalendar : ComponentBase
             {
                 // Update duration if needed
                 var newDuration = (int)(appointmentData.End - appointmentData.Start).TotalMinutes;
-                
+
                 // Use the domain method to update date/time which will handle status transitions
                 var updateResult = interview.UpdateDateTime(appointmentData.Start, newDuration);
-                
+
                 if (updateResult.IsFailure)
                 {
                     Logger.LogError("Domain validation failed for interview datetime update: {Error}", updateResult.Error?.Message);
@@ -433,9 +422,9 @@ public partial class InterviewCalendar : ComponentBase
 
             LogEvent($"Opening create interview dialog for {startTime:yyyy-MM-dd HH:mm}");
 
-            var options = new DialogOptions() 
-            { 
-                Width = "100%", 
+            var options = new DialogOptions()
+            {
+                Width = "100%",
                 Height = "100%",
                 Resizable = false,
                 Draggable = false,
@@ -446,8 +435,8 @@ public partial class InterviewCalendar : ComponentBase
                 CssClass = "custom-modal-dialog"
             };
 
-            var parameters = new Dictionary<string, object> 
-            { 
+            var parameters = new Dictionary<string, object>
+            {
                 { "InvestigationCode", "UNKNOWN" }, // Default - user can change
                 { "PresetDateTime", startTime },
                 { "PresetEndDateTime", endTime }
@@ -540,7 +529,7 @@ public partial class InterviewCalendar : ComponentBase
         var now = DateTime.Now;
         var startOfWeek = now.Date.AddDays(-(int)now.DayOfWeek);
         var endOfWeek = startOfWeek.AddDays(7);
-        
+
         return Interviews.Count(i => i.InterviewDate >= startOfWeek && i.InterviewDate < endOfWeek);
     }
 
@@ -595,7 +584,7 @@ public partial class InterviewCalendar : ComponentBase
             ShowDetailsModal = false;
             SelectedInterview = null;
             LogEvent("Details modal closed");
-            
+
             // Force a brief delay before state change to prevent focus issues
             InvokeAsync(async () =>
             {
@@ -620,10 +609,10 @@ public partial class InterviewCalendar : ComponentBase
         {
             LogEvent($"Edit requested for interview: {interview.Code}");
             CloseDetailsModal();
-            
+
             // Add a small delay to ensure modal is fully closed
             await Task.Delay(200);
-            
+
             await OnEditInterviewAsync(interview);
         }
         catch (Exception ex)
@@ -645,9 +634,9 @@ public partial class InterviewCalendar : ComponentBase
 
         try
         {
-            var options = new DialogOptions() 
-            { 
-                Width = "100%", 
+            var options = new DialogOptions()
+            {
+                Width = "100%",
                 Height = "100%",
                 Resizable = false,
                 Draggable = false,
@@ -658,9 +647,9 @@ public partial class InterviewCalendar : ComponentBase
                 CssClass = "custom-modal-dialog"
             };
 
-            var parameters = new Dictionary<string, object> 
-            { 
-                { "Interview", interview } 
+            var parameters = new Dictionary<string, object>
+            {
+                { "Interview", interview }
             };
 
             var result = await DialogService.OpenAsync<Components.EditInterviewDialog>(
@@ -695,7 +684,7 @@ public partial class InterviewCalendar : ComponentBase
             return BadgeStyle.Success;
         if (status.Equals(InterviewStatus.Cancelled))
             return BadgeStyle.Danger;
-        
+
         return BadgeStyle.Light;
     }
     #endregion

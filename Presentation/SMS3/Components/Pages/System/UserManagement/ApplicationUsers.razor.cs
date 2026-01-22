@@ -1,14 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using Radzen;
-using Radzen.Blazor;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Shared.Common;
-using SMS3.Components.Pages.System.Components;
-
 namespace SMS3.Components.Pages.System.UserManagement;
 
 /// <summary>
@@ -70,7 +59,7 @@ public partial class ApplicationUsers : ComponentBase
     protected override async Task OnInitializedAsync()
     {
         await LoadDataAsync();
-        
+
         // Check if we're in edit mode
         if (!string.IsNullOrWhiteSpace(Id))
         {
@@ -99,24 +88,24 @@ public partial class ApplicationUsers : ComponentBase
             // Load Application Users
             var applicationUsersQuery = new GetAllSMSApplicationUsersQuery();
             var applicationUsersResult = await Mediator.SendAsync(applicationUsersQuery, CancellationToken.None);
-            ApplicationUsersList = applicationUsersResult.IsSuccess ? 
-                applicationUsersResult.Value?.ToList() ?? new List<SMSApplicationUser>() : 
+            ApplicationUsersList = applicationUsersResult.IsSuccess ?
+                applicationUsersResult.Value?.ToList() ?? new List<SMSApplicationUser>() :
                 new List<SMSApplicationUser>();
             // Load Application Groups for group management
             var groupsQuery = new GetAllSMSApplicationGroupsQuery();
             var groupsResult = await Mediator.SendAsync(groupsQuery, CancellationToken.None);
-            AllApplicationGroups = groupsResult.IsSuccess ? 
-                groupsResult.Value?.ToList() ?? new List<SMSApplicationGroup>() : 
+            AllApplicationGroups = groupsResult.IsSuccess ?
+                groupsResult.Value?.ToList() ?? new List<SMSApplicationGroup>() :
                 new List<SMSApplicationGroup>();
 
             // ?? NEW: Load User Roles for assignment
             var userRolesQuery = new GetAllSMSUserRolesQuery();
             var userRolesResult = await Mediator.SendAsync(userRolesQuery, CancellationToken.None);
-            AvailableRoles = userRolesResult.IsSuccess ? 
-                userRolesResult.Value?.ToList() ?? new List<SMSUserRole>() : 
+            AvailableRoles = userRolesResult.IsSuccess ?
+                userRolesResult.Value?.ToList() ?? new List<SMSUserRole>() :
                 new List<SMSUserRole>();
 
-            Logger.LogInformation("Loaded {UserCount} application users, {GroupCount} groups, and {RoleCount} roles", 
+            Logger.LogInformation("Loaded {UserCount} application users, {GroupCount} groups, and {RoleCount} roles",
                 ApplicationUsersList.Count, AllApplicationGroups.Count, AvailableRoles.Count);
 
             StateHasChanged();
@@ -134,7 +123,7 @@ public partial class ApplicationUsers : ComponentBase
         {
             var getUserQuery = new GetSMSApplicationUserByIdQuery(id);
             var userResult = await Mediator.SendAsync(getUserQuery, CancellationToken.None);
-            
+
             if (userResult.IsFailure)
             {
                 ShowErrorNotification("User not found.");
@@ -144,7 +133,7 @@ public partial class ApplicationUsers : ComponentBase
 
             CurrentUser = userResult.Value;
             IsEditMode = true;
-            
+
             // Populate edit form
             editUser = new EditUserModel
             {
@@ -201,7 +190,7 @@ public partial class ApplicationUsers : ComponentBase
             // Get the user
             var userQuery = new GetSMSApplicationUserByCodeQuery(RoleAssignmentUserCode);
             var userResult = await Mediator.SendAsync(userQuery, CancellationToken.None);
-            
+
             if (userResult.IsFailure || userResult.Value == null)
             {
                 ShowErrorNotification("User not found.");
@@ -230,7 +219,7 @@ public partial class ApplicationUsers : ComponentBase
             if (updateResult.IsSuccess)
             {
                 ShowSuccessNotification($"Role '{selectedRole.Name}' successfully assigned to {RoleAssignmentUserDisplayName}.");
-                
+
                 // Refresh data and close modal
                 await LoadDataAsync();
                 CloseRoleAssignmentModal();
@@ -268,7 +257,7 @@ public partial class ApplicationUsers : ComponentBase
             // Get the user
             var userQuery = new GetSMSApplicationUserByCodeQuery(RoleAssignmentUserCode);
             var userResult = await Mediator.SendAsync(userQuery, CancellationToken.None);
-            
+
             if (userResult.IsFailure || userResult.Value == null)
             {
                 ShowErrorNotification("User not found.");
@@ -289,7 +278,7 @@ public partial class ApplicationUsers : ComponentBase
             if (updateResult.IsSuccess)
             {
                 ShowSuccessNotification($"Role successfully removed from {RoleAssignmentUserDisplayName}.");
-                
+
                 // Refresh data and close modal
                 await LoadDataAsync();
                 CloseRoleAssignmentModal();
@@ -392,10 +381,10 @@ public partial class ApplicationUsers : ComponentBase
         StateHasChanged();
     }
 
-    private bool IsCreateFormValid => 
-        !string.IsNullOrWhiteSpace(NewUser.FirstName) && 
-        !string.IsNullOrWhiteSpace(NewUser.LastName) && 
-        !string.IsNullOrWhiteSpace(NewUser.UserName) && 
+    private bool IsCreateFormValid =>
+        !string.IsNullOrWhiteSpace(NewUser.FirstName) &&
+        !string.IsNullOrWhiteSpace(NewUser.LastName) &&
+        !string.IsNullOrWhiteSpace(NewUser.UserName) &&
         !string.IsNullOrWhiteSpace(NewUser.Password);
 
     private async Task EditUser(string userId)
@@ -416,7 +405,7 @@ public partial class ApplicationUsers : ComponentBase
             // Update user properties using the model parameter
             CurrentUser.FirstName = FirstName.Create(model.FirstName).Value;
             CurrentUser.LastName = LastName.Create(model.LastName).Value;
-            
+
             // Set the UpdatedBy field to the currently logged-in user's ID
             CurrentUser.UpdatedBy = SessionService.GetCurrentUserId() ?? "SYSTEM";
             CurrentUser.UpdatedDate = DateTime.UtcNow;
@@ -443,11 +432,11 @@ public partial class ApplicationUsers : ComponentBase
 
     private async Task ShowDeleteDialog(string userId, string displayName)
     {
-        var result = await DialogService.Confirm($"Are you sure you want to delete the user '{displayName}'?", 
-            "Confirm Delete", 
-            new ConfirmOptions 
-            { 
-                OkButtonText = "Delete", 
+        var result = await DialogService.Confirm($"Are you sure you want to delete the user '{displayName}'?",
+            "Confirm Delete",
+            new ConfirmOptions
+            {
+                OkButtonText = "Delete",
                 CancelButtonText = "Cancel",
                 AutoFocusFirstElement = true
             });
@@ -605,7 +594,7 @@ public partial class ApplicationUsers : ComponentBase
         {
             GroupManagementUserCode = userId;
             GroupManagementUserDisplayName = displayName;
-            
+
             await LoadUserGroups(userId);
             ShowGroupsModal = true;
         }
@@ -623,10 +612,10 @@ public partial class ApplicationUsers : ComponentBase
             // Load groups that this user is currently assigned to
             var userGroupsQuery = new GetSMSApplicationGroupsByUserCodeQuery(userId);
             var userGroupsResult = await Mediator.SendAsync(userGroupsQuery, CancellationToken.None);
-            UserCurrentGroups = userGroupsResult.IsSuccess ? 
-                userGroupsResult.Value?.ToList() ?? new List<SMSApplicationGroup>() : 
+            UserCurrentGroups = userGroupsResult.IsSuccess ?
+                userGroupsResult.Value?.ToList() ?? new List<SMSApplicationGroup>() :
                 new List<SMSApplicationGroup>();
-            
+
             // Calculate available groups (groups the user is not currently in)
             var currentGroupCodes = UserCurrentGroups.Select(g => g.Code).ToHashSet();
             AvailableGroups = AllApplicationGroups
@@ -641,7 +630,7 @@ public partial class ApplicationUsers : ComponentBase
                 SelectedGroups[group.Code] = false;
             }
 
-            Logger.LogInformation("Loaded {CurrentGroupCount} current groups and {AvailableGroupCount} available groups for user {UserId}", 
+            Logger.LogInformation("Loaded {CurrentGroupCount} current groups and {AvailableGroupCount} available groups for user {UserId}",
                 UserCurrentGroups.Count, AvailableGroups.Count, userId);
         }
         catch (Exception ex)
@@ -649,7 +638,7 @@ public partial class ApplicationUsers : ComponentBase
             Logger.LogError(ex, "Error loading groups for user: {UserId}", userId);
             UserCurrentGroups = new List<SMSApplicationGroup>();
             AvailableGroups = AllApplicationGroups.Where(g => g.IsActive).ToList();
-            
+
             // Initialize selection tracking even on error
             SelectedGroups.Clear();
             foreach (var group in AvailableGroups)
@@ -770,7 +759,7 @@ public partial class ApplicationUsers : ComponentBase
                 if (failureCount > 0)
                     message += $" {failureCount} assignment(s) failed.";
                 ShowSuccessNotification(message);
-                
+
                 await LoadUserGroups(GroupManagementUserCode);
                 StateHasChanged();
             }

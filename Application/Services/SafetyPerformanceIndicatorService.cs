@@ -1,10 +1,6 @@
 using Microsoft.Extensions.Logging;
+
 using SMS_Application.Messaging.Queries;
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Domain.Errors;
-using SMS_Infrastructure.Services;
-using SMS_Shared.Common;
 
 namespace SMS_Application.Services;
 
@@ -47,10 +43,10 @@ public class SafetyPerformanceIndicatorService
             var spi = existingResult.Value;
 
             // Map string values to enum types
-            var spiType = SPIType.GetAllValues().FirstOrDefault(t => 
+            var spiType = SPIType.GetAllValues().FirstOrDefault(t =>
                 t.Value.Equals(indicatorType, StringComparison.OrdinalIgnoreCase)) ?? SPIType.IncidentRate;
-            
-            var frequency = SPIMeasurementFrequency.GetAllValues().FirstOrDefault(f => 
+
+            var frequency = SPIMeasurementFrequency.GetAllValues().FirstOrDefault(f =>
                 f.Value.Equals(measurementFrequency, StringComparison.OrdinalIgnoreCase)) ?? SPIMeasurementFrequency.Monthly;
 
             // Update configuration using domain method
@@ -131,7 +127,7 @@ public class SafetyPerformanceIndicatorService
             var spi = existingResult.Value;
 
             // Map string to enum
-            var spiStatus = SPIStatus.GetAllValues().FirstOrDefault(s => 
+            var spiStatus = SPIStatus.GetAllValues().FirstOrDefault(s =>
                 s.Value.Equals(status, StringComparison.OrdinalIgnoreCase)) ?? SPIStatus.Active;
 
             // Update status using domain method
@@ -663,11 +659,11 @@ public class SafetyPerformanceIndicatorService
     {
         if (spi.IsOverThreshold()) return "Critical";
         if (spi.IsAtWarningLevel()) return "Warning";
-        
+
         var currentValue = spi.GetCurrentValue();
         if (!currentValue.HasValue) return "No Data";
         if (currentValue >= spi.TargetValue) return "Compliant";
-        
+
         return "Below Target";
     }
 

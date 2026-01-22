@@ -1,13 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using Radzen;
-using Radzen.Blazor;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Shared.Common;
-
 namespace SMS3.Components.Pages.System.UserRoles;
 
 public partial class UserRoles : ComponentBase
@@ -24,7 +14,7 @@ public partial class UserRoles : ComponentBase
     private string? ErrorMessage { get; set; }
 
     // Predefined SMS Modules
-    private static readonly string[] SMSModules = 
+    private static readonly string[] SMSModules =
     {
         "SMS_Assurance", "SMS_Policy", "SMS_Promotion", "SMS_RiskManagement", "SMS_System"
     };
@@ -62,8 +52,8 @@ public partial class UserRoles : ComponentBase
             // Load User Roles
             var userRolesQuery = new GetAllSMSUserRolesQuery();
             var userRolesResult = await Mediator.SendAsync(userRolesQuery, CancellationToken.None);
-            UserRolesList = userRolesResult.IsSuccess ? 
-                userRolesResult.Value?.ToList() ?? new List<SMSUserRole>() : 
+            UserRolesList = userRolesResult.IsSuccess ?
+                userRolesResult.Value?.ToList() ?? new List<SMSUserRole>() :
                 new List<SMSUserRole>();
 
             Logger.LogInformation("Loaded {RoleCount} user roles", UserRolesList.Count);
@@ -218,7 +208,7 @@ public partial class UserRoles : ComponentBase
         {
             var getRoleQuery = new GetSMSUserRoleByIdQuery(roleCode);
             var roleResult = await Mediator.SendAsync(getRoleQuery, CancellationToken.None);
-            
+
             if (roleResult.IsFailure)
             {
                 ShowErrorNotification("Role not found.");
@@ -226,7 +216,7 @@ public partial class UserRoles : ComponentBase
             }
 
             CurrentEditRole = roleResult.Value;
-            
+
             // Populate edit form with permission matrices
             editRole = new EditRoleModel
             {
@@ -358,11 +348,11 @@ public partial class UserRoles : ComponentBase
 
     private async Task ShowDeleteDialog(string roleCode, string roleName)
     {
-        var result = await DialogService.Confirm($"Are you sure you want to delete the role '{roleName}'?\n\nThis action cannot be undone and may affect users assigned to this role.", 
-            "Confirm Delete", 
-            new ConfirmOptions 
-            { 
-                OkButtonText = "Delete", 
+        var result = await DialogService.Confirm($"Are you sure you want to delete the role '{roleName}'?\n\nThis action cannot be undone and may affect users assigned to this role.",
+            "Confirm Delete",
+            new ConfirmOptions
+            {
+                OkButtonText = "Delete",
                 CancelButtonText = "Cancel",
                 AutoFocusFirstElement = true
             });
@@ -419,7 +409,7 @@ public partial class UserRoles : ComponentBase
     private bool IsPermissionGranted(string module, string action)
     {
         if (ViewRole?.Permissions == null) return false;
-        
+
         var permission = ViewRole.Permissions.FirstOrDefault(p => p.SMSModule == module);
         return action switch
         {
@@ -459,7 +449,7 @@ public partial class UserRoles : ComponentBase
     private bool GetPermissionValue(string module, string permissionType)
     {
         if (CurrentEditRole?.Permissions == null) return false;
-        
+
         var permission = CurrentEditRole.Permissions.FirstOrDefault(p => p.SMSModule == module);
         if (permission == null) return false;
 

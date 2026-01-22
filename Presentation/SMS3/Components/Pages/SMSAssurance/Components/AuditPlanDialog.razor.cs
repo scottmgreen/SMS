@@ -1,12 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Shared.Common;
-using Radzen;
-using Radzen.Blazor;
-
 namespace SMS3.Components.Pages.SMSAssurance.Components;
 
 public partial class AuditPlanDialog : ComponentBase
@@ -29,7 +20,7 @@ public partial class AuditPlanDialog : ComponentBase
     private bool IsReadOnly => !IsNew && AuditPlan?.Status == "Completed";
     private string ValidationMessage { get; set; } = string.Empty;
     private int selectedTabIndex = 0;
-    
+
     // Form Data
     private string? Code { get; set; }
     private string? Name { get; set; }
@@ -46,18 +37,18 @@ public partial class AuditPlanDialog : ComponentBase
     private string? Priority { get; set; }
     private string? Status { get; set; }
     private string? Notes { get; set; }
-    
+
     // Approval Workflow Fields - ADDED
     private bool RequiresApproval { get; set; } = true;
     private string? ApprovedBy { get; set; }
     private DateTime? ApprovedDate { get; set; }
     private string? ApprovalNotes { get; set; }
-    
+
     // Additional Entity Fields
     private string? ContactPerson { get; set; }
     private string? RecurrencePattern { get; set; }
     private DateTime? NextScheduledDate { get; set; }
-    
+
     // UI Mapping Fields (for backward compatibility)
     private string? RegulatoryRequirements { get; set; }
     private string? Resources { get; set; }
@@ -73,7 +64,7 @@ public partial class AuditPlanDialog : ComponentBase
 
     public List<string> DepartmentOptions { get; } = new()
     {
-        "Airport Operations", "Security", "Maintenance", "Ground Handling", "Air Traffic Control", 
+        "Airport Operations", "Security", "Maintenance", "Ground Handling", "Air Traffic Control",
         "Safety", "Administration", "Emergency Services", "Environmental"
     };
 
@@ -86,7 +77,7 @@ public partial class AuditPlanDialog : ComponentBase
     {
         "Critical", "High", "Medium", "Low"
     };
-    
+
     public List<string> RecurrencePatternOptions { get; } = new()
     {
         "None", "Annual", "Semi-Annual", "Quarterly", "Monthly"
@@ -103,7 +94,7 @@ public partial class AuditPlanDialog : ComponentBase
     private void InitializeFormData()
     {
         Logger.LogInformation("DEBUG: InitializeFormData called - AuditPlan.Status: {Status}", AuditPlan?.Status);
-        
+
         if (AuditPlan != null)
         {
             Code = AuditPlan.Code;
@@ -121,18 +112,18 @@ public partial class AuditPlanDialog : ComponentBase
             Priority = AuditPlan.Priority;
             Status = AuditPlan.Status;
             Notes = AuditPlan.Notes;
-                        
+
             // Approval Workflow Fields - ADDED
             RequiresApproval = AuditPlan.RequiresApproval;
             ApprovedBy = AuditPlan.ApprovedBy;
             ApprovedDate = AuditPlan.ApprovedDate;
             ApprovalNotes = AuditPlan.ApprovalNotes;
-            
+
             // Additional Fields
             ContactPerson = AuditPlan.ContactPerson;
             RecurrencePattern = AuditPlan.RecurrencePattern;
             NextScheduledDate = AuditPlan.NextScheduledDate;
-            
+
             // UI Mapping Fields (for tabs)
             RegulatoryRequirements = AuditPlan.AuditCriteria;
             Resources = AuditPlan.RequiredDocuments;
@@ -150,7 +141,7 @@ public partial class AuditPlanDialog : ComponentBase
             RequiresApproval = true;
             RecurrencePattern = "None";
         }
-        
+
         Logger.LogInformation("DEBUG: InitializeFormData completed - Status set to: {Status}", Status);
     }
     #endregion
@@ -214,10 +205,10 @@ public partial class AuditPlanDialog : ComponentBase
             IsSubmitting = true;
             StateHasChanged();
 
-            
+
             // Create or update the audit plan entity with proper property mapping
             SMSAuditPlan auditPlan;
-            
+
             if (IsNew)
             {
                 auditPlan = new SMSAuditPlan(new SMSAuditPlanID(Code!), "CURRENT_USER");
@@ -249,24 +240,24 @@ public partial class AuditPlanDialog : ComponentBase
             auditPlan.Priority = Priority ?? "Medium";
             auditPlan.Status = Status!;
             auditPlan.Notes = Notes ?? string.Empty;
-            
+
             // Approval Workflow Fields - ADDED
             auditPlan.RequiresApproval = RequiresApproval;
             auditPlan.ApprovedBy = ApprovedBy ?? string.Empty;
             auditPlan.ApprovedDate = ApprovedDate;
             auditPlan.ApprovalNotes = ApprovalNotes ?? string.Empty;
-            
+
             // Additional Fields
             auditPlan.ContactPerson = ContactPerson ?? string.Empty;
             auditPlan.RecurrencePattern = RecurrencePattern ?? "None";
             auditPlan.NextScheduledDate = NextScheduledDate;
-            
+
             // Map UI fields to entity properties
             auditPlan.AuditCriteria = RegulatoryRequirements ?? string.Empty;
             auditPlan.RequiredDocuments = Resources ?? string.Empty;
             auditPlan.SpecialRequirements = Deliverables ?? string.Empty;
             auditPlan.RiskAreas = SuccessCriteria ?? string.Empty;
-            
+
             // Set audit metadata
             auditPlan.UpdatedBy = "CURRENT_USER";
             auditPlan.UpdatedDate = DateTime.UtcNow;
@@ -331,26 +322,26 @@ public partial class AuditPlanDialog : ComponentBase
     private void OnStartDateChanged(DateTime? value)
     {
         PlannedStartDate = value;
-        
+
         // Automatically adjust end date if start date changes
         if (value.HasValue && (!PlannedEndDate.HasValue || PlannedEndDate.Value <= value.Value))
         {
             PlannedEndDate = value.Value.AddDays(7);
         }
-        
+
         // Calculate estimated hours based on duration
         CalculateEstimatedHours();
-        
+
         StateHasChanged();
     }
 
     private void OnEndDateChanged(DateTime? value)
     {
         PlannedEndDate = value;
-        
+
         // Calculate estimated hours based on duration
         CalculateEstimatedHours();
-        
+
         StateHasChanged();
     }
 
@@ -360,7 +351,7 @@ public partial class AuditPlanDialog : ComponentBase
         {
             var duration = PlannedEndDate.Value - PlannedStartDate.Value;
             var totalDays = (int)duration.TotalDays;
-            
+
             // Calculate estimated hours based on audit type and duration
             var baseHoursPerDay = AuditType switch
             {
@@ -371,24 +362,24 @@ public partial class AuditPlanDialog : ComponentBase
                 "Follow-up" => 3, // 3 hours per day for follow-up audits
                 _ => 6 // Default to 6 hours per day
             };
-            
+
             // Calculate total estimated hours
             var calculatedHours = totalDays * baseHoursPerDay;
-            
+
             // Apply reasonable bounds (minimum 2 hours, maximum 200 hours)
             EstimatedHours = Math.Max(2, Math.Min(200, calculatedHours));
-            
-            Logger.LogInformation("Calculated EstimatedHours: {Hours} for {Days} days of {AuditType} audit", 
+
+            Logger.LogInformation("Calculated EstimatedHours: {Hours} for {Days} days of {AuditType} audit",
                 EstimatedHours, totalDays, AuditType);
         }
     }
-    
+
     private void OnStatusChanged(string value)
     {
         if (value != Status)
         {
             Status = value;
-            
+
             // Handle approval workflow
             if (value == "Approved")
             {
@@ -397,7 +388,7 @@ public partial class AuditPlanDialog : ComponentBase
                 {
                     RequiresApproval = true;
                 }
-                
+
                 // Auto-populate approval fields if empty
                 if (string.IsNullOrEmpty(ApprovedBy))
                 {
@@ -412,15 +403,15 @@ public partial class AuditPlanDialog : ComponentBase
                 ApprovedDate = null;
                 ApprovalNotes = string.Empty;
             }
-            
+
             StateHasChanged();
         }
     }
-    
+
     private void OnRequiresApprovalChanged(bool value)
     {
         RequiresApproval = value;
-        
+
         // If approval is not required and status is approved, clear approval fields
         if (!value && Status == "Approved")
         {
@@ -430,7 +421,7 @@ public partial class AuditPlanDialog : ComponentBase
             // Also change status back to a non-approved state
             Status = "Draft";
         }
-        
+
         // Trigger re-render to show/hide the Approval Workflow tab
         StateHasChanged();
     }
@@ -438,16 +429,16 @@ public partial class AuditPlanDialog : ComponentBase
     private void OnAuditTypeChanged(string value)
     {
         AuditType = value;
-        
+
         // Auto-generate code if it's empty and we have an audit type
         if (string.IsNullOrWhiteSpace(Code) && !string.IsNullOrWhiteSpace(AuditType))
         {
             GenerateCode();
         }
-        
+
         // Recalculate estimated hours based on new audit type
         CalculateEstimatedHours();
-        
+
         StateHasChanged();
     }
     #endregion
@@ -460,7 +451,7 @@ public partial class AuditPlanDialog : ComponentBase
             var prefix = AuditType switch
             {
                 "Internal" => "INT",
-                "External" => "EXT", 
+                "External" => "EXT",
                 "Regulatory" => "REG",
                 "Management Review" => "MGT",
                 "Process Audit" => "PRC",
@@ -472,7 +463,7 @@ public partial class AuditPlanDialog : ComponentBase
             var year = DateTime.Now.Year.ToString()[2..];
             var month = DateTime.Now.Month.ToString("D2");
             var random = new Random().Next(100, 999);
-            
+
             Code = $"{prefix}-{year}{month}-{random}";
             StateHasChanged();
         }

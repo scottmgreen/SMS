@@ -1,11 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Queries;
-using SMS_Domain.Entities;
-using SMS_Shared.Common;
-using Radzen;
-using Radzen.Blazor;
-
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
 public partial class Hazards : ComponentBase
@@ -92,7 +84,7 @@ public partial class Hazards : ComponentBase
             {
                 AllHazards = result.Value.ToList();
                 Logger.LogInformation("Successfully loaded {Count} hazards", AllHazards.Count);
-                
+
                 // Show success notification
                 NotificationService.Notify(new NotificationMessage
                 {
@@ -107,7 +99,7 @@ public partial class Hazards : ComponentBase
                 AllHazards = new List<Hazard>();
                 ErrorMessage = result.Error?.Message ?? "Failed to load hazards";
                 Logger.LogWarning("Failed to load hazards: {Error}", ErrorMessage);
-                
+
                 // Show error notification
                 NotificationService.Notify(new NotificationMessage
                 {
@@ -123,7 +115,7 @@ public partial class Hazards : ComponentBase
             Logger.LogError(ex, "Exception occurred while loading hazards");
             AllHazards = new List<Hazard>();
             ErrorMessage = "An unexpected error occurred while loading hazards.";
-            
+
             // Show error notification
             NotificationService.Notify(new NotificationMessage
             {
@@ -156,7 +148,7 @@ public partial class Hazards : ComponentBase
     private async Task OnViewHazardAsync(Hazard hazard)
     {
         Logger.LogInformation("View hazard details: {HazardCode}", hazard.Code);
-        
+
         try
         {
             // Show detailed hazard information dialog
@@ -199,7 +191,7 @@ Created: {hazard.CreatedDate?.ToString("MM/dd/yyyy") ?? "N/A"}";
     private async Task OnDeleteHazardAsync(Hazard hazard)
     {
         Logger.LogInformation("Delete hazard request: {HazardCode}", hazard.Code);
-        
+
         try
         {
             // Show confirmation dialog
@@ -216,7 +208,7 @@ Created: {hazard.CreatedDate?.ToString("MM/dd/yyyy") ?? "N/A"}";
             {
                 // TODO: Implement delete via CQRS command when available
                 Logger.LogInformation("Delete confirmed for hazard: {HazardCode}", hazard.Code);
-                
+
                 NotificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Info,
@@ -224,14 +216,14 @@ Created: {hazard.CreatedDate?.ToString("MM/dd/yyyy") ?? "N/A"}";
                     Detail = $"Hazard deletion for {hazard.Code} will be implemented in a future update.",
                     Duration = 5000
                 });
-                
+
                 // await RefreshAsync(); // Uncomment when delete is implemented
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error deleting hazard: {HazardCode}", hazard.Code);
-            
+
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
@@ -249,18 +241,18 @@ Created: {hazard.CreatedDate?.ToString("MM/dd/yyyy") ?? "N/A"}";
         {
             Logger.LogInformation("Page size changed from {OldSize} to {NewSize}", PageSize, pageSize);
             PageSize = pageSize;
-            
+
             // Clear expanded rows when changing page size
             _expandedRows.Clear();
-            
+
             // Refresh the data list to apply new page size
             if (hazardsDataList != null)
             {
                 await hazardsDataList.Reload();
             }
-            
+
             StateHasChanged();
-            
+
             // Show notification
             NotificationService.Notify(new NotificationMessage
             {

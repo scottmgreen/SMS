@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SMS_Application.Common;
+﻿namespace SMS_Application.Common;
 public static class ApplicationEventIds
 {
     public const int Critical = 1000;

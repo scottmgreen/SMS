@@ -1,15 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-using Radzen;
-using Radzen.Blazor;
-using System.Linq.Expressions;
-using SMS3.Components.Shared;
-
 namespace SMS3.Components.Pages.Listings;
 
 public partial class MitigationListing : ComponentBase
@@ -68,10 +56,10 @@ public partial class MitigationListing : ComponentBase
             await LoadInitialData();
 
             var query = mitigations.AsQueryable();
-            
+
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
-                query = args.OrderBy.Contains("desc") 
+                query = args.OrderBy.Contains("desc")
                     ? query.OrderByDescending(GetPropertyExpression(args.OrderBy.Replace(" desc", "")))
                     : query.OrderBy(GetPropertyExpression(args.OrderBy));
             }
@@ -130,7 +118,7 @@ public partial class MitigationListing : ComponentBase
         try
         {
             Logger.LogInformation("Editing mitigation: {Code}", mitigation.Code);
-            
+
             // Navigate to HazardMitigation edit page
             Navigation.NavigateTo($"/SMSRiskManagement/HazardMitigation/Edit/{mitigation.Code}");
         }
@@ -180,7 +168,7 @@ public partial class MitigationListing : ComponentBase
                 {
                     ShowSuccessNotification($"Mitigation '{mitigation.Name}' deleted successfully");
                     Logger.LogInformation("Successfully deleted mitigation: {Code}", mitigation.Code);
-                    
+
                     // Refresh the data grid
                     await LoadInitialData();
                     if (mitigationsGrid != null)

@@ -1,8 +1,6 @@
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Queries;
-using SMS_Shared.Common;
 using Microsoft.Extensions.Logging;
-using SMS_Domain.Entities;
+
+using SMS_Application.Messaging.Queries;
 
 namespace SMS_Application.Messaging.QueryHandlers;
 
@@ -15,7 +13,7 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<
     private readonly ILogger<DashboardStatisticsQueryHandler> _logger;
 
     public DashboardStatisticsQueryHandler(
-        IMediator mediator, 
+        IMediator mediator,
         ILogger<DashboardStatisticsQueryHandler> logger)
     {
         _mediator = mediator;
@@ -47,7 +45,7 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<
             // Calculate cross-entity analytics
             CalculateCrossEntityAnalytics(response);
 
-            _logger.LogInformation("Dashboard statistics loaded successfully - Reports: {Reports}, Hazards: {Hazards}, Assessments: {Assessments}", 
+            _logger.LogInformation("Dashboard statistics loaded successfully - Reports: {Reports}, Hazards: {Hazards}, Assessments: {Assessments}",
                 response.TotalReports, response.TotalHazards, response.TotalRiskAssessments);
 
             return Result<DashboardStatisticsResponse>.Success(response);
@@ -84,7 +82,7 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<
                     .OrderBy(g => g.Key)
                     .ToDictionary(g => FormatMonthYear(g.Key), g => g.Count());
 
-                _logger.LogInformation("Loaded report statistics: {Count} reports across {StatusCount} statuses", 
+                _logger.LogInformation("Loaded report statistics: {Count} reports across {StatusCount} statuses",
                     response.TotalReports, response.ReportsByStatus.Count);
             }
         }
@@ -116,7 +114,7 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<
                     .GroupBy(h => h.HazardType ?? "Unknown")
                     .ToDictionary(g => g.Key, g => g.Count());
 
-                _logger.LogInformation("Loaded hazard statistics: {Count} hazards across {StatusCount} statuses and {TypeCount} types", 
+                _logger.LogInformation("Loaded hazard statistics: {Count} hazards across {StatusCount} statuses and {TypeCount} types",
                     response.TotalHazards, response.HazardsByStatus.Count, response.HazardsByType.Count);
             }
         }
@@ -148,7 +146,7 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<
                     .GroupBy(a => a.AssessmentType?.Name ?? "Unknown")
                     .ToDictionary(g => g.Key, g => g.Count());
 
-                _logger.LogInformation("Loaded risk assessment statistics: {Count} assessments across {StatusCount} statuses", 
+                _logger.LogInformation("Loaded risk assessment statistics: {Count} assessments across {StatusCount} statuses",
                     response.TotalRiskAssessments, response.RiskAssessmentsByStatus.Count);
             }
         }
@@ -175,7 +173,7 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<
                     .GroupBy(i => i.Status ?? "Unknown")
                     .ToDictionary(g => g.Key, g => g.Count());
 
-                _logger.LogInformation("Loaded investigation statistics: {Count} investigations across {StatusCount} statuses", 
+                _logger.LogInformation("Loaded investigation statistics: {Count} investigations across {StatusCount} statuses",
                     response.TotalInvestigations, response.InvestigationsByStatus.Count);
             }
         }
@@ -202,7 +200,7 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<
                     .GroupBy(i => i.Status?.Name ?? "Unknown")
                     .ToDictionary(g => g.Key, g => g.Count());
 
-                _logger.LogInformation("Loaded interview statistics: {Count} interviews across {StatusCount} statuses", 
+                _logger.LogInformation("Loaded interview statistics: {Count} interviews across {StatusCount} statuses",
                     response.TotalInterviews, response.InterviewsByStatus.Count);
             }
         }
@@ -234,7 +232,7 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<
                     .GroupBy(m => m.Type ?? "Unknown")
                     .ToDictionary(g => g.Key, g => g.Count());
 
-                _logger.LogInformation("Loaded mitigation statistics: {Count} mitigations across {StatusCount} statuses", 
+                _logger.LogInformation("Loaded mitigation statistics: {Count} mitigations across {StatusCount} statuses",
                     response.TotalMitigations, response.MitigationsByStatus.Count);
             }
         }
@@ -352,7 +350,7 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<
         {
             // Calculate items completed this month
             var thisMonth = DateTime.UtcNow.ToString("yyyy-MM");
-            response.ItemsCompletedThisMonth = 
+            response.ItemsCompletedThisMonth =
                 (response.ReportsByStatus.GetValueOrDefault("Completed", 0) +
                  response.ReportsByStatus.GetValueOrDefault("Closed", 0) +
                  response.HazardsByStatus.GetValueOrDefault("Closed", 0) +
@@ -361,19 +359,19 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<
                  response.MitigationsByStatus.GetValueOrDefault("Completed", 0));
 
             // Estimate average processing days (simplified calculation)
-            var totalActiveItems = 
+            var totalActiveItems =
                 response.ReportsByStatus.Where(kvp => kvp.Key != "Completed" && kvp.Key != "Closed").Sum(kvp => kvp.Value) +
                 response.HazardsByStatus.Where(kvp => kvp.Key != "Closed").Sum(kvp => kvp.Value);
 
             response.AverageProcessingDays = totalActiveItems > 0 ? 15.5 : 0; // Placeholder calculation
 
             // Calculate overdue items (simplified - items in progress for more than 30 days)
-            response.ItemsOverdue = 
+            response.ItemsOverdue =
                 response.ReportsByStatus.GetValueOrDefault("In Progress", 0) / 3 + // Estimate
                 response.HazardsByStatus.GetValueOrDefault("Under Review", 0) / 2 +
                 response.RiskAssessmentsByStatus.GetValueOrDefault("In Progress", 0) / 2;
 
-            _logger.LogInformation("Cross-entity analytics calculated - Completed this month: {Completed}, Overdue: {Overdue}", 
+            _logger.LogInformation("Cross-entity analytics calculated - Completed this month: {Completed}, Overdue: {Overdue}",
                 response.ItemsCompletedThisMonth, response.ItemsOverdue);
         }
         catch (Exception ex)

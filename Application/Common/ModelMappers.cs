@@ -1,5 +1,4 @@
 using SMS_Application.Messaging.Queries;
-using Domain.Models;
 
 namespace SMS_Application.Common;
 
@@ -14,7 +13,7 @@ public static class ModelMappers
     /// </summary>
     public static SMS_Application.Messaging.Queries.SMSAuditExecutionDashboard ToApplicationModel(this Domain.Models.SMSAuditExecutionDashboard domainModel)
     {
-        if (domainModel == null) 
+        if (domainModel == null)
             return new SMS_Application.Messaging.Queries.SMSAuditExecutionDashboard();
 
         return new SMS_Application.Messaging.Queries.SMSAuditExecutionDashboard
@@ -26,26 +25,26 @@ public static class ModelMappers
             CompletedAudits = domainModel.AuditsCompleted,
             OverdueAudits = domainModel.AuditsOverdue,
             CancelledAudits = domainModel.AuditsCancelled,
-            
+
             // Findings Summary - direct mapping
             TotalFindings = domainModel.TotalFindings,
             CriticalFindings = domainModel.CriticalFindings,
             MajorFindings = domainModel.MajorFindings,
             MinorFindings = domainModel.MinorFindings,
             Observations = domainModel.Observations,
-            
+
             // Performance Metrics - convert types as needed
             AverageAuditDuration = (decimal)domainModel.AverageAuditDurationHours,
             OnTimeCompletionRate = (decimal)domainModel.OnTimeCompletionRate,
-            FindingClosureRate = domainModel.FindingsResolved > 0 ? 
+            FindingClosureRate = domainModel.FindingsResolved > 0 ?
                 (decimal)(domainModel.FindingsResolved / (double)domainModel.TotalFindings * 100) : 0,
-            
+
             // Breakdowns - direct mapping
             AuditsByType = domainModel.AuditsByType ?? new(),
             AuditsByDepartment = domainModel.AuditsByDepartment ?? new(),
             AuditsByAuditor = new(), // Not in domain model, initialize empty
             FindingsByType = new(), // Not in domain model, initialize empty
-            
+
             // Activity data - map from domain model collections
             RecentActivities = domainModel.RecentActivities?.Select(ra => new SMSAuditActivitySummary
             {
@@ -56,7 +55,7 @@ public static class ModelMappers
                 ActivityDate = ra.ActivityDate,
                 ActivityBy = ra.ResponsiblePerson
             }).ToList() ?? new(),
-            
+
             OverdueItems = new(), // Would need mapping if domain model had this
             UpcomingAudits = new() // Would need mapping if domain model had this
         };

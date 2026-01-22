@@ -1,12 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-using Radzen;
-using Radzen.Blazor;
-
 namespace SMS3.Components.Pages.Listings;
 
 public partial class HazardListing : ComponentBase
@@ -63,10 +54,10 @@ public partial class HazardListing : ComponentBase
             await LoadInitialData();
 
             var query = hazards.AsQueryable();
-            
+
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
-                query = args.OrderBy.Contains("desc") 
+                query = args.OrderBy.Contains("desc")
                     ? query.OrderByDescending(GetPropertyExpression(args.OrderBy.Replace(" desc", "")))
                     : query.OrderBy(GetPropertyExpression(args.OrderBy));
             }
@@ -254,13 +245,13 @@ public partial class HazardListing : ComponentBase
                                     (1 > 0 ? "??  WARNING: This hazard has associated details that may also be affected.\n\n" : "") +
                                     "?? This action cannot be undone!";
 
-            var confirmed = await DialogService.Confirm(confirmationMessage,"Confirm Delete Hazard",
+            var confirmed = await DialogService.Confirm(confirmationMessage, "Confirm Delete Hazard",
                 new ConfirmOptions()
                 {
                     OkButtonText = "Yes, Delete Hazard",
                     CancelButtonText = "Cancel",
                     AutoFocusFirstElement = false
-                } );
+                });
 
             if (confirmed == true)
             {

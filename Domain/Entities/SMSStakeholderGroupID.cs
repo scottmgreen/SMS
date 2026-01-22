@@ -1,5 +1,3 @@
-using SMS_Domain.Common;
-
 namespace SMS_Domain.Entities;
 
 /// <summary>
@@ -9,5 +7,5 @@ public sealed class SMSStakeholderGroupID : BaseUserID
 {
     public SMSStakeholderGroupID(string id) : base(id) { }
 
-       
+
 }

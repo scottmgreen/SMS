@@ -1,9 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Queries;
-using SMS_Shared.Common;
-using SMS_Domain.Enums;
-using SMS_Domain.Entities;
 using System.ComponentModel.DataAnnotations;
 
 namespace SMS3.Components.Pages;
@@ -39,7 +33,7 @@ public partial class Login : ComponentBase
                 // Set authentication in service
                 AuthService.SetAuthentication(user, userType);
                 Logger.LogInformation("Authentication set in service for user: {Username}", model.Username);
-                
+
                 // Navigate to dashboard
                 Navigation.NavigateTo("/");
             }

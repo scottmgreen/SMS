@@ -1,7 +1,4 @@
-﻿
-using SMS_Shared.Common;
-
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 namespace SMS_Domain.Common;
 
@@ -15,13 +12,13 @@ where TEntity : class
     private readonly string _logheader = "BaseDataService";
     public string LogHeader => _logheader;
     public ILogger<TEntity> Logger => _logger;
-   // private UserDetails UserDetails { get; set; }
+    // private UserDetails UserDetails { get; set; }
     private IConfiguration _configuration;
     private readonly IServiceScopeFactory _serviceScopeFactory;
-    
-    
+
+
     protected IConfiguration Configuration => _configuration;
-    
+
 
     public BaseDataService(ILogger<TEntity> logger, IServiceScopeFactory serviceScopeFactory, IConfiguration configuration)
     {
@@ -33,8 +30,8 @@ where TEntity : class
         //    UserDetails = userDetailsFactory.GetUserDetails();
         //}
         //this._logheader = LogSupport.GenerateLogHeader(UserDetails);
-        
-        
+
+
         this._configuration = configuration;
 
     }

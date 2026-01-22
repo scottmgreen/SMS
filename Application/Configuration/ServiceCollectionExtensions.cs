@@ -12,15 +12,15 @@ internal static class ServiceCollectionExtensions
     {
         // Core mediator service
         services.AddTransient<IMediator, Mediator>();
-        
+
         // Register all command/query handlers  
         services.Register(typeof(IRequestHandler<,>), LifeTime.Scoped);
-        
+
         // 🔥 NEW: Register pipelines in execution order (AuditFieldsPipeline runs FIRST)
         services.AddTransient(typeof(IPipeline<,>), typeof(AuditFieldsPipeline<,>)); // First - set audit fields
         services.AddTransient(typeof(IPipeline<,>), typeof(LoggingPipeline<,>));     // Second - log execution
         services.AddTransient(typeof(IPipeline<,>), typeof(AuditLogPipeline<,>));    // Third - audit logging
-        
+
         return services;
     }
 
@@ -71,28 +71,28 @@ internal static class ServiceCollectionExtensions
         Scoped
     }
 }
-        //// Register Application Services
-        //services.AddScoped<IAirportSharedDatasetService, AirportSharedDatasetService>();
-        //services.AddScoped<IHazardService, HazardService>();
-        //services.AddScoped<IInterviewService, InterviewService>();
-        //services.AddScoped<IInvestigationService, InvestigationService>();
-        //services.AddScoped<IMitigationAssignmentService, MitigationAssignmentService>();
-        //services.AddScoped<IMitigationService, MitigationService>();
-        //services.AddScoped<IReportService, ReportService>();
-        //services.AddScoped<IReportValidationService, ReportValidationService>();
-        //services.AddScoped<IRiskAnalysisService, RiskAnalysisService>();
-        //services.AddScoped<IRiskAssessmentService, RiskAssessmentService>();
-        //services.AddScoped<IScoringPanelService, ScoringPanelService>();
-        //services.AddScoped<ISystemService, SystemService>();
+//// Register Application Services
+//services.AddScoped<IAirportSharedDatasetService, AirportSharedDatasetService>();
+//services.AddScoped<IHazardService, HazardService>();
+//services.AddScoped<IInterviewService, InterviewService>();
+//services.AddScoped<IInvestigationService, InvestigationService>();
+//services.AddScoped<IMitigationAssignmentService, MitigationAssignmentService>();
+//services.AddScoped<IMitigationService, MitigationService>();
+//services.AddScoped<IReportService, ReportService>();
+//services.AddScoped<IReportValidationService, ReportValidationService>();
+//services.AddScoped<IRiskAnalysisService, RiskAnalysisService>();
+//services.AddScoped<IRiskAssessmentService, RiskAssessmentService>();
+//services.AddScoped<IScoringPanelService, ScoringPanelService>();
+//services.AddScoped<ISystemService, SystemService>();
 
-        //// Register SMS User Management Services
-        //services.AddScoped<ISMSApplicationUserService, SMSApplicationUserService>();
-        //services.AddScoped<ISMSOrganizationalUserService, SMSOrganizationalUserService>();
-        //services.AddScoped<ISMSStakeholderUserService, SMSStakeholderUserService>();
-        //services.AddScoped<ISMSRoleService, SMSRoleService>();
-        //services.AddScoped<ISMSWorkflowService, SMSWorkflowService>();
-        //services.AddScoped<ISMSAuthorizationService, SMSAuthorizationService>();
+//// Register SMS User Management Services
+//services.AddScoped<ISMSApplicationUserService, SMSApplicationUserService>();
+//services.AddScoped<ISMSOrganizationalUserService, SMSOrganizationalUserService>();
+//services.AddScoped<ISMSStakeholderUserService, SMSStakeholderUserService>();
+//services.AddScoped<ISMSRoleService, SMSRoleService>();
+//services.AddScoped<ISMSWorkflowService, SMSWorkflowService>();
+//services.AddScoped<ISMSAuthorizationService, SMSAuthorizationService>();
 
-        //// Register Messaging Services
-        //services.AddScoped<MediatorService>();
-        //services.AddScoped<MessengerService>();
+//// Register Messaging Services
+//services.AddScoped<MediatorService>();
+//services.AddScoped<MessengerService>();

@@ -1,6 +1,4 @@
-﻿using System.Text.RegularExpressions;
-
-namespace SMS_Domain.ValueObjects;
+﻿namespace SMS_Domain.ValueObjects;
 
 public sealed class URL : BaseValueObject
 {
@@ -8,7 +6,7 @@ public sealed class URL : BaseValueObject
     /// The URL maximum and minimum length.
     /// </summary>
     //public const int RequiredLength = 7;
-    
+
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UPID"/> class.

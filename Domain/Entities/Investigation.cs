@@ -1,6 +1,4 @@
-﻿using SMS_Shared.Common;
-
-namespace SMS_Domain.Entities;
+﻿namespace SMS_Domain.Entities;
 
 /// <summary>
 /// Investigation Domain Entity
@@ -12,7 +10,7 @@ public sealed class Investigation : BaseAuditableEntity
     public Investigation(InvestigationID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
 
     // Simple constructor pattern as requested
-    private Investigation(InvestigationID id, string code) : base(id, "SYSTEM", DateTime.UtcNow) 
+    private Investigation(InvestigationID id, string code) : base(id, "SYSTEM", DateTime.UtcNow)
     {
         Code = code;
     }
@@ -44,10 +42,10 @@ public sealed class Investigation : BaseAuditableEntity
     //    // Validate required parameters
     //    if (string.IsNullOrWhiteSpace(code))
     //        throw new ArgumentException("Investigation code is required", nameof(code));
-        
+
     //    if (string.IsNullOrWhiteSpace(hazardCode))
     //        throw new ArgumentException("HazardCode is required and cannot be null", nameof(hazardCode));
-        
+
     //    if (string.IsNullOrWhiteSpace(assignedInvestigatorId))
     //        throw new ArgumentException("Assigned investigator ID is required", nameof(assignedInvestigatorId));
 

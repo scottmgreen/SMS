@@ -1,13 +1,4 @@
 using Microsoft.Extensions.Logging;
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Services;
-using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Domain.ValueObjects;
-using SMS_Infrastructure.Services;
-using SMS_Shared.Common;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 
@@ -186,7 +177,7 @@ public class AssignRoleToUserCommandHandler : BaseCommandBundle, IRequestHandler
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing AssignRoleToUserCommand - User: {UserId}, Role: {RoleCode}", 
+            _logger.LogInformation("Processing AssignRoleToUserCommand - User: {UserId}, Role: {RoleCode}",
                 request.UserId, request.RoleCode);
 
             // Create a new user role assignment
@@ -202,7 +193,7 @@ public class AssignRoleToUserCommandHandler : BaseCommandBundle, IRequestHandler
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully assigned role {RoleCode} to user {UserId}", 
+                _logger.LogInformation("Successfully assigned role {RoleCode} to user {UserId}",
                     request.RoleCode, request.UserId);
             }
             else
@@ -325,7 +316,7 @@ public class ActivateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHand
             }
 
             var userRole = userRoleResult.Value;
-            
+
             // Note: You'll need to add activation logic to your domain model
             // userRole.Activate(request.ActivatedBy);
 
@@ -387,7 +378,7 @@ public class DeactivateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHa
             }
 
             var userRole = userRoleResult.Value;
-            
+
             // Note: You'll need to add deactivation logic to your domain model
             // userRole.Deactivate(request.DeactivatedBy, request.DeactivationReason);
 

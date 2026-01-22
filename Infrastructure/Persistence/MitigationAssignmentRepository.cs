@@ -1,10 +1,7 @@
-﻿using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Domain.ValueObjects;
-using SMS_Infrastructure.Common;
+﻿using SMS_Domain.Errors;
+
 using SMS_Infrastructure.Interfaces;
-using Microsoft.Data.SqlClient;
-using System.Data;
+
 using static SMS_Domain.Errors.DomainErrors;
 
 namespace SMS_Infrastructure.Persistence;
@@ -58,7 +55,7 @@ public sealed class MitigationAssignmentRepository : BaseRepository<MitigationAs
 
             int newIdValue = (int)newID.Value;
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
-            MitigationAssignmentID mitigationAssignmentId = new (newCodeValue);
+            MitigationAssignmentID mitigationAssignmentId = new(newCodeValue);
 
             return await GetMitigationAssignmentByIdAsync(mitigationAssignmentId, ct).ConfigureAwait(false);
         }
@@ -204,7 +201,7 @@ public sealed class MitigationAssignmentRepository : BaseRepository<MitigationAs
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId,id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

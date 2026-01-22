@@ -1,8 +1,4 @@
-﻿using SMS_Domain.Common;
-using SMS_Shared.Common;
-using SMS_Domain.Errors;
-
-namespace SMS_Domain.ValueObjects;
+﻿namespace SMS_Domain.ValueObjects;
 
 /// <summary>
 /// Application permissions for SMS Application Users
@@ -17,7 +13,7 @@ namespace SMS_Domain.ValueObjects;
 //    public bool CanAccessCommittees { get; }
 //    public bool CanAccessUserManagement { get; }
 //    public bool CanAccessSystemSettings { get; }
-    
+
 //    // Feature Permissions
 //    public bool CanCreateReports { get; }
 //    public bool CanEditReports { get; }
@@ -27,7 +23,7 @@ namespace SMS_Domain.ValueObjects;
 //    public bool CanManageUsers { get; }
 //    public bool CanManageRoles { get; }
 //    public bool CanConfigureSystem { get; }
-    
+
 //    // Administrative Permissions
 //    public bool CanViewAuditLogs { get; }
 //    public bool CanManageBackups { get; }

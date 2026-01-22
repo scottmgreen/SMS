@@ -1,12 +1,4 @@
-using System.Reflection.Emit;
-
 using Microsoft.Extensions.Logging;
-
-using SMS_Domain.Entities;
-
-using SMS_Infrastructure.Services;
-
-using SMS_Shared.Common;
 
 namespace SMS_Application.Services;
 
@@ -229,7 +221,7 @@ public sealed class AirportSharedDatasetService
                 .Where(d => d.ReportCode.Equals(reportId, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
-            _logger.LogInformation("Found {Count} Airport Shared Datasets for Report ID: {ReportId}", 
+            _logger.LogInformation("Found {Count} Airport Shared Datasets for Report ID: {ReportId}",
                 filteredDatasets.Count, reportId);
 
             return Result<List<AirportSharedDataset>>.Success(filteredDatasets);
@@ -267,7 +259,7 @@ public sealed class AirportSharedDatasetService
                 .Where(d => d.HazardCode.Equals(hazardCode, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
-            _logger.LogInformation("Found {Count} Airport Shared Datasets for Hazard Code: {HazardCode}", 
+            _logger.LogInformation("Found {Count} Airport Shared Datasets for Hazard Code: {HazardCode}",
                 filteredDatasets.Count, hazardCode);
 
             return Result<List<AirportSharedDataset>>.Success(filteredDatasets);
@@ -306,17 +298,17 @@ public sealed class AirportSharedDatasetService
                 validationErrors.Add("SharedNarrative is required for SMS compliance reporting");
 
             // Business rule validations
-            if (!string.IsNullOrWhiteSpace(dataset.PrivateNarrative) && 
+            if (!string.IsNullOrWhiteSpace(dataset.PrivateNarrative) &&
                 dataset.PrivateNarrative.Length > 4000)
                 validationErrors.Add("PrivateNarrative exceeds maximum length (4000 characters)");
 
-            if (!string.IsNullOrWhiteSpace(dataset.SharedNarrative) && 
+            if (!string.IsNullOrWhiteSpace(dataset.SharedNarrative) &&
                 dataset.SharedNarrative.Length > 4000)
                 validationErrors.Add("SharedNarrative exceeds maximum length (4000 characters)");
 
             if (validationErrors.Any())
             {
-                _logger.LogWarning("Dataset validation failed for Code: {Code}. Errors: {Errors}", 
+                _logger.LogWarning("Dataset validation failed for Code: {Code}. Errors: {Errors}",
                     dataset.Code, string.Join(", ", validationErrors));
                 return Result<bool>.Failure<bool>(DomainErrors.AirportSharedDatasetError.InvalidNarrative);
             }

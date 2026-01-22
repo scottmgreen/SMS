@@ -1,5 +1,3 @@
-using SMS_Domain.Common;
-
 namespace Domain.Entities;
 
 /// <summary>

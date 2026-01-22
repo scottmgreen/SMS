@@ -1,6 +1,4 @@
-﻿using SMS_Shared.Common;
-
-namespace SMS_Domain.Entities;
+﻿namespace SMS_Domain.Entities;
 
 /// <summary>
 /// Mitigation Domain Entity - Comprehensive implementation matching tbld_Mitigations schema
@@ -9,12 +7,12 @@ namespace SMS_Domain.Entities;
 public sealed class Mitigation : BaseAuditableEntity
 {
     #region Constructors
-    
+
     // Constructor for Entity Framework
     private Mitigation() : base(new MitigationID(Guid.NewGuid().ToString()), "SYSTEM", DateTime.UtcNow) { }
 
     // Public constructor following domain pattern
-    public Mitigation(MitigationID id) : base(id, "SYSTEM", DateTime.UtcNow) 
+    public Mitigation(MitigationID id) : base(id, "SYSTEM", DateTime.UtcNow)
     {
         // Set default values to match database defaults
         Status = "Proposed";
@@ -311,7 +309,7 @@ public sealed class Mitigation : BaseAuditableEntity
         Status = "Approved";
         ApprovedBy = approvedBy;
         ApprovedDate = DateTime.UtcNow;
-        
+
         if (!string.IsNullOrEmpty(notes))
         {
             Notes = string.IsNullOrEmpty(Notes) ? notes : $"{Notes}\n\nApproval Notes: {notes}";
@@ -328,12 +326,12 @@ public sealed class Mitigation : BaseAuditableEntity
         Status = "Completed";
         Progress = 100;
         CompletionDate = DateTime.UtcNow;
-        
+
         if (!string.IsNullOrEmpty(completedBy))
         {
             ProgressUpdatedBy = completedBy;
         }
-        
+
         if (!string.IsNullOrEmpty(notes))
         {
             ProgressNotes = notes;
@@ -356,7 +354,7 @@ public sealed class Mitigation : BaseAuditableEntity
 
         Status = "Cancelled";
         Notes = string.IsNullOrEmpty(Notes) ? $"Cancelled: {reason}" : $"{Notes}\n\nCancelled: {reason}";
-        
+
         if (!string.IsNullOrEmpty(cancelledBy))
         {
             ProgressUpdatedBy = cancelledBy;
@@ -372,9 +370,9 @@ public sealed class Mitigation : BaseAuditableEntity
     /// </summary>
     public bool IsOverdue()
     {
-        return TargetDate.HasValue && 
-               TargetDate < DateTime.UtcNow && 
-               Status != "Completed" && 
+        return TargetDate.HasValue &&
+               TargetDate < DateTime.UtcNow &&
+               Status != "Completed" &&
                Status != "Cancelled";
     }
 

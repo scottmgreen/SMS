@@ -1,5 +1,3 @@
-using System;
-
 namespace Domain.Models;
 
 /// <summary>
@@ -12,132 +10,132 @@ public class SMSAuditExecutionDashboard
     /// Date range for the dashboard data
     /// </summary>
     public DateTime StartDate { get; set; }
-    
+
     /// <summary>
     /// End date for the dashboard data
     /// </summary>
     public DateTime EndDate { get; set; }
-    
+
     /// <summary>
     /// Total number of audit plans in the period
     /// </summary>
     public int TotalAuditPlans { get; set; }
-    
+
     /// <summary>
     /// Total number of audits scheduled
     /// </summary>
     public int TotalAuditsScheduled { get; set; }
-    
+
     /// <summary>
     /// Number of audits completed
     /// </summary>
     public int AuditsCompleted { get; set; }
-    
+
     /// <summary>
     /// Number of audits currently in progress
     /// </summary>
     public int AuditsInProgress { get; set; }
-    
+
     /// <summary>
     /// Number of audits that are overdue
     /// </summary>
     public int AuditsOverdue { get; set; }
-    
+
     /// <summary>
     /// Number of audits cancelled
     /// </summary>
     public int AuditsCancelled { get; set; }
-    
+
     /// <summary>
     /// Total number of findings discovered
     /// </summary>
     public int TotalFindings { get; set; }
-    
+
     /// <summary>
     /// Number of critical findings
     /// </summary>
     public int CriticalFindings { get; set; }
-    
+
     /// <summary>
     /// Number of major findings
     /// </summary>
     public int MajorFindings { get; set; }
-    
+
     /// <summary>
     /// Number of minor findings
     /// </summary>
     public int MinorFindings { get; set; }
-    
+
     /// <summary>
     /// Number of observations (non-finding items)
     /// </summary>
     public int Observations { get; set; }
-    
+
     /// <summary>
     /// Number of findings resolved
     /// </summary>
     public int FindingsResolved { get; set; }
-    
+
     /// <summary>
     /// Number of findings still open
     /// </summary>
     public int FindingsOpen { get; set; }
-    
+
     /// <summary>
     /// Number of findings overdue for resolution
     /// </summary>
     public int FindingsOverdue { get; set; }
-    
+
     /// <summary>
     /// Average time to resolve findings (in days)
     /// </summary>
     public double AverageResolutionTimeDays { get; set; }
-    
+
     /// <summary>
     /// Percentage of audits completed on time
     /// </summary>
     public double OnTimeCompletionRate { get; set; }
-    
+
     /// <summary>
     /// Average audit duration in hours
     /// </summary>
     public double AverageAuditDurationHours { get; set; }
-    
+
     /// <summary>
     /// Number of pieces of evidence collected
     /// </summary>
     public int TotalEvidence { get; set; }
-    
+
     /// <summary>
     /// Number of evidence items verified
     /// </summary>
     public int EvidenceVerified { get; set; }
-    
+
     /// <summary>
     /// Number of evidence items archived
     /// </summary>
     public int EvidenceArchived { get; set; }
-    
+
     /// <summary>
     /// Breakdown by audit type
     /// </summary>
     public Dictionary<string, int> AuditsByType { get; set; } = new();
-    
+
     /// <summary>
     /// Breakdown by department
     /// </summary>
     public Dictionary<string, int> AuditsByDepartment { get; set; } = new();
-    
+
     /// <summary>
     /// Monthly trend data for charts
     /// </summary>
     public List<AuditTrendData> MonthlyTrends { get; set; } = new();
-    
+
     /// <summary>
     /// Top performing auditors
     /// </summary>
     public List<AuditorPerformanceData> TopAuditors { get; set; } = new();
-    
+
     /// <summary>
     /// Recent audit activities
     /// </summary>

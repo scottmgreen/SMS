@@ -9,5 +9,5 @@ public sealed class RiskAnalysis : BaseAuditableEntity
     public string? RiskAssessmentCode { get; set; }
     public string? WorstCredibleOutcome { get; set; }
     public string? RootCause { get; set; }
-    public string? AdditionalComments { get; set; } 
+    public string? AdditionalComments { get; set; }
 }

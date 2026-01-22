@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 
-using Radzen;
-
 using SMS_Application.Configuration;
 
 using SMS_Infrastructure.Configuration;
@@ -28,12 +26,12 @@ public class Program
         builder.Services.AddScoped<ApiKeyAuthenticationFilter>();
         // Register authentication service as singleton
         builder.Services.AddSingleton<AuthenticationService>();
-        
+
         // Register SMS Services
         builder.Services.AddSharedServices(builder.Configuration);
         builder.Services.AddInfrastructureServices(builder.Configuration);
         builder.Services.AddApplicationServices();
-        
+
         // SMS Session Management
         builder.Services.ConfigureSMSSession();
 
@@ -107,7 +105,7 @@ public class Program
 
         app.UseAntiforgery();
 
-        
+
 
         // ============================================================================
         // CONFIDENTIAL REPORTING MINIMAL API - FOR EXTERNAL SYSTEMS
@@ -259,7 +257,7 @@ public class Program
                 return Results.Problem("An error occurred while processing the confidential report");
             }
         })
-        .AddEndpointFilter<ApiKeyAuthenticationFilter>() 
+        .AddEndpointFilter<ApiKeyAuthenticationFilter>()
         .WithName("SubmitConfidentialReport")
         .WithTags("ConfidentialReporting")
         .WithSummary("Submit a confidential safety report from external systems")

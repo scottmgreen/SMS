@@ -1,6 +1,3 @@
-using SMS_Domain.Common;
-using SMS_Domain.ValueObjects;
-
 namespace SMS_Domain.Entities;
 
 /// <summary>
@@ -20,7 +17,7 @@ public sealed class SMSOrganizationalUser : BaseUser
     /// </summary>
     public string OrganizationLevel { get; set; } = string.Empty;
 
-    
+
     public string? SMSRole { get; set; }
 
     /// <summary>

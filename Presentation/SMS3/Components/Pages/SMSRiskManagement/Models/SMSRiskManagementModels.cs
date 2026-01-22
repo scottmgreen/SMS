@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Components.Forms;
-
 namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 
 /// <summary>
@@ -62,7 +60,7 @@ public class DropdownOption
 {
     public string Value { get; set; } = string.Empty;
     public string Text { get; set; } = string.Empty;
-    
+
     public DropdownOption() { }
     public DropdownOption(string value, string text)
     {
@@ -97,7 +95,7 @@ public class ConfidentialDropdownOption
 {
     public string Value { get; set; } = string.Empty;
     public string Text { get; set; } = string.Empty;
-    
+
     public ConfidentialDropdownOption() { }
     public ConfidentialDropdownOption(string value, string text)
     {

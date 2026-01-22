@@ -1,7 +1,3 @@
-using SMS_Domain.Entities;
-using SMS_Domain.Models;
-using SMS_Shared.Common;
-
 namespace SMS_Infrastructure.Interfaces;
 
 /// <summary>
@@ -31,7 +27,7 @@ public interface IHazardFileDataService
         bool includeConfidential = false,
         int maxResults = 100,
         CancellationToken ct = default);
-    
+
     Task<Result<IEnumerable<HazardFile>>> GetHazardPhotosAsync(string hazardCode, CancellationToken ct = default);
     Task<Result<IEnumerable<HazardFile>>> GetHazardDocumentsAsync(string hazardCode, CancellationToken ct = default);
     Task<Result<IEnumerable<HazardFile>>> GetHazardVideosAsync(string hazardCode, CancellationToken ct = default);

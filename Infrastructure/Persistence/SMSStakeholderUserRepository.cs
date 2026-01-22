@@ -1,12 +1,7 @@
-using SMS_Domain.Entities;
 using SMS_Domain.Errors;
 using SMS_Domain.Interfaces;
-using SMS_Infrastructure.Common;
+
 using SMS_Infrastructure.Interfaces;
-using SMS_Shared.Common;
-using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Logging;
-using System.Data;
 
 namespace SMS_Infrastructure.Persistence;
 
@@ -74,16 +69,16 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
                 {
                     var permission = Mappers.MapToSMSUserRolePermission(reader);
                     var roleCode = permission.SMSUserRoleCode;
-                    
+
                     if (!userRolePermissions.ContainsKey(roleCode))
                     {
                         userRolePermissions[roleCode] = new List<SMSUserRolePermission>();
                     }
-                    
+
                     // Check for duplicates before adding
                     var existingPermission = userRolePermissions[roleCode]
                         .FirstOrDefault(p => p.SMSModule == permission.SMSModule);
-                    
+
                     if (existingPermission == null)
                     {
                         userRolePermissions[roleCode].Add(permission);
@@ -100,7 +95,7 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
                 if (!string.IsNullOrWhiteSpace(user.UserRole?.Code))
                 {
                     var userRoleCode = user.UserRole.Code.Trim();
-                    
+
                     // Get the role for this user
                     if (userRoles.TryGetValue(userRoleCode, out var userRole))
                     {
@@ -920,16 +915,16 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
                 {
                     var permission = Mappers.MapToSMSUserRolePermission(reader);
                     var roleCode = permission.SMSUserRoleCode.Trim();
-                    
+
                     if (!userRolePermissions.ContainsKey(roleCode))
                     {
                         userRolePermissions[roleCode] = new List<SMSUserRolePermission>();
                     }
-                    
+
                     // Check for duplicates before adding
                     var existingPermission = userRolePermissions[roleCode]
                         .FirstOrDefault(p => p.SMSModule == permission.SMSModule);
-                    
+
                     if (existingPermission == null)
                     {
                         userRolePermissions[roleCode].Add(permission);

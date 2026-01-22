@@ -1,11 +1,3 @@
-using Microsoft.Extensions.Logging;
-using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Infrastructure.Common;
-using SMS_Infrastructure.Persistence;
-using SMS_Shared.Common;
-using System.Data;
-
 namespace SMS_Infrastructure.Services;
 
 /// <summary>
@@ -29,7 +21,7 @@ public class SafetyPerformanceIndicatorDataService : BaseDataService<SafetyPerfo
         _logheader = base.LogHeader;
         _repo = repo;
 
-        _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent,$"{_logheader} {repo.GetType().Name}");
+        _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent, $"{_logheader} {repo.GetType().Name}");
     }
 
     /// <summary>

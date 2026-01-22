@@ -1,8 +1,3 @@
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Shared.Common;
-
 namespace SMS_Application.Messaging.Commands;
 
 /// <summary>
@@ -122,7 +117,7 @@ public class UpdateSMSAuditCommand : BaseCommandBundle, IRequest<Result<SMSAudit
     //public DateTime UpdatedDate { get; set; }
 
     public UpdateSMSAuditCommand(SMSAudit audit)
-    {  this.Audit = audit; }    
+    { this.Audit = audit; }
     //{
     //    Code = code ?? throw new ArgumentNullException(nameof(code));
     //    Name = name ?? throw new ArgumentNullException(nameof(name));

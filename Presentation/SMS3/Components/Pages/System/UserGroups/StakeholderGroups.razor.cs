@@ -1,14 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using Radzen;
-using Radzen.Blazor;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Shared.Common;
-
 namespace SMS3.Components.Pages.System.UserGroups;
 
 public partial class StakeholderGroups : ComponentBase
@@ -102,18 +91,18 @@ public partial class StakeholderGroups : ComponentBase
             // Load Stakeholder Groups
             var groupsQuery = new GetAllSMSStakeholderGroupsQuery();
             var groupsResult = await Mediator.SendAsync(groupsQuery, CancellationToken.None);
-            SMSStakeholderGroups = groupsResult.IsSuccess ? 
-                groupsResult.Value?.ToList() ?? new List<SMSStakeholderGroup>() : 
+            SMSStakeholderGroups = groupsResult.IsSuccess ?
+                groupsResult.Value?.ToList() ?? new List<SMSStakeholderGroup>() :
                 new List<SMSStakeholderGroup>();
 
             // Load Stakeholder Users for potential group assignments
             var usersQuery = new GetAllSMSStakeholderUsersQuery();
             var usersResult = await Mediator.SendAsync(usersQuery, CancellationToken.None);
-            SMSStakeholderUsers = usersResult.IsSuccess ? 
-                usersResult.Value?.ToList() ?? new List<SMSStakeholderUser>() : 
+            SMSStakeholderUsers = usersResult.IsSuccess ?
+                usersResult.Value?.ToList() ?? new List<SMSStakeholderUser>() :
                 new List<SMSStakeholderUser>();
 
-            Logger.LogInformation("Loaded {GroupCount} stakeholder groups and {UserCount} stakeholder users", 
+            Logger.LogInformation("Loaded {GroupCount} stakeholder groups and {UserCount} stakeholder users",
                 SMSStakeholderGroups.Count, SMSStakeholderUsers.Count);
         }
         catch (Exception ex)
@@ -139,7 +128,7 @@ public partial class StakeholderGroups : ComponentBase
         {
             var getGroupQuery = new GetSMSStakeholderGroupByCodeQuery(groupCode);
             var groupResult = await Mediator.SendAsync(getGroupQuery, CancellationToken.None);
-            
+
             if (groupResult.IsFailure)
             {
                 ShowErrorNotification("Group not found.");
@@ -147,12 +136,12 @@ public partial class StakeholderGroups : ComponentBase
             }
 
             CurrentGroup = groupResult.Value;
-            
+
             // Set edit form values
             EditGroupName = CurrentGroup.Name ?? string.Empty;
             EditDescription = CurrentGroup.Description ?? string.Empty;
             EditIsActive = CurrentGroup.IsActive;
-            
+
             // Open edit modal
             ShowEditModal = true;
         }
@@ -298,7 +287,7 @@ public partial class StakeholderGroups : ComponentBase
             // Get existing group to pass to delete command
             var getGroupQuery = new GetSMSStakeholderGroupByCodeQuery(DeleteGroupCode);
             var groupResult = await Mediator.SendAsync(getGroupQuery, CancellationToken.None);
-            
+
             if (groupResult.IsFailure)
             {
                 ShowErrorNotification("Group not found.");
@@ -314,7 +303,7 @@ public partial class StakeholderGroups : ComponentBase
                 CloseDeleteModal();
                 await LoadDataAsync();
                 await groupsGrid?.Reload();
-                
+
                 // If we're editing the deleted group, cancel edit mode
                 if (CurrentGroup?.Code == DeleteGroupCode)
                 {
@@ -415,7 +404,7 @@ public partial class StakeholderGroups : ComponentBase
             CurrentGroup = SMSStakeholderGroups.FirstOrDefault(g => g.Code == groupCode);
 
             await LoadGroupMembersAsync(groupCode);
-            
+
             // Show modal instead of navigating
             ShowMembersModal = true;
         }
@@ -433,8 +422,8 @@ public partial class StakeholderGroups : ComponentBase
             // Get users in this group
             var groupMembersQuery = new GetSMSStakeholderUsersByGroupCodeQuery(groupCode);
             var membersResult = await Mediator.SendAsync(groupMembersQuery, CancellationToken.None);
-            GroupMembers = membersResult.IsSuccess ? 
-                membersResult.Value?.ToList() ?? new List<SMSStakeholderUser>() : 
+            GroupMembers = membersResult.IsSuccess ?
+                membersResult.Value?.ToList() ?? new List<SMSStakeholderUser>() :
                 new List<SMSStakeholderUser>();
 
             // Load available users (users not in this group)
@@ -453,13 +442,13 @@ public partial class StakeholderGroups : ComponentBase
                 SelectedUsers[user.Code] = false;
             }
 
-            Logger.LogInformation("Loaded {MemberCount} group members and {AvailableCount} available users for group {GroupCode}", 
+            Logger.LogInformation("Loaded {MemberCount} group members and {AvailableCount} available users for group {GroupCode}",
                 GroupMembers.Count, AvailableUsers.Count, groupCode);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading group members for group: {GroupCode}", groupCode);
-            
+
             // For now, if the query fails, just load empty collections
             GroupMembers = new List<SMSStakeholderUser>();
             AvailableUsers = SMSStakeholderUsers?.ToList() ?? new List<SMSStakeholderUser>();
@@ -560,7 +549,7 @@ public partial class StakeholderGroups : ComponentBase
                 if (failureCount > 0)
                     message += $" {failureCount} assignment(s) failed.";
                 ShowSuccessNotification(message);
-                
+
                 await LoadGroupMembersAsync(CurrentGroupCode);
                 StateHasChanged(); // Refresh the modal
             }

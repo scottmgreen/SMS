@@ -1,8 +1,4 @@
-﻿using SMS_Domain.Entities;
-using SMS_Domain.Interfaces;
-using SMS_Shared.Common;
-
-namespace SMS_Application.Interfaces;
+﻿namespace SMS_Application.Interfaces;
 
 public interface ISMSApplicationUserService
 {

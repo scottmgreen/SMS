@@ -52,10 +52,10 @@ public partial class HazardLocationListing : ComponentBase
             await LoadInitialData();
 
             var query = locations.AsQueryable();
-            
+
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
-                query = args.OrderBy.Contains("desc") 
+                query = args.OrderBy.Contains("desc")
                     ? query.OrderByDescending(GetPropertyExpression(args.OrderBy.Replace(" desc", "")))
                     : query.OrderBy(GetPropertyExpression(args.OrderBy));
             }

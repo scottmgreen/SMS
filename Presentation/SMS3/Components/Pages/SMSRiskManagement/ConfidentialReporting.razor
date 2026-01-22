@@ -47,14 +47,26 @@ else if (ShowFinalSuccessConfirmation)
                                 <i class="fas fa-info-circle"></i> Report Summary
                             </h6>
                             <div class="row">
-                                <div class="col-sm-6">
+                                <div class="col-sm-4">
                                     <strong>Tracking ID:</strong> @GeneratedTrackingId<br>
                                     <strong>Hazard ID:</strong> @GeneratedHazardId<br>
                                     <strong>Status:</strong> <RadzenBadge Text="Submitted" BadgeStyle="BadgeStyle.Success" />
                                 </div>
-                                <div class="col-sm-6">
+                                <div class="col-sm-4">
+                                    <div class="text-center">
+                                        <RadzenFieldset Text="Track Report URL">
+                                            <RadzenQRCode Value="@GetTrackingUrl()" Size="120" />
+                                            <div class="small text-muted mt-2">
+                                                Scan to track your report
+                                            </div>
+                                        </RadzenFieldset>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
                                     <strong>Submitted:</strong> @SubmissionDateTime?.ToString("MM/dd/yyyy HH:mm")<br>
-                                    <strong>Confidential:</strong> Yes
+                                    <strong>Confidential:</strong> Yes<br>
+                                    <strong>Tracking URL:</strong><br>
+                                    <small class="text-break">@GetTrackingUrl()</small>
                                 </div>
                             </div>
                         </div>
@@ -67,12 +79,27 @@ else if (ShowFinalSuccessConfirmation)
                         <p class="mb-0">Your confidential report has been submitted anonymously and will be reviewed by authorized SMS personnel only. Save your tracking ID for future reference.</p>
                     </RadzenAlert>
 
+                    <!-- Action Buttons -->
                     <div class="text-center">
-                        <RadzenButton ButtonStyle="ButtonStyle.Primary" 
-                                    Click="CloseFinalConfirmation" 
-                                    Text="Continue & Clear Form" 
-                                    Icon="check"
-                                    Size="ButtonSize.Medium" />
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
+                                        Click="PrintConfirmation" 
+                                        Text="Print Details" 
+                                        Icon="print"
+                                        Size="ButtonSize.Medium" />
+                            
+                            <RadzenButton ButtonStyle="ButtonStyle.Info" 
+                                        Click="CopyTrackingInfo" 
+                                        Text="Copy Tracking ID" 
+                                        Icon="copy"
+                                        Size="ButtonSize.Medium" />
+                            
+                            <RadzenButton ButtonStyle="ButtonStyle.Primary" 
+                                        Click="CloseFinalConfirmation" 
+                                        Text="Continue & Clear Form" 
+                                        Icon="check"
+                                        Size="ButtonSize.Medium" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1062,3 +1089,135 @@ else
 <!-- Leaflet.js JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<!-- Print functionality -->
+<script>
+    // Function to generate QR code as data URL
+    window.generateQRCodeDataUrl = async function(url) {
+        return new Promise((resolve, reject) => {
+            try {
+                // Create a temporary canvas
+                const canvas = document.createElement('canvas');
+                canvas.width = 150;
+                canvas.height = 150;
+                
+                // Load QR code library if not already loaded
+                if (!window.QRCode) {
+                    // Load QR code library dynamically
+                    const script = document.createElement('script');
+                    script.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
+                    script.onload = function() {
+                        generateQR();
+                    };
+                    script.onerror = function() {
+                        resolve(''); // Return empty string on failure
+                    };
+                    document.head.appendChild(script);
+                } else {
+                    generateQR();
+                }
+                
+                function generateQR() {
+                    try {
+                        QRCode.toCanvas(canvas, url, {
+                            width: 150,
+                            height: 150,
+                            margin: 2,
+                            color: {
+                                dark: '#212e61',
+                                light: '#ffffff'
+                            }
+                        }, function (error) {
+                            if (error) {
+                                console.error('QR Code generation error:', error);
+                                resolve(''); // Return empty string on error
+                            } else {
+                                // Convert canvas to data URL
+                                const dataUrl = canvas.toDataURL('image/png');
+                                resolve(dataUrl);
+                            }
+                        });
+                    } catch (e) {
+                        console.error('QR Code generation exception:', e);
+                        resolve(''); // Return empty string on exception
+                    }
+                }
+            } catch (e) {
+                console.error('QR Code setup error:', e);
+                resolve(''); // Return empty string on setup error
+            }
+        });
+    };
+
+    // Enhanced print function that waits for QR code generation
+    window.printContentWithQR = function(htmlContent) {
+        // Create a new window for printing
+        const printWindow = window.open('', '_blank', 'width=800,height=900');
+        
+        // Write the HTML content
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+        
+        // Wait for content to load, then wait for QR code generation, then print
+        printWindow.onload = function() {
+            // Give extra time for QR code generation (3 seconds)
+            setTimeout(function() {
+                printWindow.focus();
+                printWindow.print();
+                
+                // Close the window after printing (optional)
+                printWindow.onafterprint = function() {
+                    printWindow.close();
+                };
+            }, 3000); // Wait 3 seconds for QR code to generate
+        };
+    };
+
+    // Original print function (now primary function since QR is pre-generated)
+    window.printContent = function(htmlContent) {
+        // Create a new window for printing
+        const printWindow = window.open('', '_blank', 'width=800,height=900');
+        
+        // Write the HTML content
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+        
+        // Wait for content to load, then print immediately (QR is already embedded)
+        printWindow.onload = function() {
+            printWindow.focus();
+            printWindow.print();
+            
+            // Close the window after printing (optional)
+            printWindow.onafterprint = function() {
+                printWindow.close();
+            };
+        };
+    };
+
+    // Fallback for older browsers that don't support onafterprint
+    window.printContentSimple = function(htmlContent) {
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+    };
+
+    // Alternative method using blob URL for better print quality
+    window.printContentBlob = function(htmlContent) {
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const printWindow = window.open(url, '_blank', 'width=800,height=900');
+        
+        printWindow.onload = function() {
+            setTimeout(() => {
+                printWindow.focus();
+                printWindow.print();
+                printWindow.onafterprint = function() {
+                    printWindow.close();
+                    URL.revokeObjectURL(url);
+                };
+            }, 500);
+        };
+    };
+</script>

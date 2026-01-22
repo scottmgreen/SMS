@@ -1,8 +1,3 @@
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Shared.Common;
-
 namespace SMS_Application.Messaging.Queries;
 
 /// <summary>
@@ -141,25 +136,25 @@ public class SMSAuditExecutionDashboard
     public int CompletedAudits { get; set; }
     public int OverdueAudits { get; set; }
     public int CancelledAudits { get; set; }
-    
+
     // Findings Summary
     public int TotalFindings { get; set; }
     public int CriticalFindings { get; set; }
     public int MajorFindings { get; set; }
     public int MinorFindings { get; set; }
     public int Observations { get; set; }
-    
+
     // Performance Metrics
     public decimal AverageAuditDuration { get; set; }
     public decimal OnTimeCompletionRate { get; set; }
     public decimal FindingClosureRate { get; set; }
-    
+
     // Breakdowns
     public Dictionary<string, int> AuditsByType { get; set; } = new();
     public Dictionary<string, int> AuditsByDepartment { get; set; } = new();
     public Dictionary<string, int> AuditsByAuditor { get; set; } = new();
     public Dictionary<string, int> FindingsByType { get; set; } = new();
-    
+
     // Recent Activity
     public List<SMSAuditActivitySummary> RecentActivities { get; set; } = new();
     public List<SMSAuditOverdueItem> OverdueItems { get; set; } = new();
@@ -219,11 +214,11 @@ public class SMSAuditFindingStatistics
     public int ClosedFindings { get; set; }
     public int VerifiedFindings { get; set; }
     public int OverdueFindings { get; set; }
-    
+
     public Dictionary<string, int> FindingsBySeverity { get; set; } = new();
     public Dictionary<string, int> FindingsByType { get; set; } = new();
     public Dictionary<string, int> FindingsByDepartment { get; set; } = new();
-    
+
     public decimal AverageResolutionDays { get; set; }
     public decimal FindingClosureRate { get; set; }
     public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
@@ -238,11 +233,11 @@ public class SMSAuditEvidenceStatistics
     public int VerifiedEvidence { get; set; }
     public int UnverifiedEvidence { get; set; }
     public int ArchivedEvidence { get; set; }
-    
+
     public Dictionary<string, int> EvidenceByType { get; set; } = new();
     public Dictionary<string, int> EvidenceByAudit { get; set; } = new();
     public Dictionary<string, int> EvidenceByCollector { get; set; } = new();
-    
+
     public long TotalFileSize { get; set; }
     public decimal AverageEvidencePerAudit { get; set; }
     public DateTime LastUpdated { get; set; } = DateTime.UtcNow;

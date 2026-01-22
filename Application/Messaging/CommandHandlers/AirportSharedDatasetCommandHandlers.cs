@@ -30,7 +30,7 @@ public class CreateAirportSharedDatasetCommandHandler : BaseCommandBundle, IRequ
             // Validate Airport Shared Dataset Code
             if (string.IsNullOrWhiteSpace(request.AirportSharedDataset.Code))
             {
-                _logger.LogApplicationError("CreateAirportSharedDatasetCommand received with null or empty Code",ApplicationEventIds.Error,null);
+                _logger.LogApplicationError("CreateAirportSharedDatasetCommand received with null or empty Code", ApplicationEventIds.Error, null);
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.CodeRequired);
             }
 

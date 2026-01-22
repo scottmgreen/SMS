@@ -1,6 +1,3 @@
-using SMS_Domain.Common;
-using SMS_Domain.Enums;
-
 namespace SMS_Domain.Entities;
 
 /// <summary>
@@ -22,7 +19,7 @@ public sealed class MeetingAttendee : BaseEntity
     public string UserId { get; private set; }
     public AttendanceType AttendanceType { get; private set; }
     public DateTime RecordedDate { get; private set; }
-    
+
     // Optional Properties
     public string? Notes { get; private set; }
     public DateTime? ArrivalTime { get; private set; }
@@ -43,7 +40,7 @@ public sealed class MeetingAttendee : BaseEntity
         ArrivalTime = arrivalTime;
         RecordedBy = recordedBy;
         RecordedDate = DateTime.UtcNow;
-        
+
         // Update attendance type if currently absent
         if (AttendanceType == SMS_Domain.Enums.AttendanceType.Absent)
         {
@@ -56,7 +53,7 @@ public sealed class MeetingAttendee : BaseEntity
         DepartureTime = departureTime;
         RecordedBy = recordedBy;
         RecordedDate = DateTime.UtcNow;
-        
+
         // If departure is before meeting end, mark as partial
         if (AttendanceType == SMS_Domain.Enums.AttendanceType.Present)
         {

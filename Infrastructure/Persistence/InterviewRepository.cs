@@ -1,13 +1,5 @@
-﻿using System.Data;
-using System.Net.NetworkInformation;
+﻿using SMS_Domain.Errors;
 
-using Microsoft.Data.SqlClient;
-
-using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Domain.ValueObjects;
-
-using SMS_Infrastructure.Common;
 using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Persistence;
@@ -47,38 +39,38 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
                 CommandType = CommandType.StoredProcedure
             };
             //    
-                    //@pInvestigationCode NVARCHAR(50) = NULL,
-                    //@pSMSInvestigatorCode NVARCHAR(50) = NULL,
-                    //@pPersonInterviewed NVARCHAR(200) = NULL,
-                    //@pPersonInterviewedRole NVARCHAR(100) = NULL,
-                    //@pPersonInterviewedDepartment NVARCHAR(100) = NULL,
-                    //@pPersonInterviewedNotes NVARCHAR(MAX) = NULL,
-                    //@pInvestigatorNotes NVARCHAR(MAX) = NULL,
-                    //@pStatus NVARCHAR(50) = 'Planned',
-                    //@pInterviewDate DATETIME2(7) = NULL,
-                    //@pDurationMinutes INT = NULL,
-                    //@pInterviewLocation NVARCHAR(200) = NULL,
-                    //@pType NVARCHAR(50) = 'Witness',
-                    //@pIsConfidential BIT = 0,
-                    //@pPreparationNotes NVARCHAR(MAX) = NULL,
-                    //@pQuestionsToAsk NVARCHAR(MAX) = NULL,
-                    //@pBackgroundInformation NVARCHAR(MAX) = NULL,
-                    //@pCreatedBy NVARCHAR(50) = 'SYSTEM',
-                    //@pCreatedDate DATETIME2(7) = NULL,
-                    //@pNewID INT OUTPUT,
-                    //@pNewInterviewCode NVARCHAR(50) OUTPUT
-    //        // Core properties
+            //@pInvestigationCode NVARCHAR(50) = NULL,
+            //@pSMSInvestigatorCode NVARCHAR(50) = NULL,
+            //@pPersonInterviewed NVARCHAR(200) = NULL,
+            //@pPersonInterviewedRole NVARCHAR(100) = NULL,
+            //@pPersonInterviewedDepartment NVARCHAR(100) = NULL,
+            //@pPersonInterviewedNotes NVARCHAR(MAX) = NULL,
+            //@pInvestigatorNotes NVARCHAR(MAX) = NULL,
+            //@pStatus NVARCHAR(50) = 'Planned',
+            //@pInterviewDate DATETIME2(7) = NULL,
+            //@pDurationMinutes INT = NULL,
+            //@pInterviewLocation NVARCHAR(200) = NULL,
+            //@pType NVARCHAR(50) = 'Witness',
+            //@pIsConfidential BIT = 0,
+            //@pPreparationNotes NVARCHAR(MAX) = NULL,
+            //@pQuestionsToAsk NVARCHAR(MAX) = NULL,
+            //@pBackgroundInformation NVARCHAR(MAX) = NULL,
+            //@pCreatedBy NVARCHAR(50) = 'SYSTEM',
+            //@pCreatedDate DATETIME2(7) = NULL,
+            //@pNewID INT OUTPUT,
+            //@pNewInterviewCode NVARCHAR(50) OUTPUT
+            //        // Core properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewCode, interview.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewInvestigationCode, interview.InvestigationCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewSMSInvestigatorCode, interview.SMSInvestigatorCode));
-            
+
             // Interview details
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewPersonInterviewed, interview.PersonInterviewed));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewPersonRole, interview.PersonInterviewedRole ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewPersonDepartment, interview.PersonInterviewedDepartment ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewPersonInterviewedNotes, interview.PersonInterviewedNotes ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewInvestigatorNotes, interview.InvestigatorNotes ?? (object)DBNull.Value));
-            
+
             // Status and scheduling
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewStatus, interview.Status.ToString()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewDate, interview.InterviewDate ?? (object)DBNull.Value));
@@ -86,18 +78,18 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewLocation, interview.InterviewLocation ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewType, interview.Type.ToString()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewIsConfidential, interview.IsConfidential));
-            
+
             // Preparation properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewPreparationNotes, interview.PreparationNotes ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewQuestionsToAsk, interview.QuestionsToAsk ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewBackgroundInformation, interview.BackgroundInformation ?? (object)DBNull.Value));
-            
+
             // Results properties
             //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewKeyFindings, interview.KeyFindings ?? (object)DBNull.Value));
             //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewFollowUpRequired, interview.FollowUpRequired ?? (object)DBNull.Value));
             //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewAdditionalWitnesses, interview.AdditionalWitnesses ?? (object)DBNull.Value));
             //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewCompletedDate, interview.CompletedDate ?? (object)DBNull.Value));
-            
+
             // Audit properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, interview.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, interview.CreatedDate));
@@ -248,7 +240,7 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
         catch (Exception ex)
         {
             _logger.LogInfrastructureGetItemsError($"{_logheader} {ex.Message}", null);
-            return Result<List<Interview>>. Failure<List<Interview>>(DomainErrors.InterviewError.NullOrEmpty);
+            return Result<List<Interview>>.Failure<List<Interview>>(DomainErrors.InterviewError.NullOrEmpty);
         }
     }
 
@@ -493,7 +485,7 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
         }
     }
 
-    public async Task<Result<bool>> ScheduleInterviewAsync(string interviewCode, DateTime interviewDate, string location, 
+    public async Task<Result<bool>> ScheduleInterviewAsync(string interviewCode, DateTime interviewDate, string location,
         int? durationMinutes = null, CancellationToken ct = default)
     {
         try
@@ -532,7 +524,7 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
         }
     }
 
-    public async Task<Result<bool>> CompleteInterviewAsync(string interviewCode, string? personNotes, string? investigatorNotes, 
+    public async Task<Result<bool>> CompleteInterviewAsync(string interviewCode, string? personNotes, string? investigatorNotes,
         string? keyFindings = null, CancellationToken ct = default)
     {
         try

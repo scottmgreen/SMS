@@ -1,7 +1,4 @@
-﻿
-using SMS_Application.Interfaces;
-
-namespace SMS_Application.States;
+﻿namespace SMS_Application.States;
 
 //public class CourseFailState : BaseState
 //{

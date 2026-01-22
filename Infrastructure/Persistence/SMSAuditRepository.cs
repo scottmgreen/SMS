@@ -1,12 +1,5 @@
-using System.Data;
-
-using Microsoft.Data.SqlClient;
-
-using SMS_Domain.Entities;
 using SMS_Domain.Errors;
-using SMS_Domain.Interfaces;
 
-using SMS_Infrastructure.Common;
 using SMS_Infrastructure.Interfaces;
 
 namespace Infrastructure.Persistence;
@@ -18,15 +11,15 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
     private readonly string _connectionString;
 
     public SMSAuditRepository(
-        ILogger<SMSAuditRepository> logger, 
-        ILogSupport logsupport, 
+        ILogger<SMSAuditRepository> logger,
+        ILogSupport logsupport,
         IConfiguration configuration)
         : base(logger, logsupport, configuration)
     {
         _logger = Logger;
         _logheader = LogHeader;
         _connectionString = ConnectionString;
-        _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent, 
+        _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent,
             $"{_logheader} SMSAudit Repository Initialized");
     }
 
@@ -69,7 +62,7 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditNotes, audit.Notes));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, audit.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, audit.CreatedDate));
-            
+
             // Output parameters
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             var newCode = new SqlParameter("@pNewAuditCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
@@ -116,12 +109,12 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            
+
             if (await reader.ReadAsync(ct).ConfigureAwait(false))
             {
                 audit = Mappers.MapToSMSAudit(reader);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             if (audit != null)
@@ -156,13 +149,13 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            
+
             while (await reader.ReadAsync(ct).ConfigureAwait(false))
             {
                 var audit = Mappers.MapToSMSAudit(reader);
                 audits.Add(audit);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result.Success(audits);
@@ -221,7 +214,7 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
 
 
             return await GetSMSAuditByCodeAsync(audit.Code, ct).ConfigureAwait(false);
-            
+
         }
         catch (Exception ex)
         {

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+
 using SMS_Application.Messaging.Queries;
 
 namespace SMS_Application.Messaging.QueryHandlers;

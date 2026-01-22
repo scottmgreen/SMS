@@ -1,14 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using Radzen;
-using Radzen.Blazor;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Domain.Enums;
-using SMS_Shared.Common;
-
 namespace SMS3.Components.Pages.Listings;
 
 public partial class ReportCalendar : ComponentBase
@@ -97,7 +86,7 @@ public partial class ReportCalendar : ComponentBase
     private ReportSchedulerItem MapReportToSchedulerItem(Report report)
     {
         var reportDate = report.CreatedDate ?? DateTime.Now;
-        
+
         return new ReportSchedulerItem
         {
             ReportId = report.Id?.Value ?? "",
@@ -124,7 +113,7 @@ public partial class ReportCalendar : ComponentBase
         // Logic to determine report type from report data
         // Since we don't have specific type fields, use the Name or Description to infer
         var text = (report.Name + " " + report.Description).ToLower();
-        
+
         if (text.Contains("incident"))
             return ReportType.Incident;
         else if (text.Contains("hazard"))
@@ -149,7 +138,7 @@ public partial class ReportCalendar : ComponentBase
         try
         {
             Logger.LogInformation("Slot selected: {Start} to {End}", args.Start, args.End);
-            
+
             // Optional: Show dialog to create new report for selected date
             // This can be implemented later if needed
         }
@@ -181,7 +170,7 @@ public partial class ReportCalendar : ComponentBase
         {
             // Customize appointment appearance based on report type
             var reportItem = args.Data;
-            
+
             switch (reportItem.ReportType)
             {
                 case ReportType.Incident:
@@ -273,7 +262,7 @@ public partial class ReportCalendar : ComponentBase
             // Show the details modal
             ShowDetailsModal = true;
 
-            Logger.LogInformation("Displaying details for report: {ReportCode} with {HazardCount} hazards", 
+            Logger.LogInformation("Displaying details for report: {ReportCode} with {HazardCount} hazards",
                 reportItem.ReportCode, AssociatedHazards.Count);
 
             ShowSuccessNotification($"Report details loaded for {reportItem.ReportCode}");
@@ -303,7 +292,7 @@ public partial class ReportCalendar : ComponentBase
         var now = DateTime.Now;
         var startOfWeek = now.Date.AddDays(-(int)now.DayOfWeek);
         var endOfWeek = startOfWeek.AddDays(7);
-        
+
         return Reports.Count(r => r.CreatedDate >= startOfWeek && r.CreatedDate < endOfWeek);
     }
 
@@ -372,12 +361,12 @@ public partial class ReportCalendar : ComponentBase
         try
         {
             var confirmed = await DialogService.Confirm(
-                $"Edit report '{report.Code} - {report.Name}'?\n\nThis will navigate to the hazard reporting form in edit mode.", 
-                "Edit Report", 
-                new ConfirmOptions() 
-                { 
-                    OkButtonText = "Yes, Edit Report", 
-                    CancelButtonText = "Cancel" 
+                $"Edit report '{report.Code} - {report.Name}'?\n\nThis will navigate to the hazard reporting form in edit mode.",
+                "Edit Report",
+                new ConfirmOptions()
+                {
+                    OkButtonText = "Yes, Edit Report",
+                    CancelButtonText = "Cancel"
                 });
 
             if (confirmed == true)
@@ -415,7 +404,7 @@ public partial class ReportCalendar : ComponentBase
                 if (hazardsResult.IsSuccess && hazardsResult.Value != null)
                 {
                     AssociatedHazards = hazardsResult.Value.ToList();
-                    Logger.LogInformation("Loaded {Count} hazards for report {ReportCode}", 
+                    Logger.LogInformation("Loaded {Count} hazards for report {ReportCode}",
                         AssociatedHazards.Count, reportCode);
                     return;
                 }
@@ -435,14 +424,14 @@ public partial class ReportCalendar : ComponentBase
                 AssociatedHazards = allHazardsResult.Value
                     .Where(h => h.ReportCode == reportCode)
                     .ToList();
-                
-                Logger.LogInformation("Loaded {Count} hazards for report {ReportCode} using fallback method", 
+
+                Logger.LogInformation("Loaded {Count} hazards for report {ReportCode} using fallback method",
                     AssociatedHazards.Count, reportCode);
             }
             else
             {
                 AssociatedHazards = new List<Hazard>();
-                Logger.LogWarning("No hazards found for report {ReportCode}: {Error}", 
+                Logger.LogWarning("No hazards found for report {ReportCode}: {Error}",
                     reportCode, allHazardsResult.Error?.Message);
             }
         }

@@ -1,8 +1,4 @@
-﻿using System.Net;
-
-using SMS_Domain.Common;
-
-namespace SMS_Domain.Enums;
+﻿namespace SMS_Domain.Enums;
 
 public abstract class SMSDepartment : BaseEnum<SMSDepartment>
 {

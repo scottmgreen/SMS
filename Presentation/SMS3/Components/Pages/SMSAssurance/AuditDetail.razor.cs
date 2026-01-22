@@ -1,13 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Shared.Common;
-using Radzen;
-using Radzen.Blazor;
-
 namespace SMS3.Components.Pages.SMSAssurance;
 
 public partial class AuditDetail : ComponentBase
@@ -32,11 +22,11 @@ public partial class AuditDetail : ComponentBase
     private List<SMSAuditEvidence> Evidence { get; set; } = new();
     private List<SMSAuditChecklistItem> ChecklistItems { get; set; } = new();
     private int ActiveTabIndex { get; set; } = 0;
-    
+
     // Grid References
     private RadzenDataGrid<SMSAuditFinding>? findingsGrid;
     private RadzenDataGrid<SMSAuditEvidence>? evidenceGrid;
-    
+
     // Statistics
     private AuditDetailStats Stats { get; set; } = new();
     #endregion
@@ -289,9 +279,9 @@ public partial class AuditDetail : ComponentBase
             var confirm = await DialogService.Confirm(
                 "Are you sure you want to complete this audit? Please provide completion summary.",
                 "Complete Audit",
-                new ConfirmOptions() 
-                { 
-                    OkButtonText = "Yes, Complete", 
+                new ConfirmOptions()
+                {
+                    OkButtonText = "Yes, Complete",
                     CancelButtonText = "Cancel",
                     Width = "500px"
                 });
@@ -300,7 +290,7 @@ public partial class AuditDetail : ComponentBase
 
             // For now, use basic completion data - could be enhanced with a completion dialog later
             var auditSummary = $"Audit completed with {Stats.TotalFindings} findings identified.";
-            var keyFindings = Stats.CriticalFindings > 0 
+            var keyFindings = Stats.CriticalFindings > 0
                 ? $"Critical findings require immediate attention: {Stats.CriticalFindings} critical, {Stats.MajorFindings} major findings."
                 : $"No critical findings identified: {Stats.MajorFindings} major, {Stats.MinorFindings} minor findings.";
 
@@ -696,7 +686,7 @@ public partial class AuditDetail : ComponentBase
             // TODO: Implement comprehensive report generation
             // For now, provide a placeholder implementation
             ShowSuccessNotification($"Report generation initiated for audit {Audit.Code}. Feature will be enhanced in future updates.");
-            
+
             // Future implementation could:
             // 1. Generate PDF report with audit details
             // 2. Include findings summary and evidence
@@ -742,7 +732,7 @@ public partial class AuditDetail : ComponentBase
         return severity switch
         {
             "Critical" => BadgeStyle.Danger,
-            "Major" => BadgeStyle.Warning, 
+            "Major" => BadgeStyle.Warning,
             "Minor" => BadgeStyle.Info,
             "Observation" => BadgeStyle.Light,
             _ => BadgeStyle.Secondary

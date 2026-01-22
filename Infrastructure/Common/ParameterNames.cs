@@ -1,7 +1,4 @@
-﻿using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-
-namespace SMS_Infrastructure.Common;
+﻿namespace SMS_Infrastructure.Common;
 
 public static class ParameterNames
 {
@@ -345,7 +342,7 @@ public static class ParameterNames
     public static string pmHazardAverageScore => _pmHazardAverageScore.Value;
 
     // Additional Hazard parameters for comprehensive SMS support
-    
+
 
     private static readonly Lazy<string> _pmHazardReportedBy = new Lazy<string>(() => "@pHazardReportedBy");
     public static string pmHazardReportedBy => _pmHazardReportedBy.Value;
@@ -1117,7 +1114,7 @@ public static class ParameterNames
 
     private static readonly Lazy<string> _pmSMSApplicationGroupIsActive = new Lazy<string>(() => "@pIsActive");
     public static string pmSMSApplicationGroupIsActive => _pmSMSApplicationGroupIsActive.Value;
-    
+
     private static readonly Lazy<string> _pmSMSApplicationGroupClearedBy = new Lazy<string>(() => "@pClearedBy");
     public static string pmSMSApplicationGroupClearedBy => _pmSMSApplicationGroupClearedBy.Value;
     #endregion
@@ -1204,7 +1201,7 @@ public static class ParameterNames
     /// <summary>
     /// ENHANCED MITIGATION PARAMETERS - All comprehensive mitigation fields
     /// </summary>
-    
+
     // Core Mitigation Fields
     private static readonly Lazy<string> _pmMitigationName = new Lazy<string>(() => "@pMitigationName");
     public static string pmMitigationName => _pmMitigationName.Value;
@@ -1476,7 +1473,7 @@ public static class ParameterNames
     /// <summary>
     /// SMS Audit Management parameters
     /// </summary>
-    
+
     // SMS Audit Plan parameters
     private static readonly Lazy<string> _pmSMSAuditPlanId = new Lazy<string>(() => "@pID");
     public static string pmSMSAuditPlanId => _pmSMSAuditPlanId.Value;
@@ -1778,4 +1775,20 @@ public static class ParameterNames
 
     private static readonly Lazy<string> _pmDeleteReason = new Lazy<string>(() => "@pDeleteReason");
     public static string pmDeleteReason => _pmDeleteReason.Value;
+
+    #region HazardReportTracking Parameter Names
+
+    /// <summary>
+    /// HazardReportTracking table parameter names - Following established naming convention
+    /// </summary>
+    private static readonly Lazy<string> _pmHazardReportTrackingHazardCode = new Lazy<string>(() => "@pHazardCode");
+    public static string pmHazardReportTrackingHazardCode => _pmHazardReportTrackingHazardCode.Value;
+
+    private static readonly Lazy<string> _pmHazardReportTrackingReportCode = new Lazy<string>(() => "@pReportCode");
+    public static string pmHazardReportTrackingReportCode => _pmHazardReportTrackingReportCode.Value;
+
+    private static readonly Lazy<string> _pmHazardReportTrackingTrackingCode = new Lazy<string>(() => "@pTrackingCode");
+    public static string pmHazardReportTrackingTrackingCode => _pmHazardReportTrackingTrackingCode.Value;
+
+    #endregion
 }

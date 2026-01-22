@@ -1,8 +1,4 @@
-﻿using SMS_Application.Messaging.Commands;
-using SMS_Infrastructure.Persistence;
-using SMS_Shared.Common;
-using SMS_Domain.Entities;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 

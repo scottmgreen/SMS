@@ -1,12 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-using Radzen;
-using Radzen.Blazor;
-
 namespace SMS3.Components.Pages.Listings;
 
 public partial class ScoringPanelListing : ComponentBase
@@ -61,10 +52,10 @@ public partial class ScoringPanelListing : ComponentBase
             await LoadInitialData();
 
             var query = panels.AsQueryable();
-            
+
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
-                query = args.OrderBy.Contains("desc") 
+                query = args.OrderBy.Contains("desc")
                     ? query.OrderByDescending(GetPropertyExpression(args.OrderBy.Replace(" desc", "")))
                     : query.OrderBy(GetPropertyExpression(args.OrderBy));
             }

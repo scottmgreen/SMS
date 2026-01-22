@@ -1,10 +1,3 @@
-using SMS_Application.Common;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Messaging;
-using SMS_Shared.Common;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Infrastructure.Services;
 using Microsoft.Extensions.Logging;
 
 namespace SMS_Application.Messaging.CommandHandlers;
@@ -173,14 +166,14 @@ public class AssignUserToOrganizationalGroupCommandHandler : BaseCommandBundle, 
     {
         try
         {
-            _logger.LogInformation("Processing AssignUserToOrganizationalGroupCommand for user: {UserCode} to group: {GroupId}", 
+            _logger.LogInformation("Processing AssignUserToOrganizationalGroupCommand for user: {UserCode} to group: {GroupId}",
                 request.UserCode, request.GroupId.Value);
 
             var result = await _organizationalGroupDataService.AssignUserToGroupAsync(request.UserCode, request.GroupId.Value, request.AssignedBy, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully assigned user {UserCode} to organizational group {GroupId}", 
+                _logger.LogInformation("Successfully assigned user {UserCode} to organizational group {GroupId}",
                     request.UserCode, request.GroupId.Value);
             }
             else
@@ -223,14 +216,14 @@ public class RemoveUserFromOrganizationalGroupCommandHandler : BaseCommandBundle
     {
         try
         {
-            _logger.LogInformation("Processing RemoveUserFromOrganizationalGroupCommand for user: {UserCode} from group: {GroupId}", 
+            _logger.LogInformation("Processing RemoveUserFromOrganizationalGroupCommand for user: {UserCode} from group: {GroupId}",
                 request.UserCode, request.GroupId.Value);
 
             var result = await _organizationalGroupDataService.RemoveUserFromGroupAsync(request.UserCode, request.GroupId.Value, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully removed user {UserCode} from organizational group {GroupId}", 
+                _logger.LogInformation("Successfully removed user {UserCode} from organizational group {GroupId}",
                     request.UserCode, request.GroupId.Value);
             }
             else

@@ -1,9 +1,5 @@
-using Microsoft.Extensions.Logging;
-using SMS_Domain.Entities;
-using SMS_Infrastructure.Common;
-using SMS_Infrastructure.Persistence;
-using SMS_Shared.Common;
 using Domain.Models;
+
 using Infrastructure.Persistence;
 
 namespace SMS_Infrastructure.Services;
@@ -133,7 +129,7 @@ public class SMSAuditDataService : BaseDataService<SMSAuditDataService>
     /// <summary>
     /// Gets SMS Audits by auditor
     /// </summary>
-    public async Task<Result<List<SMSAudit>>> GetAuditsByAuditorAsync(string auditor, string? statusFilter = null, 
+    public async Task<Result<List<SMSAudit>>> GetAuditsByAuditorAsync(string auditor, string? statusFilter = null,
         DateTime? startDateFrom = null, DateTime? startDateTo = null, CancellationToken ct = default)
     {
         // For now, get all and filter in memory - could be optimized with specific repository methods
@@ -144,7 +140,7 @@ public class SMSAuditDataService : BaseDataService<SMSAuditDataService>
         }
 
         var filteredAudits = allAuditsResult.Value
-            .Where(a => a.LeadAuditor.Equals(auditor, StringComparison.OrdinalIgnoreCase) || 
+            .Where(a => a.LeadAuditor.Equals(auditor, StringComparison.OrdinalIgnoreCase) ||
                        (a.AuditorTeam != null && a.AuditorTeam.Contains(auditor, StringComparison.OrdinalIgnoreCase)));
 
         if (!string.IsNullOrEmpty(statusFilter))
@@ -208,7 +204,7 @@ public class SMSAuditDataService : BaseDataService<SMSAuditDataService>
         }
 
         var audits = allAuditsResult.Value.ToList();
-        
+
         // Filter by date range if specified
         if (startDate.HasValue)
         {

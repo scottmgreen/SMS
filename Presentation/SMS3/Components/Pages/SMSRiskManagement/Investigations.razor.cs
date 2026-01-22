@@ -1,13 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using Radzen;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Domain.Enums;
-using SMS_Shared.Common;
-
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
 public partial class Investigations : ComponentBase
@@ -103,12 +93,12 @@ public partial class Investigations : ComponentBase
             if (investigationResult.IsSuccess && investigationResult.Value != null)
             {
                 InvestigationEntity = investigationResult.Value;
-                Logger.LogInformation("Successfully loaded investigation: {Code} with Status: {Status}", 
+                Logger.LogInformation("Successfully loaded investigation: {Code} with Status: {Status}",
                     InvestigationEntity.Code, InvestigationEntity.Status);
             }
             else
             {
-                Logger.LogError("Investigation {InvestigationId} not found: {Error}", 
+                Logger.LogError("Investigation {InvestigationId} not found: {Error}",
                     InvestigationId, investigationResult.Error?.Message);
                 ShowErrorNotification($"Investigation {InvestigationId} not found. Please verify the investigation exists and try again.");
                 return;
@@ -120,30 +110,30 @@ public partial class Investigations : ComponentBase
                 InvestigationEntity.HazardCode = HazardId;
                 Logger.LogInformation("Set HazardCode from route parameter: {HazardCode}", HazardId);
             }
-            
+
             // Check HazardCode validity
             if (!string.IsNullOrWhiteSpace(HazardId) && !string.IsNullOrWhiteSpace(InvestigationEntity.HazardCode))
             {
                 if (!InvestigationEntity.HazardCode.Equals(HazardId, StringComparison.OrdinalIgnoreCase))
                 {
-                    Logger.LogWarning("HazardCode mismatch. Route: {RouteHazardId}, Entity: {EntityHazardCode}", 
+                    Logger.LogWarning("HazardCode mismatch. Route: {RouteHazardId}, Entity: {EntityHazardCode}",
                         HazardId, InvestigationEntity.HazardCode);
                 }
             }
-            
+
             // Validate that HazardCode is set
             if (string.IsNullOrWhiteSpace(InvestigationEntity.HazardCode) || InvestigationEntity.HazardCode == "HAZ-UNKNOWN")
             {
                 ShowErrorNotification("Investigation has invalid or missing HazardCode. Please check the investigation setup.");
-                Logger.LogError("Investigation {InvestigationId} has invalid HazardCode: {HazardCode}", 
+                Logger.LogError("Investigation {InvestigationId} has invalid HazardCode: {HazardCode}",
                     InvestigationId, InvestigationEntity.HazardCode ?? "NULL");
             }
-            
+
             showDecisionForm = InvestigationEntity?.DecisionDate == null; // Only show form if decision hasn't been recorded yet
-            
-            Logger.LogInformation("Successfully loaded investigation: {Code} with HazardCode: {HazardCode}, Status: {Status}", 
+
+            Logger.LogInformation("Successfully loaded investigation: {Code} with HazardCode: {HazardCode}, Status: {Status}",
                 InvestigationEntity?.Code, InvestigationEntity?.HazardCode, InvestigationEntity?.Status);
-                
+
             // Load available investigators
             await LoadAvailableInvestigators();
 
@@ -174,10 +164,10 @@ public partial class Investigations : ComponentBase
             var usersQuery = new GetUsersByApplicationGroupCodeQuery("AG-0006");
 
             var usersResult = await Mediator.SendAsync(usersQuery, CancellationToken.None);
-            
+
             if (usersResult.IsSuccess && usersResult.Value != null)
             {
-                
+
                 AvailableInvestigators = usersResult.Value.ToList();
                 Logger.LogInformation("Loaded {Count} available investigators", AvailableInvestigators.Count);
             }
@@ -194,13 +184,13 @@ public partial class Investigations : ComponentBase
         {
             var interviewsQuery = new GetAllInterviewsQuery();
             var interviewsResult = await Mediator.SendAsync(interviewsQuery, CancellationToken.None);
-            
+
             if (interviewsResult.IsSuccess && interviewsResult.Value != null)
             {
                 Interviews = interviewsResult.Value
                     .Where(i => i.InvestigationCode.Trim() == InvestigationEntity?.Code)
                     .ToList();
-                
+
                 Logger.LogInformation("Loaded {Count} interviews for investigation", Interviews.Count);
             }
         }
@@ -220,21 +210,21 @@ public partial class Investigations : ComponentBase
                 // This will include both files uploaded during initial reporting and investigation
                 var filesQuery = new GetHazardFilesByHazardCodeQuery(InvestigationEntity.HazardCode, false, null);
                 var filesResult = await Mediator.SendAsync(filesQuery, CancellationToken.None);
-                
+
                 if (filesResult.IsSuccess && filesResult.Value != null)
                 {
                     EvidenceFiles = filesResult.Value
                         .Where(f => f.IsActive) // Only show active files
                         .OrderByDescending(f => f.UploadedDate)
                         .ToList();
-                    
-                    Logger.LogInformation("Loaded {Count} evidence files for hazard {HazardCode}", 
+
+                    Logger.LogInformation("Loaded {Count} evidence files for hazard {HazardCode}",
                         EvidenceFiles.Count, InvestigationEntity.HazardCode);
                 }
                 else
                 {
                     EvidenceFiles = new List<HazardFile>();
-                    Logger.LogWarning("No evidence files found for hazard {HazardCode}: {Error}", 
+                    Logger.LogWarning("No evidence files found for hazard {HazardCode}: {Error}",
                         InvestigationEntity.HazardCode, filesResult.Error?.Message);
                 }
             }
@@ -264,14 +254,14 @@ public partial class Investigations : ComponentBase
             {
                 ShowSuccessNotification("Investigation updated successfully");
                 Logger.LogInformation("Investigation {Code} updated successfully", InvestigationEntity.Code);
-                
+
                 // Refresh the investigation data
                 await LoadInvestigationData();
             }
             else
             {
                 ShowErrorNotification($"Failed to update investigation: {result.Error?.Message}");
-                Logger.LogError("Failed to update investigation {Code}: {Error}", 
+                Logger.LogError("Failed to update investigation {Code}: {Error}",
                     InvestigationEntity.Code, result.Error?.Message);
             }
         }
@@ -310,7 +300,7 @@ public partial class Investigations : ComponentBase
                 InvestigationEntity.Complete();
                 await SaveInvestigation();
                 ShowSuccessNotification("Investigation completed successfully");
-                
+
                 // Navigate based on decision type
                 await HandleInvestigationCompletion();
             }
@@ -328,7 +318,7 @@ public partial class Investigations : ComponentBase
 
         // Show completion dialog with next steps
         var nextStepMessage = InvestigationEntity.NextStepsMessage;
-        
+
         await DialogService.Alert(nextStepMessage, "Investigation Completed", new AlertOptions() { OkButtonText = "OK" });
 
         // Navigate based on decision
@@ -414,7 +404,7 @@ public partial class Investigations : ComponentBase
 
         try
         {
-            Logger.LogInformation("Processing 'Return to Validation' workflow for Investigation: {Code}, ReportCode: {ReportCode}", 
+            Logger.LogInformation("Processing 'Return to Validation' workflow for Investigation: {Code}, ReportCode: {ReportCode}",
                 InvestigationEntity.Code, InvestigationEntity.ReportCode);
 
             // Step 1: Complete the investigation (set status to Completed)
@@ -431,26 +421,26 @@ public partial class Investigations : ComponentBase
             else if (!string.IsNullOrEmpty(InvestigationEntity.HazardCode))
             {
                 // If no ReportCode, try to find it from the Hazard
-                Logger.LogWarning("Investigation {Code} has no ReportCode, attempting to find from HazardCode: {HazardCode}", 
+                Logger.LogWarning("Investigation {Code} has no ReportCode, attempting to find from HazardCode: {HazardCode}",
                     InvestigationEntity.Code, InvestigationEntity.HazardCode);
-                
+
                 var hazardQuery = new GetAllHazardsQuery();
                 var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
-                
+
                 if (hazardResult.IsSuccess && hazardResult.Value != null)
                 {
                     var hazard = hazardResult.Value.FirstOrDefault(h => h.Code == InvestigationEntity.HazardCode);
-                    
+
                     if (hazard != null && !string.IsNullOrEmpty(hazard.ReportCode))
                     {
-                        Logger.LogInformation("Found ReportCode {ReportCode} from Hazard {HazardCode}", 
+                        Logger.LogInformation("Found ReportCode {ReportCode} from Hazard {HazardCode}",
                             hazard.ReportCode, InvestigationEntity.HazardCode);
-                        
+
                         await ResetReportValidation(hazard.ReportCode);
                     }
                     else
                     {
-                        Logger.LogError("Could not find ReportCode for Investigation {Code} with HazardCode {HazardCode}", 
+                        Logger.LogError("Could not find ReportCode for Investigation {Code} with HazardCode {HazardCode}",
                             InvestigationEntity.Code, InvestigationEntity.HazardCode);
                         ShowErrorNotification("Error: Could not find associated report for validation reset. Please contact administrator.");
                         return;
@@ -458,7 +448,7 @@ public partial class Investigations : ComponentBase
                 }
                 else
                 {
-                    Logger.LogError("Could not load hazards for Investigation {Code} with HazardCode {HazardCode}", 
+                    Logger.LogError("Could not load hazards for Investigation {Code} with HazardCode {HazardCode}",
                         InvestigationEntity.Code, InvestigationEntity.HazardCode);
                     ShowErrorNotification("Error: Could not find associated report for validation reset. Please contact administrator.");
                     return;
@@ -507,22 +497,22 @@ public partial class Investigations : ComponentBase
             if (validationResult.IsSuccess && validationResult.Value != null)
             {
                 var validation = validationResult.Value;
-                
+
                 // CRITICAL: Reset the validation to make it appear in Validation tab again
                 validation.Status = "InProgress";
                 validation.Stage = "Initial";
                 validation.UpdatedDate = DateTime.UtcNow;
-                
+
                 // IMPORTANT: Clear these key fields so the validation appears as needing re-validation
                 validation.ValidationType = null;        // Clear validation type - this is key!
                 validation.ValidationDecision = null;    // Clear validation decision - this is key!
                 validation.ValidatedDate = null;         // Clear validated date
                 validation.ValidatedBy = null;          // Clear who validated it
-                
+
                 // Add a comment about the reset
                 validation.ValidationComments = $"Reset from Investigation on {DateTime.UtcNow:yyyy-MM-dd HH:mm} - Returned for re-validation due to investigation findings";
-                
-                Logger.LogInformation("Resetting ReportValidation {ValidationCode}: Status=InProgress, Stage=Initial, ValidationType=NULL, ValidationDecision=NULL", 
+
+                Logger.LogInformation("Resetting ReportValidation {ValidationCode}: Status=InProgress, Stage=Initial, ValidationType=NULL, ValidationDecision=NULL",
                     validation.Code);
 
                 // Update the ReportValidation
@@ -531,12 +521,12 @@ public partial class Investigations : ComponentBase
 
                 if (updateResult.IsSuccess)
                 {
-                    Logger.LogInformation("Successfully reset ReportValidation {ValidationCode} for ReportCode: {ReportCode}", 
+                    Logger.LogInformation("Successfully reset ReportValidation {ValidationCode} for ReportCode: {ReportCode}",
                         validation.Code, reportCode);
                 }
                 else
                 {
-                    Logger.LogError("Failed to update ReportValidation {ValidationCode}: {Error}", 
+                    Logger.LogError("Failed to update ReportValidation {ValidationCode}: {Error}",
                         validation.Code, updateResult.Error?.Message);
                     throw new InvalidOperationException($"Failed to reset ReportValidation: {updateResult.Error?.Message}");
                 }
@@ -544,7 +534,7 @@ public partial class Investigations : ComponentBase
             else
             {
                 Logger.LogWarning("No ReportValidation found for ReportCode: {ReportCode}. Creating new validation...", reportCode);
-                
+
                 // If no existing validation found, create a new one
                 await CreateNewReportValidation(reportCode);
             }
@@ -569,7 +559,7 @@ public partial class Investigations : ComponentBase
             if (reportResult.IsSuccess && reportResult.Value != null)
             {
                 var report = reportResult.Value;
-                
+
                 // Create new ReportValidation using the static factory method
                 var validation = SMS_Domain.Entities.ReportValidation.Create(reportCode, "SYSTEM");
                 validation.ValidationComments = $"Created from Investigation return to validation workflow on {DateTime.UtcNow:yyyy-MM-dd HH:mm}";
@@ -579,12 +569,12 @@ public partial class Investigations : ComponentBase
 
                 if (createResult.IsSuccess)
                 {
-                    Logger.LogInformation("Successfully created new ReportValidation {ValidationCode} for ReportCode: {ReportCode}", 
+                    Logger.LogInformation("Successfully created new ReportValidation {ValidationCode} for ReportCode: {ReportCode}",
                         createResult.Value.Code, reportCode);
                 }
                 else
                 {
-                    Logger.LogError("Failed to create new ReportValidation for ReportCode: {ReportCode}, Error: {Error}", 
+                    Logger.LogError("Failed to create new ReportValidation for ReportCode: {ReportCode}, Error: {Error}",
                         reportCode, createResult.Error?.Message);
                     throw new InvalidOperationException($"Failed to create new ReportValidation: {createResult.Error?.Message}");
                 }
@@ -659,7 +649,7 @@ public partial class Investigations : ComponentBase
         // Clear the decision date to allow editing
         InvestigationEntity.DecisionDate = null;
         StateHasChanged();
-        
+
         ShowSuccessNotification("Decision opened for editing. Make your changes and click 'Record Decision' to save.");
     }
     #endregion

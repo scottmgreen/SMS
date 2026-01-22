@@ -42,6 +42,7 @@
                                 <RadzenMenuItem Text="SMS Risk Management" Icon="shield" class="sms-menu-item">
                                     <RadzenMenuItem Text="Create Hazard Report" Path="/SMSRiskManagement/HazardReporting" Icon="add_circle"></RadzenMenuItem>
                                     <RadzenMenuItem Text="Report Processing" Path="/SMSRiskManagement/ReportProcessing" Icon="settings"></RadzenMenuItem>
+                                    <RadzenMenuItem Text="Search Reports" Path="/SMSRiskManagement/HazardReportSearch" Icon="search"></RadzenMenuItem>
                                     <!-- Investigations -->
                                     <RadzenMenuItem Text="Investigate" Icon="search">
                                         <RadzenMenuItem Text="Active Investigations" Path="/Listings/Investigations" Icon="assignment"></RadzenMenuItem>
@@ -206,6 +207,16 @@
             {
                 <!-- Guest Navigation -->
                 <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link sms-nav-link" href="/SMSRiskManagement/ConfidentialReporting">
+                            <i class="fas fa-user-secret me-1"></i> Submit Confidential Report
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link sms-nav-link" href="/ConfidentialReporting/TrackStatus">
+                            <i class="fas fa-search me-1"></i> Track Report
+                        </a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link sms-nav-link" href="/Login">
                             <i class="fas fa-sign-in-alt me-1"></i> Login

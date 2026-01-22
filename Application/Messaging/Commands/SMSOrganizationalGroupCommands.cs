@@ -1,6 +1,3 @@
-using SMS_Application.Common;
-using SMS_Shared.Common;
-using SMS_Domain.Entities;
 using Domain.Entities;
 
 namespace SMS_Application.Messaging.Commands;
@@ -121,7 +118,7 @@ public class AssignUserToOrganizationalGroupCommand : BaseCommandBundle, IReques
     {
         if (string.IsNullOrWhiteSpace(userCode))
             throw new ArgumentException("User code cannot be null or empty", nameof(userCode));
-        
+
         UserCode = userCode;
         GroupId = groupId ?? throw new ArgumentNullException(nameof(groupId));
     }
@@ -163,7 +160,7 @@ public class RemoveUserFromOrganizationalGroupCommand : BaseCommandBundle, IRequ
     {
         if (string.IsNullOrWhiteSpace(userCode))
             throw new ArgumentException("User code cannot be null or empty", nameof(userCode));
-        
+
         UserCode = userCode;
         GroupId = groupId ?? throw new ArgumentNullException(nameof(groupId));
     }

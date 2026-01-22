@@ -1,16 +1,6 @@
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Messaging.Queries;
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Shared.Common;
-using Microsoft.AspNetCore.Components;
-using Radzen;
-using Radzen.Blazor;
-using SMS3.Components.Shared;
-
 namespace SMS3.Components.Pages.SMSAssurance;
 
-public partial class SPIConfiguration 
+public partial class SPIConfiguration
 {
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
@@ -26,19 +16,19 @@ public partial class SPIConfiguration
     #region Data Properties
     private IEnumerable<SafetyPerformanceIndicator> allSPIs = new List<SafetyPerformanceIndicator>();
     private IEnumerable<SafetyPerformanceIndicator> filteredSPIs = new List<SafetyPerformanceIndicator>();
-    
+
     // Filter properties
     private string searchTerm = string.Empty;
     private string? selectedType = null;
     private string? selectedDepartment = null;
     private string? selectedStatus = null;
-    
+
     // Pagination
     private int itemsPerPage = 20;
-    
+
     // Loading state
     private bool isLoading = true;
-    
+
     // Dropdown data
     private List<SPIType> availableTypes = new();
     private List<SPIStatus> availableStatuses = new();
@@ -47,7 +37,7 @@ public partial class SPIConfiguration
     #endregion
 
     #region Computed Properties
-    private bool HasActiveFilters => 
+    private bool HasActiveFilters =>
         !string.IsNullOrWhiteSpace(searchTerm) ||
         !string.IsNullOrWhiteSpace(selectedType) ||
         !string.IsNullOrWhiteSpace(selectedDepartment) ||
@@ -78,7 +68,7 @@ public partial class SPIConfiguration
     {
         // Load SPI types
         availableTypes = SPIType.GetAllValues().ToList();
-        
+
         // Load statuses
         availableStatuses = new List<SPIStatus>
         {
@@ -87,7 +77,7 @@ public partial class SPIConfiguration
             SPIStatus.UnderReview,
             SPIStatus.Deprecated
         };
-        
+
         // Load frequencies
         availableFrequencies = new List<SPIMeasurementFrequency>
         {
@@ -97,14 +87,14 @@ public partial class SPIConfiguration
             SPIMeasurementFrequency.Quarterly,
             SPIMeasurementFrequency.Annually
         };
-        
+
         // Load departments
         availableDepartments = new List<string>
         {
             "Safety Department",
             "Operations",
             "Human Resources",
-            "Maintenance", 
+            "Maintenance",
             "Security",
             "Ground Services",
             "Air Traffic Control",
@@ -120,24 +110,24 @@ public partial class SPIConfiguration
         {
             var query = new GetAllSafetyPerformanceIndicatorsQuery();
             var result = await Mediator.SendAsync(query, CancellationToken.None);
-            
+
             if (result.IsSuccess)
             {
                 allSPIs = result.Value ?? new List<SafetyPerformanceIndicator>();
-                
+
                 // Extract unique departments from loaded SPIs
                 var spiDepartments = allSPIs
                     .Where(spi => !string.IsNullOrEmpty(spi.ResponsibleDepartment))
                     .Select(spi => spi.ResponsibleDepartment)
                     .Distinct()
                     .ToList();
-                
+
                 // Merge with predefined departments
                 availableDepartments = availableDepartments
                     .Union(spiDepartments)
                     .OrderBy(d => d)
                     .ToList();
-                
+
                 ApplyFilters();
             }
             else
@@ -154,35 +144,35 @@ public partial class SPIConfiguration
     private void ApplyFilters()
     {
         var query = allSPIs.AsQueryable();
-        
+
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             var lowerSearch = searchTerm.ToLower();
-            query = query.Where(spi => 
+            query = query.Where(spi =>
                 spi.Code.ToLower().Contains(lowerSearch) ||
                 spi.Name.ToLower().Contains(lowerSearch) ||
                 (spi.Description != null && spi.Description.ToLower().Contains(lowerSearch)));
         }
-        
+
         // Apply type filter
         if (!string.IsNullOrWhiteSpace(selectedType))
         {
             query = query.Where(spi => spi.IndicatorType.Value == selectedType);
         }
-        
+
         // Apply department filter
         if (!string.IsNullOrWhiteSpace(selectedDepartment))
         {
             query = query.Where(spi => spi.ResponsibleDepartment == selectedDepartment);
         }
-        
+
         // Apply status filter
         if (!string.IsNullOrWhiteSpace(selectedStatus))
         {
             query = query.Where(spi => spi.Status.Value == selectedStatus);
         }
-        
+
         filteredSPIs = query.OrderBy(spi => spi.Code).ToList();
         StateHasChanged();
     }
@@ -213,7 +203,7 @@ public partial class SPIConfiguration
             SPIType.IncidentRate,
             "SYSTEM"
         );
-        
+
         await OpenSPIDialog(newSPI, false);
     }
 
@@ -244,7 +234,7 @@ public partial class SPIConfiguration
         editSPI.NextReviewDate = spi.NextReviewDate;
         editSPI.AlertsEnabled = spi.AlertsEnabled;
         editSPI.AlertRecipients = spi.AlertRecipients;
-        
+
         await OpenSPIDialog(editSPI, true);
     }
 
@@ -273,7 +263,7 @@ public partial class SPIConfiguration
         duplicatedSPI.ReviewAuthority = spi.ReviewAuthority;
         duplicatedSPI.AlertsEnabled = spi.AlertsEnabled;
         duplicatedSPI.AlertRecipients = spi.AlertRecipients;
-        
+
         await OpenSPIDialog(duplicatedSPI, false);
     }
 
@@ -282,13 +272,13 @@ public partial class SPIConfiguration
         var confirmed = await DialogService.Confirm(
             $"Are you sure you want to delete the SPI '{spi.Code} - {spi.Name}'?\n\nThis action cannot be undone and will also delete all associated data points.",
             "Delete SPI",
-            new ConfirmOptions() 
-            { 
-                OkButtonText = "Yes, Delete", 
+            new ConfirmOptions()
+            {
+                OkButtonText = "Yes, Delete",
                 CancelButtonText = "Cancel",
                 AutoFocusFirstElement = true
             });
-        
+
         if (confirmed == true)
         {
             try
@@ -296,7 +286,7 @@ public partial class SPIConfiguration
                 var spiId = new SafetyPerformanceIndicatorID(spi.Id.Value);
                 var command = new DeleteSafetyPerformanceIndicatorCommand(spiId);
                 var result = await Mediator.SendAsync(command, CancellationToken.None);
-                
+
                 if (result.IsSuccess)
                 {
                     ShowSuccessNotification($"SPI '{spi.Code}' has been deleted successfully.");
@@ -316,9 +306,9 @@ public partial class SPIConfiguration
 
     private async Task OpenSPIDialog(SafetyPerformanceIndicator spi, bool isEditMode)
     {
-        var options = new DialogOptions() 
-        { 
-            Width = "1200px", 
+        var options = new DialogOptions()
+        {
+            Width = "1200px",
             Height = "auto",
             Resizable = true,
             Draggable = true,
@@ -329,8 +319,8 @@ public partial class SPIConfiguration
             CssClass = "sms-spi-dialog"
         };
 
-        var parameters = new Dictionary<string, object> 
-        { 
+        var parameters = new Dictionary<string, object>
+        {
             { "SPI", spi },
             { "IsEditMode", isEditMode },
             { "AvailableTypes", availableTypes },
@@ -355,7 +345,7 @@ public partial class SPIConfiguration
         try
         {
             Result result;
-            
+
             if (!isEditMode)
             {
                 // Create new SPI
@@ -379,9 +369,9 @@ public partial class SPIConfiguration
                     spi.AlertRecipients,
                     "SYSTEM"
                 );
-                
+
                 result = await Mediator.SendAsync(command, CancellationToken.None);
-                
+
                 if (result.IsSuccess)
                 {
                     ShowSuccessNotification("SPI created successfully.");
@@ -416,15 +406,15 @@ public partial class SPIConfiguration
                     spi.AlertRecipients,
                     "SYSTEM"
                 );
-                
+
                 result = await Mediator.SendAsync(command, CancellationToken.None);
-                
+
                 if (result.IsSuccess)
                 {
                     ShowSuccessNotification("SPI updated successfully.");
                 }
             }
-            
+
             if (result.IsSuccess)
             {
                 await LoadSPIs();
@@ -451,10 +441,10 @@ public partial class SPIConfiguration
     #region Filter Options Methods
     private List<FilterOption> GetTypeFilterOptions()
     {
-        return availableTypes.Select(t => new FilterOption 
-        { 
-            Text = $"{t.Name} ({t.Category})", 
-            Value = t.Value 
+        return availableTypes.Select(t => new FilterOption
+        {
+            Text = $"{t.Name} ({t.Category})",
+            Value = t.Value
         }).ToList();
     }
 
@@ -465,10 +455,10 @@ public partial class SPIConfiguration
 
     private List<FilterOption> GetStatusFilterOptions()
     {
-        return availableStatuses.Select(s => new FilterOption 
-        { 
-            Text = s.Name, 
-            Value = s.Value 
+        return availableStatuses.Select(s => new FilterOption
+        {
+            Text = s.Name,
+            Value = s.Value
         }).ToList();
     }
     #endregion
@@ -507,7 +497,7 @@ public partial class SPIConfiguration
     {
         if (string.IsNullOrEmpty(text) || text.Length <= maxLength)
             return text;
-        
+
         return text.Substring(0, maxLength) + "...";
     }
     #endregion

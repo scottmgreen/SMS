@@ -1,7 +1,3 @@
-using SMS_Domain.Common;
-using SMS_Domain.Enums;
-using SMS_Shared.Common;
-
 namespace SMS_Domain.Entities;
 
 /// <summary>
@@ -10,7 +6,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public sealed class SafetyPerformanceIndicator : BaseAuditableEntity
 {
-    public SafetyPerformanceIndicator(SafetyPerformanceIndicatorID id, string name, string description, 
+    public SafetyPerformanceIndicator(SafetyPerformanceIndicatorID id, string name, string description,
         SPIType indicatorType, string createdBy)
         : base(id, createdBy, DateTime.UtcNow)
     {
@@ -28,46 +24,46 @@ public sealed class SafetyPerformanceIndicator : BaseAuditableEntity
     public string Description { get; set; }
     public SPIType IndicatorType { get; set; }
     public SPIStatus Status { get; set; }
-    
+
     // Measurement Configuration
     public string MeasurementUnit { get; set; } = string.Empty;
     public SPIMeasurementFrequency MeasurementFrequency { get; set; } = SPIMeasurementFrequency.Monthly;
     public string CalculationMethod { get; set; } = string.Empty;
     public string DataSource { get; set; } = string.Empty;
-    
+
     // Target Values
     public decimal? TargetValue { get; set; }
     public decimal? AcceptableRange { get; set; }
     public decimal? WarningThreshold { get; set; }
     public decimal? CriticalThreshold { get; set; }
-    
+
     // Ownership
     public string ResponsibleDepartment { get; set; } = string.Empty;
     public string DataOwner { get; set; } = string.Empty;
     public string ReviewAuthority { get; set; } = string.Empty;
-    
+
     // Review Schedule
     public DateTime? NextReviewDate { get; set; }
     public DateTime? LastReviewDate { get; set; }
     public string? LastReviewNotes { get; set; }
-    
+
     // Alert Configuration
     public List<SPIThreshold> AlertThresholds { get; set; }
     public bool AlertsEnabled { get; set; } = true;
     public string? AlertRecipients { get; set; }
-    
+
     // Data Points Collection
     public List<SPIDataPoint> DataPoints { get; set; }
 
     // Business Methods
-    public Result UpdateConfiguration(string name, string description, SPIType indicatorType, 
+    public Result UpdateConfiguration(string name, string description, SPIType indicatorType,
         string measurementUnit, SPIMeasurementFrequency frequency, string updatedBy)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(name))
                 return Result.Failure(DomainErrors.SPIError.InvalidName);
-                
+
             if (string.IsNullOrWhiteSpace(description))
                 return Result.Failure(DomainErrors.SPIError.InvalidDescription);
 
@@ -87,7 +83,7 @@ public sealed class SafetyPerformanceIndicator : BaseAuditableEntity
         }
     }
 
-    public Result SetTargets(decimal? targetValue, decimal? acceptableRange, 
+    public Result SetTargets(decimal? targetValue, decimal? acceptableRange,
         decimal? warningThreshold, decimal? criticalThreshold, string updatedBy)
     {
         try
@@ -277,7 +273,7 @@ public sealed class SafetyPerformanceIndicator : BaseAuditableEntity
     private int GetWeekNumber(DateTime date)
     {
         var culture = System.Globalization.CultureInfo.CurrentCulture;
-        return culture.Calendar.GetWeekOfYear(date, 
+        return culture.Calendar.GetWeekOfYear(date,
             System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Monday);
     }
 

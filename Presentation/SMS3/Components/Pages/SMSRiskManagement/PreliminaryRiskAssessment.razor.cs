@@ -1,13 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-using Radzen;
-
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
 /// <summary>
@@ -33,7 +23,7 @@ public partial class PreliminaryRiskAssessment : ComponentBase
     #region State Properties
     private bool IsLoading { get; set; } = true;
     private bool IsSaving { get; set; } = false;
-    
+
     public int ProgressPercentage { get; set; } = 0;
     public string CurrentSection { get; set; } = "Risk Level Assessment";
     public Hazard? Hazard { get; set; }
@@ -47,7 +37,7 @@ public partial class PreliminaryRiskAssessment : ComponentBase
     private readonly List<string> LikelihoodOptions = new()
     {
         "Very Low (< 1% chance)",
-        "Low (1-10% chance)", 
+        "Low (1-10% chance)",
         "Medium (10-50% chance)",
         "High (50-90% chance)",
         "Very High (> 90% chance)"
@@ -57,7 +47,7 @@ public partial class PreliminaryRiskAssessment : ComponentBase
     {
         "Negligible (Minor inconvenience)",
         "Minor (Temporary disruption)",
-        "Moderate (Significant impact)", 
+        "Moderate (Significant impact)",
         "Major (Serious consequences)",
         "Catastrophic (Severe/fatal consequences)"
     };
@@ -134,29 +124,29 @@ public partial class PreliminaryRiskAssessment : ComponentBase
         try
         {
             IsLoading = true;
-            
+
             // Load or create assessment first
             await LoadOrCreateAssessment();
-            
+
             // If we have an assessment but no HazardId parameter, get it from the assessment
             if (Assessment != null && string.IsNullOrWhiteSpace(HazardId))
             {
                 HazardId = Assessment.HazardCode;
             }
-            
+
             // Load hazard if we have a HazardId
             if (!string.IsNullOrWhiteSpace(HazardId))
             {
                 var hazardQuery = new GetHazardByIdQuery(new HazardID(HazardId));
                 var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
-                
+
                 if (hazardResult.IsSuccess)
                 {
                     Hazard = hazardResult.Value;
                     ReportId = Hazard.ReportCode;
                 }
             }
-            
+
             CalculateProgress();
         }
         catch (Exception ex)
@@ -176,7 +166,7 @@ public partial class PreliminaryRiskAssessment : ComponentBase
         // Try to find existing assessment by AssessmentId first
         var assessmentQuery = new GetRiskAssessmentByIdQuery(new RiskAssessmentID(AssessmentId!));
         var assessmentResult = await Mediator.SendAsync(assessmentQuery, CancellationToken.None);
-        
+
         if (assessmentResult.IsSuccess)
         {
             Assessment = assessmentResult.Value;
@@ -195,7 +185,7 @@ public partial class PreliminaryRiskAssessment : ComponentBase
     {
         // Generate a proper RiskAssessment ID based on the Report ID
         // If AssessmentId is RP-0269, create RS-0269 for the risk assessment
-        var riskAssessmentId = AssessmentId!.StartsWith("RP-") 
+        var riskAssessmentId = AssessmentId!.StartsWith("RP-")
             ? AssessmentId.Replace("RP-", "RS-")
             : $"RS-{AssessmentId}";
 
@@ -212,17 +202,17 @@ public partial class PreliminaryRiskAssessment : ComponentBase
             Assessment = createResult.Value;
             // Set the report code for linking
             Assessment.Description = $"Created from Report {AssessmentId}";
-            
+
             var createCommand = new CreateRiskAssessmentCommand(Assessment);
             var result = await Mediator.SendAsync(createCommand, CancellationToken.None);
-            
+
             if (!result.IsSuccess)
             {
                 Logger.LogError("Failed to create new assessment: {Error}", result.Error?.Message);
                 throw new Exception($"Failed to create assessment: {result.Error?.Message}");
             }
 
-            Logger.LogInformation("Created new RiskAssessment {RiskAssessmentId} from Report {ReportId}", 
+            Logger.LogInformation("Created new RiskAssessment {RiskAssessmentId} from Report {ReportId}",
                 riskAssessmentId, AssessmentId);
         }
         else
@@ -289,10 +279,10 @@ public partial class PreliminaryRiskAssessment : ComponentBase
         try
         {
             await SaveAssessment(isDraft: false);
-            
+
             var overallRisk = DetermineOverallRisk();
             var nextAction = DetermineNextAction();
-            
+
             ShowSuccessNotification($"Preliminary risk assessment {AssessmentId} completed successfully. Risk level: {overallRisk}. Next: {nextAction}.");
             Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
         }
@@ -428,7 +418,7 @@ public partial class PreliminaryRiskAssessment : ComponentBase
         NotificationService.Notify(new NotificationMessage
         {
             Severity = NotificationSeverity.Error,
-            Summary = "Error", 
+            Summary = "Error",
             Detail = message,
             Duration = 6000
         });

@@ -15,13 +15,13 @@
 //    public bool CanViewOrganizationSpecificData { get; }
 //    public bool CanViewAirsideOperationalData { get; }
 //    public bool CanViewHistoricalData { get; }
-    
+
 //    // Participation Permissions
 //    public bool CanParticipateInCommittees { get; }
 //    public bool CanSubmitHazardReports { get; }
 //    public bool CanCommentOnReports { get; }
 //    public bool CanReceiveNotifications { get; }
-    
+
 //    // Operational Permissions
 //    public bool CanAccessAOAInformation { get; }
 //    public bool CanViewWeatherData { get; }

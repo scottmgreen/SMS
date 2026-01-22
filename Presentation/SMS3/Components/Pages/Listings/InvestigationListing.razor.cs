@@ -1,13 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-using Radzen;
-using Radzen.Blazor;
-using System.Linq.Expressions;
-
 namespace SMS3.Components.Pages.Listings;
 
 public partial class InvestigationListing : ComponentBase
@@ -63,10 +53,10 @@ public partial class InvestigationListing : ComponentBase
             await LoadInitialData();
 
             var query = investigations.AsQueryable();
-            
+
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
-                query = args.OrderBy.Contains("desc") 
+                query = args.OrderBy.Contains("desc")
                     ? query.OrderByDescending(GetPropertyExpression(args.OrderBy.Replace(" desc", "")))
                     : query.OrderBy(GetPropertyExpression(args.OrderBy));
             }
@@ -112,12 +102,12 @@ public partial class InvestigationListing : ComponentBase
     private void ViewInvestigation(Investigation investigation)
     {
         if (investigation == null) return;
-        
+
         // Navigate to Investigation with HazardCode if available
-        var navigationUrl = string.IsNullOrWhiteSpace(investigation.HazardCode) 
+        var navigationUrl = string.IsNullOrWhiteSpace(investigation.HazardCode)
             ? $"/SMSRiskManagement/Investigations/{investigation.Code}"
             : $"/SMSRiskManagement/Investigations/{investigation.Code}/{investigation.HazardCode}";
-            
+
         Logger.LogInformation("Navigating to investigation: {Code} with URL: {Url}", investigation.Code, navigationUrl);
         Navigation.NavigateTo(navigationUrl);
     }
@@ -125,12 +115,12 @@ public partial class InvestigationListing : ComponentBase
     private void EditInvestigation(Investigation investigation)
     {
         if (investigation == null) return;
-        
+
         // Navigate to Investigation edit mode with HazardCode if available
-        var navigationUrl = string.IsNullOrWhiteSpace(investigation.HazardCode) 
+        var navigationUrl = string.IsNullOrWhiteSpace(investigation.HazardCode)
             ? $"/SMSRiskManagement/Investigations/{investigation.Code}"
             : $"/SMSRiskManagement/Investigations/{investigation.Code}/{investigation.HazardCode}";
-            
+
         Logger.LogInformation("Navigating to edit investigation: {Code} with URL: {Url}", investigation.Code, navigationUrl);
         Navigation.NavigateTo(navigationUrl);
     }

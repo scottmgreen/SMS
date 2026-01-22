@@ -1,10 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using Radzen;
 using SMS3.Components.Pages.SMSRiskManagement.Components;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
@@ -30,7 +23,7 @@ public partial class MyInterviewsSimple : ComponentBase
         try
         {
             IsLoading = true;
-            
+
             var query = new GetAllInterviewsQuery();
             var result = await Mediator.SendAsync(query, CancellationToken.None);
 
@@ -41,8 +34,8 @@ public partial class MyInterviewsSimple : ComponentBase
                     .Where(i => i.SMSInvestigatorCode.Equals(currentUserId, StringComparison.OrdinalIgnoreCase))
                     .OrderBy(i => i.InterviewDate ?? DateTime.MaxValue)
                     .ToList();
-                
-                Logger.LogInformation("Loaded {Count} interviews for user {UserId}", 
+
+                Logger.LogInformation("Loaded {Count} interviews for user {UserId}",
                     FilteredInterviews.Count, currentUserId);
             }
             else
@@ -95,18 +88,18 @@ public partial class MyInterviewsSimple : ComponentBase
 
     private async Task ConductInterview(Interview interview)
     {
-        var options = new DialogOptions() 
-        { 
-            Width = "100%", 
+        var options = new DialogOptions()
+        {
+            Width = "100%",
             Height = "100%",
             ShowTitle = false,
             ShowClose = false,
             CssClass = "custom-modal-dialog"
         };
 
-        var parameters = new Dictionary<string, object> 
-        { 
-            { "Interview", interview } 
+        var parameters = new Dictionary<string, object>
+        {
+            { "Interview", interview }
         };
 
         await DialogService.OpenAsync<EditInterviewDialog>("", parameters, options);
@@ -128,7 +121,7 @@ public partial class MyInterviewsSimple : ComponentBase
             return BadgeStyle.Success;
         if (interview.Status.Equals(InterviewStatus.Cancelled))
             return BadgeStyle.Danger;
-        
+
         return BadgeStyle.Light;
     }
 }

@@ -1,5 +1,3 @@
-using SMS_Shared.Common;
-
 namespace SMS_Domain.ValueObjects;
 
 /// <summary>

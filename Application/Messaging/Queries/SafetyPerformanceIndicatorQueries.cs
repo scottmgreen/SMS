@@ -1,9 +1,3 @@
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-
 namespace SMS_Application.Messaging.Queries;
 
 // =============================================
@@ -17,7 +11,7 @@ public class GetAllSafetyPerformanceIndicatorsQuery : BaseEventBundle, IRequest<
     public string? DepartmentFilter { get; set; }
     public bool IncludeDataPoints { get; set; } = true;
 
-    public GetAllSafetyPerformanceIndicatorsQuery(string? statusFilter = null, string? typeFilter = null, 
+    public GetAllSafetyPerformanceIndicatorsQuery(string? statusFilter = null, string? typeFilter = null,
         string? departmentFilter = null, bool includeDataPoints = true)
     {
         StatusFilter = statusFilter;
@@ -89,8 +83,8 @@ public class GetSPIDashboardDataQuery : BaseEventBundle, IRequest<Result<SPIDash
     public bool IncludeTrends { get; set; } = true;
     public bool IncludeAlerts { get; set; } = true;
 
-    public GetSPIDashboardDataQuery(DateTime? startDate = null, DateTime? endDate = null, 
-        List<string>? spiIds = null, List<string>? departmentFilters = null, 
+    public GetSPIDashboardDataQuery(DateTime? startDate = null, DateTime? endDate = null,
+        List<string>? spiIds = null, List<string>? departmentFilters = null,
         List<string>? typeFilters = null, bool includeTrends = true, bool includeAlerts = true)
     {
         StartDate = startDate;
@@ -124,7 +118,7 @@ public class GetSPIPerformanceSummaryQuery : BaseEventBundle, IRequest<Result<SP
     public List<string>? DepartmentFilters { get; set; }
     public List<string>? TypeFilters { get; set; }
 
-    public GetSPIPerformanceSummaryQuery(DateTime startDate, DateTime endDate, 
+    public GetSPIPerformanceSummaryQuery(DateTime startDate, DateTime endDate,
         List<string>? departmentFilters = null, List<string>? typeFilters = null)
     {
         StartDate = startDate;
@@ -141,7 +135,7 @@ public class GetSPIAlertsQuery : BaseEventBundle, IRequest<Result<List<SPIAlert>
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
 
-    public GetSPIAlertsQuery(List<string>? spiIds = null, bool activeAlertsOnly = true, 
+    public GetSPIAlertsQuery(List<string>? spiIds = null, bool activeAlertsOnly = true,
         DateTime? startDate = null, DateTime? endDate = null)
     {
         SPIIds = spiIds;
@@ -245,24 +239,24 @@ public class SPIDashboardCard
     public string Status { get; set; } = string.Empty; // Using string instead of SPIStatus
     public string MeasurementUnit { get; set; } = string.Empty;
     public string MeasurementFrequency { get; set; } = string.Empty; // Using string instead of SPIMeasurementFrequency
-    
+
     // Current Values
     public decimal? CurrentValue { get; set; }
     public decimal? TargetValue { get; set; }
     public decimal? WarningThreshold { get; set; }
     public decimal? CriticalThreshold { get; set; }
-    
+
     // Performance Indicators
     public string TrendDirection { get; set; } = string.Empty; // Using string instead of SPITrendDirection
     public decimal? PercentageToTarget { get; set; }
     public bool IsOverThreshold { get; set; }
     public bool IsAtWarningLevel { get; set; }
     public bool RequiresReview { get; set; }
-    
+
     // Timing
     public DateTime? LastMeasurementDate { get; set; }
     public DateTime? NextReviewDate { get; set; }
-    
+
     // Ownership
     public string ResponsibleDepartment { get; set; } = string.Empty;
     public string DataOwner { get; set; } = string.Empty;
@@ -308,12 +302,12 @@ public class SPIPerformanceSummary
     public int SPIsAboveWarning { get; set; }
     public int SPIsAboveCritical { get; set; }
     public decimal OverallComplianceRate { get; set; }
-    
+
     // By HazardCategory
     public Dictionary<string, int> SPIsByType { get; set; } = new();
     public Dictionary<string, int> SPIsByDepartment { get; set; } = new();
     public Dictionary<string, decimal> AverageValuesByType { get; set; } = new();
-    
+
     // Trends
     public int SPIsImproving { get; set; }
     public int SPIsStable { get; set; }

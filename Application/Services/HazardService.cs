@@ -1,11 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using SMS_Infrastructure.Services;
-using SMS_Infrastructure.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Domain.Models;
-using SMS_Domain.Errors;
-using SMS_Domain.Enums;
-using SMS_Shared.Common;
 
 namespace SMS_Application.Services;
 
@@ -19,7 +12,7 @@ public sealed class HazardService
     private readonly ILogger<HazardService> _logger;
 
     public HazardService(
-        HazardDataService dataService, 
+        HazardDataService dataService,
         HazardLocationService hazardLocationService,
         ILogger<HazardService> logger)
     {
@@ -55,16 +48,16 @@ public sealed class HazardService
         }
     }
 
-    public async Task<Result<Hazard>> GetHazardByIdAsync(HazardID id, CancellationToken ct = default)
+    public async Task<Result<Hazard>> GetHazardByCodeAsync(HazardID code, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Retrieving hazard with ID: {Id}", id);
-            return await _dataService.GetHazardByIdAsync(id, ct).ConfigureAwait(false);
+            _logger.LogInformation("Retrieving hazard with Code: {Id}", code);
+            return await _dataService.GetHazardByCodeAsync(code, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving hazard with ID: {Id}", id);
+            _logger.LogError(ex, "Unexpected error retrieving hazard with Code: {Id}", code);
             return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NotFound);
         }
     }
@@ -78,16 +71,16 @@ public sealed class HazardService
         try
         {
             _logger.LogInformation("Retrieving hazard with location data for ID: {Id}", id);
-            
+
             // First get the basic hazard
-            var hazardResult = await _dataService.GetHazardByIdAsync(id, ct).ConfigureAwait(false);
+            var hazardResult = await _dataService.GetHazardByCodeAsync(id, ct).ConfigureAwait(false);
             if (hazardResult.IsFailure)
             {
                 return hazardResult;
             }
 
             var hazard = hazardResult.Value;
-            
+
             // Then populate the complex HazardLocation entity
             await PopulateHazardLocationAsync(hazard, ct);
 
@@ -124,7 +117,7 @@ public sealed class HazardService
         try
         {
             _logger.LogInformation("Retrieving all hazards with location data");
-            
+
             // First get all basic hazards
             var hazardsResult = await _dataService.GetAllHazardsAsync(ct).ConfigureAwait(false);
             if (hazardsResult.IsFailure)
@@ -133,7 +126,7 @@ public sealed class HazardService
             }
 
             var hazards = hazardsResult.Value;
-            
+
             // Then populate HazardLocation for each hazard
             var tasks = hazards.Select(hazard => PopulateHazardLocationAsync(hazard, ct));
             await Task.WhenAll(tasks);
@@ -217,7 +210,7 @@ public sealed class HazardService
         {
             // Get HazardLocation(s) for this Hazard via Application Service
             var locationsResult = await _hazardLocationService.GetHazardLocationsByHazardCodeAsync(hazard.Code, ct);
-            
+
             if (locationsResult.IsSuccess && locationsResult.Value.Any())
             {
                 // Get the primary/most recent location
@@ -251,9 +244,9 @@ public sealed class HazardService
         try
         {
             _logger.LogInformation("Retrieving location for hazard: {HazardCode}", hazardCode);
-            
+
             var locationsResult = await _hazardLocationService.GetHazardLocationsByHazardCodeAsync(hazardCode, ct);
-            
+
             if (locationsResult.IsSuccess && locationsResult.Value.Any())
             {
                 var primaryLocation = locationsResult.Value.OrderByDescending(l => l.CreatedDate).First();

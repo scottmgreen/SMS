@@ -1,11 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
-using SMS_Domain.Entities;
-using SMS_Shared.Common;
-using Radzen;
-using Radzen.Blazor;
-
 namespace SMS3.Components.Pages.SMSAssurance.Components;
 
 public partial class AuditEvidenceDialog : ComponentBase
@@ -168,7 +160,7 @@ public partial class AuditEvidenceDialog : ComponentBase
         {
             // For now, just show success since the commands don't exist yet
             ShowSuccessNotification("Evidence creation feature will be implemented when command handlers are ready");
-            
+
             // TODO: Implement when CreateSMSAuditEvidenceCommand is available
             /*
             var command = new CreateSMSAuditEvidenceCommand(
@@ -194,7 +186,7 @@ public partial class AuditEvidenceDialog : ComponentBase
                 ShowErrorNotification($"Failed to upload evidence: {result.Error?.Message}");
             }
             */
-            
+
             DialogService.Close(true);
         }
         catch (Exception ex)
@@ -210,7 +202,7 @@ public partial class AuditEvidenceDialog : ComponentBase
         {
             // For now, just show success since the commands don't exist yet
             ShowSuccessNotification("Evidence update feature will be implemented when command handlers are ready");
-            
+
             // TODO: Implement when UpdateSMSAuditEvidenceCommand is available
             /*
             var command = new UpdateSMSAuditEvidenceCommand(
@@ -237,7 +229,7 @@ public partial class AuditEvidenceDialog : ComponentBase
                 ShowErrorNotification($"Failed to update evidence: {result.Error?.Message}");
             }
             */
-            
+
             DialogService.Close(true);
         }
         catch (Exception ex)

@@ -1,11 +1,6 @@
 using Microsoft.Extensions.Logging;
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
+
 using SMS_Application.Messaging.Queries;
-using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Infrastructure.Services;
-using SMS_Shared.Common;
 
 namespace SMS_Application.Messaging.QueryHandlers;
 
@@ -30,7 +25,7 @@ public class GetAllSMSStakeholderUsersQueryHandler : BaseQueryBundle, IRequestHa
         {
             _logger.LogInformation("Processing GetAllSMSStakeholderUsersQuery");
             var result = await _dataService.GetAllAsync(ct);
-            
+
             if (result.IsSuccess)
             {
                 _logger.LogInformation("Successfully retrieved {Count} SMS Stakeholder Users", result.Value?.Count() ?? 0);
@@ -39,7 +34,7 @@ public class GetAllSMSStakeholderUsersQueryHandler : BaseQueryBundle, IRequestHa
             {
                 _logger.LogWarning("Failed to retrieve SMS Stakeholder Users");
             }
-            
+
             return result;
         }
         catch (Exception ex)
@@ -67,7 +62,7 @@ public class GetSMSStakeholderUserByIdQueryHandler : BaseQueryBundle, IRequestHa
         {
             _logger.LogInformation("Processing GetSMSStakeholderUserByIdQuery for ID: {UserId}", request.UserId);
             var result = await _dataService.GetByIdAsync(request.UserId, ct);
-            
+
             if (result.IsSuccess)
             {
                 _logger.LogInformation("Successfully retrieved SMS Stakeholder User with ID: {UserId}", request.UserId);
@@ -76,7 +71,7 @@ public class GetSMSStakeholderUserByIdQueryHandler : BaseQueryBundle, IRequestHa
             {
                 _logger.LogWarning("SMS Stakeholder User not found with ID: {UserId}", request.UserId);
             }
-            
+
             return result;
         }
         catch (Exception ex)
@@ -104,7 +99,7 @@ public class GetSMSStakeholderUserByCodeQueryHandler : BaseQueryBundle, IRequest
         {
             _logger.LogInformation("Processing GetSMSStakeholderUserByCodeQuery for Code: {UserCode}", request.UserCode);
             var result = await _dataService.GetByIdAsync(request.UserCode, ct);
-            
+
             if (result.IsSuccess)
             {
                 _logger.LogInformation("Successfully retrieved SMS Stakeholder User with Code: {UserCode}", request.UserCode);
@@ -113,7 +108,7 @@ public class GetSMSStakeholderUserByCodeQueryHandler : BaseQueryBundle, IRequest
             {
                 _logger.LogWarning("SMS Stakeholder User not found with Code: {UserCode}", request.UserCode);
             }
-            
+
             return result;
         }
         catch (Exception ex)
@@ -140,7 +135,7 @@ public class GetSMSStakeholderUserByUserNameQueryHandler : BaseQueryBundle, IReq
         try
         {
             _logger.LogInformation("Processing GetSMSStakeholderUserByUserNameQuery for UserName: {UserName}", request.UserName);
-            
+
             // Get all users and filter by username
             var allUsersResult = await _dataService.GetAllAsync(ct);
             if (allUsersResult.IsFailure)
@@ -149,7 +144,7 @@ public class GetSMSStakeholderUserByUserNameQueryHandler : BaseQueryBundle, IReq
             }
 
             var user = allUsersResult.Value?.FirstOrDefault(u => u.UserName.Value.Equals(request.UserName, StringComparison.OrdinalIgnoreCase));
-            
+
             if (user != null)
             {
                 _logger.LogInformation("Successfully retrieved SMS Stakeholder User with UserName: {UserName}", request.UserName);
@@ -186,7 +181,7 @@ public class GetActiveSMSStakeholderUsersQueryHandler : BaseQueryBundle, IReques
         {
             _logger.LogInformation("Processing GetActiveSMSStakeholderUsersQuery");
             var result = await _dataService.GetActiveAsync(ct);
-            
+
             if (result.IsSuccess)
             {
                 _logger.LogInformation("Successfully retrieved {Count} active SMS Stakeholder Users", result.Value?.Count() ?? 0);
@@ -195,7 +190,7 @@ public class GetActiveSMSStakeholderUsersQueryHandler : BaseQueryBundle, IReques
             {
                 _logger.LogWarning("Failed to retrieve active SMS Stakeholder Users");
             }
-            
+
             return result;
         }
         catch (Exception ex)
@@ -222,7 +217,7 @@ public class GetSMSStakeholderUsersByTypeQueryHandler : BaseQueryBundle, IReques
         try
         {
             _logger.LogInformation("Processing GetSMSStakeholderUsersByTypeQuery for Type: {StakeholderType}", request.StakeholderType);
-            
+
             // Filter users by stakeholder type through service
             var allUsersResult = await _dataService.GetAllAsync(ct);
             if (allUsersResult.IsFailure)
@@ -231,7 +226,7 @@ public class GetSMSStakeholderUsersByTypeQueryHandler : BaseQueryBundle, IReques
             }
 
             var filteredUsers = allUsersResult.Value?.Where(u => u.StakeholderType.Equals(request.StakeholderType, StringComparison.OrdinalIgnoreCase)) ?? Enumerable.Empty<SMSStakeholderUser>();
-            
+
             _logger.LogInformation("Successfully retrieved {Count} SMS Stakeholder Users for Type: {StakeholderType}", filteredUsers.Count(), request.StakeholderType);
             return Result<IEnumerable<SMSStakeholderUser>>.Success(filteredUsers);
         }
@@ -259,7 +254,7 @@ public class GetSMSStakeholderUsersByOrganizationQueryHandler : BaseQueryBundle,
         try
         {
             _logger.LogInformation("Processing GetSMSStakeholderUsersByOrganizationQuery for Organization: {Organization}", request.Organization);
-            
+
             // Filter users by organization through service
             var allUsersResult = await _dataService.GetAllAsync(ct);
             if (allUsersResult.IsFailure)
@@ -268,7 +263,7 @@ public class GetSMSStakeholderUsersByOrganizationQueryHandler : BaseQueryBundle,
             }
 
             var filteredUsers = allUsersResult.Value?.Where(u => u.Organization.Equals(request.Organization, StringComparison.OrdinalIgnoreCase)) ?? Enumerable.Empty<SMSStakeholderUser>();
-            
+
             _logger.LogInformation("Successfully retrieved {Count} SMS Stakeholder Users for Organization: {Organization}", filteredUsers.Count(), request.Organization);
             return Result<IEnumerable<SMSStakeholderUser>>.Success(filteredUsers);
         }
@@ -305,12 +300,12 @@ public class GetSMSStakeholderUsersByGroupCodeQueryHandler : BaseQueryBundle, IR
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS Stakeholder Users for GroupCode: {GroupCode}", 
+                _logger.LogInformation("Successfully retrieved {Count} SMS Stakeholder Users for GroupCode: {GroupCode}",
                     result.Value?.Count() ?? 0, request.GroupCode);
             }
             else
             {
-                _logger.LogApplicationError("Failed to retrieve SMS Stakeholder Users for GroupCode {GroupCode}: {Error}", 
+                _logger.LogApplicationError("Failed to retrieve SMS Stakeholder Users for GroupCode {GroupCode}: {Error}",
                     ApplicationEventIds.Error, null);
             }
 

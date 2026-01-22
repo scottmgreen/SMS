@@ -1,10 +1,6 @@
-using Microsoft.Data.SqlClient;
-using SMS_Domain.Entities;
-using SMS_Infrastructure.Common;
-using SMS_Infrastructure.Interfaces;
-using SMS_Shared.Common;
-using System.Data;
 using SMS_Domain.Errors;
+
+using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Persistence;
 

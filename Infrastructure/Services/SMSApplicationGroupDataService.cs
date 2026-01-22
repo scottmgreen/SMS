@@ -1,12 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using SMS_Domain.Entities;
-using SMS_Domain.Interfaces;
 using SMS_Domain.Errors;
-using SMS_Infrastructure.Common;
-using SMS_Infrastructure.Interfaces;
-using SMS_Infrastructure.Persistence;
-using SMS_Shared.Common;
 
 namespace SMS_Infrastructure.Services;
 
@@ -44,7 +36,7 @@ public sealed class SMSApplicationGroupDataService : BaseDataService<SMSApplicat
             }
 
             _logger.LogInformation("Creating SMS Application Group with code: {Code}", group.Code);
-            
+
             var result = await _repository.CreateAsync(group, ct);
 
             if (result.IsSuccess)
@@ -165,7 +157,7 @@ public sealed class SMSApplicationGroupDataService : BaseDataService<SMSApplicat
             }
 
             _logger.LogInformation("Updating SMS Application Group with code: {Code}", group.Code);
-            
+
             var result = await _repository.UpdateAsync(group, ct);
 
             if (result.IsSuccess)
@@ -200,7 +192,7 @@ public sealed class SMSApplicationGroupDataService : BaseDataService<SMSApplicat
             }
 
             _logger.LogInformation("Deleting SMS Application Group with code: {Code}", groupCode);
-            
+
             var result = await _repository.DeleteAsync(groupCode, ct);
 
             if (result.IsSuccess)
@@ -235,7 +227,7 @@ public sealed class SMSApplicationGroupDataService : BaseDataService<SMSApplicat
             }
 
             _logger.LogInformation("Assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
-            
+
             var result = await _repository.AssignUserToGroupAsync(userCode, groupCode, assignedBy, ct);
 
             if (result.IsSuccess)
@@ -270,7 +262,7 @@ public sealed class SMSApplicationGroupDataService : BaseDataService<SMSApplicat
             }
 
             _logger.LogInformation("Removing user {UserCode} from group {GroupCode}", userCode, groupCode);
-            
+
             var result = await _repository.RemoveUserFromGroupAsync(userCode, groupCode, ct);
 
             if (result.IsSuccess)
@@ -305,7 +297,7 @@ public sealed class SMSApplicationGroupDataService : BaseDataService<SMSApplicat
             }
 
             _logger.LogInformation("Retrieving users for SMS Application Group: {GroupCode}", userCode);
-            
+
             return await _repository.GetGroupsByUserCodeAsync(userCode, ct);
         }
         catch (Exception ex)
@@ -350,7 +342,7 @@ public sealed class SMSApplicationGroupDataService : BaseDataService<SMSApplicat
             }
 
             _logger.LogInformation("Clearing all group memberships for user {UserCode}", userCode);
-            
+
             var result = await _repository.ClearUserGroupsAsync(userCode, ct);
 
             if (result.IsSuccess)

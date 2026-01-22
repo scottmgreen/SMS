@@ -1,0 +1,398 @@
+@page "/SMSRiskManagement/HazardReportSearch"
+@using SMS_Domain.Entities
+@using SMS_Domain.ValueObjects
+@using SMS_Application.Messaging.Queries
+@using SMS3.Components.Shared
+@inherits ComponentBase
+
+<PageTitle>Hazard Report Search</PageTitle>
+
+<!-- Header Section -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h3 class="page-title mb-1">
+                <RadzenIcon Icon="search" class="me-2" />
+                Hazard Report Search
+            </h3>
+            <p class="page-subtitle mb-0">
+                Search for hazard reports using tracking ID or report details
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Search Section -->
+<RadzenCard class="mb-4">
+    <div class="container-fluid">
+        
+        <!-- Primary Search: Tracking ID -->
+        <div class="row">
+            <div class="col-12">
+                <h5 class="mb-3">
+                    <RadzenIcon Icon="track_changes" class="me-2" />
+                    Search by Tracking ID
+                </h5>
+                <p class="text-muted mb-3">
+                    Enter your tracking ID to get comprehensive report details and processing status.
+                </p>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-lg-6 col-md-8 col-12">
+                <div class="search-input-container">
+                    <RadzenTextBox @bind-Value="@TrackingIdSearch" 
+                                   Placeholder="Enter tracking ID (e.g., HT-2026-0006)"
+                                   class="w-100"
+                                   Style="height: 50px; font-size: 1.1rem;"
+                                   @onkeypress="@OnTrackingIdKeyPress" 
+                                   @oninput="@OnTrackingIdInput" />
+                    <small class="form-text text-muted mt-1">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Tracking ID format: <strong>HT-YYYY-NNNN</strong> (e.g., HT-2026-0006)
+                        <br />
+                        <span class="text-primary">?? Tip: You can enter just numbers (e.g., 0006) and we'll try to find matches</span>
+                    </small>
+                    @if (!string.IsNullOrEmpty(TrackingIdFormatMessage))
+                    {
+                        <small class="form-text mt-1" style="color: @TrackingIdFormatColor;">
+                            <i class="fas @TrackingIdFormatIcon me-1"></i>
+                            @TrackingIdFormatMessage
+                        </small>
+                    }
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-4 col-12 d-flex align-items-start">
+                <RadzenButton ButtonType="ButtonType.Button" 
+                              Click="@SearchByTrackingId" 
+                              Text="Search"
+                              Icon="search"
+                              BusyText="Searching..."
+                              IsBusy="@IsSearching"
+                              ButtonStyle="ButtonStyle.Primary"
+                              Size="ButtonSize.Large"
+                              class="w-100"
+                              Disabled="@(string.IsNullOrWhiteSpace(TrackingIdSearch))" />
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <hr class="my-4" />
+
+        <!-- Advanced Search Section -->
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex align-items-center mb-3">
+                    <h5 class="mb-0 me-3">
+                        <RadzenIcon Icon="manage_search" class="me-2" />
+                        Advanced Search
+                    </h5>
+                    <RadzenButton ButtonType="ButtonType.Button"
+                                  Click="@ToggleAdvancedSearch"
+                                  Text="@(ShowAdvancedSearch ? "Hide Advanced" : "Show Advanced")"
+                                  Variant="Variant.Text"
+                                  Size="ButtonSize.Small" />
+                </div>
+            </div>
+        </div>
+
+        @if (ShowAdvancedSearch)
+        {
+            <div class="advanced-search-section" @key="@("advanced-search")">
+                <div class="row g-3">
+                    <!-- Report Code -->
+                    <div class="col-lg-3 col-md-6">
+                        <RadzenLabel Text="Report Code" Component="ReportCodeSearch" class="fw-semibold" />
+                        <RadzenTextBox @bind-Value="@ReportCodeSearch" 
+                                       Name="ReportCodeSearch"
+                                       Placeholder="RP-YYYY-XXXX" 
+                                       class="w-100" />
+                    </div>
+
+                    <!-- Hazard Code -->
+                    <div class="col-lg-3 col-md-6">
+                        <RadzenLabel Text="Hazard Code" Component="HazardCodeSearch" class="fw-semibold" />
+                        <RadzenTextBox @bind-Value="@HazardCodeSearch" 
+                                       Name="HazardCodeSearch"
+                                       Placeholder="HZ-YYYY-XXXX" 
+                                       class="w-100" />
+                    </div>
+
+                    <!-- Reported By -->
+                    <div class="col-lg-3 col-md-6">
+                        <RadzenLabel Text="Reported By" Component="ReportedBySearch" class="fw-semibold" />
+                        <RadzenTextBox @bind-Value="@ReportedBySearch" 
+                                       Name="ReportedBySearch"
+                                       Placeholder="Reporter name" 
+                                       class="w-100" />
+                    </div>
+
+                    <!-- Date Range -->
+                    <div class="col-lg-3 col-md-6">
+                        <RadzenLabel Text="Date Range" Component="DateFromSearch" class="fw-semibold" />
+                        <div class="d-flex gap-2">
+                            <RadzenDatePicker @bind-Value="@DateFromSearch" 
+                                              Name="DateFromSearch"
+                                              Placeholder="From"
+                                              class="flex-fill" 
+                                              ShowTime="false"
+                                              DateFormat="MM/dd/yyyy" />
+                            <RadzenDatePicker @bind-Value="@DateToSearch" 
+                                              Name="DateToSearch"
+                                              Placeholder="To"
+                                              class="flex-fill" 
+                                              ShowTime="false"
+                                              DateFormat="MM/dd/yyyy" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="d-flex gap-2">
+                            <RadzenButton ButtonType="ButtonType.Button"
+                                          Click="@SearchAdvanced"
+                                          Text="Search"
+                                          Icon="search"
+                                          BusyText="Searching..."
+                                          IsBusy="@IsSearching"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          Disabled="@(!HasAdvancedSearchCriteria)" />
+                            <RadzenButton ButtonType="ButtonType.Button"
+                                          Click="@ClearAdvancedSearch"
+                                          Text="Clear"
+                                          Icon="clear"
+                                          ButtonStyle="ButtonStyle.Light" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</RadzenCard>
+
+<!-- Search Results Section -->
+@if (SearchResults.Any() || HasSearched)
+{
+    <RadzenCard>
+        <div class="results-header mb-3">
+            <h5 class="mb-1">
+                <RadzenIcon Icon="list_alt" class="me-2" />
+                Search Results
+            </h5>
+            @if (HasSearched)
+            {
+                <p class="text-muted mb-0">
+                    Found @SearchResults.Count result(s)
+                    @if (!string.IsNullOrEmpty(LastSearchQuery))
+                    {
+                        <span>for "@LastSearchQuery"</span>
+                    }
+                </p>
+            }
+        </div>
+
+        @if (SearchResults.Any())
+        {
+            <!-- Show info if we found similar results instead of exact match -->
+            @if (HasSimilarResults)
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mb-3">
+                    <h6 class="mb-1">
+                        <RadzenIcon Icon="info" class="me-2" />
+                        Similar Tracking IDs Found
+                    </h6>
+                    <p class="mb-0">
+                        No exact match for "@LastSearchQuery" but found @SearchResults.Count similar tracking ID(s).
+                        These results might be what you're looking for:
+                    </p>
+                </RadzenAlert>
+            }
+
+            <RadzenDataGrid @ref="@SearchResultsGrid"
+                            Data="@SearchResults"
+                            TItem="HazardReportSearchResult"
+                            AllowPaging="true"
+                            PageSize="10"
+                            AllowSorting="true"
+                            class="search-results-grid">
+                
+                <Columns>
+                    <RadzenDataGridColumn TItem="HazardReportSearchResult" 
+                                          Property="TrackingCode" 
+                                          Title="Tracking ID"
+                                          Sortable="true"
+                                          Width="180px">
+                        <Template Context="result">
+                            <span class="fw-bold text-primary">@result.TrackingCode</span>
+                            @if (HasSimilarResults && IsHighMatch(result.TrackingCode))
+                            {
+                                <RadzenBadge Text="Best Match" BadgeStyle="BadgeStyle.Success" class="ms-2" Style="font-size: 0.6rem;" />
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="HazardReportSearchResult" 
+                                          Property="ReportCode" 
+                                          Title="Report"
+                                          Sortable="true"
+                                          Width="120px">
+                        <Template Context="result">
+                            <span class="fw-semibold">@result.ReportCode</span>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="HazardReportSearchResult" 
+                                          Property="HazardCode" 
+                                          Title="Hazard"
+                                          Sortable="true"
+                                          Width="120px">
+                        <Template Context="result">
+                            <span class="fw-semibold">@result.HazardCode</span>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="HazardReportSearchResult" 
+                                          Property="HazardType" 
+                                          Title="Type"
+                                          Sortable="true"
+                                          Width="150px">
+                        <Template Context="result">
+                            <span class="text-info">@result.HazardType</span>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="HazardReportSearchResult" 
+                                          Property="ReportedBy" 
+                                          Title="Reported By"
+                                          Sortable="true"
+                                          Width="130px">
+                        <Template Context="result">
+                            @result.ReportedBy
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="HazardReportSearchResult" 
+                                          Property="ReportedOn" 
+                                          Title="Date"
+                                          Sortable="true"
+                                          Width="110px"
+                                          FormatString="{0:MM/dd/yyyy}">
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="HazardReportSearchResult" 
+                                          Property="CurrentStatus" 
+                                          Title="Status"
+                                          Sortable="true"
+                                          Width="120px">
+                        <Template Context="result">
+                            <RadzenBadge Text="@result.CurrentStatus" 
+                                         BadgeStyle="@GetStatusBadgeStyle(result.CurrentStatus)" 
+                                         class="status-badge" />
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="HazardReportSearchResult" 
+                                          Property="ValidationDecision" 
+                                          Title="Validation"
+                                          Sortable="true"
+                                          Width="140px">
+                        <Template Context="result">
+                            @if (!string.IsNullOrEmpty(result.ValidationDecision))
+                            {
+                                <RadzenBadge Text="@GetValidationDecisionDisplay(result.ValidationDecision)" 
+                                             BadgeStyle="@GetValidationBadgeStyle(result.ValidationDecision)" 
+                                             class="validation-badge" />
+                            }
+                            else
+                            {
+                                <span class="text-muted">Pending</span>
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="HazardReportSearchResult" 
+                                          Title="Actions" 
+                                          Sortable="false" 
+                                          Width="100px">
+                        <Template Context="result">
+                            <RadzenButton ButtonType="ButtonType.Button"
+                                          Click="@(() => ViewDetails(result.TrackingCode))"
+                                          Text="Details"
+                                          Icon="visibility"
+                                          Size="ButtonSize.Small"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          Variant="Variant.Outlined" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        }
+        else if (HasSearched)
+        {
+            <div class="no-results text-center py-5">
+                <RadzenIcon Icon="search_off" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" class="mb-3" />
+                <h6 class="text-muted">No results found</h6>
+                <p class="text-muted mb-0">
+                    Try adjusting your search criteria or verify the tracking ID format.
+                </p>
+            </div>
+        }
+    </RadzenCard>
+}
+
+<!-- Loading State -->
+@if (IsSearching)
+{
+    <RadzenCard class="text-center py-5">
+        <RadzenProgressBarCircular ShowValue="false" class="mb-3" />
+        <h6 class="text-muted">Searching...</h6>
+    </RadzenCard>
+}
+
+<style>
+    .page-header {
+        border-bottom: 2px solid var(--rz-border-color);
+        padding-bottom: 1rem;
+    }
+
+    .search-input-container {
+        position: relative;
+    }
+
+    .advanced-search-section {
+        background-color: var(--rz-background-color);
+        border: 1px solid var(--rz-border-color);
+        border-radius: var(--rz-border-radius);
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .search-results-grid {
+        --rz-grid-cell-padding: 0.75rem;
+    }
+
+    .status-badge, .validation-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .fw-semibold {
+        font-weight: 600;
+    }
+
+    .no-results {
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    @@media (max-width: 768px) {
+        .search-results-grid .rz-datatable-scrollable-wrapper {
+            overflow-x: auto;
+        }
+    }
+</style>

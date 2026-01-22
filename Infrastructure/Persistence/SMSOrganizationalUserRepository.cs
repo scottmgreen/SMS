@@ -1,20 +1,16 @@
-using SMS_Domain.Entities;
+using Infrastructure.Interfaces;
+
 using SMS_Domain.Errors;
 using SMS_Domain.Interfaces;
-using SMS_Infrastructure.Common;
+
 using SMS_Infrastructure.Interfaces;
-using SMS_Shared.Common;
-using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Logging;
-using System.Data;
-using Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Persistence;
 
 /// <summary>
 /// Repository implementation for SMS Organizational User operations
 /// </summary>
-public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganizationalUserRepository, SMSOrganizationalUser>,ISMSOrganizationalUserRepository
+public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganizationalUserRepository, SMSOrganizationalUser>, ISMSOrganizationalUserRepository
 {
     private readonly ILogger<SMSOrganizationalUserRepository> _logger;
     private readonly string _logHeader;
@@ -634,5 +630,5 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
         }
     }
 
-    
+
 }

@@ -1,8 +1,4 @@
 using Microsoft.Extensions.Logging;
-using SMS_Domain.Entities;
-using SMS_Domain.Models;
-using SMS_Infrastructure.Services;
-using SMS_Shared.Common;
 
 namespace SMS_Application.Services;
 
@@ -21,7 +17,7 @@ public interface ISMSUserRoleService
     Task<Result<IEnumerable<SMSUserRole>>> GetUserRolesByRoleValueAsync(string roleValue);
     Task<Result<IEnumerable<SMSUserRole>>> GetUserRolesByDepartmentAsync(string department);
     Task<Result<IEnumerable<SMSUserRole>>> GetUserRolesByUserTypeAsync(string userType);
-    
+
     Task<Result<SMSUserRole>> UpdateUserRoleAsync(SMSUserRole userRole);
     Task<Result<bool>> DeleteUserRoleAsync(string id);
     //Task<Result<UserRoleStatistics>> GetUserRoleStatisticsAsync();
@@ -168,7 +164,7 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} user role assignments for user {UserId}", 
+                _logger.LogInformation("Successfully retrieved {Count} user role assignments for user {UserId}",
                     result.Value?.Count() ?? 0, userId);
             }
 
@@ -320,7 +316,7 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} expiring user role assignments", 
+                _logger.LogInformation("Successfully retrieved {Count} expiring user role assignments",
                     result.Value?.Count() ?? 0);
             }
 

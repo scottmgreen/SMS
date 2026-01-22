@@ -1,12 +1,6 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using SMS_Domain.Entities;
 using SMS_Domain.Errors;
-using SMS_Domain.Models;
-using SMS_Infrastructure.Common;
+
 using SMS_Infrastructure.Interfaces;
-using SMS_Infrastructure.Persistence;
-using SMS_Shared.Common;
 
 namespace SMS_Infrastructure.Services;
 
@@ -364,7 +358,7 @@ public sealed class SMSUserRoleDataService : BaseDataService<SMSUserRoleDataServ
     //        }
 
     //        _logger.LogInformation("Validating role {RoleValue} for user {UserId}", roleValue, userId);
-            
+
     //        var activeRolesResult = await _repository.GetActiveRolesByUserIdAsync(userId);
     //        if (activeRolesResult.IsFailure)
     //        {
@@ -373,7 +367,7 @@ public sealed class SMSUserRoleDataService : BaseDataService<SMSUserRoleDataServ
 
     //        var hasRole = activeRolesResult.Value.Any(ur => 
     //            string.Equals(ur.Code, roleValue, StringComparison.OrdinalIgnoreCase));
-                
+
     //        return Result<bool>.Success(hasRole);
     //    }
     //    catch (Exception ex)

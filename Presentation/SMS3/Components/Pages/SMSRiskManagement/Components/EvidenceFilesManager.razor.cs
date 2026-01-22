@@ -1,10 +1,3 @@
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-using Radzen;
 using Microsoft.JSInterop;
 
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
@@ -81,9 +74,9 @@ public partial class EvidenceFilesManager : ComponentBase
             }
 
             IsLoading = true;
-            
+
             Logger.LogInformation("?? Loading evidence files for HazardCode: {HazardCode}", HazardCode);
-            
+
             // Load ALL files for this hazard, not just those with HazardCategory = "Evidence"
             // This will include both files uploaded during initial reporting and investigation
             var query = new GetHazardFilesByHazardCodeQuery(HazardCode, false, null); // null removes category filter
@@ -98,10 +91,10 @@ public partial class EvidenceFilesManager : ComponentBase
                     .Where(f => f.IsActive) // Only show active files
                     .OrderByDescending(f => f.UploadedDate)
                     .ToList();
-                
-                Logger.LogInformation("? Filtered to {Count} active evidence files for hazard {HazardCode}", 
+
+                Logger.LogInformation("? Filtered to {Count} active evidence files for hazard {HazardCode}",
                     EvidenceFiles.Count, HazardCode);
-                
+
                 // Log details about each file for debugging
                 foreach (var file in EvidenceFiles)
                 {
@@ -133,9 +126,9 @@ public partial class EvidenceFilesManager : ComponentBase
     #region File Actions
     private async Task ShowUploadDialog()
     {
-        var options = new DialogOptions() 
-        { 
-            Width = "1098px", 
+        var options = new DialogOptions()
+        {
+            Width = "1098px",
             Height = "584px",
             Resizable = true,
             Draggable = true,
@@ -143,14 +136,14 @@ public partial class EvidenceFilesManager : ComponentBase
             CloseDialogOnEsc = true
         };
 
-        var parameters = new Dictionary<string, object> 
-        { 
+        var parameters = new Dictionary<string, object>
+        {
             { "HazardCode", HazardCode },
             { "InvestigationCode", InvestigationCode }
         };
 
         var result = await DialogService.OpenAsync<UploadEvidenceDialog>(
-            "Upload Evidence File", 
+            "Upload Evidence File",
             parameters,
             options);
 
@@ -166,7 +159,7 @@ public partial class EvidenceFilesManager : ComponentBase
         try
         {
             Logger.LogInformation("Opening file viewer for: {FileName}", file.FileName);
-            
+
             ViewingFile = file;
             ShowFileViewer = true;
             StateHasChanged();
@@ -196,16 +189,16 @@ public partial class EvidenceFilesManager : ComponentBase
             }
 
             Logger.LogInformation("Starting download for file: {FileName}", file.FileName);
-            
+
             var fileName = file.FileName ?? "file";
             var mimeType = GetMimeType(file);
             var base64 = Convert.ToBase64String(file.FileData);
-            
+
             await JSRuntime.InvokeVoidAsync("downloadFile", fileName, mimeType, base64);
-            
+
             ShowInfoNotification($"Download started for '{fileName}'");
-            
-            Logger.LogInformation("Download initiated for file: {FileName} (Code: {Code})", 
+
+            Logger.LogInformation("Download initiated for file: {FileName} (Code: {Code})",
                 file.FileName, file.Code);
         }
         catch (Exception ex)
@@ -267,7 +260,7 @@ public partial class EvidenceFilesManager : ComponentBase
 
     private bool IsPdfFile(HazardFile file)
     {
-        return file.FileType?.ToLowerInvariant() == "pdf" || 
+        return file.FileType?.ToLowerInvariant() == "pdf" ||
                file.FileName?.ToLowerInvariant().EndsWith(".pdf") == true;
     }
 
@@ -290,7 +283,7 @@ public partial class EvidenceFilesManager : ComponentBase
         if (IsPdfFile(file)) return "picture_as_pdf";
         if (IsImageFile(file)) return "image";
         if (IsVideoFile(file)) return "videocam";
-        
+
         var extension = Path.GetExtension(file.FileName)?.ToLowerInvariant();
         return extension switch
         {
@@ -308,7 +301,7 @@ public partial class EvidenceFilesManager : ComponentBase
         if (IsPdfFile(file)) return "#d32f2f";
         if (IsImageFile(file)) return "#388e3c";
         if (IsVideoFile(file)) return "#1976d2";
-        
+
         return "#757575";
     }
 

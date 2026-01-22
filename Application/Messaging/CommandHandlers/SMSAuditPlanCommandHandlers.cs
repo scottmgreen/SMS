@@ -1,9 +1,3 @@
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Services;
-using SMS_Domain.Entities;
-using SMS_Shared.Common;
 using Microsoft.Extensions.Logging;
 
 namespace SMS_Application.Messaging.CommandHandlers;
@@ -38,8 +32,8 @@ public class CreateSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
             _logger.LogInformation("Processing CreateSMSAuditPlanCommand for audit plan: {Name}", request.AuditPlan.Name);
 
             // Generate audit plan code
-            
-            
+
+
             // Create audit plan entity
             var auditPlan = new SMSAuditPlan(new SMSAuditPlanID("AP-0000"), request.AuditPlan.CreatedBy)
             {
@@ -209,7 +203,7 @@ public class ApproveSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHand
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully approved SMS audit plan: {AuditPlanCode} by {ApprovedBy}", 
+                _logger.LogInformation("Successfully approved SMS audit plan: {AuditPlanCode} by {ApprovedBy}",
                     request.AuditPlanCode, request.ApprovedBy);
             }
             else
@@ -261,7 +255,7 @@ public class DeleteSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted SMS audit plan: {AuditPlanCode} by {DeletedBy}", 
+                _logger.LogInformation("Successfully deleted SMS audit plan: {AuditPlanCode} by {DeletedBy}",
                     request.AuditPlanCode, request.DeletedBy);
             }
             else
@@ -309,7 +303,7 @@ public class ScheduleSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHan
 
             _logger.LogInformation("Processing ScheduleSMSAuditPlanCommand for audit plan: {AuditPlanCode}", request.AuditPlan.Code);
 
-            
+
             var auditPlan = request.AuditPlan; //existingPlanResult.Value!;
             auditPlan.Status = "Scheduled";
 

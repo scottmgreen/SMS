@@ -1,8 +1,4 @@
-﻿using SMS_Shared.Common;
-using SMS_Domain.Enums;
-using Microsoft.Win32.SafeHandles;
-
-namespace SMS_Domain.Entities;
+﻿namespace SMS_Domain.Entities;
 
 /// <summary>
 /// Hazard Domain Entity - Mission Critical
@@ -34,12 +30,12 @@ public sealed class Hazard : BaseAuditableEntity
     public string Code { get; set; } = string.Empty;
     public string? Name { get; set; }
     public string Description { get; set; } = string.Empty;
-    
+
     public FiveMComponent? FiveMComponent { get; set; } // Man, Machine, Method, Material, Milieu - Smart Enum
     public HazardStatus Status { get; set; } = HazardStatus.Active;
     public HazardPriority Priority { get; set; } = HazardPriority.Medium;
 
-    public bool IsInitialHazard { get; set; }   
+    public bool IsInitialHazard { get; set; }
     #endregion
 
     #region Hazard Classification Properties
@@ -108,7 +104,7 @@ public sealed class Hazard : BaseAuditableEntity
 
     #region Factory Methods
 
-    
+
     /// <summary>
     /// Create hazard from Risk Assessment Step 2 data
     /// </summary>
@@ -128,7 +124,7 @@ public sealed class Hazard : BaseAuditableEntity
     /// <summary>
     /// Create a comprehensive hazard with all required SMS information
     /// </summary>
-    public static Result<Hazard> CreateComprehensive(string code, string description, string category, string reportedBy, string? reportingDepartment = null, string? hazardType = null, 
+    public static Result<Hazard> CreateComprehensive(string code, string description, string category, string reportedBy, string? reportingDepartment = null, string? hazardType = null,
         FiveMComponent? fiveMComponent = null, bool isConfidential = false, bool isAnonymous = false)
     {
         if (string.IsNullOrWhiteSpace(code))
@@ -178,15 +174,15 @@ public sealed class Hazard : BaseAuditableEntity
     /// <summary>
     /// Create hazard from hazard reporting form
     /// </summary>
-    public static Result<Hazard> CreateFromHazardReport(string description, string category, string reportedBy, 
-        string? reportingDepartment, string? hazardType = null, HazardLocation location = null, 
+    public static Result<Hazard> CreateFromHazardReport(string description, string category, string reportedBy,
+        string? reportingDepartment, string? hazardType = null, HazardLocation location = null,
         bool isConfidential = false, bool isAnonymous = false)
     {
         // Auto-generate code
         var code = $"HZ-0000"; // These are generated in the Database via stored proc so the initial code is HZ-0000
-        
+
         var result = CreateComprehensive(code, description, category, reportedBy, reportingDepartment, hazardType, null, isConfidential, isAnonymous); // Let auto-analysis determine Five M component
-            
+
         if (result.IsFailure)
         {
             return result;
@@ -194,13 +190,13 @@ public sealed class Hazard : BaseAuditableEntity
 
         var hazard = result.Value;
         hazard.HazardLocation = location;
-        
+
         // Set the Name property based on hazard type or use a default
         hazard.Name = GetHazardNameFromType(hazardType) ?? $"Hazard Report - {DateTime.UtcNow:yyyy-MM-dd}";
-        
+
         return Result<Hazard>.Success(hazard);
     }
-    
+
     /// <summary>
     /// Get a user-friendly name based on hazard type
     /// </summary>
@@ -224,8 +220,8 @@ public sealed class Hazard : BaseAuditableEntity
 
     #region Domain Behavior Methods
 
-     
-    
+
+
 
     /// <summary>
     /// Set hazard location
@@ -244,12 +240,12 @@ public sealed class Hazard : BaseAuditableEntity
     //    }
 
     //    HazardLocation = hazardLocation;
-        
+
     //    // Update the legacy location fields for backward compatibility
     //    Location = hazardLocation.GetDisplayName();
     //    LocationArea = hazardLocation.LocationArea;
     //    LocationSubArea = hazardLocation.LocationSubArea;
-        
+
     //    UpdatedDate = DateTime.UtcNow;
     //    return Result<bool>.Success(true);
     //}
@@ -261,7 +257,7 @@ public sealed class Hazard : BaseAuditableEntity
     //    string? locationArea = null, string? locationSubArea = null, string? description = null)
     //{
     //    var locationCode = $"HL-{Code}-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}";
-        
+
     //    var locationResult = HazardLocation.Create(locationCode, Code, latitude, longitude);
     //    if (locationResult.IsFailure)
     //    {
@@ -292,12 +288,12 @@ public sealed class Hazard : BaseAuditableEntity
         }
     }
 
-   
-    
-   
+
+
+
     #endregion
 
-    
+
     /// <summary>
     /// Analyze and suggest Five M component based on hazard description
     /// </summary>
@@ -316,5 +312,5 @@ public sealed class Hazard : BaseAuditableEntity
 
     #endregion
 
-    
+
 }

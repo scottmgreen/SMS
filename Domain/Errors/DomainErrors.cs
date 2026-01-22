@@ -201,7 +201,7 @@ public static class DomainErrors
         public static Error GroupHasMembers => new Error("SMSStakeholderGroup.GroupHasMembers", "Cannot delete a group that has assigned members.");
         public static Error DuplicateGroupName => new Error("SMSStakeholderGroup.DuplicateGroupName", "A stakeholder group with this name already exists.");
         public static Error DuplicateCode => new Error("SMSStakeholderGroup.DuplicateCode", "A stakeholder group with this code already exists.");
-        
+
         // User-Group Assignment Errors
         public static Error UserCodeRequired => new Error("SMSStakeholderGroup.UserCodeRequired", "The User Code is required for group assignment.");
         public static Error AssignedByRequired => new Error("SMSStakeholderGroup.AssignedByRequired", "The Assigned By field is required.");
@@ -615,30 +615,30 @@ public static class DomainErrors
         public static Error InvalidIdFormat => new Error("RiskAssessment.InvalidIdFormat", "The Risk Assessment ID format is invalid. Expected format: RA-YYYYMMDD-XXXXXXXX");
         public static Error InvalidName => new Error("RiskAssessment.InvalidName", "The Risk Assessment name is required and cannot be empty.");
         public static Error InvalidLeadAssessor => new Error("RiskAssessment.InvalidLeadAssessor", "The Lead Assessor ID is required and cannot be empty.");
-        
+
         // Status and Workflow Errors
         public static Error InvalidStatus => new Error("RiskAssessment.InvalidStatus", "The Risk Assessment Status is invalid.");
         public static Error InvalidStage => new Error("RiskAssessment.InvalidStage", "The Stage is invalid or required.");
         public static Error InvalidStep => new Error("RiskAssessment.InvalidStep", "The step number must be between 1 and 5.");
         public static Error CannotModifyCompleted => new Error("RiskAssessment.CannotModifyCompleted", "Cannot modify a completed Risk Assessment.");
         public static Error IncompleteSteps => new Error("RiskAssessment.IncompleteSteps", "Cannot complete Risk Assessment - not all steps are completed.");
-        
+
         // Hazard-Related Errors
         public static Error InvalidHazard => new Error("RiskAssessment.InvalidHazard", "The hazard ID is invalid or empty.");
         public static Error HazardNotFound => new Error("RiskAssessment.HazardNotFound", "The hazard is not part of this Risk Assessment.");
         public static Error InvalidStakeholder => new Error("RiskAssessment.InvalidStakeholder", "The stakeholder ID is invalid or empty.");
         public static Error InvalidParentAssessment => new Error("RiskAssessment.InvalidParentAssessment", "The parent assessment ID is required for residual risk assessments.");
-        
+
         // Panel Scoring Errors
         public static Error InvalidPanelMember => new Error("RiskAssessment.InvalidPanelMember", "The panel member ID is invalid or empty.");
         public static Error InvalidSeverityScore => new Error("RiskAssessment.InvalidSeverityScore", "Severity score must be between 1 and 5.");
         public static Error InvalidLikelihoodScore => new Error("RiskAssessment.InvalidLikelihoodScore", "Likelihood score must be between 1 and 5.");
         public static Error InvalidRiskScore => new Error("RiskAssessment.InvalidRiskScore", "Both severity and likelihood scores must be between 1 and 5.");
-        
+
         // Mitigation and Assessment Errors
         public static Error InvalidMitigationStrategy => new Error("RiskAssessment.InvalidMitigationStrategy", "The mitigation strategy is invalid or empty.");
         public static Error InvalidAssignment => new Error("RiskAssessment.InvalidAssignment", "The mitigation assignment is invalid - department is required.");
-        
+
         // Legacy Support (for existing RiskAssessmentError references)
         public static Error HazardCodeRequired => new Error("RiskAssessment.HazardCodeRequired", "The Hazard Code is required.");
         public static Error InvalidAssessmentType => new Error("RiskAssessment.InvalidAssessmentType", "The Assessment Type is invalid.");
@@ -654,7 +654,7 @@ public static class DomainErrors
         public static Error CreateFailed => new Error("MitigationStrategy.CreateFailed", "Failed to create the Mitigation Strategy.");
         public static Error UpdateFailed => new Error("MitigationStrategy.UpdateFailed", "Failed to update the Mitigation Strategy.");
         public static Error DeleteFailed => new Error("MitigationStrategy.DeleteFailed", "Failed to delete the Mitigation Strategy.");
-        
+
         // Validation Errors
         public static Error InvalidId => new Error("MitigationStrategy.InvalidId", "The Mitigation Strategy ID is invalid.");
         public static Error InvalidIdFormat => new Error("MitigationStrategy.InvalidIdFormat", "The Mitigation Strategy ID format is invalid. Expected format: MS-YYYYMMDD-XXXXXXXX");
@@ -812,7 +812,7 @@ public static class DomainErrors
         public static Error GroupHasMembers => new Error("SMSOrganizationalGroup.GroupHasMembers", "Cannot delete a group that has assigned members.");
         public static Error DuplicateGroupName => new Error("SMSOrganizationalGroup.DuplicateGroupName", "An organizational group with this name already exists.");
         public static Error DuplicateCode => new Error("SMSOrganizationalGroup.DuplicateCode", "An organizational group with this code already exists.");
-        
+
         // User-Group Assignment Errors
         public static Error UserCodeRequired => new Error("SMSOrganizationalGroup.UserCodeRequired", "The User Code is required for group assignment.");
         public static Error AssignedByRequired => new Error("SMSOrganizationalGroup.AssignedByRequired", "The Assigned By field is required.");
@@ -826,7 +826,7 @@ public static class DomainErrors
         public static Error InvalidUserType => new Error("SMSOrganizationalGroup.InvalidUserType", "Only organizational users can be assigned to organizational groups.");
         public static Error MaxMembersExceeded => new Error("SMSOrganizationalGroup.MaxMembersExceeded", "The organizational group has reached its maximum member limit.");
         public static Error MinMembersRequired => new Error("SMSOrganizationalGroup.MinMembersRequired", "The organizational group must have at least one member.");
-        
+
         // Enhanced SMS Role-specific Errors
         public static Error InvalidSMSRole => new Error("SMSOrganizationalGroup.InvalidSMSRole", "The SMS Role assignment is invalid.");
         public static Error InvalidRoleAuthorityLevel => new Error("SMSOrganizationalGroup.InvalidRoleAuthorityLevel", "The role authority level is invalid.");
@@ -836,7 +836,7 @@ public static class DomainErrors
         public static Error RoleAssignmentFailed => new Error("SMSOrganizationalGroup.RoleAssignmentFailed", "Failed to assign SMS role to the organizational group member.");
         public static Error RoleRemovalFailed => new Error("SMSOrganizationalGroup.RoleRemovalFailed", "Failed to remove SMS role from the organizational group member.");
         public static Error GroupTypeAuthorityMismatch => new Error("SMSOrganizationalGroup.GroupTypeAuthorityMismatch", "The group type does not match the required authority level.");
-        
+
         // Department and Organization Hierarchy Errors
         public static Error InvalidDepartmentAssignment => new Error("SMSOrganizationalGroup.InvalidDepartmentAssignment", "The department assignment is invalid for this group type.");
         public static Error OrganizationLevelMismatch => new Error("SMSOrganizationalGroup.OrganizationLevelMismatch", "The organization level does not match the group's authority level.");
@@ -864,7 +864,7 @@ public static class DomainErrors
         public static Error InvalidReviewDate => new Error("SPI.InvalidReviewDate", "The review date must be in the future.");
         public static Error InvalidDataPoint => new Error("SPI.InvalidDataPoint", "The data point value is invalid.");
         public static Error InvalidPeriod => new Error("SPI.InvalidPeriod", "The measurement period is invalid for the frequency.");
-        
+
         public static Error NotFound => new Error("SPI.NotFound", "The Safety Performance Indicator was not found.");
         public static Error CreateFailed => new Error("SPI.CreateFailed", "Failed to create the Safety Performance Indicator.");
         public static Error UpdateFailed => new Error("SPI.UpdateFailed", "Failed to update the Safety Performance Indicator.");
@@ -874,7 +874,7 @@ public static class DomainErrors
         public static Error DataPointAddFailed => new Error("SPI.DataPointAddFailed", "Failed to add data point to the SPI.");
         public static Error ReviewScheduleFailed => new Error("SPI.ReviewScheduleFailed", "Failed to schedule SPI review.");
         public static Error ReviewCompletionFailed => new Error("SPI.ReviewCompletionFailed", "Failed to complete SPI review.");
-        
+
         public static Error CannotModifyInactive => new Error("SPI.CannotModifyInactive", "Cannot modify an inactive Safety Performance Indicator.");
         public static Error AlreadyExists => new Error("SPI.AlreadyExists", "A Safety Performance Indicator with this code already exists.");
         public static Error DependentDataExists => new Error("SPI.DependentDataExists", "Cannot delete SPI that has associated data points.");
@@ -1032,5 +1032,37 @@ public static class DomainErrors
         public static Error StatusUpdateFailed => new Error("SMSAuditChecklistItem.StatusUpdateFailed", "Failed to update checklist item status.");
         public static Error CompletionFailed => new Error("SMSAuditChecklistItem.CompletionFailed", "Failed to complete checklist item.");
         public static Error ReviewFailed => new Error("SMSAuditChecklistItem.ReviewFailed", "Failed to review checklist item.");
+    }
+
+    /// <summary>
+    /// Contains Hazard Report Tracking related errors.
+    /// </summary>
+    public static class HazardReportTrackingError
+    {
+        public static Error NullOrEmpty => new Error("HazardReportTracking.NullOrEmpty", "The Hazard Report Tracking is required.");
+        public static Error CodeRequired => new Error("HazardReportTracking.CodeRequired", "The Tracking Code is required.");
+        public static Error HazardCodeRequired => new Error("HazardReportTracking.HazardCodeRequired", "The Hazard Code is required.");
+        public static Error ReportCodeRequired => new Error("HazardReportTracking.ReportCodeRequired", "The Report Code is required.");
+        public static Error TrackingCodeRequired => new Error("HazardReportTracking.TrackingCodeRequired", "The Tracking Code is required.");
+        public static Error InvalidCode => new Error("HazardReportTracking.InvalidCode", "The Tracking Code is invalid.");
+        public static Error InvalidTrackingCodeFormat => new Error("HazardReportTracking.InvalidTrackingCodeFormat", "The Tracking Code format is invalid. Expected format: HRT-YYYYMMDD-HHMMSS-XXXX");
+        public static Error InvalidHazardCode => new Error("HazardReportTracking.InvalidHazardCode", "The Hazard Code is invalid.");
+        public static Error InvalidReportCode => new Error("HazardReportTracking.InvalidReportCode", "The Report Code is invalid.");
+        public static Error NotFound => new Error("HazardReportTracking.NotFound", "The Hazard Report Tracking record was not found.");
+        public static Error CreateFailed => new Error("HazardReportTracking.CreateFailed", "Failed to create the Hazard Report Tracking record.");
+        public static Error UpdateFailed => new Error("HazardReportTracking.UpdateFailed", "Failed to update the Hazard Report Tracking record.");
+        public static Error DeleteFailed => new Error("HazardReportTracking.DeleteFailed", "Failed to delete the Hazard Report Tracking record.");
+        public static Error TrackingCodeGenerationFailed => new Error("HazardReportTracking.TrackingCodeGenerationFailed", "Failed to generate unique tracking code.");
+        public static Error DuplicateTrackingCode => new Error("HazardReportTracking.DuplicateTrackingCode", "A tracking record with this code already exists.");
+        public static Error TrackingCodeExpired => new Error("HazardReportTracking.TrackingCodeExpired", "The tracking code has expired and is no longer valid.");
+        public static Error InvalidStatusTransition => new Error("HazardReportTracking.InvalidStatusTransition", "The status transition is not allowed.");
+        public static Error StatusUpdateFailed => new Error("HazardReportTracking.StatusUpdateFailed", "Failed to update the tracking status.");
+        public static Error ProcessingStageUpdateFailed => new Error("HazardReportTracking.ProcessingStageUpdateFailed", "Failed to update the processing stage.");
+        public static Error RelatedHazardNotFound => new Error("HazardReportTracking.RelatedHazardNotFound", "The related hazard was not found.");
+        public static Error RelatedReportNotFound => new Error("HazardReportTracking.RelatedReportNotFound", "The related report was not found.");
+        public static Error TrackingCodeNotActive => new Error("HazardReportTracking.TrackingCodeNotActive", "The tracking code is not active for status updates.");
+        public static Error CannotModifyCompletedTracking => new Error("HazardReportTracking.CannotModifyCompletedTracking", "Cannot modify a completed tracking record.");
+        public static Error InvalidProcessingStage => new Error("HazardReportTracking.InvalidProcessingStage", "The processing stage is invalid.");
+        public static Error InvalidCurrentStatus => new Error("HazardReportTracking.InvalidCurrentStatus", "The current status is invalid.");
     }
 }

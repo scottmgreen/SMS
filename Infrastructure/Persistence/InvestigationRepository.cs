@@ -1,10 +1,6 @@
-﻿using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Domain.ValueObjects;
-using SMS_Infrastructure.Common;
+﻿using SMS_Domain.Errors;
+
 using SMS_Infrastructure.Interfaces;
-using Microsoft.Data.SqlClient;
-using System.Data;
 
 namespace SMS_Infrastructure.Persistence;
 
@@ -48,13 +44,13 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationReportCode, investigation.ReportCode ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationHazardCode, investigation.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationNotes, investigation.InvestigationNotes ?? (object)DBNull.Value));
-            
+
             // Management properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationAssignedInvestigatorId, investigation.AssignedInvestigatorId));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationStatus, investigation.Status.ToString()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationPlan, investigation.InvestigationPlan ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationObjectives, investigation.InvestigationObjectives ?? (object)DBNull.Value));
-            
+
             // Decision properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationDecisionType, investigation.DecisionType ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationDecisionRationale, investigation.DecisionRationale ?? (object)DBNull.Value));
@@ -62,7 +58,7 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationDecisionDate, investigation.DecisionDate ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationNextSteps, investigation.NextSteps ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationReferralDetails, investigation.ReferralDetails ?? (object)DBNull.Value));
-            
+
             // Audit properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, investigation.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, investigation.CreatedDate));
@@ -357,14 +353,14 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationReportCode, investigation.ReportCode ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationHazardCode, investigation.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationNotes, investigation.InvestigationNotes ?? (object)DBNull.Value));
-            
+
             // Management properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationAssignedInvestigatorId, investigation.AssignedInvestigatorId));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationStatus, investigation.Status.ToString()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationCompletedDate, investigation.CompletedDate ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationPlan, investigation.InvestigationPlan ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationObjectives, investigation.InvestigationObjectives ?? (object)DBNull.Value));
-            
+
             // Decision properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationDecisionType, investigation.DecisionType ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationDecisionRationale, investigation.DecisionRationale ?? (object)DBNull.Value));
@@ -372,7 +368,7 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationDecisionDate, investigation.DecisionDate ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationNextSteps, investigation.NextSteps ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationReferralDetails, investigation.ReferralDetails ?? (object)DBNull.Value));
-            
+
             // Audit properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, investigation.UpdatedBy ?? "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, investigation.UpdatedDate ?? DateTime.UtcNow));
@@ -457,7 +453,7 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
         }
     }
 
-    public async Task<Result<bool>> RecordDecisionAsync(string investigationCode, string decisionType, string rationale, 
+    public async Task<Result<bool>> RecordDecisionAsync(string investigationCode, string decisionType, string rationale,
         string decisionMaker, string? nextSteps = null, string? referralDetails = null, CancellationToken ct = default)
     {
         try

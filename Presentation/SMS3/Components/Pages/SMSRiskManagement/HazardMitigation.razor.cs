@@ -1,14 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-using Radzen;
-using SMS3.Components.Shared;
-
-namespace SMS3.Components.Pages.SMSRiskManagement;
+﻿namespace SMS3.Components.Pages.SMSRiskManagement;
 
 /// <summary>
 /// Code-behind for HazardMitigation creation/editing page
@@ -21,7 +11,7 @@ public partial class HazardMitigation : ComponentBase
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private ILogger<HazardMitigation> Logger { get; set; } = default!;
-    
+
     [CascadingParameter(Name = "AuthService")]
     public AuthenticationService AuthService { get; set; } = default!;
     #endregion
@@ -34,10 +24,10 @@ public partial class HazardMitigation : ComponentBase
     private bool IsLoading { get; set; } = true;
     private bool IsSaving { get; set; } = false;
     private bool IsEditMode => !string.IsNullOrWhiteSpace(MitigationCode);
-    
+
     // Use the Domain Entity directly - NO MODELS!
     public SMS_Domain.Entities.Mitigation CurrentMitigation { get; set; } = new(new MitigationID(Guid.NewGuid().ToString()));
-    
+
     public string PageTitle => IsEditMode ? "Edit Hazard Mitigation" : "Create Hazard Mitigation";
     public string PageSubtitle => IsEditMode ? $"Modify hazard mitigation strategy {MitigationCode}" : "Create new hazard mitigation strategy";
     #endregion
@@ -60,8 +50,8 @@ public partial class HazardMitigation : ComponentBase
 
     private readonly List<string> Departments = new()
     {
-        "Airport Operations", "Safety Management", "Maintenance & Engineering", 
-        "Aircraft Rescue & Firefighting", "Airport Security", "Air Traffic Control", 
+        "Airport Operations", "Safety Management", "Maintenance & Engineering",
+        "Aircraft Rescue & Firefighting", "Airport Security", "Air Traffic Control",
         "Ground Handling Services", "Cargo Operations", "External Contractor"
     };
     #endregion
@@ -97,13 +87,13 @@ public partial class HazardMitigation : ComponentBase
                     Progress = 0,
                     TargetDate = DateTime.Now.AddMonths(3)
                 };
-                
+
                 // 📋 AUDIT: Set creation audit fields
                 CurrentMitigation.CreatedBy = GetCurrentUserId();
                 CurrentMitigation.CreatedDate = DateTime.UtcNow;
             }
 
-            Logger.LogInformation("Loaded hazard mitigation {Mode} page for Code: {Code} by user: {UserId}", 
+            Logger.LogInformation("Loaded hazard mitigation {Mode} page for Code: {Code} by user: {UserId}",
                 IsEditMode ? "edit" : "creation", MitigationCode ?? "New", GetCurrentUserId());
         }
         catch (Exception ex)
@@ -212,13 +202,13 @@ public partial class HazardMitigation : ComponentBase
         if (result.IsSuccess)
         {
             ShowSuccessNotification($"Hazard mitigation {CurrentMitigation.Code} created successfully!");
-            Logger.LogInformation("Created hazard mitigation: {Code} by user: {UserId}", 
+            Logger.LogInformation("Created hazard mitigation: {Code} by user: {UserId}",
                 CurrentMitigation.Code, GetCurrentUserId());
         }
         else
         {
             ShowErrorNotification($"Failed to create hazard mitigation: {result.Error?.Message}");
-            Logger.LogError("Failed to create hazard mitigation: {Error} by user: {UserId}", 
+            Logger.LogError("Failed to create hazard mitigation: {Error} by user: {UserId}",
                 result.Error?.Message, GetCurrentUserId());
         }
     }
@@ -236,13 +226,13 @@ public partial class HazardMitigation : ComponentBase
         if (result.IsSuccess)
         {
             ShowSuccessNotification($"Hazard mitigation {CurrentMitigation.Code} updated successfully!");
-            Logger.LogInformation("Updated hazard mitigation: {Code} by user: {UserId}", 
+            Logger.LogInformation("Updated hazard mitigation: {Code} by user: {UserId}",
                 CurrentMitigation.Code, GetCurrentUserId());
         }
         else
         {
             ShowErrorNotification($"Failed to update hazard mitigation: {result.Error?.Message}");
-            Logger.LogError("Failed to update hazard mitigation {Code}: {Error} by user: {UserId}", 
+            Logger.LogError("Failed to update hazard mitigation {Code}: {Error} by user: {UserId}",
                 CurrentMitigation.Code, result.Error?.Message, GetCurrentUserId());
         }
     }

@@ -1,20 +1,3 @@
-using Microsoft.AspNetCore.Components;
-
-using Radzen;
-using Radzen.Blazor;
-
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.CommandHandlers;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Messaging.Queries;
-
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-
-using SMS_Shared.Common;
-
-using SMS3.Components.Pages.SMSAssurance.Components;
-
 namespace SMS3.Components.Pages.SMSAssurance;
 
 public partial class AuditManagement : ComponentBase
@@ -30,7 +13,7 @@ public partial class AuditManagement : ComponentBase
     #region Component State
     private bool IsLoading { get; set; } = true;
     private bool IsUpdating { get; set; } = false;
-    
+
     // Collapsible sections
     private bool showCategorySummary { get; set; } = true;
     private bool showFilterPanel { get; set; } = false;
@@ -40,12 +23,12 @@ public partial class AuditManagement : ComponentBase
     private string SelectedStatus { get; set; } = "All";
     private string SelectedType { get; set; } = "All";
     private string SelectedDepartment { get; set; } = "All";
-    
+
     // Filter Options
     private List<string> StatusOptions { get; set; } = new() { "All", "Draft", "Approved", "Scheduled", "In Progress", "Completed", "Cancelled" };
     private List<string> TypeOptions { get; set; } = new() { "All", "Internal", "External", "Management Review", "Compliance", "Follow-up" };
     private List<string> DepartmentOptions { get; set; } = new() { "All", "Operations", "Maintenance", "Safety", "Security", "Management" };
-    
+
     // Data Collections
     private List<SMSAuditPlan> AuditPlans { get; set; } = new();
     private List<SMSAuditPlan> AllAuditPlans { get; set; } = new();
@@ -53,11 +36,11 @@ public partial class AuditManagement : ComponentBase
     private List<SMSAudit> AllAudits { get; set; } = new(); // Add this for complete audit list
     private List<SMSAuditFinding> RecentFindings { get; set; } = new();
     private List<SMSAuditEvidence> RecentEvidence { get; set; } = new();
-    
+
     // Grid References
     private RadzenDataGrid<SMSAuditPlan>? auditPlansGrid;
     private RadzenDataGrid<SMSAudit>? activeAuditsGrid;
-    
+
     // Dashboard Statistics
     private AuditDashboardStats DashboardStats { get; set; } = new();
     #endregion
@@ -140,10 +123,10 @@ public partial class AuditManagement : ComponentBase
             if (result.IsSuccess && result.Value != null)
             {
                 var allAudits = result.Value.ToList();
-                
+
                 // Store all audits for statistics calculation
                 AllAudits = allAudits;
-                
+
                 // Filter for the active audits grid display
                 ActiveAudits = allAudits
                     .Where(a => a.Status == "In Progress" || a.Status == "Scheduled")
@@ -229,27 +212,27 @@ public partial class AuditManagement : ComponentBase
                 // Audit Plan Statistics
                 TotalAuditPlans = AllAuditPlans.Count,
                 ApprovedPlans = AllAuditPlans.Count(p => p.Status == "Approved"),
-                
+
                 // Active Audit Statistics  
                 ActiveAudits = AllAudits.Count(a => a.Status == "In Progress"),
-                CompletedThisMonth = AllAudits.Count(a => a.Status == "Completed" && 
+                CompletedThisMonth = AllAudits.Count(a => a.Status == "Completed" &&
                     a.ActualEndDate.HasValue &&
                     a.ActualEndDate.Value.Month == DateTime.Now.Month &&
                     a.ActualEndDate.Value.Year == DateTime.Now.Year),
-                
+
                 // Calculate overdue audits (scheduled but past end date and not completed)
-                OverdueAudits = AllAudits.Count(a => 
-                    a.ScheduledEndDate < DateTime.Now && 
-                    a.ActualEndDate == null && 
+                OverdueAudits = AllAudits.Count(a =>
+                    a.ScheduledEndDate < DateTime.Now &&
+                    a.ActualEndDate == null &&
                     (a.Status == "Scheduled" || a.Status == "In Progress")),
-                
+
                 // Finding Statistics
                 CriticalFindings = RecentFindings.Count(f => f.Severity == "Critical"),
                 MajorFindings = RecentFindings.Count(f => f.Severity == "Major"),
                 FindingsAwaitingAction = RecentFindings.Count(f => f.Status == "Open" || f.Status == "In Progress")
             };
 
-            Logger.LogInformation("Dashboard Stats Calculated: Plans={TotalPlans}, ActiveAudits={Active}, Overdue={Overdue}", 
+            Logger.LogInformation("Dashboard Stats Calculated: Plans={TotalPlans}, ActiveAudits={Active}, Overdue={Overdue}",
                 DashboardStats.TotalAuditPlans, DashboardStats.ActiveAudits, DashboardStats.OverdueAudits);
         }
         catch (Exception ex)
@@ -361,13 +344,13 @@ public partial class AuditManagement : ComponentBase
         {
             // Simple confirmation dialog instead of full form
             var confirmMessage = $"Schedule audit '{plan.Name}' for {plan.PlannedStartDate:MM/dd/yyyy} - {plan.PlannedEndDate:MM/dd/yyyy}?";
-            
+
             var confirm = await DialogService.Confirm(
                 confirmMessage,
                 "Schedule Audit Confirmation",
-                new ConfirmOptions() 
-                { 
-                    OkButtonText = "Yes, Schedule", 
+                new ConfirmOptions()
+                {
+                    OkButtonText = "Yes, Schedule",
                     CancelButtonText = "Cancel",
                     Width = "500px"
                 });
@@ -433,7 +416,7 @@ public partial class AuditManagement : ComponentBase
 
             if (confirm == true)
             {
-                var command = new DeleteSMSAuditPlanCommand(plan.Code,"SYSTEM");
+                var command = new DeleteSMSAuditPlanCommand(plan.Code, "SYSTEM");
                 var result = await Mediator.SendAsync(command, CancellationToken.None);
 
                 if (result.IsSuccess)
@@ -595,7 +578,7 @@ public partial class AuditManagement : ComponentBase
         return severity switch
         {
             "Critical" => BadgeStyle.Danger,
-            "Major" => BadgeStyle.Warning, 
+            "Major" => BadgeStyle.Warning,
             "Minor" => BadgeStyle.Info,
             "Observation" => BadgeStyle.Light,
             _ => BadgeStyle.Secondary
@@ -666,19 +649,19 @@ public partial class AuditManagement : ComponentBase
     #region Helper Methods for Category Statistics
     private int GetInternalAuditsCount()
     {
-        return AllAudits.Count(a => a.AuditType == "Internal" && 
+        return AllAudits.Count(a => a.AuditType == "Internal" &&
             (a.Status == "Scheduled" || a.Status == "In Progress" || a.Status == "Completed"));
     }
 
     private int GetExternalAuditsCount()
     {
-        return AllAudits.Count(a => a.AuditType == "External" && 
+        return AllAudits.Count(a => a.AuditType == "External" &&
             (a.Status == "Scheduled" || a.Status == "In Progress" || a.Status == "Completed"));
     }
 
     private int GetManagementReviewsCount()
     {
-        return AllAudits.Count(a => a.AuditType == "Management Review" && 
+        return AllAudits.Count(a => a.AuditType == "Management Review" &&
             (a.Status == "Scheduled" || a.Status == "In Progress" || a.Status == "Completed"));
     }
 
@@ -690,8 +673,8 @@ public partial class AuditManagement : ComponentBase
     private int GetPlannedInternalAudits()
     {
         var currentYear = DateTime.Now.Year;
-        return AllAuditPlans.Count(ap => ap.AuditType == "Internal" && 
-            ap.Status == "Approved" && 
+        return AllAuditPlans.Count(ap => ap.AuditType == "Internal" &&
+            ap.Status == "Approved" &&
             ap.PlannedStartDate.Year == currentYear);
     }
 
@@ -703,7 +686,7 @@ public partial class AuditManagement : ComponentBase
     private int GetScheduledExternalAudits()
     {
         var currentYear = DateTime.Now.Year;
-        return AllAudits.Count(a => a.AuditType == "External" && 
+        return AllAudits.Count(a => a.AuditType == "External" &&
             (a.Status == "Scheduled" || a.Status == "Completed") &&
             a.ScheduledStartDate.Year == currentYear);
     }
@@ -711,8 +694,8 @@ public partial class AuditManagement : ComponentBase
     private int GetCompletedManagementReviews()
     {
         var currentYear = DateTime.Now.Year;
-        return AllAudits.Count(a => a.AuditType == "Management Review" && 
-            a.Status == "Completed" && 
+        return AllAudits.Count(a => a.AuditType == "Management Review" &&
+            a.Status == "Completed" &&
             a.ActualEndDate.HasValue &&
             a.ActualEndDate.Value.Year == currentYear);
     }
@@ -726,7 +709,7 @@ public partial class AuditManagement : ComponentBase
     {
         var planned = GetPlannedInternalAudits();
         if (planned == 0) return 100;
-        
+
         var completed = GetCompletedInternalAudits();
         return Math.Round((decimal)completed / planned * 100, 1);
     }
@@ -735,7 +718,7 @@ public partial class AuditManagement : ComponentBase
     {
         var scheduled = GetScheduledExternalAudits();
         if (scheduled == 0) return 100;
-        
+
         var completed = GetCompletedExternalAudits();
         return Math.Round((decimal)completed / scheduled * 100, 1);
     }
@@ -744,7 +727,7 @@ public partial class AuditManagement : ComponentBase
     {
         var required = GetRequiredManagementReviews();
         var completed = GetCompletedManagementReviews();
-        
+
         return Math.Round((decimal)completed / required * 100, 1);
     }
 
@@ -784,7 +767,7 @@ public partial class AuditManagement : ComponentBase
             // Apply search text filter
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
-                filteredPlans = filteredPlans.Where(p => 
+                filteredPlans = filteredPlans.Where(p =>
                     (p.Name?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
                     (p.Code?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
                     (p.Description?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));

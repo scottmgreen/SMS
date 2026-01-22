@@ -1,8 +1,4 @@
-using SMS_Domain.Entities;
-using SMS_Domain.Models;
 using SMS_Infrastructure.Interfaces;
-using SMS_Infrastructure.Persistence;
-using SMS_Shared.Common;
 
 namespace SMS_Infrastructure.Services;
 
@@ -31,7 +27,7 @@ public class HazardFileDataService : BaseDataService<HazardFileDataService>, IHa
         return _repo.AddAsync(hazardFile, ct);
     }
 
-    
+
     public Task<Result<HazardFile>> GetHazardFileByCodeAsync(string code, CancellationToken ct = default)
     {
         return _repo.GetByCodeAsync(code, ct);
@@ -88,7 +84,7 @@ public class HazardFileDataService : BaseDataService<HazardFileDataService>, IHa
         return _repo.SearchAsync(hazardCode, reportCode, fileType, category, searchText, uploadedBy, dateFrom, dateTo, includeConfidential, maxResults, ct);
     }
 
-   
+
 
     public Task<Result<IEnumerable<HazardFile>>> GetHazardPhotosAsync(string hazardCode, CancellationToken ct = default)
     {

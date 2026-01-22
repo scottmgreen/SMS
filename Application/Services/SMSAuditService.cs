@@ -1,10 +1,6 @@
-using SMS_Infrastructure.Services;
-using SMS_Domain.Entities;
-using SMS_Shared.Common;
 using Microsoft.Extensions.Logging;
+
 using SMS_Application.Messaging.Queries;
-using SMS_Application.Common;
-using SMS_Domain.Errors;
 
 namespace SMS_Application.Services;
 
@@ -131,11 +127,11 @@ public class SMSAuditService
             {
                 // Convert Domain model to Application model and apply business logic
                 var dashboardData = result.Value.ToApplicationModel();
-                
+
                 // Apply additional business logic calculations here
                 CalculatePerformanceMetrics(dashboardData);
-                
-                _logger.LogInformation("Successfully retrieved SMS audit execution dashboard with {TotalAudits} audits", 
+
+                _logger.LogInformation("Successfully retrieved SMS audit execution dashboard with {TotalAudits} audits",
                     dashboardData.TotalAudits);
 
                 return Result<SMSAuditExecutionDashboard>.Success(dashboardData);
@@ -153,7 +149,7 @@ public class SMSAuditService
     /// <summary>
     /// Gets audits by plan with business filtering
     /// </summary>
-    public async Task<Result<List<SMSAudit>>> GetAuditsByPlanAsync(string auditPlanCode, 
+    public async Task<Result<List<SMSAudit>>> GetAuditsByPlanAsync(string auditPlanCode,
         string? statusFilter = null, bool includeFindings = false, CancellationToken ct = default)
     {
         try
@@ -171,7 +167,7 @@ public class SMSAuditService
     /// <summary>
     /// Gets audits by status with business filtering
     /// </summary>
-    public async Task<Result<List<SMSAudit>>> GetAuditsByStatusAsync(string status, 
+    public async Task<Result<List<SMSAudit>>> GetAuditsByStatusAsync(string status,
         string? departmentFilter = null, bool includeFindings = false, CancellationToken ct = default)
     {
         try
@@ -189,7 +185,7 @@ public class SMSAuditService
     /// <summary>
     /// Gets audits by auditor with business filtering
     /// </summary>
-    public async Task<Result<List<SMSAudit>>> GetAuditsByAuditorAsync(string auditor, 
+    public async Task<Result<List<SMSAudit>>> GetAuditsByAuditorAsync(string auditor,
         string? statusFilter = null, DateTime? startDateFrom = null, DateTime? startDateTo = null, CancellationToken ct = default)
     {
         try
@@ -213,23 +209,23 @@ public class SMSAuditService
         try
         {
             _logger.LogInformation("Getting overdue audits");
-            
+
             var result = await _auditDataService.GetOverdueAuditsAsync(departmentFilter, auditorFilter, ct);
-            
+
             if (result.IsSuccess)
             {
                 var audits = result.Value;
-                
+
                 // Sort by priority: Critical findings > Regulatory > Days overdue
                 var prioritizedAudits = audits
                     .OrderByDescending(a => a.CriticalFindings)
                     .ThenBy(a => GetAuditTypePriority(a.AuditType))
                     .ThenByDescending(a => (DateTime.UtcNow - a.ScheduledEndDate).TotalDays)
                     .ToList();
-                
+
                 return Result<List<SMSAudit>>.Success(prioritizedAudits);
             }
-            
+
             return result;
         }
         catch (Exception ex)
@@ -247,9 +243,9 @@ public class SMSAuditService
     {
         try
         {
-            _logger.LogInformation("Scheduling audit from plan: {AuditPlanCode} for date: {ScheduledDate}", 
+            _logger.LogInformation("Scheduling audit from plan: {AuditPlanCode} for date: {ScheduledDate}",
                 auditPlanCode, scheduledDate);
-            
+
             return await _auditDataService.ScheduleAuditFromPlanAsync(
                 auditPlanCode, scheduledDate, scheduledBy, contactPerson, auditLocation, ct);
         }
@@ -304,7 +300,7 @@ public class SMSAuditService
             var typeCode = GetAuditTypeCode(auditType);
             var yearMonth = scheduledStartDate.ToString("yyyyMM");
             var sequence = DateTime.UtcNow.ToString("HHmmss");
-            
+
             return $"AUD-{typeCode}-{yearMonth}-{sequence}";
         }
         catch (Exception ex)
@@ -370,7 +366,7 @@ public class SMSAuditService
             if (dashboardData.TotalAudits > 0)
             {
                 var onTimeAudits = dashboardData.CompletedAudits - dashboardData.OverdueAudits;
-                dashboardData.OnTimeCompletionRate = Math.Max(0, 
+                dashboardData.OnTimeCompletionRate = Math.Max(0,
                     (decimal)onTimeAudits / dashboardData.TotalAudits * 100);
             }
 

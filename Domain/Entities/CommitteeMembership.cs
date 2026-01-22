@@ -31,17 +31,17 @@
 //    public MembershipType MembershipType { get; private set; }
 //    public bool IsVotingMember { get; private set; }
 //    public bool IsActive { get; private set; }
-    
+
 //    // Temporal Properties
 //    public DateTime EffectiveDate { get; private set; }
 //    public DateTime? ExpirationDate { get; private set; }
-    
+
 //    // Assignment Tracking
 //    public string AssignedBy { get; private set; }
 //    public DateTime AssignedDate { get; private set; }
 //    public string? DeactivatedBy { get; private set; }
 //    public DateTime? DeactivatedDate { get; private set; }
-    
+
 //    // Optional Properties
 //    public string? Notes { get; private set; }
 //    public string? Expertise { get; private set; }

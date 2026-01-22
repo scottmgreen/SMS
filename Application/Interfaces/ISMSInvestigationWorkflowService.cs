@@ -1,7 +1,3 @@
-using SMS_Domain.Entities;
-using SMS_Shared.Common;
-using SMS_Application.Services;
-
 namespace SMS_Application.Interfaces;
 
 /// <summary>
@@ -14,8 +10,8 @@ public interface ISMSInvestigationWorkflowService
     /// Create a new investigation for a hazard
     /// </summary>
     Task<Result<Investigation>> CreateInvestigationAsync(
-        string hazardCode, 
-        string assignedInvestigatorId, 
+        string hazardCode,
+        string assignedInvestigatorId,
         string investigationNotes,
         CancellationToken cancellationToken = default);
 
@@ -33,7 +29,7 @@ public interface ISMSInvestigationWorkflowService
     /// Update investigation notes
     /// </summary>
     Task<Result<Investigation>> UpdateInvestigationNotesAsync(
-        string investigationId, 
+        string investigationId,
         string investigationNotes,
         CancellationToken cancellationToken = default);
 

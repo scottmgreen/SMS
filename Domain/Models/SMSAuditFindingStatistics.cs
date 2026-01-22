@@ -1,5 +1,3 @@
-using System;
-
 namespace Domain.Models;
 
 /// <summary>
@@ -12,37 +10,37 @@ public class SMSAuditFindingStatistics
     /// Date range for the statistics
     /// </summary>
     public DateTime StartDate { get; set; }
-    
+
     /// <summary>
     /// End date for the statistics
     /// </summary>
     public DateTime EndDate { get; set; }
-    
+
     /// <summary>
     /// Total number of findings in the period
     /// </summary>
     public int TotalFindings { get; set; }
-    
+
     /// <summary>
     /// Number of critical severity findings
     /// </summary>
     public int CriticalFindings { get; set; }
-    
+
     /// <summary>
     /// Number of major severity findings
     /// </summary>
     public int MajorFindings { get; set; }
-    
+
     /// <summary>
     /// Number of minor severity findings
     /// </summary>
     public int MinorFindings { get; set; }
-    
+
     /// <summary>
     /// Number of observations (non-findings)
     /// </summary>
     public int ObservationFindings { get; set; }
-    
+
     /// <summary>
     /// Findings by status
     /// </summary>
@@ -51,7 +49,7 @@ public class SMSAuditFindingStatistics
     public int ResolvedFindings { get; set; }
     public int VerifiedFindings { get; set; }
     public int ClosedFindings { get; set; }
-    
+
     /// <summary>
     /// Findings resolution metrics
     /// </summary>
@@ -59,48 +57,48 @@ public class SMSAuditFindingStatistics
     public double AverageResolutionDays { get; set; }
     public double MedianResolutionDays { get; set; }
     public double ResolutionComplianceRate { get; set; }
-    
+
     /// <summary>
     /// Findings requiring verification
     /// </summary>
     public int FindingsRequiringVerification { get; set; }
     public int UnverifiedFindings { get; set; }
-    
+
     /// <summary>
     /// HazardCategory breakdown
     /// </summary>
     public Dictionary<string, int> FindingsByCategory { get; set; } = new();
-    
+
     /// <summary>
     /// Department breakdown
     /// </summary>
     public Dictionary<string, int> FindingsByDepartment { get; set; } = new();
-    
+
     /// <summary>
     /// Audit type breakdown
     /// </summary>
     public Dictionary<string, int> FindingsByAuditType { get; set; } = new();
-    
+
     /// <summary>
     /// Responsible person breakdown (top 10)
     /// </summary>
     public Dictionary<string, int> FindingsByResponsiblePerson { get; set; } = new();
-    
+
     /// <summary>
     /// Monthly trend data for charts
     /// </summary>
     public List<FindingTrendData> MonthlyTrends { get; set; } = new();
-    
+
     /// <summary>
     /// Severity distribution over time
     /// </summary>
     public List<SeverityTrendData> SeverityTrends { get; set; } = new();
-    
+
     /// <summary>
     /// Resolution time analysis
     /// </summary>
     public ResolutionTimeAnalysis ResolutionAnalysis { get; set; } = new();
-    
+
     /// <summary>
     /// Repeat finding analysis
     /// </summary>

@@ -1,8 +1,6 @@
-using SMS_Application.Messaging.Queries;
-using SMS_Domain.Entities;
-using SMS_Infrastructure.Services;
-using SMS_Shared.Common;
 using Microsoft.Extensions.Logging;
+
+using SMS_Application.Messaging.Queries;
 
 namespace SMS_Application.Messaging.QueryHandlers;
 
@@ -128,12 +126,12 @@ public class GetSMSStakeholderGroupsByUserCodeQueryHandler : BaseQueryBundle, IR
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS stakeholder groups for user: {UserCode}", 
+                _logger.LogInformation("Successfully retrieved {Count} SMS stakeholder groups for user: {UserCode}",
                     result.Value?.Count() ?? 0, request.UserCode);
             }
             else
             {
-                _logger.LogApplicationError("Failed to retrieve SMS stakeholder groups for user {UserCode}: {Error}", 
+                _logger.LogApplicationError("Failed to retrieve SMS stakeholder groups for user {UserCode}: {Error}",
                     ApplicationEventIds.Error, null);
             }
 

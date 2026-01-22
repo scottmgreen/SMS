@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Http;
-
 namespace SMS_Application.Interfaces;
 
 /// <summary>
@@ -11,12 +9,12 @@ public interface ICurrentUserService
     /// Gets the current user's ID/Name for audit purposes
     /// </summary>
     string UserId { get; }
-    
+
     /// <summary>
     /// Gets the current user's display name
     /// </summary>
     string DisplayName { get; }
-    
+
     /// <summary>
     /// Indicates if a user is currently authenticated
     /// </summary>

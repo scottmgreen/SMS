@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using SMS_Application.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace SMS_Application.Services;
@@ -28,20 +27,20 @@ public class CurrentUserService : ICurrentUserService
     private string GetUserId()
     {
         var userId = GetSessionValue("SMS_UserId");
-        
+
         // ?? VERBOSE LOGGING for debugging
         _logger.LogInformation("?? CurrentUserService.GetUserId() called");
         _logger.LogInformation("?? Session SMS_UserId: '{UserId}'", userId ?? "NULL");
         _logger.LogInformation("?? Session SMS_DisplayName: '{DisplayName}'", GetSessionValue("SMS_DisplayName") ?? "NULL");
         _logger.LogInformation("?? Session IsAuthenticated: '{IsAuth}'", GetSessionValue("IsAuthenticated") ?? "NULL");
-        
+
         // Check all session keys for debugging
         if (_httpContextAccessor.HttpContext?.Session != null)
         {
-            _logger.LogInformation("?? Available session keys: {Keys}", 
+            _logger.LogInformation("?? Available session keys: {Keys}",
                 string.Join(", ", _httpContextAccessor.HttpContext.Session.Keys));
         }
-        
+
         return userId ?? "SYSTEM";
     }
 

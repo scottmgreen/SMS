@@ -1,11 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
-using SMS_Domain.Entities;
-using SMS_Shared.Common;
-using Radzen;
-using Radzen.Blazor;
-
 namespace SMS3.Components.Pages.SMSAssurance.Components;
 
 public partial class AuditFindingDialog : ComponentBase
@@ -194,7 +186,7 @@ public partial class AuditFindingDialog : ComponentBase
             return false;
         }
 
-        if (ViewModel.TargetResolutionDate.HasValue && 
+        if (ViewModel.TargetResolutionDate.HasValue &&
             ViewModel.TargetResolutionDate.Value < ViewModel.DiscoveredDate)
         {
             ShowErrorNotification("Target resolution date cannot be before discovered date");

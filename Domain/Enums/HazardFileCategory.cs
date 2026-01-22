@@ -1,6 +1,3 @@
-using System.Reflection;
-using SMS_Domain.Common;
-
 namespace SMS_Domain.Enums;
 
 /// <summary>
@@ -134,7 +131,7 @@ public abstract class HazardFileCategory : BaseEnum<HazardFileCategory>
     public static HazardFileCategory FromFileExtension(string extension)
     {
         var ext = extension.ToLowerInvariant().TrimStart('.');
-        
+
         return ext switch
         {
             "jpg" or "jpeg" or "png" or "gif" or "bmp" or "tiff" or "webp" => Photo,

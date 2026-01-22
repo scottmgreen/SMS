@@ -1,8 +1,3 @@
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Shared.Common;
-
 namespace SMS_Application.Messaging.Commands;
 
 /// <summary>
@@ -15,7 +10,7 @@ public class CreateSMSAuditPlanCommand : BaseCommandBundle, IRequest<Result<SMSA
     public SMSAuditPlan AuditPlan { get; set; }
     public CreateSMSAuditPlanCommand(SMSAuditPlan auditPlan)
     {
-        AuditPlan = auditPlan;  
+        AuditPlan = auditPlan;
     }
     //public string Code { get; set; }
     //public string Name { get; set; }
@@ -44,89 +39,89 @@ public class CreateSMSAuditPlanCommand : BaseCommandBundle, IRequest<Result<SMSA
     //    string? notes, string? regulatoryRequirements, string? resources, string? deliverables, string? successCriteria,
     //    string createdBy)
     //{
-        //Code = code ?? throw new ArgumentNullException(nameof(code));
-        //Name = name ?? throw new ArgumentNullException(nameof(name));
-        //Description = description;
-        //AuditType = auditType ?? throw new ArgumentNullException(nameof(auditType));
-        //AuditScope = auditScope ?? throw new ArgumentNullException(nameof(auditScope));
-        //AuditObjectives = auditObjectives;
-        //ResponsibleDepartment = responsibleDepartment ?? throw new ArgumentNullException(nameof(responsibleDepartment));
-        //LeadAuditor = leadAuditor ?? throw new ArgumentNullException(nameof(leadAuditor));
-        //AuditorTeam = auditorTeam;
-        //PlannedStartDate = plannedStartDate;
-        //PlannedEndDate = plannedEndDate;
-        //EstimatedHours = estimatedHours;
-        //Priority = priority ?? throw new ArgumentNullException(nameof(priority));
-        //Status = status ?? throw new ArgumentNullException(nameof(status));
-        //Notes = notes;
-        //RegulatoryRequirements = regulatoryRequirements;
-        //Resources = resources;
-        //Deliverables = deliverables;
-        //SuccessCriteria = successCriteria;
-        //CreatedBy = createdBy ?? throw new ArgumentNullException(nameof(createdBy));
-    }
+    //Code = code ?? throw new ArgumentNullException(nameof(code));
+    //Name = name ?? throw new ArgumentNullException(nameof(name));
+    //Description = description;
+    //AuditType = auditType ?? throw new ArgumentNullException(nameof(auditType));
+    //AuditScope = auditScope ?? throw new ArgumentNullException(nameof(auditScope));
+    //AuditObjectives = auditObjectives;
+    //ResponsibleDepartment = responsibleDepartment ?? throw new ArgumentNullException(nameof(responsibleDepartment));
+    //LeadAuditor = leadAuditor ?? throw new ArgumentNullException(nameof(leadAuditor));
+    //AuditorTeam = auditorTeam;
+    //PlannedStartDate = plannedStartDate;
+    //PlannedEndDate = plannedEndDate;
+    //EstimatedHours = estimatedHours;
+    //Priority = priority ?? throw new ArgumentNullException(nameof(priority));
+    //Status = status ?? throw new ArgumentNullException(nameof(status));
+    //Notes = notes;
+    //RegulatoryRequirements = regulatoryRequirements;
+    //Resources = resources;
+    //Deliverables = deliverables;
+    //SuccessCriteria = successCriteria;
+    //CreatedBy = createdBy ?? throw new ArgumentNullException(nameof(createdBy));
+}
 
 
 // UPDATE SMS AUDIT PLAN
 public class UpdateSMSAuditPlanCommand : BaseCommandBundle, IRequest<Result<SMSAuditPlan>>
 {
-    public SMSAuditPlan AuditPlan { get;set; }
+    public SMSAuditPlan AuditPlan { get; set; }
 
     public UpdateSMSAuditPlanCommand(SMSAuditPlan auditPlan)
     {
         this.AuditPlan = auditPlan;
     }
 
-        //public string AuditPlanCode { get; set; }
-        //public string Name { get; set; }
-        //public string? Description { get; set; }
-        //public string AuditType { get; set; }
-        //public string AuditScope { get; set; }
-        //public string? AuditObjectives { get; set; }
-        //public string ResponsibleDepartment { get; set; }
-        //public string LeadAuditor { get; set; }
-        //public string? AuditorTeam { get; set; }
-        //public DateTime PlannedStartDate { get; set; }
-        //public DateTime PlannedEndDate { get; set; }
-        //public int? EstimatedHours { get; set; }
-        //public string Priority { get; set; }
-        //public string Status { get; set; }
-        //public string? Notes { get; set; }
-        //public string? RegulatoryRequirements { get; set; }
-        //public string? Resources { get; set; }
-        //public string? Deliverables { get; set; }
-        //public string? SuccessCriteria { get; set; }
-        //public string UpdatedBy { get; set; }
-        //public DateTime UpdatedDate { get; set; }
+    //public string AuditPlanCode { get; set; }
+    //public string Name { get; set; }
+    //public string? Description { get; set; }
+    //public string AuditType { get; set; }
+    //public string AuditScope { get; set; }
+    //public string? AuditObjectives { get; set; }
+    //public string ResponsibleDepartment { get; set; }
+    //public string LeadAuditor { get; set; }
+    //public string? AuditorTeam { get; set; }
+    //public DateTime PlannedStartDate { get; set; }
+    //public DateTime PlannedEndDate { get; set; }
+    //public int? EstimatedHours { get; set; }
+    //public string Priority { get; set; }
+    //public string Status { get; set; }
+    //public string? Notes { get; set; }
+    //public string? RegulatoryRequirements { get; set; }
+    //public string? Resources { get; set; }
+    //public string? Deliverables { get; set; }
+    //public string? SuccessCriteria { get; set; }
+    //public string UpdatedBy { get; set; }
+    //public DateTime UpdatedDate { get; set; }
 
-        //public UpdateSMSAuditPlanCommand(string auditPlanCode, string name, string? description, string auditType, string auditScope,
-        //    string? auditObjectives, string responsibleDepartment, string leadAuditor, string? auditorTeam,
-        //    DateTime plannedStartDate, DateTime plannedEndDate, int? estimatedHours, string priority, string status,
-        //    string? notes, string? regulatoryRequirements, string? resources, string? deliverables, string? successCriteria,
-        //    string updatedBy, DateTime updatedDate)
-        //{
+    //public UpdateSMSAuditPlanCommand(string auditPlanCode, string name, string? description, string auditType, string auditScope,
+    //    string? auditObjectives, string responsibleDepartment, string leadAuditor, string? auditorTeam,
+    //    DateTime plannedStartDate, DateTime plannedEndDate, int? estimatedHours, string priority, string status,
+    //    string? notes, string? regulatoryRequirements, string? resources, string? deliverables, string? successCriteria,
+    //    string updatedBy, DateTime updatedDate)
+    //{
 
-        //AuditPlanCode = auditPlanCode ?? throw new ArgumentNullException(nameof(auditPlanCode));
-        //Name = name ?? throw new ArgumentNullException(nameof(name));
-        //Description = description;
-        //AuditType = auditType ?? throw new ArgumentNullException(nameof(auditType));
-        //AuditScope = auditScope ?? throw new ArgumentNullException(nameof(auditScope));
-        //AuditObjectives = auditObjectives;
-        //ResponsibleDepartment = responsibleDepartment ?? throw new ArgumentNullException(nameof(responsibleDepartment));
-        //LeadAuditor = leadAuditor ?? throw new ArgumentNullException(nameof(leadAuditor));
-        //AuditorTeam = auditorTeam;
-        //PlannedStartDate = plannedStartDate;
-        //PlannedEndDate = plannedEndDate;
-        //EstimatedHours = estimatedHours;
-        //Priority = priority ?? throw new ArgumentNullException(nameof(priority));
-        //Status = status ?? throw new ArgumentNullException(nameof(status));
-        //Notes = notes;
-        //RegulatoryRequirements = regulatoryRequirements;
-        //Resources = resources;
-        //Deliverables = deliverables;
-        //SuccessCriteria = successCriteria;
-        //UpdatedBy = updatedBy ?? throw new ArgumentNullException(nameof(updatedBy));
-        //UpdatedDate = updatedDate;
+    //AuditPlanCode = auditPlanCode ?? throw new ArgumentNullException(nameof(auditPlanCode));
+    //Name = name ?? throw new ArgumentNullException(nameof(name));
+    //Description = description;
+    //AuditType = auditType ?? throw new ArgumentNullException(nameof(auditType));
+    //AuditScope = auditScope ?? throw new ArgumentNullException(nameof(auditScope));
+    //AuditObjectives = auditObjectives;
+    //ResponsibleDepartment = responsibleDepartment ?? throw new ArgumentNullException(nameof(responsibleDepartment));
+    //LeadAuditor = leadAuditor ?? throw new ArgumentNullException(nameof(leadAuditor));
+    //AuditorTeam = auditorTeam;
+    //PlannedStartDate = plannedStartDate;
+    //PlannedEndDate = plannedEndDate;
+    //EstimatedHours = estimatedHours;
+    //Priority = priority ?? throw new ArgumentNullException(nameof(priority));
+    //Status = status ?? throw new ArgumentNullException(nameof(status));
+    //Notes = notes;
+    //RegulatoryRequirements = regulatoryRequirements;
+    //Resources = resources;
+    //Deliverables = deliverables;
+    //SuccessCriteria = successCriteria;
+    //UpdatedBy = updatedBy ?? throw new ArgumentNullException(nameof(updatedBy));
+    //UpdatedDate = updatedDate;
 }
 
 
@@ -149,7 +144,7 @@ public class ApproveSMSAuditPlanCommand : BaseCommandBundle, IRequest<Result<SMS
 public class ScheduleSMSAuditPlanCommand : BaseCommandBundle, IRequest<Result<SMSAuditPlan>>
 {
     public SMSAuditPlan AuditPlan { get; set; }
-    
+
 
     public ScheduleSMSAuditPlanCommand(SMSAuditPlan auditPlan)
     {

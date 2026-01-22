@@ -1,7 +1,5 @@
 using Domain.Entities;
 
-using SMS_Domain.Common;
-
 namespace SMS_Domain.Entities;
 
 /// <summary>

@@ -1,9 +1,3 @@
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-
 namespace SMS_Application.Messaging.Queries;
 
 // =============================================
@@ -44,5 +38,15 @@ public class GetHazardsByReportCodeQuery : BaseQueryBundle, IRequest<Result<List
     public GetHazardsByReportCodeQuery(string reportCode)
     {
         ReportCode = reportCode ?? throw new ArgumentNullException(nameof(reportCode));
+    }
+}
+
+public class GetHazardByCodeQuery : BaseQueryBundle, IRequest<Result<Hazard>>
+{
+    public string Code { get; set; }
+
+    public GetHazardByCodeQuery(string code)
+    {
+        Code = code ?? throw new ArgumentNullException(nameof(code));
     }
 }

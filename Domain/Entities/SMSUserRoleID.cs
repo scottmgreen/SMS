@@ -1,6 +1,4 @@
-﻿using SMS_Domain.Common;
-
-namespace SMS_Domain.Entities;
+﻿namespace SMS_Domain.Entities;
 
 //SMSUserRoles
 public class SMSUserRoleID : BaseID<string>

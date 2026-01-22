@@ -1,8 +1,6 @@
-﻿using SMS_Application.Messaging.Queries;
-using SMS_Domain.Entities;
-using SMS_Infrastructure.Persistence;
-using SMS_Shared.Common;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
+
+using SMS_Application.Messaging.Queries;
 
 namespace SMS_Application.Messaging.QueryHandlers;
 
@@ -182,7 +180,7 @@ public class GetUsersByApplicationGroupCodeQueryHandler : BaseQueryBundle, IRequ
                 var members = result.Value.Members;
                 _logger.LogInformation("Successfully retrieved {Count} users for application group: {GroupCode}",
                     members?.Count ?? 0, request.GroupCode);
-                
+
                 return Result<IEnumerable<SMSApplicationUser>>.Success((IEnumerable<SMSApplicationUser>)members);
             }
             else

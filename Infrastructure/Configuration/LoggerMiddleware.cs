@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 
 namespace SMS_Infrastructure.Configuration
 {
@@ -25,6 +24,6 @@ namespace SMS_Infrastructure.Configuration
                 _logger.LogInformation("Request took {Duration}ms", diff.TotalMilliseconds);
             }
         }
-        
+
     }
 }

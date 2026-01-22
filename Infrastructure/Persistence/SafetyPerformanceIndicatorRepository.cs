@@ -1,9 +1,6 @@
-using SMS_Domain.Entities;
 using SMS_Domain.Errors;
-using SMS_Infrastructure.Common;
+
 using SMS_Infrastructure.Interfaces;
-using Microsoft.Data.SqlClient;
-using System.Data;
 
 namespace SMS_Infrastructure.Persistence;
 
@@ -14,15 +11,15 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
     private readonly string _connectionString;
 
     public SafetyPerformanceIndicatorRepository(
-        ILogger<SafetyPerformanceIndicatorRepository> logger, 
-        ILogSupport logsupport, 
+        ILogger<SafetyPerformanceIndicatorRepository> logger,
+        ILogSupport logsupport,
         IConfiguration configuration)
         : base(logger, logsupport, configuration)
     {
         _logger = base.Logger;
         _logheader = base.LogHeader;
         _connectionString = ConnectionString;
-        _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent, 
+        _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent,
             $"{_logheader} SafetyPerformanceIndicator Repository Initialized");
     }
 

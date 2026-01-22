@@ -1,9 +1,5 @@
-using Microsoft.Extensions.Logging;
-using SMS_Domain.Entities;
-using SMS_Infrastructure.Common;
-using SMS_Infrastructure.Persistence;
-using SMS_Shared.Common;
 using Domain.Models;
+
 using Infrastructure.Persistence;
 
 namespace SMS_Infrastructure.Services;
@@ -171,7 +167,7 @@ public class SMSAuditEvidenceDataService : BaseDataService<SMSAuditEvidenceDataS
     /// <summary>
     /// Gets SMS Audit Evidence by collector
     /// </summary>
-    public Task<Result<List<SMSAuditEvidence>>> GetAuditEvidenceByCollectorAsync(string collectedBy, DateTime? collectionDateFrom = null, 
+    public Task<Result<List<SMSAuditEvidence>>> GetAuditEvidenceByCollectorAsync(string collectedBy, DateTime? collectionDateFrom = null,
         DateTime? collectionDateTo = null, CancellationToken ct = default)
     {
         // TODO: Implement when repository is ready

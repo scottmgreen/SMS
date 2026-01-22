@@ -74,13 +74,13 @@ public interface IHazard
     /// <summary>
     /// Create and set a new hazard location
     /// </summary>
-    Result<bool> CreateLocation(decimal? latitude = null, decimal? longitude = null, 
+    Result<bool> CreateLocation(decimal? latitude = null, decimal? longitude = null,
         string? locationArea = null, string? locationSubArea = null, string? description = null);
 
     /// <summary>
     /// Update location coordinates
     /// </summary>
-    Result<bool> UpdateLocationCoordinates(decimal latitude, decimal longitude, 
+    Result<bool> UpdateLocationCoordinates(decimal latitude, decimal longitude,
         decimal? accuracyMeters = null, string source = "Manual");
 
     /// <summary>
@@ -101,7 +101,7 @@ public interface IHazard
     /// <summary>
     /// Update mitigation information
     /// </summary>
-    Result<bool> UpdateMitigations(string? currentMitigations, string? proposedMitigations, 
+    Result<bool> UpdateMitigations(string? currentMitigations, string? proposedMitigations,
         DateTime? targetDate, string? mitigationOwner);
 
     /// <summary>

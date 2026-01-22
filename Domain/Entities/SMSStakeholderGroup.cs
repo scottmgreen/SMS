@@ -1,5 +1,3 @@
-using SMS_Domain.Common;
-
 namespace SMS_Domain.Entities;
 
 /// <summary>
@@ -7,12 +5,12 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public sealed class SMSStakeholderGroup : BaseAuditableEntity
 {
-    public SMSStakeholderGroup(SMSStakeholderGroupID id) : base(id, "SYSTEM", DateTime.UtcNow){}
-           
-    public string Code { get;  set; }
-    public string Name { get;  set; }
-    public string? Description { get;  set; }
-    public bool IsActive { get;  set; }
+    public SMSStakeholderGroup(SMSStakeholderGroupID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
+
+    public string Code { get; set; }
+    public string Name { get; set; }
+    public string? Description { get; set; }
+    public bool IsActive { get; set; }
 
     public List<SMSStakeholderUser> GroupMembers { get; set; }
 }

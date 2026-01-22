@@ -50,21 +50,6 @@
                               Class="sms-login-button" />
             </div>
         </RadzenTemplateForm>
-
-        <!-- Anonymous Reporting Section -->
-        <div class="sms-anonymous-section">
-            <div class="sms-anonymous-header">
-                <h6 class="sms-anonymous-title">Anonymous Reporting</h6>
-                <p class="sms-anonymous-description">Submit confidential safety reports without logging in</p>
-            </div>
-            <div class="d-grid">
-                <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                              Text="Submit Confidential Report" 
-                              Click="@(() => Navigation.NavigateTo("/SMSRiskManagement/ConfidentialReporting"))"
-                              Size="ButtonSize.Large"
-                              Class="sms-anonymous-button" />
-            </div>
-        </div>
     </div>
 </div>
 
@@ -198,45 +183,6 @@
     border: 1px solid var(--sms-alert-danger-border) !important;
     border-radius: 0.5rem !important;
     margin-bottom: 1.5rem !important;
-}
-
-/* Anonymous Reporting Section */
-.sms-anonymous-section {
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--sms-blue-light);
-}
-
-.sms-anonymous-header {
-    text-align: center;
-    margin-bottom: 1rem;
-}
-
-.sms-anonymous-title {
-    color: var(--sms-blue-dark-bold);
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-
-.sms-anonymous-description {
-        color: var(--sms-blue-dark-bold);
-    font-size: 0.9rem;
-    margin-bottom: 0;
-}
-
-.sms-anonymous-button {
-    padding: 0.875rem 1.5rem !important;
-    font-weight: 600 !important;
-    border-radius: 0.5rem !important;
-    background-color: var(--sms-btn-danger-bg) !important;
-    border-color: var(--sms-btn-danger-bg) !important;
-    transition: all 0.2s ease-in-out !important;
-}
-
-.sms-anonymous-button:hover {
-    background-color: var(--sms-btn-danger-hover) !important;
-    border-color: var(--sms-btn-danger-hover) !important;
-    transform: translateY(-1px) !important;
 }
 
 /* =============================================================================

@@ -1,8 +1,3 @@
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Shared.Common;
-
 namespace SMS_Application.Messaging.Commands;
 
 /// <summary>
@@ -22,7 +17,7 @@ public class CreateSMSAuditFindingCommand : BaseCommandBundle, IRequest<Result<S
     public string CreatedBy { get; set; }
 
     public CreateSMSAuditFindingCommand(string auditCode, string findingDescription, string severity,
-        string findingType, string affectedArea, string requirementReference, 
+        string findingType, string affectedArea, string requirementReference,
         string evidenceDescription, string createdBy)
     {
         AuditCode = auditCode ?? throw new ArgumentNullException(nameof(auditCode));
@@ -50,7 +45,7 @@ public class UpdateSMSAuditFindingCommand : BaseCommandBundle, IRequest<Result<S
     public string UpdatedBy { get; set; }
 
     public UpdateSMSAuditFindingCommand(string findingCode, string findingDescription, string severity,
-        string findingType, string affectedArea, string requirementReference, 
+        string findingType, string affectedArea, string requirementReference,
         string evidenceDescription, string rootCause, string updatedBy)
     {
         FindingCode = findingCode ?? throw new ArgumentNullException(nameof(findingCode));

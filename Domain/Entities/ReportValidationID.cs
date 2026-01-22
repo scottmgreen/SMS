@@ -1,6 +1,4 @@
-﻿using SMS_Domain.Common;
-
-namespace SMS_Domain.Entities;
+﻿namespace SMS_Domain.Entities;
 
 /// <summary>
 /// Unique identifier for Report Validation entities

@@ -1,7 +1,3 @@
-using SMS_Domain.Common;
-using SMS_Domain.Enums;
-using SMS_Shared.Common;
-
 namespace SMS_Domain.Entities;
 
 /// <summary>
@@ -27,23 +23,23 @@ public sealed class RiskApproval : BaseAuditableEntity
     public RiskLevel RiskLevel { get; private set; }
     public ApprovalStatus ApprovalStatus { get; private set; }
     public DateTime RequestDate { get; private set; }
-    
+
     // Approval Authority
     public string RequiredApproverId { get; private set; }
     public string? ActualApproverId { get; private set; }
     public DateTime? ApprovedDate { get; private set; }
     public string? ApprovalNotes { get; private set; }
-    
+
     // Escalation Tracking
     public string? EscalatedToId { get; private set; }
     public DateTime? EscalatedDate { get; private set; }
     public string? EscalationReason { get; private set; }
     public string? EscalatedBy { get; private set; }
-    
+
     // Committee Integration
     public string? CommitteeId { get; private set; }
     public string? MeetingId { get; private set; }
-    
+
     // Timing Properties
     public DateTime? DueDate { get; private set; }
     public DateTime? ExpirationDate { get; private set; }
@@ -53,7 +49,7 @@ public sealed class RiskApproval : BaseAuditableEntity
     {
         try
         {
-            if (ApprovalStatus != SMS_Domain.Enums.ApprovalStatus.Pending && 
+            if (ApprovalStatus != SMS_Domain.Enums.ApprovalStatus.Pending &&
                 ApprovalStatus != SMS_Domain.Enums.ApprovalStatus.UnderReview)
             {
                 return Result.Failure(DomainErrors.ApprovalError.CannotApproveNonPendingRequest);
@@ -81,7 +77,7 @@ public sealed class RiskApproval : BaseAuditableEntity
     {
         try
         {
-            if (ApprovalStatus != SMS_Domain.Enums.ApprovalStatus.Pending && 
+            if (ApprovalStatus != SMS_Domain.Enums.ApprovalStatus.Pending &&
                 ApprovalStatus != SMS_Domain.Enums.ApprovalStatus.UnderReview)
             {
                 return Result.Failure(DomainErrors.ApprovalError.CannotRejectNonPendingRequest);
@@ -112,7 +108,7 @@ public sealed class RiskApproval : BaseAuditableEntity
     {
         try
         {
-            if (ApprovalStatus == SMS_Domain.Enums.ApprovalStatus.Approved || 
+            if (ApprovalStatus == SMS_Domain.Enums.ApprovalStatus.Approved ||
                 ApprovalStatus == SMS_Domain.Enums.ApprovalStatus.Rejected)
             {
                 return Result.Failure(DomainErrors.ApprovalError.CannotEscalateCompletedRequest);
@@ -192,7 +188,7 @@ public sealed class RiskApproval : BaseAuditableEntity
     {
         try
         {
-            if (ApprovalStatus == SMS_Domain.Enums.ApprovalStatus.Approved || 
+            if (ApprovalStatus == SMS_Domain.Enums.ApprovalStatus.Approved ||
                 ApprovalStatus == SMS_Domain.Enums.ApprovalStatus.Rejected)
             {
                 return Result.Failure(DomainErrors.ApprovalError.CannotExpireCompletedRequest);
@@ -231,7 +227,7 @@ public sealed class RiskApproval : BaseAuditableEntity
         if (ApprovalStatus == SMS_Domain.Enums.ApprovalStatus.Expired)
             return true;
 
-        return ExpirationDate.HasValue && ExpirationDate <= DateTime.UtcNow && 
+        return ExpirationDate.HasValue && ExpirationDate <= DateTime.UtcNow &&
                ApprovalStatus.IsInProgress;
     }
 

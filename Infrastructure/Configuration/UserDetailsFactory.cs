@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-
-using SMS_Infrastructure.Interfaces;
+﻿using SMS_Infrastructure.Interfaces;
 
 
 namespace SMS_Infrastructure.Configuration;

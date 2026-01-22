@@ -1,20 +1,6 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.JSInterop;
+﻿using Microsoft.JSInterop;
 
-using Radzen;
-using Radzen.Blazor;
-
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Messaging.Queries;
-
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Domain.Enums; // <-- Added using for Smart Enums
-
-using SMS_Shared.Common;
-using SMS3.Components.Pages.SMSRiskManagement.Models; // <-- Updated to use the correct shared models namespace
+using SMS3.Components.Pages.SMSRiskManagement.Models;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -147,8 +133,8 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     /// <summary>
     /// Geographic location display string
     /// </summary>
-    public string GeoLocationDisplay => HasGeoLocation ? 
-        $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}" : 
+    public string GeoLocationDisplay => HasGeoLocation ?
+        $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}" :
         "No coordinates selected";
 
     /// <summary>
@@ -159,7 +145,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     /// <summary>
     /// Check if form has minimum required fields for preview
     /// </summary>
-    public bool IsFormValidForPreview => 
+    public bool IsFormValidForPreview =>
         !string.IsNullOrEmpty(HazardReport.HazardType) &&
         !string.IsNullOrEmpty(HazardReport.ReportedBy) &&
         !string.IsNullOrEmpty(HazardReport.Description);
@@ -167,8 +153,8 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     /// <summary>
     /// Check if form is valid for submission
     /// </summary>
-    public bool IsFormValidForSubmission => 
-        IsFormValidForPreview && 
+    public bool IsFormValidForSubmission =>
+        IsFormValidForPreview &&
         (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) &&
         DescriptionCharacterCount <= 2000;
 
@@ -198,11 +184,11 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     {
         InitializeDropdownOptions();
         InitializeFormDefaults();
-        
+
         // Create DotNet reference for JavaScript callbacks
         _dotNetRef = DotNetObjectReference.Create(this);
-        
-        Logger.LogInformation("Confidential reporting page initialized for user: {User}", 
+
+        Logger.LogInformation("Confidential reporting page initialized for user: {User}",
             SessionService.GetCurrentUserDisplayName() ?? "Anonymous");
     }
 
@@ -240,7 +226,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     {
         try
         {
-            Logger.LogInformation("Confidential form submit triggered with data: HazardType={HazardType}, ReportedBy={ReportedBy}", 
+            Logger.LogInformation("Confidential form submit triggered with data: HazardType={HazardType}, ReportedBy={ReportedBy}",
                 formData.HazardType, formData.ReportedBy);
 
             if (!IsFormValidForSubmission)
@@ -260,7 +246,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error during confidential form submission");
-            
+
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
@@ -277,22 +263,22 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     public async Task OnFilesSelected(IReadOnlyList<IBrowserFile> newFiles)
     {
         Logger.LogInformation("?? OnFilesSelected called with {Count} new files", newFiles?.Count ?? 0);
-        
+
         if (newFiles?.Any() == true)
         {
             // Process files immediately to avoid JavaScript interop issues
             var successfullyProcessedFiles = new List<AttachedFile>();
             var failedFiles = new List<string>();
-            
+
             foreach (var newFile in newFiles)
             {
                 try
                 {
                     // Check for duplicate first (before processing)
-                    var isDuplicate = AttachedFiles.Any(existing => 
-                        existing.FileName.Equals(newFile.Name, StringComparison.OrdinalIgnoreCase) && 
+                    var isDuplicate = AttachedFiles.Any(existing =>
+                        existing.FileName.Equals(newFile.Name, StringComparison.OrdinalIgnoreCase) &&
                         existing.Size == newFile.Size);
-                    
+
                     if (isDuplicate)
                     {
                         Logger.LogInformation("?? Skipped duplicate file: {FileName}", newFile.Name);
@@ -307,7 +293,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                         await stream.CopyToAsync(memoryStream);
                         fileData = memoryStream.ToArray();
                     }
-                    
+
                     // Create the attached file object with cached data
                     var attachedFile = new AttachedFile
                     {
@@ -317,7 +303,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                         Data = fileData,
                         SizeDisplay = FormatFileSize(newFile.Size)
                     };
-                    
+
                     successfullyProcessedFiles.Add(attachedFile);
                     Logger.LogInformation("? Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
                 }
@@ -327,12 +313,12 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                     failedFiles.Add(newFile.Name);
                 }
             }
-            
+
             // Add successfully processed files to the collection
             if (successfullyProcessedFiles.Any())
             {
                 AttachedFiles.AddRange(successfullyProcessedFiles);
-                
+
                 // Update SelectedFiles to maintain compatibility
                 var allFiles = SelectedFiles?.ToList() ?? new List<IBrowserFile>();
                 foreach (var file in newFiles.Where(f => successfullyProcessedFiles.Any(sf => sf.FileName == f.Name && sf.Size == f.Size)))
@@ -341,7 +327,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                 }
                 SelectedFiles = allFiles.AsReadOnly();
             }
-            
+
             // Show notification about results
             if (successfullyProcessedFiles.Any())
             {
@@ -358,7 +344,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         {
             Logger.LogInformation("?? No files provided to OnFilesSelected");
         }
-        
+
         StateHasChanged();
     }
 
@@ -369,22 +355,22 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     {
         var newFiles = args.GetMultipleFiles(10); // Allow up to 10 files at once
         Logger.LogInformation("?? OnInputFileChange called with {Count} new files", newFiles?.Count() ?? 0);
-        
+
         if (newFiles?.Any() == true)
         {
             // Process files immediately to avoid the "file list may have changed" error
             var successfullyProcessedFiles = new List<AttachedFile>();
             var failedFiles = new List<string>();
-            
+
             foreach (var newFile in newFiles)
             {
                 try
                 {
                     // Check for duplicate first (before processing)
-                    var isDuplicate = AttachedFiles.Any(existing => 
-                        existing.FileName.Equals(newFile.Name, StringComparison.OrdinalIgnoreCase) && 
+                    var isDuplicate = AttachedFiles.Any(existing =>
+                        existing.FileName.Equals(newFile.Name, StringComparison.OrdinalIgnoreCase) &&
                         existing.Size == newFile.Size);
-                    
+
                     if (isDuplicate)
                     {
                         Logger.LogInformation("?? Skipped duplicate file: {FileName}", newFile.Name);
@@ -399,7 +385,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                         await stream.CopyToAsync(memoryStream);
                         fileData = memoryStream.ToArray();
                     }
-                    
+
                     // Create the attached file object with cached data
                     var attachedFile = new AttachedFile
                     {
@@ -409,7 +395,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                         Data = fileData,
                         SizeDisplay = FormatFileSize(newFile.Size)
                     };
-                    
+
                     successfullyProcessedFiles.Add(attachedFile);
                     Logger.LogInformation("? Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
                 }
@@ -419,12 +405,12 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                     failedFiles.Add(newFile.Name);
                 }
             }
-            
+
             // Add successfully processed files to the collection
             if (successfullyProcessedFiles.Any())
             {
                 AttachedFiles.AddRange(successfullyProcessedFiles);
-                
+
                 // Update SelectedFiles to maintain compatibility (though we won't use it for reading data)
                 var allFiles = SelectedFiles?.ToList() ?? new List<IBrowserFile>();
                 foreach (var file in newFiles.Where(f => successfullyProcessedFiles.Any(sf => sf.FileName == f.Name && sf.Size == f.Size)))
@@ -433,7 +419,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                 }
                 SelectedFiles = allFiles.AsReadOnly();
             }
-            
+
             // Show notification about results
             if (successfullyProcessedFiles.Any() && failedFiles.Any())
             {
@@ -465,15 +451,15 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                     Duration = 5000
                 });
             }
-            
-            Logger.LogInformation("?? File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}", 
+
+            Logger.LogInformation("?? File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",
                 successfullyProcessedFiles.Count, failedFiles.Count, AttachedFiles.Count);
         }
         else
         {
             Logger.LogInformation("?? No files provided to OnInputFileChange");
         }
-        
+
         StateHasChanged();
     }
 
@@ -488,41 +474,41 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     {
         ShowMapModal = true;
         StateHasChanged();
-        
+
         // Give DOM time to render the modal
         await Task.Delay(300);
-        
+
         if (_mapModule != null)
         {
             try
             {
-                await _mapModule.InvokeVoidAsync("initializeMap", 
+                await _mapModule.InvokeVoidAsync("initializeMap",
                     AirportCenterLatitude, AirportCenterLongitude, DefaultZoomLevel, _dotNetRef);
-                
+
                 Logger.LogInformation("Map reinitialized for confidential reporting modal");
-                
+
                 if (HasGeoLocation)
                 {
                     await Task.Delay(100);
-                    
+
                     await _mapModule.InvokeVoidAsync("setLocationFromCoordinates",
                         (double)SelectedGeoLocation.Latitude, (double)SelectedGeoLocation.Longitude,
                         SelectedGeoLocation.Description);
-                    
+
                     SelectedLatitude = SelectedGeoLocation.Latitude;
                     SelectedLongitude = SelectedGeoLocation.Longitude;
                     LocationDescription = SelectedGeoLocation.Description ?? "";
-                    
-                    Logger.LogInformation("Existing location restored in confidential reporting: {Lat}, {Lng}", 
+
+                    Logger.LogInformation("Existing location restored in confidential reporting: {Lat}, {Lng}",
                         SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
-                    
+
                     StateHasChanged();
                 }
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error initializing map in confidential reporting OpenMapSelector");
-                
+
                 NotificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Warning,
@@ -532,7 +518,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                 });
             }
         }
-        
+
         NotificationService.Notify(new NotificationMessage
         {
             Severity = NotificationSeverity.Info,
@@ -577,10 +563,10 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         };
 
         HazardReport.Location = "MAP_LOCATION";
-        
+
         ShowMapModal = false;
         StateHasChanged();
-        
+
         NotificationService.Notify(new NotificationMessage
         {
             Severity = NotificationSeverity.Success,
@@ -600,7 +586,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         LocationDescription = string.Empty;
         SelectedGeoLocation = new GeoLocationData();
         HazardReport.Location = "";
-        
+
         if (_mapModule != null)
         {
             try
@@ -612,9 +598,9 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                 Logger.LogWarning(ex, "Error clearing map selection in confidential reporting");
             }
         }
-        
+
         StateHasChanged();
-        
+
         NotificationService.Notify(new NotificationMessage
         {
             Severity = NotificationSeverity.Info,
@@ -633,9 +619,9 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         SelectedLatitude = (decimal)latitude;
         SelectedLongitude = (decimal)longitude;
         LocationDescription = description;
-        
+
         await InvokeAsync(StateHasChanged);
-        
+
         Logger.LogInformation("Confidential reporting map location selected: {Lat}, {Lng}, {Desc}", latitude, longitude, description);
     }
 
@@ -702,7 +688,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     {
         // Clear all form data after successful submission
         InitializeFormDefaults();
-        
+
         // Clear the form changed flag to prevent browser warning
         try
         {
@@ -712,9 +698,9 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         {
             Logger.LogWarning(ex, "Could not clear form changed flag");
         }
-        
+
         StateHasChanged();
-        
+
         // Navigate to home page for anonymous users (not ReportProcessing)
         Navigation.NavigateTo("/", forceLoad: true);
     }
@@ -724,17 +710,18 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     #region Business Logic Methods
 
     /// <summary>
-    /// Submit the confidential report
+    /// Submit the confidential report - Following same pattern as HazardReporting
     /// </summary>
     public async Task SubmitReportConfirmed()
     {
         try
         {
+            // Validation
             if (!IsFormValidForSubmission)
             {
                 ShowSubmissionConfirmation = true;
                 StateHasChanged();
-                
+
                 NotificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Warning,
@@ -751,155 +738,115 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
 
             Logger.LogInformation("Starting confidential report submission");
 
-            // Generate tracking ID
-            GeneratedTrackingId = GenerateAnonymousTrackingId();
-            
             // ===============================
-            // STEP 1: CREATE PARENT REPORT
+            // STEP 1: Create new Report
             // ===============================
             var report = new Report(new ReportID("RP-0000"))
             {
                 Code = "RP-0000",
-                Name = GetHazardTypeDisplay(HazardReport.HazardType),
+                Name = $"{HazardReport.HazardCategory} - {HazardReport.HazardType}",
+                ReportedBy = "CONFIDENTIAL_USER",
+                ReportedOn = HazardReport.ReportedOn,
+                Department = "CONFIDENTIAL",
                 Description = HazardReport.Description,
                 Stage = "Initial",
-                Status = "Active",
-                ReportedBy = "CONFIDENTIAL_USER",
-                Department = "CONFIDENTIAL"
+                Status = "Initial"
             };
 
             var reportResult = await Mediator.SendAsync(new CreateReportCommand(report), CancellationToken.None);
-            
+
             if (reportResult.IsFailure)
             {
-                Logger.LogError("Failed to create report for confidential submission: {Error}", reportResult.Error?.Message);
                 throw new Exception($"Failed to create report: {reportResult.Error?.Message}");
             }
 
             var actualReportCode = reportResult.Value.Code;
-            Logger.LogInformation("Confidential report created with Code: {ReportCode}", actualReportCode);
+            Logger.LogInformation("? Confidential report created with Code: {ReportCode}", actualReportCode);
 
             // ===============================
-            // STEP 2: CREATE CONFIDENTIAL HAZARD
+            // STEP 2: Create new Hazard
             // ===============================
-            var hazardCode = "HZ-0000";
-            var hazard = new Hazard(new HazardID(hazardCode))
+            var hazard = new Hazard(new HazardID("HZ-0000"))
             {
-                Code = hazardCode,
-                Name = GetHazardTypeDisplay(HazardReport.HazardType),
+                Code = "HZ-0000",
+                Name = $"{HazardReport.HazardCategory} - {HazardReport.HazardType}",
                 Description = HazardReport.Description,
-                HazardCategory = HazardReport.HazardType ?? "OTHER",
+                HazardCategory = HazardReport.HazardCategory,
                 HazardType = HazardReport.HazardType,
                 ReportedBy = "CONFIDENTIAL_USER",
                 ReportedOn = HazardReport.ReportedOn,
                 ReportingDepartment = "CONFIDENTIAL",
-                IsConfidential = true, // Always confidential
+                IsConfidential = true, // Always confidential for this page
                 IsAnonymous = true,
                 ReportCode = actualReportCode,
-                IsInitialHazard = true
+                IsInitialHazard = true // Mark as the initial hazard for this report
             };
 
-            // Handle location data
-            if (HasGeoLocation)
-            {
-                hazard.LocationArea = "Coordinates Provided";
-                hazard.LocationSubArea = $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}";
-            }
-            else if (!string.IsNullOrEmpty(HazardReport.Location))
-            {
-                hazard.LocationArea = HazardReport.Location;
-            }
+
+
 
             var createHazardCommand = new CreateHazardCommand(hazard);
             var createdHazardResult = await Mediator.SendAsync(createHazardCommand, CancellationToken.None);
-            
+
             if (createdHazardResult.IsFailure)
             {
-                Logger.LogError("Failed to create hazard for confidential submission: {Error}", createdHazardResult.Error?.Message);
                 throw new Exception($"Failed to create hazard: {createdHazardResult.Error?.Message}");
             }
-            
+
             var createdHazard = createdHazardResult.Value;
+
+            // Handle location for confidential hazard AFTER NEW Hazard Has Been Recorded !! 
+
+            await UpdateHazardLocation(createdHazard);
+
+
             GeneratedHazardId = createdHazard.Code;
-            Logger.LogInformation("Confidential hazard created with Code: {HazardCode}", createdHazard.Code);
+            Logger.LogInformation("? Confidential hazard created with Code: {HazardCode}, linked to Report: {ReportCode}",
+                createdHazard.Code, actualReportCode);
 
             // ===============================
-            // STEP 3: PROCESS FILE ATTACHMENTS
+            // STEP 3: Create Tracking Code
             // ===============================
-            if (AttachedFiles.Any())
-            {
-                foreach (var attachedFile in AttachedFiles)
-                {
-                    try
-                    {
-                        var hazardFile = new HazardFile(new HazardFileID("HF-0000"))
-                        {
-                            Code = "HF-0000",
-                            HazardCode = createdHazard.Code,
-                            ReportCode = actualReportCode,
-                            FileName = attachedFile.FileName,
-                            FileType = Path.GetExtension(attachedFile.FileName)?.TrimStart('.') ?? "unknown",
-                            ContentType = attachedFile.ContentType,
-                            FileSizeBytes = (int)attachedFile.Size,
-                            StorageType = "Database",
-                            FileData = attachedFile.Data,
-                            UploadedBy = "CONFIDENTIAL_USER",
-                            UploadedDate = DateTime.UtcNow,
-                            IsActive = true,
-                            IsConfidential = true
-                        };
+            Result<HazardReportTracking> createdtrackingcodeResult = await GenerateTracking(createdHazard);
+            var createdTracking = createdtrackingcodeResult.Value;
 
-                        var createFileCommand = new CreateHazardFileCommand(hazardFile);
-                        await Mediator.SendAsync(createFileCommand, CancellationToken.None);
-                        
-                        Logger.LogInformation("Confidential file attachment processed: {FileName}", attachedFile.FileName);
-                    }
-                    catch (Exception fileEx)
-                    {
-                        Logger.LogWarning(fileEx, "Failed to process confidential attachment: {FileName}", attachedFile.FileName);
-                        // Continue processing other files
-                    }
-                }
-            }
+            GeneratedTrackingId = createdTracking.TrackingCode;
+            Logger.LogInformation("? Tracking code created: {TrackingCode}", createdTracking.TrackingCode);
 
             // ===============================
-            // SUCCESS - SHOW CONFIRMATION
+            // STEP 4: Process files for confidential hazard
+            // ===============================
+            await ProcessFileUpdates(createdHazard);
+
+            // ===============================
+            // SUCCESS - Show completion message for confidential submission
             // ===============================
             SubmissionDateTime = DateTime.Now;
+            ShowSubmissionConfirmation = false;
             ShowFinalSuccessConfirmation = true;
 
-            // Clear the form changed flag to prevent browser warning
-            try
-            {
-                await JSRuntime.InvokeVoidAsync("clearFormChanged");
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning(ex, "Could not clear form changed flag");
-            }
+            Logger.LogInformation("? Confidential report submission completed - Report: {ReportCode}, Hazard: {HazardCode}, Tracking: {TrackingCode}",
+                createdHazard.ReportCode, createdHazard.Code, createdTracking.TrackingCode);
 
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Success,
-                Summary = "Confidential Report Submitted",
-                Detail = $"Your confidential report has been securely submitted. Tracking ID: {GeneratedTrackingId}",
-                Duration = 8000
+                Summary = "Confidential Report Submitted Successfully",
+                Detail = $"Your confidential report has been securely submitted with tracking ID: {createdTracking.TrackingCode}",
+                Duration = 5000
             });
-
-            Logger.LogInformation("? Confidential report successfully submitted - TrackingId: {TrackingId}, HazardId: {HazardId}, ReportId: {ReportId}", 
-                GeneratedTrackingId, GeneratedHazardId, actualReportCode);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "? Error during confidential report submission");
-            
+
             ShowSubmissionConfirmation = false;
-            
+
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
                 Summary = "Submission Failed",
-                Detail = "An error occurred while submitting your confidential report. Please try again or contact support.",
+                Detail = "An error occurred while submitting your confidential report. Please try again.",
                 Duration = 5000
             });
         }
@@ -910,172 +857,158 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         }
     }
 
+    private async Task<Result<HazardReportTracking>> GenerateTracking(Hazard createdHazard)
+    {
+        HazardReportTracking hazardreporttracking = new HazardReportTracking(new HazardReportTrackingID("HT-0000"));
+        hazardreporttracking.HazardCode = createdHazard.Code;
+        hazardreporttracking.ReportCode = createdHazard.ReportCode;
+        hazardreporttracking.TrackingCode = "HT-0000";
+        var trackingcodeCommand = new CreateHazardReportTrackingCommand(hazardreporttracking);
+        var createdtrackingcodeResult = await Mediator.SendAsync(trackingcodeCommand, CancellationToken.None);
+        return createdtrackingcodeResult;
+    }
+
     /// <summary>
-    /// Cancel submission
+    /// Update hazard location (common for both CREATE and EDIT modes) - Same as HazardReporting
     /// </summary>
-    public void CancelSubmission()
+    private async Task UpdateHazardLocation(Hazard hazard)
     {
-        ShowSubmissionConfirmation = false;
-        StateHasChanged();
-        
-        NotificationService.Notify(new NotificationMessage
+        // Set text-based location if no geographic coordinates
+        if (!HasGeoLocation && !string.IsNullOrEmpty(HazardReport.Location))
         {
-            Severity = NotificationSeverity.Info,
-            Summary = "Submission Cancelled",
-            Detail = "You can continue editing your confidential report.",
-            Duration = 3000
-        });
-    }
-
-    #endregion
-
-    #region Dropdown and Smart Enum Methods
-
-    private void InitializeDropdownOptions()
-    {
-        HazardCategoryOptions = HazardCategory.GetAllValues()
-            .Select(hc => new DropdownOption(hc.Value, hc.Name))
-            .ToList();
-        HazardTypeOptions = new List<DropdownOption>();
-    }
-
-    public async Task OnHazardCategoryChanged(string? categoryValue)
-    {
-        Logger.LogInformation("Hazard category changed to: {Category}", categoryValue);
-        SelectedHazardCategory = categoryValue;
-        HazardReport.HazardType = null;
-        await LoadHazardTypesForCategory(categoryValue ?? "", preserveSelectedType: false);
-    }
-
-    public async Task OnHazardTypeChanged(string? hazardTypeValue)
-    {
-        HazardReport.HazardType = hazardTypeValue;
-        
-        if (!string.IsNullOrEmpty(hazardTypeValue))
-        {
-            var hazardType = HazardType.FromValue(hazardTypeValue);
-            if (hazardType != null)
-            {
-                Logger.LogInformation("Hazard type changed to: {HazardType}, requires regulatory: {RequiresRegulatory}", 
-                    hazardType.Name, hazardType.RequiresRegulatoryReporting);
-                
-                if (hazardType.RequiresRegulatoryReporting)
-                {
-                    NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Info,
-                        Summary = "Regulatory Reporting Required",
-                        Detail = $"This hazard type ({hazardType.Name}) requires regulatory reporting to appropriate authorities.",
-                        Duration = 5000
-                    });
-                }
-            }
-        }
-        
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task LoadHazardTypesForCategory(string categoryValue, bool preserveSelectedType = false)
-    {
-        if (string.IsNullOrEmpty(categoryValue))
-        {
-            HazardTypeOptions.Clear();
+            hazard.LocationArea = HazardReport.Location;
             return;
         }
 
-        var category = HazardCategory.FromValue(categoryValue);
-        if (category != null)
+        // Handle geographic location if provided
+        if (HasGeoLocation)
         {
-            var currentSelectedType = preserveSelectedType ? HazardReport.HazardType : null;
-            
-            HazardTypeOptions = HazardType.GetByCategory(category)
-                .Select(ht => new DropdownOption(ht.Value, ht.Name))
-                .ToList();
-            
-            if (preserveSelectedType && !string.IsNullOrEmpty(currentSelectedType))
+            try
             {
-                var typeExists = HazardTypeOptions.Any(ht => ht.Value == currentSelectedType);
-                if (typeExists)
+                var hazardLocationResult = await Mediator.SendAsync(
+                    new GetHazardLocationsByHazardCodeQuery(hazard.Code), CancellationToken.None);
+
+                if (hazardLocationResult.IsSuccess && hazardLocationResult.Value.Any())
                 {
-                    HazardReport.HazardType = currentSelectedType;
+                    var hazardLocation = hazardLocationResult.Value.FirstOrDefault();
+                    if (hazardLocation != null)
+                    {
+                        hazardLocation.HazardCode = hazard.Code;
+                        hazardLocation.Latitude = SelectedGeoLocation.Latitude;
+                        hazardLocation.Longitude = SelectedGeoLocation.Longitude;
+                        hazardLocation.Description = SelectedGeoLocation.Description ?? "Map selected location";
+                        hazard.HazardLocation = hazardLocation;
+
+                        var locationUpdateResult = await Mediator.SendAsync(
+                            new UpdateHazardLocationCommand(hazardLocation), CancellationToken.None);
+
+                        if (locationUpdateResult.IsSuccess)
+                        {
+                            Logger.LogInformation("✅ HazardLocation updated with Code: {LocationCode}, Coordinates: ({Lat}, {Lng})",
+                                hazardLocation.Code, SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
+                        }
+                    }
+                }
+
+                // Set coordinate information in hazard fields for backward compatibility
+                hazard.LocationArea = $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}";
+                if (!string.IsNullOrEmpty(SelectedGeoLocation.Description))
+                {
+                    hazard.LocationSubArea = SelectedGeoLocation.Description;
                 }
             }
-            
-            Logger.LogInformation("Loaded {Count} hazard types for category: {Category}", 
-                HazardTypeOptions.Count, category.Name);
+            catch (Exception locationEx)
+            {
+                Logger.LogWarning(locationEx, "Failed to create/update hazard location for confidential report, but continuing with hazard update");
+
+                // Set location in hazard fields as fallback
+                hazard.LocationArea = $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}";
+                if (!string.IsNullOrEmpty(SelectedGeoLocation.Description))
+                {
+                    hazard.LocationSubArea = SelectedGeoLocation.Description;
+                }
+            }
         }
-        else
+    }
+
+    /// <summary>
+    /// Process file attachments (common for both CREATE and EDIT modes) - Same as HazardReporting
+    /// </summary>
+    private async Task ProcessFileUpdates(Hazard hazard)
+    {
+        try
         {
-            HazardTypeOptions.Clear();
+            if (AttachedFiles?.Any() == true)
+            {
+                Logger.LogInformation("?? Processing {Count} cached files for confidential Hazard: {HazardCode}",
+                    AttachedFiles.Count, hazard.Code);
+
+                foreach (var attachedFile in AttachedFiles.Where(f => f?.Data?.Length > 0))
+                {
+                    try
+                    {
+                        var fileData = attachedFile.Data;
+                        var fileCode = "HF-0000";
+
+                        var hazardFile = new HazardFile(new HazardFileID(fileCode))
+                        {
+                            Code = fileCode,
+                            HazardCode = hazard.Code,
+                            ReportCode = hazard.ReportCode ?? string.Empty,
+                            FileName = attachedFile.FileName,
+                            FileType = Path.GetExtension(attachedFile.FileName)?.TrimStart('.') ?? "unknown",
+                            ContentType = attachedFile.ContentType ?? "application/octet-stream",
+                            FileSizeBytes = attachedFile.Size,
+                            StorageType = "Database",
+                            FileData = fileData,
+                            UploadedBy = "CONFIDENTIAL_USER", // Anonymous for confidential reports
+                            UploadedDate = DateTime.UtcNow,
+                            IsActive = true,
+                            IsConfidential = true // Always confidential
+                        };
+
+                        var createHazardFileCommand = new CreateHazardFileCommand(hazardFile);
+                        var hazardFileResult = await Mediator.SendAsync(createHazardFileCommand, CancellationToken.None);
+
+                        if (hazardFileResult.IsSuccess)
+                        {
+                            var createdFileId = hazardFileResult.Value.Code;
+                            hazard.AddHazardFile(new HazardFileID(createdFileId));
+
+                            Logger.LogInformation("? Created confidential HazardFile: {FileName} with ID: {FileId} for Hazard: {HazardCode}",
+                                attachedFile.FileName, createdFileId, hazard.Code);
+                        }
+                        else
+                        {
+                            Logger.LogError("? Failed to create confidential HazardFile: {FileName} for Hazard: {HazardCode}. Error: {Error}",
+                                attachedFile.FileName, hazard.Code, hazardFileResult.Error?.Message);
+                        }
+                    }
+                    catch (Exception fileEx)
+                    {
+                        Logger.LogError(fileEx, "? Exception creating confidential HazardFile: {FileName} for Hazard: {HazardCode}",
+                            attachedFile.FileName, hazard.Code);
+                    }
+                }
+            }
+            else
+            {
+                Logger.LogInformation("?? No files to process for confidential Hazard: {HazardCode}", hazard.Code);
+            }
         }
-        
-        await InvokeAsync(StateHasChanged);
-    }
-
-    public string GetHazardTypeGuidance(string? hazardTypeValue)
-    {
-        if (string.IsNullOrEmpty(hazardTypeValue)) return string.Empty;
-        var hazardType = HazardType.FromValue(hazardTypeValue);
-        return hazardType?.GuidanceText ?? string.Empty;
-    }
-
-    public bool RequiresRegulatoryReporting(string? hazardTypeValue)
-    {
-        if (string.IsNullOrEmpty(hazardTypeValue)) return false;
-        var hazardType = HazardType.FromValue(hazardTypeValue);
-        return hazardType?.RequiresRegulatoryReporting ?? false;
-    }
-
-    public string GetHazardCategoryDescription(string? categoryValue)
-    {
-        if (string.IsNullOrEmpty(categoryValue)) return string.Empty;
-        var category = HazardCategory.FromValue(categoryValue);
-        return category?.Description ?? string.Empty;
+        catch (Exception fileEx)
+        {
+            Logger.LogError(fileEx, "?? Error processing confidential files, but continuing with hazard operation");
+        }
     }
 
     #endregion
 
-    #region Helpers and Utility Methods
+    #region Helper Methods and Dropdown Logic
 
-    private void InitializeFormDefaults()
-    {
-        var currentUser = SessionService.GetCurrentUserDisplayName();
-        var tenMinutesAgo = DateTime.Now.AddMinutes(-10);
-        
-        HazardReport = new HazardReportForm
-        {
-            ReportedBy = currentUser ?? "Anonymous User",
-            ReportedOn = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day,
-                tenMinutesAgo.Hour, tenMinutesAgo.Minute, 0),
-            IsConfidential = true
-        };
-
-        SelectedGeoLocation = new GeoLocationData
-        {
-            Latitude = 0,
-            Longitude = 0,
-            Description = "Not set",
-            SelectedDateTime = DateTime.UtcNow
-        };
-
-        SelectedFiles = new List<IBrowserFile>().AsReadOnly();
-        AttachedFiles.Clear();
-        SelectedHazardCategory = null;
-        HazardTypeOptions.Clear();
-        ShowPreview = false;
-        ShowMapModal = false;
-        ShowSubmissionConfirmation = false;
-        ShowFinalSuccessConfirmation = false;
-    }
-
-    private string GetSelectedLocationText()
-    {
-        if (!HasGeoLocation) return "No location selected";
-        var lat = SelectedGeoLocation.Latitude;
-        var lng = SelectedGeoLocation.Longitude;
-        return $"Lat: {lat:F6}, Lng: {lng:F6} - {SelectedGeoLocation.Description}";
-    }
-
+    /// <summary>
+    /// Format file size for display
+    /// </summary>
     private string FormatFileSize(long bytes)
     {
         const int scale = 1024;
@@ -1091,98 +1024,753 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         return "0 Bytes";
     }
 
-    private string GetHazardTypeDisplay(string? key)
+    /// <summary>
+    /// Get display text for hazard types
+    /// </summary>
+    private string GetHazardTypeDisplay(string? hazardTypeValue)
     {
-        if (string.IsNullOrEmpty(key)) return "UNKNOWN";
-        var hazardType = HazardType.FromValue(key);
-        return hazardType?.Name ?? key;
+        return hazardTypeValue ?? "Unknown";
     }
-
-    private string GetHazardCategoryDisplay(string? key)
-    {
-        if (string.IsNullOrEmpty(key)) return "UNKNOWN";
-        var category = HazardCategory.FromValue(key);
-        return category?.Name ?? key;
-    }
-
-    private string GenerateAnonymousTrackingId()
-    {
-        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd");
-        var randomComponent = Random.Shared.Next(1000, 9999);
-        var checksum = (timestamp.GetHashCode() + randomComponent).ToString().Substring(0, 2);
-        return $"CONF-{timestamp}-{randomComponent}-{checksum}";
-    }
-
-    #endregion
-
-    #region File Management Methods
 
     /// <summary>
-    /// Remove a specific file from the queue
+    /// Get display text for hazard categories
     /// </summary>
-    public async Task RemoveFile(int index)
+    private string GetHazardCategoryDisplay(string? categoryValue)
+    {
+        return categoryValue ?? "Unknown";
+    }
+
+    /// <summary>
+    /// Get selected location text
+    /// </summary>
+    private string GetSelectedLocationText()
+    {
+        if (!HasGeoLocation) return "No location selected";
+
+        var lat = SelectedGeoLocation.Latitude;
+        var lng = SelectedGeoLocation.Longitude;
+        return $"Lat: {lat:F6}, Lng: {lng:F6} - {SelectedGeoLocation.Description}";
+    }
+
+    /// <summary>
+    /// Initialize dropdown options - Simplified for confidential reporting
+    /// </summary>
+    private void InitializeDropdownOptions()
+    {
+        // Basic hazard category options - can be expanded later
+        HazardCategoryOptions = new List<DropdownOption>
+        {
+            new("AIRCRAFT", "Aircraft Operations"),
+            new("GROUND", "Ground Operations"),
+            new("FACILITY", "Facility & Infrastructure"),
+            new("EQUIPMENT", "Equipment & Maintenance"),
+            new("PERSONNEL", "Personnel Safety"),
+            new("SECURITY", "Security Related"),
+            new("ENVIRONMENTAL", "Environmental"),
+            new("OTHER", "Other")
+        };
+
+        HazardTypeOptions = new List<DropdownOption>();
+    }
+
+    /// <summary>
+    /// Initialize form defaults for confidential reporting
+    /// </summary>
+    private void InitializeFormDefaults()
+    {
+        var tenMinutesAgo = DateTime.Now.AddMinutes(-10);
+        HazardReport = new HazardReportForm
+        {
+            ReportedBy = "Anonymous Reporter",
+            ReportedOn = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day,
+                tenMinutesAgo.Hour, tenMinutesAgo.Minute, 0),
+            IsConfidential = true // Always true for confidential reporting
+        };
+
+        SelectedGeoLocation = new GeoLocationData
+        {
+            Latitude = 0,
+            Longitude = 0,
+            Description = "Not set",
+            SelectedDateTime = DateTime.UtcNow
+        };
+
+        // Initialize empty file collections
+        SelectedFiles = new List<IBrowserFile>().AsReadOnly();
+        AttachedFiles.Clear();
+
+        // Reset dropdown selections
+        SelectedHazardCategory = null;
+        HazardTypeOptions.Clear();
+
+        ShowPreview = false;
+        ShowMapModal = false;
+        ShowSubmissionConfirmation = false;
+        ShowFinalSuccessConfirmation = false;
+    }
+
+    /// <summary>
+    /// Handle hazard category change
+    /// </summary>
+    public async Task OnHazardCategoryChanged(string? categoryValue)
+    {
+        Logger.LogInformation("Confidential reporting: Hazard category changed to: {Category}", categoryValue);
+
+        SelectedHazardCategory = categoryValue;
+
+        // Clear selected hazard type when category changes
+        HazardReport.HazardType = null;
+
+        // Load hazard types for the new category
+        HazardTypeOptions = categoryValue switch
+        {
+            "AIRCRAFT" => new List<DropdownOption>
+            {
+                new("RWY_INCURSION", "Runway Incursion"),
+                new("ACFT_DAMAGE", "Aircraft Damage"),
+                new("NEAR_MISS", "Near Miss")
+            },
+            "GROUND" => new List<DropdownOption>
+            {
+                new("GROUND_VEHICLE", "Ground Vehicle"),
+                new("GSE_MALFUNCTION", "GSE Malfunction"),
+                new("FOD", "Foreign Object Debris")
+            },
+            "PERSONNEL" => new List<DropdownOption>
+            {
+                new("PERSONNEL_INJURY", "Personnel Injury"),
+                new("UNSAFE_PRACTICE", "Unsafe Practice"),
+                new("TRAINING_ISSUE", "Training Issue")
+            },
+            "FACILITY" => new List<DropdownOption>
+            {
+                new("INFRASTRUCTURE", "Infrastructure Issue"),
+                new("LIGHTING", "Lighting Problem"),
+                new("SIGNAGE", "Signage Issue")
+            },
+            "EQUIPMENT" => new List<DropdownOption>
+            {
+                new("EQUIPMENT_FAIL", "Equipment Failure"),
+                new("MAINTENANCE_ISSUE", "Maintenance Issue")
+            },
+            "SECURITY" => new List<DropdownOption>
+            {
+                new("SECURITY_BREACH", "Security Breach"),
+                new("UNAUTHORIZED_ACCESS", "Unauthorized Access")
+            },
+            "ENVIRONMENTAL" => new List<DropdownOption>
+            {
+                new("WILDLIFE_STRIKE", "Wildlife Strike"),
+                new("WEATHER_RELATED", "Weather Related")
+            },
+            _ => new List<DropdownOption>()
+        };
+
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Handle hazard type change
+    /// </summary>
+    public async Task OnHazardTypeChanged(string? hazardTypeValue)
+    {
+        HazardReport.HazardType = hazardTypeValue;
+
+        if (!string.IsNullOrEmpty(hazardTypeValue))
+        {
+            Logger.LogInformation("Confidential reporting: Hazard type changed to: {HazardType}", hazardTypeValue);
+
+            // Show regulatory notification if required
+            if (RequiresRegulatoryReporting(hazardTypeValue))
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Info,
+                    Summary = "Regulatory Reporting Required",
+                    Detail = $"This hazard type may require regulatory reporting to appropriate authorities.",
+                    Duration = 5000
+                });
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Get hazard type guidance
+    /// </summary>
+    public string GetHazardTypeGuidance(string? hazardTypeValue)
+    {
+        return hazardTypeValue switch
+        {
+            "RWY_INCURSION" => "Report any unauthorized presence on a runway or failure to comply with ATC clearances.",
+            "ACFT_DAMAGE" => "Document any damage to aircraft including ground handling incidents.",
+            "GROUND_VEHICLE" => "Report incidents involving ground support equipment or vehicles.",
+            "PERSONNEL_INJURY" => "Report any injury to personnel including slips, trips, and falls.",
+            "EQUIPMENT_FAIL" => "Report any equipment malfunction or failure that could impact safety.",
+            "SECURITY_BREACH" => "Report any breach of security protocols or unauthorized access.",
+            "WILDLIFE_STRIKE" => "Report any wildlife collision or near-miss with aircraft.",
+            _ => "Provide detailed description of the hazard or incident."
+        };
+    }
+
+    /// <summary>
+    /// Check if hazard type requires regulatory reporting
+    /// </summary>
+    public bool RequiresRegulatoryReporting(string? hazardTypeValue)
+    {
+        return hazardTypeValue switch
+        {
+            "RWY_INCURSION" => true,
+            "ACFT_DAMAGE" => true,
+            "WILDLIFE_STRIKE" => true,
+            "SECURITY_BREACH" => true,
+            _ => false
+        };
+    }
+
+    /// <summary>
+    /// Get hazard category description
+    /// </summary>
+    public string GetHazardCategoryDescription(string? categoryValue)
+    {
+        return categoryValue switch
+        {
+            "AIRCRAFT" => "Aircraft operations, movements, and related incidents",
+            "GROUND" => "Ground operations, equipment, and vehicle-related events",
+            "PERSONNEL" => "Personnel safety, training, and procedure-related issues",
+            "FACILITY" => "Facility infrastructure, lighting, and physical plant issues",
+            "EQUIPMENT" => "Equipment malfunctions, maintenance, and technical problems",
+            "SECURITY" => "Security breaches, unauthorized access, and safety-security interface issues",
+            "ENVIRONMENTAL" => "Wildlife, weather, and environmental safety concerns",
+            _ => "General safety hazards and incidents"
+        };
+    }
+
+    /// <summary>
+    /// Clear all files
+    /// </summary>
+    public void ClearAllFiles()
+    {
+        AttachedFiles.Clear();
+        SelectedFiles = new List<IBrowserFile>().AsReadOnly();
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Remove specific file
+    /// </summary>
+    public void RemoveFile(int index)
     {
         if (index >= 0 && index < AttachedFiles.Count)
         {
             var fileToRemove = AttachedFiles[index];
-            
             AttachedFiles.RemoveAt(index);
-            
+
+            // Also remove from SelectedFiles for consistency
             var selectedFilesList = SelectedFiles.ToList();
-            var selectedFileToRemove = selectedFilesList.FirstOrDefault(sf => 
+            var selectedFileToRemove = selectedFilesList.FirstOrDefault(sf =>
                 sf.Name == fileToRemove.FileName && sf.Size == fileToRemove.Size);
-            
+
             if (selectedFileToRemove != null)
             {
                 selectedFilesList.Remove(selectedFileToRemove);
                 SelectedFiles = selectedFilesList.AsReadOnly();
             }
-            
-            Logger.LogInformation("Removed file from confidential report: {FileName}", fileToRemove.FileName);
+
+            Logger.LogInformation("Removed confidential file: {FileName} from queue", fileToRemove.FileName);
             StateHasChanged();
         }
     }
 
     /// <summary>
-    /// Clear all queued files
+    /// Clear form
     /// </summary>
-    public async Task ClearAllFiles()
+    public void ClearForm()
     {
-        AttachedFiles.Clear();
-        SelectedFiles = new List<IBrowserFile>().AsReadOnly();
-        
-        Logger.LogInformation("Cleared all files from confidential report queue");
+        InitializeFormDefaults();
+        SelectedHazardCategory = null;
+        HazardTypeOptions.Clear();
         StateHasChanged();
     }
 
     /// <summary>
-    /// Clear form data
+    /// Cancel submission
     /// </summary>
-    public async Task ClearForm()
+    public void CancelSubmission()
     {
-        var confirmed = await DialogService.Confirm(
-            "Are you sure you want to clear all form data?", 
-            "Clear Form", 
-            new ConfirmOptions() 
-            { 
-                OkButtonText = "Yes, Clear", 
-                CancelButtonText = "Cancel" 
-            });
+        ShowSubmissionConfirmation = false;
+        StateHasChanged();
 
-        if (confirmed == true)
+        NotificationService.Notify(new NotificationMessage
         {
-            InitializeFormDefaults();
-            StateHasChanged();
-            
+            Severity = NotificationSeverity.Info,
+            Summary = "Submission Cancelled",
+            Detail = "You can continue editing your confidential report.",
+            Duration = 3000
+        });
+    }
+
+    #endregion
+
+    #region URL and Print Functionality
+
+    /// <summary>
+    /// Get the full tracking URL for the submitted report
+    /// </summary>
+    /// <returns>Complete URL for tracking the report</returns>
+    private string GetTrackingUrl()
+    {
+        if (string.IsNullOrEmpty(GeneratedTrackingId))
+            return string.Empty;
+
+        var baseUri = Navigation.BaseUri.TrimEnd('/');
+        return $"{baseUri}/ConfidentialReporting/TrackStatus/{GeneratedTrackingId}";
+    }
+
+    /// <summary>
+    /// Print the confirmation details with QR code
+    /// </summary>
+    private async Task PrintConfirmation()
+    {
+        try
+        {
+            // First, generate the QR code as a data URL using JavaScript
+            var trackingUrl = GetTrackingUrl();
+            var qrCodeDataUrl = await GenerateQRCodeDataUrl(trackingUrl);
+
+            // Create printable content with embedded QR code
+            var printContent = GeneratePrintableContentWithQRData(qrCodeDataUrl);
+
+            // Use standard print function since QR is now embedded
+            await JSRuntime.InvokeVoidAsync("printContent", printContent);
+
+            Logger.LogInformation("Print confirmation with embedded QR code requested for tracking ID: {TrackingId}", GeneratedTrackingId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error printing confirmation for tracking ID: {TrackingId}", GeneratedTrackingId);
+
+            // Fallback: print without QR code
+            var printContentFallback = GeneratePrintableContentFallback();
+            await JSRuntime.InvokeVoidAsync("printContent", printContentFallback);
+
             NotificationService.Notify(new NotificationMessage
             {
-                Severity = NotificationSeverity.Info,
-                Summary = "Form Cleared",
-                Detail = "All form data has been cleared.",
-                Duration = 2000
+                Severity = NotificationSeverity.Warning,
+                Summary = "Print Warning",
+                Detail = "Printed confirmation without QR code. Full tracking URL is included.",
+                Duration = 5000
             });
         }
     }
 
+    /// <summary>
+    /// Copy tracking information to clipboard
+    /// </summary>
+    private async Task CopyTrackingInfo()
+    {
+        try
+        {
+            var trackingInfo = $"Tracking ID: {GeneratedTrackingId}\nTracking URL: {GetTrackingUrl()}\nSubmitted: {SubmissionDateTime?.ToString("MM/dd/yyyy HH:mm")}";
+
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", trackingInfo);
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = "Tracking information copied to clipboard!",
+                Duration = 4000
+            });
+
+            Logger.LogInformation("Tracking information copied to clipboard for: {TrackingId}", GeneratedTrackingId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error copying tracking info for: {TrackingId}", GeneratedTrackingId);
+
+            // Fallback: Show alert with the information
+            await ShowTrackingInfoAlert();
+        }
+    }
+
+    /// <summary>
+    /// Generate printable HTML content for the confirmation with QR code
+    /// </summary>
+    /// <returns>HTML content for printing</returns>
+    private string GeneratePrintableContentWithQRData(string qrCodeDataUrl)
+    {
+        var trackingUrl = GetTrackingUrl();
+        var submissionDate = SubmissionDateTime?.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt") ?? "Unknown";
+        var hasQRCode = !string.IsNullOrEmpty(qrCodeDataUrl);
+
+        return $@"
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>SMS Confidential Report Confirmation</title>
+                <style>
+                    body {{
+                        font-family: Arial, sans-serif;
+                        margin: 20px;
+                        line-height: 1.4;
+                    }}
+                    .header {{
+                        text-align: center;
+                        border-bottom: 2px solid #212e61;
+                        padding-bottom: 20px;
+                        margin-bottom: 30px;
+                    }}
+                    .logo {{
+                        font-size: 24px;
+                        font-weight: bold;
+                        color: #212e61;
+                    }}
+                    .subtitle {{
+                        color: #666;
+                        margin-top: 5px;
+                    }}
+                    .confirmation {{
+                        background-color: #d4edda;
+                        border: 1px solid #c3e6cb;
+                        border-radius: 5px;
+                        padding: 15px;
+                        margin-bottom: 20px;
+                    }}
+                    .content-row {{
+                        display: table;
+                        width: 100%;
+                        margin-bottom: 20px;
+                    }}
+                    .details-column {{
+                        display: table-cell;
+                        vertical-align: top;
+                        width: 70%;
+                        padding-right: 20px;
+                    }}
+                    .qr-column {{
+                        display: table-cell;
+                        vertical-align: top;
+                        width: 30%;
+                        text-align: center;
+                        border: 1px solid #ddd;
+                        padding: 15px;
+                        border-radius: 5px;
+                        background-color: #f9f9f9;
+                    }}
+                    .details-table {{
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 20px;
+                    }}
+                    .details-table th,
+                    .details-table td {{
+                        border: 1px solid #ddd;
+                        padding: 10px;
+                        text-align: left;
+                    }}
+                    .details-table th {{
+                        background-color: #f8f9fa;
+                        font-weight: bold;
+                        color: #212e61;
+                    }}
+                    .tracking-id {{
+                        font-family: monospace;
+                        font-size: 16px;
+                        font-weight: bold;
+                        background-color: #fff3cd;
+                        padding: 5px;
+                        border-radius: 3px;
+                    }}
+                    .qr-code-img {{
+                        max-width: 150px;
+                        max-height: 150px;
+                        margin: 10px 0;
+                    }}
+                    .qr-label {{
+                        font-weight: bold;
+                        color: #212e61;
+                        margin-bottom: 10px;
+                    }}
+                    .qr-instruction {{
+                        font-size: 12px;
+                        color: #666;
+                        margin-top: 10px;
+                    }}
+                    .important {{
+                        background-color: #fff3cd;
+                        border: 1px solid #ffeaa7;
+                        border-radius: 5px;
+                        padding: 15px;
+                        margin-bottom: 20px;
+                    }}
+                    .footer {{
+                        border-top: 1px solid #ddd;
+                        padding-top: 20px;
+                        margin-top: 30px;
+                        text-align: center;
+                        color: #666;
+                        font-size: 12px;
+                    }}
+                    @media print {{
+                        body {{ margin: 0; }}
+                        .no-print {{ display: none; }}
+                        .content-row {{ 
+                            display: table;
+                            width: 100%;
+                        }}
+                        .details-column {{
+                            display: table-cell;
+                            width: 70%;
+                        }}
+                        .qr-column {{ 
+                            display: table-cell;
+                            width: 30%;
+                        }}
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class='header'>
+                    <div class='logo'>🛩️ PDX SMS</div>
+                    <div class='subtitle'>Safety Management System - Confidential Reporting</div>
+                </div>
+
+                <div class='confirmation'>
+                    <h2 style='margin: 0; color: #0d8944;'>✅ Report Successfully Submitted</h2>
+                    <p style='margin: 5px 0 0 0;'>Your confidential safety report has been received and will be reviewed by authorized personnel.</p>
+                </div>
+
+                <div class='content-row'>
+                    <div class='details-column'>
+                        <table class='details-table'>
+                            <tr>
+                                <th>Tracking ID</th>
+                                <td class='tracking-id'>{GeneratedTrackingId}</td>
+                            </tr>
+                            <tr>
+                                <th>Hazard ID</th>
+                                <td>{GeneratedHazardId}</td>
+                            </tr>
+                            <tr>
+                                <th>Submission Date</th>
+                                <td>{submissionDate}</td>
+                            </tr>
+                            <tr>
+                                <th>Report Type</th>
+                                <td>Confidential Safety Report</td>
+                            </tr>
+                            <tr>
+                                <th>Status</th>
+                                <td><strong>Submitted</strong> - Under Review</td>
+                            </tr>
+                            <tr>
+                                <th>Tracking URL</th>
+                                <td style='word-break: break-all; font-size: 11px;'>{trackingUrl}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class='qr-column'>
+                        <div class='qr-label'>📱 Quick Track</div>
+                        {(hasQRCode ?
+                            $"<img src='{qrCodeDataUrl}' alt='QR Code for {trackingUrl}' class='qr-code-img' />" :
+                            "<div style='font-size: 12px; color: #999; padding: 20px;'>QR Code<br>Not Available</div>"
+                        )}
+                        <div class='qr-instruction'>
+                            {(hasQRCode ? "Scan with mobile device<br>to track your report" : "Use the tracking URL above")}
+                        </div>
+                    </div>
+                </div>
+
+                <div class='important'>
+                    <h3 style='margin: 0 0 10px 0; color: #212e61;'>🔒 Important Information</h3>
+                    <ul style='margin: 0; padding-left: 20px;'>
+                        <li><strong>Save this information:</strong> Your tracking ID is the only way to check your report status</li>
+                        <li><strong>Anonymous protection:</strong> Your identity is protected and will not be disclosed</li>
+                        <li><strong>Follow-up:</strong> Use the tracking URL to check your report status at any time</li>
+                        {(hasQRCode ? "<li><strong>QR Code:</strong> Scan the QR code above with your mobile device for quick access</li>" : "")}
+                        <li><strong>Questions:</strong> Call our confidential hotline at (503) 555-0199</li>
+                    </ul>
+                </div>
+
+                <div class='footer'>
+                    <p>Port of Portland - Safety Management System</p>
+                    <p>This document was generated on {DateTime.Now:dddd, MMMM dd, yyyy 'at' h:mm tt}</p>
+                    <p>Keep this confirmation for your records</p>
+                </div>
+            </body>
+            </html>
+        ";
+    }
+
+    /// <summary>
+    /// Generate printable content without QR code (fallback)
+    /// </summary>
+    private string GeneratePrintableContentFallback()
+    {
+        var trackingUrl = GetTrackingUrl();
+        var submissionDate = SubmissionDateTime?.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt") ?? "Unknown";
+
+        return $@"
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>SMS Confidential Report Confirmation</title>
+                <style>
+                    body {{
+                        font-family: Arial, sans-serif;
+                        margin: 20px;
+                        line-height: 1.4;
+                    }}
+                    .header {{
+                        text-align: center;
+                        border-bottom: 2px solid #212e61;
+                        padding-bottom: 20px;
+                        margin-bottom: 30px;
+                    }}
+                    .logo {{
+                        font-size: 24px;
+                        font-weight: bold;
+                        color: #212e61;
+                    }}
+                    .subtitle {{
+                        color: #666;
+                        margin-top: 5px;
+                    }}
+                    .confirmation {{
+                        background-color: #d4edda;
+                        border: 1px solid #c3e6cb;
+                        border-radius: 5px;
+                        padding: 15px;
+                        margin-bottom: 20px;
+                    }}
+                    .details-table {{
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 20px;
+                    }}
+                    .details-table th,
+                    .details-table td {{
+                        border: 1px solid #ddd;
+                        padding: 10px;
+                        text-align: left;
+                    }}
+                    .details-table th {{
+                        background-color: #f8f9fa;
+                        font-weight: bold;
+                        color: #212e61;
+                    }}
+                    .tracking-id {{
+                        font-family: monospace;
+                        font-size: 16px;
+                        font-weight: bold;
+                        background-color: #fff3cd;
+                        padding: 5px;
+                        border-radius: 3px;
+                    }}
+                    .important {{
+                        background-color: #fff3cd;
+                        border: 1px solid #ffeaa7;
+                        border-radius: 5px;
+                        padding: 15px;
+                        margin-bottom: 20px;
+                    }}
+                    .footer {{
+                        border-top: 1px solid #ddd;
+                        padding-top: 20px;
+                        margin-top: 30px;
+                        text-align: center;
+                        color: #666;
+                        font-size: 12px;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class='header'>
+                    <div class='logo'>??? PDX SMS</div>
+                    <div class='subtitle'>Safety Management System - Confidential Reporting</div>
+                </div>
+
+                <div class='confirmation'>
+                    <h2 style='margin: 0; color: #0d8944;'>? Report Successfully Submitted</h2>
+                    <p style='margin: 5px 0 0 0;'>Your confidential safety report has been received and will be reviewed by authorized personnel.</p>
+                </div>
+
+                <table class='details-table'>
+                    <tr>
+                        <th>Tracking ID</th>
+                        <td class='tracking-id'>{GeneratedTrackingId}</td>
+                    </tr>
+                    <tr>
+                        <th>Hazard ID</th>
+                        <td>{GeneratedHazardId}</td>
+                    </tr>
+                    <tr>
+                        <th>Submission Date</th>
+                        <td>{submissionDate}</td>
+                    </tr>
+                    <tr>
+                        <th>Report Type</th>
+                        <td>Confidential Safety Report</td>
+                    </tr>
+                    <tr>
+                        <th>Status</th>
+                        <td><strong>Submitted</strong> - Under Review</td>
+                    </tr>
+                    <tr>
+                        <th>Tracking URL</th>
+                        <td style='word-break: break-all;'>{trackingUrl}</td>
+                    </tr>
+                </table>
+
+                <div class='important'>
+                    <h3 style='margin: 0 0 10px 0; color: #212e61;'>?? Important Information</h3>
+                    <ul style='margin: 0; padding-left: 20px;'>
+                        <li><strong>Save this information:</strong> Your tracking ID is the only way to check your report status</li>
+                        <li><strong>Anonymous protection:</strong> Your identity is protected and will not be disclosed</li>
+                        <li><strong>Follow-up:</strong> Use the tracking URL to check your report status at any time</li>
+                        <li><strong>Questions:</strong> Call our confidential hotline at (503) 555-0199</li>
+                    </ul>
+                </div>
+
+                <div class='footer'>
+                    <p>Port of Portland - Safety Management System</p>
+                    <p>This document was generated on {DateTime.Now:dddd, MMMM dd, yyyy 'at' h:mm tt}</p>
+                    <p>Keep this confirmation for your records</p>
+                </div>
+            </body>
+            </html>
+        ";
+    }
+
+    /// <summary>
+    /// Show tracking info alert as fallback if clipboard access fails
+    /// </summary>
+    private async Task ShowTrackingInfoAlert()
+    {
+        var trackingInfo = $"Tracking ID: {GeneratedTrackingId}\\n\\nTracking URL: {GetTrackingUrl()}\\n\\nSubmitted: {SubmissionDateTime?.ToString("MM/dd/yyyy HH:mm")}";
+
+        // Use JavaScript alert as fallback
+        await JSRuntime.InvokeVoidAsync("alert", $"Please copy and save this tracking information:\\n\\n{trackingInfo}");
+    }
+
+    /// <summary>
+    /// Generate QR code as data URL using JavaScript
+    /// </summary>
+    private async Task<string> GenerateQRCodeDataUrl(string url)
+    {
+        try
+        {
+            // Use JavaScript to generate QR code and return as data URL
+            var qrDataUrl = await JSRuntime.InvokeAsync<string>("generateQRCodeDataUrl", url);
+            return qrDataUrl ?? string.Empty;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Failed to generate QR code data URL");
+            return string.Empty;
+        }
+    }
     #endregion
 }

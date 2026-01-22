@@ -75,12 +75,12 @@ public sealed class ScoringPanelService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} scoring panels for hazard code: {HazardCode}", 
+                _logger.LogInformation("Successfully retrieved {Count} scoring panels for hazard code: {HazardCode}",
                     result.Value?.Count ?? 0, hazardCode);
             }
             else
             {
-                _logger.LogWarning("No scoring panels found for hazard code: {HazardCode}. Error: {Error}", 
+                _logger.LogWarning("No scoring panels found for hazard code: {HazardCode}. Error: {Error}",
                     hazardCode, result.Error?.Message);
             }
 

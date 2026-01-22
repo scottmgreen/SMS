@@ -1,13 +1,6 @@
 using Microsoft.Extensions.Logging;
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
+
 using SMS_Application.Messaging.Queries;
-using SMS_Application.Services;
-using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Domain.Models;
-using SMS_Infrastructure.Services;
-using SMS_Shared.Common;
 
 namespace SMS_Application.Messaging.QueryHandlers;
 
@@ -177,7 +170,7 @@ public class GetSMSUserRolesByRoleValueQueryHandler : BaseQueryBundle, IRequestH
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS User Roles for Role: {RoleValue}", 
+                _logger.LogInformation("Successfully retrieved {Count} SMS User Roles for Role: {RoleValue}",
                     result.Value?.Count() ?? 0, request.RoleValue);
             }
 
@@ -223,7 +216,7 @@ public class GetSMSUserRolesByDepartmentQueryHandler : BaseQueryBundle, IRequest
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS User Roles for Department: {Department}", 
+                _logger.LogInformation("Successfully retrieved {Count} SMS User Roles for Department: {Department}",
                     result.Value?.Count() ?? 0, request.Department);
             }
 
@@ -269,7 +262,7 @@ public class GetSMSUserRolesByUserTypeQueryHandler : BaseQueryBundle, IRequestHa
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS User Roles for UserType: {UserType}", 
+                _logger.LogInformation("Successfully retrieved {Count} SMS User Roles for UserType: {UserType}",
                     result.Value?.Count() ?? 0, request.UserType);
             }
 

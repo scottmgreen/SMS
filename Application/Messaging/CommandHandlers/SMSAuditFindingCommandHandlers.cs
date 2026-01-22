@@ -1,10 +1,3 @@
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Services;
-using SMS_Infrastructure.Services;
-using SMS_Domain.Entities;
-using SMS_Shared.Common;
 using Microsoft.Extensions.Logging;
 
 namespace SMS_Application.Messaging.CommandHandlers;
@@ -58,7 +51,7 @@ public class CreateSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
                 AuditCode = request.AuditCode,
                 FindingDescription = request.FindingDescription,
                 // ? FIX: Map to both Description and Title for repository compatibility
-                Description = request.FindingDescription, 
+                Description = request.FindingDescription,
                 Title = request.FindingDescription, // Use description as title for now
                 Severity = request.Severity,
                 FindingType = request.FindingType,
@@ -224,10 +217,10 @@ public class AssignSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle, I
 
             // Use domain method to assign corrective action
             var assignResult = finding.AssignCorrectiveAction(
-                request.CorrectiveAction, 
-                request.ResponsiblePerson, 
-                request.ResponsibleDepartment, 
-                request.TargetCompletionDate, 
+                request.CorrectiveAction,
+                request.ResponsiblePerson,
+                request.ResponsibleDepartment,
+                request.TargetCompletionDate,
                 request.AssignedBy);
 
             if (assignResult.IsFailure)
@@ -241,7 +234,7 @@ public class AssignSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle, I
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully assigned corrective action for finding: {FindingCode} to {ResponsiblePerson}", 
+                _logger.LogInformation("Successfully assigned corrective action for finding: {FindingCode} to {ResponsiblePerson}",
                     request.FindingCode, request.ResponsiblePerson);
             }
             else
@@ -301,8 +294,8 @@ public class CompleteSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle,
 
             // Use domain method to complete corrective action
             var completeResult = finding.CompleteCorrectiveAction(
-                request.CompletedBy, 
-                request.CompletionDate, 
+                request.CompletedBy,
+                request.CompletionDate,
                 request.CompletionEvidence);
 
             if (completeResult.IsFailure)
@@ -375,8 +368,8 @@ public class VerifySMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
 
             // Use domain method to verify finding
             var verifyResult = finding.VerifyFinding(
-                request.VerifiedBy, 
-                request.VerificationMethod, 
+                request.VerifiedBy,
+                request.VerificationMethod,
                 request.VerificationEvidence);
 
             if (verifyResult.IsFailure)
@@ -390,7 +383,7 @@ public class VerifySMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully verified finding: {FindingCode} by {VerifiedBy}", 
+                _logger.LogInformation("Successfully verified finding: {FindingCode} by {VerifiedBy}",
                     request.FindingCode, request.VerifiedBy);
             }
             else
@@ -440,14 +433,14 @@ public class DeleteSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
 
             // Delete finding
             var result = await _auditFindingDataService.DeleteAuditFindingAsync(
-                request.FindingCode, 
-                request.DeletedBy, 
-                request.DeletionReason, 
+                request.FindingCode,
+                request.DeletedBy,
+                request.DeletionReason,
                 cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted finding: {FindingCode} by {DeletedBy}", 
+                _logger.LogInformation("Successfully deleted finding: {FindingCode} by {DeletedBy}",
                     request.FindingCode, request.DeletedBy);
             }
             else

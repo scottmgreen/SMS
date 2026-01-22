@@ -41,7 +41,7 @@ public abstract class BaseID<T> : IEquatable<BaseID<T>>
 
     public override string ToString() => Value.ToString();
 
-    
+
     public static bool operator ==(BaseID<T> left, BaseID<T> right)
     {
         return Equals(left, right);

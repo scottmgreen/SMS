@@ -16,23 +16,23 @@
 //    public bool CanApproveMediumRisk { get; }
 //    public bool CanApproveHighRisk { get; }
 //    public bool CanApproveCriticalRisk { get; }
-    
+
 //    // Escalation Permissions
 //    public bool CanEscalateWithinDepartment { get; }
 //    public bool CanEscalateAcrossDepartments { get; }
 //    public bool CanEscalateToExecutiveLevel { get; }
-    
+
 //    // Committee Permissions
 //    public bool CanParticipateInCommittees { get; }
 //    public bool CanChairCommittees { get; }
 //    public bool CanCreateCommittees { get; }
 //    public bool CanScheduleMeetings { get; }
-    
+
 //    // Investigation Permissions
 //    public bool CanInitiateInvestigations { get; }
 //    public bool CanLeadInvestigations { get; }
 //    public bool CanCloseInvestigations { get; }
-    
+
 //    // Reporting Permissions
 //    public bool CanViewDepartmentReports { get; }
 //    public bool CanViewCrossDepartmentReports { get; }

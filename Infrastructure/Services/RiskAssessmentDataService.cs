@@ -4,10 +4,6 @@
 // =============================================
 
 using SMS_Domain.Errors;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Infrastructure.Persistence;
-using SMS_Shared.Common;
 
 namespace SMS_Infrastructure.Services;
 
@@ -327,7 +323,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     {
         try
         {
-            _logger.LogInformation("Updating progress for RiskAssessment: {Id}, Step: {Step}, Completion: {Percentage}%", 
+            _logger.LogInformation("Updating progress for RiskAssessment: {Id}, Step: {Step}, Completion: {Percentage}%",
                 riskAssessmentId, currentStep, completionPercentage);
 
             var result = await _repo.UpdateProgressAsync(
@@ -426,13 +422,13 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
                     stepData.GetValueOrDefault("FiveMPhysicalEnvironment", "")?.ToString() ?? "",
                     stepData.GetValueOrDefault("FiveMOperationalEnvironment", "")?.ToString() ?? "",
                     updatedBy, ct),
-                    
+
                 3 => await SaveStep3Async(
-                    riskAssessmentId, 
+                    riskAssessmentId,
                     stepData.GetValueOrDefault("RiskAnalysisMethod", "SMS Risk Matrix")?.ToString() ?? "SMS Risk Matrix",
                     stepData.GetValueOrDefault("RiskCriteria", "")?.ToString() ?? "",
                     updatedBy, ct),
-                    
+
                 4 => await SaveStep4Async(
                     riskAssessmentId,
                     stepData.GetValueOrDefault("TolerabilityFramework", "PDX-SMS Default")?.ToString() ?? "PDX-SMS Default",
@@ -443,14 +439,14 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
                     stepData.GetValueOrDefault("RiskTolerability", "")?.ToString() ?? "",
                     stepData.GetValueOrDefault("AssessmentRationale", "")?.ToString() ?? "",
                     updatedBy, ct),
-                    
+
                 5 => await SaveStep5Async(
                     riskAssessmentId,
                     stepData.GetValueOrDefault("ImplementationStrategy", "")?.ToString() ?? "",
                     stepData.GetValueOrDefault("OverallTargetDate", null) as DateTime?,
                     stepData.GetValueOrDefault("ImplementationNotes", "")?.ToString() ?? "",
                     updatedBy, ct),
-                    
+
                 _ => Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.InvalidStep)
             };
         }
@@ -469,14 +465,14 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     /// Validates if a step can be saved based on current assessment state
     /// </summary>
     public async Task<Result<bool>> ValidateStepCanBeSavedAsync(
-        string riskAssessmentId, 
-        int stepNumber, 
+        string riskAssessmentId,
+        int stepNumber,
         CancellationToken ct = default)
     {
         try
         {
             var assessmentResult = await GetRiskAssessmentByIdAsync(new RiskAssessmentID(riskAssessmentId), ct);
-            
+
             if (assessmentResult.IsFailure)
             {
                 return Result<bool>.Failure<bool>(DomainErrors.RiskAssessmentError.NotFound);
@@ -509,13 +505,13 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     /// Gets the completion status for all steps of an assessment
     /// </summary>
     public async Task<Result<Dictionary<int, bool>>> GetStepCompletionStatusAsync(
-        string riskAssessmentId, 
+        string riskAssessmentId,
         CancellationToken ct = default)
     {
         try
         {
             var assessmentResult = await GetRiskAssessmentByIdAsync(new RiskAssessmentID(riskAssessmentId), ct);
-            
+
             if (assessmentResult.IsFailure)
             {
                 return Result<Dictionary<int, bool>>.Failure<Dictionary<int, bool>>(DomainErrors.RiskAssessmentError.NotFound);

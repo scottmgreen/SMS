@@ -1,9 +1,6 @@
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Messaging.Queries;
-using SMS_Domain.Entities;
-using SMS_Shared.Common;
 using Microsoft.Extensions.Logging;
+
+using SMS_Application.Messaging.Queries;
 
 namespace SMS_Application.Services;
 
@@ -31,8 +28,8 @@ public class SMSInvestigationWorkflowService : ISMSInvestigationWorkflowService
     /// Create a new investigation for a hazard
     /// </summary>
     public async Task<Result<Investigation>> CreateInvestigationAsync(
-        string hazardCode, 
-        string assignedInvestigatorId, 
+        string hazardCode,
+        string assignedInvestigatorId,
         string investigationNotes,
         CancellationToken cancellationToken = default)
     {
@@ -65,7 +62,7 @@ public class SMSInvestigationWorkflowService : ISMSInvestigationWorkflowService
                 Status = "Assigned"
             };
 
-            _logger.LogInformation("Creating investigation with HazardCode: {HazardCode}, AssignedTo: {Investigator}", 
+            _logger.LogInformation("Creating investigation with HazardCode: {HazardCode}, AssignedTo: {Investigator}",
                 hazardCode, assignedInvestigatorId);
 
             // Use CQRS to create investigation
@@ -74,12 +71,12 @@ public class SMSInvestigationWorkflowService : ISMSInvestigationWorkflowService
 
             if (result.IsFailure)
             {
-                _logger.LogError("Failed to create investigation for hazard {HazardCode}: {Error}", 
+                _logger.LogError("Failed to create investigation for hazard {HazardCode}: {Error}",
                     hazardCode, result.Error.Message);
                 return result;
             }
 
-            _logger.LogInformation("Successfully created investigation {InvestigationCode} for hazard {HazardCode}", 
+            _logger.LogInformation("Successfully created investigation {InvestigationCode} for hazard {HazardCode}",
                 investigationCode, hazardCode);
 
             return result;
@@ -155,7 +152,7 @@ public class SMSInvestigationWorkflowService : ISMSInvestigationWorkflowService
     /// Update investigation notes
     /// </summary>
     public async Task<Result<Investigation>> UpdateInvestigationNotesAsync(
-        string investigationId, 
+        string investigationId,
         string investigationNotes,
         CancellationToken cancellationToken = default)
     {
@@ -203,7 +200,7 @@ public class SMSInvestigationWorkflowService : ISMSInvestigationWorkflowService
     {
         try
         {
-            _logger.LogInformation("Completing investigation {InvestigationId} with decision {DecisionType}", 
+            _logger.LogInformation("Completing investigation {InvestigationId} with decision {DecisionType}",
                 investigationId, decisionType);
 
             // Validate decision inputs
@@ -225,15 +222,15 @@ public class SMSInvestigationWorkflowService : ISMSInvestigationWorkflowService
             }
 
             var investigation = investigationResult.Value;
-            
+
             // Update investigation with completion data
             var completionNotes = $"INVESTIGATION COMPLETED - Decision: {decisionType} | " +
                                  $"Rationale: {decisionRationale} | " +
                                  $"Decision Maker: {decisionMaker} | " +
                                  $"Completion Date: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss UTC}";
 
-            investigation.InvestigationNotes = string.IsNullOrEmpty(investigation.InvestigationNotes) 
-                ? completionNotes 
+            investigation.InvestigationNotes = string.IsNullOrEmpty(investigation.InvestigationNotes)
+                ? completionNotes
                 : $"{investigation.InvestigationNotes}\n\n{completionNotes}";
 
             // Update via CQRS
@@ -242,7 +239,7 @@ public class SMSInvestigationWorkflowService : ISMSInvestigationWorkflowService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully completed investigation {InvestigationId} with decision {DecisionType}", 
+                _logger.LogInformation("Successfully completed investigation {InvestigationId} with decision {DecisionType}",
                     investigationId, decisionType);
             }
 

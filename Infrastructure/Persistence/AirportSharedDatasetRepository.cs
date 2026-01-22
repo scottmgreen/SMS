@@ -1,9 +1,6 @@
-﻿using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Infrastructure.Common;
+﻿using SMS_Domain.Errors;
+
 using SMS_Infrastructure.Interfaces;
-using Microsoft.Data.SqlClient;
-using System.Data;
 
 namespace SMS_Infrastructure.Persistence;
 
@@ -94,7 +91,7 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
 
             int newIdValue = (int)newID.Value;
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
-            AirportSharedDatasetID datasetCode = new (newCodeValue);
+            AirportSharedDatasetID datasetCode = new(newCodeValue);
 
             return await GetAirportSharedDatasetByCodeAsync(datasetCode, ct).ConfigureAwait(false);
         }

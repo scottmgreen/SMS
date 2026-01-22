@@ -1,0 +1,371 @@
+@page "/ConfidentialReporting/TrackStatus"
+@using SMS_Domain.Entities
+@using SMS_Domain.ValueObjects
+@using SMS_Application.Messaging.Queries
+@using SMS3.Components.Shared
+@layout SMS3.Components.Layout.AnonymousLayout
+@inherits ComponentBase
+
+<PageTitle>Track Your Confidential Report - PDX SMS</PageTitle>
+
+<!-- Anonymous Page Header -->
+<div class="sms-page-header">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h3 class="mb-2">
+                <i class="fas fa-search me-2"></i>
+                Track Your Confidential Report
+            </h3>
+            <p class="mb-0 text-white-50">
+                Check the status of your anonymously submitted hazard report using your tracking ID
+            </p>
+        </div>
+        <div class="text-end">
+            <small class="text-white-50">
+                <i class="fas fa-shield-alt me-1"></i>
+                Anonymous & Secure
+            </small>
+        </div>
+    </div>
+</div>
+
+<!-- Search Section -->
+<RadzenCard class="mb-4">
+    <div class="container-fluid">
+        
+        <!-- Instructions -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
+                    <h6 class="mb-2">
+                        <RadzenIcon Icon="info" class="me-2" />
+                        How to Track Your Report
+                    </h6>
+                    <p class="mb-1">
+                        When you submitted your confidential report, you received a <strong>tracking ID</strong>. 
+                        Enter it below to check the current status and any updates on your report.
+                    </p>
+                    <p class="mb-0">
+                        <strong>Example:</strong> HT-2026-0006
+                    </p>
+                </RadzenAlert>
+            </div>
+        </div>
+        
+        <!-- Tracking ID Search -->
+        <div class="row">
+            <div class="col-12">
+                <h5 class="mb-3">
+                    <RadzenIcon Icon="track_changes" class="me-2" />
+                    Enter Your Tracking ID
+                </h5>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-lg-6 col-md-8 col-12">
+                <div class="search-input-container">
+                    <RadzenTextBox @bind-Value="@TrackingIdSearch" 
+                                   Placeholder="Enter your tracking ID (e.g., HT-2026-0006)"
+                                   class="w-100"
+                                   Style="height: 50px; font-size: 1.1rem;"
+                                   @onkeypress="@OnTrackingIdKeyPress" 
+                                   @oninput="@OnTrackingIdInput" />
+                    <small class="form-text text-muted mt-1">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Tracking ID format: <strong>HT-YYYY-NNNN</strong> (e.g., HT-2026-0006)
+                        <br />
+                        <span class="text-primary">?? Tip: You can enter just the numbers if you're not sure of the full format</span>
+                    </small>
+                    @if (!string.IsNullOrEmpty(TrackingIdFormatMessage))
+                    {
+                        <small class="form-text mt-1" style="color: @TrackingIdFormatColor;">
+                            <i class="fas @TrackingIdFormatIcon me-1"></i>
+                            @TrackingIdFormatMessage
+                        </small>
+                    }
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-4 col-12 d-flex align-items-start">
+                <RadzenButton ButtonType="ButtonType.Button" 
+                              Click="@SearchByTrackingId" 
+                              Text="Check Status"
+                              Icon="search"
+                              BusyText="Searching..."
+                              IsBusy="@IsSearching"
+                              ButtonStyle="ButtonStyle.Primary"
+                              Size="ButtonSize.Large"
+                              class="w-100"
+                              Disabled="@(string.IsNullOrWhiteSpace(TrackingIdSearch))" />
+            </div>
+        </div>
+
+        <!-- Privacy Notice -->
+        <div class="row">
+            <div class="col-12">
+                <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat">
+                    <h6 class="mb-2">
+                        <RadzenIcon Icon="security" class="me-2" />
+                        Your Privacy is Protected
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="mb-0 small">
+                                <li>No login required - completely anonymous</li>
+                                <li>Your identity remains confidential</li>
+                                <li>Only your tracking ID is used for search</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="mb-0 small">
+                                <li>No personal information is displayed</li>
+                                <li>Secure connection protects your search</li>
+                                <li>No search history is stored</li>
+                            </ul>
+                        </div>
+                    </div>
+                </RadzenAlert>
+            </div>
+        </div>
+    </div>
+</RadzenCard>
+
+<!-- Search Results Section -->
+@if (SearchResults.Any() || HasSearched)
+{
+    <RadzenCard>
+        <div class="results-header mb-3">
+            <h5 class="mb-1">
+                <RadzenIcon Icon="list_alt" class="me-2" />
+                Report Status
+            </h5>
+            @if (HasSearched)
+            {
+                <p class="text-muted mb-0">
+                    @if (SearchResults.Any())
+                    {
+                        <span>Found report information for tracking ID: <strong>@LastSearchQuery</strong></span>
+                    }
+                    else
+                    {
+                        <span>No report found for tracking ID: <strong>@LastSearchQuery</strong></span>
+                    }
+                </p>
+            }
+        </div>
+
+        @if (SearchResults.Any())
+        {
+            <!-- Show info if we found similar results instead of exact match -->
+            @if (HasSimilarResults)
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mb-3">
+                    <h6 class="mb-1">
+                        <RadzenIcon Icon="info" class="me-2" />
+                        Similar Tracking IDs Found
+                    </h6>
+                    <p class="mb-0">
+                        No exact match for "@LastSearchQuery" but found @SearchResults.Count similar tracking ID(s).
+                        These might be your report:
+                    </p>
+                </RadzenAlert>
+            }
+
+            <RadzenDataGrid @ref="@SearchResultsGrid"
+                            Data="@SearchResults"
+                            TItem="HazardReportSearchResult"
+                            AllowPaging="true"
+                            PageSize="5"
+                            AllowSorting="false"
+                            class="search-results-grid">
+                
+                <Columns>
+                    <RadzenDataGridColumn TItem="HazardReportSearchResult" 
+                                          Property="TrackingCode" 
+                                          Title="Tracking ID"
+                                          Width="180px">
+                        <Template Context="result">
+                            <span class="fw-bold text-primary">@result.TrackingCode</span>
+                            @if (HasSimilarResults && IsHighMatch(result.TrackingCode))
+                            {
+                                <RadzenBadge Text="Best Match" BadgeStyle="BadgeStyle.Success" class="ms-2" Style="font-size: 0.6rem;" />
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="HazardReportSearchResult" 
+                                          Property="HazardType" 
+                                          Title="Report Type"
+                                          Width="150px">
+                        <Template Context="result">
+                            <span class="text-info">@(result.HazardType ?? "Confidential Report")</span>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="HazardReportSearchResult" 
+                                          Property="ReportedOn" 
+                                          Title="Submitted"
+                                          Width="120px"
+                                          FormatString="{0:MM/dd/yyyy}">
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="HazardReportSearchResult" 
+                                          Property="CurrentStatus" 
+                                          Title="Status"
+                                          Width="140px">
+                        <Template Context="result">
+                            <RadzenBadge Text="@result.CurrentStatus" 
+                                         BadgeStyle="@GetStatusBadgeStyle(result.CurrentStatus)" 
+                                         class="status-badge" />
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="HazardReportSearchResult" 
+                                          Property="ValidationDecision" 
+                                          Title="SMS Review"
+                                          Width="140px">
+                        <Template Context="result">
+                            @if (!string.IsNullOrEmpty(result.ValidationDecision))
+                            {
+                                <RadzenBadge Text="@GetValidationDecisionDisplay(result.ValidationDecision)" 
+                                             BadgeStyle="@GetValidationBadgeStyle(result.ValidationDecision)" 
+                                             class="validation-badge" />
+                            }
+                            else
+                            {
+                                <span class="text-muted">Under Review</span>
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="HazardReportSearchResult" 
+                                          Title="Details" 
+                                          Width="100px">
+                        <Template Context="result">
+                            <RadzenButton ButtonType="ButtonType.Button"
+                                          Click="@(() => ViewDetails(result.TrackingCode))"
+                                          Text="View"
+                                          Icon="visibility"
+                                          Size="ButtonSize.Small"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          Variant="Variant.Outlined" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        }
+        else if (HasSearched)
+        {
+            <div class="no-results text-center py-5">
+                <RadzenIcon Icon="search_off" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" class="mb-3" />
+                <h6 class="text-muted">No Report Found</h6>
+                <p class="text-muted mb-3">
+                    We couldn't find a report with tracking ID: <strong>@LastSearchQuery</strong>
+                </p>
+                
+                <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" class="text-start">
+                    <h6 class="mb-2">Please Check:</h6>
+                    <ul class="mb-2">
+                        <li>Tracking ID is entered correctly (format: HT-YYYY-NNNN)</li>
+                        <li>Report was submitted recently (may take a few minutes to appear)</li>
+                        <li>You have the complete tracking ID from your submission confirmation</li>
+                    </ul>
+                    <p class="mb-0">
+                        <strong>Need help?</strong> Call our confidential hotline: <strong>(503) 555-0199</strong>
+                    </p>
+                </RadzenAlert>
+            </div>
+        }
+    </RadzenCard>
+}
+
+<!-- Loading State -->
+@if (IsSearching)
+{
+    <RadzenCard class="text-center py-5">
+        <RadzenProgressBarCircular ShowValue="false" class="mb-3" />
+        <h6 class="text-muted">Searching for your report...</h6>
+    </RadzenCard>
+}
+
+<!-- Help Section -->
+<RadzenCard class="mt-4">
+    <h5 class="mb-3">
+        <RadzenIcon Icon="help" class="me-2" />
+        Need Help?
+    </h5>
+    <div class="row">
+        <div class="col-md-6">
+            <h6>Lost Your Tracking ID?</h6>
+            <p class="small mb-3">
+                If you didn't save your tracking ID, unfortunately we cannot retrieve it since your 
+                report was submitted anonymously. However, you can submit a new report if needed.
+            </p>
+            <RadzenButton Text="Submit New Report" 
+                          Icon="add" 
+                          ButtonStyle="ButtonStyle.Success" 
+                          Click="@NavigateToReporting"
+                          Size="ButtonSize.Small" />
+        </div>
+        <div class="col-md-6">
+            <h6>Questions About Your Report?</h6>
+            <p class="small mb-3">
+                Our safety team is here to help with any questions about the reporting process 
+                or status of your submission.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                <span class="badge bg-primary">
+                    <i class="fas fa-phone me-1"></i>
+                    Call: (503) 555-0199
+                </span>
+                <span class="badge bg-secondary">
+                    <i class="fas fa-envelope me-1"></i>
+                    safety@pdxairport.com
+                </span>
+            </div>
+        </div>
+    </div>
+</RadzenCard>
+
+<style>
+    .search-input-container {
+        position: relative;
+    }
+
+    .search-results-grid {
+        --rz-grid-cell-padding: 0.75rem;
+    }
+
+    .status-badge, .validation-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .fw-semibold {
+        font-weight: 600;
+    }
+
+    .no-results {
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* Anonymous layout specific styling */
+    .sms-page-header {
+        background: #212e61 !important;
+        border: 2px solid white !important;
+        border-radius: 0.5rem !important;
+        padding: 1.5rem !important;
+        margin-bottom: 2rem !important;
+        color: white !important;
+    }
+
+    .sms-page-header h3,
+    .sms-page-header p,
+    .sms-page-header i {
+        color: white !important;
+    }
+</style>

@@ -1,14 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-using Radzen;
-using SMS3.Components.Shared;
-
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
 /// <summary>
@@ -36,7 +25,7 @@ public partial class HybridRiskAssessment : ComponentBase
     private int ActiveTabIndex { get; set; } = 0;
     private string AssessmentMode { get; set; } = "Preliminary";
     private bool ShowAdvancedSections { get; set; } = false;
-    
+
     public Hazard? Hazard { get; set; }
     public RiskAssessment? InitialRiskAssessment { get; set; }
     public RiskAssessment? ResidualRiskAssessment { get; set; }
@@ -74,7 +63,7 @@ public partial class HybridRiskAssessment : ComponentBase
     private readonly List<string> LikelihoodOptions = new()
     {
         "Very Low (< 1% chance)",
-        "Low (1-10% chance)", 
+        "Low (1-10% chance)",
         "Medium (10-50% chance)",
         "High (50-90% chance)",
         "Very High (> 90% chance)"
@@ -84,7 +73,7 @@ public partial class HybridRiskAssessment : ComponentBase
     {
         "Negligible (Minor inconvenience)",
         "Minor (Temporary disruption)",
-        "Moderate (Significant impact)", 
+        "Moderate (Significant impact)",
         "Major (Serious consequences)",
         "Catastrophic (Severe/fatal consequences)"
     };
@@ -160,16 +149,16 @@ public partial class HybridRiskAssessment : ComponentBase
         try
         {
             IsLoading = true;
-            
+
             // Load or create assessments
             await LoadOrCreateAssessments();
-            
+
             // Load stakeholder and assessor data
             await LoadStakeholderData();
-            
+
             // Load hazard data
             await LoadHazardData();
-            
+
         }
         catch (Exception ex)
         {
@@ -186,18 +175,18 @@ public partial class HybridRiskAssessment : ComponentBase
     private async Task LoadOrCreateAssessments()
     {
         // Generate proper assessment IDs
-        var initialAssessmentId = AssessmentId!.StartsWith("RP-") 
+        var initialAssessmentId = AssessmentId!.StartsWith("RP-")
             ? AssessmentId.Replace("RP-", "RS-")
             : $"RS-{AssessmentId}";
-        
-        var residualAssessmentId = AssessmentId.StartsWith("RP-") 
+
+        var residualAssessmentId = AssessmentId.StartsWith("RP-")
             ? AssessmentId.Replace("RP-", "RRS-")
             : $"RRS-{AssessmentId}";
 
         // Load or create initial assessment
         var initialQuery = new GetRiskAssessmentByIdQuery(new RiskAssessmentID(initialAssessmentId));
         var initialResult = await Mediator.SendAsync(initialQuery, CancellationToken.None);
-        
+
         if (initialResult.IsSuccess)
         {
             InitialRiskAssessment = initialResult.Value;
@@ -213,7 +202,7 @@ public partial class HybridRiskAssessment : ComponentBase
         {
             var residualQuery = new GetRiskAssessmentByIdQuery(new RiskAssessmentID(residualAssessmentId));
             var residualResult = await Mediator.SendAsync(residualQuery, CancellationToken.None);
-            
+
             if (residualResult.IsSuccess)
             {
                 ResidualRiskAssessment = residualResult.Value;
@@ -238,10 +227,10 @@ public partial class HybridRiskAssessment : ComponentBase
         if (createResult.IsSuccess)
         {
             InitialRiskAssessment = createResult.Value;
-            
+
             var createCommand = new CreateRiskAssessmentCommand(InitialRiskAssessment);
             await Mediator.SendAsync(createCommand, CancellationToken.None);
-            
+
             Logger.LogInformation("Created initial assessment {AssessmentId}", assessmentId);
         }
     }
@@ -259,10 +248,10 @@ public partial class HybridRiskAssessment : ComponentBase
         if (createResult.IsSuccess)
         {
             ResidualRiskAssessment = createResult.Value;
-            
+
             var createCommand = new CreateRiskAssessmentCommand(ResidualRiskAssessment);
             await Mediator.SendAsync(createCommand, CancellationToken.None);
-            
+
             Logger.LogInformation("Created residual assessment {AssessmentId}", assessmentId);
         }
     }
@@ -276,7 +265,7 @@ public partial class HybridRiskAssessment : ComponentBase
             AvailableStakeholders = new List<SMSStakeholderUser>();
             AvailableAssessors = new List<SMSApplicationUser>();
             StakeholderGroups = new List<SMSStakeholderGroup>();
-            
+
             Logger.LogInformation("Stakeholder data initialized (queries need to be implemented)");
             await Task.CompletedTask;
         }
@@ -294,7 +283,7 @@ public partial class HybridRiskAssessment : ComponentBase
             {
                 var hazardQuery = new GetHazardByIdQuery(new HazardID(HazardId));
                 var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
-                
+
                 if (hazardResult.IsSuccess)
                 {
                     Hazard = hazardResult.Value;
@@ -343,7 +332,7 @@ public partial class HybridRiskAssessment : ComponentBase
     private async Task OnAssessmentModeChanged()
     {
         ShowAdvancedSections = AssessmentMode != "Preliminary";
-        
+
         if (AssessmentMode == "Technical")
         {
             // Auto-expand all advanced sections
@@ -351,14 +340,14 @@ public partial class HybridRiskAssessment : ComponentBase
             {
                 AdvancedSectionsExpanded[i] = true;
             }
-            
+
             // Create residual assessment if it doesn't exist
             if (ResidualRiskAssessment == null && InitialRiskAssessment != null)
             {
-                var residualAssessmentId = AssessmentId!.StartsWith("RP-") 
+                var residualAssessmentId = AssessmentId!.StartsWith("RP-")
                     ? AssessmentId.Replace("RP-", "RRS-")
                     : $"RRS-{AssessmentId}";
-                    
+
                 await CreateResidualAssessment(residualAssessmentId);
             }
         }
@@ -370,7 +359,7 @@ public partial class HybridRiskAssessment : ComponentBase
                 AdvancedSectionsExpanded[i] = false;
             }
         }
-        
+
         StateHasChanged();
     }
 
@@ -455,10 +444,10 @@ public partial class HybridRiskAssessment : ComponentBase
         try
         {
             await SaveAssessment(isDraft: false);
-            
+
             var overallRisk = DetermineOverallRisk();
             var nextAction = DetermineNextAction();
-            
+
             ShowSuccessNotification($"Hybrid risk assessment completed successfully. Risk level: {overallRisk}. Next: {nextAction}.");
             Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
         }
@@ -633,7 +622,7 @@ public partial class HybridRiskAssessment : ComponentBase
         NotificationService.Notify(new NotificationMessage
         {
             Severity = NotificationSeverity.Error,
-            Summary = "Error", 
+            Summary = "Error",
             Detail = message,
             Duration = 6000
         });

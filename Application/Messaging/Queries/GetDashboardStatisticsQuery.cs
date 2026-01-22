@@ -1,7 +1,3 @@
-using SMS_Shared.Common;
-using SMS_Domain.Entities;
-using SMS_Application.Interfaces;
-
 namespace SMS_Application.Messaging.Queries;
 
 /// <summary>

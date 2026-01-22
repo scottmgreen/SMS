@@ -1,11 +1,6 @@
 using Microsoft.Extensions.Logging;
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
+
 using SMS_Application.Messaging.Queries;
-using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Infrastructure.Services;
-using SMS_Shared.Common;
 
 namespace SMS_Application.Messaging.QueryHandlers;
 
@@ -30,7 +25,7 @@ public class GetAllSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IReques
         {
             _logger.LogInformation("Processing GetAllSMSOrganizationalUsersQuery");
             var result = await _dataService.GetAllSMSOrganizationalUsersAsync(ct);
-            
+
             if (result.IsSuccess)
             {
                 _logger.LogInformation("Successfully retrieved {Count} SMS Organizational Users", result.Value?.Count() ?? 0);
@@ -39,7 +34,7 @@ public class GetAllSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IReques
             {
                 _logger.LogWarning("Failed to retrieve SMS Organizational Users");
             }
-            
+
             return result;
         }
         catch (Exception ex)
@@ -67,7 +62,7 @@ public class GetSMSOrganizationalUserByCodeQueryHandler : BaseQueryBundle, IRequ
         {
             _logger.LogInformation("Processing GetSMSOrganizationalUserByCodeQuery for Code: {Code}", request.UserCode);
             var result = await _dataService.GetSMSOrganizationalUserByCodeAsync(request.UserCode, ct);
-            
+
             if (result.IsSuccess)
             {
                 _logger.LogInformation("Successfully retrieved SMS Organizational User with Code: {Code}", request.UserCode);
@@ -76,7 +71,7 @@ public class GetSMSOrganizationalUserByCodeQueryHandler : BaseQueryBundle, IRequ
             {
                 _logger.LogWarning("SMS Organizational User not found with Code: {Code}", request.UserCode);
             }
-            
+
             return result;
         }
         catch (Exception ex)
@@ -104,7 +99,7 @@ public class GetSMSOrganizationalUserByUserNameQueryHandler : BaseQueryBundle, I
         try
         {
             _logger.LogInformation("Processing GetSMSOrganizationalUserByUserNameQuery for UserName: {UserName}", request.UserName);
-            
+
             // Get all users and filter by username
             var allUsersResult = await _dataService.GetAllSMSOrganizationalUsersAsync(ct);
             if (allUsersResult.IsFailure)
@@ -113,7 +108,7 @@ public class GetSMSOrganizationalUserByUserNameQueryHandler : BaseQueryBundle, I
             }
 
             var user = allUsersResult.Value?.FirstOrDefault(u => u.UserName.Value.Equals(request.UserName, StringComparison.OrdinalIgnoreCase));
-            
+
             if (user != null)
             {
                 _logger.LogInformation("Successfully retrieved SMS Organizational User with UserName: {UserName}", request.UserName);
@@ -150,7 +145,7 @@ public class GetActiveSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IReq
         {
             _logger.LogInformation("Processing GetActiveSMSOrganizationalUsersQuery");
             var result = await _dataService.GetActiveSMSOrganizationalUsersAsync(ct);
-            
+
             if (result.IsSuccess)
             {
                 _logger.LogInformation("Successfully retrieved {Count} active SMS Organizational Users", result.Value?.Count() ?? 0);
@@ -159,7 +154,7 @@ public class GetActiveSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IReq
             {
                 _logger.LogWarning("Failed to retrieve active SMS Organizational Users");
             }
-            
+
             return result;
         }
         catch (Exception ex)
@@ -187,12 +182,12 @@ public class GetSMSOrganizationalUsersByDepartmentQueryHandler : BaseQueryBundle
         {
             _logger.LogInformation("Processing GetSMSOrganizationalUsersByDepartmentQuery for Department: {Department}", request.Department);
             var result = await _dataService.GetSMSOrganizationalUsersByDepartmentAsync(request.Department, ct);
-            
+
             if (result.IsSuccess)
             {
                 _logger.LogInformation("Successfully retrieved {Count} SMS Organizational Users for Department: {Department}", result.Value?.Count() ?? 0, request.Department);
             }
-            
+
             return result;
         }
         catch (Exception ex)
@@ -220,12 +215,12 @@ public class GetSMSOrganizationalUsersByPositionQueryHandler : BaseQueryBundle, 
         {
             _logger.LogInformation("Processing GetSMSOrganizationalUsersByPositionQuery for Position: {Position}", request.Position);
             var result = await _dataService.GetSMSOrganizationalUsersByPositionAsync(request.Position, ct);
-            
+
             if (result.IsSuccess)
             {
                 _logger.LogInformation("Successfully retrieved {Count} SMS Organizational Users for Position: {Position}", result.Value?.Count() ?? 0, request.Position);
             }
-            
+
             return result;
         }
         catch (Exception ex)
@@ -252,7 +247,7 @@ public class GetSMSOrganizationalUsersByOrganizationLevelQueryHandler : BaseQuer
         try
         {
             _logger.LogInformation("Processing GetSMSOrganizationalUsersByOrganizationLevelQuery for OrganizationLevel: {OrganizationLevel}", request.OrganizationLevel);
-            
+
             // Filter users by organization level through service
             var allUsersResult = await _dataService.GetAllSMSOrganizationalUsersAsync(ct);
             if (allUsersResult.IsFailure)
@@ -261,7 +256,7 @@ public class GetSMSOrganizationalUsersByOrganizationLevelQueryHandler : BaseQuer
             }
 
             var filteredUsers = allUsersResult.Value?.Where(u => u.OrganizationLevel.Equals(request.OrganizationLevel, StringComparison.OrdinalIgnoreCase)) ?? Enumerable.Empty<SMSOrganizationalUser>();
-            
+
             _logger.LogInformation("Successfully retrieved {Count} SMS Organizational Users for OrganizationLevel: {OrganizationLevel}", filteredUsers.Count(), request.OrganizationLevel);
             return Result<IEnumerable<SMSOrganizationalUser>>.Success(filteredUsers);
         }
@@ -290,10 +285,10 @@ public class CheckSMSOrganizationalUserNameExistsQueryHandler : BaseQueryBundle,
         {
             _logger.LogInformation("Processing CheckSMSOrganizationalUserNameExistsQuery for UserName: {UserName}", request.UserName);
             var result = await _dataService.GetAllSMSOrganizationalUsersAsync();//(request.UserName);
-            var checkresult = result.Value.Any(x=> x.UserName.Value == request.UserName);    
-            
+            var checkresult = result.Value.Any(x => x.UserName.Value == request.UserName);
+
             _logger.LogInformation("Username {UserName} exists: {Exists}", request.UserName, result.Value);
-            
+
             return checkresult;
         }
         catch (Exception ex)
@@ -320,7 +315,7 @@ public class GetSMSOrganizationalUserStatisticsQueryHandler : BaseQueryBundle, I
         try
         {
             _logger.LogInformation("Processing GetSMSOrganizationalUserStatisticsQuery");
-            
+
             var statsResult = await _dataService.GetSMSOrganizationalUserStatisticsAsync();
             if (statsResult.IsSuccess)
             {
@@ -334,7 +329,7 @@ public class GetSMSOrganizationalUserStatisticsQueryHandler : BaseQueryBundle, I
                     ["StaleUsers"] = userStats.StaleUsers,
                     ["LastLoginDate"] = userStats.LastLoginDate
                 };
-                
+
                 _logger.LogInformation("Successfully retrieved SMS Organizational User statistics");
                 return Result<Dictionary<string, object>>.Success<Dictionary<string, object>>(stats);
             }

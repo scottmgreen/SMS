@@ -1,12 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-using Radzen;
-using SMS3.Components.Shared;
 using SMS_Domain.Errors;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
@@ -14,7 +5,7 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 public partial class ReportValidation : ComponentBase
 {
     [Parameter] public string ReportId { get; set; } = "";
-    
+
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<ReportValidation> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
@@ -94,11 +85,11 @@ public partial class ReportValidation : ComponentBase
             // Check for existing validation
             var existingValidationQuery = new GetReportValidationByReportIdQuery(reportCode);
             var validationResult = await Mediator.SendAsync(existingValidationQuery, CancellationToken.None);
-            
+
             if (validationResult.IsSuccess)
             {
                 ExistingValidation = validationResult.Value;
-                
+
                 // Populate form fields from existing validation using Smart Enum
                 if (!string.IsNullOrWhiteSpace(ExistingValidation.ValidationDecision))
                 {
@@ -110,14 +101,14 @@ public partial class ReportValidation : ComponentBase
                 ValidationComments = ExistingValidation.ValidationComments ?? "";
                 ValidationType = ExistingValidation.ValidationType ?? "Technical";
                 ValidatedBy = ExistingValidation.ValidatedBy ?? "";
-                
-                Logger.LogInformation("Found existing ReportValidation for report {ReportId} - Decision: {Decision}", 
+
+                Logger.LogInformation("Found existing ReportValidation for report {ReportId} - Decision: {Decision}",
                     ReportId, SelectedValidationDecision?.Name ?? "None");
             }
             else
             {
                 Logger.LogInformation("No existing ReportValidation found for report: {ReportId}", ReportId);
-                
+
                 // Set defaults for new validation
                 SelectedValidationDecision = null;
                 ValidatedBy = "";
@@ -147,18 +138,18 @@ public partial class ReportValidation : ComponentBase
             if (usersResult.IsSuccess)
             {
                 AvailableAssessors = usersResult.Value?.ToList() ?? new List<SMSApplicationUser>();
-                
+
                 // Build dropdown options
                 ValidatedByOptions = new List<DropdownOption>
                 {
                     new DropdownOption { Value = "", Text = "" }
                 };
-                
+
                 foreach (var assessor in AvailableAssessors)
                 {
-                    ValidatedByOptions.Add(new DropdownOption 
-                    { 
-                        Value = assessor.UserName.Value, 
+                    ValidatedByOptions.Add(new DropdownOption
+                    {
+                        Value = assessor.UserName.Value,
                         Text = $"{assessor.DisplayName}" // ({assessor.UserName.Value}) - {assessor.UserRole}" 
                     });
                 }
@@ -203,7 +194,7 @@ public partial class ReportValidation : ComponentBase
             IsProcessing = true;
             StateHasChanged();
 
-            Logger.LogInformation("HandleSubmit called for ReportId: {ReportId}, Decision: {Decision}", 
+            Logger.LogInformation("HandleSubmit called for ReportId: {ReportId}, Decision: {Decision}",
                 ReportId, SelectedValidationDecision?.Value);
 
             // Manual validation
@@ -228,15 +219,15 @@ public partial class ReportValidation : ComponentBase
                 case "SMS_RISK":
                     await NavigateToRiskAssessment();
                     break;
-                
+
                 case "NEEDS_INVESTIGATION":
                     await NavigateToInvestigation();
                     break;
-                
+
                 case "NOT_SMS_RISK":
                     await HandleNotSmsRisk();
                     break;
-                
+
                 default:
                     ShowErrorNotification("Invalid validation decision");
                     break;
@@ -261,14 +252,14 @@ public partial class ReportValidation : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Smart validation record processing for ReportId: {ReportId}, HasExisting: {HasExisting}", 
+            Logger.LogInformation("Smart validation record processing for ReportId: {ReportId}, HasExisting: {HasExisting}",
                 ReportId, ExistingValidation != null);
 
             if (ExistingValidation != null)
             {
                 // ? UPDATE EXISTING VALIDATION
                 Logger.LogInformation("Updating existing ReportValidation: {ValidationCode}", ExistingValidation.Code);
-                
+
                 // Update the existing validation with new values
                 ExistingValidation.ValidationDecision = ValidationDecisionValue;
                 ExistingValidation.ValidationComments = ValidationComments;
@@ -295,9 +286,9 @@ public partial class ReportValidation : ComponentBase
             {
                 // ? CREATE NEW VALIDATION (only if none exists)
                 Logger.LogInformation("Creating new ReportValidation for ReportId: {ReportId}", ReportId);
-                
+
                 var validationId = new ReportValidationID($"RV-0000");
-                
+
                 var validation = new SMS_Domain.Entities.ReportValidation(validationId)
                 {
                     Code = validationId.Value,
@@ -340,10 +331,10 @@ public partial class ReportValidation : ComponentBase
         // Show Airport Shared Dataset dialog before proceeding to assessment
         var result = await DialogService.Confirm(
             message: "Do you want to create an Airport Shared Dataset for this SMS Risk assessment?",
-            title: "Airport Shared Dataset", 
-            options: new ConfirmOptions() 
-            { 
-                OkButtonText = "Yes, Create Dataset", 
+            title: "Airport Shared Dataset",
+            options: new ConfirmOptions()
+            {
+                OkButtonText = "Yes, Create Dataset",
                 CancelButtonText = "No, Skip",
                 Width = "500px"
             });
@@ -353,23 +344,23 @@ public partial class ReportValidation : ComponentBase
             // User wants to create dataset - navigate to dataset creation page
             Logger.LogInformation("User chose to create Airport Shared Dataset for Report: {ReportId}", ReportId);
             var datasetUrl = $"/SMSRiskManagement/AirportSharedDataset/{ReportId}";
-            
+
             if (!string.IsNullOrEmpty(ReportHazard?.Code))
             {
                 datasetUrl += $"/{ReportHazard.Code}";
             }
-            
+
             Navigation.NavigateTo(datasetUrl);
         }
         else
         {
             // User skipped dataset creation - proceed directly to assessment
             Logger.LogInformation("User skipped Airport Shared Dataset creation for Report: {ReportId}", ReportId);
-            
+
             var assessmentType = ValidationType?.ToLower() switch
             {
                 "technical" => "TechnicalAssessment",
-                "preliminary" => "PreliminaryRiskAssessment", 
+                "preliminary" => "PreliminaryRiskAssessment",
                 _ => "TechnicalAssessment"
             };
 
@@ -384,7 +375,7 @@ public partial class ReportValidation : ComponentBase
             }
 
             Logger.LogInformation("Navigating to {AssessmentType}: {Url}", assessmentType, navigationUrl);
-            
+
             await Task.Delay(1500);
             Navigation.NavigateTo(navigationUrl);
         }
@@ -475,10 +466,10 @@ public partial class ReportValidation : ComponentBase
     {
         var confirmed = await DialogService.Confirm(
             message: "This report has been determined to be NOT an SMS Risk. Do you want to close this report?",
-            title: "Close Report", 
-            options: new ConfirmOptions() 
-            { 
-                OkButtonText = "Yes, Close Report", 
+            title: "Close Report",
+            options: new ConfirmOptions()
+            {
+                OkButtonText = "Yes, Close Report",
                 CancelButtonText = "No, Keep Open",
                 Width = "500px"
             });
@@ -561,7 +552,7 @@ public partial class ReportValidation : ComponentBase
                 _ => baseStyle
             };
         }
-        
+
         return baseStyle;
     }
 

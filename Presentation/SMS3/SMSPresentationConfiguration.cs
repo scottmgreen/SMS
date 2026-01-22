@@ -1,9 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Builder;
-using SMS_Application.Interfaces;
-using SMS_Application.Services;
+﻿using SMS_Application.Services;
 
 namespace SMS3.Configuration;
 
@@ -86,7 +81,7 @@ public class SMSAuthenticationMiddleware
             context.Items["SMS_DisplayName"] = context.Session.GetString("SMS_DisplayName");
             context.Items["SMS_FirstName"] = context.Session.GetString("SMS_FirstName");
             context.Items["SMS_LastName"] = context.Session.GetString("SMS_LastName");
-            
+
             // No need to manipulate claims - session data is sufficient
         }
 

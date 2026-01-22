@@ -1,6 +1,3 @@
-using SMS_Domain.Common;
-using SMS_Domain.ValueObjects;
-
 namespace SMS_Domain.Entities;
 
 /// <summary>
@@ -9,8 +6,8 @@ namespace SMS_Domain.Entities;
 public sealed class SMSStakeholderUser : BaseUser
 {
     // Simple constructors
-       
-    public SMSStakeholderUser(SMSStakeholderUserID id) : base(id,"SYSTEM", DateTime.UtcNow) 
+
+    public SMSStakeholderUser(SMSStakeholderUserID id) : base(id, "SYSTEM", DateTime.UtcNow)
     {
         StakeholderUserId = id;
     }
@@ -19,7 +16,7 @@ public sealed class SMSStakeholderUser : BaseUser
     public SMSStakeholderUserID StakeholderUserId { get; set; }
     public string StakeholderType { get; set; } = string.Empty;
     public string Organization { get; set; } = string.Empty;
-    
+
 
     /// <summary>
     /// Checks if the user is of a specific stakeholder type
@@ -40,7 +37,7 @@ public sealed class SMSStakeholderUser : BaseUser
     /// <summary>
     /// Gets the stakeholder's external organization display
     /// </summary>
-   
 
-    
+
+
 }

@@ -1,15 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using Radzen;
-using Radzen.Blazor;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Domain.Enums;
-using SMS_Shared.Common;
-using SMS3.Components.Pages.System.Components;
-
 namespace SMS3.Components.Pages.System.UserManagement;
 
 /// <summary>
@@ -69,29 +57,29 @@ public partial class StakeholderUsers : ComponentBase
             // Load Stakeholder Users
             var stakeholderUsersQuery = new GetAllSMSStakeholderUsersQuery();
             var stakeholderUsersResult = await Mediator.SendAsync(stakeholderUsersQuery, CancellationToken.None);
-            StakeholderUsersList = stakeholderUsersResult.IsSuccess ? 
-                stakeholderUsersResult.Value?.ToList() ?? new List<SMSStakeholderUser>() : 
+            StakeholderUsersList = stakeholderUsersResult.IsSuccess ?
+                stakeholderUsersResult.Value?.ToList() ?? new List<SMSStakeholderUser>() :
                 new List<SMSStakeholderUser>();
 
             // Load User Roles
             var userRolesQuery = new GetAllSMSUserRolesQuery();
             var userRolesResult = await Mediator.SendAsync(userRolesQuery, CancellationToken.None);
-            UserRoles = userRolesResult.IsSuccess ? 
-                userRolesResult.Value?.ToList() ?? new List<SMSUserRole>() : 
+            UserRoles = userRolesResult.IsSuccess ?
+                userRolesResult.Value?.ToList() ?? new List<SMSUserRole>() :
                 new List<SMSUserRole>();
 
             // Load Stakeholder Groups for group management
             var groupsQuery = new GetAllSMSStakeholderGroupsQuery();
             var groupsResult = await Mediator.SendAsync(groupsQuery, CancellationToken.None);
-            AllStakeholderGroups = groupsResult.IsSuccess ? 
-                groupsResult.Value?.ToList() ?? new List<SMSStakeholderGroup>() : 
+            AllStakeholderGroups = groupsResult.IsSuccess ?
+                groupsResult.Value?.ToList() ?? new List<SMSStakeholderGroup>() :
                 new List<SMSStakeholderGroup>();
 
 
             StakeholderTypes = SMSStakeholderType.GetAllValuesAsStringArray();
 
 
-            Logger.LogInformation("Loaded {UserCount} stakeholder users, {RoleCount} user roles, and {GroupCount} stakeholder groups", 
+            Logger.LogInformation("Loaded {UserCount} stakeholder users, {RoleCount} user roles, and {GroupCount} stakeholder groups",
                 StakeholderUsersList.Count, UserRoles.Count, AllStakeholderGroups.Count);
 
             StateHasChanged();
@@ -186,18 +174,19 @@ public partial class StakeholderUsers : ComponentBase
         StateHasChanged();
     }
 
-    private bool IsCreateFormValid => 
-        !string.IsNullOrWhiteSpace(NewUser.FirstName) && 
-        !string.IsNullOrWhiteSpace(NewUser.LastName) && 
-        !string.IsNullOrWhiteSpace(NewUser.UserName) && 
+    private bool IsCreateFormValid =>
+        !string.IsNullOrWhiteSpace(NewUser.FirstName) &&
+        !string.IsNullOrWhiteSpace(NewUser.LastName) &&
+        !string.IsNullOrWhiteSpace(NewUser.UserName) &&
         !string.IsNullOrWhiteSpace(NewUser.Password) &&
         !string.IsNullOrWhiteSpace(NewUser.StakeholderType) &&
         !string.IsNullOrWhiteSpace(NewUser.Organization);
 
     // Transform stakeholder types for dropdown
-    private IEnumerable<object> StakeholderTypesForDropdown => StakeholderTypes.Select(type => new { 
-        Value = type, 
-        Text = GetStakeholderTypeDisplay(type) 
+    private IEnumerable<object> StakeholderTypesForDropdown => StakeholderTypes.Select(type => new
+    {
+        Value = type,
+        Text = GetStakeholderTypeDisplay(type)
     });
 
     private async Task ShowEditDialog(SMSStakeholderUser user)
@@ -291,19 +280,19 @@ public partial class StakeholderUsers : ComponentBase
         StateHasChanged();
     }
 
-    private bool IsEditFormValid => 
-        !string.IsNullOrWhiteSpace(editUser.FirstName) && 
-        !string.IsNullOrWhiteSpace(editUser.LastName) && 
+    private bool IsEditFormValid =>
+        !string.IsNullOrWhiteSpace(editUser.FirstName) &&
+        !string.IsNullOrWhiteSpace(editUser.LastName) &&
         !string.IsNullOrWhiteSpace(editUser.StakeholderType) &&
         !string.IsNullOrWhiteSpace(editUser.Organization);
 
     private async Task ShowDeleteDialog(string userId, string displayName)
     {
-        var result = await DialogService.Confirm($"Are you sure you want to delete the user '{displayName}'?", 
-            "Confirm Delete", 
-            new ConfirmOptions 
-            { 
-                OkButtonText = "Delete", 
+        var result = await DialogService.Confirm($"Are you sure you want to delete the user '{displayName}'?",
+            "Confirm Delete",
+            new ConfirmOptions
+            {
+                OkButtonText = "Delete",
                 CancelButtonText = "Cancel",
                 AutoFocusFirstElement = true
             });
@@ -425,7 +414,7 @@ public partial class StakeholderUsers : ComponentBase
         {
             var getUserQuery = new GetSMSStakeholderUserByIdQuery(userId);
             var userResult = await Mediator.SendAsync(getUserQuery, CancellationToken.None);
-            
+
             if (userResult.IsFailure)
             {
                 ShowErrorNotification("User not found.");
@@ -486,7 +475,7 @@ public partial class StakeholderUsers : ComponentBase
         {
             GroupManagementUserCode = userId;
             GroupManagementUserDisplayName = displayName;
-            
+
             await LoadUserGroups(userId);
             ShowGroupsModal = true;
         }
@@ -504,10 +493,10 @@ public partial class StakeholderUsers : ComponentBase
             // Load groups that this user is currently assigned to
             var userGroupsQuery = new GetSMSStakeholderGroupsByUserCodeQuery(userId);
             var userGroupsResult = await Mediator.SendAsync(userGroupsQuery, CancellationToken.None);
-            UserCurrentGroups = userGroupsResult.IsSuccess ? 
-                userGroupsResult.Value?.ToList() ?? new List<SMSStakeholderGroup>() : 
+            UserCurrentGroups = userGroupsResult.IsSuccess ?
+                userGroupsResult.Value?.ToList() ?? new List<SMSStakeholderGroup>() :
                 new List<SMSStakeholderGroup>();
-            
+
             // Calculate available groups (groups the user is not currently in)
             var currentGroupCodes = UserCurrentGroups.Select(g => g.Code).ToHashSet();
             AvailableGroups = AllStakeholderGroups
@@ -522,7 +511,7 @@ public partial class StakeholderUsers : ComponentBase
                 SelectedGroups[group.Code] = false;
             }
 
-            Logger.LogInformation("Loaded {CurrentGroupCount} current groups and {AvailableGroupCount} available groups for user {UserId}", 
+            Logger.LogInformation("Loaded {CurrentGroupCount} current groups and {AvailableGroupCount} available groups for user {UserId}",
                 UserCurrentGroups.Count, AvailableGroups.Count, userId);
         }
         catch (Exception ex)
@@ -530,7 +519,7 @@ public partial class StakeholderUsers : ComponentBase
             Logger.LogError(ex, "Error loading groups for user: {UserId}", userId);
             UserCurrentGroups = new List<SMSStakeholderGroup>();
             AvailableGroups = AllStakeholderGroups.Where(g => g.IsActive).ToList();
-            
+
             // Initialize selection tracking even on error
             SelectedGroups.Clear();
             foreach (var group in AvailableGroups)
@@ -654,7 +643,7 @@ public partial class StakeholderUsers : ComponentBase
                 if (failureCount > 0)
                     message += $" {failureCount} assignment(s) failed.";
                 ShowSuccessNotification(message);
-                
+
                 await LoadUserGroups(GroupManagementUserCode);
                 StateHasChanged();
             }

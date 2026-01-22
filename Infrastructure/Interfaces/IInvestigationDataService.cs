@@ -20,7 +20,7 @@ public interface IInvestigationDataService
 
     // Status Management Operations
     Task<Result<bool>> UpdateStatusAsync(string investigationCode, InvestigationStatus status, CancellationToken ct = default);
-    Task<Result<bool>> RecordDecisionAsync(string investigationCode, string decisionType, string rationale, 
+    Task<Result<bool>> RecordDecisionAsync(string investigationCode, string decisionType, string rationale,
         string decisionMaker, string? nextSteps = null, string? referralDetails = null, CancellationToken ct = default);
     Task<Result<bool>> CompleteInvestigationAsync(string investigationCode, CancellationToken ct = default);
 }

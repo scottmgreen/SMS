@@ -1,14 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using Radzen;
-using Radzen.Blazor;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Shared.Common;
-
 namespace SMS3.Components.Pages.System.UserGroups;
 
 public partial class ApplicationGroups : ComponentBase
@@ -103,18 +92,18 @@ public partial class ApplicationGroups : ComponentBase
             // Load Application Groups
             var groupsQuery = new GetAllSMSApplicationGroupsQuery();
             var groupsResult = await Mediator.SendAsync(groupsQuery, CancellationToken.None);
-            SMSApplicationGroups = groupsResult.IsSuccess ? 
-                groupsResult.Value?.ToList() ?? new List<SMSApplicationGroup>() : 
+            SMSApplicationGroups = groupsResult.IsSuccess ?
+                groupsResult.Value?.ToList() ?? new List<SMSApplicationGroup>() :
                 new List<SMSApplicationGroup>();
 
             // Load Application Users for potential group assignments
             var usersQuery = new GetAllSMSApplicationUsersQuery();
             var usersResult = await Mediator.SendAsync(usersQuery, CancellationToken.None);
-            SMSApplicationUsers = usersResult.IsSuccess ? 
-                usersResult.Value?.ToList() ?? new List<SMSApplicationUser>() : 
+            SMSApplicationUsers = usersResult.IsSuccess ?
+                usersResult.Value?.ToList() ?? new List<SMSApplicationUser>() :
                 new List<SMSApplicationUser>();
 
-            Logger.LogInformation("Loaded {GroupCount} application groups and {UserCount} application users", 
+            Logger.LogInformation("Loaded {GroupCount} application groups and {UserCount} application users",
                 SMSApplicationGroups.Count, SMSApplicationUsers.Count);
         }
         catch (Exception ex)
@@ -140,7 +129,7 @@ public partial class ApplicationGroups : ComponentBase
         {
             var getGroupQuery = new GetSMSApplicationGroupByCodeQuery(groupCode);
             var groupResult = await Mediator.SendAsync(getGroupQuery, CancellationToken.None);
-            
+
             if (groupResult.IsFailure)
             {
                 ShowErrorNotification("Group not found.");
@@ -148,12 +137,12 @@ public partial class ApplicationGroups : ComponentBase
             }
 
             CurrentGroup = groupResult.Value;
-            
+
             // Set edit form values
             EditGroupName = CurrentGroup.Name ?? string.Empty;
             EditDescription = CurrentGroup.Description ?? string.Empty;
             EditIsActive = CurrentGroup.IsActive;
-            
+
             // Open edit modal
             ShowEditModal = true;
         }
@@ -305,7 +294,7 @@ public partial class ApplicationGroups : ComponentBase
                 CloseDeleteModal();
                 await LoadDataAsync();
                 await groupsGrid?.Reload();
-                
+
                 // If we're editing the deleted group, cancel edit mode
                 if (CurrentGroup?.Code == DeleteGroupCode)
                 {
@@ -406,7 +395,7 @@ public partial class ApplicationGroups : ComponentBase
             CurrentGroup = SMSApplicationGroups.FirstOrDefault(g => g.Code == groupCode);
 
             await LoadGroupMembersAsync(groupCode);
-            
+
             // Show modal instead of navigating
             ShowMembersModal = true;
         }
@@ -424,8 +413,8 @@ public partial class ApplicationGroups : ComponentBase
             // Get users in this group using the enhanced repository method
             var groupMembersQuery = new GetUsersByApplicationGroupCodeQuery(groupCode);
             var membersResult = await Mediator.SendAsync(groupMembersQuery, CancellationToken.None);
-            GroupMembers = membersResult.IsSuccess ? 
-                membersResult.Value?.ToList() ?? new List<SMSApplicationUser>() : 
+            GroupMembers = membersResult.IsSuccess ?
+                membersResult.Value?.ToList() ?? new List<SMSApplicationUser>() :
                 new List<SMSApplicationUser>();
 
             // Load available users (users not in this group)
@@ -450,7 +439,7 @@ public partial class ApplicationGroups : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading group members for group: {GroupCode}", groupCode);
-            
+
             // For now, if the query fails, just load empty collections
             GroupMembers = new List<SMSApplicationUser>();
             AvailableUsers = SMSApplicationUsers?.ToList() ?? new List<SMSApplicationUser>();
@@ -549,7 +538,7 @@ public partial class ApplicationGroups : ComponentBase
                 if (failureCount > 0)
                     message += $" {failureCount} assignment(s) failed.";
                 ShowSuccessNotification(message);
-                
+
                 await LoadGroupMembersAsync(CurrentGroupCode);
                 StateHasChanged(); // Refresh the modal
             }

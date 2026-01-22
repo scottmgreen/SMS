@@ -1,5 +1,3 @@
-using SMS_Domain.Entities;
-
 namespace SMS3.Components.Shared
 {
     /// <summary>
@@ -34,9 +32,9 @@ namespace SMS3.Components.Shared
         /// <returns>Matrix code or "-" if incomplete</returns>
         public static string GetPanelMatrixCode(ScoringPanel panel)
         {
-            if (!panel.Severity.HasValue || !panel.Likelihood.HasValue) 
+            if (!panel.Severity.HasValue || !panel.Likelihood.HasValue)
                 return "-";
-            
+
             return GetMatrixCode(panel.Severity.Value, panel.Likelihood.Value);
         }
 
@@ -51,7 +49,7 @@ namespace SMS3.Components.Shared
         {
             var roundedSeverity = (int)Math.Round(averageSeverity);
             var roundedLikelihood = (int)Math.Round(averageLikelihood);
-            
+
             return GetMatrixCode(roundedSeverity, roundedLikelihood);
         }
 
@@ -67,16 +65,16 @@ namespace SMS3.Components.Shared
             {
                 // High Risk (Red)
                 (5, 3) or (5, 4) or (5, 5) or (4, 4) or (4, 5) or (3, 5) => "High",
-                
+
                 // Medium Risk (Orange)  
                 (5, 2) or (4, 3) or (3, 4) or (2, 5) => "Medium",
-                
+
                 // Low Risk (Yellow)
                 (5, 1) or (4, 2) or (3, 2) or (3, 3) or (2, 3) or (2, 4) or (1, 5) => "Low",
-                
+
                 // Acceptable Risk (Green)
                 (4, 1) or (3, 1) or (2, 1) or (2, 2) or (1, 1) or (1, 2) or (1, 3) or (1, 4) => "Acceptable",
-                
+
                 _ => "Unknown"
             };
         }
@@ -91,11 +89,31 @@ namespace SMS3.Components.Shared
         {
             return (severity, likelihood) switch
             {
-                (5, 1) => "#ffc107", (5, 2) => "#fd7e14", (5, 3) => "#dc3545", (5, 4) => "#dc3545", (5, 5) => "#dc3545",
-                (4, 1) => "#28a745", (4, 2) => "#ffc107", (4, 3) => "#fd7e14", (4, 4) => "#dc3545", (4, 5) => "#dc3545",
-                (3, 1) => "#28a745", (3, 2) => "#ffc107", (3, 3) => "#ffc107", (3, 4) => "#fd7e14", (3, 5) => "#dc3545",
-                (2, 1) => "#28a745", (2, 2) => "#28a745", (2, 3) => "#ffc107", (2, 4) => "#ffc107", (2, 5) => "#fd7e14",
-                (1, 1) => "#28a745", (1, 2) => "#28a745", (1, 3) => "#28a745", (1, 4) => "#28a745", (1, 5) => "#ffc107",
+                (5, 1) => "#ffc107",
+                (5, 2) => "#fd7e14",
+                (5, 3) => "#dc3545",
+                (5, 4) => "#dc3545",
+                (5, 5) => "#dc3545",
+                (4, 1) => "#28a745",
+                (4, 2) => "#ffc107",
+                (4, 3) => "#fd7e14",
+                (4, 4) => "#dc3545",
+                (4, 5) => "#dc3545",
+                (3, 1) => "#28a745",
+                (3, 2) => "#ffc107",
+                (3, 3) => "#ffc107",
+                (3, 4) => "#fd7e14",
+                (3, 5) => "#dc3545",
+                (2, 1) => "#28a745",
+                (2, 2) => "#28a745",
+                (2, 3) => "#ffc107",
+                (2, 4) => "#ffc107",
+                (2, 5) => "#fd7e14",
+                (1, 1) => "#28a745",
+                (1, 2) => "#28a745",
+                (1, 3) => "#28a745",
+                (1, 4) => "#28a745",
+                (1, 5) => "#ffc107",
                 _ => "#f8f9fa"
             };
         }
@@ -109,13 +127,13 @@ namespace SMS3.Components.Shared
         {
             if (hexColor.StartsWith("#"))
                 hexColor = hexColor[1..];
-                
+
             var r = Convert.ToInt32(hexColor[0..2], 16);
             var g = Convert.ToInt32(hexColor[2..4], 16);
             var b = Convert.ToInt32(hexColor[4..6], 16);
-            
+
             var luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-            
+
             return luminance > 0.5;
         }
 
@@ -142,10 +160,10 @@ namespace SMS3.Components.Shared
         {
             var backgroundColor = GetAviationMatrixColor(severity, likelihood);
             var textColor = IsLightColor(backgroundColor) ? "#000" : "#fff";
-            var border = isPreview ? 
-                "border: 2px dashed rgba(0,0,0,0.3); opacity: 0.8;" : 
+            var border = isPreview ?
+                "border: 2px dashed rgba(0,0,0,0.3); opacity: 0.8;" :
                 "border: 1px solid rgba(0,0,0,0.2);";
-            
+
             return $"background: {backgroundColor}; color: {textColor}; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9rem; display: inline-block; text-align: center; min-width: 30px; {border}";
         }
 
@@ -158,32 +176,32 @@ namespace SMS3.Components.Shared
         public static string CalculateHazardMatrixCodeWithDebug(string hazardCode, IEnumerable<ScoringPanel> panels, Action<string> logAction = null)
         {
             var completedPanels = panels.Where(p => p.Severity.HasValue && p.Likelihood.HasValue).ToList();
-            
+
             if (!completedPanels.Any())
                 return "-";
 
             var avgSeverity = completedPanels.Average(p => p.Severity!.Value);
             var avgLikelihood = completedPanels.Average(p => p.Likelihood!.Value);
-            
+
             var roundedSeverity = (int)Math.Round(avgSeverity);
             var roundedLikelihood = (int)Math.Round(avgLikelihood);
-            
+
             var matrixCode = GetMatrixCode(roundedSeverity, roundedLikelihood);
-            
+
             // Detailed logging
             logAction?.Invoke($"=== MATRIX DEBUG: {hazardCode} ===");
             logAction?.Invoke($"Panel Count: {completedPanels.Count}");
-            
+
             foreach (var panel in completedPanels)
             {
                 var panelCode = GetPanelMatrixCode(panel);
                 logAction?.Invoke($"  {panel.SMSUserCode}: Sev={panel.Severity}, Like={panel.Likelihood}, Code={panelCode}");
             }
-            
+
             logAction?.Invoke($"Averages: Sev={avgSeverity:F2}?{roundedSeverity}, Like={avgLikelihood:F2}?{roundedLikelihood}");
             logAction?.Invoke($"FINAL CODE: {matrixCode}");
             logAction?.Invoke("=== END DEBUG ===");
-            
+
             return matrixCode;
         }
     }

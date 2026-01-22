@@ -1,7 +1,3 @@
-using SMS_Domain.Entities;
-using SMS_Domain.Models;
-using SMS_Shared.Common;
-
 namespace SMS_Infrastructure.Interfaces;
 
 /// <summary>
@@ -21,10 +17,10 @@ public interface IHazardFileRepository
     Task<Result<IEnumerable<HazardFile>>> GetByHazardCodeAsync(string hazardCode, bool includeFileData = false, string? category = null, CancellationToken cancellationToken = default);
     Task<Result<IEnumerable<HazardFile>>> GetByReportCodeAsync(string reportCode, bool includeFileData = false, CancellationToken cancellationToken = default);
     Task<Result<IEnumerable<HazardFile>>> GetActiveFilesAsync(CancellationToken cancellationToken = default);
-    
+
     // File data operations
     Task<Result<HazardFile>> GetFileDataAsync(string code, CancellationToken cancellationToken = default);
-    
+
     // Search operations
     Task<Result<IEnumerable<HazardFile>>> SearchAsync(
         string? hazardCode = null,
@@ -39,13 +35,13 @@ public interface IHazardFileRepository
         int maxResults = 100,
         CancellationToken cancellationToken = default);
 
-    
+
 
     // File type queries
     Task<Result<IEnumerable<HazardFile>>> GetImageFilesAsync(string hazardCode, CancellationToken cancellationToken = default);
     Task<Result<IEnumerable<HazardFile>>> GetDocumentFilesAsync(string hazardCode, CancellationToken cancellationToken = default);
     Task<Result<IEnumerable<HazardFile>>> GetVideoFilesAsync(string hazardCode, CancellationToken cancellationToken = default);
-    
+
     // Confidential file operations
     Task<Result<IEnumerable<HazardFile>>> GetConfidentialFilesAsync(string hazardCode, CancellationToken cancellationToken = default);
     Task<Result<bool>> SetFileConfidentialityAsync(string code, bool isConfidential, string updatedBy, CancellationToken cancellationToken = default);

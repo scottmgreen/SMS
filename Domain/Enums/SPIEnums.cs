@@ -1,6 +1,3 @@
-using SMS_Domain.Common;
-using System.Reflection;
-
 namespace SMS_Domain.Enums;
 
 /// <summary>
@@ -18,142 +15,159 @@ public abstract class SPIType : BaseEnum<SPIType>
     public string Category { get; }
 
     #region SPI Types
-    
+
     // Leading Indicators (Proactive)
     public static readonly SPIType HazardReportRate = new HazardReportRateType();
     public static readonly SPIType TrainingCompletionRate = new TrainingCompletionRateType();
     public static readonly SPIType AuditComplianceRate = new AuditComplianceRateType();
     public static readonly SPIType SafetyMeetingAttendance = new SafetyMeetingAttendanceType();
     public static readonly SPIType MitigationImplementationRate = new MitigationImplementationRateType();
-    
+
     // Lagging Indicators (Reactive)
     public static readonly SPIType IncidentRate = new IncidentRateType();
     public static readonly SPIType AccidentRate = new AccidentRateType();
     public static readonly SPIType NearMissRate = new NearMissRateType();
     public static readonly SPIType RegulatoryViolations = new RegulatoryViolationsType();
     public static readonly SPIType WorkplaceSafetyIncidents = new WorkplaceSafetyIncidentsType();
-    
+
     // Process Indicators
     public static readonly SPIType CorrectiveActionClosure = new CorrectiveActionClosureType();
     public static readonly SPIType RiskAssessmentCompletion = new RiskAssessmentCompletionType();
     public static readonly SPIType InvestigationTimeliness = new InvestigationTimelinessType();
     public static readonly SPIType SystemEffectiveness = new SystemEffectivenessType();
-    
+
     // Compliance Indicators
     public static readonly SPIType RegulatoryCompliance = new RegulatoryComplianceType();
     public static readonly SPIType PolicyAdherence = new PolicyAdherenceType();
     public static readonly SPIType DocumentationCurrency = new DocumentationCurrencyType();
-    
+
     #endregion
 
     #region Implementations
-    
+
     // Leading Indicators
     private sealed class HazardReportRateType : SPIType
     {
         public HazardReportRateType() : base("HAZARD_REPORT_RATE", "Hazard Report Rate",
-            "Number of hazard reports submitted per period", "Leading") { }
+            "Number of hazard reports submitted per period", "Leading")
+        { }
     }
-    
+
     private sealed class TrainingCompletionRateType : SPIType
     {
         public TrainingCompletionRateType() : base("TRAINING_COMPLETION_RATE", "Training Completion Rate",
-            "Percentage of required safety training completed on time", "Leading") { }
+            "Percentage of required safety training completed on time", "Leading")
+        { }
     }
-    
+
     private sealed class AuditComplianceRateType : SPIType
     {
         public AuditComplianceRateType() : base("AUDIT_COMPLIANCE_RATE", "Audit Compliance Rate",
-            "Percentage of audit requirements met during inspections", "Leading") { }
+            "Percentage of audit requirements met during inspections", "Leading")
+        { }
     }
-    
+
     private sealed class SafetyMeetingAttendanceType : SPIType
     {
         public SafetyMeetingAttendanceType() : base("SAFETY_MEETING_ATTENDANCE", "Safety Meeting Attendance",
-            "Percentage attendance at safety committee meetings", "Leading") { }
+            "Percentage attendance at safety committee meetings", "Leading")
+        { }
     }
-    
+
     private sealed class MitigationImplementationRateType : SPIType
     {
         public MitigationImplementationRateType() : base("MITIGATION_IMPLEMENTATION_RATE", "Mitigation Implementation Rate",
-            "Percentage of planned mitigations implemented on schedule", "Leading") { }
+            "Percentage of planned mitigations implemented on schedule", "Leading")
+        { }
     }
-    
+
     // Lagging Indicators
     private sealed class IncidentRateType : SPIType
     {
         public IncidentRateType() : base("INCIDENT_RATE", "Incident Rate",
-            "Number of safety incidents per period", "Lagging") { }
+            "Number of safety incidents per period", "Lagging")
+        { }
     }
-    
+
     private sealed class AccidentRateType : SPIType
     {
         public AccidentRateType() : base("ACCIDENT_RATE", "Accident Rate",
-            "Number of accidents per period", "Lagging") { }
+            "Number of accidents per period", "Lagging")
+        { }
     }
-    
+
     private sealed class NearMissRateType : SPIType
     {
         public NearMissRateType() : base("NEAR_MISS_RATE", "Near Miss Rate",
-            "Number of near miss events per period", "Lagging") { }
+            "Number of near miss events per period", "Lagging")
+        { }
     }
-    
+
     private sealed class RegulatoryViolationsType : SPIType
     {
         public RegulatoryViolationsType() : base("REGULATORY_VIOLATIONS", "Regulatory Violations",
-            "Number of regulatory violations identified", "Lagging") { }
+            "Number of regulatory violations identified", "Lagging")
+        { }
     }
-    
+
     private sealed class WorkplaceSafetyIncidentsType : SPIType
     {
         public WorkplaceSafetyIncidentsType() : base("WORKPLACE_SAFETY_INCIDENTS", "Workplace Safety Incidents",
-            "Number of workplace safety incidents", "Lagging") { }
+            "Number of workplace safety incidents", "Lagging")
+        { }
     }
-    
+
     // Process Indicators
     private sealed class CorrectiveActionClosureType : SPIType
     {
         public CorrectiveActionClosureType() : base("CORRECTIVE_ACTION_CLOSURE", "Corrective Action Closure Rate",
-            "Percentage of corrective actions closed on time", "Process") { }
+            "Percentage of corrective actions closed on time", "Process")
+        { }
     }
-    
+
     private sealed class RiskAssessmentCompletionType : SPIType
     {
         public RiskAssessmentCompletionType() : base("RISK_ASSESSMENT_COMPLETION", "Risk Assessment Completion Rate",
-            "Percentage of risk assessments completed within timeline", "Process") { }
+            "Percentage of risk assessments completed within timeline", "Process")
+        { }
     }
-    
+
     private sealed class InvestigationTimelinessType : SPIType
     {
         public InvestigationTimelinessType() : base("INVESTIGATION_TIMELINESS", "Investigation Timeliness",
-            "Average days to complete safety investigations", "Process") { }
+            "Average days to complete safety investigations", "Process")
+        { }
     }
-    
+
     private sealed class SystemEffectivenessType : SPIType
     {
         public SystemEffectivenessType() : base("SYSTEM_EFFECTIVENESS", "System Effectiveness Score",
-            "Overall effectiveness rating of SMS implementation", "Process") { }
+            "Overall effectiveness rating of SMS implementation", "Process")
+        { }
     }
-    
+
     // Compliance Indicators
     private sealed class RegulatoryComplianceType : SPIType
     {
         public RegulatoryComplianceType() : base("REGULATORY_COMPLIANCE", "Regulatory Compliance Rate",
-            "Percentage compliance with 14 CFR Part 139 requirements", "Compliance") { }
+            "Percentage compliance with 14 CFR Part 139 requirements", "Compliance")
+        { }
     }
-    
+
     private sealed class PolicyAdherenceType : SPIType
     {
         public PolicyAdherenceType() : base("POLICY_ADHERENCE", "Policy Adherence Rate",
-            "Percentage adherence to safety policies and procedures", "Compliance") { }
+            "Percentage adherence to safety policies and procedures", "Compliance")
+        { }
     }
-    
+
     private sealed class DocumentationCurrencyType : SPIType
     {
         public DocumentationCurrencyType() : base("DOCUMENTATION_CURRENCY", "Documentation Currency Rate",
-            "Percentage of safety documentation that is current", "Compliance") { }
+            "Percentage of safety documentation that is current", "Compliance")
+        { }
     }
-    
+
     #endregion
 
     public static IEnumerable<SPIType> GetByCategory(string category)

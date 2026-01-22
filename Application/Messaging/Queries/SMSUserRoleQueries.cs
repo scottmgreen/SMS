@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Domain.Models;
-using SMS_Domain.ValueObjects;
-using SMS_Shared.Common;
+﻿using SMS_Domain.Models;
 
 namespace SMS_Application.Messaging.Queries;
 
@@ -75,7 +66,7 @@ public class GetSMSUserRoleByIdQuery : BaseQueryBundle, IRequest<Result<SMSUserR
     {
         if (string.IsNullOrWhiteSpace(userRoleId))
             throw new ArgumentException("User role ID cannot be null or empty", nameof(userRoleId));
-        
+
         UserRoleId = new SMSUserRoleID(userRoleId);
     }
 }
@@ -103,7 +94,7 @@ public class GetSMSUserRolesByUserIdQuery : BaseQueryBundle, IRequest<Result<IEn
     {
         if (string.IsNullOrWhiteSpace(userId))
             throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
-        
+
         UserId = userId;
     }
 }
@@ -127,7 +118,7 @@ public class GetSMSUserRolesByUserIdQuery : BaseQueryBundle, IRequest<Result<IEn
 //    {
 //        if (string.IsNullOrWhiteSpace(userId))
 //            throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
-        
+
 //        UserId = userId;
 //    }
 //}
@@ -155,7 +146,7 @@ public class GetSMSUserRolesByRoleValueQuery : BaseQueryBundle, IRequest<Result<
     {
         if (string.IsNullOrWhiteSpace(roleValue))
             throw new ArgumentException("Role value cannot be null or empty", nameof(roleValue));
-        
+
         RoleValue = roleValue;
     }
 }
@@ -183,7 +174,7 @@ public class GetSMSUserRolesByDepartmentQuery : BaseQueryBundle, IRequest<Result
     {
         if (string.IsNullOrWhiteSpace(department))
             throw new ArgumentException("Department cannot be null or empty", nameof(department));
-        
+
         Department = department;
     }
 }
@@ -207,7 +198,7 @@ public class GetSMSUserRolesByUserTypeQuery : BaseQueryBundle, IRequest<Result<I
     {
         if (string.IsNullOrWhiteSpace(userType))
             throw new ArgumentException("User type cannot be null or empty", nameof(userType));
-        
+
         UserType = userType;
     }
 }
@@ -308,7 +299,7 @@ public class GetSMSUserRoleStatisticsQuery : BaseQueryBundle, IRequest<Result<Us
 //            throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
 //        if (string.IsNullOrWhiteSpace(roleValue))
 //            throw new ArgumentException("Role value cannot be null or empty", nameof(roleValue));
-        
+
 //        UserId = userId;
 //        RoleValue = roleValue;
 //        ActiveOnly = activeOnly;

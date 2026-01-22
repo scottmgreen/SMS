@@ -1,15 +1,6 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-using Radzen;
-using Radzen.Blazor;
-using System.Linq.Expressions;
 using System.Text;
+
+using Microsoft.JSInterop;
 
 namespace SMS3.Components.Pages.Listings;
 
@@ -75,10 +66,10 @@ public partial class HazardFileListing : ComponentBase
             await LoadInitialData();
 
             var query = files.AsQueryable();
-            
+
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
-                query = args.OrderBy.Contains("desc") 
+                query = args.OrderBy.Contains("desc")
                     ? query.OrderByDescending(GetPropertyExpression(args.OrderBy.Replace(" desc", "")))
                     : query.OrderBy(GetPropertyExpression(args.OrderBy));
             }
@@ -124,7 +115,7 @@ public partial class HazardFileListing : ComponentBase
         try
         {
             Logger.LogInformation("Reading file: {Code} - {FileName}", file.Code, file.FileName);
-            
+
             selectedFile = file;
             showFileModal = true;
             isLoadingFile = true;
@@ -145,7 +136,7 @@ public partial class HazardFileListing : ComponentBase
             }
 
             var fileWithData = result.Value;
-            
+
             // Process based on file type
             if (IsImageFile(file.FileType))
             {
@@ -190,12 +181,12 @@ public partial class HazardFileListing : ComponentBase
         try
         {
             var confirmed = await DialogService.Confirm(
-                $"Are you sure you want to delete '{file.FileName}'?\n\nThis action cannot be undone.", 
-                "Delete File", 
-                new ConfirmOptions() 
-                { 
-                    OkButtonText = "Yes, Delete", 
-                    CancelButtonText = "Cancel" 
+                $"Are you sure you want to delete '{file.FileName}'?\n\nThis action cannot be undone.",
+                "Delete File",
+                new ConfirmOptions()
+                {
+                    OkButtonText = "Yes, Delete",
+                    CancelButtonText = "Cancel"
                 });
 
             if (confirmed == true)
@@ -204,23 +195,23 @@ public partial class HazardFileListing : ComponentBase
 
                 // Use correct CQRS command for deactivation (soft delete)
                 var command = new DeactivateHazardFileCommand(
-                    ExtractIdFromCode(file.Code), 
+                    ExtractIdFromCode(file.Code),
                     "Deleted by user from HazardFileListing"
                 );
-                
+
                 var result = await Mediator.SendAsync(command, CancellationToken.None);
 
                 if (result.IsSuccess)
                 {
                     ShowSuccessNotification($"File '{file.FileName}' has been deleted successfully.");
-                    
+
                     // Reload the data to reflect changes
                     await LoadInitialData();
                     if (filesGrid != null)
                     {
                         await filesGrid.Reload();
                     }
-                    
+
                     Logger.LogInformation("Successfully deleted file: {Code}", file.Code);
                 }
                 else
@@ -261,7 +252,7 @@ public partial class HazardFileListing : ComponentBase
             {
                 var query = new GetHazardFileDataQuery(selectedFile.Code);
                 var result = await Mediator.SendAsync(query, CancellationToken.None);
-                
+
                 if (result.IsFailure || result.Value?.FileData == null)
                 {
                     ShowErrorNotification("Could not download file - file data not available.");
@@ -332,7 +323,7 @@ public partial class HazardFileListing : ComponentBase
     private static string GetMimeType(string? fileType)
     {
         if (string.IsNullOrEmpty(fileType)) return "application/octet-stream";
-        
+
         return fileType.ToLower() switch
         {
             "jpg" or "jpeg" => "image/jpeg",

@@ -1,9 +1,3 @@
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-
 namespace SMS_Application.Messaging.Commands;
 
 /// <summary>
@@ -107,7 +101,7 @@ public class AssignUserToStakeholderGroupCommand : BaseCommandBundle, IRequest<R
     /// <summary>
     /// The group code to assign the user to
     /// </summary>
-    public SMSStakeholderGroupID StakeholderGroupID{ get; set; }
+    public SMSStakeholderGroupID StakeholderGroupID { get; set; }
 
     /// <summary>
     /// The user who is making the assignment
@@ -126,7 +120,7 @@ public class AssignUserToStakeholderGroupCommand : BaseCommandBundle, IRequest<R
             throw new ArgumentException("User code cannot be null or empty", nameof(userCode));
         if (string.IsNullOrWhiteSpace(groupID?.Value))
             throw new ArgumentException("Group ID cannot be null or empty", nameof(groupID));
-        
+
         UserCode = userCode;
         StakeholderGroupID = groupID;
     }
@@ -169,7 +163,7 @@ public class RemoveUserFromStakeholderGroupCommand : BaseCommandBundle, IRequest
             throw new ArgumentException("User code cannot be null or empty", nameof(userCode));
         if (string.IsNullOrWhiteSpace(groupID?.Value))
             throw new ArgumentException("Group ID cannot be null or empty", nameof(groupID));
-        
+
         UserCode = userCode;
         StakeholderGroupID = groupID;
     }
@@ -194,7 +188,7 @@ public class ClearUserStakeholderGroupsCommand : BaseCommandBundle, IRequest<Res
     {
         if (string.IsNullOrWhiteSpace(userCode))
             throw new ArgumentException("User code cannot be null or empty", nameof(userCode));
-        
+
         UserCode = userCode;
     }
 }

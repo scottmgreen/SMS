@@ -1,6 +1,4 @@
-﻿using System.Reflection;
-
-namespace SMS_Domain.Common;
+﻿namespace SMS_Domain.Common;
 
 public abstract class BaseEnum<TEnum> : IEquatable<BaseEnum<TEnum>> where TEnum : BaseEnum<TEnum>
 {
@@ -25,7 +23,7 @@ public abstract class BaseEnum<TEnum> : IEquatable<BaseEnum<TEnum>> where TEnum 
         Value = value;
         Name = name;
     }
-    
+
     public string Value { get; protected init; } = string.Empty;
     public string Name { get; protected init; } = string.Empty;
 
@@ -35,7 +33,7 @@ public abstract class BaseEnum<TEnum> : IEquatable<BaseEnum<TEnum>> where TEnum 
             return default;
         return Enumerations.TryGetValue(value, out TEnum? enumeration) ? enumeration : default;
     }
-    
+
     public static TEnum? FromName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -65,17 +63,17 @@ public abstract class BaseEnum<TEnum> : IEquatable<BaseEnum<TEnum>> where TEnum 
             return false;
         return GetType() == other.GetType() && Value == other.Value;
     }
-    
+
     public override bool Equals(object? obj)
     {
         return obj is BaseEnum<TEnum> other && Equals(other);
     }
-    
+
     public override int GetHashCode()
     {
         return Value.GetHashCode();
     }
-    
+
     public override string ToString()
     {
         return Name; // Return Name instead of Value for better display

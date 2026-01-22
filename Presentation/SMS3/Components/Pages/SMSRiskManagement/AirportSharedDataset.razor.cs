@@ -1,12 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-using Radzen;
-
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
 /// <summary>
@@ -31,12 +22,12 @@ public partial class AirportSharedDataset : ComponentBase
     #region State Properties
     private bool IsLoading { get; set; } = true;
     private bool IsSaving { get; set; } = false;
-    
+
     public AirportSharedDatasetModel Model { get; set; } = new();
     public Report? ReportDetails { get; set; }
     public Hazard? HazardDetails { get; set; }
     public SMS_Domain.Entities.AirportSharedDataset? ExistingDataset { get; set; } // Store existing dataset for updates
-    
+
     // Edit mode detection - we're in edit mode if we have both ReportId and HazardId and an existing dataset
     public bool IsEditMode => ExistingDataset != null;
     #endregion
@@ -84,11 +75,11 @@ public partial class AirportSharedDataset : ComponentBase
             // Load report details
             var reportQuery = new GetReportByIdQuery(new ReportID(ReportId));
             var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
-            
+
             if (reportResult.IsSuccess)
             {
                 ReportDetails = reportResult.Value;
-                
+
                 // Initialize model with report data
                 Model.DateTime = ReportDetails.CreatedDate ?? DateTime.Now;
                 Model.PrivateNarrative = ReportDetails.Description;
@@ -99,21 +90,21 @@ public partial class AirportSharedDataset : ComponentBase
             {
                 var hazardQuery = new GetHazardByIdQuery(new HazardID(HazardId));
                 var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
-                
+
                 if (hazardResult.IsSuccess)
                 {
                     HazardDetails = hazardResult.Value;
-                    
+
                     // Initialize model with hazard data
                     Model.Location = HazardDetails.LocationArea ?? "";
                     Model.SharedNarrative = HazardDetails.Description ?? "";
-                    
+
                     // Check if there's an existing dataset for this report/hazard combination
                     await CheckForExistingDataset();
                 }
             }
 
-            Logger.LogInformation("Loaded dataset page for Report: {ReportId}, Hazard: {HazardId}, EditMode: {IsEditMode}", 
+            Logger.LogInformation("Loaded dataset page for Report: {ReportId}, Hazard: {HazardId}, EditMode: {IsEditMode}",
                 ReportId, HazardId ?? "None", IsEditMode);
         }
         catch (Exception ex)
@@ -136,18 +127,18 @@ public partial class AirportSharedDataset : ComponentBase
             // Note: This is a simplified approach - in production, you might want a more specific query
             var datasetsQuery = new GetAllAirportSharedDatasetsQuery();
             var datasetsResult = await Mediator.SendAsync(datasetsQuery, CancellationToken.None);
-            
+
             if (datasetsResult.IsSuccess && datasetsResult.Value != null)
             {
-                ExistingDataset = datasetsResult.Value.FirstOrDefault(d => 
-                    d.HazardCode == HazardId && 
+                ExistingDataset = datasetsResult.Value.FirstOrDefault(d =>
+                    d.HazardCode == HazardId &&
                     (string.IsNullOrEmpty(d.ReportCode) || d.ReportCode == ReportId));
-                
+
                 if (ExistingDataset != null)
                 {
-                    Logger.LogInformation("Found existing dataset {DatasetCode} for Report: {ReportId}, Hazard: {HazardId}", 
+                    Logger.LogInformation("Found existing dataset {DatasetCode} for Report: {ReportId}, Hazard: {HazardId}",
                         ExistingDataset.Code, ReportId, HazardId);
-                    
+
                     // Map existing dataset to form - using only available properties
                     MapDatasetToModel(ExistingDataset);
                 }
@@ -166,12 +157,12 @@ public partial class AirportSharedDataset : ComponentBase
         {
             // Map only the properties that exist in the domain model
             // This is a conservative approach to avoid property mismatch errors
-            
+
             Model.PrivateNarrative = dataset.PrivateNarrative;
             Model.SharedNarrative = dataset.SharedNarrative;
             Model.Weather = dataset.Weather;
             Model.TriggeringEvent = dataset.TriggeringEvent;
-            
+
             // Handle location mapping safely
             if (!string.IsNullOrEmpty(dataset.LocationArea))
             {
@@ -296,13 +287,13 @@ public partial class AirportSharedDataset : ComponentBase
             if (result.IsSuccess)
             {
                 ShowSuccessNotification($"Airport Shared Dataset {dataset.Code} created successfully!");
-                Logger.LogInformation("Created Airport Shared Dataset: {DatasetId} for Report: {ReportId}", 
+                Logger.LogInformation("Created Airport Shared Dataset: {DatasetId} for Report: {ReportId}",
                     dataset.Code, ReportId);
             }
             else
             {
                 ShowErrorNotification($"Failed to create dataset: {result.Error?.Message}");
-                Logger.LogError("Failed to create Airport Shared Dataset for Report: {ReportId}, Error: {Error}", 
+                Logger.LogError("Failed to create Airport Shared Dataset for Report: {ReportId}, Error: {Error}",
                     ReportId, result.Error?.Message);
             }
         }
@@ -321,7 +312,7 @@ public partial class AirportSharedDataset : ComponentBase
     private async Task SaveAndContinue()
     {
         await SaveDataset();
-        
+
         // Navigate to appropriate assessment after successful save
         if (!IsSaving) // Only navigate if save was successful
         {
@@ -348,7 +339,7 @@ public partial class AirportSharedDataset : ComponentBase
     {
         // Determine assessment type from route or default to Technical
         var assessmentType = "TechnicalAssessment"; // Default - could be passed as parameter
-        
+
         string navigationUrl;
         if (!string.IsNullOrEmpty(HazardId))
         {
@@ -393,7 +384,7 @@ public partial class AirportSharedDataset : ComponentBase
     private string BuildContributingFactorsString()
     {
         var factors = new List<string>();
-        
+
         if (Model.Fatigue) factors.Add("Fatigue");
         if (Model.Speed) factors.Add("Speed");
         if (Model.WeatherFactor) factors.Add("Weather");

@@ -1,5 +1,3 @@
-using SMS_Application.Interfaces;
-using SMS_Domain.Common;
 using Microsoft.Extensions.Logging;
 
 namespace SMS_Application.Messaging.Pipelines;
@@ -7,8 +5,8 @@ namespace SMS_Application.Messaging.Pipelines;
 /// <summary>
 /// Pipeline behavior that automatically sets audit fields on commands
 /// </summary>
-public class AuditFieldsPipeline<TRequest, TResult> : IPipeline<TRequest, TResult> 
-    where TRequest : IRequest<TResult> 
+public class AuditFieldsPipeline<TRequest, TResult> : IPipeline<TRequest, TResult>
+    where TRequest : IRequest<TResult>
     where TResult : Result
 {
     private readonly ICurrentUserService _currentUserService;
@@ -23,8 +21,8 @@ public class AuditFieldsPipeline<TRequest, TResult> : IPipeline<TRequest, TResul
     }
 
     public async Task<TResult> HandleAsync(
-        TRequest request, 
-        RequestPipelineDelegate<TResult> next, 
+        TRequest request,
+        RequestPipelineDelegate<TResult> next,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -58,7 +56,7 @@ public class AuditFieldsPipeline<TRequest, TResult> : IPipeline<TRequest, TResul
         var currentUser = _currentUserService.UserId;
         var timestamp = DateTime.UtcNow;
 
-        _logger.LogInformation("?? Current user from service: '{CurrentUser}', IsAuthenticated: {IsAuth}", 
+        _logger.LogInformation("?? Current user from service: '{CurrentUser}', IsAuthenticated: {IsAuth}",
             currentUser, _currentUserService.IsAuthenticated);
 
         try
@@ -68,13 +66,13 @@ public class AuditFieldsPipeline<TRequest, TResult> : IPipeline<TRequest, TResul
             {
                 case ICreateCommand createCommand:
                     createCommand.SetCreatedBy(currentUser, timestamp);
-                    _logger.LogInformation("? Set CreatedBy to '{UserId}' for {CommandType}", 
+                    _logger.LogInformation("? Set CreatedBy to '{UserId}' for {CommandType}",
                         currentUser, createCommand.GetType().Name);
                     break;
 
                 case IUpdateCommand updateCommand:
                     updateCommand.SetUpdatedBy(currentUser, timestamp);
-                    _logger.LogInformation("? Set UpdatedBy to '{UserId}' for {CommandType}", 
+                    _logger.LogInformation("? Set UpdatedBy to '{UserId}' for {CommandType}",
                         currentUser, updateCommand.GetType().Name);
                     break;
 
@@ -83,14 +81,14 @@ public class AuditFieldsPipeline<TRequest, TResult> : IPipeline<TRequest, TResul
                     // Try both - the command implementation will decide which to use
                     auditableCommand.SetCreatedBy(currentUser, timestamp);
                     auditableCommand.SetUpdatedBy(currentUser, timestamp);
-                    _logger.LogInformation("? Set both audit fields to '{UserId}' for {CommandType}", 
+                    _logger.LogInformation("? Set both audit fields to '{UserId}' for {CommandType}",
                         currentUser, auditableCommand.GetType().Name);
                     break;
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Failed to set audit fields for command {CommandType}", 
+            _logger.LogError(ex, "? Failed to set audit fields for command {CommandType}",
                 auditableCommand.GetType().Name);
             // Don't throw - audit field setting should not break the command
         }

@@ -1,19 +1,6 @@
-using System.Data;
-
-using Azure;
-
-using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-
-using SMS_Domain.Entities;
 using SMS_Domain.Errors;
-using SMS_Domain.Models;
 
-using SMS_Infrastructure.Common;
 using SMS_Infrastructure.Interfaces;
-
-using SMS_Shared.Common;
 
 namespace SMS_Infrastructure.Persistence;
 
@@ -35,7 +22,7 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
         _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent, $"{_logHeader} Hazard File Repository Initialized");
     }
 
-    
+
     public async Task<Result<HazardFile>> GetByCodeAsync(string code, CancellationToken cancellationToken = default)
     {
         try
@@ -59,12 +46,12 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
 
             await sql.OpenAsync(cancellationToken).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-            
+
             if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
                 hazardFile = Mappers.MapToHazardFile(reader);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             if (hazardFile != null)
@@ -161,7 +148,7 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
 
             // Extract ID from the HazardFile (you may need to add this property or modify based on your ID strategy)
             var id = ExtractIdFromHazardFile(hazardFile); // This method would need to be implemented
-            
+
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileId, id));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileFileName, hazardFile.FileName));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileDescription, hazardFile.Description ?? (object)DBNull.Value));
@@ -173,13 +160,13 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
 
             await sql.OpenAsync(cancellationToken).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-            
+
             HazardFile? result = null;
             if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
                 result = Mappers.MapToHazardFile(reader);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             if (result != null)
@@ -280,13 +267,13 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
 
             await sql.OpenAsync(cancellationToken).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-            
+
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
                 var hazardFile = Mappers.MapToHazardFile(reader);
                 hazardFiles.Add(hazardFile);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result<IEnumerable<HazardFile>>.Success(hazardFiles.AsEnumerable());
@@ -322,13 +309,13 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
 
             await sql.OpenAsync(cancellationToken).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-            
+
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
                 var hazardFile = Mappers.MapToHazardFile(reader);
                 hazardFiles.Add(hazardFile);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result<IEnumerable<HazardFile>>.Success(hazardFiles.AsEnumerable());
@@ -356,13 +343,13 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
 
             await sql.OpenAsync(cancellationToken).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-            
+
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
                 var hazardFile = Mappers.MapToHazardFile(reader);
                 hazardFiles.Add(hazardFile);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result<IEnumerable<HazardFile>>.Success(hazardFiles.AsEnumerable());
@@ -397,12 +384,12 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
 
             await sql.OpenAsync(cancellationToken).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-            
+
             if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
                 hazardFile = Mappers.MapToHazardFile(reader);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             if (hazardFile != null)
@@ -459,13 +446,13 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
 
             await sql.OpenAsync(cancellationToken).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-            
+
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
                 var hazardFile = Mappers.MapToHazardFile(reader);
                 hazardFiles.Add(hazardFile);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result<IEnumerable<HazardFile>>.Success(hazardFiles.AsEnumerable());
@@ -477,7 +464,7 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
         }
     }
 
-    
+
 
     // Convenience methods for specific file types
     public async Task<Result<IEnumerable<HazardFile>>> GetImageFilesAsync(string hazardCode, CancellationToken cancellationToken = default)
@@ -527,8 +514,8 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
             }
 
             var file = fileResult.Value;
-            
-            
+
+
             // Save the changes
             var saveResult = await UpdateAsync(file, cancellationToken);
             if (saveResult.IsFailure)

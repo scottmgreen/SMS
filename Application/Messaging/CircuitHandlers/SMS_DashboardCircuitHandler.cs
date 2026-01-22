@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SMS_Infrastructure.Configuration;
-
-
-using Microsoft.AspNetCore.Components.Server.Circuits;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.Extensions.Logging;
 
 using SMS_Infrastructure.Interfaces;

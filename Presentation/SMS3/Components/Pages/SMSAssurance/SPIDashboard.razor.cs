@@ -1,13 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Shared.Common;
-using Radzen;
-using Radzen.Blazor;
-
 namespace SMS3.Components.Pages.SMSAssurance;
 
 public partial class SPIDashboard : ComponentBase
@@ -22,13 +12,13 @@ public partial class SPIDashboard : ComponentBase
     #region Component State
     private bool IsLoading { get; set; } = true;
     private SPIDashboardData? DashboardData { get; set; }
-    
+
     // Filter State
     private string? SelectedSPIType { get; set; } = "All";
     private string? SelectedDepartment { get; set; } = "All";
     private string? SelectedTimePeriod { get; set; } = "Last 12 Months";
     private string? SelectedTrendSPI { get; set; }
-    
+
     // Chart Data
     private List<SPIDataPointSummary>? TrendData { get; set; }
     private List<SPIDataPointSummary>? TrendTargetData { get; set; }
@@ -69,7 +59,7 @@ public partial class SPIDashboard : ComponentBase
             IsLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("Loading SPI Dashboard data with filters - Type: {Type}, Department: {Department}, Period: {Period}", 
+            Logger.LogInformation("Loading SPI Dashboard data with filters - Type: {Type}, Department: {Department}, Period: {Period}",
                 SelectedSPIType, SelectedDepartment, SelectedTimePeriod);
 
             var (startDate, endDate) = GetDateRange();
@@ -93,7 +83,7 @@ public partial class SPIDashboard : ComponentBase
                 DashboardData = result.Value;
                 await LoadTrendSPIOptionsAsync();
                 await LoadCategoryDataAsync();
-                
+
                 Logger.LogInformation("SPI Dashboard data loaded successfully - Total SPIs: {TotalSPIs}, Active Alerts: {ActiveAlerts}",
                     DashboardData.TotalSPIs, DashboardData.ActiveAlerts.Count);
             }
@@ -170,7 +160,7 @@ public partial class SPIDashboard : ComponentBase
                     })
                     .OrderBy(dp => dp.MeasurementDate)
                     .ToList();
-                
+
                 // If no valid data, clear the collections
                 if (!TrendData.Any())
                 {
@@ -206,7 +196,7 @@ public partial class SPIDashboard : ComponentBase
                     .Where(kvp => !string.IsNullOrEmpty(kvp.Key) && kvp.Value > 0)
                     .Select(kvp => new CategoryDataPoint(kvp.Key, kvp.Value))
                     .ToList();
-                
+
                 // If no valid data, clear the collection
                 if (!CategoryData.Any())
                 {
@@ -389,12 +379,12 @@ public partial class SPIDashboard : ComponentBase
     private string GetSPICardStyle(SPIDashboardCard spiCard)
     {
         var styleClass = "spi-card";
-        
+
         if (spiCard.IsOverThreshold)
             styleClass += " critical";
         else if (spiCard.IsAtWarningLevel)
             styleClass += " warning";
-        else if (spiCard.CurrentValue.HasValue && spiCard.TargetValue.HasValue && 
+        else if (spiCard.CurrentValue.HasValue && spiCard.TargetValue.HasValue &&
                  spiCard.CurrentValue.Value >= spiCard.TargetValue.Value)
             styleClass += " compliant";
 
@@ -415,7 +405,7 @@ public partial class SPIDashboard : ComponentBase
 
     private string GetPerformanceText(SPIDashboardCard spiCard)
     {
-        if (!spiCard.CurrentValue.HasValue || !spiCard.TargetValue.HasValue) 
+        if (!spiCard.CurrentValue.HasValue || !spiCard.TargetValue.HasValue)
             return "";
 
         // Handle division by zero case
@@ -430,7 +420,7 @@ public partial class SPIDashboard : ComponentBase
 
     private double GetProgressValue(SPIDashboardCard spiCard)
     {
-        if (!spiCard.CurrentValue.HasValue || !spiCard.TargetValue.HasValue || spiCard.TargetValue.Value == 0) 
+        if (!spiCard.CurrentValue.HasValue || !spiCard.TargetValue.HasValue || spiCard.TargetValue.Value == 0)
             return 0;
 
         var progress = (double)(spiCard.CurrentValue.Value / spiCard.TargetValue.Value * 100m);
@@ -440,7 +430,7 @@ public partial class SPIDashboard : ComponentBase
     private ProgressBarStyle GetProgressStyle(SPIDashboardCard spiCard)
     {
         var progress = GetProgressValue(spiCard);
-        
+
         if (progress >= 95) return ProgressBarStyle.Success;
         if (progress >= 80) return ProgressBarStyle.Info;
         if (progress >= 60) return ProgressBarStyle.Warning;
@@ -450,9 +440,9 @@ public partial class SPIDashboard : ComponentBase
     private string GetLastUpdateText(SPIDashboardCard spiCard)
     {
         if (!spiCard.LastMeasurementDate.HasValue) return "No data";
-        
+
         var timeAgo = DateTime.UtcNow - spiCard.LastMeasurementDate.Value;
-        
+
         if (timeAgo.TotalDays < 1)
             return "Today";
         else if (timeAgo.TotalDays < 7)

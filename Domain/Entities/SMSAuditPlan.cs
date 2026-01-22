@@ -17,7 +17,7 @@ public class SMSAuditPlan : BaseAuditableEntity
     public string Description { get; set; } = string.Empty;
     public string AuditType { get; set; } = string.Empty; // Internal, External, Regulatory, Management
     public string Status { get; set; } = string.Empty; // Draft, Approved, Active, Completed, Cancelled
-    
+
     // Planning Details - ADDED MISSING PROPERTIES
     public DateTime PlannedStartDate { get; set; }
     public DateTime PlannedEndDate { get; set; }
@@ -26,13 +26,13 @@ public class SMSAuditPlan : BaseAuditableEntity
     public string AuditScope { get; set; } = string.Empty;
     public string AuditObjectives { get; set; } = string.Empty;
     public string AuditCriteria { get; set; } = string.Empty;
-    
+
     // Resource Assignment
     public string LeadAuditor { get; set; } = string.Empty;
     public string AuditorTeam { get; set; } = string.Empty; // JSON array of auditor names/IDs
     public string ResponsibleDepartment { get; set; } = string.Empty;
     public string ContactPerson { get; set; } = string.Empty;
-    
+
     // Approval and Authorization - ADDED MISSING PROPERTIES
     public string Priority { get; set; } = string.Empty; // Added for repository compatibility
     public bool RequiresApproval { get; set; } = true; // Added for repository compatibility
@@ -41,18 +41,18 @@ public class SMSAuditPlan : BaseAuditableEntity
     public string ApprovedBy { get; set; } = string.Empty;
     public DateTime? ApprovedDate { get; set; }
     public string ApprovalNotes { get; set; } = string.Empty;
-    
+
     // Planning Documentation
     public string AuditChecklist { get; set; } = string.Empty;
     public string RequiredDocuments { get; set; } = string.Empty;
     public string SpecialRequirements { get; set; } = string.Empty;
     public string RiskAreas { get; set; } = string.Empty;
-    
+
     // Schedule Management
     public int EstimatedDurationHours { get; set; }
     public string RecurrencePattern { get; set; } = string.Empty; // None, Annual, Quarterly, Monthly
     public DateTime? NextScheduledDate { get; set; }
-    
+
     // Navigation Properties
     public List<SMSAudit> AuditCalendarEntries { get; set; }
 
@@ -129,12 +129,12 @@ public class SMSAuditPlan : BaseAuditableEntity
             Status = "Completed";
             UpdatedBy = completedBy;
             UpdatedDate = DateTime.UtcNow;
-            
+
             // Add completion notes to existing notes
             if (!string.IsNullOrEmpty(completionNotes))
             {
-                Notes = string.IsNullOrEmpty(Notes) 
-                    ? $"Completed: {completionNotes}" 
+                Notes = string.IsNullOrEmpty(Notes)
+                    ? $"Completed: {completionNotes}"
                     : $"{Notes}\n\nCompleted: {completionNotes}";
             }
 

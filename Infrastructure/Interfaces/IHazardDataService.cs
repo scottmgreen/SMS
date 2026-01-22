@@ -1,5 +1,3 @@
-using SMS_Domain.Entities;
-
 namespace SMS_Infrastructure.Interfaces;
 
 /// <summary>
@@ -22,7 +20,7 @@ public interface IHazardDataService
     /// <param name="id">The hazard identifier</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result containing the hazard or error</returns>
-    Task<Result<Hazard>> GetHazardByIdAsync(HazardID id, CancellationToken ct = default);
+    Task<Result<Hazard>> GetHazardByCodeAsync(HazardID code, CancellationToken ct = default);
 
     /// <summary>
     /// Retrieves all hazards asynchronously

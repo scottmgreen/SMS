@@ -1,8 +1,4 @@
-﻿using System.Reflection;
-
-using SMS_Domain.Common;
-
-namespace SMS_Domain.Enums;
+﻿namespace SMS_Domain.Enums;
 
 /// <summary>
 /// Hazard HazardCategory Smart Enum - Primary categorization for hazard types

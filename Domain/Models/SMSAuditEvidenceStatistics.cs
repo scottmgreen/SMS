@@ -1,5 +1,3 @@
-using System;
-
 namespace Domain.Models;
 
 /// <summary>
@@ -12,17 +10,17 @@ public class SMSAuditEvidenceStatistics
     /// Date range for the statistics
     /// </summary>
     public DateTime StartDate { get; set; }
-    
+
     /// <summary>
     /// End date for the statistics
     /// </summary>
     public DateTime EndDate { get; set; }
-    
+
     /// <summary>
     /// Total number of evidence items collected
     /// </summary>
     public int TotalEvidenceItems { get; set; }
-    
+
     /// <summary>
     /// Evidence by type breakdown
     /// </summary>
@@ -32,21 +30,21 @@ public class SMSAuditEvidenceStatistics
     public int InterviewEvidence { get; set; }
     public int DigitalEvidence { get; set; }
     public int PhysicalEvidence { get; set; }
-    
+
     /// <summary>
     /// Evidence verification status
     /// </summary>
     public int VerifiedEvidence { get; set; }
     public int UnverifiedEvidence { get; set; }
     public int PendingVerification { get; set; }
-    
+
     /// <summary>
     /// Evidence archival status
     /// </summary>
     public int ArchivedEvidence { get; set; }
     public int ActiveEvidence { get; set; }
     public int PendingArchival { get; set; }
-    
+
     /// <summary>
     /// Storage and file metrics
     /// </summary>
@@ -54,57 +52,57 @@ public class SMSAuditEvidenceStatistics
     public double AverageFileSizeMB { get; set; }
     public int LargestFileSizeMB { get; set; }
     public int SmallestFileSizeKB { get; set; }
-    
+
     /// <summary>
     /// Evidence by confidentiality level
     /// </summary>
     public Dictionary<string, int> EvidenceByConfidentialityLevel { get; set; } = new();
-    
+
     /// <summary>
     /// Evidence by audit type
     /// </summary>
     public Dictionary<string, int> EvidenceByAuditType { get; set; } = new();
-    
+
     /// <summary>
     /// Evidence by department
     /// </summary>
     public Dictionary<string, int> EvidenceByDepartment { get; set; } = new();
-    
+
     /// <summary>
     /// Evidence by collector (top 10)
     /// </summary>
     public Dictionary<string, int> EvidenceByCollector { get; set; } = new();
-    
+
     /// <summary>
     /// Evidence collection timeline
     /// </summary>
     public List<EvidenceCollectionTrendData> CollectionTrends { get; set; } = new();
-    
+
     /// <summary>
     /// Verification timeline
     /// </summary>
     public List<EvidenceVerificationTrendData> VerificationTrends { get; set; } = new();
-    
+
     /// <summary>
     /// Storage usage over time
     /// </summary>
     public List<StorageUsageTrendData> StorageTrends { get; set; } = new();
-    
+
     /// <summary>
     /// Evidence quality metrics
     /// </summary>
     public EvidenceQualityMetrics QualityMetrics { get; set; } = new();
-    
+
     /// <summary>
     /// Retention and compliance metrics
     /// </summary>
     public RetentionComplianceMetrics RetentionMetrics { get; set; } = new();
-    
+
     /// <summary>
     /// Evidence source analysis
     /// </summary>
     public Dictionary<string, int> EvidenceBySource { get; set; } = new();
-    
+
     /// <summary>
     /// Evidence linked to findings
     /// </summary>

@@ -1,10 +1,3 @@
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-using Radzen;
-
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
 public partial class CompleteInterviewDialog : ComponentBase
@@ -51,7 +44,7 @@ public partial class CompleteInterviewDialog : ComponentBase
     {
         await CompleteInterview(Model);
     }
-    
+
     private async Task CompleteInterview(CompleteInterviewModel model)
     {
         try
@@ -116,7 +109,7 @@ public partial class CompleteInterviewDialog : ComponentBase
     private string BuildAssessmentNotes(CompleteInterviewModel model)
     {
         var notes = new List<string>();
-        
+
         notes.Add("[INTERVIEW ASSESSMENT]");
         notes.Add($"- Interviewee Cooperation: {(model.IntervieweeCooperative ? "Cooperative" : "Uncooperative or resistant")}");
         notes.Add($"- Information Reliability: {(model.InformationReliable ? "Reliable and accurate" : "Questionable or inconsistent")}");
@@ -157,7 +150,7 @@ public partial class CompleteInterviewDialog : ComponentBase
         public string? KeyFindings { get; set; }
         public string? FollowUpRequired { get; set; }
         public string? AdditionalWitnesses { get; set; }
-        
+
         // Assessment flags
         public bool IntervieweeCooperative { get; set; } = true;
         public bool InformationReliable { get; set; } = true;

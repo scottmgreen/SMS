@@ -1,7 +1,4 @@
-﻿using System;
-using BCrypt.Net;
-
-namespace PasswordHashGenerator
+﻿namespace PasswordHashGenerator
 {
     /// <summary>
     /// SMS Password Hash Generator - FIXED VERSION
@@ -14,41 +11,41 @@ namespace PasswordHashGenerator
             Console.WriteLine("=== SMS PASSWORD HASH GENERATOR - FIXED ===");
             Console.WriteLine("Generates REAL BCrypt hashes for SMS system");
             Console.WriteLine();
-            
+
             // First, generate common passwords immediately
             GenerateCommonPasswords();
-            
+
             // Interactive mode for custom passwords
             Console.WriteLine("=== INTERACTIVE MODE ===");
             while (true)
             {
                 Console.Write("Enter password to hash (or 'quit' to exit): ");
                 string input = Console.ReadLine();
-                
+
                 if (string.IsNullOrWhiteSpace(input) || input.ToLower() == "quit")
                     break;
-                    
+
                 GenerateHashForPassword(input);
             }
-            
+
             Console.WriteLine("Goodbye!");
         }
-        
+
         static void GenerateCommonPasswords()
         {
             Console.WriteLine("=== COMMON PASSWORDS WITH REAL HASHES ===");
             Console.WriteLine();
-            
-            string[] commonPasswords = { 
-                "admin", 
-                "password", 
-                "Password123!", 
-                "flypdx", 
+
+            string[] commonPasswords = {
+                "admin",
+                "password",
+                "Password123!",
+                "flypdx",
                 "TempAdmin123!",
                 "SMS123!",
                 "pdx2025"
             };
-            
+
             foreach (string password in commonPasswords)
             {
                 try
@@ -64,17 +61,17 @@ namespace PasswordHashGenerator
                     Console.WriteLine($"Error hashing '{password}': {ex.Message}");
                 }
             }
-            
+
             Console.WriteLine("=".PadRight(100, '='));
             Console.WriteLine();
         }
-        
+
         static void GenerateHashForPassword(string password)
         {
             try
             {
                 string hash = BCrypt.Net.BCrypt.HashPassword(password, 12);
-                
+
                 Console.WriteLine();
                 Console.WriteLine($"✅ SUCCESS!");
                 Console.WriteLine($"Password: {password}");
@@ -84,7 +81,7 @@ namespace PasswordHashGenerator
                 Console.WriteLine($"EXEC [dbo].[pr_PasswordReset] @pUserName = 'admin@flypdx.com', @pNewPasswordHash = '{hash}';");
                 Console.WriteLine();
                 Console.WriteLine("🧪 Test the hash:");
-                
+
                 // Test the hash immediately
                 bool isValid = BCrypt.Net.BCrypt.Verify(password, hash);
                 Console.WriteLine($"Hash verification: {(isValid ? "✅ VALID" : "❌ INVALID")}");

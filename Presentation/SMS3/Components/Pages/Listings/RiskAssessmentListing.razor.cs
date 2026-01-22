@@ -1,16 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-using Radzen;
-using Radzen.Blazor;
-using System.Linq.Expressions;
-using System.Text.RegularExpressions;
-using SMS3.Components.Shared;
-
 namespace SMS3.Components.Pages.Listings;
 
 public partial class RiskAssessmentListing : ComponentBase
@@ -69,10 +56,10 @@ public partial class RiskAssessmentListing : ComponentBase
             await LoadInitialData();
 
             var query = assessments.AsQueryable();
-            
+
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
-                query = args.OrderBy.Contains("desc") 
+                query = args.OrderBy.Contains("desc")
                     ? query.OrderByDescending(GetPropertyExpression(args.OrderBy.Replace(" desc", "")))
                     : query.OrderBy(GetPropertyExpression(args.OrderBy));
             }
@@ -131,10 +118,10 @@ public partial class RiskAssessmentListing : ComponentBase
         try
         {
             Logger.LogInformation("Editing risk assessment: {Code} - Type: {Type}", assessment.Code, assessment.AssessmentType);
-            
+
             // Smart navigation based on assessment type and category
             string navigationUrl = DetermineEditUrl(assessment);
-            
+
             Logger.LogInformation("Navigating to: {Url}", navigationUrl);
             Navigation.NavigateTo(navigationUrl);
         }
@@ -151,7 +138,7 @@ public partial class RiskAssessmentListing : ComponentBase
         var assessmentType = assessment.AssessmentType?.Name?.ToLowerInvariant() ?? "";
         var category = assessment.RiskAssessmentCategory?.Name?.ToLowerInvariant() ?? "";
         var hazardCode = assessment.HazardCode ?? "";
-        
+
         // Check if it's a preliminary assessment
         if (assessmentType.Contains("preliminary") || category.Contains("preliminary"))
         {
@@ -171,7 +158,7 @@ public partial class RiskAssessmentListing : ComponentBase
             // Navigate to Technical Assessment
             // For technical assessments, we need to determine the report ID
             var reportId = ExtractReportIdFromAssessment(assessment);
-            
+
             if (!string.IsNullOrEmpty(reportId) && !string.IsNullOrEmpty(hazardCode))
             {
                 return $"/SMSRiskManagement/TechnicalAssessment/{reportId}/{hazardCode}/1";
@@ -193,7 +180,7 @@ public partial class RiskAssessmentListing : ComponentBase
         else
         {
             Logger.LogWarning("Could not determine assessment type for {Code}, defaulting to Preliminary", assessment.Code);
-            
+
             if (!string.IsNullOrEmpty(hazardCode))
             {
                 return $"/SMSRiskManagement/PreliminaryRiskAssessment/{assessment.Code}/{hazardCode}";
@@ -213,7 +200,7 @@ public partial class RiskAssessmentListing : ComponentBase
         {
             return assessment.Code.Replace("RS-", "RP-");
         }
-        
+
         // Check if there's report information in the description
         if (!string.IsNullOrEmpty(assessment.Description) && assessment.Description.Contains("Report"))
         {
@@ -224,7 +211,7 @@ public partial class RiskAssessmentListing : ComponentBase
                 return reportMatch.Value;
             }
         }
-        
+
         // Fallback: use the assessment code as-is
         return assessment.Code ?? assessment.Id.Value;
     }
@@ -282,7 +269,7 @@ public partial class RiskAssessmentListing : ComponentBase
                 {
                     ShowSuccessNotification($"Risk assessment '{assessment.Name}' deleted successfully");
                     Logger.LogInformation("Successfully deleted risk assessment: {Code}", assessment.Code);
-                    
+
                     // Refresh the data grid
                     await LoadInitialData();
                     if (assessmentsGrid != null)

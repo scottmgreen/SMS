@@ -1,9 +1,4 @@
-﻿using SMS_Domain.Entities;
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-
-namespace SMS_Application.Messaging.Commands;
+﻿namespace SMS_Application.Messaging.Commands;
 
 /// <summary>
 /// Command to create a new SMS application group

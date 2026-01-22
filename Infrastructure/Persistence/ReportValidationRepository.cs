@@ -1,10 +1,6 @@
-﻿using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Domain.ValueObjects;
-using SMS_Infrastructure.Common;
+﻿using SMS_Domain.Errors;
+
 using SMS_Infrastructure.Interfaces;
-using Microsoft.Data.SqlClient;
-using System.Data;
 
 namespace SMS_Infrastructure.Persistence;
 
@@ -65,7 +61,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
 
             int newIdValue = (int)newID.Value;
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
-            ReportValidationID reportValidationId = new (newCodeValue);
+            ReportValidationID reportValidationId = new(newCodeValue);
 
             return await GetReportValidationByIdAsync(reportValidationId, ct).ConfigureAwait(false);
         }
@@ -242,7 +238,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
             var rowsAffected = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            if (rowsAffected > 0)  
+            if (rowsAffected > 0)
             {
                 return await GetReportValidationByIdAsync((ReportValidationID)reportValidation.Id, ct).ConfigureAwait(false);
             }
@@ -273,7 +269,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId,id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

@@ -1,8 +1,7 @@
-﻿using SMS_Infrastructure.Interfaces;
-using SMS_Infrastructure.Services;
-using SMS_Domain.Interfaces;
-using Infrastructure.Interfaces;
+﻿using Infrastructure.Interfaces;
 using Infrastructure.Persistence;
+
+using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Configuration;
 
@@ -26,15 +25,16 @@ internal static class ServiceCollectionExtensions
         // SMS Repositories - BOTH CONCRETE AND INTERFACE BINDINGS
         services.AddScoped<HazardRepository>();
         services.AddScoped<IHazardRepository, HazardRepository>();
-        
+
         services.AddScoped<HazardLocationRepository>();
         services.AddScoped<IHazardLocationRepository, HazardLocationRepository>();
-        
+
         services.AddScoped<HazardFileRepository>();
         services.AddScoped<IHazardFileRepository, HazardFileRepository>();
-        
+
         services.AddScoped<AirportSharedDatasetRepository>();
         services.AddScoped<ReportRepository>();
+        services.AddScoped<HazardReportTrackingRepository>();
         services.AddScoped<InterviewRepository>();
         services.AddScoped<InvestigationRepository>();
         services.AddScoped<RiskAnalysisRepository>();
@@ -74,6 +74,7 @@ internal static class ServiceCollectionExtensions
         services.AddScoped<HazardFileDataService>();
         services.AddScoped<AirportSharedDatasetDataService>();
         services.AddScoped<ReportDataService>();
+        services.AddScoped<HazardReportTrackingDataService>();
         services.AddScoped<InterviewDataService>();
         services.AddScoped<InvestigationDataService>();
         services.AddScoped<RiskAnalysisDataService>();

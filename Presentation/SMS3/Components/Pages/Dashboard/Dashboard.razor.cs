@@ -1,10 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Queries;
-using SMS_Shared.Common;
-using Radzen;
-using Radzen.Blazor;
-
 namespace SMS3.Components.Pages.Dashboard;
 
 public partial class Dashboard : ComponentBase
@@ -29,7 +22,7 @@ public partial class Dashboard : ComponentBase
     public int TotalRiskAssessments => Statistics?.TotalRiskAssessments ?? 0;
     public int TotalInvestigations => Statistics?.TotalInvestigations ?? 0;
     public int TotalMitigations => Statistics?.TotalMitigations ?? 0;
-    
+
     // Status-filtered counts
     public int ActiveItems => GetFilteredCount("Active");
     public int PendingItems => GetFilteredCount("Pending");

@@ -1,9 +1,3 @@
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Services;
-using SMS_Domain.Entities;
-using SMS_Shared.Common;
 using Microsoft.Extensions.Logging;
 
 namespace SMS_Application.Messaging.CommandHandlers;
@@ -39,7 +33,7 @@ public class CreateSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<C
 
             // Generate audit code
             var auditCode = _auditService.GenerateAuditCode(request.AuditType, request.ScheduledStartDate);
-            
+
             // Create audit entity
             var audit = new SMSAudit(new SMSAuditID(auditCode), request.CreatedBy)
             {
@@ -115,7 +109,7 @@ public class StartSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<St
             _logger.LogInformation("Processing StartSMSAuditCommand for audit: {AuditCode}", request.AuditCode);
 
             //Get existing audit
-           var existingAuditResult = await _auditService.GetAuditByCodeAsync(request.AuditCode, cancellationToken);
+            var existingAuditResult = await _auditService.GetAuditByCodeAsync(request.AuditCode, cancellationToken);
             if (existingAuditResult.IsFailure)
             {
                 _logger.LogApplicationError("Audit not found: {AuditCode}", ApplicationEventIds.Error, null);
@@ -137,7 +131,7 @@ public class StartSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<St
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully started SMS audit: {AuditCode} by {StartedBy}", 
+                _logger.LogInformation("Successfully started SMS audit: {AuditCode} by {StartedBy}",
                     request.AuditCode, request.StartedBy);
             }
             else
@@ -215,7 +209,7 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully completed SMS audit: {AuditCode} by {CompletedBy}", 
+                _logger.LogInformation("Successfully completed SMS audit: {AuditCode} by {CompletedBy}",
                     request.AuditCode, request.CompletedBy);
 
                 // NEW: Check if associated audit plan should be completed
@@ -284,7 +278,7 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler
             var completedAudits = allAudits.Count(a => a.Status == "Completed");
             var totalAudits = allAudits.Count;
 
-            _logger.LogInformation("Audit plan {AuditPlanCode}: {CompletedAudits}/{TotalAudits} audits completed", 
+            _logger.LogInformation("Audit plan {AuditPlanCode}: {CompletedAudits}/{TotalAudits} audits completed",
                 auditPlanCode, completedAudits, totalAudits);
 
             // If all audits are completed, complete the plan
@@ -304,19 +298,19 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler
                     }
                     else
                     {
-                        _logger.LogApplicationError("Failed to save completed audit plan {AuditPlanCode}: {Error}", 
+                        _logger.LogApplicationError("Failed to save completed audit plan {AuditPlanCode}: {Error}",
                             ApplicationEventIds.Error, null);
                     }
                 }
                 else
                 {
-                    _logger.LogApplicationError("Failed to complete audit plan {AuditPlanCode}: {Error}", 
+                    _logger.LogApplicationError("Failed to complete audit plan {AuditPlanCode}: {Error}",
                         ApplicationEventIds.Error, null);
                 }
             }
             else
             {
-                _logger.LogInformation("Not all audits completed yet for plan {AuditPlanCode}, keeping plan status as {Status}", 
+                _logger.LogInformation("Not all audits completed yet for plan {AuditPlanCode}, keeping plan status as {Status}",
                     auditPlanCode, auditPlan.Status);
             }
         }
@@ -390,7 +384,7 @@ public class AddSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHandl
 
             if (newFinding != null)
             {
-                _logger.LogInformation("Successfully added finding to SMS audit: {AuditCode}, Finding: {FindingCode}", 
+                _logger.LogInformation("Successfully added finding to SMS audit: {AuditCode}, Finding: {FindingCode}",
                     request.AuditCode, newFinding.Code);
                 return Result<SMSAuditFinding>.Success(newFinding);
             }

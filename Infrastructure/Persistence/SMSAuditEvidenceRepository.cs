@@ -1,9 +1,6 @@
-using SMS_Domain.Entities;
 using SMS_Domain.Errors;
-using SMS_Infrastructure.Common;
+
 using SMS_Infrastructure.Interfaces;
-using Microsoft.Data.SqlClient;
-using System.Data;
 
 namespace Infrastructure.Persistence;
 
@@ -14,15 +11,15 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
     private readonly string _connectionString;
 
     public SMSAuditEvidenceRepository(
-        ILogger<SMSAuditEvidenceRepository> logger, 
-        ILogSupport logsupport, 
+        ILogger<SMSAuditEvidenceRepository> logger,
+        ILogSupport logsupport,
         IConfiguration configuration)
         : base(logger, logsupport, configuration)
     {
         _logger = Logger;
         _logheader = LogHeader;
         _connectionString = ConnectionString;
-        _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent, 
+        _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent,
             $"{_logheader} SMSAuditEvidence Repository Initialized");
     }
 
@@ -113,12 +110,12 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            
+
             if (await reader.ReadAsync(ct).ConfigureAwait(false))
             {
                 evidence = Mappers.MapToSMSAuditEvidence(reader);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             if (evidence != null)
@@ -153,13 +150,13 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            
+
             while (await reader.ReadAsync(ct).ConfigureAwait(false))
             {
                 var evidence = Mappers.MapToSMSAuditEvidence(reader);
                 evidenceList.Add(evidence);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result.Success(evidenceList.AsEnumerable());
@@ -189,7 +186,7 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
             };
 
             // FIXED: Use correct parameter name to match stored procedure exactly - @pID parameter
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceId, evidence.Id.Value)); 
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceId, evidence.Id.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceCode, evidence.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceAuditCode, evidence.AuditCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceFindingCode, evidence.FindingCode));
@@ -284,13 +281,13 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            
+
             while (await reader.ReadAsync(ct).ConfigureAwait(false))
             {
                 var evidence = Mappers.MapToSMSAuditEvidence(reader);
                 evidenceList.Add(evidence);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result.Success(evidenceList.AsEnumerable());
@@ -321,13 +318,13 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            
+
             while (await reader.ReadAsync(ct).ConfigureAwait(false))
             {
                 var evidence = Mappers.MapToSMSAuditEvidence(reader);
                 evidenceList.Add(evidence);
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result.Success(evidenceList.AsEnumerable());

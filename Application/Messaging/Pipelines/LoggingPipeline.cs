@@ -1,13 +1,5 @@
-﻿using SMS_Application.Interfaces;
+﻿using Microsoft.Extensions.Logging;
 
-using SMS_Domain.Common;
-
-using SMS_Shared;
-using SMS_Shared.Common;
-
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Microsoft.FeatureManagement;
 using SMS_Infrastructure.Configuration;
 
 namespace SMS_Application.Messaging.Pipelines;
@@ -29,7 +21,7 @@ public class LoggingPipeline<TRequest, TResult> : IPipeline<TRequest, TResult> w
 
         var start = TimeProvider.System.GetTimestamp();
         // Log before executing the command handler
-        _logger.LogApplicationInformation(ApplicationEventIds.Information, $"{_logheader} PreExecute => {request.GetType().Name} {DateTime.Now.ToString("HH:mm:ss") }");
+        _logger.LogApplicationInformation(ApplicationEventIds.Information, $"{_logheader} PreExecute => {request.GetType().Name} {DateTime.Now.ToString("HH:mm:ss")}");
         var result = await next();
 
         var diff = TimeProvider.System.GetElapsedTime(start);
@@ -37,7 +29,7 @@ public class LoggingPipeline<TRequest, TResult> : IPipeline<TRequest, TResult> w
         // Log after executing the command handler
         if (result.IsSuccess)
         {
-            _logger.LogApplicationInformation(ApplicationEventIds.Information, $"{ _logheader } PostExecute => {request.GetType().Name} { diff.TotalMilliseconds}ms");
+            _logger.LogApplicationInformation(ApplicationEventIds.Information, $"{_logheader} PostExecute => {request.GetType().Name} {diff.TotalMilliseconds}ms");
         }
         else
         {

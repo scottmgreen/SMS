@@ -2,9 +2,6 @@ using Microsoft.Extensions.Logging;
 
 using SMS_Application.Messaging.Queries;
 
-using SMS_Domain.Entities;
-using SMS_Domain.Interfaces;
-
 namespace SMS_Application.Messaging.QueryHandlers;
 
 // =============================================
@@ -28,8 +25,8 @@ public class GetHazardByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetHaz
     {
         try
         {
-            _logger.LogInformation("Processing GetHazardByIdQuery for ID: {Id}", request.HazardId);
-            var result = await _hazardDataService.GetHazardByIdAsync(request.HazardId, ct).ConfigureAwait(false);
+            _logger.LogInformation("Processing GetHazardByIdQuery for Code: {Code}", request.HazardId);
+            var result = await _hazardDataService.GetHazardByCodeAsync(request.HazardId, ct).ConfigureAwait(false);
             var location = await _locationDataService.GetHazardLocationsByHazardCodeAsync(request.HazardId.Value, ct);
             result.Value.HazardLocation = location.Value.FirstOrDefault();
 
@@ -37,7 +34,7 @@ public class GetHazardByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetHaz
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("Error processing GetHazardByIdQuery for ID: {Id}", ApplicationEventIds.Error, ex);
+            _logger.LogApplicationError("Error processing GetHazardByIdQuery for Code: {Code}", ApplicationEventIds.Error, ex);
             return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NotFound);
         }
     }
@@ -60,7 +57,7 @@ public class GetAllHazardsQueryHandler : BaseQueryBundle, IRequestHandler<GetAll
     {
         try
         {
-            
+
             _logger.LogInformation("Processing GetAllHazardsQuery");
             var result = await _hazardDataService.GetAllHazardsAsync(ct).ConfigureAwait(false);
             List<Hazard> hazards = new();
@@ -90,11 +87,11 @@ public class GetHazardsByReportIdQueryHandler : BaseQueryBundle, IRequestHandler
     public GetHazardsByReportIdQueryHandler(HazardDataService hazardDataService, HazardLocationDataService hazardLocationDataService, ILogger<GetHazardsByReportIdQueryHandler> logger)
     {
         _hazardDataService = hazardDataService ?? throw new ArgumentNullException(nameof(hazardDataService));
-        _hazardLocationDataService= hazardLocationDataService ?? throw new ArgumentNullException(nameof(hazardLocationDataService));
+        _hazardLocationDataService = hazardLocationDataService ?? throw new ArgumentNullException(nameof(hazardLocationDataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    
+
     public async Task<Result<List<Hazard>>> HandleAsync(GetHazardsByReportIdQuery request, CancellationToken ct = default)
     {
         try
@@ -102,7 +99,7 @@ public class GetHazardsByReportIdQueryHandler : BaseQueryBundle, IRequestHandler
             ReportID reportid = request.ReportId;
 
             _logger.LogInformation("Processing GetAllHazardsByReportIdQuery");
-            var result = await _hazardDataService.GetHazardsByReportIdAsync(reportid,ct).ConfigureAwait(false);
+            var result = await _hazardDataService.GetHazardsByReportIdAsync(reportid, ct).ConfigureAwait(false);
             List<Hazard> hazards = new();
             foreach (Hazard hz in result.Value)
             {
@@ -140,13 +137,13 @@ public class GetHazardsByReportCodeQueryHandler : BaseQueryBundle, IRequestHandl
         try
         {
             _logger.LogInformation("Processing GetHazardsByReportCodeQuery for ReportCode: {ReportCode}", request.ReportCode);
-            
+
             // Convert report code to ReportID and use existing method
             var reportId = new ReportID(request.ReportCode);
-            
+
             // ? FIXED: Use the clean method that doesn't include complex mitigation joins
             var result = await _hazardDataService.GetHazardsByReportIdAsync(reportId, ct).ConfigureAwait(false);
-            
+
             if (result.IsFailure || result.Value == null)
             {
                 return result;
@@ -174,6 +171,48 @@ public class GetHazardsByReportCodeQueryHandler : BaseQueryBundle, IRequestHandl
         {
             _logger.LogApplicationError("Error processing GetHazardsByReportCodeQuery for ReportCode: {ReportCode}", ApplicationEventIds.Error, ex);
             return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
+        }
+    }
+}
+
+public class GetHazardByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardByCodeQuery, Result<Hazard>>
+{
+    private readonly HazardDataService _hazardDataService;
+    private readonly HazardLocationDataService _locationDataService;
+    private readonly ILogger<GetHazardByCodeQueryHandler> _logger;
+
+    public GetHazardByCodeQueryHandler(HazardDataService hazardDataService, HazardLocationDataService hazardLocationDataService, ILogger<GetHazardByCodeQueryHandler> logger)
+    {
+        _hazardDataService = hazardDataService ?? throw new ArgumentNullException(nameof(hazardDataService));
+        _locationDataService = hazardLocationDataService ?? throw new ArgumentNullException(nameof(hazardLocationDataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<Hazard>> HandleAsync(GetHazardByCodeQuery request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing GetHazardByCodeQuery for Code: {Code}", request.Code);
+
+            // Convert string code to HazardID and use existing method
+            var hazardId = new HazardID(request.Code);
+            var result = await _hazardDataService.GetHazardByCodeAsync(hazardId, ct).ConfigureAwait(false);
+
+            if (result.IsSuccess && result.Value != null)
+            {
+                var location = await _locationDataService.GetHazardLocationsByHazardCodeAsync(request.Code, ct);
+                if (location.IsSuccess && location.Value?.Any() == true)
+                {
+                    result.Value.HazardLocation = location.Value.FirstOrDefault();
+                }
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Error processing GetHazardByCodeQuery for Code: {Code}", ApplicationEventIds.Error, ex);
+            return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NotFound);
         }
     }
 }

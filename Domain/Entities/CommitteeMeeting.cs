@@ -1,7 +1,3 @@
-using SMS_Domain.Common;
-using SMS_Domain.Enums;
-using SMS_Shared.Common;
-
 namespace SMS_Domain.Entities;
 
 /// <summary>
@@ -30,13 +26,13 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
     public MeetingType MeetingType { get; private set; }
     public string FacilitatorId { get; private set; }
     public MeetingStatus Status { get; private set; }
-    
+
     // Meeting Documentation
     public string? Agenda { get; private set; }
     public string? Minutes { get; private set; }
     public string? ApprovedBy { get; private set; }
     public DateTime? ApprovedDate { get; private set; }
-    
+
     // Optional Properties
     public string? Location { get; private set; }
     public string? VirtualMeetingLink { get; private set; }
@@ -44,7 +40,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
     public string? Notes { get; private set; }
     public DateTime? ActualStartTime { get; private set; }
     public DateTime? ActualEndTime { get; private set; }
-    
+
     // Collections
     public IReadOnlyList<MeetingAttendee> Attendees => _attendees.AsReadOnly();
     public IReadOnlyList<MeetingAgendaItem> AgendaItems => _agendaItems.AsReadOnly();
@@ -65,7 +61,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception )
+        catch (Exception)
         {
             return Result.Failure(DomainErrors.MeetingError.MeetingUpdateFailed);
         }
@@ -86,7 +82,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception )
+        catch (Exception)
         {
             return Result.Failure(DomainErrors.MeetingError.AgendaUpdateFailed);
         }
@@ -108,7 +104,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception )
+        catch (Exception)
         {
             return Result.Failure(DomainErrors.MeetingError.MinutesUpdateFailed);
         }
@@ -131,7 +127,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception )
+        catch (Exception)
         {
             return Result.Failure(DomainErrors.MeetingError.MinutesApprovalFailed);
         }
@@ -150,7 +146,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception )
+        catch (Exception)
         {
             return Result.Failure(DomainErrors.MeetingError.MeetingStartFailed);
         }
@@ -168,18 +164,18 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             {
                 Duration = ActualEndTime.Value - ActualStartTime.Value;
             }
-            
+
             // If minutes are already set, go to pending approval, otherwise stay in progress
             if (!string.IsNullOrWhiteSpace(Minutes))
             {
                 Status = MeetingStatus.PendingApproval;
             }
-            
+
             UpdatedBy = endedBy;
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception )
+        catch (Exception)
         {
             return Result.Failure(DomainErrors.MeetingError.MeetingEndFailed);
         }
@@ -198,7 +194,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception )
+        catch (Exception)
         {
             return Result.Failure(DomainErrors.MeetingError.MeetingCancellationFailed);
         }
@@ -221,7 +217,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             UpdatedDate = DateTime.UtcNow;
             return Result.Success();
         }
-        catch (Exception )
+        catch (Exception)
         {
             return Result.Failure(DomainErrors.MeetingError.MeetingPostponeFailed);
         }
@@ -250,7 +246,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             _attendees.Add(attendee);
             return Result<MeetingAttendee>.Success(attendee);
         }
-        catch (Exception )
+        catch (Exception)
         {
             return Result<MeetingAttendee>.Failure<MeetingAttendee>(DomainErrors.MeetingError.AttendeeAddFailed);
         }
@@ -274,7 +270,7 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
             _agendaItems.Add(agendaItem);
             return Result<MeetingAgendaItem>.Success(agendaItem);
         }
-        catch (Exception )
+        catch (Exception)
         {
             return Result<MeetingAgendaItem>.Failure<MeetingAgendaItem>(DomainErrors.MeetingError.AgendaItemAddFailed);
         }
@@ -338,8 +334,8 @@ public sealed class CommitteeMeeting : BaseAuditableEntity
 
     public bool IsUpcoming(TimeSpan timeWindow)
     {
-        return MeetingDate > DateTime.UtcNow && 
-               MeetingDate <= DateTime.UtcNow.Add(timeWindow) && 
+        return MeetingDate > DateTime.UtcNow &&
+               MeetingDate <= DateTime.UtcNow.Add(timeWindow) &&
                Status == MeetingStatus.Scheduled;
     }
 }

@@ -1,0 +1,653 @@
+@page "/SMSRiskManagement/HazardReportSearchResult/{TrackingCode}"
+@using SMS_Domain.Entities
+@using SMS_Domain.ValueObjects
+@using SMS_Application.Messaging.Queries
+@using SMS3.Components.Shared
+@inherits ComponentBase
+
+<PageTitle>Hazard Report Details - @TrackingCode</PageTitle>
+
+<!-- Header Section -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h3 class="page-title mb-1">
+                <RadzenIcon Icon="description" class="me-2" />
+                Hazard Report Details
+            </h3>
+            <p class="page-subtitle mb-0">
+                Comprehensive information for tracking ID: <strong>@TrackingCode</strong>
+            </p>
+        </div>
+        <div class="action-buttons">
+            <RadzenButton ButtonType="ButtonType.Button"
+                          Click="@BackToSearch"
+                          Text="Back to Search"
+                          Icon="arrow_back"
+                          ButtonStyle="ButtonStyle.Light" />
+        </div>
+    </div>
+</div>
+
+<!-- Loading State -->
+@if (IsLoading)
+{
+    <div class="text-center py-5">
+        <RadzenProgressBarCircular ShowValue="false" class="mb-3" />
+        <h6 class="text-muted">Loading report details...</h6>
+    </div>
+}
+else if (ReportDetails != null)
+{
+    <!-- Tracking Information Card -->
+    <RadzenCard class="mb-4">
+        <div class="tracking-header">
+            <h5 class="mb-3">
+                <RadzenIcon Icon="track_changes" class="me-2" />
+                Tracking Information
+            </h5>
+            
+            <div class="row g-3">
+                <div class="col-lg-3 col-md-6">
+                    <div class="info-item">
+                        <label class="info-label">Tracking ID</label>
+                        <div class="info-value tracking-id">@TrackingCode</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="info-item">
+                        <label class="info-label">Report Code</label>
+                        <div class="info-value">@(ReportDetails.ReportCode ?? "N/A")</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="info-item">
+                        <label class="info-label">Hazard Code</label>
+                        <div class="info-value">@(ReportDetails.HazardCode ?? "N/A")</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="info-item">
+                        <label class="info-label">Current Status</label>
+                        <RadzenBadge Text="@ReportDetails.CurrentStatus" 
+                                     BadgeStyle="@GetStatusBadgeStyle(ReportDetails.CurrentStatus)" 
+                                     class="status-badge" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </RadzenCard>
+
+    <!-- Basic Information Card -->
+    <RadzenCard class="mb-4">
+        <h5 class="mb-3">
+            <RadzenIcon Icon="info" class="me-2" />
+            Basic Information
+        </h5>
+        
+        <div class="row g-3">
+            <div class="col-lg-6">
+                <div class="info-item">
+                    <label class="info-label">Hazard Type</label>
+                    <div class="info-value hazard-type">@(ReportDetails.HazardType ?? "Not Specified")</div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="info-item">
+                    <label class="info-label">Reported By</label>
+                    <div class="info-value">@(ReportDetails.ReportedBy ?? "Unknown")</div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="info-item">
+                    <label class="info-label">Reported On</label>
+                    <div class="info-value">@(ReportDetails.ReportedOn?.ToString("MMMM dd, yyyy 'at' HH:mm tt") ?? "Not Specified")</div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="info-item">
+                    <label class="info-label">Department</label>
+                    <div class="info-value">@(ReportDetails.Department ?? "Not Specified")</div>
+                </div>
+            </div>
+        </div>
+        
+        @if (!string.IsNullOrEmpty(ReportDetails.Description))
+        {
+            <div class="mt-4">
+                <div class="info-item">
+                    <label class="info-label">Description</label>
+                    <div class="info-value description-text">@ReportDetails.Description</div>
+                </div>
+            </div>
+        }
+        
+        @if (ReportDetails.IsConfidential)
+        {
+            <div class="mt-3">
+                <RadzenAlert AlertStyle="AlertStyle.Warning" ShowIcon="true" class="confidential-alert">
+                    <strong>Confidential Report:</strong> This report contains confidential information and should be handled accordingly.
+                </RadzenAlert>
+            </div>
+        }
+    </RadzenCard>
+
+    <!-- Validation Status Card -->
+    <RadzenCard class="mb-4">
+        <h5 class="mb-3">
+            <RadzenIcon Icon="verified" class="me-2" />
+            Validation Status
+        </h5>
+        
+        @if (ReportValidation != null)
+        {
+            <div class="row g-3">
+                <div class="col-lg-3 col-md-6">
+                    <div class="info-item">
+                        <label class="info-label">Validation Decision</label>
+                        <RadzenBadge Text="@GetValidationDecisionDisplay(ReportValidation.ValidationDecision)" 
+                                     BadgeStyle="@GetValidationBadgeStyle(ReportValidation.ValidationDecision)" 
+                                     class="validation-badge" />
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="info-item">
+                        <label class="info-label">Validated By</label>
+                        <div class="info-value">@(ReportValidation.ValidatedBy ?? "N/A")</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="info-item">
+                        <label class="info-label">Validation Date</label>
+                        <div class="info-value">@(ReportValidation.ValidatedDate?.ToString("MM/dd/yyyy HH:mm tt") ?? "Not Completed")</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="info-item">
+                        <label class="info-label">Validation Type</label>
+                        <div class="info-value">@(ReportValidation.ValidationType ?? "N/A")</div>
+                    </div>
+                </div>
+            </div>
+            
+            @if (!string.IsNullOrEmpty(ReportValidation.ValidationComments))
+            {
+                <div class="mt-4">
+                    <div class="info-item">
+                        <label class="info-label">Validation Comments</label>
+                        <div class="info-value validation-comments">@ReportValidation.ValidationComments</div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="validation-pending">
+                <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true">
+                    <strong>Validation Pending:</strong> This report has not yet been validated by SMS personnel.
+                </RadzenAlert>
+            </div>
+        }
+    </RadzenCard>
+
+    <!-- Processing Status Card -->
+    <RadzenCard class="mb-4">
+        <h5 class="mb-3">
+            <RadzenIcon Icon="settings" class="me-2" />
+            Processing Status
+        </h5>
+        
+        <div class="processing-timeline">
+            <!-- Report Submitted -->
+            <div class="timeline-item completed">
+                <div class="timeline-icon">
+                    <RadzenIcon Icon="assignment" />
+                </div>
+                <div class="timeline-content">
+                    <h6>Report Submitted</h6>
+                    <p class="text-muted">@(ReportDetails.ReportedOn?.ToString("MMMM dd, yyyy 'at' HH:mm tt") ?? "Not Available")</p>
+                </div>
+            </div>
+
+            <!-- Validation -->
+            <div class="timeline-item @(ReportValidation != null ? "completed" : "pending")">
+                <div class="timeline-icon">
+                    <RadzenIcon Icon="@(ReportValidation != null ? "verified_user" : "schedule")" />
+                </div>
+                <div class="timeline-content">
+                    <h6>SMS Validation</h6>
+                    @if (ReportValidation != null)
+                    {
+                        <p class="text-success">
+                            Completed - @GetValidationDecisionDisplay(ReportValidation.ValidationDecision)
+                            <br />
+                            <small class="text-muted">@(ReportValidation.ValidatedDate?.ToString("MM/dd/yyyy HH:mm tt"))</small>
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Awaiting SMS validation</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Further Processing -->
+            @if (ReportValidation != null)
+            {
+                <div class="timeline-item @GetProcessingStatusClass()">
+                    <div class="timeline-icon">
+                        <RadzenIcon Icon="@GetProcessingIcon()" />
+                    </div>
+                    <div class="timeline-content">
+                        <h6>@GetProcessingStageTitle()</h6>
+                        <p class="@GetProcessingStatusTextClass()">@GetProcessingStatusDescription()</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </RadzenCard>
+
+    <!-- Location Information Card -->
+    @if (HazardLocation != null)
+    {
+        <RadzenCard class="mb-4">
+            <h5 class="mb-3">
+                <RadzenIcon Icon="place" class="me-2" />
+                Location Information
+            </h5>
+            
+            <RadzenRow>
+                <RadzenColumn Size="8">
+                    <div class="row g-3">
+                        @if (HazardLocation.Latitude.HasValue && HazardLocation.Longitude.HasValue)
+                        {
+                            <div class="col-lg-6">
+                                <div class="info-item">
+                                    <label class="info-label">Coordinates</label>
+                                    <div class="info-value coordinates">
+                                        <i class="fas fa-map-marker-alt me-2"></i>
+                                        @HazardLocation.Latitude.Value.ToString("F6"), @HazardLocation.Longitude.Value.ToString("F6")
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="info-item">
+                                    <label class="info-label">Location Code</label>
+                                    <div class="info-value">@HazardLocation.Code</div>
+                                </div>
+                            </div>
+                        }
+                        
+                        @if (!string.IsNullOrEmpty(HazardLocation.Description))
+                        {
+                            <div class="col-12">
+                                <div class="info-item">
+                                    <label class="info-label">Description</label>
+                                    <div class="info-value">@HazardLocation.Description</div>
+                                </div>
+                            </div>
+                        }
+
+                        @if (HazardLocation.CreatedDate != default)
+                        {
+                            <div class="col-lg-6">
+                                <div class="info-item">
+                                    <label class="info-label">Location Recorded</label>
+                                    <div class="info-value">@HazardLocation.CreatedDate.Value.ToString("MM/dd/yyyy")</div>
+                                </div>
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(HazardLocation.CreatedBy))
+                        {
+                            <div class="col-lg-6">
+                                <div class="info-item">
+                                    <label class="info-label">Recorded By</label>
+                                    <div class="info-value">@HazardLocation.CreatedBy</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    @if (HazardLocation.Latitude.HasValue && HazardLocation.Longitude.HasValue)
+                    {
+                        <div class="text-center">
+                            <ReadOnlyLocationMap Latitude="@HazardLocation.Latitude.Value"
+                                               Longitude="@HazardLocation.Longitude.Value"
+                                               LocationDescription="@(HazardLocation.Description ?? ReportDetails?.HazardCode ?? "Location")"
+                                               MapHeight="200px"
+                                               ShowZoomControls="false"
+                                               ShowCoordinates="false"
+                                               ShowLocationDetails="false"
+                                               ZoomLevel="16" />
+                            <small class="text-muted d-block mt-2">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Interactive map thumbnail
+                            </small>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted p-4">
+                            <i class="fas fa-map-marker-alt fa-3x mb-3" style="color: #dee2e6;"></i>
+                            <div><strong>No Coordinates Available</strong></div>
+                            <small>Location data does not include geographic coordinates</small>
+                        </div>
+                    }
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenCard>
+    }
+    else if (ReportDetails != null && (!string.IsNullOrEmpty(ReportDetails.LocationArea) || !string.IsNullOrEmpty(ReportDetails.LocationSubArea)))
+    {
+        <!-- Fallback Location Card for text-based location info -->
+        <RadzenCard class="mb-4">
+            <h5 class="mb-3">
+                <RadzenIcon Icon="place" class="me-2" />
+                Location Information
+            </h5>
+            
+            <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true">
+                <strong>Text-Based Location:</strong> This report contains location information but no geographic coordinates.
+            </RadzenAlert>
+            
+            <div class="row g-3 mt-2">
+                @if (!string.IsNullOrEmpty(ReportDetails.LocationArea))
+                {
+                    <div class="col-lg-6">
+                        <div class="info-item">
+                            <label class="info-label">Location Area</label>
+                            <div class="info-value">@ReportDetails.LocationArea</div>
+                        </div>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(ReportDetails.LocationSubArea))
+                {
+                    <div class="col-lg-6">
+                        <div class="info-item">
+                            <label class="info-label">Location Sub-Area</label>
+                            <div class="info-value">@ReportDetails.LocationSubArea</div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </RadzenCard>
+    }
+
+    <!-- Files and Attachments Card -->
+    @if (AttachedFiles.Any())
+    {
+        <RadzenCard class="mb-4">
+            <h5 class="mb-3">
+                <RadzenIcon Icon="attach_file" class="me-2" />
+                Attachments (@AttachedFiles.Count)
+            </h5>
+            
+            <RadzenDataList Data="@AttachedFiles" TItem="HazardFile" class="file-list">
+                <Template Context="file">
+                    <div class="file-item d-flex justify-content-between align-items-center">
+                        <div class="file-info d-flex align-items-center">
+                            <RadzenIcon Icon="@GetFileIcon(file.FileType)" class="me-3 file-icon" />
+                            <div>
+                                <div class="file-name">@file.FileName</div>
+                                <small class="text-muted">
+                                    @FormatFileSize(file.FileSizeBytes) • 
+                                    Uploaded @(file.UploadedDate?.ToString("MM/dd/yyyy") ?? "Unknown date")
+                                    @if (file.IsConfidential)
+                                    {
+                                        <span class="ms-2">
+                                            <RadzenBadge Text="Confidential" BadgeStyle="BadgeStyle.Warning" />
+                                        </span>
+                                    }
+                                </small>
+                            </div>
+                        </div>
+                        <RadzenButton ButtonType="ButtonType.Button"
+                                      Text="View"
+                                      Icon="visibility"
+                                      Size="ButtonSize.Small"
+                                      ButtonStyle="ButtonStyle.Primary"
+                                      Variant="Variant.Outlined"
+                                      Disabled="true"
+                                      Title="File viewing not available in search results" />
+                    </div>
+                </Template>
+            </RadzenDataList>
+        </RadzenCard>
+    }
+
+    <!-- Contact Information Card -->
+    <RadzenCard class="mb-4">
+        <h5 class="mb-3">
+            <RadzenIcon Icon="contact_support" class="me-2" />
+            Need Help?
+        </h5>
+        
+        <div class="contact-info">
+            <p class="mb-3">
+                If you have questions about this report or need to provide additional information, 
+                please contact the SMS team with your tracking ID: <strong>@TrackingCode</strong>
+            </p>
+            
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="contact-method">
+                        <RadzenIcon Icon="email" class="me-2" />
+                        <strong>Email:</strong> sms@pdx.com
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="contact-method">
+                        <RadzenIcon Icon="phone" class="me-2" />
+                        <strong>Phone:</strong> (503) 460-4000
+                    </div>
+                </div>
+            </div>
+        </div>
+    </RadzenCard>
+}
+else if (!IsLoading && HasSearched)
+{
+    <!-- No Results Found -->
+    <RadzenCard class="text-center py-5">
+        <RadzenIcon Icon="search_off" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" class="mb-3" />
+        <h5 class="text-muted">Report Not Found</h5>
+        <p class="text-muted mb-4">
+            No hazard report found for tracking ID: <strong>@TrackingCode</strong>
+        </p>
+        <RadzenButton ButtonType="ButtonType.Button"
+                      Click="@BackToSearch"
+                      Text="Back to Search"
+                      Icon="arrow_back"
+                      ButtonStyle="ButtonStyle.Primary" />
+    </RadzenCard>
+}
+
+<style>
+    .page-header {
+        border-bottom: 2px solid var(--rz-border-color);
+        padding-bottom: 1rem;
+    }
+
+    .info-item {
+        margin-bottom: 0.75rem;
+    }
+
+    .info-label {
+        display: block;
+        font-weight: 600;
+        color: var(--rz-text-color);
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+    }
+
+    .info-value {
+        color: var(--rz-text-color);
+        font-size: 1rem;
+        line-height: 1.4;
+    }
+
+    .tracking-id {
+        font-family: 'Courier New', monospace;
+        font-weight: 700;
+        color: var(--rz-primary);
+        font-size: 1.1rem;
+    }
+
+    .hazard-type {
+        color: var(--rz-info);
+        font-weight: 600;
+    }
+
+    .description-text {
+        background-color: var(--rz-background-color);
+        padding: 1rem;
+        border-radius: var(--rz-border-radius);
+        border: 1px solid var(--rz-border-color);
+        white-space: pre-wrap;
+    }
+
+    .validation-comments {
+        background-color: var(--rz-background-color);
+        padding: 0.75rem;
+        border-radius: var(--rz-border-radius);
+        border: 1px solid var(--rz-border-color);
+        font-style: italic;
+    }
+
+    .coordinates {
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+    }
+
+    .confidential-alert {
+        border-left: 4px solid var(--rz-warning);
+    }
+
+    /* Processing Timeline Styles */
+    .processing-timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-bottom: 2rem;
+        display: flex;
+        align-items-flex-start;
+    }
+
+    .timeline-item:not(:last-child)::before {
+        content: '';
+        position: absolute;
+        left: -1.75rem;
+        top: 2.5rem;
+        width: 2px;
+        height: calc(100% - 1rem);
+        background-color: var(--rz-border-color);
+    }
+
+    .timeline-item.completed::before {
+        background-color: var(--rz-success);
+    }
+
+    .timeline-icon {
+        position: absolute;
+        left: -2.25rem;
+        top: 0;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--rz-background-color);
+        border: 2px solid var(--rz-border-color);
+    }
+
+    .timeline-item.completed .timeline-icon {
+        background-color: var(--rz-success);
+        border-color: var(--rz-success);
+        color: white;
+    }
+
+    .timeline-item.pending .timeline-icon {
+        background-color: var(--rz-warning-lighter);
+        border-color: var(--rz-warning);
+        color: var(--rz-warning);
+    }
+
+    .timeline-item.in-progress .timeline-icon {
+        background-color: var(--rz-info-lighter);
+        border-color: var(--rz-info);
+        color: var(--rz-info);
+    }
+
+    .timeline-content {
+        margin-left: 1rem;
+        flex: 1;
+    }
+
+    .timeline-content h6 {
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+
+    .timeline-content p {
+        margin-bottom: 0;
+    }
+
+    /* File List Styles */
+    .file-list .rz-datalist-item {
+        border-bottom: 1px solid var(--rz-border-color);
+        padding: 1rem;
+    }
+
+    .file-list .rz-datalist-item:last-child {
+        border-bottom: none;
+    }
+
+    .file-item {
+        width: 100%;
+    }
+
+    .file-icon {
+        font-size: 1.5rem;
+        color: var(--rz-info);
+    }
+
+    .file-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .contact-method {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Badge Styles */
+    .status-badge, .validation-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .processing-timeline {
+            padding-left: 1.5rem;
+        }
+
+        .timeline-icon {
+            left: -2rem;
+            width: 2rem;
+            height: 2rem;
+        }
+
+        .timeline-content {
+            margin-left: 0.5rem;
+        }
+    }
+</style>

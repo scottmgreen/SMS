@@ -1,9 +1,5 @@
-using Microsoft.Extensions.Logging;
-using SMS_Domain.Entities;
-using SMS_Infrastructure.Common;
-using SMS_Infrastructure.Persistence;
-using SMS_Shared.Common;
 using Domain.Models;
+
 using Infrastructure.Persistence;
 
 namespace SMS_Infrastructure.Services;
@@ -152,7 +148,7 @@ public class SMSAuditPlanDataService : BaseDataService<SMSAuditPlanDataService>
     /// <summary>
     /// Gets SMS Audit Calendar data for dashboard
     /// </summary>
-    public async Task<Result<SMSAuditCalendarData>> GetAuditCalendarDataAsync(DateTime startDate, DateTime endDate, 
+    public async Task<Result<SMSAuditCalendarData>> GetAuditCalendarDataAsync(DateTime startDate, DateTime endDate,
         string? departmentFilter = null, string? auditTypeFilter = null, string? auditorFilter = null, CancellationToken ct = default)
     {
         // This method would need to be implemented based on specific business requirements

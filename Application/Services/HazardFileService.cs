@@ -1,10 +1,4 @@
 using Microsoft.Extensions.Logging;
-using SMS_Infrastructure.Services;
-using SMS_Domain.Entities;
-using SMS_Domain.Models;
-using SMS_Domain.Errors;
-using SMS_Shared.Common;
-using SMS_Application.Interfaces;
 
 namespace SMS_Application.Services;
 
@@ -165,5 +159,5 @@ public sealed class HazardFileService : IHazardFileService
         }
     }
 
-    
+
 }

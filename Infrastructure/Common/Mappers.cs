@@ -1,24 +1,11 @@
-﻿using System.Reflection;
-using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Infrastructure.Common;
-using Microsoft.Data.SqlClient;
-using System.Data;
-
-using SMS_Domain.Enums;
-using SMS_Domain.Models;
-
-using SMS_Infrastructure.Common;
-
-using SMS_Shared.Common;
-using Domain.Entities;
+﻿using Domain.Entities;
 
 namespace SMS_Infrastructure.Common;
 
 public static partial class Mappers
 {
     #region Generic Helper Methods
-    
+
     public static List<T> LoadCollection<T>(this SqlDataReader reader) where T : new()
     {
         List<T> collection = new List<T>();
@@ -67,18 +54,18 @@ public static partial class Mappers
     /// </summary>
     public static SMSApplicationUser MapToSMSApplicationUser(SqlDataReader reader)
     {
-        
+
         try
         {
             // Extract database values
             SMSApplicationUserID applicationuserId = new SMSApplicationUserID(reader.GetString(FieldNames.fSMSApplicationUserCode));
             SMSApplicationUser applicationUser = new SMSApplicationUser(applicationuserId);
-                        
+
             applicationUser.Code = reader.GetString(FieldNames.fSMSApplicationUserCode);
             applicationUser.FirstName = FirstName.Create(reader.GetString(FieldNames.fSMSApplicationUserFirstName)).Value;
             applicationUser.LastName = LastName.Create(reader.GetString(FieldNames.fSMSApplicationUserLastName)).Value;
-            applicationUser.UserName= UserName.Create(reader.GetString(FieldNames.fSMSApplicationUserUserName)).Value;
-            applicationUser.Password = Password.FromHash(reader.GetString(FieldNames.fSMSApplicationUserPassword), reader.GetDateTime(FieldNames.fCreatedDate),false);
+            applicationUser.UserName = UserName.Create(reader.GetString(FieldNames.fSMSApplicationUserUserName)).Value;
+            applicationUser.Password = Password.FromHash(reader.GetString(FieldNames.fSMSApplicationUserPassword), reader.GetDateTime(FieldNames.fCreatedDate), false);
             applicationUser.SMSUserType = reader.GetString(FieldNames.fSMSApplicationUserTypeCode);
             applicationUser.UserRole = new SMSUserRole(new SMSUserRoleID(reader.GetString(FieldNames.fSMSUserRoleCode)));
             applicationUser.IsActive = reader.GetBoolean(FieldNames.fSMSApplicationUserIsActive);
@@ -113,23 +100,23 @@ public static partial class Mappers
             orgUser.Department = reader.GetString(FieldNames.fSMSOrganizationalUserDepartment);
             orgUser.Position = reader.GetString(FieldNames.fSMSOrganizationalUserPosition);
             orgUser.OrganizationLevel = reader.GetString(FieldNames.fSMSOrganizationalUserOrganizationLevel);
-            
+
             // New SMS role fields - with null checking for backward compatibility
             if (reader.HasColumn(FieldNames.fSMSOrganizationalUserSMSRole))
             {
                 orgUser.SMSRole = reader.GetValue<string>(FieldNames.fSMSOrganizationalUserSMSRole);
             }
-            
+
             if (reader.HasColumn(FieldNames.fSMSOrganizationalUserAuthorityLevel))
             {
                 orgUser.AuthorityLevel = reader.GetValue<string>(FieldNames.fSMSOrganizationalUserAuthorityLevel);
             }
-            
+
             if (reader.HasColumn(FieldNames.fSMSOrganizationalUserRiskApprovalAuthority))
             {
                 orgUser.RiskApprovalAuthority = reader.GetValue<string>(FieldNames.fSMSOrganizationalUserRiskApprovalAuthority);
             }
-            
+
             orgUser.IsActive = reader.GetBoolean(FieldNames.fSMSOrganizationalUserIsActive);
             orgUser.LastLoginDate = reader.IsDBNull(FieldNames.fSMSOrganizationalUserLastLoginDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSOrganizationalUserLastLoginDate);
             orgUser.CreatedBy = reader.GetString(FieldNames.fCreatedBy);
@@ -192,7 +179,7 @@ public static partial class Mappers
             stakeholderuser.FirstName = firstName;
             stakeholderuser.LastName = lastName;
             stakeholderuser.UserName = userName;
-            stakeholderuser.Password = password;    
+            stakeholderuser.Password = password;
 
             stakeholderuser.StakeholderType = reader.GetString(FieldNames.fSMSStakeholderUserStakeholderTypeCode);
             stakeholderuser.UserRole = new SMSUserRole(new SMSUserRoleID(reader.GetString(FieldNames.fSMSUserRoleCode)));
@@ -203,7 +190,7 @@ public static partial class Mappers
             stakeholderuser.LastLoginDate = reader.IsDBNull(FieldNames.fSMSStakeholderUserLastLoginDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSStakeholderUserLastLoginDate);
             stakeholderuser.CreatedBy = reader.GetString(FieldNames.fCreatedBy);
             stakeholderuser.CreatedDate = reader.GetDateTime(FieldNames.fCreatedDate);
-            
+
             return stakeholderuser;
         }
         catch (Exception ex)
@@ -211,7 +198,7 @@ public static partial class Mappers
             throw new InvalidOperationException($"Error mapping SqlDataReader to SMSStakeholderUser: {ex.Message}", ex);
         }
     }
-    
+
     /// <summary>
     /// Maps SqlDataReader to AirportSharedDataset entity using updated field names
     /// </summary>
@@ -276,11 +263,11 @@ public static partial class Mappers
         hazard.HazardCategory = reader.GetValue<string>(FieldNames.fHazardCategory).Trim();
         hazard.ReportCode = reader.GetValue<string>(FieldNames.fHazardReportCode) ?? string.Empty;
         hazard.RiskMatrixCode = reader.GetValue<string>(FieldNames.fHazardScoringPanelRiskMatrixCode);
-        
+
         // ✅ FIXED: HazardAverageScore is actually a decimal in database, not string
         var averageScore = reader.IsDBNull(FieldNames.fHazardAverageScore) ? (decimal?)null : reader.GetDecimal(FieldNames.fHazardAverageScore);
         hazard.AverageScore = averageScore ?? 0;
-        
+
         // NOTE: HazardLocation is NOT populated here - it must be populated at the Application Service layer
         // to maintain proper separation of concerns and avoid circular dependencies
 
@@ -288,7 +275,7 @@ public static partial class Mappers
         try
         {
             // Enhanced Classification Fields
-            
+
             var hazardType = reader.GetValue<string>(FieldNames.fHazardType);
             if (!string.IsNullOrEmpty(hazardType))
             {
@@ -438,45 +425,45 @@ public static partial class Mappers
     {
         InvestigationID investigationId = new InvestigationID(reader.GetValue<string>(FieldNames.fInvestigationCode));
         Investigation investigation = new Investigation(investigationId);
-        
+
         // Map basic properties using reflection to access private setters
         var investigationType = typeof(Investigation);
-        
+
         // Core properties
         investigation.Code = reader.GetValue<string>(FieldNames.fInvestigationCode);
         investigation.ReportCode = reader.GetValue<string>(FieldNames.fInvestigationReportCode);
         investigation.HazardCode = reader.GetValue<string>(FieldNames.fInvestigationHazardCode);
         investigation.InvestigationNotes = reader.GetValue<string>(FieldNames.fInvestigationNotes);
-        
+
         // Management properties
         investigation.AssignedInvestigatorId = reader.GetValue<string>(FieldNames.fInvestigationAssignedInvestigatorId) ?? string.Empty;
-        
+
         // ✅ ENHANCED: Handle both old and new status format during transition
         var statusValue = reader.GetValue<string>(FieldNames.fInvestigationStatus);
         var mappedStatus = InvestigationStatus.FromValue(statusValue);
-        
+
         // If Smart Enum mapping fails, try legacy format conversion
         if (mappedStatus == null && !string.IsNullOrEmpty(statusValue))
         {
             var legacyStatusConverted = statusValue.Trim() switch
             {
                 "Completed" => "COMPLETED",
-                "InProgress" or "In Progress" => "IN_PROGRESS", 
+                "InProgress" or "In Progress" => "IN_PROGRESS",
                 "OnHold" or "On Hold" => "ON_HOLD",
                 "Cancelled" => "CANCELLED",
                 "Assigned" => "IN_PROGRESS", // Map legacy "Assigned" to IN_PROGRESS
                 _ => statusValue.ToUpperInvariant().Replace(" ", "_")
             };
-            
+
             mappedStatus = InvestigationStatus.FromValue(legacyStatusConverted);
         }
-        
+
         investigation.Status = mappedStatus?.Value ?? InvestigationStatus.InProgress.Value;
-        
+
         investigation.CompletedDate = reader.GetValue<DateTime?>(FieldNames.fInvestigationCompletedDate);
         investigation.InvestigationPlan = reader.GetValue<string>(FieldNames.fInvestigationPlan);
         investigation.InvestigationObjectives = reader.GetValue<string>(FieldNames.fInvestigationObjectives);
-        
+
         // Decision properties
         investigation.DecisionType = reader.GetValue<string>(FieldNames.fInvestigationDecisionType);
         investigation.DecisionRationale = reader.GetValue<string>(FieldNames.fInvestigationDecisionRationale);
@@ -484,13 +471,13 @@ public static partial class Mappers
         investigation.DecisionDate = reader.GetValue<DateTime?>(FieldNames.fInvestigationDecisionDate);
         investigation.NextSteps = reader.GetValue<string>(FieldNames.fInvestigationNextSteps);
         investigation.ReferralDetails = reader.GetValue<string>(FieldNames.fInvestigationReferralDetails);
-        
+
         // Audit properties
         investigation.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
         investigation.CreatedDate = reader.GetValue<DateTime>(FieldNames.fCreatedDate);
         investigation.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
         investigation.UpdatedDate = reader.GetValue<DateTime?>(FieldNames.fUpdatedDate);
-        
+
         return investigation;
     }
 
@@ -501,32 +488,32 @@ public static partial class Mappers
     {
         var interviewId = new InterviewID(reader.GetValue<string>(FieldNames.fInterviewCode));
         var interview = new Interview(interviewId);
-        
+
         // Core properties
         interview.Code = reader.GetValue<string>(FieldNames.fInterviewCode);
         interview.InvestigationCode = reader.GetValue<string>(FieldNames.fInterviewInvestigationCode);
         interview.SMSInvestigatorCode = reader.GetValue<string>(FieldNames.fInterviewSMSInvestigatorCode);
-        
+
         // Interview details
         interview.PersonInterviewed = reader.GetValue<string>(FieldNames.fInterviewPersonInterviewed) ?? string.Empty;
         interview.PersonInterviewedRole = reader.GetValue<string>(FieldNames.fInterviewPersonRole);
         interview.PersonInterviewedDepartment = reader.GetValue<string>(FieldNames.fInterviewPersonDepartment);
         interview.PersonInterviewedNotes = reader.GetValue<string>(FieldNames.fInterviewPersonInterviewedNotes);
         interview.InvestigatorNotes = reader.GetValue<string>(FieldNames.fInterviewInvestigatorNotes);
-        
+
         // Status and scheduling
         var statusValue = reader.GetValue<string>(FieldNames.fInterviewStatus);
         interview.Status = InterviewStatus.FromValue(statusValue) ?? InterviewStatus.Scheduled;
-        
+
         interview.InterviewDate = reader.GetValue<DateTime?>(FieldNames.fInterviewDate);
         interview.DurationMinutes = reader.GetValue<int?>(FieldNames.fInterviewDurationMinutes);
         interview.InterviewLocation = reader.GetValue<string>(FieldNames.fInterviewLocation);
-        
+
         var typeValue = reader.GetValue<string>(FieldNames.fInterviewType);
         interview.Type = InterviewType.FromValue(typeValue) ?? InterviewType.Witness;
-        
+
         interview.IsConfidential = reader.GetValue<bool>(FieldNames.fInterviewIsConfidential);
-        
+
         // Preparation and results
         interview.PreparationNotes = reader.GetValue<string>(FieldNames.fInterviewPreparationNotes);
         interview.QuestionsToAsk = reader.GetValue<string>(FieldNames.fInterviewQuestionsToAsk);
@@ -535,13 +522,13 @@ public static partial class Mappers
         interview.FollowUpRequired = reader.GetValue<string>(FieldNames.fInterviewFollowUpRequired);
         interview.AdditionalWitnesses = reader.GetValue<string>(FieldNames.fInterviewAdditionalWitnesses);
         interview.CompletedDate = reader.GetValue<DateTime?>(FieldNames.fInterviewCompletedDate);
-        
+
         // Audit properties
         interview.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
         interview.CreatedDate = reader.GetValue<DateTime>(FieldNames.fCreatedDate);
         interview.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
         interview.UpdatedDate = reader.GetValue<DateTime?>(FieldNames.fUpdatedDate);
-        
+
         return interview;
     }
 
@@ -625,7 +612,7 @@ public static partial class Mappers
         riskAssessment.FiveMProcedures = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMProcedures) ?? string.Empty;
         riskAssessment.FiveMResources = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMResources) ?? string.Empty;
         riskAssessment.FiveMPhysicalEnvironment = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMPhysicalEnvironment) ?? string.Empty;
-   //     riskAssessment.FiveMOperationalEnvironment = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMOperationalEnvironment) ?? string.Empty;
+        //     riskAssessment.FiveMOperationalEnvironment = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMOperationalEnvironment) ?? string.Empty;
 
         // ✅ Step 3 - Risk Analysis Fields
         riskAssessment.RiskAnalysisMethod = reader.GetValue<string>(FieldNames.fRiskAssessmentRiskAnalysisMethod) ?? "SMS Risk Matrix";
@@ -775,7 +762,7 @@ public static partial class Mappers
             reportValidation.Status = reader.GetValue<string>(FieldNames.fReportValidationStatus);
             reportValidation.Stage = reader.GetValue<string>(FieldNames.fReportValidationStage);
             reportValidation.ValidationType = reader.GetValue<string>(FieldNames.fReportValidationType);
-            reportValidation.ValidationComments =  reader.GetValue<string>(FieldNames.fReportValidationComments);
+            reportValidation.ValidationComments = reader.GetValue<string>(FieldNames.fReportValidationComments);
             reportValidation.ValidatedBy = reader.GetValue<string>(FieldNames.fReportValidationValidatedBy);
             // Set audit properties using reflection since they have private setters
             var baseEntityType = typeof(BaseAuditableEntity);
@@ -896,7 +883,7 @@ public static partial class Mappers
         try
         {
             var code = reader.GetValue<string>(FieldNames.fSMSStakeholderGroupCode) ?? string.Empty;
-            SMSStakeholderGroupID id = new SMSStakeholderGroupID(code); 
+            SMSStakeholderGroupID id = new SMSStakeholderGroupID(code);
             SMSStakeholderGroup stakeholderGroup = new SMSStakeholderGroup(id);
             stakeholderGroup.Code = code;
             stakeholderGroup.Name = reader.GetValue<string>(FieldNames.fSMSStakeholderGroupName) ?? string.Empty;
@@ -921,7 +908,7 @@ public static partial class Mappers
             var code = reader.GetValue<string>(FieldNames.fSMSApplicationGroupCode) ?? string.Empty;
             SMSApplicationGroupID id = new SMSApplicationGroupID(code);
             SMSApplicationGroup applicationGroup = new SMSApplicationGroup(id);
-            
+
             applicationGroup.Code = code;
             applicationGroup.Name = reader.GetValue<string>(FieldNames.fSMSApplicationGroupName) ?? string.Empty;
             applicationGroup.Description = reader.GetValue<string>(FieldNames.fSMSApplicationGroupDescription) ?? string.Empty;
@@ -949,7 +936,7 @@ public static partial class Mappers
             var code = reader.GetValue<string>(FieldNames.fSMSOrganizationalGroupCode) ?? string.Empty;
             SMSOrganizationalGroupID id = new SMSOrganizationalGroupID(code);
             SMSOrganizationalGroup organizationalGroup = new SMSOrganizationalGroup(id);
-            
+
             organizationalGroup.Code = code;
             organizationalGroup.Name = reader.GetValue<string>(FieldNames.fSMSOrganizationalGroupName) ?? string.Empty;
             organizationalGroup.Description = reader.GetValue<string>(FieldNames.fSMSOrganizationalGroupDescription) ?? string.Empty;
@@ -1011,7 +998,7 @@ public static partial class Mappers
         var code = reader.GetValue<string>(FieldNames.fSPICode);
         SafetyPerformanceIndicatorID spiID = new(code);
 
-        SafetyPerformanceIndicator spi = new(spiID, 
+        SafetyPerformanceIndicator spi = new(spiID,
             reader.GetValue<string>(FieldNames.fSPIName) ?? string.Empty,
             reader.GetValue<string>(FieldNames.fSPIDescription) ?? string.Empty,
             SPIType.GetAllValues().FirstOrDefault(t => t.Value == reader.GetValue<string>(FieldNames.fSPIIndicatorType)) ?? SPIType.IncidentRate,
@@ -1056,7 +1043,7 @@ public static partial class Mappers
         var dataPoint = new SPIDataPoint(new SPIDataPointID(reader.GetValue<string>(FieldNames.fSPIDataPointCode)));
 
         dataPoint.Code = reader.GetValue<string>(FieldNames.fSPIDataPointCode);
-        dataPoint.SPIId = reader.GetValue<string>(FieldNames.fSPIDataPointSPIId); 
+        dataPoint.SPIId = reader.GetValue<string>(FieldNames.fSPIDataPointSPIId);
         dataPoint.Value = reader.GetValue<decimal>(FieldNames.fSPIDataPointValue);
         dataPoint.MeasurementDate = reader.GetValue<DateTime>(FieldNames.fSPIDataPointMeasurementDate);
         dataPoint.Period = reader.GetValue<string>(FieldNames.fSPIDataPointPeriod) ?? string.Empty;
@@ -1239,6 +1226,28 @@ public static partial class Mappers
         evidence.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fUpdatedDate);
 
         return evidence;
+    }
+
+    /// <summary>
+    /// Maps SqlDataReader to HazardReportTracking entity
+    /// </summary>
+    public static HazardReportTracking MapToHazardReportTracking(SqlDataReader reader)
+    {
+        var trackingCode = reader.GetValue<string>(FieldNames.fHazardReportTrackingTrackingCode);
+        HazardReportTrackingID hazardReportTrackingID = new(trackingCode);
+        HazardReportTracking hazardReportTracking = new(hazardReportTrackingID);
+
+        hazardReportTracking.HazardCode = reader.GetValue<string>(FieldNames.fHazardReportTrackingHazardCode) ?? string.Empty;
+        hazardReportTracking.ReportCode = reader.GetValue<string>(FieldNames.fHazardReportTrackingReportCode);
+        hazardReportTracking.TrackingCode = trackingCode ?? string.Empty;
+
+        // Audit properties
+        hazardReportTracking.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
+        hazardReportTracking.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+        hazardReportTracking.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
+        hazardReportTracking.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fUpdatedDate);
+
+        return hazardReportTracking;
     }
 
     #endregion

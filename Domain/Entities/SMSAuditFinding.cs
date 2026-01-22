@@ -14,7 +14,7 @@ public class SMSAuditFinding : BaseAuditableEntity
     public string Code { get; set; }
     public string AuditCode { get; set; } = string.Empty;
     public string FindingNumber { get; set; } = string.Empty;
-    
+
     // ADDED MISSING PROPERTIES for repository compatibility
     public string Title { get; set; } = string.Empty; // Added for repository compatibility
     public string Description { get; set; } = string.Empty; // Added for repository compatibility
@@ -25,12 +25,12 @@ public class SMSAuditFinding : BaseAuditableEntity
     public string RootCauseAnalysis { get; set; } = string.Empty; // Added for repository compatibility
     public bool VerificationRequired { get; set; } = true; // Added for repository compatibility
     public string Notes { get; set; } = string.Empty; // Added for repository compatibility
-    
+
     public string FindingDescription { get; set; } = string.Empty;
     public string FindingType { get; set; } = string.Empty; // Non-Conformance, Observation, Improvement Opportunity
     public string Severity { get; set; } = string.Empty; // Critical, Major, Minor, Observation
     public string Status { get; set; } = string.Empty; // Open, In Progress, Closed, Verified
-    
+
     // Finding Details
     public DateTime FoundDate { get; set; }
     public string FoundBy { get; set; } = string.Empty;
@@ -38,25 +38,25 @@ public class SMSAuditFinding : BaseAuditableEntity
     public string AffectedProcess { get; set; } = string.Empty;
     public string RequirementReference { get; set; } = string.Empty;
     public string StandardReference { get; set; } = string.Empty;
-    
+
     // Evidence and Documentation
     public string EvidenceDescription { get; set; } = string.Empty;
     public string ObjectiveEvidence { get; set; } = string.Empty;
     public string PhotosAttached { get; set; } = string.Empty; // Yes/No or count
     public string DocumentsReferenced { get; set; } = string.Empty;
-    
+
     // Root Cause Analysis
     public string RootCause { get; set; } = string.Empty;
     public string ContributingFactors { get; set; } = string.Empty;
     public string RootCauseMethod { get; set; } = string.Empty; // 5 Whys, Fishbone, FMEA, etc.
-    
+
     // Corrective Action
     public string CorrectiveAction { get; set; } = string.Empty;
     public string ResponsiblePerson { get; set; } = string.Empty;
     public string ResponsibleDepartment { get; set; } = string.Empty;
     public DateTime? TargetCompletionDate { get; set; }
     public DateTime? ActualCompletionDate { get; set; }
-    
+
     // Verification and Closure
     public string VerificationMethod { get; set; } = string.Empty;
     public string VerificationEvidence { get; set; } = string.Empty;
@@ -65,14 +65,14 @@ public class SMSAuditFinding : BaseAuditableEntity
     public string ClosureNotes { get; set; } = string.Empty;
     public DateTime? ClosureDate { get; set; }
     public string ClosedBy { get; set; } = string.Empty;
-    
+
     // Follow-up
     public bool RequiresFollowUp { get; set; } = false;
     public DateTime? FollowUpDate { get; set; }
     public string FollowUpNotes { get; set; } = string.Empty;
     public bool IsRecurring { get; set; } = false;
     public string RecurrencePattern { get; set; } = string.Empty;
-    
+
     // Additional Information
     public string ImpactAssessment { get; set; } = string.Empty;
     public string RiskLevel { get; set; } = string.Empty; // High, Medium, Low
@@ -80,7 +80,7 @@ public class SMSAuditFinding : BaseAuditableEntity
     public string AdditionalNotes { get; set; } = string.Empty;
 
     // Business Methods
-    public Result AssignCorrectiveAction(string correctiveAction, string responsiblePerson, 
+    public Result AssignCorrectiveAction(string correctiveAction, string responsiblePerson,
         string responsibleDepartment, DateTime targetDate, string assignedBy)
     {
         try
@@ -114,7 +114,7 @@ public class SMSAuditFinding : BaseAuditableEntity
             ActualCompletionDate = completionDate;
             if (!string.IsNullOrEmpty(evidence))
                 VerificationEvidence = evidence;
-            
+
             Status = "Closed";
             UpdatedBy = completedBy;
             UpdatedDate = DateTime.UtcNow;

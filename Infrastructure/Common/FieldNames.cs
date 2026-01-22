@@ -568,7 +568,7 @@ public static class FieldNames
     private static readonly Lazy<string> _fHazardFileInactiveBy = new Lazy<string>(() => "fldv_InactiveBy");
     public static string fHazardFileInactiveBy => _fHazardFileInactiveBy.Value;
 
-   
+
     #region Safety Performance Indicator Field Names
 
     /// <summary>
@@ -1484,6 +1484,22 @@ public static class FieldNames
 
     private static readonly Lazy<string> _fSMSAuditEvidenceNotes = new Lazy<string>(() => "fldv_Notes");
     public static string fSMSAuditEvidenceNotes => _fSMSAuditEvidenceNotes.Value;
+
+    #endregion
+
+    #region HazardReportTracking Field Names
+
+    /// <summary>
+    /// HazardReportTracking table field names - Following established naming convention
+    /// </summary>
+    private static readonly Lazy<string> _fHazardReportTrackingHazardCode = new(() => "fldv_HazardCode");
+    public static string fHazardReportTrackingHazardCode => _fHazardReportTrackingHazardCode.Value;
+
+    private static readonly Lazy<string> _fHazardReportTrackingReportCode = new(() => "fldv_ReportCode");
+    public static string fHazardReportTrackingReportCode => _fHazardReportTrackingReportCode.Value;
+
+    private static readonly Lazy<string> _fHazardReportTrackingTrackingCode = new(() => "fldv_Code");
+    public static string fHazardReportTrackingTrackingCode => _fHazardReportTrackingTrackingCode.Value;
 
     #endregion
 }

@@ -40,7 +40,7 @@ public class InterviewDataService : BaseDataService<InterviewDataService>, IInte
         return _repo.GetInterviewByCodeAsync(code, ct);
     }
 
-    
+
 
     public Task<Result<List<Interview>>> GetAllInterviewsAsync(CancellationToken ct = default)
     {
@@ -79,13 +79,13 @@ public class InterviewDataService : BaseDataService<InterviewDataService>, IInte
         return _repo.UpdateStatusAsync(interviewCode, status, ct);
     }
 
-    public Task<Result<bool>> ScheduleInterviewAsync(string interviewCode, DateTime interviewDate, string location, 
+    public Task<Result<bool>> ScheduleInterviewAsync(string interviewCode, DateTime interviewDate, string location,
         int? durationMinutes = null, CancellationToken ct = default)
     {
         return _repo.ScheduleInterviewAsync(interviewCode, interviewDate, location, durationMinutes, ct);
     }
 
-    public Task<Result<bool>> CompleteInterviewAsync(string interviewCode, string? personNotes, string? investigatorNotes, 
+    public Task<Result<bool>> CompleteInterviewAsync(string interviewCode, string? personNotes, string? investigatorNotes,
         string? keyFindings = null, CancellationToken ct = default)
     {
         return _repo.CompleteInterviewAsync(interviewCode, personNotes, investigatorNotes, keyFindings, ct);

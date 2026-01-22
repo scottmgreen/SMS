@@ -1,6 +1,6 @@
-﻿using SMS_Shared.Common;
+﻿using Microsoft.Extensions.Logging;
 
-using Microsoft.Extensions.Logging;
+using SMS_Shared.Common;
 
 
 namespace SMS_Application.Common;

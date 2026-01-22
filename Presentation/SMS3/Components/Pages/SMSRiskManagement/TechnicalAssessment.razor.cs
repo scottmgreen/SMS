@@ -1,15 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-using Radzen;
-using SMS3.Components.Shared;
-
-namespace SMS3.Components.Pages.SMSRiskManagement;
+﻿namespace SMS3.Components.Pages.SMSRiskManagement;
 
 /// <summary>
 /// Technical Assessment - Comprehensive 5-step SMS risk assessment methodology
@@ -21,7 +10,7 @@ public partial class TechnicalAssessment : ComponentBase
     [Parameter] public string? ReportId { get; set; }
     [Parameter] public string? HazardId { get; set; }  // Now a route parameter
     [Parameter] public string? StepNumber { get; set; } = "1";
-    
+
     // Keep query parameters for backward compatibility
     // [SupplyParameterFromQuery(Name = "reportId")] public string? ReportId { get; set; }
 
@@ -65,10 +54,10 @@ public partial class TechnicalAssessment : ComponentBase
     public string AssessmentName => InitialRiskAssessment?.Name ?? "Technical Risk Assessment";
     public string AssessmentId => InitialRiskAssessment?.Code ?? $"RS-{ReportId?.Replace("RP-", "")}";
     public string LeadAssessorName => AvailableAssessors.FirstOrDefault(a => a.Id.Value == Step1.LeadAssessor)?.DisplayName ?? Step1.LeadAssessor;
-    
+
     // CRITICAL: Make this a property that can trigger change detection
     public List<Hazard> AvailableHazards { get; private set; } = new();
-    
+
     public List<Step4Model.PanelMemberScoreData> CompletedScores => Step4?.CompletedScores ?? new();
 
     #endregion
@@ -125,7 +114,7 @@ public partial class TechnicalAssessment : ComponentBase
             await NavigateToStep(1);
             return;
         }
-            
+
         await LoadAssessmentDataAsync();
     }
 
@@ -133,7 +122,7 @@ public partial class TechnicalAssessment : ComponentBase
     {
         Logger.LogInformation("TechnicalAssessment OnParametersSetAsync - ReportId: {ReportId}, StepNumber: {StepNumber}, HazardId: {HazardId}",
             ReportId, StepNumber, HazardId);
-            
+
         // Handle route parameter changes
         var currentStep = CurrentStep;
         if (currentStep < 1 || currentStep > 5)
@@ -152,7 +141,7 @@ public partial class TechnicalAssessment : ComponentBase
 
         // If StepNumber parameter changed, we need to refresh the UI
         await InvokeAsync(StateHasChanged);
-        
+
         Logger.LogInformation("OnParametersSetAsync completed - Current step: {CurrentStep}", CurrentStep);
     }
 
@@ -219,7 +208,7 @@ public partial class TechnicalAssessment : ComponentBase
             ReportId = InitialRiskAssessment.Code;
         }
 
-        Logger.LogInformation("Successfully loaded assessments - Initial: {InitialCode}, Residual: {ResidualCode}", 
+        Logger.LogInformation("Successfully loaded assessments - Initial: {InitialCode}, Residual: {ResidualCode}",
             InitialRiskAssessment.Code, ResidualRiskAssessment?.Code ?? "None");
     }
 
@@ -233,7 +222,7 @@ public partial class TechnicalAssessment : ComponentBase
         if (allAssessmentsResult.IsSuccess && allAssessmentsResult.Value?.Any() == true)
         {
             var assessments = allAssessmentsResult.Value.ToList();
-            
+
             InitialRiskAssessment = assessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Initial);
             ResidualRiskAssessment = assessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Residual);
 
@@ -255,7 +244,7 @@ public partial class TechnicalAssessment : ComponentBase
             if (ReportId?.StartsWith("RP-") == true)
             {
                 await LoadAssessmentsByReportIdAsync();
-                
+
                 // If no assessments found, create them
                 if (InitialRiskAssessment == null && !string.IsNullOrEmpty(HazardId))
                 {
@@ -291,10 +280,10 @@ public partial class TechnicalAssessment : ComponentBase
             {
                 InitialRiskAssessment = createInitialResult.Value;
                 InitialRiskAssessment.Description = $"Created from Report {ReportId}";
-                
+
                 var createCommand = new CreateRiskAssessmentCommand(InitialRiskAssessment);
                 var result = await Mediator.SendAsync(createCommand, CancellationToken.None);
-                
+
                 if (!result.IsSuccess)
                 {
                     Logger.LogError("Failed to create Initial assessment: {Error}", result.Error?.Message);
@@ -318,7 +307,7 @@ public partial class TechnicalAssessment : ComponentBase
                     await Mediator.SendAsync(createResidualCommand, CancellationToken.None);
                 }
 
-                Logger.LogInformation("Created new assessments - Initial: {InitialId}, Residual: {ResidualId}", 
+                Logger.LogInformation("Created new assessments - Initial: {InitialId}, Residual: {ResidualId}",
                     riskAssessmentId, residualId);
             }
             else
@@ -356,21 +345,21 @@ public partial class TechnicalAssessment : ComponentBase
                 if (assessmentsResult.IsSuccess && assessmentsResult.Value?.Any() == true)
                 {
                     var assessments = assessmentsResult.Value.ToList();
-                    
+
                     // Take the first valid set of assessments we find
                     if (InitialRiskAssessment == null)
                     {
                         InitialRiskAssessment = assessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Initial);
                         HazardId = hazard.Code; // Update HazardId for consistency
                     }
-                    
+
                     if (ResidualRiskAssessment == null)
                     {
                         ResidualRiskAssessment = assessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Residual);
                     }
 
                     Logger.LogInformation("Found assessments via hazard {HazardCode}", hazard.Code);
-                    
+
                     // If we found what we need, no need to check other hazards
                     if (InitialRiskAssessment != null) break;
                 }
@@ -393,13 +382,13 @@ public partial class TechnicalAssessment : ComponentBase
             {
                 var hazardQuery = new GetHazardByIdQuery(new HazardID(HazardId));
                 var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
-                
+
                 if (hazardResult.IsSuccess && hazardResult.Value != null)
                 {
                     allHazards.Add(hazardResult.Value);
                     PrimaryHazard = hazardResult.Value;
                 }
-                    
+
             }
 
             // Load additional hazards from report
@@ -407,7 +396,7 @@ public partial class TechnicalAssessment : ComponentBase
             {
                 var reportHazardQuery = new GetHazardsByReportIdQuery(new ReportID(ReportId.Trim()));
                 var reportHazardResult = await Mediator.SendAsync(reportHazardQuery, CancellationToken.None);
-                
+
                 if (reportHazardResult.IsSuccess && reportHazardResult.Value?.Any() == true)
                 {
                     foreach (var hazard in reportHazardResult.Value)
@@ -429,8 +418,8 @@ public partial class TechnicalAssessment : ComponentBase
                     {
                         var hazardQuery = new GetHazardByIdQuery(new HazardID(hazardIdString));
                         var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
-                        
-                        if (hazardResult.IsSuccess && hazardResult.Value != null 
+
+                        if (hazardResult.IsSuccess && hazardResult.Value != null
                             && !allHazards.Any(h => h.Code == hazardResult.Value.Code))
                         {
                             allHazards.Add(hazardResult.Value);
@@ -446,7 +435,7 @@ public partial class TechnicalAssessment : ComponentBase
             // CRITICAL: Update both collections
             ReportHazards = allHazards;
             AvailableHazards = allHazards.ToList(); // Create a new list to trigger change detection
-            
+
             Logger.LogInformation("Loaded {Count} hazards for assessment", allHazards.Count);
         }
         catch (Exception ex)
@@ -467,10 +456,10 @@ public partial class TechnicalAssessment : ComponentBase
             Step2.LoadFromAssessment(InitialRiskAssessment);
             Step3.LoadFromAssessment(InitialRiskAssessment, ReportHazards);
             Step4.LoadFromAssessment(InitialRiskAssessment);
-            
+
             // Load existing scoring panel data for Step 4 using CQRS
             await Step4.LoadExistingScoringPanelsAsync(Mediator, ReportHazards);
-            
+
             // ✅ ENHANCED: Load Step 5 with comprehensive mitigation loading
             await Step5.LoadFromAssessmentAsync(InitialRiskAssessment, Mediator, ReportHazards);
 
@@ -492,13 +481,13 @@ public partial class TechnicalAssessment : ComponentBase
             if (smsUsersResult.IsSuccess)
             {
                 AvailableSMSUsers = smsUsersResult.Value?.Where(u => u.IsActive).ToList() ?? new List<SMSApplicationUser>();
-                
+
                 // ENHANCED: Filter for Safety Team members only
                 AvailableAssessors = AvailableSMSUsers
                     .Where(u => u.IsActive && IsSafetyTeamMember(u))
                     .ToList();
-                    
-                Logger.LogInformation("Filtered to {SafetyTeamCount} Safety Team assessors from {TotalCount} total SMS users", 
+
+                Logger.LogInformation("Filtered to {SafetyTeamCount} Safety Team assessors from {TotalCount} total SMS users",
                     AvailableAssessors.Count, AvailableSMSUsers.Count);
             }
 
@@ -539,8 +528,8 @@ public partial class TechnicalAssessment : ComponentBase
         if (user.UserRole?.Name != null)
         {
             var roleName = user.UserRole.Name.ToLowerInvariant();
-            if (roleName.Contains("safety") || 
-                roleName.Contains("assessor") || 
+            if (roleName.Contains("safety") ||
+                roleName.Contains("assessor") ||
                 roleName.Contains("risk") ||
                 roleName.Contains("sms") ||
                 roleName.Equals("safety team", StringComparison.OrdinalIgnoreCase))
@@ -553,8 +542,8 @@ public partial class TechnicalAssessment : ComponentBase
         if (!string.IsNullOrEmpty(user.SMSUserType))
         {
             var userType = user.SMSUserType.ToLowerInvariant();
-            if (userType.Contains("safety") || 
-                userType.Contains("assessor") || 
+            if (userType.Contains("safety") ||
+                userType.Contains("assessor") ||
                 userType.Contains("risk") ||
                 userType.Contains("sms"))
             {
@@ -566,7 +555,7 @@ public partial class TechnicalAssessment : ComponentBase
         if (!string.IsNullOrEmpty(user.Code))
         {
             var userCode = user.Code.ToLowerInvariant();
-            if (userCode.Contains("safety") || 
+            if (userCode.Contains("safety") ||
                 userCode.Contains("sms") ||
                 userCode.StartsWith("st-") // Safety Team prefix
                 || userCode.StartsWith("ra-"))   // Risk Assessor prefix
@@ -579,7 +568,7 @@ public partial class TechnicalAssessment : ComponentBase
         if (user.UserName?.Value != null)
         {
             var username = user.UserName.Value.ToLowerInvariant();
-            if (username.Contains("safety") || 
+            if (username.Contains("safety") ||
                 username.Contains("sms") ||
                 username.Contains("risk") ||
                 username.Contains("assessor"))
@@ -723,7 +712,7 @@ public partial class TechnicalAssessment : ComponentBase
             await CompleteAssessmentProcess();
 
             ShowSuccessNotification("Technical Assessment completed successfully!");
-            
+
             // Navigate back to report processing
             Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
         }
@@ -786,7 +775,7 @@ public partial class TechnicalAssessment : ComponentBase
 
             // ENHANCEMENT: Update the current step in the assessment
             InitialRiskAssessment.CurrentStep = CurrentStep;
-            
+
             // ENHANCEMENT: Update status based on current step
             UpdateAssessmentAndReportStatus();
 
@@ -797,13 +786,13 @@ public partial class TechnicalAssessment : ComponentBase
             if (result.IsSuccess)
             {
                 InitialRiskAssessment = result.Value; // Update with latest data
-                
+
                 // ENHANCEMENT: Also update the associated Hazard status
                 await UpdateHazardStatusForProgress();
-                
+
                 Logger.LogInformation("Step {CurrentStep} saved successfully for assessment {AssessmentCode}",
                     CurrentStep, InitialRiskAssessment.Code);
-                
+
                 return (true, $"Step {CurrentStep} saved successfully");
             }
             else
@@ -830,7 +819,7 @@ public partial class TechnicalAssessment : ComponentBase
         InitialRiskAssessment.Stage = CurrentStep switch
         {
             1 => "System Description In Progress",
-            2 => "Hazard Identification In Progress", 
+            2 => "Hazard Identification In Progress",
             3 => "Risk Analysis In Progress",
             4 => "Risk Assessment In Progress",
             5 => "Risk Mitigation In Progress",
@@ -844,7 +833,7 @@ public partial class TechnicalAssessment : ComponentBase
         InitialRiskAssessment.UpdatedDate = DateTime.UtcNow;
         InitialRiskAssessment.UpdatedBy = "Current User"; // TODO: Get from session service
 
-        Logger.LogInformation("Updated assessment stage to: {Stage} and status to: {Status} for step {Step}", 
+        Logger.LogInformation("Updated assessment stage to: {Stage} and status to: {Status} for step {Step}",
             InitialRiskAssessment.Stage, InitialRiskAssessment.Status.Name, CurrentStep);
     }
 
@@ -929,12 +918,12 @@ public partial class TechnicalAssessment : ComponentBase
     private (bool isValid, string message) ValidateStep2()
     {
         var hazardCount = ReportHazards?.Count ?? 0;
-        
+
         if (hazardCount < 1)
         {
             return (false, "At least 1 hazard must be identified before proceeding to Step 3");
         }
-        
+
         return (true, $"Step 2 validation passed with {hazardCount} hazard(s)");
     }
 
@@ -1106,10 +1095,10 @@ public partial class TechnicalAssessment : ComponentBase
 
             // Add to collections (no database call needed here - already done in modal)
             ReportHazards.Add(newHazard);
-            
+
             // Create a completely new list to force parameter change detection
             AvailableHazards = ReportHazards.ToList();
-            
+
             // Update Step2 model
             if (!Step2.HazardIds.Contains(newHazard.Code))
             {
@@ -1136,7 +1125,7 @@ public partial class TechnicalAssessment : ComponentBase
             });
 
             ShowSuccessNotification($"Hazard {newHazard.Code} added successfully");
-            Logger.LogInformation("Successfully added hazard to collections: {HazardCode} - Total hazards: {Count}", 
+            Logger.LogInformation("Successfully added hazard to collections: {HazardCode} - Total hazards: {Count}",
                 newHazard.Code, AvailableHazards.Count);
         }
         catch (Exception ex)
@@ -1203,7 +1192,7 @@ public partial class TechnicalAssessment : ComponentBase
                 // Remove from local collections
                 ReportHazards.RemoveAll(h => h.Code == hazardToDelete.Code);
                 AvailableHazards = ReportHazards.ToList();
-                
+
                 // Update Step2 model
                 var indexToRemove = Step2.HazardIds.IndexOf(hazardToDelete.Code);
                 if (indexToRemove >= 0)
@@ -1223,8 +1212,8 @@ public partial class TechnicalAssessment : ComponentBase
                     foreach (var remainingHazardId in Step2.HazardIds)
                     {
                         var hazardIndex = Step2.HazardIds.IndexOf(remainingHazardId);
-                        var hazardDescription = hazardIndex < Step2.HazardDescriptions.Count 
-                            ? Step2.HazardDescriptions[hazardIndex] 
+                        var hazardDescription = hazardIndex < Step2.HazardDescriptions.Count
+                            ? Step2.HazardDescriptions[hazardIndex]
                             : $"Hazard {remainingHazardId}";
                         InitialRiskAssessment.AddIdentifiedHazard(remainingHazardId, hazardDescription);
                     }
@@ -1235,7 +1224,7 @@ public partial class TechnicalAssessment : ComponentBase
                 await InvokeAsync(StateHasChanged);
 
                 ShowSuccessNotification($"Hazard {hazardToDelete.Code} deleted successfully");
-                Logger.LogInformation("Successfully deleted hazard: {HazardCode} - Remaining hazards: {Count}", 
+                Logger.LogInformation("Successfully deleted hazard: {HazardCode} - Remaining hazards: {Count}",
                     hazardToDelete.Code, AvailableHazards.Count);
             }
             else

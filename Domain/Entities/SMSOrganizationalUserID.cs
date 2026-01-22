@@ -1,5 +1,3 @@
-using SMS_Domain.Common;
-
 namespace SMS_Domain.Entities;
 
 /// <summary>
@@ -8,7 +6,7 @@ namespace SMS_Domain.Entities;
 public sealed class SMSOrganizationalUserID : BaseUserID
 {
     public SMSOrganizationalUserID(string id) : base(id) { }
-    
+
     // Implicit conversion from string for convenience
     public static implicit operator SMSOrganizationalUserID(string value) => new(value);
 }

@@ -1,9 +1,8 @@
-﻿using SMS_Domain.Errors;
-using SMS_Domain.Interfaces;
-using SMS_Infrastructure.Common;
-using SMS_Infrastructure.Interfaces;
+﻿using Microsoft.FeatureManagement;
 
-using Microsoft.FeatureManagement;
+using SMS_Domain.Errors;
+
+using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Persistence;
 

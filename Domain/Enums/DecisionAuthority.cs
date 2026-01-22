@@ -1,7 +1,3 @@
-using System.Reflection;
-using SMS_Domain.Common;
-using SMS_Domain.Enums;
-
 namespace SMS_Domain.Enums;
 
 /// <summary>
@@ -95,7 +91,7 @@ public abstract class DecisionAuthority : BaseEnum<DecisionAuthority>
     //public bool CanApprove(SMSRole role)
     //{
     //    if (role == null) return false;
-        
+
     //    return role.AuthorityLevel >= RequiredAuthorityLevel || 
     //           ApproverRoles.Contains(role.Value);
     //}
@@ -218,7 +214,7 @@ public abstract class DecisionAuthority : BaseEnum<DecisionAuthority>
         {
             >= 10 => "Strategic",
             >= 9 => "Executive",
-            >= 8 => "Managerial", 
+            >= 8 => "Managerial",
             >= 7 => "Supervisory",
             _ => "Operational"
         };

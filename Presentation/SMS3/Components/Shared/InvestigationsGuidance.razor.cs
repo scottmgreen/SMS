@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Components;
-
 namespace SMS3.Components.Shared;
 
 public partial class InvestigationsGuidance : ComponentBase

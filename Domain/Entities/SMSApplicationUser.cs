@@ -1,6 +1,3 @@
-using SMS_Domain.Common;
-using SMS_Domain.ValueObjects;
-
 namespace SMS_Domain.Entities;
 
 /// <summary>
@@ -9,8 +6,8 @@ namespace SMS_Domain.Entities;
 public sealed class SMSApplicationUser : BaseUser
 {
     // Simple constructors
-       
-    public SMSApplicationUser(SMSApplicationUserID id) : base(id,"SYSTEM", DateTime.UtcNow) 
+
+    public SMSApplicationUser(SMSApplicationUserID id) : base(id, "SYSTEM", DateTime.UtcNow)
     {
         ApplicationUserId = id;
     }
@@ -19,8 +16,8 @@ public sealed class SMSApplicationUser : BaseUser
     public SMSApplicationUserID ApplicationUserId { get; set; }
     //public string ApplicationRole { get; set; } = string.Empty;
     //public string PermissionLevel { get; set; } = string.Empty;
-    
-    
 
-   
+
+
+
 }

@@ -1,12 +1,3 @@
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Domain.Enums;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-using Radzen;
-
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
 public partial class InterviewsManager : ComponentBase
@@ -47,13 +38,13 @@ public partial class InterviewsManager : ComponentBase
     public async Task RefreshInterviews()
     {
         await LoadInterviews();
-        
+
         // Notify parent component of changes
         if (OnInterviewsChanged.HasDelegate)
         {
             await OnInterviewsChanged.InvokeAsync();
         }
-        
+
         StateHasChanged();
     }
     #endregion
@@ -70,7 +61,7 @@ public partial class InterviewsManager : ComponentBase
             }
 
             IsLoading = true;
-            
+
             var query = new GetAllInterviewsQuery();
             var result = await Mediator.SendAsync(query, CancellationToken.None);
 
@@ -80,8 +71,8 @@ public partial class InterviewsManager : ComponentBase
                     .Where(i => i.InvestigationCode == InvestigationCode)
                     .OrderBy(i => i.InterviewDate ?? DateTime.MaxValue)
                     .ToList();
-                
-                Logger.LogInformation("Loaded {Count} interviews for investigation {Code} (Total available: {Total})", 
+
+                Logger.LogInformation("Loaded {Count} interviews for investigation {Code} (Total available: {Total})",
                     Interviews.Count, InvestigationCode, result.Value.Count);
             }
             else
@@ -106,9 +97,9 @@ public partial class InterviewsManager : ComponentBase
     #region Interview Actions
     private async Task ShowCreateInterviewDialog()
     {
-        var options = new DialogOptions() 
-        { 
-            Width = "100%", 
+        var options = new DialogOptions()
+        {
+            Width = "100%",
             Height = "100%",
             Resizable = false,
             Draggable = false,
@@ -119,9 +110,9 @@ public partial class InterviewsManager : ComponentBase
             CssClass = "custom-modal-dialog"
         };
 
-        var parameters = new Dictionary<string, object> 
-        { 
-            { "InvestigationCode", InvestigationCode } 
+        var parameters = new Dictionary<string, object>
+        {
+            { "InvestigationCode", InvestigationCode }
         };
 
         var result = await DialogService.OpenAsync<CreateInterviewDialog>(
@@ -138,9 +129,9 @@ public partial class InterviewsManager : ComponentBase
 
     private async Task ViewInterview(Interview interview)
     {
-        var options = new DialogOptions() 
-        { 
-            Width = "100%", 
+        var options = new DialogOptions()
+        {
+            Width = "100%",
             Height = "100%",
             Resizable = false,
             Draggable = false,
@@ -151,9 +142,9 @@ public partial class InterviewsManager : ComponentBase
             CssClass = "custom-modal-dialog"
         };
 
-        var parameters = new Dictionary<string, object> 
-        { 
-            { "Interview", interview } 
+        var parameters = new Dictionary<string, object>
+        {
+            { "Interview", interview }
         };
 
         await DialogService.OpenAsync<ViewInterviewDialog>(
@@ -164,9 +155,9 @@ public partial class InterviewsManager : ComponentBase
 
     private async Task EditInterview(Interview interview)
     {
-        var options = new DialogOptions() 
-        { 
-            Width = "100%", 
+        var options = new DialogOptions()
+        {
+            Width = "100%",
             Height = "100%",
             Resizable = false,
             Draggable = false,
@@ -177,9 +168,9 @@ public partial class InterviewsManager : ComponentBase
             CssClass = "custom-modal-dialog"
         };
 
-        var parameters = new Dictionary<string, object> 
-        { 
-            { "Interview", interview } 
+        var parameters = new Dictionary<string, object>
+        {
+            { "Interview", interview }
         };
 
         var result = await DialogService.OpenAsync<EditInterviewDialog>(
@@ -215,7 +206,7 @@ public partial class InterviewsManager : ComponentBase
                     {
                         await RefreshInterviews();
                         ShowSuccessNotification("Interview started - Opening interview dialog for conducting");
-                        
+
                         // Immediately open the EditInterviewDialog to conduct the interview
                         await OpenConductInterviewDialog(interview);
                     }
@@ -239,9 +230,9 @@ public partial class InterviewsManager : ComponentBase
 
     private async Task OpenConductInterviewDialog(Interview interview)
     {
-        var options = new DialogOptions() 
-        { 
-            Width = "100%", 
+        var options = new DialogOptions()
+        {
+            Width = "100%",
             Height = "100%",
             Resizable = false,
             Draggable = false,
@@ -252,9 +243,9 @@ public partial class InterviewsManager : ComponentBase
             CssClass = "custom-modal-dialog"
         };
 
-        var parameters = new Dictionary<string, object> 
-        { 
-            { "Interview", interview } 
+        var parameters = new Dictionary<string, object>
+        {
+            { "Interview", interview }
         };
 
         var result = await DialogService.OpenAsync<EditInterviewDialog>(
@@ -271,9 +262,9 @@ public partial class InterviewsManager : ComponentBase
 
     private async Task CompleteInterview(Interview interview)
     {
-        var options = new DialogOptions() 
-        { 
-            Width = "100%", 
+        var options = new DialogOptions()
+        {
+            Width = "100%",
             Height = "100%",
             Resizable = false,
             Draggable = false,
@@ -284,9 +275,9 @@ public partial class InterviewsManager : ComponentBase
             CssClass = "custom-modal-dialog"
         };
 
-        var parameters = new Dictionary<string, object> 
-        { 
-            { "Interview", interview } 
+        var parameters = new Dictionary<string, object>
+        {
+            { "Interview", interview }
         };
 
         var result = await DialogService.OpenAsync<CompleteInterviewDialog>(
@@ -314,7 +305,7 @@ public partial class InterviewsManager : ComponentBase
             {
                 // Use a default reason since Radzen doesn't have a built-in prompt
                 var reason = "Interview cancelled by investigator";
-                
+
                 var cancelResult = interview.CancelInterview(reason);
                 if (cancelResult.IsSuccess)
                 {
@@ -372,7 +363,7 @@ public partial class InterviewsManager : ComponentBase
         {
             return "border-left: 4px solid var(--rz-info); background-color: rgba(var(--rz-info-rgb), 0.05);";
         }
-        
+
         return "";
     }
     #endregion

@@ -1,7 +1,7 @@
 ﻿
-using SMS_Shared.Common;
-
 using Microsoft.Extensions.Logging;
+
+using SMS_Shared.Common;
 
 namespace SMS_Shared.Configuration;
 
@@ -10,12 +10,12 @@ namespace SMS_Shared.Configuration;
 public static class LogMessages
 {
 
-    private static readonly Action<ILogger,int, string,  Exception?> _SMSLoggerInformation =
-            LoggerMessage.Define<int,string >(LogLevel.Information, LoggingEventIds.SMS_ApplicationEventIds.Information, "{message} {CBTEventId} ");
+    private static readonly Action<ILogger, int, string, Exception?> _SMSLoggerInformation =
+            LoggerMessage.Define<int, string>(LogLevel.Information, LoggingEventIds.SMS_ApplicationEventIds.Information, "{message} {CBTEventId} ");
 
-    public static void SMSLogInformation(this ILogger logger, int CBTEventId, string message, params object[] args )
+    public static void SMSLogInformation(this ILogger logger, int CBTEventId, string message, params object[] args)
     {
-        _SMSLoggerInformation(logger, CBTEventId, message,  null);
+        _SMSLoggerInformation(logger, CBTEventId, message, null);
     }
 
 

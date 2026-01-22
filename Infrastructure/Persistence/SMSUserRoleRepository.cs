@@ -1,13 +1,7 @@
-using SMS_Domain.Entities;
 using SMS_Domain.Errors;
 using SMS_Domain.Models;
-using SMS_Infrastructure.Common;
+
 using SMS_Infrastructure.Interfaces;
-using SMS_Shared.Common;
-using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using System.Data;
 
 namespace SMS_Infrastructure.Persistence;
 
@@ -45,7 +39,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
 
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            
+
             // Dataset 1: SMSUserRole data
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
@@ -70,7 +64,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                     }
                 }
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result<IEnumerable<SMSUserRole>>.Success(userRoles.AsEnumerable());
@@ -100,7 +94,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
 
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            
+
             // Dataset 1: SMSUserRole data
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
@@ -125,7 +119,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                     }
                 }
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result<IEnumerable<SMSUserRole>>.Success(userRoles.AsEnumerable());
@@ -160,7 +154,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
 
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            
+
             // Dataset 1: SMSUserRole data
             if (await reader.ReadAsync().ConfigureAwait(false))
             {
@@ -178,7 +172,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                 }
                 userRole.Permissions = permissions;
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             if (userRole is not null)
@@ -220,7 +214,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
 
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            
+
             // Dataset 1: SMSUserRole data
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
@@ -245,7 +239,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                     }
                 }
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result<IEnumerable<SMSUserRole>>.Success(userRoles.AsEnumerable());
@@ -340,7 +334,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
 
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            
+
             // Dataset 1: SMSUserRole data
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
@@ -365,7 +359,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                     }
                 }
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result<IEnumerable<SMSUserRole>>.Success(userRoles.AsEnumerable());
@@ -400,7 +394,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
 
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            
+
             // Dataset 1: SMSUserRole data
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
@@ -425,7 +419,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                     }
                 }
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result<IEnumerable<SMSUserRole>>.Success(userRoles.AsEnumerable());
@@ -460,7 +454,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
 
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            
+
             // Dataset 1: SMSUserRole data
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
@@ -485,7 +479,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                     }
                 }
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result<IEnumerable<SMSUserRole>>.Success(userRoles.AsEnumerable());
@@ -520,7 +514,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
 
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            
+
             // Dataset 1: SMSUserRole data
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
@@ -545,7 +539,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                     }
                 }
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result<IEnumerable<SMSUserRole>>.Success(userRoles.AsEnumerable());
@@ -575,7 +569,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
 
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            
+
             // Dataset 1: SMSUserRole data
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
@@ -600,7 +594,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                     }
                 }
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result<IEnumerable<SMSUserRole>>.Success(userRoles.AsEnumerable());
@@ -635,7 +629,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
 
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            
+
             // Dataset 1: SMSUserRole data
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
@@ -660,7 +654,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                     }
                 }
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result<IEnumerable<SMSUserRole>>.Success(userRoles.AsEnumerable());
@@ -737,7 +731,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
 
             await sql.CloseAsync().ConfigureAwait(false);
 
-            
+
 
             return await GetByIdAsync(newCodeValue).ConfigureAwait(false);
         }
@@ -770,7 +764,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleCode, userRole.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRoleName, userRole.Name));
-            
+
 
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
@@ -825,7 +819,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id));
-            
+
             await sql.OpenAsync().ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
@@ -853,9 +847,9 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
 
             await sql.OpenAsync().ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            
+
             var stats = new UserRoleStatistics();
-            
+
             if (await reader.ReadAsync().ConfigureAwait(false))
             {
                 stats.TotalAssignments = reader.GetValue<int>("TotalAssignments");
@@ -864,7 +858,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                 stats.ExpiringAssignments = reader.GetValue<int>("ExpiringAssignments");
                 stats.LastAssignmentDate = reader.IsDBNull("LastAssignmentDate") ? null : reader.GetDateTime("LastAssignmentDate");
             }
-            
+
             await sql.CloseAsync().ConfigureAwait(false);
 
             return Result<UserRoleStatistics>.Success(stats);

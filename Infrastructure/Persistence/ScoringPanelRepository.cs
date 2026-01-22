@@ -1,10 +1,6 @@
-﻿using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Domain.ValueObjects;
-using SMS_Infrastructure.Common;
+﻿using SMS_Domain.Errors;
+
 using SMS_Infrastructure.Interfaces;
-using Microsoft.Data.SqlClient;
-using System.Data;
 
 namespace SMS_Infrastructure.Persistence;
 
@@ -61,7 +57,7 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
 
             int newIdValue = (int)newID.Value;
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
-            ScoringPanelID scoringPanelId = new (newCodeValue);
+            ScoringPanelID scoringPanelId = new(newCodeValue);
 
             return await GetScoringPanelByIdAsync(scoringPanelId, ct).ConfigureAwait(false);
         }

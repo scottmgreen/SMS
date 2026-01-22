@@ -1,19 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Collections.Concurrent;
-
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Infrastructure.Configuration;
-using SMS_Infrastructure.Interfaces;
-using SMS_Application.Interfaces;
-
-using Microsoft.AspNetCore.Components.Server.Circuits;
+﻿using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+
+using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Application.Messaging.CircuitHandlers;
 
@@ -23,15 +12,15 @@ namespace SMS_Application.Messaging.CircuitHandlers;
 public class SMS_CircuitHandler : BaseCircuitHandler
 {
     private new readonly ILogger<SMS_CircuitHandler> _logger;
-    
+
     // Simple static storage for circuit authentication
     private static readonly ConcurrentDictionary<string, CircuitAuthState> _circuitAuth = new();
-    
+
     public SMS_CircuitHandler(
-        ILogger<SMS_CircuitHandler> logger, 
-        ILogSupport logsupport, 
+        ILogger<SMS_CircuitHandler> logger,
+        ILogSupport logsupport,
         IMediator mediator,
-        IHttpContextAccessor httpContextAccessor) 
+        IHttpContextAccessor httpContextAccessor)
         : base(logger, logsupport, mediator, httpContextAccessor)
     {
         _logger = logger;

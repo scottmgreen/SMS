@@ -1,9 +1,3 @@
-using SMS_Application.Common;
-using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Shared.Common;
-
 namespace SMS_Application.Messaging.Commands;
 
 /// <summary>
@@ -281,10 +275,10 @@ public class AssignRoleToUserCommand : BaseCommandBundle, IRequest<Result<SMSUse
     /// Initializes a new instance of the AssignRoleToUserCommand class.
     /// </summary>
     public AssignRoleToUserCommand(
-        string userId, 
-        string roleCode, 
-        string department, 
-        string userType, 
+        string userId,
+        string roleCode,
+        string department,
+        string userType,
         DateTime effectiveDate,
         DateTime? expirationDate = null)
     {

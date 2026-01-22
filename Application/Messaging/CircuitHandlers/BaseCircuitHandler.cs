@@ -1,11 +1,9 @@
-﻿using SMS_Infrastructure.Configuration;
-using SMS_Infrastructure.Interfaces;
-using Microsoft.AspNetCore.Components.Server.Circuits;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
-using System.Collections.Concurrent;
+using SMS_Infrastructure.Configuration;
+using SMS_Infrastructure.Interfaces;
 namespace SMS_Application.Messaging.CircuitHandlers;
 
 public abstract class BaseCircuitHandler : CircuitHandler
@@ -35,9 +33,9 @@ public abstract class BaseCircuitHandler : CircuitHandler
     {
         var session = _httpContextAccessor?.HttpContext?.Session;
         if (session == null) return "SYSTEM";
-        
-        return session.GetString("SMS_UserCode") ?? 
-               session.GetString("SMS_UserId") ?? 
+
+        return session.GetString("SMS_UserCode") ??
+               session.GetString("SMS_UserId") ??
                "SYSTEM";
     }
 
@@ -48,9 +46,9 @@ public abstract class BaseCircuitHandler : CircuitHandler
     {
         var session = _httpContextAccessor?.HttpContext?.Session;
         if (session == null) return "System";
-        
-        return session.GetString("SMS_DisplayName") ?? 
-               session.GetString("SMS_Email") ?? 
+
+        return session.GetString("SMS_DisplayName") ??
+               session.GetString("SMS_Email") ??
                "System";
     }
 
@@ -61,7 +59,7 @@ public abstract class BaseCircuitHandler : CircuitHandler
     {
         var session = _httpContextAccessor?.HttpContext?.Session;
         if (session == null) return false;
-        
+
         return session.GetString("IsAuthenticated") == "true" &&
                !string.IsNullOrEmpty(session.GetString("SMS_UserId"));
     }
@@ -104,7 +102,7 @@ public abstract class BaseCircuitHandler : CircuitHandler
 
     public override Task OnConnectionDownAsync(Circuit circuit, CancellationToken cancellationToken)
     {
-        
+
         _activeCircuits.TryRemove(circuit.Id, out _);
         CircuitUserTrackingMiddleware.UnregisterCircuit(circuit.Id);
 

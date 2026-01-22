@@ -1,14 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using Radzen;
-using Radzen.Blazor;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Domain.Enums;
-using SMS_Shared.Common;
 using SMS3.Components.Pages.SMSAssurance.Components;
 
 namespace SMS3.Components.Pages.SMSAssurance;
@@ -89,13 +78,13 @@ public partial class AuditCalendar : ComponentBase
     {
         console?.Log("Refreshing calendar data...");
         await LoadAuditPlansAsync();
-        
+
         // Reload the scheduler
         if (scheduler != null)
         {
             await scheduler.Reload();
         }
-        
+
         ShowSuccessNotification("Calendar data refreshed");
         console?.Log("Calendar refresh completed");
     }
@@ -106,14 +95,14 @@ public partial class AuditCalendar : ComponentBase
     {
         var startDate = auditPlan.PlannedStartDate;
         var endDate = auditPlan.PlannedEndDate;
-        
+
         // For multi-day audits, show the full span
         // For single-day audits, use the estimated duration or default to 8 hours
         if (startDate.Date == endDate.Date && auditPlan.EstimatedDurationHours > 0)
         {
             endDate = startDate.AddHours(auditPlan.EstimatedDurationHours);
         }
-        
+
         return new AuditSchedulerItem
         {
             AuditPlanId = auditPlan.Id?.Value ?? "",
@@ -135,16 +124,16 @@ public partial class AuditCalendar : ComponentBase
     private string GetAuditDescription(SMSAuditPlan auditPlan)
     {
         var parts = new List<string>();
-        
+
         if (!string.IsNullOrEmpty(auditPlan.LeadAuditor))
             parts.Add($"Lead: {auditPlan.LeadAuditor}");
-        
+
         if (!string.IsNullOrEmpty(auditPlan.ResponsibleDepartment))
             parts.Add($"Dept: {auditPlan.ResponsibleDepartment}");
-        
+
         if (auditPlan.EstimatedDurationHours > 0)
             parts.Add($"{auditPlan.EstimatedDurationHours}h");
-            
+
         return string.Join(" | ", parts);
     }
     #endregion
@@ -179,7 +168,7 @@ public partial class AuditCalendar : ComponentBase
         {
             console?.Log($"SlotSelect: Start={args.Start:yyyy-MM-dd HH:mm} End={args.End:yyyy-MM-dd HH:mm}");
             Logger.LogInformation("Slot selected: {Start} to {End}", args.Start, args.End);
-            
+
             // Don't create appointments in year view (like Radzen sample)
             if (args.View.Text != "Year")
             {
@@ -190,9 +179,9 @@ public partial class AuditCalendar : ComponentBase
                 };
 
                 var data = await DialogService.OpenAsync<AuditPlanDialog>("Add Audit Plan",
-                    new Dictionary<string, object> 
-                    { 
-                        { "AuditPlan", newAuditPlan }, 
+                    new Dictionary<string, object>
+                    {
+                        { "AuditPlan", newAuditPlan },
                         { "IsNew", true }
                     },
                     new DialogOptions() { Width = "1200px", Height = "900px", Resizable = true });
@@ -247,10 +236,10 @@ public partial class AuditCalendar : ComponentBase
                     CreatedDate = auditPlan.CreatedDate
                 };
 
-                var data = await DialogService.OpenAsync<AuditPlanDialog>("Edit Audit Plan", 
-                    new Dictionary<string, object> 
-                    { 
-                        { "AuditPlan", copy }, 
+                var data = await DialogService.OpenAsync<AuditPlanDialog>("Edit Audit Plan",
+                    new Dictionary<string, object>
+                    {
+                        { "AuditPlan", copy },
                         { "IsNew", false }
                     },
                     new DialogOptions() { Width = "1200px", Height = "900px", Resizable = true });
@@ -278,14 +267,14 @@ public partial class AuditCalendar : ComponentBase
         try
         {
             // Never call StateHasChanged in AppointmentRender - would lead to infinite loop (from Radzen sample)
-            
+
             // Customize appointment appearance based on audit status
             var auditItem = args.Data;
             var backgroundColor = auditItem.Status?.ToLower() switch
             {
                 "draft" => "#6c757d",
                 "approved" => "#28a745",
-                "scheduled" => "#17a2b8", 
+                "scheduled" => "#17a2b8",
                 "in progress" => "#007bff",
                 "completed" => "#28a745",
                 "overdue" => "#dc3545",
@@ -301,7 +290,7 @@ public partial class AuditCalendar : ComponentBase
                          $"Priority: {auditItem.Priority}\\n" +
                          $"Lead Auditor: {auditItem.LeadAuditor}\\n" +
                          $"Department: {auditItem.ResponsibleDepartment}";
-                
+
             args.Attributes["title"] = tooltip;
         }
         catch (Exception ex)
@@ -361,7 +350,7 @@ public partial class AuditCalendar : ComponentBase
                 // Update the planned dates
                 auditPlan.PlannedStartDate = appointmentData.Start;
                 auditPlan.PlannedEndDate = appointmentData.End;
-                
+
                 // Update metadata
                 auditPlan.UpdatedBy = "CURRENT_USER";
                 auditPlan.UpdatedDate = DateTime.UtcNow;
@@ -455,7 +444,7 @@ public partial class AuditCalendar : ComponentBase
     private int GetAuditsThisMonth()
     {
         var now = DateTime.Now;
-        return AuditPlans.Count(a => 
+        return AuditPlans.Count(a =>
             (a.PlannedStartDate.Year == now.Year && a.PlannedStartDate.Month == now.Month) ||
             (a.PlannedEndDate.Year == now.Year && a.PlannedEndDate.Month == now.Month));
     }
@@ -465,8 +454,8 @@ public partial class AuditCalendar : ComponentBase
         var now = DateTime.Now;
         var startOfWeek = now.Date.AddDays(-(int)now.DayOfWeek);
         var endOfWeek = startOfWeek.AddDays(7);
-        
-        return AuditPlans.Count(a => 
+
+        return AuditPlans.Count(a =>
             (a.PlannedStartDate >= startOfWeek && a.PlannedStartDate < endOfWeek) ||
             (a.PlannedEndDate >= startOfWeek && a.PlannedEndDate < endOfWeek) ||
             (a.PlannedStartDate <= startOfWeek && a.PlannedEndDate >= endOfWeek));
@@ -476,8 +465,8 @@ public partial class AuditCalendar : ComponentBase
     {
         var today = DateTime.Today;
         var tomorrow = today.AddDays(1);
-        
-        return AuditPlans.Count(a => 
+
+        return AuditPlans.Count(a =>
             (a.PlannedStartDate.Date <= today && a.PlannedEndDate.Date >= today) ||
             (a.PlannedStartDate >= today && a.PlannedStartDate < tomorrow));
     }

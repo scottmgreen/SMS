@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
 
 namespace SMS_Shared.Configuration;
@@ -13,9 +11,9 @@ public static class DependencyInjection
         {
             services.AddLogging(opt => opt.AddConfiguration(configuration)
                     .AddSimpleConsole(x => x.SingleLine = true)
-                    #if WINDOWS
+#if WINDOWS
                     .AddEventLog()
-                    #endif
+#endif
                     .AddDebug())
 
                 ;

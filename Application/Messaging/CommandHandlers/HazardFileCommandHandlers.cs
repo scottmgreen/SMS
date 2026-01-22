@@ -1,10 +1,4 @@
 using Microsoft.Extensions.Logging;
-using SMS_Infrastructure.Services;
-using SMS_Application.Messaging.Commands;
-using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 
@@ -33,7 +27,7 @@ public class CreateHazardFileCommandHandler : BaseCommandBundle, IRequestHandler
                 return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing CreateHazardFileCommand for Code: {Code}, HazardCode: {HazardCode}", 
+            _logger.LogInformation("Processing CreateHazardFileCommand for Code: {Code}, HazardCode: {HazardCode}",
                 request.HazardFile.Code, request.HazardFile.HazardCode);
 
             var result = await _dataService.CreateHazardFileAsync(request.HazardFile, ct).ConfigureAwait(false);
@@ -136,7 +130,7 @@ public class DeactivateHazardFileCommandHandler : BaseCommandBundle, IRequestHan
                 return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing DeactivateHazardFileCommand for FileId: {FileId}, Reason: {Reason}", 
+            _logger.LogInformation("Processing DeactivateHazardFileCommand for FileId: {FileId}, Reason: {Reason}",
                 request.FileId, request.Reason);
 
             var result = await _dataService.DeactivateHazardFileAsync(request.FileId, request.Reason, request.DeactivatedBy, ct).ConfigureAwait(false);
@@ -237,7 +231,7 @@ public class SetHazardFileConfidentialityCommandHandler : BaseCommandBundle, IRe
                 return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing SetHazardFileConfidentialityCommand for FileCode: {FileCode}, Confidential: {IsConfidential}", 
+            _logger.LogInformation("Processing SetHazardFileConfidentialityCommand for FileCode: {FileCode}, Confidential: {IsConfidential}",
                 request.FileCode, request.IsConfidential);
 
             var result = await _dataService.SetFileConfidentialityAsync(request.FileCode, request.IsConfidential, request.UpdatedBy, ct).ConfigureAwait(false);

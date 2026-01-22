@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Linq;
+﻿using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Http;
 
@@ -92,7 +89,7 @@ namespace SMS_Infrastructure.Configuration
 
             return ("Unknown", "Unknown IP", "Unknown Host");
         }
-        public static (string circuitid,string connectionid, string ip, string host) GetUserInfoFromConnectionId(string connectionid)
+        public static (string circuitid, string connectionid, string ip, string host) GetUserInfoFromConnectionId(string connectionid)
         {
             if (ConnectionInfoMap.TryGetValue(connectionid, out _))
             {
@@ -100,11 +97,11 @@ namespace SMS_Infrastructure.Configuration
                     ? connInfo
                     : ("Unknown IP", "Unknown Host");
                 var circuitId = CircuitToConnectionMap.Where(x => x.Value == connectionid).FirstOrDefault().Key;
-                
+
                 return (circuitId, connectionid, ip, host);
             }
 
-            return ("Unknown","Unknown", "Unknown IP", "Unknown Host");
+            return ("Unknown", "Unknown", "Unknown IP", "Unknown Host");
         }
 
         public static (string circuitId, string connectionId, string ip, string host) GetUserInfoFromHostName(string hostName)

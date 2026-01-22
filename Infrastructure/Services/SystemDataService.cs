@@ -1,9 +1,4 @@
-﻿
-using SMS_Domain.Interfaces;
-
-using SMS_Infrastructure.Persistence;
-
-namespace SMS_Infrastructure.Services
+﻿namespace SMS_Infrastructure.Services
 {
     public class SystemDataService : BaseDataService<SystemDataService>
     {
@@ -20,10 +15,10 @@ namespace SMS_Infrastructure.Services
             _repo = repo;
         }
 
-      
+
         public Task<Result<bool>> AddAuditLogEntryAsync(AuditLogEntry auditlogentry, CancellationToken ct = default)
         {
-            return _repo.AddAuditLogEntryAsync(auditlogentry,ct);
+            return _repo.AddAuditLogEntryAsync(auditlogentry, ct);
         }
 
         public Task<Result<int>> GetAdminPasscodeAsync()

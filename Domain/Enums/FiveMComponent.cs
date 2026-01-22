@@ -1,6 +1,3 @@
-using System.Reflection;
-using SMS_Domain.Common;
-
 namespace SMS_Domain.Enums;
 
 /// <summary>
@@ -48,10 +45,10 @@ public abstract class FiveMComponent : BaseEnum<FiveMComponent>
         public ManComponent() : base("MAN", "Man (Human)",
             "Human factors including personnel capabilities, training, experience, and performance",
             "All aspects related to human performance, capabilities, limitations, and behavior in the operational environment",
-            new[] { 
-                "Training deficiencies", "Experience level", "Fatigue", "Communication breakdown", 
+            new[] {
+                "Training deficiencies", "Experience level", "Fatigue", "Communication breakdown",
                 "Situational awareness", "Decision making", "Workload", "Stress", "Health conditions",
-                "Certification currency", "Language barriers", "Cultural factors" 
+                "Certification currency", "Language barriers", "Cultural factors"
             }, 5)
         {
         }
@@ -62,10 +59,10 @@ public abstract class FiveMComponent : BaseEnum<FiveMComponent>
         public MachineComponent() : base("MACHINE", "Machine (Equipment)",
             "Equipment factors including aircraft, vehicles, tools, and technological systems",
             "All mechanical, electrical, and technological systems and their operational status, maintenance, and design",
-            new[] { 
+            new[] {
                 "Equipment failure", "Maintenance issues", "Design defects", "Technological limitations",
                 "System integration problems", "Age of equipment", "Calibration issues", "Software bugs",
-                "Compatibility issues", "Performance degradation", "Safety system failures" 
+                "Compatibility issues", "Performance degradation", "Safety system failures"
             }, 4)
         {
         }
@@ -76,10 +73,10 @@ public abstract class FiveMComponent : BaseEnum<FiveMComponent>
         public MethodComponent() : base("METHOD", "Method (Procedures)",
             "Procedural factors including policies, processes, and operational methods",
             "All formal and informal procedures, policies, processes, and methods used in operations",
-            new[] { 
+            new[] {
                 "Inadequate procedures", "Procedure not followed", "Unclear instructions", "Missing procedures",
                 "Conflicting procedures", "Outdated documentation", "Process inefficiencies", "Workflow issues",
-                "Quality control gaps", "Standard operating procedure violations", "Checklist omissions" 
+                "Quality control gaps", "Standard operating procedure violations", "Checklist omissions"
             }, 4)
         {
         }
@@ -90,10 +87,10 @@ public abstract class FiveMComponent : BaseEnum<FiveMComponent>
         public MaterialComponent() : base("MATERIAL", "Material (Resources)",
             "Material factors including parts, supplies, fuel, and physical resources",
             "All physical materials, supplies, consumables, and resources required for safe operations",
-            new[] { 
+            new[] {
                 "Defective parts", "Substandard materials", "Contaminated fuel", "Inadequate supplies",
                 "Wrong specifications", "Counterfeit parts", "Material degradation", "Storage issues",
-                "Supply chain problems", "Documentation errors", "Quality control failures" 
+                "Supply chain problems", "Documentation errors", "Quality control failures"
             }, 3)
         {
         }
@@ -104,10 +101,10 @@ public abstract class FiveMComponent : BaseEnum<FiveMComponent>
         public MilieuComponent() : base("MILIEU", "Milieu (Environment)",
             "Environmental factors including weather, facilities, workspace, and organizational culture",
             "All environmental conditions, organizational culture, and contextual factors affecting operations",
-            new[] { 
+            new[] {
                 "Weather conditions", "Facility design", "Workspace layout", "Organizational culture",
                 "Time pressures", "Regulatory environment", "Economic pressures", "Lighting conditions",
-                "Noise levels", "Temperature extremes", "Airspace congestion", "Airport conditions" 
+                "Noise levels", "Temperature extremes", "Airspace congestion", "Airport conditions"
             }, 4)
         {
         }
@@ -147,33 +144,33 @@ public abstract class FiveMComponent : BaseEnum<FiveMComponent>
         var description = hazardDescription.ToLowerInvariant();
 
         // Man (Human) keywords
-        var manKeywords = new[] { 
-            "pilot", "mechanic", "controller", "crew", "staff", "personnel", "training", "fatigue", 
-            "communication", "experience", "skill", "error", "forgot", "missed", "confused" 
+        var manKeywords = new[] {
+            "pilot", "mechanic", "controller", "crew", "staff", "personnel", "training", "fatigue",
+            "communication", "experience", "skill", "error", "forgot", "missed", "confused"
         };
-        
+
         // Machine (Equipment) keywords
-        var machineKeywords = new[] { 
-            "engine", "aircraft", "equipment", "system", "failure", "malfunction", "maintenance", 
-            "hydraulic", "electrical", "avionics", "instrument", "computer", "software" 
+        var machineKeywords = new[] {
+            "engine", "aircraft", "equipment", "system", "failure", "malfunction", "maintenance",
+            "hydraulic", "electrical", "avionics", "instrument", "computer", "software"
         };
 
         // Method (Procedures) keywords
-        var methodKeywords = new[] { 
+        var methodKeywords = new[] {
             "procedure", "checklist", "policy", "process", "manual", "instruction", "guideline",
-            "standard", "protocol", "workflow", "step", "sequence" 
+            "standard", "protocol", "workflow", "step", "sequence"
         };
 
         // Material keywords
-        var materialKeywords = new[] { 
+        var materialKeywords = new[] {
             "fuel", "oil", "parts", "component", "supply", "material", "consumable", "defective",
-            "contaminated", "worn", "expired", "substandard" 
+            "contaminated", "worn", "expired", "substandard"
         };
 
         // Milieu (Environment) keywords
-        var milieuKeywords = new[] { 
+        var milieuKeywords = new[] {
             "weather", "wind", "rain", "fog", "turbulence", "facility", "runway", "airport",
-            "environment", "culture", "pressure", "lighting", "noise", "temperature" 
+            "environment", "culture", "pressure", "lighting", "noise", "temperature"
         };
 
         // Count matches for each component
@@ -185,7 +182,7 @@ public abstract class FiveMComponent : BaseEnum<FiveMComponent>
 
         // Return the component with highest score
         var maxScore = new[] { manScore, machineScore, methodScore, materialScore, milieuScore }.Max();
-        
+
         if (maxScore == 0) return null;
 
         if (manScore == maxScore) return Man;

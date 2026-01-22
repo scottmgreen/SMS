@@ -1,11 +1,3 @@
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Shared.Common;
-using Microsoft.AspNetCore.Components.Forms;
-using Radzen;
-
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
 public partial class UploadEvidenceDialog : ComponentBase
@@ -31,25 +23,25 @@ public partial class UploadEvidenceDialog : ComponentBase
     private string CurrentFileName { get; set; } = string.Empty;
     private string CurrentUploadStatus { get; set; } = string.Empty;
     private bool ShowConfidentialInfo { get; set; } = false;
-    
+
     public UploadFileModel Model { get; set; } = new();
     public List<AttachedFile> AttachedFiles { get; set; } = new();
     #endregion
 
     #region Computed Properties
     public int DescriptionCharacterCount => Model.Description?.Length ?? 0;
-    
+
     private long TotalSize => AttachedFiles.Sum(f => f.Size);
-    
+
     private string GetTotalSizeDisplay() => FormatFileSize(TotalSize);
-    
+
     private string GetFileTypeSummary()
     {
         var typeGroups = AttachedFiles
             .GroupBy(f => GetFileTypeCategory(f.FileName))
             .Select(g => $"{g.Count()} {g.Key}")
             .ToList();
-        
+
         return typeGroups.Any() ? string.Join(", ", typeGroups) : "None";
     }
     #endregion
@@ -90,7 +82,7 @@ public partial class UploadEvidenceDialog : ComponentBase
     private void InitializeModel()
     {
         var currentUser = SessionService.GetCurrentUserDisplayName() ?? "System User";
-        
+
         Model = new UploadFileModel
         {
             Category = "Evidence",
@@ -107,22 +99,22 @@ public partial class UploadEvidenceDialog : ComponentBase
     {
         var newFiles = e.GetMultipleFiles(10); // Allow up to 10 files at once
         Logger.LogInformation("?? OnInputFileChange called with {Count} new files", newFiles?.Count() ?? 0);
-        
+
         if (newFiles?.Any() == true)
         {
             // Process files immediately to avoid the "file list may have changed" error
             var successfullyProcessedFiles = new List<AttachedFile>();
             var failedFiles = new List<string>();
-            
+
             foreach (var newFile in newFiles)
             {
                 try
                 {
                     // Check for duplicate first (before processing)
-                    var isDuplicate = AttachedFiles.Any(existing => 
-                        existing.FileName.Equals(newFile.Name, StringComparison.OrdinalIgnoreCase) && 
+                    var isDuplicate = AttachedFiles.Any(existing =>
+                        existing.FileName.Equals(newFile.Name, StringComparison.OrdinalIgnoreCase) &&
                         existing.Size == newFile.Size);
-                    
+
                     if (isDuplicate)
                     {
                         Logger.LogInformation("?? Skipped duplicate file: {FileName}", newFile.Name);
@@ -146,7 +138,7 @@ public partial class UploadEvidenceDialog : ComponentBase
                         await stream.CopyToAsync(memoryStream);
                         fileData = memoryStream.ToArray();
                     }
-                    
+
                     // Create the attached file object with cached data
                     var attachedFile = new AttachedFile
                     {
@@ -156,7 +148,7 @@ public partial class UploadEvidenceDialog : ComponentBase
                         Data = fileData,
                         SizeDisplay = FormatFileSize(newFile.Size)
                     };
-                    
+
                     successfullyProcessedFiles.Add(attachedFile);
                     Logger.LogInformation("? Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
                 }
@@ -167,13 +159,13 @@ public partial class UploadEvidenceDialog : ComponentBase
                     ShowErrorNotification($"Error processing file '{newFile.Name}': {ex.Message}");
                 }
             }
-            
+
             // Add successfully processed files to the collection
             if (successfullyProcessedFiles.Any())
             {
                 AttachedFiles.AddRange(successfullyProcessedFiles);
             }
-            
+
             // Show notification about results
             if (successfullyProcessedFiles.Any() && failedFiles.Any())
             {
@@ -187,15 +179,15 @@ public partial class UploadEvidenceDialog : ComponentBase
             {
                 ShowErrorNotification($"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.");
             }
-            
-            Logger.LogInformation("?? File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}", 
+
+            Logger.LogInformation("?? File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",
                 successfullyProcessedFiles.Count, failedFiles.Count, AttachedFiles.Count);
         }
         else
         {
             Logger.LogInformation("?? No files provided to OnInputFileChange");
         }
-        
+
         StateHasChanged();
     }
 
@@ -231,8 +223,8 @@ public partial class UploadEvidenceDialog : ComponentBase
     #region Validation
     private bool CanUpload()
     {
-        return AttachedFiles.Any() && 
-               !string.IsNullOrWhiteSpace(Model.Description) && 
+        return AttachedFiles.Any() &&
+               !string.IsNullOrWhiteSpace(Model.Description) &&
                DescriptionCharacterCount <= 1000;
     }
 
@@ -241,7 +233,7 @@ public partial class UploadEvidenceDialog : ComponentBase
         if (!AttachedFiles.Any()) return "Please select at least one file";
         if (string.IsNullOrWhiteSpace(Model.Description)) return "Evidence description is required";
         if (DescriptionCharacterCount > 1000) return "Description exceeds character limit";
-        
+
         return "Ready to upload";
     }
     #endregion
@@ -262,7 +254,7 @@ public partial class UploadEvidenceDialog : ComponentBase
             CurrentUploadStatus = "Preparing upload...";
             StateHasChanged();
 
-            Logger.LogInformation("?? Starting upload of {Count} evidence files for Hazard: {HazardCode}", 
+            Logger.LogInformation("?? Starting upload of {Count} evidence files for Hazard: {HazardCode}",
                 AttachedFiles.Count, HazardCode);
 
             var uploadedFileIds = new List<string>();
@@ -314,7 +306,7 @@ public partial class UploadEvidenceDialog : ComponentBase
                     };
 
                     // Send CreateHazardFileCommand
-                    Logger.LogInformation("?? Creating HazardFile: {FileName} with Code: {FileCode} for Evidence", 
+                    Logger.LogInformation("?? Creating HazardFile: {FileName} with Code: {FileCode} for Evidence",
                         file.FileName, fileCode);
 
                     var createCommand = new CreateHazardFileCommand(hazardFile);
@@ -325,14 +317,14 @@ public partial class UploadEvidenceDialog : ComponentBase
                         var createdFileId = result.Value.Code;
                         uploadedFileIds.Add(createdFileId);
 
-                        Logger.LogInformation("? Successfully created evidence file: {FileName} with ID: {FileId}", 
+                        Logger.LogInformation("? Successfully created evidence file: {FileName} with ID: {FileId}",
                             file.FileName, createdFileId);
                     }
                     else
                     {
-                        Logger.LogError("? Failed to create evidence file: {FileName}. Error: {Error}", 
+                        Logger.LogError("? Failed to create evidence file: {FileName}. Error: {Error}",
                             file.FileName, result.Error?.Message);
-                        
+
                         ShowErrorNotification($"Failed to upload '{file.FileName}': {result.Error?.Message}");
                     }
                 }
@@ -356,11 +348,11 @@ public partial class UploadEvidenceDialog : ComponentBase
             // Show completion message
             if (uploadedFileIds.Count == totalFiles)
             {
-                Logger.LogInformation("? All evidence files uploaded successfully: {SuccessCount}/{TotalCount} files", 
+                Logger.LogInformation("? All evidence files uploaded successfully: {SuccessCount}/{TotalCount} files",
                     uploadedFileIds.Count, totalFiles);
-                
+
                 ShowSuccessNotification($"Successfully uploaded {uploadedFileIds.Count} evidence file(s)");
-                
+
                 // Close dialog with success
                 await Task.Delay(1000); // Brief delay to show completion
                 DialogService.Close(true);
@@ -368,11 +360,11 @@ public partial class UploadEvidenceDialog : ComponentBase
             else
             {
                 var failedCount = totalFiles - uploadedFileIds.Count;
-                Logger.LogWarning("?? Partial upload success: {SuccessCount}/{TotalCount} files uploaded, {FailedCount} failed", 
+                Logger.LogWarning("?? Partial upload success: {SuccessCount}/{TotalCount} files uploaded, {FailedCount} failed",
                     uploadedFileIds.Count, totalFiles, failedCount);
-                
+
                 ShowWarningNotification($"Uploaded {uploadedFileIds.Count} of {totalFiles} files. {failedCount} file(s) failed.");
-                
+
                 if (uploadedFileIds.Any())
                 {
                     // Close dialog as we had some success
@@ -429,7 +421,7 @@ public partial class UploadEvidenceDialog : ComponentBase
         return GetFileTypeFromExtension(fileName).ToLowerInvariant() switch
         {
             "image" => "images",
-            "video" => "videos", 
+            "video" => "videos",
             "audio" => "audio files",
             "pdf" => "PDFs",
             "document" => "documents",
@@ -461,7 +453,7 @@ public partial class UploadEvidenceDialog : ComponentBase
         return GetFileTypeFromExtension(fileName) switch
         {
             "PDF" => "#d32f2f",
-            "Image" => "#388e3c", 
+            "Image" => "#388e3c",
             "Video" => "#1976d2",
             "Audio" => "#f57c00",
             "Document" => "#7b1fa2",
@@ -585,7 +577,7 @@ public partial class UploadEvidenceDialog : ComponentBase
         {
             var fileToRemove = AttachedFiles[index];
             AttachedFiles.RemoveAt(index);
-            
+
             Logger.LogInformation("Removed file: {FileName} from upload queue", fileToRemove.FileName);
             StateHasChanged();
         }
@@ -598,7 +590,7 @@ public partial class UploadEvidenceDialog : ComponentBase
     {
         AttachedFiles.Clear();
         Model.SelectedFiles = null;
-        
+
         Logger.LogInformation("Cleared all files from upload queue");
         StateHasChanged();
     }

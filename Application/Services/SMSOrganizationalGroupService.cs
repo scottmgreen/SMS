@@ -1,9 +1,4 @@
-using Application.Interfaces;
 using Microsoft.Extensions.Logging;
-using SMS_Domain.Entities;
-using SMS_Domain.Errors;
-using SMS_Infrastructure.Services;
-using SMS_Shared.Common;
 
 namespace SMS_Application.Services;
 
@@ -378,7 +373,7 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
             var validAuthorityLevels = restrictedCombinations[groupType];
             if (!validAuthorityLevels.Contains(authorityLevel, StringComparer.OrdinalIgnoreCase))
             {
-                _logger.LogInformation("Authority level {AuthorityLevel} for group type {GroupType} requires validation", 
+                _logger.LogInformation("Authority level {AuthorityLevel} for group type {GroupType} requires validation",
                     authorityLevel, groupType);
                 // Could implement additional validation logic here
             }

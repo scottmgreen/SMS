@@ -1,12 +1,8 @@
-﻿
+﻿namespace SMS_Application.Interfaces;
 
-
-using SMS_Domain.Common;
-namespace SMS_Application.Interfaces;
-
-public interface IPipeline<in TRequest,TResult> where TRequest :notnull
+public interface IPipeline<in TRequest, TResult> where TRequest : notnull
 {
-    Task<TResult> HandleAsync(TRequest request, RequestPipelineDelegate<TResult> next,CancellationToken cancellationToken );
+    Task<TResult> HandleAsync(TRequest request, RequestPipelineDelegate<TResult> next, CancellationToken cancellationToken);
 }
 
 

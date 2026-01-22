@@ -1,13 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using Radzen;
-using Radzen.Blazor;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Domain.Enums;
-using SMS_Shared.Common;
 using Domain.Entities;
 
 namespace SMS3.Components.Pages.System.UserManagement;
@@ -125,25 +115,25 @@ public partial class OrganizationalUsers : ComponentBase
         get
         {
             var options = new List<DropdownOption>();
-            
+
             // Group by category and show them in order of authority
             var categories = new[] { "Executive", "Management", "Operational", "Committee", "External" };
-            
+
             foreach (var category in categories)
             {
                 var categoryRoles = SMSOrganizationalLevel.GetLevelsByCategory(category)
                     .OrderByDescending(level => level.AuthorityLevel);
-                
+
                 if (categoryRoles.Any())
                 {
                     // Add category header (disabled option)
-                    options.Add(new DropdownOption 
-                    { 
-                        Text = $"--- {category} Roles ---", 
-                        Value = "", 
-                        IsDisabled = true 
+                    options.Add(new DropdownOption
+                    {
+                        Text = $"--- {category} Roles ---",
+                        Value = "",
+                        IsDisabled = true
                     });
-                    
+
                     // Add roles in category
                     foreach (var level in categoryRoles)
                     {
@@ -155,7 +145,7 @@ public partial class OrganizationalUsers : ComponentBase
                     }
                 }
             }
-            
+
             return options;
         }
     }
@@ -176,7 +166,7 @@ public partial class OrganizationalUsers : ComponentBase
 
     #region Form Validation Properties
 
-    private bool IsCreateFormValid => 
+    private bool IsCreateFormValid =>
         !string.IsNullOrWhiteSpace(NewFirstName) &&
         !string.IsNullOrWhiteSpace(NewLastName) &&
         !string.IsNullOrWhiteSpace(NewUserName) &&
@@ -184,13 +174,13 @@ public partial class OrganizationalUsers : ComponentBase
         !string.IsNullOrWhiteSpace(NewDepartment) &&
         IsValidOrganizationLevel(NewOrganizationLevel);
 
-    private bool IsEditFormValid => 
+    private bool IsEditFormValid =>
         !string.IsNullOrWhiteSpace(EditFirstName) &&
         !string.IsNullOrWhiteSpace(EditLastName) &&
         !string.IsNullOrWhiteSpace(EditDepartment) &&
         IsValidOrganizationLevel(EditOrganizationLevel);
 
-    private bool IsPasswordFormValid => 
+    private bool IsPasswordFormValid =>
         !string.IsNullOrWhiteSpace(NewPassword) &&
         !string.IsNullOrWhiteSpace(ConfirmPassword) &&
         NewPassword == ConfirmPassword &&
@@ -200,7 +190,7 @@ public partial class OrganizationalUsers : ComponentBase
     private bool IsValidOrganizationLevel(string organizationLevel)
     {
         if (string.IsNullOrWhiteSpace(organizationLevel)) return true; // Optional field
-        
+
         return SMSOrganizationalLevel.GetAllValues()
             .Any(level => level.Name.Equals(organizationLevel, StringComparison.OrdinalIgnoreCase));
     }
@@ -225,18 +215,18 @@ public partial class OrganizationalUsers : ComponentBase
             // Load Organizational Users
             var organizationalUsersQuery = new GetAllSMSOrganizationalUsersQuery();
             var organizationalUsersResult = await Mediator.SendAsync(organizationalUsersQuery, CancellationToken.None);
-            OrganizationalUsersList = organizationalUsersResult.IsSuccess ? 
-                organizationalUsersResult.Value?.ToList() ?? new List<SMSOrganizationalUser>() : 
+            OrganizationalUsersList = organizationalUsersResult.IsSuccess ?
+                organizationalUsersResult.Value?.ToList() ?? new List<SMSOrganizationalUser>() :
                 new List<SMSOrganizationalUser>();
 
             // Load Organizational Groups for group management
             var groupsQuery = new GetAllSMSOrganizationalGroupsQuery();
             var groupsResult = await Mediator.SendAsync(groupsQuery, CancellationToken.None);
-            AllOrganizationalGroups = groupsResult.IsSuccess ? 
-                groupsResult.Value?.ToList() ?? new List<SMSOrganizationalGroup>() : 
+            AllOrganizationalGroups = groupsResult.IsSuccess ?
+                groupsResult.Value?.ToList() ?? new List<SMSOrganizationalGroup>() :
                 new List<SMSOrganizationalGroup>();
 
-            Logger.LogInformation("Loaded {UserCount} organizational users and {GroupCount} organizational groups", 
+            Logger.LogInformation("Loaded {UserCount} organizational users and {GroupCount} organizational groups",
                 OrganizationalUsersList.Count, AllOrganizationalGroups.Count);
 
             StateHasChanged();
@@ -351,7 +341,7 @@ public partial class OrganizationalUsers : ComponentBase
         {
             var getUserQuery = new GetSMSOrganizationalUserByCodeQuery(userId);
             var userResult = await Mediator.SendAsync(getUserQuery, CancellationToken.None);
-            
+
             if (userResult.IsFailure)
             {
                 ShowErrorNotification("User not found.");
@@ -359,7 +349,7 @@ public partial class OrganizationalUsers : ComponentBase
             }
 
             CurrentUser = userResult.Value;
-            
+
             // Set edit form values
             EditFirstName = CurrentUser.FirstName?.Value ?? string.Empty;
             EditLastName = CurrentUser.LastName?.Value ?? string.Empty;
@@ -367,7 +357,7 @@ public partial class OrganizationalUsers : ComponentBase
             EditPosition = CurrentUser.Position ?? string.Empty;
             EditOrganizationLevel = CurrentUser.OrganizationLevel ?? string.Empty;
             EditIsActive = CurrentUser.IsActive;
-            
+
             // Open edit modal
             ShowEditModal = true;
         }
@@ -546,7 +536,7 @@ public partial class OrganizationalUsers : ComponentBase
         {
             GroupManagementUserCode = userId;
             GroupManagementUserDisplayName = displayName;
-            
+
             await LoadUserGroups(userId);
             ShowGroupsModal = true;
         }
@@ -564,10 +554,10 @@ public partial class OrganizationalUsers : ComponentBase
             // Load groups that this user is currently assigned to
             var userGroupsQuery = new GetSMSOrganizationalGroupsByUserCodeQuery(userId);
             var userGroupsResult = await Mediator.SendAsync(userGroupsQuery, CancellationToken.None);
-            UserCurrentGroups = userGroupsResult.IsSuccess ? 
-                userGroupsResult.Value?.ToList() ?? new List<SMSOrganizationalGroup>() : 
+            UserCurrentGroups = userGroupsResult.IsSuccess ?
+                userGroupsResult.Value?.ToList() ?? new List<SMSOrganizationalGroup>() :
                 new List<SMSOrganizationalGroup>();
-            
+
             // Calculate available groups (groups the user is not currently in)
             var currentGroupCodes = UserCurrentGroups.Select(g => g.Code).ToHashSet();
             AvailableGroups = AllOrganizationalGroups
@@ -582,7 +572,7 @@ public partial class OrganizationalUsers : ComponentBase
                 SelectedGroups[group.Code] = false;
             }
 
-            Logger.LogInformation("Loaded {CurrentGroupCount} current groups and {AvailableGroupCount} available groups for user {UserId}", 
+            Logger.LogInformation("Loaded {CurrentGroupCount} current groups and {AvailableGroupCount} available groups for user {UserId}",
                 UserCurrentGroups.Count, AvailableGroups.Count, userId);
         }
         catch (Exception ex)
@@ -590,7 +580,7 @@ public partial class OrganizationalUsers : ComponentBase
             Logger.LogError(ex, "Error loading groups for user: {UserId}", userId);
             UserCurrentGroups = new List<SMSOrganizationalGroup>();
             AvailableGroups = AllOrganizationalGroups.Where(g => g.IsActive).ToList();
-            
+
             // Initialize selection tracking even on error
             SelectedGroups.Clear();
             foreach (var group in AvailableGroups)
@@ -714,7 +704,7 @@ public partial class OrganizationalUsers : ComponentBase
                 if (failureCount > 0)
                     message += $" {failureCount} assignment(s) failed.";
                 ShowSuccessNotification(message);
-                
+
                 await LoadUserGroups(GroupManagementUserCode);
                 StateHasChanged();
             }
@@ -757,7 +747,7 @@ public partial class OrganizationalUsers : ComponentBase
     {
         var level = SMSOrganizationalLevel.GetAllValues()
             .FirstOrDefault(l => l.Name.Equals(organizationLevel, StringComparison.OrdinalIgnoreCase));
-        
+
         if (level == null) return BadgeStyle.Secondary;
 
         return level.AuthorityLevel switch
@@ -776,7 +766,7 @@ public partial class OrganizationalUsers : ComponentBase
     {
         var level = SMSOrganizationalLevel.GetAllValues()
             .FirstOrDefault(l => l.Name.Equals(organizationLevel, StringComparison.OrdinalIgnoreCase));
-        
+
         if (level == null) return organizationLevel;
 
         return $"{level.Name} - {level.Category} (Authority Level {level.AuthorityLevel})";

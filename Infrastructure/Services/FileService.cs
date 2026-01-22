@@ -1,6 +1,4 @@
-﻿using System.Threading;
-
-using SMS_Domain.Errors;
+﻿using SMS_Domain.Errors;
 
 namespace SMS_Infrastructure.Services
 {
@@ -20,7 +18,7 @@ namespace SMS_Infrastructure.Services
                 string fullPath = Path.Combine(wwwRootPath, filePath.TrimStart('/'));
                 bool result = File.Exists(fullPath);
 
-            
+
                 return Task.FromResult(Result<bool>.Success(result));
             }
             catch (Exception)

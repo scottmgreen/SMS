@@ -1,20 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Services;
-
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Domain.Errors;
-using SMS_Domain.ValueObjects;
-
-using SMS_Infrastructure.Common;
-using SMS_Infrastructure.Configuration;
 using SMS_Infrastructure.Interfaces;
-using SMS_Infrastructure.Services;
-
-using SMS_Shared.Common;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 
@@ -32,7 +18,7 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
     private readonly ScoringPanelDataService _scoringPanelDataService;
     private readonly HazardLocationDataService _locationDataService;
     private readonly RiskAssessmentDataService _riskAssessmentDataService;
-    private readonly RiskAnalysisDataService _riskAnalysisDataService;  
+    private readonly RiskAnalysisDataService _riskAnalysisDataService;
     private readonly ILogger<CreateHazardCommandHandler> _logger;
     private readonly ILogSupport _logsupport;
     private readonly string _logheader = string.Empty;
@@ -58,7 +44,7 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
         try
         {
             _logger.LogInformation("??? SMS Backend: Creating new hazard - {Name}", request.Hazard.Name);
-           
+
             Hazard hazard = request.Hazard;
             hazard.ReportCode = request.Hazard.ReportCode;
 
@@ -74,10 +60,10 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
                 var scoringPanel = new ScoringPanel(new ScoringPanelID("SP-0000"))
                 {
                     HazardCode = hazard.Code
-                    
+
                 };
-                
-               
+
+
                 var hazardLocation = new HazardLocation(new HazardLocationID("HL-0000"))
                 {
                     HazardCode = hazard.Code,
@@ -86,7 +72,7 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
                     Description = "Map selected location"
                 };
 
-                var createdLocationResult = await _locationDataService.CreateHazardLocationAsync(hazardLocation,ct);
+                var createdLocationResult = await _locationDataService.CreateHazardLocationAsync(hazardLocation, ct);
                 hazard.HazardLocation = createdLocationResult.Value;
 
                 RiskAssessment initialRiskAssessment = new RiskAssessment(new RiskAssessmentID("RS-0000"));
@@ -113,16 +99,16 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
                 riskAssessmentResult = _riskAssessmentDataService.CreateRiskAssessmentAsync(residualRiskAssessment, ct);
 
                 RiskAnalysis riskanalysis = new RiskAnalysis(new RiskAnalysisID("RA-0000"));
-                riskanalysis.HazardCode= hazard.Code;
+                riskanalysis.HazardCode = hazard.Code;
                 riskanalysis.RiskAssessmentCode = initialRiskAccessmentCode;
-                var riskanalysisresult  = _riskAnalysisDataService.CreateRiskAnalysisAsync(riskanalysis, ct); 
+                var riskanalysisresult = _riskAnalysisDataService.CreateRiskAnalysisAsync(riskanalysis, ct);
 
             }
-                        
-            
-            _logger.LogApplicationInformation(ApplicationEventIds.Information,"? SMS Backend: Hazard saved via data service - {Code}", hazard.Code);
+
+
+            _logger.LogApplicationInformation(ApplicationEventIds.Information, "? SMS Backend: Hazard saved via data service - {Code}", hazard.Code);
             return Result<Hazard>.Success(hazardResult.Value);
-        
+
         }
         catch (Exception ex)
         {

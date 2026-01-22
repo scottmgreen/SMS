@@ -5,7 +5,6 @@
 
 // 1. HazardDataService.cs
 using SMS_Infrastructure.Interfaces;
-using SMS_Infrastructure.Persistence;
 
 namespace SMS_Infrastructure.Services;
 
@@ -30,7 +29,7 @@ public class HazardDataService : BaseDataService<HazardDataService>, IHazardData
         return _repo.CreateHazardAsync(hazard, ct);
     }
 
-    public Task<Result<Hazard>> GetHazardByIdAsync(HazardID code, CancellationToken ct = default)
+    public Task<Result<Hazard>> GetHazardByCodeAsync(HazardID code, CancellationToken ct = default)
     {
         return _repo.GetHazardByCodeAsync(code, ct);
     }

@@ -1,11 +1,4 @@
-using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using Microsoft.Extensions.Logging;
 
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
@@ -39,17 +32,17 @@ public partial class AddHazardModal : ComponentBase
     private bool HasGeoLocation => SelectedGeoLocation != null;
     private bool HasValidCoordinates => SelectedLatitude != 0 && SelectedLongitude != 0;
     private string GeoLocationDisplay => HasValidCoordinates ? $"{SelectedLatitude:F6}, {SelectedLongitude:F6}" : "";
-    private string LocationDisplayText => HasGeoLocation && !string.IsNullOrEmpty(SelectedGeoLocation?.Description) 
-        ? SelectedGeoLocation.Description 
-        : HasValidCoordinates 
-            ? GeoLocationDisplay 
+    private string LocationDisplayText => HasGeoLocation && !string.IsNullOrEmpty(SelectedGeoLocation?.Description)
+        ? SelectedGeoLocation.Description
+        : HasValidCoordinates
+            ? GeoLocationDisplay
             : "No location selected";
 
     // Form validation
-    private bool IsFormValid => 
-        !string.IsNullOrWhiteSpace(NewHazardDescription?.Trim()) && 
+    private bool IsFormValid =>
+        !string.IsNullOrWhiteSpace(NewHazardDescription?.Trim()) &&
         NewHazardDescription.Trim().Length >= 10 &&
-        !string.IsNullOrWhiteSpace(NewHazardCategory) && 
+        !string.IsNullOrWhiteSpace(NewHazardCategory) &&
         !string.IsNullOrWhiteSpace(NewHazardFiveM) &&
         HasGeoLocation &&
         !IsSubmitting; // ENHANCED: Prevent submission when already submitting
@@ -57,7 +50,7 @@ public partial class AddHazardModal : ComponentBase
     private List<string> HazardCategories = new()
     {
         "Aircraft Operations",
-        "Ground Operations", 
+        "Ground Operations",
         "Security Operations",
         "Weather Related",
         "Equipment Failure",
@@ -103,18 +96,18 @@ public partial class AddHazardModal : ComponentBase
 
             // Set properties
             hazard.Code = "HZ-0000";
-            hazard.Name = NewHazardDescription.Trim(); 
+            hazard.Name = NewHazardDescription.Trim();
             hazard.Description = NewHazardDescription.Trim();
             hazard.HazardCategory = NewHazardCategory;
-            hazard.ReportCode = ReportId ?? ""; 
-            hazard.ReportedBy = "Technical Assessment User"; 
+            hazard.ReportCode = ReportId ?? "";
+            hazard.ReportedBy = "Technical Assessment User";
             hazard.ReportingDepartment = "Technical Assessment";
             hazard.HazardType = NewHazardCategory;
             hazard.FiveMComponent = GetFiveMComponent(NewHazardFiveM);
             hazard.IsConfidential = false;
             hazard.IsAnonymous = false;
-            hazard.Status = HazardStatus.Active; 
-            hazard.Priority = HazardPriority.Medium; 
+            hazard.Status = HazardStatus.Active;
+            hazard.Priority = HazardPriority.Medium;
             hazard.ReportedOn = DateTime.UtcNow;
 
             // First, create the hazard
@@ -144,11 +137,11 @@ public partial class AddHazardModal : ComponentBase
                 if (locationResult.IsSuccess)
                 {
                     var createdLocation = locationResult.Value;
-                    
+
                     // Only update the display text for backward compatibility
                     // Don't update hazard references to avoid duplicate creation
                     createdHazard.LocationArea = LocationDisplayText;
-                    
+
                     Logger?.LogInformation("Successfully created hazard location: {LocationCode}", createdLocation?.Code);
                 }
                 else
@@ -189,7 +182,7 @@ public partial class AddHazardModal : ComponentBase
     private FiveMComponent? GetFiveMComponent(string? value)
     {
         if (string.IsNullOrEmpty(value)) return null;
-        
+
         return value switch
         {
             "MAN" => FiveMComponent.Man,
@@ -235,8 +228,8 @@ public partial class AddHazardModal : ComponentBase
             {
                 Latitude = SelectedLatitude,
                 Longitude = SelectedLongitude,
-                Description = !string.IsNullOrEmpty(LocationDescription) 
-                    ? LocationDescription 
+                Description = !string.IsNullOrEmpty(LocationDescription)
+                    ? LocationDescription
                     : $"Location at {SelectedLatitude:F6}, {SelectedLongitude:F6}",
                 HazardCode = "HZ-0000", // Will be updated when hazard is created
                 Code = "HL-0000", // Will be updated when created
@@ -251,7 +244,7 @@ public partial class AddHazardModal : ComponentBase
     {
         try
         {
-            await JSRuntime.InvokeVoidAsync("initializeHazardLocationMap", "hazardLocationMap", 
+            await JSRuntime.InvokeVoidAsync("initializeHazardLocationMap", "hazardLocationMap",
                 DotNetObjectReference.Create(this), 45.5898, -122.5951, 12);
         }
         catch (Exception)

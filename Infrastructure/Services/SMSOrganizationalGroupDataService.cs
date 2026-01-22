@@ -1,11 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using SMS_Domain.Entities;
-using SMS_Domain.Interfaces;
 using SMS_Domain.Errors;
-using SMS_Infrastructure.Common;
-using SMS_Infrastructure.Interfaces;
-using SMS_Shared.Common;
 
 namespace SMS_Infrastructure.Services;
 
@@ -43,7 +36,7 @@ public sealed class SMSOrganizationalGroupDataService : BaseDataService<SMSOrgan
             }
 
             _logger.LogInformation("Creating SMS Organizational Group with code: {Code}", group.Code);
-            
+
             var result = await _repository.AddAsync(group);
 
             if (result.IsSuccess)
@@ -123,7 +116,7 @@ public sealed class SMSOrganizationalGroupDataService : BaseDataService<SMSOrgan
             // For now, return an empty list as this functionality may not be implemented yet
             var result = await _repository.GetGroupsByUserCodeAsync(userCode);
 
-            
+
             return Result<IEnumerable<SMSOrganizationalGroup>>.Success(result.Value.AsEnumerable());
         }
         catch (Exception ex)
@@ -147,7 +140,7 @@ public sealed class SMSOrganizationalGroupDataService : BaseDataService<SMSOrgan
             }
 
             _logger.LogInformation("Updating SMS Organizational Group with code: {Code}", group.Code);
-            
+
             var result = await _repository.UpdateAsync(group);
 
             if (result.IsSuccess)
@@ -183,7 +176,7 @@ public sealed class SMSOrganizationalGroupDataService : BaseDataService<SMSOrgan
             }
 
             _logger.LogInformation("Deleting SMS Organizational Group with code: {Code}", groupCode);
-            
+
             var result = await _repository.DeleteAsync(groupCode);
 
             if (result.IsSuccess)
@@ -218,7 +211,7 @@ public sealed class SMSOrganizationalGroupDataService : BaseDataService<SMSOrgan
             }
 
             _logger.LogInformation("Assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
-            
+
             var result = await _repository.AssignUserToGroupAsync(userCode, groupCode);
 
             if (result.IsSuccess)
@@ -253,7 +246,7 @@ public sealed class SMSOrganizationalGroupDataService : BaseDataService<SMSOrgan
             }
 
             _logger.LogInformation("Removing user {UserCode} from group {GroupCode}", userCode, groupCode);
-            
+
             var result = await _repository.RemoveUserFromGroupAsync(userCode, groupCode);
 
             if (result.IsSuccess)
@@ -288,7 +281,7 @@ public sealed class SMSOrganizationalGroupDataService : BaseDataService<SMSOrgan
             }
 
             _logger.LogInformation("Clearing all group memberships for user {UserCode}", userCode);
-            
+
             var result = await _repository.ClearUserGroupsAsync(userCode, "SYSTEM");
 
             if (result.IsSuccess)
@@ -332,4 +325,4 @@ public sealed class SMSOrganizationalGroupDataService : BaseDataService<SMSOrgan
             return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalGroupError.NotFound);
         }
     }
- }
+}

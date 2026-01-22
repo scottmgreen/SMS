@@ -1,10 +1,6 @@
-using SMS_Domain.Entities;
 using SMS_Domain.Errors;
-using SMS_Domain.ValueObjects;
-using SMS_Infrastructure.Common;
+
 using SMS_Infrastructure.Interfaces;
-using Microsoft.Data.SqlClient;
-using System.Data;
 
 namespace SMS_Infrastructure.Persistence;
 
@@ -49,7 +45,7 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
     public async Task<Result<IEnumerable<HazardLocation>>> GetAllAsync()
     {
         var result = await GetAllHazardLocationsAsync();
-        return result.IsSuccess 
+        return result.IsSuccess
             ? Result<IEnumerable<HazardLocation>>.Success(result.Value.AsEnumerable())
             : Result<IEnumerable<HazardLocation>>.Failure<IEnumerable<HazardLocation>>(result.Error);
     }
@@ -57,7 +53,7 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
     public async Task<Result<IEnumerable<HazardLocation>>> GetByHazardCodeAsync(string hazardCode)
     {
         var result = await GetHazardLocationsByHazardCodeAsync(hazardCode);
-        return result.IsSuccess 
+        return result.IsSuccess
             ? Result<IEnumerable<HazardLocation>>.Success(result.Value.AsEnumerable())
             : Result<IEnumerable<HazardLocation>>.Failure<IEnumerable<HazardLocation>>(result.Error);
     }

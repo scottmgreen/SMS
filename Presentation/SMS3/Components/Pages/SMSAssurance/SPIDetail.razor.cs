@@ -1,12 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Shared.Common;
-using Radzen;
-using Radzen.Blazor;
 using SMS3.Components.Pages.SMSAssurance.Components;
 
 namespace SMS3.Components.Pages.SMSAssurance;
@@ -29,12 +20,12 @@ public partial class SPIDetail : ComponentBase
     private bool IsLoading { get; set; } = true;
     private bool IsAuthenticated { get; set; } = true; // TODO: Implement actual authentication check
     private string? ErrorMessage { get; set; }
-    
+
     private SafetyPerformanceIndicator? SPI { get; set; }
     private List<SPIDataPoint>? DataPoints { get; set; }
     private SPIDataPoint? CurrentDataPoint { get; set; }
     private bool IsEditingDataPoint { get; set; }
-    
+
     // Component References
     private RadzenDataGrid<SPIDataPoint>? dataPointsGrid;
     #endregion
@@ -79,8 +70,8 @@ public partial class SPIDetail : ComponentBase
             {
                 SPI = result.Value;
                 DataPoints = SPI.DataPoints?.OrderByDescending(dp => dp.MeasurementDate).ToList() ?? new List<SPIDataPoint>();
-                
-                Logger.LogInformation("Successfully loaded SPI: {SPIName} with {DataPointCount} data points", 
+
+                Logger.LogInformation("Successfully loaded SPI: {SPIName} with {DataPointCount} data points",
                     SPI.Name, DataPoints.Count);
             }
             else
@@ -138,7 +129,7 @@ public partial class SPIDetail : ComponentBase
             IsVerified = true,
             Period = string.Empty
         };
-        
+
         var parameters = new Dictionary<string, object>
         {
             { "SPI", SPI },
@@ -167,7 +158,7 @@ public partial class SPIDetail : ComponentBase
     {
         IsEditingDataPoint = true; // Set this flag so we know we're editing
         CurrentDataPoint = dataPoint; // Store the current data point being edited
-        
+
         //var currentDataPoint = new SPIDataPoint(new SPIDataPointID(dataPoint.Code))
         //{
         //    Code = dataPoint.Code, // Include the ID for edit mode
@@ -182,7 +173,7 @@ public partial class SPIDetail : ComponentBase
         //    VerifiedBy = dataPoint.VerifiedBy,
         //    VerifiedDate = dataPoint.VerifiedDate
         //};
-        
+
         var parameters = new Dictionary<string, object>
         {
             { "SPI", SPI },
@@ -250,7 +241,7 @@ public partial class SPIDetail : ComponentBase
         {
             if (SPI == null) return;
 
-            Logger.LogInformation("Saving data point for SPI {SPICode}: Value={Value}, Date={Date}", 
+            Logger.LogInformation("Saving data point for SPI {SPICode}: Value={Value}, Date={Date}",
                 SPI.Code, savedDataPoint.Value, savedDataPoint.MeasurementDate);
 
             if (IsEditingDataPoint && CurrentDataPoint != null)
@@ -328,16 +319,16 @@ public partial class SPIDetail : ComponentBase
         if (SPI?.GetCurrentValue() == null) return "color: #6c757d;";
 
         var currentValue = SPI.GetCurrentValue().Value;
-        
+
         if (SPI.CriticalThreshold.HasValue && currentValue >= SPI.CriticalThreshold.Value)
             return "color: #dc3545; font-weight: bold;";
-        
+
         if (SPI.WarningThreshold.HasValue && currentValue >= SPI.WarningThreshold.Value)
             return "color: #fd7e14; font-weight: bold;";
-        
+
         if (SPI.TargetValue.HasValue && currentValue >= SPI.TargetValue.Value)
             return "color: #198754; font-weight: bold;";
-        
+
         return "color: #0d6efd;";
     }
 
@@ -375,13 +366,13 @@ public partial class SPIDetail : ComponentBase
 
         if (SPI.CriticalThreshold.HasValue && dataPoint.Value >= SPI.CriticalThreshold.Value)
             return "color: #dc3545; font-weight: bold;";
-        
+
         if (SPI.WarningThreshold.HasValue && dataPoint.Value >= SPI.WarningThreshold.Value)
             return "color: #fd7e14; font-weight: bold;";
-        
+
         if (SPI.TargetValue.HasValue && dataPoint.Value >= SPI.TargetValue.Value)
             return "color: #198754; font-weight: bold;";
-        
+
         return "";
     }
 

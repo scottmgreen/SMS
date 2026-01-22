@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging;
-using SMS_Infrastructure.Services;
+
 using SMS_Application.Messaging.Queries;
-using SMS_Domain.Models;
 
 namespace SMS_Application.Messaging.QueryHandlers;
 

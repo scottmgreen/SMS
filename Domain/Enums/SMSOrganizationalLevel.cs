@@ -1,6 +1,3 @@
-using System.Reflection;
-using SMS_Domain.Common;
-
 namespace SMS_Domain.Enums;
 
 public abstract class SMSOrganizationalLevel : BaseEnum<SMSOrganizationalLevel>
@@ -57,7 +54,7 @@ public abstract class SMSOrganizationalLevel : BaseEnum<SMSOrganizationalLevel>
             "Ultimately responsible for SMS performance, resource allocation, and ensuring compliance with 14 CFR Part 139 Subpart E. Reviews critical risks and compliance issues.", 10)
         {
         }
-        
+
     }
 
     private sealed class ResponsibleExecutiveLevel : SMSOrganizationalLevel

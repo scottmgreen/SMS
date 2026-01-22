@@ -11,9 +11,9 @@ public class AddAuditLogEntryCommandHandler : BaseCommandBundle, IRequestHandler
     private readonly SystemDataService _dataService;
     public Task<Result<bool>> HandleAsync(AddAuditLogEntryCommand request, CancellationToken ct = default)
     {
-        var result = _dataService.AddAuditLogEntryAsync(request.AuditLogEntry,ct);
+        var result = _dataService.AddAuditLogEntryAsync(request.AuditLogEntry, ct);
         return result;
     }
 
-    
+
 }

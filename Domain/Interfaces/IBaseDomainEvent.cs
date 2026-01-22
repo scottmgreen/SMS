@@ -1,6 +1,6 @@
 ﻿
 namespace SMS_Domain.Interfaces;
 
-public interface IBaseDomainEvent 
+public interface IBaseDomainEvent
 {
 }

@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Net;
 using System.Net.Sockets;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-
-using SMS_Infrastructure.Interfaces;
 
 using Microsoft.AspNetCore.Http;
-using System.Net.Http;
+
+using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Services;
 public class ConnectionService : IConnectionService
@@ -20,16 +14,16 @@ public class ConnectionService : IConnectionService
 
 
     public ConnectionService(IHttpContextAccessor httpContextAccessor)
-        {
+    {
         _httpContextAccessor = httpContextAccessor;
         //var httpContext = _httpContextAccessor.HttpContext;
         //_ipAddress = GetRemoteIpAddress(httpContext);
         //_hostName = GetRemoteHostName(httpContext);
-        }
+    }
     // Set connection information (called by middleware)
     public void SetConnectionInfo(string ipAddress, string hostName)
     {
-        
+
         _ipAddress = ipAddress;
         _hostName = hostName;
     }

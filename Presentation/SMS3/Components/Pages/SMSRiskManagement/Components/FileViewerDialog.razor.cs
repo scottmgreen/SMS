@@ -1,9 +1,7 @@
-using SMS_Domain.Entities;
-using Microsoft.JSInterop;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using Radzen;
 using System.Text;
+
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
@@ -51,7 +49,7 @@ public partial class FileViewerDialog : ComponentBase
             IsLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("Loading file for viewing: {FileName} ({Size} bytes)", 
+            Logger.LogInformation("Loading file for viewing: {FileName} ({Size} bytes)",
                 ViewingFile.FileName, ViewingFile.FileData.Length);
 
             // For text files, decode the content
@@ -60,7 +58,7 @@ public partial class FileViewerDialog : ComponentBase
                 try
                 {
                     TextContent = Encoding.UTF8.GetString(ViewingFile.FileData);
-                    Logger.LogInformation("Loaded text content for file: {FileName} ({Length} characters)", 
+                    Logger.LogInformation("Loaded text content for file: {FileName} ({Length} characters)",
                         ViewingFile.FileName, TextContent.Length);
                 }
                 catch (Exception ex)
@@ -75,8 +73,8 @@ public partial class FileViewerDialog : ComponentBase
                 var mimeType = GetMimeType(ViewingFile);
                 var base64 = Convert.ToBase64String(ViewingFile.FileData);
                 FileDataUrl = $"data:{mimeType};base64,{base64}";
-                
-                Logger.LogInformation("Created data URL for file: {FileName} with MIME type: {MimeType}", 
+
+                Logger.LogInformation("Created data URL for file: {FileName} with MIME type: {MimeType}",
                     ViewingFile.FileName, mimeType);
             }
         }
@@ -97,21 +95,21 @@ public partial class FileViewerDialog : ComponentBase
     private bool IsImageFile(HazardFile file)
     {
         if (file.FileType?.ToLowerInvariant() == "image") return true;
-        
+
         var imageExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg" };
         return imageExtensions.Any(ext => file.FileName?.ToLowerInvariant().EndsWith(ext) == true);
     }
 
     private bool IsPdfFile(HazardFile file)
     {
-        return file.FileType?.ToLowerInvariant() == "pdf" || 
+        return file.FileType?.ToLowerInvariant() == "pdf" ||
                file.FileName?.ToLowerInvariant().EndsWith(".pdf") == true;
     }
 
     private bool IsVideoFile(HazardFile file)
     {
         if (file.FileType?.ToLowerInvariant() == "video") return true;
-        
+
         var videoExtensions = new[] { ".mp4", ".avi", ".mov", ".wmv", ".flv", ".webm", ".mkv" };
         return videoExtensions.Any(ext => file.FileName?.ToLowerInvariant().EndsWith(ext) == true);
     }
@@ -119,7 +117,7 @@ public partial class FileViewerDialog : ComponentBase
     private bool IsAudioFile(HazardFile file)
     {
         if (file.FileType?.ToLowerInvariant() == "audio") return true;
-        
+
         var audioExtensions = new[] { ".mp3", ".wav", ".m4a", ".aac", ".ogg", ".wma" };
         return audioExtensions.Any(ext => file.FileName?.ToLowerInvariant().EndsWith(ext) == true);
     }
@@ -127,7 +125,7 @@ public partial class FileViewerDialog : ComponentBase
     private bool IsTextFile(HazardFile file)
     {
         if (file.FileType?.ToLowerInvariant() == "text") return true;
-        
+
         var textExtensions = new[] { ".txt", ".csv", ".log", ".xml", ".json", ".html", ".css", ".js", ".sql", ".md" };
         return textExtensions.Any(ext => file.FileName?.ToLowerInvariant().EndsWith(ext) == true);
     }
@@ -247,9 +245,9 @@ public partial class FileViewerDialog : ComponentBase
         try
         {
             Logger.LogInformation("Opening file in new tab: {FileName}", ViewingFile.FileName);
-            
+
             await JSRuntime.InvokeVoidAsync("open", FileDataUrl, "_blank");
-            
+
             ShowSuccessNotification($"Opened '{ViewingFile.FileName}' in new tab");
         }
         catch (Exception ex)
@@ -270,14 +268,14 @@ public partial class FileViewerDialog : ComponentBase
         try
         {
             Logger.LogInformation("Starting download for file: {FileName}", ViewingFile.FileName);
-            
+
             // Create download link using JS interop
             var fileName = ViewingFile.FileName ?? "file";
             var mimeType = GetMimeType(ViewingFile);
             var base64 = Convert.ToBase64String(ViewingFile.FileData);
-            
+
             await JSRuntime.InvokeVoidAsync("downloadFile", fileName, mimeType, base64);
-            
+
             ShowSuccessNotification($"Download started for '{fileName}'");
         }
         catch (Exception ex)

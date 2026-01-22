@@ -1,10 +1,6 @@
 using Microsoft.Extensions.Logging;
+
 using SMS_Application.Messaging.Queries;
-using SMS_Application.Services;
-using SMS_Domain.Entities;
-using SMS_Infrastructure.Services;
-using SMS_Shared.Common;
-using SMS_Application.Common;
 
 namespace SMS_Application.Messaging.QueryHandlers;
 
@@ -210,10 +206,10 @@ public class GetSMSAuditsByAuditorQueryHandler : BaseQueryBundle, IRequestHandle
             _logger.LogInformation("Processing GetSMSAuditsByAuditorQuery for Auditor: {Auditor}", request.Auditor);
 
             var result = await _dataService.GetAuditsByAuditorAsync(
-                request.Auditor, 
-                request.StatusFilter, 
-                request.StartDateFrom, 
-                request.StartDateTo, 
+                request.Auditor,
+                request.StatusFilter,
+                request.StartDateFrom,
+                request.StartDateTo,
                 ct);
 
             return result;
