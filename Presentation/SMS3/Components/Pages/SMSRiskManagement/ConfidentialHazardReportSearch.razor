@@ -8,26 +8,11 @@
 
 <PageTitle>Track Your Confidential Report - PDX SMS</PageTitle>
 
-<!-- Anonymous Page Header -->
-<div class="sms-page-header">
-    <div class="d-flex justify-content-between align-items-start">
-        <div>
-            <h3 class="mb-2">
-                <i class="fas fa-search me-2"></i>
-                Track Your Confidential Report
-            </h3>
-            <p class="mb-0 text-white-50">
-                Check the status of your anonymously submitted hazard report using your tracking ID
-            </p>
-        </div>
-        <div class="text-end">
-            <small class="text-white-50">
-                <i class="fas fa-shield-alt me-1"></i>
-                Anonymous & Secure
-            </small>
-        </div>
-    </div>
-</div>
+<!-- SMS Page Header using standard component -->
+<PageHeader Title="@PageTitle"
+           Subtitle="@PageSubtitle"
+           Icon="fas fa-search"
+           AdditionalContent="@AdditionalHeaderContent" />
 
 <!-- Search Section -->
 <RadzenCard class="mb-4">
@@ -75,7 +60,7 @@
                         <i class="fas fa-info-circle me-1"></i>
                         Tracking ID format: <strong>HT-YYYY-NNNN</strong> (e.g., HT-2026-0006)
                         <br />
-                        <span class="text-primary">?? Tip: You can enter just the numbers if you're not sure of the full format</span>
+                        @* <span class="text-primary">?? Tip: You can enter just the numbers if you're not sure of the full format</span> *@
                     </small>
                     @if (!string.IsNullOrEmpty(TrackingIdFormatMessage))
                     {
@@ -101,7 +86,7 @@
         </div>
 
         <!-- Privacy Notice -->
-        <div class="row">
+        @* <div class="row">
             <div class="col-12">
                 <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat">
                     <h6 class="mb-2">
@@ -126,7 +111,7 @@
                     </div>
                 </RadzenAlert>
             </div>
-        </div>
+        </div> *@
     </div>
 </RadzenCard>
 
@@ -263,7 +248,7 @@
                     We couldn't find a report with tracking ID: <strong>@LastSearchQuery</strong>
                 </p>
                 
-                <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" class="text-start">
+               @*  <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" class="text-start">
                     <h6 class="mb-2">Please Check:</h6>
                     <ul class="mb-2">
                         <li>Tracking ID is entered correctly (format: HT-YYYY-NNNN)</li>
@@ -273,7 +258,7 @@
                     <p class="mb-0">
                         <strong>Need help?</strong> Call our confidential hotline: <strong>(503) 555-0199</strong>
                     </p>
-                </RadzenAlert>
+                </RadzenAlert> *@
             </div>
         }
     </RadzenCard>
@@ -351,21 +336,5 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-    }
-
-    /* Anonymous layout specific styling */
-    .sms-page-header {
-        background: #212e61 !important;
-        border: 2px solid white !important;
-        border-radius: 0.5rem !important;
-        padding: 1.5rem !important;
-        margin-bottom: 2rem !important;
-        color: white !important;
-    }
-
-    .sms-page-header h3,
-    .sms-page-header p,
-    .sms-page-header i {
-        color: white !important;
     }
 </style>

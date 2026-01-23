@@ -114,6 +114,18 @@ public partial class HazardReportSearch : ComponentBase
     public Dictionary<string, int> SimilarityScores { get; set; } = new();
     #endregion
 
+    #region UI Properties
+    /// <summary>
+    /// Page title for header component
+    /// </summary>
+    public string PageTitle => "Hazard Report Search";
+
+    /// <summary>
+    /// Page subtitle for header component
+    /// </summary>
+    public string PageSubtitle => "Search for hazard reports using tracking ID or report details";
+    #endregion
+
     #region Event Handlers
 
     /// <summary>

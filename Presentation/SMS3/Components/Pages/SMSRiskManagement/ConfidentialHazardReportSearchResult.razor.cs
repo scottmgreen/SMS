@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Components.Web;
+
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
 /// <summary>
@@ -36,6 +38,33 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
     /// Hazard location information
     /// </summary>
     public HazardLocation? HazardLocation { get; set; }
+    #endregion
+
+    #region UI Properties
+    /// <summary>
+    /// Page title for header component
+    /// </summary>
+    public string PageTitle => "Confidential Report Status";
+
+    /// <summary>
+    /// Page subtitle for header component
+    /// </summary>
+    public string PageSubtitle => $"Status information for tracking ID: {TrackingCode}";
+
+    /// <summary>
+    /// Additional header content with back button
+    /// </summary>
+    public RenderFragment AdditionalHeaderContent => builder =>
+    {
+        builder.OpenComponent<RadzenButton>(0);
+        builder.AddAttribute(1, "ButtonType", ButtonType.Button);
+        builder.AddAttribute(2, "Click", EventCallback.Factory.Create<MouseEventArgs>(this, BackToSearch));
+        builder.AddAttribute(3, "Text", "Back to Search");
+        builder.AddAttribute(4, "Icon", "arrow_back");
+        builder.AddAttribute(5, "ButtonStyle", ButtonStyle.Light);
+        builder.AddAttribute(6, "Size", ButtonSize.Small);
+        builder.CloseComponent();
+    };
     #endregion
 
     #region Lifecycle Methods

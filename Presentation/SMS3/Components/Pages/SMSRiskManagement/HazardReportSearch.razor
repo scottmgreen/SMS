@@ -7,20 +7,10 @@
 
 <PageTitle>Hazard Report Search</PageTitle>
 
-<!-- Header Section -->
-<div class="page-header mb-4">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h3 class="page-title mb-1">
-                <RadzenIcon Icon="search" class="me-2" />
-                Hazard Report Search
-            </h3>
-            <p class="page-subtitle mb-0">
-                Search for hazard reports using tracking ID or report details
-            </p>
-        </div>
-    </div>
-</div>
+<!-- SMS Page Header using standard component -->
+<PageHeader Title="@PageTitle"
+           Subtitle="@PageSubtitle"
+           Icon="fas fa-search" />
 
 <!-- Search Section -->
 <RadzenCard class="mb-4">
@@ -33,7 +23,7 @@
                     <RadzenIcon Icon="track_changes" class="me-2" />
                     Search by Tracking ID
                 </h5>
-                <p class="text-muted mb-3">
+                <p class="text-muted mb-0">
                     Enter your tracking ID to get comprehensive report details and processing status.
                 </p>
             </div>
@@ -352,11 +342,6 @@
 }
 
 <style>
-    .page-header {
-        border-bottom: 2px solid var(--rz-border-color);
-        padding-bottom: 1rem;
-    }
-
     .search-input-container {
         position: relative;
     }

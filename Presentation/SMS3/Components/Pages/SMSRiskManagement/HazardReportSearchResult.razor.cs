@@ -1,3 +1,7 @@
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
+using SMS_Application.Messaging.Queries;
+
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
 /// <summary>
@@ -307,6 +311,32 @@ public partial class HazardReportSearchResult : ComponentBase
         }
     }
 
+    #endregion
+
+    #region UI Properties
+    /// <summary>
+    /// Page title for header component
+    /// </summary>
+    public string PageTitle => "Hazard Report Details";
+
+    /// <summary>
+    /// Page subtitle for header component
+    /// </summary>
+    public string PageSubtitle => $"Comprehensive information for tracking ID: {TrackingCode}";
+
+    /// <summary>
+    /// Additional header content with back button
+    /// </summary>
+    public RenderFragment AdditionalHeaderContent => builder =>
+    {
+        builder.OpenComponent<RadzenButton>(0);
+        builder.AddAttribute(1, "ButtonType", ButtonType.Button);
+        builder.AddAttribute(2, "Click", EventCallback.Factory.Create<MouseEventArgs>(this, BackToSearch));
+        builder.AddAttribute(3, "Text", "Back to Search");
+        builder.AddAttribute(4, "Icon", "arrow_back");
+        builder.AddAttribute(5, "ButtonStyle", ButtonStyle.Light);
+        builder.CloseComponent();
+    };
     #endregion
 
     #region UI Helper Methods

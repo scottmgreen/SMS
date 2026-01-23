@@ -75,6 +75,34 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
     public RadzenDataGrid<HazardReportSearchResult>? SearchResultsGrid { get; set; }
     #endregion
 
+    #region UI Properties
+    /// <summary>
+    /// Page title for header component
+    /// </summary>
+    public string PageTitle => "Track Your Confidential Report";
+
+    /// <summary>
+    /// Page subtitle for header component
+    /// </summary>
+    public string PageSubtitle => "Check the status of your anonymously submitted hazard report using your tracking ID";
+
+    /// <summary>
+    /// Additional header content with anonymous badge
+    /// </summary>
+    public RenderFragment AdditionalHeaderContent => builder =>
+    {
+        builder.OpenElement(0, "small");
+        builder.AddAttribute(1, "class", "text-white-50");
+        
+        builder.OpenElement(2, "i");
+        builder.AddAttribute(3, "class", "fas fa-shield-alt me-1");
+        builder.CloseElement();
+        
+        builder.AddContent(4, "Anonymous & Secure");
+        builder.CloseElement();
+    };
+    #endregion
+
     #region Event Handlers
 
     /// <summary>
@@ -117,7 +145,7 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
         // Check for exact HT-YYYY-NNNN format
         if (global::System.Text.RegularExpressions.Regex.IsMatch(cleaned, @"^HT-\d{4}-\d{4}$"))
         {
-            TrackingIdFormatMessage = "? Valid tracking ID format";
+            TrackingIdFormatMessage = "Valid tracking ID format";
             TrackingIdFormatColor = "#28a745";
             TrackingIdFormatIcon = "fa-check-circle";
         }
@@ -129,20 +157,20 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
                 ? $"HT-{currentYear}-{cleaned.PadLeft(4, '0')}"
                 : $"HT-{currentYear}-{cleaned}";
 
-            TrackingIdFormatMessage = $"? Will search for format: {suggestion}";
+            TrackingIdFormatMessage = $"Will search for format: {suggestion}";
             TrackingIdFormatColor = "#ffc107";
             TrackingIdFormatIcon = "fa-exclamation-triangle";
         }
         // Check for partial HT- format
         else if (cleaned.StartsWith("HT-"))
         {
-            TrackingIdFormatMessage = "? Continue typing or search anyway";
+            TrackingIdFormatMessage = "Continue typing or search anyway";
             TrackingIdFormatColor = "#17a2b8";
             TrackingIdFormatIcon = "fa-info-circle";
         }
         else
         {
-            TrackingIdFormatMessage = "? Expected format: HT-YYYY-NNNN (e.g., HT-2026-0006)";
+            TrackingIdFormatMessage = "Expected format: HT-YYYY-NNNN (e.g., HT-2026-0006)";
             TrackingIdFormatColor = "#dc3545";
             TrackingIdFormatIcon = "fa-times-circle";
         }

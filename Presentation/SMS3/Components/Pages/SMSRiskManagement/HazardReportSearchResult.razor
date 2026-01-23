@@ -7,27 +7,11 @@
 
 <PageTitle>Hazard Report Details - @TrackingCode</PageTitle>
 
-<!-- Header Section -->
-<div class="page-header mb-4">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h3 class="page-title mb-1">
-                <RadzenIcon Icon="description" class="me-2" />
-                Hazard Report Details
-            </h3>
-            <p class="page-subtitle mb-0">
-                Comprehensive information for tracking ID: <strong>@TrackingCode</strong>
-            </p>
-        </div>
-        <div class="action-buttons">
-            <RadzenButton ButtonType="ButtonType.Button"
-                          Click="@BackToSearch"
-                          Text="Back to Search"
-                          Icon="arrow_back"
-                          ButtonStyle="ButtonStyle.Light" />
-        </div>
-    </div>
-</div>
+<!-- SMS Page Header using standard component -->
+<PageHeader Title="@PageTitle"
+           Subtitle="@PageSubtitle"
+           Icon="fas fa-description"
+           AdditionalContent="@AdditionalHeaderContent" />
 
 <!-- Loading State -->
 @if (IsLoading)
@@ -465,11 +449,6 @@ else if (!IsLoading && HasSearched)
 }
 
 <style>
-    .page-header {
-        border-bottom: 2px solid var(--rz-border-color);
-        padding-bottom: 1rem;
-    }
-
     .info-item {
         margin-bottom: 0.75rem;
     }
