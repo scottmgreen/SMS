@@ -133,13 +133,9 @@ public sealed class RiskAssessment : BaseAuditableEntity
     public string RiskCriteria { get; set; } = string.Empty;
 
     // Step 4 - Risk Assessment Properties
-    public string TolerabilityFramework { get; set; } = "PDX-SMS Default";
-    public string RiskAcceptanceCriteria { get; set; } = string.Empty;
-
+   
     // Step 5 - Implementation Properties
-    public string ImplementationStrategy { get; set; } = string.Empty;
-    public DateTime? OverallTargetDate { get; set; }
-    public string ImplementationNotes { get; set; } = string.Empty;
+   
 
     // Read-only collections
     public IReadOnlyList<string> IdentifiedHazardIds => _identifiedHazardIds.AsReadOnly();

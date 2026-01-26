@@ -30,7 +30,7 @@
                                 <RadzenIcon Icon="@GetStepIcon(CurrentStep)" Style="margin-right: 0.5rem;" />
                                 Step @CurrentStep: @GetStepName(CurrentStep)
                             </RadzenText>
-                            <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-text-secondary-color); margin: 0;">
+                            <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-text-secondary-color); margin: 0;">
                                 @AssessmentName
                             </RadzenText>
                         </RadzenStack>
@@ -125,12 +125,12 @@
                         case 4:
                             <TechnicalAssessmentStep4 Step4="@Step4" 
                                                      Step4Changed="@UpdateStep4"
-                                                     AvailableHazards="AvailableHazards"
-                                                     AvailableStakeholders="AvailableStakeholders"
-                                                     AvailableAssessors="AvailableAssessors"
+                                                     AvailableHazards="@AvailableHazards"
+                                                     AvailableStakeholders="@AvailableStakeholders"
+                                                     AvailableAssessors="@AvailableAssessors"
                                                      InitialRiskAssessment="@InitialRiskAssessment"
                                                      ResidualRiskAssessment="@ResidualRiskAssessment"
-                                                     RiskAssessmentId="@(InitialRiskAssessment?.Code ?? string.Empty)" />
+                                                     RiskAssessmentId="@(InitialRiskAssessment?.Id != null ? new RiskAssessmentID(InitialRiskAssessment.Id.Value) : null)" />
                             break;
                         case 5:
                             <TechnicalAssessmentStep5 Step4="@Step4"

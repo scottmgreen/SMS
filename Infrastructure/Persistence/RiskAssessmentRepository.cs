@@ -128,19 +128,19 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
         }
     }
 
-    public async Task<Result<List<RiskAssessment>>> GetRiskAssessmentsByHazardIdAsync(HazardID hazardId, CancellationToken cancellationToken = default)
+    public async Task<Result<List<RiskAssessment>>> GetRiskAssessmentsByHazardCodeAsync(HazardID hazardCode, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Retrieving RiskAssessment by Hazard ID: {Id}", hazardId);
+            _logger.LogInformation("Retrieving RiskAssessment by Hazard Code: {Code}", hazardCode);
 
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_RiskAssessment_GetByHazardId, sql)
+            using SqlCommand cmd = new(StoredProcs.pr_RiskAssessment_GetByHazardCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, hazardId.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentHazardCode, hazardCode.Value));
 
             List<RiskAssessment> response = new();
 
@@ -162,7 +162,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to retrieve RiskAssessments by ID: {Id}", hazardId);
+            _logger.LogError(ex, "Failed to retrieve RiskAssessments by Code: {Code}", hazardCode);
             return Result<List<RiskAssessment>>.Failure<List<RiskAssessment>>(DomainErrors.RiskAssessmentError.NotFound);
         }
     }
@@ -222,7 +222,6 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             };
 
             // Core parameters (required)
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentId, riskAssessment.Id.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCode, riskAssessment.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentName, riskAssessment.Name ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentDescription, riskAssessment.Description ?? (object)DBNull.Value));
@@ -255,8 +254,6 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskCriteria, riskAssessment.RiskCriteria ?? (object)DBNull.Value));
 
             // Step 4 - Risk Assessment Fields
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmTolerabilityFramework, riskAssessment.TolerabilityFramework ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAcceptanceCriteria, riskAssessment.RiskAcceptanceCriteria ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalSeverityScore, riskAssessment.FinalSeverityScore ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalLikelihoodScore, riskAssessment.FinalLikelihoodScore ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalRiskLevel, riskAssessment.FinalRiskLevel ?? (object)DBNull.Value));
@@ -264,9 +261,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssessmentRationale, riskAssessment.AssessmentRationale ?? (object)DBNull.Value));
 
             // Step 5 - Implementation Fields
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmImplementationStrategy, riskAssessment.ImplementationStrategy ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmOverallTargetDate, riskAssessment.OverallTargetDate ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmImplementationNotes, riskAssessment.ImplementationNotes ?? (object)DBNull.Value));
+            
 
             // Progress Tracking Fields
             var completedStepsString = string.Join(",", riskAssessment.CompletedSteps);
@@ -296,7 +291,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
     /// Updates Step 1 - System Description data specifically
     /// </summary>
     public async Task<Result<RiskAssessment>> UpdateStep1Async(
-        string riskAssessmentId,
+        RiskAssessmentID riskAssessmentId,
         string leadAssessorId,
         string systemDescription,
         string systemBoundaries,
@@ -320,7 +315,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentId, riskAssessmentId));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCode, riskAssessmentId));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmLeadAssessorId, leadAssessorId));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSystemDescription, systemDescription));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSystemBoundaries, systemBoundaries));
@@ -336,7 +331,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetRiskAssessmentByCodeAsync(new RiskAssessmentID(riskAssessmentId), ct).ConfigureAwait(false);
+            return await GetRiskAssessmentByCodeAsync(riskAssessmentId, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -349,7 +344,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
     /// Updates Step 3 - Risk Analysis data specifically
     /// </summary>
     public async Task<Result<RiskAssessment>> UpdateStep3Async(
-        string riskAssessmentId,
+        RiskAssessmentID riskAssessmentId,
         string riskAnalysisMethod,
         string riskCriteria,
         string updatedBy = "SYSTEM",
@@ -365,7 +360,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentId, riskAssessmentId));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCode, riskAssessmentId));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisMethod, riskAnalysisMethod));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskCriteria, riskCriteria));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, updatedBy));
@@ -374,7 +369,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetRiskAssessmentByCodeAsync(new RiskAssessmentID(riskAssessmentId), ct).ConfigureAwait(false);
+            return await GetRiskAssessmentByCodeAsync(riskAssessmentId, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -387,9 +382,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
     /// Updates Step 4 - Risk Assessment data specifically
     /// </summary>
     public async Task<Result<RiskAssessment>> UpdateStep4Async(
-        string riskAssessmentId,
-        string tolerabilityFramework,
-        string riskAcceptanceCriteria,
+        RiskAssessmentID riskAssessmentId,
         int? finalSeverityScore,
         int? finalLikelihoodScore,
         string finalRiskLevel,
@@ -408,9 +401,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentId, riskAssessmentId));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmTolerabilityFramework, tolerabilityFramework));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAcceptanceCriteria, riskAcceptanceCriteria));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCode, riskAssessmentId.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalSeverityScore, finalSeverityScore ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalLikelihoodScore, finalLikelihoodScore ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalRiskLevel, finalRiskLevel));
@@ -422,7 +413,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetRiskAssessmentByCodeAsync(new RiskAssessmentID(riskAssessmentId), ct).ConfigureAwait(false);
+            return await GetRiskAssessmentByCodeAsync(riskAssessmentId, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -435,10 +426,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
     /// Updates Step 5 - Implementation data specifically
     /// </summary>
     public async Task<Result<RiskAssessment>> UpdateStep5Async(
-        string riskAssessmentId,
-        string implementationStrategy,
-        DateTime? overallTargetDate,
-        string implementationNotes,
+        RiskAssessmentID riskAssessmentId,
         string updatedBy = "SYSTEM",
         CancellationToken ct = default)
     {
@@ -452,17 +440,14 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentId, riskAssessmentId));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmImplementationStrategy, implementationStrategy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmOverallTargetDate, overallTargetDate ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmImplementationNotes, implementationNotes));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCode, riskAssessmentId.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, updatedBy));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetRiskAssessmentByCodeAsync(new RiskAssessmentID(riskAssessmentId), ct).ConfigureAwait(false);
+            return await GetRiskAssessmentByCodeAsync(riskAssessmentId, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -475,7 +460,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
     /// Updates progress tracking data specifically
     /// </summary>
     public async Task<Result<RiskAssessment>> UpdateProgressAsync(
-        string riskAssessmentId,
+        RiskAssessmentID riskAssessmentId,
         int currentStep,
         string completedSteps,
         int completionPercentage,
@@ -494,7 +479,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentId, riskAssessmentId));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCode, riskAssessmentId.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCurrentStep, currentStep));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletedSteps, completedSteps));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletionPercentage, completionPercentage));
@@ -506,7 +491,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetRiskAssessmentByCodeAsync(new RiskAssessmentID(riskAssessmentId), ct).ConfigureAwait(false);
+            return await GetRiskAssessmentByCodeAsync(riskAssessmentId, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

@@ -58,39 +58,38 @@ public class GetRiskAssessmentByIdQueryHandler : BaseQueryBundle, IRequestHandle
     }
 }
 
-public class GetRiskAssessmentByHazardIdQueryHandler : BaseQueryBundle, IRequestHandler<GetRiskAssessmentsByHazardIdQuery, Result<List<RiskAssessment>>>
+public class GetRiskAssessmentByHazardCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetRiskAssessmentsByHazardCodeQuery, Result<List<RiskAssessment>>>
 {
     private readonly RiskAssessmentDataService _appService;
-    private readonly ILogger<GetRiskAssessmentByHazardIdQueryHandler> _logger;
+    private readonly ILogger<GetRiskAssessmentByHazardCodeQueryHandler> _logger;
 
-    public GetRiskAssessmentByHazardIdQueryHandler(RiskAssessmentDataService dataService, ILogger<GetRiskAssessmentByHazardIdQueryHandler> logger)
+    public GetRiskAssessmentByHazardCodeQueryHandler(RiskAssessmentDataService dataService, ILogger<GetRiskAssessmentByHazardCodeQueryHandler> logger)
     {
         _appService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<List<RiskAssessment>>> HandleAsync(GetRiskAssessmentsByHazardIdQuery request, CancellationToken ct = default)
+    public async Task<Result<List<RiskAssessment>>> HandleAsync(GetRiskAssessmentsByHazardCodeQuery request, CancellationToken ct = default)
     {
         try
         {
-            if (request?.HazardId is null)
+            if (request?.HazardCode is null)
             {
-                _logger.LogApplicationError("GetRiskAssessmentByIdQuery received with null RiskAssessmentId", ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("GetRiskAssessmentsByHazardCodeQuery received with null HazardCode", ApplicationEventIds.Error, null);
                 return Result<List<RiskAssessment>>.Failure<List<RiskAssessment>>(DomainErrors.RiskAssessmentError.NotFound);
             }
 
-            _logger.LogInformation("Processing GetRiskAssessmentByIdQuery for ID: {Id}", request.HazardId.Value);
+            _logger.LogInformation("Processing GetRiskAssessmentByIdQuery for ID: {Id}", request.HazardCode.Value);
 
-            var result = await _appService.GetRiskAssessmentsByHazardIdAsync(request.HazardId, ct).ConfigureAwait(false);
+            var result = await _appService.GetRiskAssessmentsByHazardCodeAsync(request.HazardCode, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved RiskAssessment with Hazard ID: {Id}", request.HazardId.Value);
+                _logger.LogInformation("Successfully retrieved RiskAssessment with Hazard Code: {Code}", request.HazardCode.Value);
             }
             else
             {
-                _logger.LogApplicationError("Failed to retrieve RiskAssessment with ID: {Id}. Error: {Error}",
-                    ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("Failed to retrieve RiskAssessment with Hazard Code: {Code}. Error: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;

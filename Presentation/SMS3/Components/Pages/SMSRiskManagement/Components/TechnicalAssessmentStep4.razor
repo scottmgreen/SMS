@@ -17,24 +17,24 @@
                 <RadzenStack Gap="1rem">
                     <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
                         <RadzenIcon Icon="balance" Style="margin-right: 0.5rem;" />
-                        Step 4: Risk Assessment & Scoring Panel
+                        Step 4: Initial Risk Assessment Hazard Scoring Panel
                     </RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2">
-                        Assemble stakeholder panels to score each identified hazard using severity and likelihood ratings. 
+                    <RadzenText TextStyle="TextStyle.Body2" Style="margin-right: 0.5rem;">
+                        &nbsp; Assemble stakeholder panels to score each identified hazard using severity and likelihood ratings. 
                         Panel consensus will determine the overall risk level for each hazard.
                     </RadzenText>
                 </RadzenStack>
             </RadzenCard>
 
             <!-- Risk Assessment Framework -->
-            <RadzenCard Variant="Variant.Outlined">
+        @*     <RadzenCard Variant="Variant.Outlined">
                 <RadzenStack Gap="1rem">
                     <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-info); margin: 0;">
                         <RadzenIcon Icon="settings" Style="margin-right: 0.5rem;" />
                         Assessment Framework
                     </RadzenText>
                     
-                    <RadzenRow Gap="1rem">
+                     <RadzenRow Gap="1rem">
                         <RadzenColumn Size="12" SizeMD="6">
                             <RadzenFormField Text="Tolerability Framework" Variant="Variant.Outlined">
                                 <RadzenTextBox @bind-Value="@Step4.TolerabilityFramework" 
@@ -48,9 +48,9 @@
                                              Style="width: 100%;" />
                             </RadzenFormField>
                         </RadzenColumn>
-                    </RadzenRow>
+                    </RadzenRow> 
                 </RadzenStack>
-            </RadzenCard>
+            </RadzenCard> *@
 
             <!-- Hazard Scoring Panels -->
             @if (AvailableHazards?.Any() == true)
@@ -69,7 +69,7 @@
                                         CurrentRiskAssessment="@InitialRiskAssessment"
                                         InitialRiskAssessment="@InitialRiskAssessment"
                                         ResidualRiskAssessment="@ResidualRiskAssessment"
-                                        RiskAssessmentId="@(InitialRiskAssessment?.Code ?? RiskAssessmentId)"
+                                        RiskAssessmentId="@RiskAssessmentId"
                                         OnHazardScored="@(() => HandleHazardScored(hazard.Code))" />
                 }
 
@@ -268,7 +268,7 @@
     [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
     [Parameter] public RiskAssessment? InitialRiskAssessment { get; set; } // 🚀 NEW: For Step 4 scoring
     [Parameter] public RiskAssessment? ResidualRiskAssessment { get; set; } // 🚀 NEW: For creating Step 5 panels  
-    [Parameter] public string RiskAssessmentId { get; set; } = string.Empty; // Pass assessment ID from parent
+    [Parameter] public RiskAssessmentID? RiskAssessmentId { get; set; }  // Pass assessment ID from parent
 
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<TechnicalAssessmentStep4> Logger { get; set; } = default!;
@@ -372,9 +372,7 @@
 
             // Save Step 4 risk assessment data
             var saveStep4Command = new SaveStep4Command(
-                riskAssessmentId,
-                Step4.TolerabilityFramework,
-                Step4.RiskAcceptanceCriteria,
+                new RiskAssessmentID(riskAssessmentId),
                 finalSeverity,
                 finalLikelihood,
                 finalRiskLevel,
@@ -488,9 +486,9 @@
     /// </summary>
     private string GetCurrentRiskAssessmentId()
     {
-        if (!string.IsNullOrEmpty(RiskAssessmentId))
+        if (RiskAssessmentId != null && !string.IsNullOrEmpty(RiskAssessmentId.Value))
         {
-            return RiskAssessmentId;
+            return RiskAssessmentId.Value;
         }
         
         // Fallback - this should not happen in normal operation
@@ -582,4 +580,4 @@
             Logger.LogError(ex, "Error loading hazard averages");
         }
     }
-}
+}}

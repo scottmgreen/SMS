@@ -60,30 +60,29 @@
                                 <RadzenStack Gap="1rem">
                                     <!-- Hazard Header -->
                                     <RadzenRow AlignItems="AlignItems.Center">
-                                        <RadzenColumn Size="10">
+                                        <RadzenColumn Size="2">
                                             <RadzenStack Gap="0.25rem">
                                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
                                                     <RadzenText TextStyle="TextStyle.H6" Text="@hazard.Code" Style="margin: 0; font-weight: bold; color: var(--rz-primary);" />
-                                                    @if (!string.IsNullOrEmpty(hazard.HazardType))
-                                                    {
-                                                        <RadzenBadge Text="@hazard.HazardType" BadgeStyle="BadgeStyle.Info" />
-                                                    }
                                                 </RadzenStack>
-                                                <RadzenText TextStyle="TextStyle.Subtitle1" Text="@hazard.Description" Style="margin: 0;" />
                                             </RadzenStack>
                                         </RadzenColumn>
-                                        <RadzenColumn Size="2">
-                                            @if (IsAnalysisComplete(analysis))
-                                            {
-                                                <RadzenBadge Text="Analyzed" BadgeStyle="BadgeStyle.Success" />
-                                            }
-                                            else
-                                            {
-                                                <RadzenBadge Text="Pending" BadgeStyle="BadgeStyle.Warning" />
-                                            }
+                                        <RadzenColumn Size="10">
+                                            <RadzenStack Gap="0.25rem">
+                                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                                    <RadzenText 
+                                                        TextStyle="TextStyle.Subtitle1" 
+                                                        Text="@GetHazardDisplayText(hazard)"
+                                                        Style="margin: 0; font-weight: bold; color: var(--rz-primary);" />
+                                                </RadzenStack>
+                                            </RadzenStack>
                                         </RadzenColumn>
                                     </RadzenRow>
-
+                                    <RadzenRow Gap="1rem">
+                                        <RadzenColumn Size="12" SizeMD="6">
+                                            <RadzenText TextStyle="TextStyle.Subtitle1" Text="@hazard.Description" Style="margin: 0;" />
+                                        </RadzenColumn>
+                                    </RadzenRow>
                                     <!-- Analysis Fields -->
                                     <RadzenRow Gap="1rem">
                                         <RadzenColumn Size="12" SizeMD="6">
@@ -239,5 +238,29 @@
             // Just notify parent of changes
             await Step3Changed.InvokeAsync(Step3);
         }
+    }
+
+
+    private string GetHazardCategoryDisplay(string? categoryValue)
+    {
+        if (string.IsNullOrEmpty(categoryValue)) return "";
+
+        var category = HazardCategory.FromValue(categoryValue);
+        return category?.Name ?? categoryValue.Replace("_", " ");
+    }
+
+    private string GetHazardTypeDisplay(string? typeValue)
+    {
+        if (string.IsNullOrEmpty(typeValue)) return "";
+
+        var hazardType = HazardType.FromValue(typeValue);
+        return hazardType?.Name ?? typeValue.Replace("_", " ");
+    }
+
+    private string GetHazardDisplayText(Hazard hazard)
+    {
+        var category = GetHazardCategoryDisplay(hazard.HazardCategory);
+        var type = GetHazardTypeDisplay(hazard.HazardType);
+        return $"{category.ToUpper()} - {type.ToUpper()}";
     }
 }

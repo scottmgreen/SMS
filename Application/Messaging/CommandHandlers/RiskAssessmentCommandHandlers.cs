@@ -183,7 +183,7 @@ public class SaveStep1CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing SaveStep1Command for RiskAssessment: {Id}", request.RiskAssessmentId);
+            _logger.LogInformation("Processing SaveStep1Command for RiskAssessment: {Id}", request.RiskAssessmentId.Value);
 
             var result = await _dataService.SaveStep1Async(
                 request.RiskAssessmentId,
@@ -246,7 +246,7 @@ public class SaveStep3CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing SaveStep3Command for RiskAssessment: {Id}", request.RiskAssessmentId);
+            _logger.LogInformation("Processing SaveStep3Command for RiskAssessment: {Id}", request.RiskAssessmentId.Value);
 
             var result = await _dataService.SaveStep3Async(
                 request.RiskAssessmentId,
@@ -301,12 +301,10 @@ public class SaveStep4CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing SaveStep4Command for RiskAssessment: {Id}", request.RiskAssessmentId);
+            _logger.LogInformation("Processing SaveStep4Command for RiskAssessment: {Id}", request.RiskAssessmentId.Value);
 
             var result = await _dataService.SaveStep4Async(
                 request.RiskAssessmentId,
-                request.TolerabilityFramework,
-                request.RiskAcceptanceCriteria,
                 request.FinalSeverityScore,
                 request.FinalLikelihoodScore,
                 request.FinalRiskLevel,
@@ -363,13 +361,7 @@ public class SaveStep5CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
 
             _logger.LogInformation("Processing SaveStep5Command for RiskAssessment: {Id}", request.RiskAssessmentId);
 
-            var result = await _dataService.SaveStep5Async(
-                request.RiskAssessmentId,
-                request.ImplementationStrategy,
-                request.OverallTargetDate,
-                request.ImplementationNotes,
-                request.UpdatedBy,
-                ct).ConfigureAwait(false);
+            var result = await _dataService.SaveStep5Async(request.RiskAssessmentId,  request.UpdatedBy,  ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {

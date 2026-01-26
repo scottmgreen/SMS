@@ -51,8 +51,7 @@ public partial class TechnicalAssessment : ComponentBase
 
     #region UI Helper Properties
 
-    public string AssessmentName => InitialRiskAssessment?.Name ?? "Technical Risk Assessment";
-    public string AssessmentId => InitialRiskAssessment?.Code ?? $"RS-{ReportId?.Replace("RP-", "")}";
+    public string AssessmentName => GetCurrentAssessmentName();
     public string LeadAssessorName => AvailableAssessors.FirstOrDefault(a => a.Id.Value == Step1.LeadAssessor)?.DisplayName ?? Step1.LeadAssessor;
 
     // CRITICAL: Make this a property that can trigger change detection
@@ -63,7 +62,29 @@ public partial class TechnicalAssessment : ComponentBase
     #endregion
 
     #region UI Helper Methods
+    private RiskAssessment? GetCurrentAssessment()
+    {
+        return CurrentStep switch
+        {
+            5 => ResidualRiskAssessment ?? InitialRiskAssessment,
+            _ => InitialRiskAssessment
+        };
+    }
+    private string GetCurrentAssessmentName()
+    {
+        var stepName = GetStepName(CurrentStep);
+        var currentAssessment = GetCurrentAssessment();
 
+        // For Step 5, emphasize it's the Residual assessment
+        if (CurrentStep == 5)
+        {
+            var residualAssessment = ResidualRiskAssessment ?? currentAssessment;
+            return $"{ReportId} {residualAssessment?.Code}"; // - {stepName}";
+        }
+
+        // For Steps 1-4, show Initial assessment
+        return $"{ReportId} {currentAssessment?.Code}"; // - {stepName}";
+    }
     public string GetStepName(int stepNumber)
     {
         return stepNumber switch
@@ -71,8 +92,8 @@ public partial class TechnicalAssessment : ComponentBase
             1 => "System Description",
             2 => "Hazard Identification",
             3 => "Risk Analysis",
-            4 => "Risk Assessment",
-            5 => "Risk Mitigation",
+            4 => "Initial Risk Assessment",
+            5 => "Risk Mitigation and Residual Risk Assesment",
             _ => "Unknown Step"
         };
     }
@@ -184,12 +205,12 @@ public partial class TechnicalAssessment : ComponentBase
         if (!string.IsNullOrWhiteSpace(HazardId))
         {
             // Primary method: Load by HazardId (this is the main approach)
-            await LoadAssessmentsByHazardIdAsync();
+            await LoadAssessmentsByHazardCodeAsync();
         }
         else if (!string.IsNullOrWhiteSpace(ReportId))
         {
             // Secondary method: Load by ReportId and find hazards, then assessments
-            await LoadAssessmentByReportIdAsync();
+            await LoadAssessmentByReportCodeAsync();
         }
         else
         {
@@ -212,11 +233,11 @@ public partial class TechnicalAssessment : ComponentBase
             InitialRiskAssessment.Code, ResidualRiskAssessment?.Code ?? "None");
     }
 
-    private async Task LoadAssessmentsByHazardIdAsync()
+    private async Task LoadAssessmentsByHazardCodeAsync()
     {
         Logger.LogInformation("Loading assessments for HazardId: {HazardId}", HazardId);
 
-        var getAllAssessmentsQuery = new GetRiskAssessmentsByHazardIdQuery(new HazardID(HazardId));
+        var getAllAssessmentsQuery = new GetRiskAssessmentsByHazardCodeQuery(new HazardID(HazardId));
         var allAssessmentsResult = await Mediator.SendAsync(getAllAssessmentsQuery, CancellationToken.None);
 
         if (allAssessmentsResult.IsSuccess && allAssessmentsResult.Value?.Any() == true)
@@ -234,7 +255,7 @@ public partial class TechnicalAssessment : ComponentBase
         }
     }
 
-    private async Task LoadAssessmentByReportIdAsync()
+    private async Task LoadAssessmentByReportCodeAsync()
     {
         Logger.LogInformation("Loading assessment by Report ID: {ReportId}", ReportId);
 
@@ -291,7 +312,7 @@ public partial class TechnicalAssessment : ComponentBase
                 }
 
                 // Create Residual assessment
-                var residualId = riskAssessmentId.Replace("RS-", "RRS-"); // RRS for Residual Risk Assessment
+                var residualId = riskAssessmentId.Replace("RS-", "RS-"); // RRS for Residual Risk Assessment
                 var createResidualResult = RiskAssessment.CreateResidual(
                     new RiskAssessmentID(residualId),
                     $"Residual Risk Assessment for Report {ReportId}",
@@ -339,7 +360,7 @@ public partial class TechnicalAssessment : ComponentBase
             // Try to load assessments for each hazard until we find one
             foreach (var hazard in reportHazards)
             {
-                var assessmentsQuery = new GetRiskAssessmentsByHazardIdQuery(new HazardID(hazard.Code));
+                var assessmentsQuery = new GetRiskAssessmentsByHazardCodeQuery(new HazardID(hazard.Code));
                 var assessmentsResult = await Mediator.SendAsync(assessmentsQuery, CancellationToken.None);
 
                 if (assessmentsResult.IsSuccess && assessmentsResult.Value?.Any() == true)

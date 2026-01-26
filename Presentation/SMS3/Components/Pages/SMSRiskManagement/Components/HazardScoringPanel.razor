@@ -26,6 +26,20 @@
         <RadzenRow AlignItems="AlignItems.Center">
             <RadzenColumn Size="2">
                 <RadzenStack Gap="0.25rem">
+                        <RadzenText Text="@Hazard.Code" TextStyle="TextStyle.H6" />
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenText TextStyle="TextStyle.Subtitle1"
+                                    Text="@GetHazardDisplayText(Hazard)"
+                                    Style="margin: 0; font-weight: bold; color: var(--rz-primary);" />
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="2">
+                <RadzenStack Gap="0.25rem">
                     @{
                         var average = GetAverageScore();
                         var completedCount = GetCompletedScoreCount();
@@ -39,17 +53,17 @@
                     }
                     else if (totalCount > 0)
                     {
-                        <RadzenBadge Text="@($"{completedCount}/{totalCount} Scored")" BadgeStyle="BadgeStyle.Warning" />
+                        <RadzenText Text="@($"{completedCount}/{totalCount} Scored")" TextStyle="TextStyle.H6" />
                     }
                     else
                     {
-                        <RadzenBadge Text="No Panel" BadgeStyle="BadgeStyle.Secondary" />
+                        @* <RadzenBadge Text="No Panel" BadgeStyle="BadgeStyle.Secondary" /> *@
                     }
                 </RadzenStack>
             </RadzenColumn>
-            <RadzenColumn Size="10">
+            <RadzenColumn Size="2">
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
-                    <RadzenButton Text="Manage Panel" Icon="people" ButtonStyle="ButtonStyle.Dark" Size="ButtonSize.Small"
+                    <RadzenButton Text="Manage Panel" Icon="people" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
                                   Click="@OpenPanelDialog" />
                    
                 </RadzenStack>
@@ -62,30 +76,23 @@
             <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-100);">
                 <RadzenDataGrid @ref="ScoringGrid" Data="@HazardScoringPanels" TItem="ScoringPanel" AllowPaging="false" AllowSorting="false">
                     <Columns>
-                        <RadzenDataGridColumn TItem="ScoringPanel" Title="Panel Member" Width="200px">
+                        <RadzenDataGridColumn TItem="ScoringPanel" Title="Panel Member" Width="200px" TextAlign="TextAlign.Start">
                             <Template Context="panel">
                                 <RadzenStack Gap="0.25rem">
-                                    <RadzenText TextStyle="TextStyle.Subtitle2" Text="@GetMemberName(panel.SMSUserCode)" Style="margin: 0;" />
-                                    @* @if (HasScore(panel))
-                                    {
-                                        <RadzenBadge Text="Completed" BadgeStyle="BadgeStyle.Success" />
-                                    }
-                                    else
-                                    {
-                                        <RadzenBadge Text="Pending" BadgeStyle="BadgeStyle.Warning" />
-                                    } *@
+                                    <RadzenText TextStyle="TextStyle.H6" Text="@GetMemberName(panel.SMSUserCode)" Style="margin: 0;" />
                                 </RadzenStack>
                             </Template>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn TItem="ScoringPanel" Title="Severity (1-5)" Width="150px">
+                        <RadzenDataGridColumn TItem="ScoringPanel" Title="Severity (1-5)" Width="150px" TextAlign="TextAlign.Start">
                             <Template Context="panel">
                                 @if (HasScore(panel))
                                 {
-                                    <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
-                                        <RadzenBadge Text="@panel.Severity.ToString()" BadgeStyle="BadgeStyle.Primary" />
-                                        <RadzenText TextStyle="TextStyle.Caption" Text="@GetSeverityLabel(panel.Severity.Value)" />
+                                    <RadzenStack AlignItems="AlignItems.Start" Gap="0.25rem">
+                                        @* <RadzenBadge Text="@panel.Severity.ToString()" BadgeStyle="BadgeStyle.Primary" /> *@
+                                        <RadzenText Text="@GetSeverityLabel(panel.Severity.Value)" TextStyle="TextStyle.H6" />
                                     </RadzenStack>
+                                    
                                 }
                                 else
                                 {
@@ -100,14 +107,15 @@
                             </Template>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn TItem="ScoringPanel" Title="Likelihood (1-5)" Width="150px">
+                        <RadzenDataGridColumn TItem="ScoringPanel" Title="Likelihood (A-E)" Width="150px" TextAlign="TextAlign.Start">
                             <Template Context="panel">
                                 @if (HasScore(panel))
                                 {
-                                    <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
-                                        <RadzenBadge Text="@panel.Likelihood.ToString()" BadgeStyle="BadgeStyle.Primary" />
-                                        <RadzenText TextStyle="TextStyle.Caption" Text="@GetLikelihoodLabel(panel.Likelihood.Value)" />
+                                    <RadzenStack AlignItems="AlignItems.Start" Gap="0.25rem">
+                                        <RadzenText Text="@GetLikelihoodLabel(panel.Likelihood.Value)" TextStyle="TextStyle.H6" />
+                                        @* <RadzenText TextStyle="TextStyle.Caption" Text="@GetLikelihoodLabel(panel.Likelihood.Value)" /> *@
                                     </RadzenStack>
+                                    
                                 }
                                 else
                                 {
@@ -122,7 +130,7 @@
                             </Template>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn TItem="ScoringPanel" Title="Score" Width="100px">
+                        <RadzenDataGridColumn TItem="ScoringPanel" Title="Score" Width="100px" TextAlign="TextAlign.Start">
                             <Template Context="panel">
                                 @if (HasScore(panel))
                                 {
@@ -138,23 +146,23 @@
                                 }
                                 else
                                 {
-                                    <span style="background: #6c757d; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9rem; display: inline-block; text-align: center; min-width: 30px;">
+                                    <span style="background: #6c757d; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9rem; display: inline-block; text-align: left; min-width: 30px;">
                                         -
                                     </span>
                                 }
                             </Template>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn TItem="ScoringPanel" Title="Action" Width="120px">
+                        <RadzenDataGridColumn TItem="ScoringPanel" Title="Action" Width="120px" TextAlign="TextAlign.Center">
                             <Template Context="panel">
                                 @if (HasScore(panel))
                                 {
                                     <RadzenStack Gap="0.25rem">
-                                        <RadzenButton Text="Edit" Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
+                                        <RadzenButton Text="Edit" Icon="edit" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.ExtraSmall"
                                                       Click="@(() => EditScore(panel))" />
                                         @if (!string.IsNullOrEmpty(panel.Rationale))
                                         {
-                                            <RadzenButton Text="View Rationale" Icon="description" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.ExtraSmall"
+                                            <RadzenButton Text="View Rationale" Icon="description" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.ExtraSmall"
                                                           Click="@(() => ShowRationale(panel))" />
                                         }
                                     </RadzenStack>
@@ -204,7 +212,7 @@
     [Parameter] public RiskAssessment? InitialRiskAssessment { get; set; }   // 🎯 For Step 4 data lookup  
     [Parameter] public RiskAssessment? ResidualRiskAssessment { get; set; }  // 🎯 For Step 5 context
     [Parameter] public EventCallback OnHazardScored { get; set; }
-    [Parameter] public string RiskAssessmentId { get; set; } = string.Empty; // NEW: Pass assessment ID to link scoring panels
+    [Parameter] public RiskAssessmentID? RiskAssessmentId { get; set; } // NEW: Pass assessment ID to link scoring panels
 
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<HazardScoringPanel> Logger { get; set; } = default!;
@@ -398,7 +406,7 @@
 
             // Calculate score
             panel.Score = panel.Severity * panel.Likelihood;
-            panel.RiskAssessmentCode = CurrentRiskAssessment.Code;
+            panel.RiskAssessmentCode = CurrentRiskAssessment?.Code ?? string.Empty;
             // Update via CQRS
             var updateCommand = new UpdateScoringPanelCommand(panel);
             var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
@@ -443,7 +451,7 @@
         panel.Likelihood = null;
         panel.Score = null;
         panel.Rationale = null; // Also clear rationale when editing
-        panel.RiskAssessmentCode = RiskAssessmentId;
+        panel.RiskAssessmentCode = CurrentRiskAssessment?.Code ?? string.Empty;
         // Don't call StateHasChanged() here to prevent render loops
     }
 
@@ -881,9 +889,9 @@
             return CurrentRiskAssessment.Code;
         }
         
-        if (!string.IsNullOrEmpty(RiskAssessmentId))
+        if (RiskAssessmentId?.Value != null)
         {
-            return RiskAssessmentId;
+            return RiskAssessmentId.Value;
         }
 
         // Final fallback - determine from available assessments
@@ -985,5 +993,29 @@
         {
             Logger.LogError(ex, "Error copying Step 4 scores to existing Step 5 panels");
         }
+    }
+
+
+    private string GetHazardCategoryDisplay(string? categoryValue)
+    {
+        if (string.IsNullOrEmpty(categoryValue)) return "";
+
+        var category = HazardCategory.FromValue(categoryValue);
+        return category?.Name ?? categoryValue.Replace("_", " ");
+    }
+
+    private string GetHazardTypeDisplay(string? typeValue)
+    {
+        if (string.IsNullOrEmpty(typeValue)) return "";
+
+        var hazardType = HazardType.FromValue(typeValue);
+        return hazardType?.Name ?? typeValue.Replace("_", " ");
+    }
+
+    private string GetHazardDisplayText(Hazard hazard)
+    {
+        var category = GetHazardCategoryDisplay(hazard.HazardCategory);
+        var type = GetHazardTypeDisplay(hazard.HazardType);
+        return $"{category.ToUpper()} - {type.ToUpper()}";
     }
 }

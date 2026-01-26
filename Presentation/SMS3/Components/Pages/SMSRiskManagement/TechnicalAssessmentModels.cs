@@ -510,8 +510,8 @@ public class Step4Model
 {
     #region Risk Assessment Properties
 
-    public string TolerabilityFramework { get; set; } = "PDX-SMS Default";
-    public string RiskAcceptanceCriteria { get; set; } = string.Empty;
+    //public string TolerabilityFramework { get; set; } = "PDX-SMS Default";
+    //public string RiskAcceptanceCriteria { get; set; } = string.Empty;
 
     #endregion
 
@@ -578,10 +578,10 @@ public class Step4Model
 
     public (bool isValid, string message) Validate()
     {
-        if (string.IsNullOrWhiteSpace(TolerabilityFramework))
-        {
-            return (false, "Tolerability framework is required");
-        }
+        //if (string.IsNullOrWhiteSpace(TolerabilityFramework))
+        //{
+        //    return (false, "Tolerability framework is required");
+        //}
 
         return (true, "Step 4 validation passed");
     }
@@ -592,16 +592,16 @@ public class Step4Model
         await SaveStep4RiskAssessmentAsync(assessment, mediator, availableHazards);
 
         // Apply to assessment
-        assessment.TolerabilityFramework = TolerabilityFramework;
-        assessment.RiskAcceptanceCriteria = RiskAcceptanceCriteria;
+        //assessment.TolerabilityFramework = TolerabilityFramework;
+        //assessment.RiskAcceptanceCriteria = RiskAcceptanceCriteria;
         assessment.CompleteStep(4);
     }
 
     public void ApplyToAssessment(RiskAssessment assessment)
     {
         // Legacy method - still needed for synchronous calls
-        assessment.TolerabilityFramework = TolerabilityFramework;
-        assessment.RiskAcceptanceCriteria = RiskAcceptanceCriteria;
+        //assessment.TolerabilityFramework = TolerabilityFramework;
+        //assessment.RiskAcceptanceCriteria = RiskAcceptanceCriteria;
         assessment.CompleteStep(4);
     }
 
@@ -616,12 +616,13 @@ public class Step4Model
         {
             // Calculate overall final scores from all hazard averages
             var (finalSeverity, finalLikelihood, finalRiskLevel, assessmentRationale) = CalculateOverallRiskAssessment(availableHazards);
+            var riskAssessmentId = new RiskAssessmentID(assessment.Code);
 
             // Use the existing SaveStep4Command to save risk assessment data
             var saveStep4Command = new SaveStep4Command(
-                assessment.Code,
-                TolerabilityFramework,
-                RiskAcceptanceCriteria,
+                riskAssessmentId,
+                //TolerabilityFramework,
+                //RiskAcceptanceCriteria,
                 finalSeverity,
                 finalLikelihood,
                 finalRiskLevel,
@@ -733,10 +734,7 @@ public class Step4Model
     }
     public async Task SaveToAssessment(RiskAssessment assessment, IMediator mediator, List<Hazard> availableHazards)
     {
-        // Save the tolerability framework and risk acceptance criteria
-        assessment.TolerabilityFramework = TolerabilityFramework;
-        assessment.RiskAcceptanceCriteria = RiskAcceptanceCriteria;
-
+                
         // Complete the step
         assessment.CompleteStep(4);
     }
@@ -744,10 +742,10 @@ public class Step4Model
     {
         if (assessment == null) return;
 
-        if (string.IsNullOrEmpty(TolerabilityFramework))
-        {
-            TolerabilityFramework = "PDX-SMS Default";
-        }
+        //if (string.IsNullOrEmpty(TolerabilityFramework))
+        //{
+        //    TolerabilityFramework = "PDX-SMS Default";
+        //}
     }
 
     /// <summary>
@@ -828,17 +826,17 @@ public class Step4Model
         }
     }
 
-    public void AddPanelMemberScore(string hazardId, PanelMemberScoreData score)
-    {
-        if (!PanelScores.ContainsKey(hazardId))
-        {
-            PanelScores[hazardId] = new List<PanelMemberScoreData>();
-        }
+    //public void AddPanelMemberScore(string hazardId, PanelMemberScoreData score)
+    //{
+    //    if (!PanelScores.ContainsKey(hazardId))
+    //    {
+    //        PanelScores[hazardId] = new List<PanelMemberScoreData>();
+    //    }
 
-        PanelScores[hazardId].RemoveAll(s => s.MemberId == score.MemberId);
-        PanelScores[hazardId].Add(score);
-        RecalculateHazardAverage(hazardId);
-    }
+    //    PanelScores[hazardId].RemoveAll(s => s.MemberId == score.MemberId);
+    //    PanelScores[hazardId].Add(score);
+    //    RecalculateHazardAverage(hazardId);
+    //}
 
     public void RecalculateHazardAverage(string hazardId)
     {
@@ -871,10 +869,10 @@ public class Step4Model
         };
     }
 
-    public void AssignPanelMembersToHazard(string hazardId, List<string> memberIds)
-    {
-        HazardPanelMembers[hazardId] = memberIds.ToList();
-    }
+    //public void AssignPanelMembersToHazard(string hazardId, List<string> memberIds)
+    //{
+    //    HazardPanelMembers[hazardId] = memberIds.ToList();
+    //}
     #endregion
 
     #region Helper Classes
@@ -908,9 +906,7 @@ public class Step5Model
 {
     #region Risk Mitigation Properties
 
-    public string ImplementationStrategy { get; set; } = string.Empty;
-    public DateTime? OverallTargetDate { get; set; }
-    public string ImplementationNotes { get; set; } = string.Empty;
+    
     public Dictionary<string, List<string>> SavedMitigationStrategies { get; set; } = new();
 
     #endregion
@@ -941,12 +937,12 @@ public class Step5Model
 
     public (bool isValid, string message) Validate()
     {
-        bool hasImplementation = !string.IsNullOrWhiteSpace(ImplementationStrategy);
+        //bool hasImplementation = !string.IsNullOrWhiteSpace(ImplementationStrategy);
 
-        if (!hasImplementation)
-        {
-            return (false, "Implementation strategy is required");
-        }
+        //if (!true)
+        //{
+        //    return (false, "Implementation strategy is required");
+        //}
 
         return (true, "Step 5 validation passed");
     }
@@ -989,21 +985,21 @@ public class Step5Model
     {
         if (assessment == null) return;
 
-        // Load implementation data if available
-        if (string.IsNullOrEmpty(ImplementationStrategy))
-        {
-            ImplementationStrategy = assessment.ImplementationStrategy ?? string.Empty;
-        }
+        //// Load implementation data if available
+        //if (string.IsNullOrEmpty(ImplementationStrategy))
+        //{
+        //    ImplementationStrategy = assessment.ImplementationStrategy ?? string.Empty;
+        //}
 
-        if (OverallTargetDate == null && assessment.OverallTargetDate.HasValue)
-        {
-            OverallTargetDate = assessment.OverallTargetDate;
-        }
+        //if (OverallTargetDate == null && assessment.OverallTargetDate.HasValue)
+        //{
+        //    OverallTargetDate = assessment.OverallTargetDate;
+        //}
 
-        if (string.IsNullOrEmpty(ImplementationNotes))
-        {
-            ImplementationNotes = assessment.ImplementationNotes ?? string.Empty;
-        }
+        //if (string.IsNullOrEmpty(ImplementationNotes))
+        //{
+        //    ImplementationNotes = assessment.ImplementationNotes ?? string.Empty;
+        //}
     }
 
     /// <summary>

@@ -49,7 +49,7 @@
                         </RadzenColumn>
                         <RadzenColumn Size="4" Style="text-align: right;">
                             <RadzenButton Text="Add New Hazard" Icon="add" ButtonStyle="ButtonStyle.Success"
-                                          Click="@OpenAddHazardModal" />
+                                          Click="@OpenAddHazardDialog" />
                         </RadzenColumn>
                     </RadzenRow>
                     
@@ -67,6 +67,11 @@
                                 <RadzenDataGridColumn TItem="Hazard" Property="Category" Title="Category">
                                     <Template Context="hazard">
                                         <RadzenBadge Text="@(hazard.HazardCategory ?? "Not specified")" BadgeStyle="BadgeStyle.Base" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="Hazard" Property="Type" Title="Type">
+                                    <Template Context="hazard">
+                                        <RadzenBadge Text="@(hazard.HazardType ?? "Not specified")" BadgeStyle="BadgeStyle.Base" />
                                     </Template>
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="Hazard" Property="Location" Title="Location">
@@ -126,10 +131,13 @@
 </RadzenRow>
 
 <!-- Add Hazard Modal -->
-<AddHazardModal IsVisible="@ShowAddHazardModal" 
+<AddHazardDialog IsVisible="@ShowAddHazardDialog" 
                 IsVisibleChanged="@OnModalVisibilityChanged"
                 OnHazardAdded="@OnHazardAdded"
-                ReportId="@ReportId" />
+                OnHazardUpdated="@OnHazardUpdated"
+                ReportId="@ReportId"
+                EditingHazard="@EditingHazard"
+                IsEditMode="@IsEditMode" />
 
 @code {
     [Parameter] public Step1Model Step1 { get; set; } = new();
@@ -142,16 +150,30 @@
     [Parameter] public string? ReportId { get; set; }
     [Parameter] public string? InitialHazardId { get; set; }
 
-    private bool ShowAddHazardModal { get; set; } = false;
+    [Inject] private ILogger<TechnicalAssessmentStep2>? Logger { get; set; }
 
-    private void OpenAddHazardModal()
+    private bool ShowAddHazardDialog { get; set; } = false;
+    private bool IsEditMode { get; set; } = false; // NEW: Track if we're in edit mode
+    private Hazard? EditingHazard { get; set; } = null; // NEW: Hazard being edited
+
+    private void OpenAddHazardDialog()
     {
-        ShowAddHazardModal = true;
+        IsEditMode = false;
+        EditingHazard = null;
+        ShowAddHazardDialog = true;
     }
 
     private async Task OnModalVisibilityChanged(bool isVisible)
     {
-        ShowAddHazardModal = isVisible;
+        ShowAddHazardDialog = isVisible;
+        
+        // Reset edit mode when dialog closes
+        if (!isVisible)
+        {
+            IsEditMode = false;
+            EditingHazard = null;
+        }
+        
         await InvokeAsync(StateHasChanged);
     }
 
@@ -181,10 +203,22 @@
         return false;
     }
 
-    private void EditHazard(Hazard hazard)
+    private async Task EditHazard(Hazard hazard)
     {
-        // TODO: Implement edit functionality via modal
-        Console.WriteLine($"Edit hazard: {hazard.Code}");
+        try
+        {
+            IsEditMode = true;
+            EditingHazard = hazard;
+            ShowAddHazardDialog = true;
+            
+            await InvokeAsync(StateHasChanged);
+            
+            Logger?.LogInformation("Opening edit dialog for hazard: {HazardCode}", hazard.Code);
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError(ex, "Error opening edit dialog for hazard: {HazardCode}", hazard.Code);
+        }
     }
 
     private async Task DeleteHazard(Hazard hazard)

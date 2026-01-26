@@ -58,26 +58,26 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
         }
     }
 
-    public async Task<Result<List<RiskAssessment>>> GetRiskAssessmentsByHazardIdAsync(HazardID hazardId, CancellationToken cancellationToken = default)
+    public async Task<Result<List<RiskAssessment>>> GetRiskAssessmentsByHazardCodeAsync(HazardID hazardCode, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Retrieving RiskAssessment by ID: {Id}", hazardId);
+            _logger.LogInformation("Retrieving RiskAssessment by Hazard Code: {Code}", hazardCode.Value);
 
-            var result = await _repo.GetRiskAssessmentsByHazardIdAsync(hazardId, cancellationToken).ConfigureAwait(false);
+            var result = await _repo.GetRiskAssessmentsByHazardCodeAsync(hazardCode, cancellationToken).ConfigureAwait(false);
 
             if (result.IsFailure)
             {
-                _logger.LogWarning("RiskAssessment not found with ID: {Id}", hazardId);
+                _logger.LogWarning("RiskAssessment not found with Hazard Code: {Code}", hazardCode);
                 return result;
             }
 
-            _logger.LogInformation("Successfully retrieved RiskAssessment: {Id}", hazardId);
+            _logger.LogInformation("Successfully retrieved with Hazard Code: {Code}", hazardCode);
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to retrieve RiskAssessment by ID: {Id}", hazardId);
+            _logger.LogError(ex, "Failed to retrieve RiskAssessment by Hazard Code: {Code}", hazardCode);
             return Result<List<RiskAssessment>>.Failure<List<RiskAssessment>>(DomainErrors.RiskAssessmentError.NotFound);
         }
     }
@@ -128,7 +128,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     /// Saves Step 1 - System Description data
     /// </summary>
     public async Task<Result<RiskAssessment>> SaveStep1Async(
-        string riskAssessmentId,
+        RiskAssessmentID riskAssessmentId,
         string leadAssessorId,
         string systemDescription,
         string systemBoundaries,
@@ -183,7 +183,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     /// Saves Step 3 - Risk Analysis data
     /// </summary>
     public async Task<Result<RiskAssessment>> SaveStep3Async(
-        string riskAssessmentId,
+        RiskAssessmentID riskAssessmentId,
         string riskAnalysisMethod,
         string riskCriteria,
         string updatedBy = "SYSTEM",
@@ -222,9 +222,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     /// Saves Step 4 - Risk Assessment data
     /// </summary>
     public async Task<Result<RiskAssessment>> SaveStep4Async(
-        string riskAssessmentId,
-        string tolerabilityFramework,
-        string riskAcceptanceCriteria,
+        RiskAssessmentID riskAssessmentId,
         int? finalSeverityScore,
         int? finalLikelihoodScore,
         string finalRiskLevel,
@@ -239,8 +237,6 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
 
             var result = await _repo.UpdateStep4Async(
                 riskAssessmentId,
-                tolerabilityFramework,
-                riskAcceptanceCriteria,
                 finalSeverityScore,
                 finalLikelihoodScore,
                 finalRiskLevel,
@@ -271,10 +267,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     /// Saves Step 5 - Implementation data
     /// </summary>
     public async Task<Result<RiskAssessment>> SaveStep5Async(
-        string riskAssessmentId,
-        string implementationStrategy,
-        DateTime? overallTargetDate,
-        string implementationNotes,
+        RiskAssessmentID riskAssessmentId,
         string updatedBy = "SYSTEM",
         CancellationToken ct = default)
     {
@@ -284,9 +277,6 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
 
             var result = await _repo.UpdateStep5Async(
                 riskAssessmentId,
-                implementationStrategy,
-                overallTargetDate,
-                implementationNotes,
                 updatedBy,
                 ct).ConfigureAwait(false);
 
@@ -312,7 +302,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     /// Updates progress tracking data
     /// </summary>
     public async Task<Result<RiskAssessment>> UpdateProgressAsync(
-        string riskAssessmentId,
+        RiskAssessmentID riskAssessmentId,
         int currentStep,
         string completedSteps,
         int completionPercentage,
@@ -362,7 +352,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     /// Saves data from Step1 model properties to the database
     /// </summary>
     public async Task<Result<RiskAssessment>> SaveFromStep1DataAsync(
-        string riskAssessmentId,
+        RiskAssessmentID riskAssessmentId,
         string leadAssessor,
         string systemDescription,
         string systemBoundaries,
@@ -397,7 +387,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     /// Note: Step models should be converted to primitive parameters before calling this
     /// </summary>
     public async Task<Result<RiskAssessment>> SaveStepDataAsync(
-        string riskAssessmentId,
+        RiskAssessmentID riskAssessmentId,
         int stepNumber,
         Dictionary<string, object> stepData,
         string updatedBy = "SYSTEM",
@@ -431,8 +421,6 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
 
                 4 => await SaveStep4Async(
                     riskAssessmentId,
-                    stepData.GetValueOrDefault("TolerabilityFramework", "PDX-SMS Default")?.ToString() ?? "PDX-SMS Default",
-                    stepData.GetValueOrDefault("RiskAcceptanceCriteria", "")?.ToString() ?? "",
                     stepData.GetValueOrDefault("FinalSeverityScore", null) as int?,
                     stepData.GetValueOrDefault("FinalLikelihoodScore", null) as int?,
                     stepData.GetValueOrDefault("FinalRiskLevel", "")?.ToString() ?? "",
@@ -442,9 +430,6 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
 
                 5 => await SaveStep5Async(
                     riskAssessmentId,
-                    stepData.GetValueOrDefault("ImplementationStrategy", "")?.ToString() ?? "",
-                    stepData.GetValueOrDefault("OverallTargetDate", null) as DateTime?,
-                    stepData.GetValueOrDefault("ImplementationNotes", "")?.ToString() ?? "",
                     updatedBy, ct),
 
                 _ => Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.InvalidStep)

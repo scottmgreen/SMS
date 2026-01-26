@@ -582,8 +582,8 @@
         private static readonly Lazy<string> _pr_RiskAssessment_GetByCode = new Lazy<string>(() => "pr_RiskAssessment_GetByCode");
         public static string pr_RiskAssessment_GetByCode => _pr_RiskAssessment_GetByCode.Value;
 
-        private static readonly Lazy<string> _pr_RiskAssessment_GetByHazardId = new Lazy<string>(() => "pr_RiskAssessment_GetByHazardId");
-        public static string pr_RiskAssessment_GetByHazardId => _pr_RiskAssessment_GetByHazardId.Value;
+        private static readonly Lazy<string> _pr_RiskAssessment_GetByHazardCode = new Lazy<string>(() => "pr_RiskAssessment_GetByHazardCode");
+        public static string pr_RiskAssessment_GetByHazardCode => _pr_RiskAssessment_GetByHazardCode.Value;
 
 
 

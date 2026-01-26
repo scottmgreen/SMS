@@ -942,11 +942,6 @@ public static class FieldNames
     public static string fRiskAssessmentRiskCriteria => _fRiskAssessmentRiskCriteria.Value;
 
     // Step 4 fields
-    private static readonly Lazy<string> _fRiskAssessmentTolerabilityFramework = new Lazy<string>(() => "fldv_TolerabilityFramework");
-    public static string fRiskAssessmentTolerabilityFramework => _fRiskAssessmentTolerabilityFramework.Value;
-
-    private static readonly Lazy<string> _fRiskAssessmentRiskAcceptanceCriteria = new Lazy<string>(() => "fldv_RiskAcceptanceCriteria");
-    public static string fRiskAssessmentRiskAcceptanceCriteria => _fRiskAssessmentRiskAcceptanceCriteria.Value;
 
     private static readonly Lazy<string> _fRiskAssessmentFinalSeverityScore = new Lazy<string>(() => "fldi_FinalSeverityScore");
     public static string fRiskAssessmentFinalSeverityScore => _fRiskAssessmentFinalSeverityScore.Value;
@@ -964,14 +959,7 @@ public static class FieldNames
     public static string fRiskAssessmentAssessmentRationale => _fRiskAssessmentAssessmentRationale.Value;
 
     // Step 5 fields
-    private static readonly Lazy<string> _fRiskAssessmentImplementationStrategy = new Lazy<string>(() => "fldv_ImplementationStrategy");
-    public static string fRiskAssessmentImplementationStrategy => _fRiskAssessmentImplementationStrategy.Value;
-
-    private static readonly Lazy<string> _fRiskAssessmentOverallTargetDate = new Lazy<string>(() => "fldd_OverallTargetDate");
-    public static string fRiskAssessmentOverallTargetDate => _fRiskAssessmentOverallTargetDate.Value;
-
-    private static readonly Lazy<string> _fRiskAssessmentImplementationNotes = new Lazy<string>(() => "fldv_ImplementationNotes");
-    public static string fRiskAssessmentImplementationNotes => _fRiskAssessmentImplementationNotes.Value;
+    
 
     #endregion
 

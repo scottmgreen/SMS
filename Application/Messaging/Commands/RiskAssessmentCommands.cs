@@ -65,7 +65,7 @@ public class DeleteRiskAssessmentCommand : BaseCommandBundle, IRequest<Result<bo
 /// </summary>
 public class SaveStep1Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IHasAuditFields
 {
-    public string RiskAssessmentId { get; set; }
+    public RiskAssessmentID RiskAssessmentId { get; set; }
     public string LeadAssessorId { get; set; }
     public string SystemDescription { get; set; }
     public string SystemBoundaries { get; set; }
@@ -79,7 +79,7 @@ public class SaveStep1Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
     public string UpdatedBy { get; set; }
 
     public SaveStep1Command(
-        string riskAssessmentId,
+        RiskAssessmentID riskAssessmentId,
         string leadAssessorId,
         string systemDescription,
         string systemBoundaries,
@@ -120,13 +120,13 @@ public class SaveStep1Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
 /// </summary>
 public class SaveStep3Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IHasAuditFields
 {
-    public string RiskAssessmentId { get; set; }
+    public RiskAssessmentID RiskAssessmentId { get; set; }
     public string RiskAnalysisMethod { get; set; }
     public string RiskCriteria { get; set; }
     public string UpdatedBy { get; set; }
 
     public SaveStep3Command(
-        string riskAssessmentId,
+        RiskAssessmentID riskAssessmentId,
         string riskAnalysisMethod,
         string riskCriteria)
     {
@@ -151,9 +151,8 @@ public class SaveStep3Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
 /// </summary>
 public class SaveStep4Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IHasAuditFields
 {
-    public string RiskAssessmentId { get; set; }
-    public string TolerabilityFramework { get; set; }
-    public string RiskAcceptanceCriteria { get; set; }
+    public RiskAssessmentID RiskAssessmentId { get; set; }
+    
     public int? FinalSeverityScore { get; set; }
     public int? FinalLikelihoodScore { get; set; }
     public string FinalRiskLevel { get; set; }
@@ -162,9 +161,7 @@ public class SaveStep4Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
     public string UpdatedBy { get; set; }
 
     public SaveStep4Command(
-        string riskAssessmentId,
-        string tolerabilityFramework,
-        string riskAcceptanceCriteria,
+        RiskAssessmentID riskAssessmentId,
         int? finalSeverityScore,
         int? finalLikelihoodScore,
         string finalRiskLevel,
@@ -172,8 +169,8 @@ public class SaveStep4Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
         string assessmentRationale)
     {
         RiskAssessmentId = riskAssessmentId ?? throw new ArgumentNullException(nameof(riskAssessmentId));
-        TolerabilityFramework = tolerabilityFramework ?? "PDX-SMS Default";
-        RiskAcceptanceCriteria = riskAcceptanceCriteria ?? string.Empty;
+        //TolerabilityFramework = tolerabilityFramework ?? "PDX-SMS Default";
+        //RiskAcceptanceCriteria = riskAcceptanceCriteria ?? string.Empty;
         FinalSeverityScore = finalSeverityScore;
         FinalLikelihoodScore = finalLikelihoodScore;
         FinalRiskLevel = finalRiskLevel ?? string.Empty;
@@ -197,22 +194,14 @@ public class SaveStep4Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
 /// </summary>
 public class SaveStep5Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IHasAuditFields
 {
-    public string RiskAssessmentId { get; set; }
-    public string ImplementationStrategy { get; set; }
-    public DateTime? OverallTargetDate { get; set; }
-    public string ImplementationNotes { get; set; }
+    public RiskAssessmentID RiskAssessmentId { get; set; }
+    
     public string UpdatedBy { get; set; }
 
-    public SaveStep5Command(
-        string riskAssessmentId,
-        string implementationStrategy,
-        DateTime? overallTargetDate,
-        string implementationNotes)
+    public SaveStep5Command(RiskAssessmentID riskAssessmentId )
     {
         RiskAssessmentId = riskAssessmentId ?? throw new ArgumentNullException(nameof(riskAssessmentId));
-        ImplementationStrategy = implementationStrategy ?? string.Empty;
-        OverallTargetDate = overallTargetDate;
-        ImplementationNotes = implementationNotes ?? string.Empty;
+        
     }
 
     public void SetCreatedBy(string userId, DateTime timestamp)
@@ -231,7 +220,7 @@ public class SaveStep5Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
 /// </summary>
 public class UpdateProgressCommand : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IHasAuditFields
 {
-    public string RiskAssessmentId { get; set; }
+    public RiskAssessmentID RiskAssessmentId { get; set; }
     public int CurrentStep { get; set; }
     public string CompletedSteps { get; set; }
     public int CompletionPercentage { get; set; }
@@ -240,7 +229,7 @@ public class UpdateProgressCommand : BaseCommandBundle, IRequest<Result<RiskAsse
     public string UpdatedBy { get; set; }
 
     public UpdateProgressCommand(
-        string riskAssessmentId,
+        RiskAssessmentID riskAssessmentId,
         int currentStep,
         string completedSteps,
         int completionPercentage,

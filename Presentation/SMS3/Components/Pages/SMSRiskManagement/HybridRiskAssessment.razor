@@ -255,7 +255,7 @@ else
                                                                               AvailableAssessors="@AvailableAssessors"
                                                                               InitialRiskAssessment="@InitialRiskAssessment"
                                                                               ResidualRiskAssessment="@ResidualRiskAssessment"
-                                                                              RiskAssessmentId="@(InitialRiskAssessment?.Code ?? string.Empty)" />
+                                                                              RiskAssessmentId="@(InitialRiskAssessment?.Id != null ? new RiskAssessmentID(InitialRiskAssessment.Id.Value) : null)" />
                                                 }
                                             </RadzenStack>
                                         </RadzenCard>

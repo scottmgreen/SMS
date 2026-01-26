@@ -619,8 +619,6 @@ public static partial class Mappers
         riskAssessment.RiskCriteria = reader.GetValue<string>(FieldNames.fRiskAssessmentRiskCriteria) ?? string.Empty;
 
         // ✅ Step 4 - Risk Assessment Fields
-        riskAssessment.TolerabilityFramework = reader.GetValue<string>(FieldNames.fRiskAssessmentTolerabilityFramework) ?? "PDX-SMS Default";
-        riskAssessment.RiskAcceptanceCriteria = reader.GetValue<string>(FieldNames.fRiskAssessmentRiskAcceptanceCriteria) ?? string.Empty;
         riskAssessment.FinalSeverityScore = reader.IsDBNull(FieldNames.fRiskAssessmentFinalSeverityScore) ? null : reader.GetValue<int?>(FieldNames.fRiskAssessmentFinalSeverityScore);
         riskAssessment.FinalLikelihoodScore = reader.IsDBNull(FieldNames.fRiskAssessmentFinalLikelihoodScore) ? null : reader.GetValue<int?>(FieldNames.fRiskAssessmentFinalLikelihoodScore);
         riskAssessment.FinalRiskLevel = reader.GetValue<string>(FieldNames.fRiskAssessmentFinalRiskLevel);
@@ -628,10 +626,7 @@ public static partial class Mappers
         riskAssessment.AssessmentRationale = reader.GetValue<string>(FieldNames.fRiskAssessmentAssessmentRationale);
 
         // ✅ Step 5 - Implementation Fields
-        riskAssessment.ImplementationStrategy = reader.GetValue<string>(FieldNames.fRiskAssessmentImplementationStrategy) ?? string.Empty;
-        riskAssessment.OverallTargetDate = reader.IsDBNull(FieldNames.fRiskAssessmentOverallTargetDate) ? null : reader.GetValue<DateTime?>(FieldNames.fRiskAssessmentOverallTargetDate);
-        riskAssessment.ImplementationNotes = reader.GetValue<string>(FieldNames.fRiskAssessmentImplementationNotes) ?? string.Empty;
-
+        
         return riskAssessment;
     }
 

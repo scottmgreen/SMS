@@ -587,10 +587,10 @@ public static class ParameterNames
     /// <summary>
     /// Risk Assessment parameters (UPDATED FOR STEPS 1-5)
     /// </summary>
-    private static readonly Lazy<string> _pmRiskAssessmentId = new Lazy<string>(() => "@pID");
-    public static string pmRiskAssessmentId => _pmRiskAssessmentId.Value;
+    private static readonly Lazy<string> _pmRiskAssessmentHazardCode = new Lazy<string>(() => "@pHazardCode");
+    public static string pmRiskAssessmentHazardCode => _pmRiskAssessmentHazardCode.Value;
 
-    private static readonly Lazy<string> _pmRiskAssessmentCode = new Lazy<string>(() => "@pRiskAssessmentCode");
+    private static readonly Lazy<string> _pmRiskAssessmentCode = new Lazy<string>(() => "@pCode");
     public static string pmRiskAssessmentCode => _pmRiskAssessmentCode.Value;
 
     private static readonly Lazy<string> _pmRiskAssessmentName = new Lazy<string>(() => "@pRiskAssessmentName");
@@ -599,9 +599,7 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmRiskAssessmentDescription = new Lazy<string>(() => "@pRiskAssessmentDescription");
     public static string pmRiskAssessmentDescription => _pmRiskAssessmentDescription.Value;
 
-    private static readonly Lazy<string> _pmRiskAssessmentHazardCode = new Lazy<string>(() => "@pRiskAssessmentHazardCode");
-    public static string pmRiskAssessmentHazardCode => _pmRiskAssessmentHazardCode.Value;
-
+    
     private static readonly Lazy<string> _pmRiskAssessmentType = new Lazy<string>(() => "@pRiskAssessmentType");
     public static string pmRiskAssessmentType => _pmRiskAssessmentType.Value;
 
@@ -696,14 +694,7 @@ public static class ParameterNames
     /// <summary>
     /// Risk Assessment - Step 5 Parameters
     /// </summary>
-    private static readonly Lazy<string> _pmImplementationStrategy = new Lazy<string>(() => "@pImplementationStrategy");
-    public static string pmImplementationStrategy => _pmImplementationStrategy.Value;
-
-    private static readonly Lazy<string> _pmOverallTargetDate = new Lazy<string>(() => "@pOverallTargetDate");
-    public static string pmOverallTargetDate => _pmOverallTargetDate.Value;
-
-    private static readonly Lazy<string> _pmImplementationNotes = new Lazy<string>(() => "@pImplementationNotes");
-    public static string pmImplementationNotes => _pmImplementationNotes.Value;
+    
 
     /// <summary>
     /// Risk Assessment - Progress Tracking Parameters

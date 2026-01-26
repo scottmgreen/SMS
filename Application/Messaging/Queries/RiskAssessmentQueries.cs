@@ -13,13 +13,13 @@ public class GetRiskAssessmentByIdQuery : BaseQueryBundle, IRequest<Result<RiskA
         RiskAssessmentId = riskAssessmentId ?? throw new ArgumentNullException(nameof(riskAssessmentId));
     }
 }
-public class GetRiskAssessmentsByHazardIdQuery : BaseQueryBundle, IRequest<Result<List<RiskAssessment>>>
+public class GetRiskAssessmentsByHazardCodeQuery : BaseQueryBundle, IRequest<Result<List<RiskAssessment>>>
 {
-    public HazardID HazardId { get; set; }
+    public HazardID HazardCode { get; set; }
 
-    public GetRiskAssessmentsByHazardIdQuery(HazardID hazardId)
+    public GetRiskAssessmentsByHazardCodeQuery(HazardID hazardCode)
     {
-        HazardId = hazardId ?? throw new ArgumentNullException(nameof(hazardId));
+        HazardCode = hazardCode ?? throw new ArgumentNullException(nameof(hazardCode));
     }
 }
 public class GetAllRiskAssessmentsQuery : BaseQueryBundle, IRequest<Result<List<RiskAssessment>>>

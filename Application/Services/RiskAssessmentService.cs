@@ -69,7 +69,7 @@ public sealed class RiskAssessmentService
         try
         {
             _logger.LogInformation("Retrieving risk assessment with ID: {Id}", id);
-            return await _dataService.GetRiskAssessmentsByHazardIdAsync(id, ct).ConfigureAwait(false);
+            return await _dataService.GetRiskAssessmentsByHazardCodeAsync(id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -153,7 +153,7 @@ public sealed class RiskAssessmentService
     /// Saves Step 1 - System Description data using command pattern
     /// </summary>
     public async Task<Result<RiskAssessment>> SaveStep1Async(
-        string riskAssessmentId,
+        RiskAssessmentID riskAssessmentId,
         string leadAssessorId,
         string systemDescription,
         string systemBoundaries,
@@ -208,7 +208,7 @@ public sealed class RiskAssessmentService
     /// Saves Step 3 - Risk Analysis data using command pattern
     /// </summary>
     public async Task<Result<RiskAssessment>> SaveStep3Async(
-        string riskAssessmentId,
+        RiskAssessmentID riskAssessmentId,
         string riskAnalysisMethod,
         string riskCriteria,
         CancellationToken ct = default)
@@ -247,7 +247,7 @@ public sealed class RiskAssessmentService
     /// Saves Step 4 - Risk Assessment data using command pattern
     /// </summary>
     public async Task<Result<RiskAssessment>> SaveStep4Async(
-        string riskAssessmentId,
+        RiskAssessmentID riskAssessmentId,
         string tolerabilityFramework,
         string riskAcceptanceCriteria,
         int? finalSeverityScore,
@@ -263,8 +263,6 @@ public sealed class RiskAssessmentService
 
             var command = new SaveStep4Command(
                 riskAssessmentId,
-                tolerabilityFramework,
-                riskAcceptanceCriteria,
                 finalSeverityScore,
                 finalLikelihoodScore,
                 finalRiskLevel,
@@ -296,21 +294,15 @@ public sealed class RiskAssessmentService
     /// Saves Step 5 - Implementation data using command pattern
     /// </summary>
     public async Task<Result<RiskAssessment>> SaveStep5Async(
-        string riskAssessmentId,
-        string implementationStrategy,
-        DateTime? overallTargetDate,
-        string implementationNotes,
+        RiskAssessmentID riskAssessmentId,
         CancellationToken ct = default)
     {
         try
         {
             _logger.LogInformation("Saving Step 5 for RiskAssessment: {Id}", riskAssessmentId);
 
-            var command = new SaveStep5Command(
-                riskAssessmentId,
-                implementationStrategy,
-                overallTargetDate,
-                implementationNotes);
+            var command = new SaveStep5Command(riskAssessmentId
+              );
 
             var result = await _mediator.SendAsync(command, ct).ConfigureAwait(false);
 
@@ -337,7 +329,7 @@ public sealed class RiskAssessmentService
     /// Updates progress tracking data using command pattern
     /// </summary>
     public async Task<Result<RiskAssessment>> UpdateProgressAsync(
-        string riskAssessmentId,
+        RiskAssessmentID riskAssessmentId,
         int currentStep,
         string completedSteps,
         int completionPercentage,
