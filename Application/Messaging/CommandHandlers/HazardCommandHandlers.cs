@@ -76,7 +76,7 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
                 var createdLocationResult = await _locationDataService.CreateHazardLocationAsync(hazardLocation, ct);
                 hazard.HazardLocation = createdLocationResult.Value;
 
-                // ? CRITICAL FIX: Check for existing RiskAssessments for this report first
+                // ? CORRECT DESIGN: Check for existing RiskAssessments for this report first
                 var existingAssessments = await FindExistingRiskAssessmentsForReport(hazard.ReportCode, ct);
                 
                 string initialRiskAssessmentCode;
@@ -84,28 +84,28 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
                 
                 if (existingAssessments.InitialAssessment != null && existingAssessments.ResidualAssessment != null)
                 {
-                    // ? Use existing RiskAssessments - don't create new ones!
+                    // ? Use existing shared RiskAssessments - perfect for multiple hazards per report!
                     initialRiskAssessmentCode = existingAssessments.InitialAssessment.Code;
                     residualRiskAssessmentCode = existingAssessments.ResidualAssessment.Code;
                     
-                    _logger.LogInformation("? REUSING existing RiskAssessments for Report {ReportCode}: Initial={InitialCode}, Residual={ResidualCode}",
+                    _logger.LogInformation("? REUSING existing shared RiskAssessments for Report {ReportCode}: Initial={InitialCode}, Residual={ResidualCode}",
                         hazard.ReportCode, initialRiskAssessmentCode, residualRiskAssessmentCode);
                 }
                 else
                 {
-                    // ? Create NEW RiskAssessments only if none exist (first hazard in the report)
-                    var (initialCode, residualCode) = await CreateRiskAssessmentsForHazard(hazard, ct);
+                    // ? Create NEW shared RiskAssessments only if none exist (first hazard in the report)
+                    var (initialCode, residualCode) = await CreateRiskAssessmentsForReport(hazard, ct);
                     initialRiskAssessmentCode = initialCode;
                     residualRiskAssessmentCode = residualCode;
                     
-                    _logger.LogInformation("? Created NEW RiskAssessments for Report {ReportCode}: Initial={InitialCode}, Residual={ResidualCode}",
+                    _logger.LogInformation("? Created NEW shared RiskAssessments for Report {ReportCode}: Initial={InitialCode}, Residual={ResidualCode}",
                         hazard.ReportCode, initialRiskAssessmentCode, residualRiskAssessmentCode);
                 }
 
-                // ? ALWAYS create RiskAnalysis records linking this hazard to the assessments
+                // ? ALWAYS create RiskAnalysis records linking this hazard to the shared assessments
                 await CreateRiskAnalysisForHazard(hazard.Code, initialRiskAssessmentCode, residualRiskAssessmentCode, ct);
 
-                _logger.LogInformation("? Created RiskAnalyses for Hazard: {HazardCode} linked to assessments", hazard.Code);
+                _logger.LogInformation("? Created RiskAnalyses for Hazard: {HazardCode} linked to shared assessments", hazard.Code);
                 _logger.LogInformation("    ?? Initial Assessment: {InitialCode}", initialRiskAssessmentCode);
                 _logger.LogInformation("    ?? Residual Assessment: {ResidualCode}", residualRiskAssessmentCode);
             }
@@ -121,13 +121,13 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
     }
 
     /// <summary>
-    /// Create RiskAssessments for this specific hazard
-    /// Note: This creates per-hazard assessments (current design)
-    /// TODO: Future enhancement - create per-report assessments
+    /// Create RiskAssessments for this specific hazard - EACH HAZARD GETS ITS OWN
     /// </summary>
     private async Task<(string InitialCode, string ResidualCode)> CreateRiskAssessmentsForHazard(Hazard hazard, CancellationToken ct)
     {
-        // Create Initial RiskAssessment for this hazard
+        _logger.LogInformation("Creating unique RiskAssessments for hazard {HazardCode}", hazard.Code);
+        
+        // Create Initial RiskAssessment for this specific hazard
         RiskAssessment initialRiskAssessment = new RiskAssessment(new RiskAssessmentID("RS-0000"));
         initialRiskAssessment.HazardCode = hazard.Code;
         initialRiskAssessment.AssessmentType = RiskAssessmentType.Initial;
@@ -140,7 +140,7 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
         var initialResult = await _riskAssessmentDataService.CreateRiskAssessmentAsync(initialRiskAssessment, ct);
         var initialCode = initialResult.Value.Code;
 
-        // Create Residual RiskAssessment for this hazard
+        // Create Residual RiskAssessment for this specific hazard  
         RiskAssessment residualRiskAssessment = new RiskAssessment(new RiskAssessmentID("RS-0000"));
         residualRiskAssessment.HazardCode = hazard.Code;
         residualRiskAssessment.AssessmentType = RiskAssessmentType.Residual;
@@ -152,6 +152,9 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
         var residualResult = await _riskAssessmentDataService.CreateRiskAssessmentAsync(residualRiskAssessment, ct);
         var residualCode = residualResult.Value.Code;
 
+        _logger.LogInformation("Created unique RiskAssessments for {HazardCode}: Initial={Initial}, Residual={Residual}", 
+            hazard.Code, initialCode, residualCode);
+            
         return (initialCode, residualCode);
     }
 
@@ -265,6 +268,39 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
             _logger.LogError(ex, "? Error finding existing RiskAssessments for report {ReportCode}", reportCode);
             return (null, null);
         }
+    }
+
+    /// <summary>
+    /// Create shared RiskAssessments for this report (first hazard creates them, subsequent hazards reuse them)
+    /// </summary>
+    private async Task<(string InitialCode, string ResidualCode)> CreateRiskAssessmentsForReport(Hazard hazard, CancellationToken ct)
+    {
+        // Create Initial RiskAssessment for this report (shared by all hazards)
+        RiskAssessment initialRiskAssessment = new RiskAssessment(new RiskAssessmentID("RS-0000"));
+        initialRiskAssessment.HazardCode = hazard.Code;
+        initialRiskAssessment.AssessmentType = RiskAssessmentType.Initial;
+        initialRiskAssessment.CurrentStep = 1;
+        initialRiskAssessment.PrimaryHazardId = hazard.Code;
+        initialRiskAssessment.RiskAssessmentCategory = RiskAssessmentCategory.Technical;
+        initialRiskAssessment.Description = $"Initial Risk Assessment for Report {hazard.ReportCode}";
+        initialRiskAssessment.Name = $"Initial Risk Assessment - {hazard.ReportCode}";
+        
+        var initialResult = await _riskAssessmentDataService.CreateRiskAssessmentAsync(initialRiskAssessment, ct);
+        var initialCode = initialResult.Value.Code;
+
+        // Create Residual RiskAssessment for this report (shared by all hazards)
+        RiskAssessment residualRiskAssessment = new RiskAssessment(new RiskAssessmentID("RS-0000"));
+        residualRiskAssessment.HazardCode = hazard.Code;
+        residualRiskAssessment.AssessmentType = RiskAssessmentType.Residual;
+        residualRiskAssessment.PrimaryHazardId = hazard.Code;
+        residualRiskAssessment.RiskAssessmentCategory = RiskAssessmentCategory.Technical;
+        residualRiskAssessment.Description = $"Residual Risk Assessment for Report {hazard.ReportCode}";
+        residualRiskAssessment.Name = $"Residual Risk Assessment - {hazard.ReportCode}";
+        
+        var residualResult = await _riskAssessmentDataService.CreateRiskAssessmentAsync(residualRiskAssessment, ct);
+        var residualCode = residualResult.Value.Code;
+
+        return (initialCode, residualCode);
     }
 }
 

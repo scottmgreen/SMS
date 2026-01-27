@@ -10,7 +10,7 @@
     <!-- Main Content Column -->
     <RadzenColumn Size="12" SizeLG="8">
         <RadzenStack Gap="1.5rem">
-            <!-- Risk Analysis Method -->
+            <!-- Risk Analysis Method Section -->
             <RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid var(--rz-primary);">
                 <RadzenStack Gap="1rem">
                     <RadzenRow AlignItems="AlignItems.Center">
@@ -35,14 +35,14 @@
                 </RadzenStack>
             </RadzenCard>
 
-            <!-- Hazard Risk Analysis -->
+            <!-- Hazard Risk Analysis Section -->
             <RadzenCard>
                 <RadzenStack Gap="1rem">
                     <RadzenRow AlignItems="AlignItems.Center">
                         <RadzenColumn Size="10">
                             <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-secondary); margin: 0;">
                                 <RadzenIcon Icon="assignment" Style="margin-right: 0.5rem;" />
-                                Hazard Risk Analysis
+                                Hazard Risk Analysis (@GetAnalyzedCount()/@(AvailableHazards?.Count ?? 0) completed)
                             </RadzenText>
                         </RadzenColumn>
                         <RadzenColumn Size="2">
@@ -58,7 +58,7 @@
                             
                             <RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid var(--rz-secondary);">
                                 <RadzenStack Gap="1rem">
-                                    <!-- Hazard Header -->
+                                    <!-- Hazard Header Information -->
                                     <RadzenRow AlignItems="AlignItems.Center">
                                         <RadzenColumn Size="2">
                                             <RadzenStack Gap="0.25rem">
@@ -78,18 +78,22 @@
                                             </RadzenStack>
                                         </RadzenColumn>
                                     </RadzenRow>
+                                    
+                                    <!-- Hazard Description -->
                                     <RadzenRow Gap="1rem">
                                         <RadzenColumn Size="12" SizeMD="6">
                                             <RadzenText TextStyle="TextStyle.Subtitle1" Text="@hazard.Description" Style="margin: 0;" />
                                         </RadzenColumn>
                                     </RadzenRow>
-                                    <!-- Analysis Fields -->
+                                    
+                                    <!-- Risk Analysis Input Fields -->
                                     <RadzenRow Gap="1rem">
+                                        <!-- Worst Credible Outcome -->
                                         <RadzenColumn Size="12" SizeMD="6">
                                             <RadzenStack Gap="0.5rem">
                                                 <RadzenFormField Text="Worst Credible Outcome *" Variant="Variant.Outlined">
                                                     <RadzenTextArea @bind-Value="@analysis.WorstCredibleOutcome"
-                                                                    @oninput="@((args) => OnAnalysisFieldChanged())"
+                                                                    @oninput="@((args) => OnAnalysisFieldChanged(hazard.Code, "WorstCredibleOutcome", args))"
                                                                     Rows="3"
                                                                     Placeholder="Describe the worst reasonable outcome that could result from this hazard..."
                                                                     Style="width: 100%;" />
@@ -98,11 +102,13 @@
                                                 <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(analysis.WorstCredibleOutcome, 10)" />
                                             </RadzenStack>
                                         </RadzenColumn>
+                                        
+                                        <!-- Root Cause Analysis -->
                                         <RadzenColumn Size="12" SizeMD="6">
                                             <RadzenStack Gap="0.5rem">
                                                 <RadzenFormField Text="Root Cause Analysis *" Variant="Variant.Outlined">
                                                     <RadzenTextArea @bind-Value="@analysis.RootCause"
-                                                                    @oninput="@((args) => OnAnalysisFieldChanged())"
+                                                                    @oninput="@((args) => OnAnalysisFieldChanged(hazard.Code, "RootCause", args))"
                                                                     Rows="3"
                                                                     Placeholder="Identify the underlying root causes that could lead to this hazard..."
                                                                     Style="width: 100%;" />
@@ -116,7 +122,7 @@
                                     <!-- Additional Comments -->
                                     <RadzenFormField Text="Additional Analysis Comments" Variant="Variant.Outlined">
                                         <RadzenTextArea @bind-Value="@analysis.AdditionalComments"
-                                                        @oninput="@((args) => OnAnalysisFieldChanged())"
+                                                        @oninput="@((args) => OnAnalysisFieldChanged(hazard.Code, "AdditionalComments", args))"
                                                         Rows="2"
                                                         Placeholder="Document any additional context, assumptions, or observations..."
                                                         Style="width: 100%;" />
@@ -128,6 +134,7 @@
                     }
                     else
                     {
+                        <!-- No Hazards Available State -->
                         <RadzenCard Style="text-align: center; padding: 2rem;">
                             <RadzenStack AlignItems="AlignItems.Center" Gap="1rem">
                                 <RadzenIcon Icon="warning" Style="font-size: 3rem; color: var(--rz-warning);" />
@@ -150,25 +157,43 @@
 </RadzenRow>
 
 @code {
+    #region Parameters
+
     [Parameter] public Step1Model Step1 { get; set; } = new();
     [Parameter] public Step3Model Step3 { get; set; } = new();
     [Parameter] public EventCallback<Step3Model> Step3Changed { get; set; }
     [Parameter] public List<Hazard> AvailableHazards { get; set; } = new();
 
+    #endregion
+
+    #region Lifecycle Methods
+
+    /// <summary>
+    /// Component initialization - Step3 data loading is handled by parent component
+    /// </summary>
     protected override void OnInitialized()
     {
-        // Initialize hazard analyses for all available hazards
-        if (AvailableHazards?.Any() == true)
-        {
-            Step3.InitializeHazardAnalyses(AvailableHazards);
-        }
+        // Step3 data loading is handled by parent component's LoadStepDataFromAssessment method
+        // This ensures proper timing and avoids race conditions with data loading
     }
 
+    #endregion
+
+    #region Progress Tracking Methods
+
+    /// <summary>
+    /// Count how many hazards have completed risk analysis
+    /// </summary>
+    /// <returns>Number of hazards with complete analysis</returns>
     private int GetAnalyzedCount()
     {
         return Step3.HazardRiskAnalyses?.Count(ha => IsAnalysisComplete(ha.Value)) ?? 0;
     }
 
+    /// <summary>
+    /// Calculate completion percentage for progress display
+    /// </summary>
+    /// <returns>Percentage of completion (0-100)</returns>
     private int GetAnalysisProgress()
     {
         var totalHazards = AvailableHazards?.Count ?? 0;
@@ -177,6 +202,11 @@
         return (GetAnalyzedCount() * 100) / totalHazards;
     }
 
+    /// <summary>
+    /// Determine if a RiskAnalysis has sufficient data for completion
+    /// </summary>
+    /// <param name="analysis">The RiskAnalysis to evaluate</param>
+    /// <returns>True if analysis meets completion criteria</returns>
     private bool IsAnalysisComplete(RiskAnalysis analysis)
     {
         return !string.IsNullOrWhiteSpace(analysis.WorstCredibleOutcome) && 
@@ -185,6 +215,16 @@
                analysis.RootCause.Length >= 10;
     }
 
+    #endregion
+
+    #region Field Validation Methods
+
+    /// <summary>
+    /// Provide validation feedback for text fields based on content length
+    /// </summary>
+    /// <param name="text">The text to validate</param>
+    /// <param name="minLength">Minimum required length</param>
+    /// <returns>Validation message for display</returns>
     private string GetFieldValidation(string? text, int minLength)
     {
         var length = text?.Trim().Length ?? 0;
@@ -197,6 +237,10 @@
             return $"{length} characters ?";
     }
 
+    /// <summary>
+    /// Generate summary validation message for the entire step
+    /// </summary>
+    /// <returns>Summary validation message</returns>
     private string GetValidationSummary()
     {
         var totalHazards = AvailableHazards?.Count ?? 0;
@@ -211,35 +255,72 @@
         return $"{totalHazards - analyzedCount} hazards need analysis";
     }
 
-    private void GoToStep2()
+    #endregion
+
+    #region Event Handlers
+
+    /// <summary>
+    /// Handle changes to analysis fields and update the underlying data model
+    /// </summary>
+    /// <param name="hazardCode">The hazard whose analysis is being updated</param>
+    /// <param name="fieldName">The specific field being changed</param>
+    /// <param name="args">Event arguments containing the new value</param>
+    private async Task OnAnalysisFieldChanged(string hazardCode, string fieldName, ChangeEventArgs args)
     {
-        // Simple placeholder - in a real implementation this would navigate
-        Console.WriteLine("Navigate to Step 2");
+        var newValue = args.Value?.ToString() ?? string.Empty;
+        
+        // Update the specific field in the RiskAnalysis entity
+        if (Step3.HazardRiskAnalyses.TryGetValue(hazardCode, out var analysis))
+        {
+            switch (fieldName)
+            {
+                case "WorstCredibleOutcome":
+                    analysis.WorstCredibleOutcome = newValue;
+                    break;
+                case "RootCause":
+                    analysis.RootCause = newValue;
+                    break;
+                case "AdditionalComments":
+                    analysis.AdditionalComments = newValue;
+                    break;
+            }
+            
+            // Ensure the updated entity is maintained in the dictionary
+            Step3.HazardRiskAnalyses[hazardCode] = analysis;
+        }
+        
+        // Trigger UI refresh and notify parent component of changes
+        await InvokeAsync(StateHasChanged);
+        await Step3Changed.InvokeAsync(Step3);
     }
 
+    /// <summary>
+    /// Handle general field changes (legacy method for backward compatibility)
+    /// </summary>
     private async Task OnAnalysisFieldChanged()
     {
-        // Trigger state update when analysis fields change
         await InvokeAsync(StateHasChanged);
-        
-        // Save Step 3 data and update hazards immediately when fields change
-        if (AvailableHazards?.Any() == true)
-        {
-            // Find parent component to get RiskAssessment and Mediator
-            // This would need to be passed down from parent or accessed via DI
-            // For now, just notify parent of changes
-            await Step3Changed.InvokeAsync(Step3);
-            
-            // TODO: Call Step3.ApplyToAssessmentAsync if we have access to assessment and mediator
-            // await Step3.ApplyToAssessmentAsync(assessment, mediator, AvailableHazards);
-        }
-        else
-        {
-            // Just notify parent of changes
-            await Step3Changed.InvokeAsync(Step3);
-        }
+        await Step3Changed.InvokeAsync(Step3);
     }
 
+    /// <summary>
+    /// Navigate back to Step 2 for hazard identification
+    /// </summary>
+    private void GoToStep2()
+    {
+        // Navigation is handled by parent component
+        // This is a placeholder for future navigation implementation
+    }
+
+    #endregion
+
+    #region Display Helper Methods
+
+    /// <summary>
+    /// Get display-friendly text for hazard category
+    /// </summary>
+    /// <param name="categoryValue">Raw category value</param>
+    /// <returns>Formatted category display text</returns>
     private string GetHazardCategoryDisplay(string? categoryValue)
     {
         if (string.IsNullOrEmpty(categoryValue)) return "";
@@ -248,6 +329,11 @@
         return category?.Name ?? categoryValue.Replace("_", " ");
     }
 
+    /// <summary>
+    /// Get display-friendly text for hazard type
+    /// </summary>
+    /// <param name="typeValue">Raw type value</param>
+    /// <returns>Formatted type display text</returns>
     private string GetHazardTypeDisplay(string? typeValue)
     {
         if (string.IsNullOrEmpty(typeValue)) return "";
@@ -256,10 +342,17 @@
         return hazardType?.Name ?? typeValue.Replace("_", " ");
     }
 
+    /// <summary>
+    /// Generate comprehensive display text for a hazard combining category and type
+    /// </summary>
+    /// <param name="hazard">The hazard to generate display text for</param>
+    /// <returns>Formatted display text combining category and type</returns>
     private string GetHazardDisplayText(Hazard hazard)
     {
         var category = GetHazardCategoryDisplay(hazard.HazardCategory);
         var type = GetHazardTypeDisplay(hazard.HazardType);
         return $"{category.ToUpper()} - {type.ToUpper()}";
     }
-}}
+
+    #endregion
+}

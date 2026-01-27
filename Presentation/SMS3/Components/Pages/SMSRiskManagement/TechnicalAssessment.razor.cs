@@ -166,6 +166,21 @@ public partial class TechnicalAssessment : ComponentBase
             Logger.LogInformation("Parameter change detected - Step: {StepNumber}", StepNumber);
         }
 
+        // ✅ CRITICAL FIX: Reload Step3 data when navigating to Step 3
+        if (currentStep == 3)
+        {
+            Logger.LogInformation("Navigating to Step 3 - reloading Step3 data to ensure HazardRiskAnalyses is complete");
+            
+            if (InitialRiskAssessment != null && ReportHazards?.Any() == true)
+            {
+                await Step3.LoadFromAssessmentAsync(InitialRiskAssessment, Mediator, ReportHazards);
+            }
+            else
+            {
+                Logger.LogWarning("Cannot reload Step3 data - missing InitialRiskAssessment or ReportHazards");
+            }
+        }
+
         // If StepNumber parameter changed, we need to refresh the UI
         await InvokeAsync(StateHasChanged);
 
@@ -524,16 +539,14 @@ public partial class TechnicalAssessment : ComponentBase
             Step1.LoadFromAssessment(InitialRiskAssessment);
             Step2.LoadFromAssessment(InitialRiskAssessment);
 
-            // ✅ REFACTORED: Load Step3 with proper RiskAnalysis entities
             await Step3.LoadFromAssessmentAsync(InitialRiskAssessment, Mediator, ReportHazards);
             
             Step4.LoadFromAssessment(InitialRiskAssessment);
-
-            // Load existing scoring panel data for Step 4 using CQRS
             await Step4.LoadExistingScoringPanelsAsync(Mediator, ReportHazards);
 
-            // ✅ ENHANCED: Load Step 5 with comprehensive mitigation loading
-            await Step5.LoadFromAssessmentAsync(InitialRiskAssessment, Mediator, ReportHazards);
+            // Step 5 uses ResidualRiskAssessment for loading residual analyses
+            var step5Assessment = ResidualRiskAssessment ?? InitialRiskAssessment;
+            await Step5.LoadFromAssessmentAsync(step5Assessment, Mediator, ReportHazards);
 
             Logger.LogInformation("Step models loaded from assessment, including RiskAnalysis entities");
         }
@@ -1173,7 +1186,7 @@ public partial class TechnicalAssessment : ComponentBase
             {
                 Step2.HazardIds.Add(newHazard.Code);
                 Step2.HazardDescriptions.Add(newHazard.Description ?? string.Empty);
-                Step2.HazardCategories.Add(newHazard.HazardType ?? string.Empty);
+                Step2.HazardCategories.Add(newHazard.HazardCategory ?? string.Empty);
             }
             else
             {
