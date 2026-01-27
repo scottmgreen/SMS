@@ -194,7 +194,7 @@ public sealed class HazardReportTrackingService : IHazardReportTrackingService
             if (!string.IsNullOrWhiteSpace(tracking.ReportCode))
             {
                 var reportId = new ReportID(tracking.ReportCode);
-                var reportResult = await _reportService.GetReportByIdAsync(reportId, ct).ConfigureAwait(false);
+                var reportResult = await _reportService.GetReportByCodeAsync(reportId, ct).ConfigureAwait(false);
                 if (reportResult.IsSuccess)
                 {
                     details.Report = reportResult.Value;

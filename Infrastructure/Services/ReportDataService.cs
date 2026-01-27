@@ -29,9 +29,9 @@ public class ReportDataService : BaseDataService<ReportDataService>, IReportData
         return _repo.CreateReportAsync(report, ct);
     }
 
-    public Task<Result<Report>> GetReportByIdAsync(ReportID id, CancellationToken ct = default)
+    public Task<Result<Report>> GetReportByCodeAsync(ReportID code, CancellationToken ct = default)
     {
-        return _repo.GetReportByCodeAsync(id, ct);
+        return _repo.GetReportByCodeAsync(code, ct);
     }
 
     public Task<Result<List<Report>>> GetAllReportsAsync(CancellationToken ct = default)

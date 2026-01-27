@@ -704,7 +704,7 @@ public static class FieldNames
     private static readonly Lazy<string> _fReportedBy = new Lazy<string>(() => "fldv_ReportedBy");
     public static string fReportedBy => _fReportedBy.Value;
 
-    private static readonly Lazy<string> _fReportedOn = new Lazy<string>(() => "fldd_ReportedOn");
+    private static readonly Lazy<string> _fReportedOn = new Lazy<string>(() => "fldd_ReportedDate");
     public static string fReportedOn => _fReportedOn.Value;
 
     private static readonly Lazy<string> _fReportedByDepartment = new Lazy<string>(() => "fldv_ReportedByDepartment");

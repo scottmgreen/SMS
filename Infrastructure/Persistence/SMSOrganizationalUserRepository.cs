@@ -565,7 +565,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
     //{
     //    try
     //    {
-    //        var userResult = await GetByIdAsync(userId);
+    //        var userResult = await GetByCodeAsync(userId);
     //        if (userResult.IsFailure)
     //        {
     //            return Result<bool>.Failure<bool>(userResult.Error);

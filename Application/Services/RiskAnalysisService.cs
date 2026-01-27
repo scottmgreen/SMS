@@ -43,7 +43,7 @@ public sealed class RiskAnalysisService
         try
         {
             _logger.LogInformation("Retrieving risk analysis with ID: {Id}", id);
-            return await _dataService.GetRiskAnalysisByIdAsync(id, ct).ConfigureAwait(false);
+            return await _dataService.GetRiskAnalysisByCodeAsync(id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

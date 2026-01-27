@@ -412,9 +412,10 @@ public static partial class Mappers
         report.Code = reader.GetValue<string>(FieldNames.fReportCode) ?? string.Empty;
         report.Name = reader.GetValue<string>(FieldNames.fReportName);
         report.Description = reader.GetValue<string>(FieldNames.fReportDescription);
-        report.Status = reader.GetValue<string>(FieldNames.fReportStatus)?.Trim(); // ✅ FIXED: Trim whitespace
-        report.Stage = reader.GetValue<string>(FieldNames.fReportStage)?.Trim();   // ✅ FIXED: Trim whitespace
-
+        report.Status = reader.GetValue<string>(FieldNames.fReportStatus)?.Trim(); 
+        report.Stage = reader.GetValue<string>(FieldNames.fReportStage)?.Trim();   
+        report.ReportedBy = reader.GetValue<string>(FieldNames.fReportedBy)?.Trim();
+        report.ReportedOn= reader.GetValue<DateTime>(FieldNames.fReportedOn);
         return report;
     }
 
@@ -540,9 +541,9 @@ public static partial class Mappers
         RiskAnalysisID riskAnalysisID = new(reader.GetValue<string>(FieldNames.fRiskAnalysisCode).ToString());
         RiskAnalysis riskAnalysis = new(riskAnalysisID);
 
-        riskAnalysis.Code = reader.GetValue<string>(FieldNames.fRiskAnalysisCode);
-        riskAnalysis.HazardCode = reader.GetValue<string>(FieldNames.fRiskAnalysisHazardCode);
-        riskAnalysis.RiskAssessmentCode = reader.GetValue<string>(FieldNames.fRiskAnalysisRiskAssessmentCode);
+        riskAnalysis.Code = reader.GetValue<string>(FieldNames.fRiskAnalysisCode).Trim();
+        riskAnalysis.HazardCode = reader.GetValue<string>(FieldNames.fRiskAnalysisHazardCode).Trim();
+        riskAnalysis.RiskAssessmentCode = reader.GetValue<string>(FieldNames.fRiskAnalysisRiskAssessmentCode).Trim();
         riskAnalysis.WorstCredibleOutcome = reader.GetValue<string>(FieldNames.fRiskAnalysisWorstCredibleOutcome);
         riskAnalysis.RootCause = reader.GetValue<string>(FieldNames.fRiskAnalysisRootCause);
         riskAnalysis.AdditionalComments = reader.GetValue<string>(FieldNames.fRiskAnalysisAdditionalComments);
@@ -599,8 +600,7 @@ public static partial class Mappers
         // ✅ DateTime fields with null handling  
         riskAssessment.CompletedDate = reader.IsDBNull(FieldNames.fRiskAssessmentCompletedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fRiskAssessmentCompletedDate);
         riskAssessment.CompletedBy = reader.GetValue<string>(FieldNames.fRiskAssessmentCompletedBy);
-        riskAssessment.ParentAssessmentId = reader.GetValue<string>(FieldNames.fRiskAssessmentParentAssessmentId);
-
+        
         // ✅ Step 1 - System Description Fields (now with public setters!)
         riskAssessment.SystemDescription = reader.GetValue<string>(FieldNames.fRiskAssessmentSystemDescription) ?? string.Empty;
         riskAssessment.SystemBoundaries = reader.GetValue<string>(FieldNames.fRiskAssessmentSystemBoundaries) ?? string.Empty;

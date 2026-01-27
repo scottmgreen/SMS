@@ -11,6 +11,7 @@ public partial class Investigations : ComponentBase
     #endregion
 
     #region Injected Services
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
@@ -553,7 +554,7 @@ public partial class Investigations : ComponentBase
             Logger.LogInformation("Creating new ReportValidation for ReportCode: {ReportCode}", reportCode);
 
             // Get the report details first
-            var reportQuery = new GetReportByIdQuery(new ReportID(reportCode));
+            var reportQuery = new GetReportByCodeQuery(new ReportID(reportCode));
             var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
 
             if (reportResult.IsSuccess && reportResult.Value != null)
@@ -561,7 +562,7 @@ public partial class Investigations : ComponentBase
                 var report = reportResult.Value;
 
                 // Create new ReportValidation using the static factory method
-                var validation = SMS_Domain.Entities.ReportValidation.Create(reportCode, "SYSTEM");
+                var validation = SMS_Domain.Entities.ReportValidation.Create(reportCode, AuthService.CurrentUserDisplayName);
                 validation.ValidationComments = $"Created from Investigation return to validation workflow on {DateTime.UtcNow:yyyy-MM-dd HH:mm}";
 
                 var createCommand = new CreateReportValidationCommand(validation);

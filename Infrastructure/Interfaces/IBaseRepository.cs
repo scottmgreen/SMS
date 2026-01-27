@@ -12,7 +12,7 @@ where TModel : class
     public string LogHeader { get; }
 
     //Task<List<TModel>> GetAllAsync();
-    //Task<TModel> GetByIdAsync(string id);
+    //Task<TModel> GetByCodeAsync(string id);
     //Task<TModel> AddAsync(TModel model);
     //Task<bool> UpdateAsync(TModel model);
     //Task<bool> DeleteAsync(TModel model);

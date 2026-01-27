@@ -40,16 +40,16 @@ public sealed class ReportService : IReportService
         }
     }
 
-    public async Task<Result<Report>> GetReportByIdAsync(ReportID id, CancellationToken ct = default)
+    public async Task<Result<Report>> GetReportByCodeAsync(ReportID code, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Retrieving report with ID: {Id}", id);
-            return await _dataService.GetReportByIdAsync(id, ct).ConfigureAwait(false);
+            _logger.LogInformation("Retrieving report with Code: {Id}", code);
+            return await _dataService.GetReportByCodeAsync(code, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving report with ID: {Id}", id);
+            _logger.LogError(ex, "Unexpected error retrieving report with Code: {Id}", code);
             return Result<Report>.Failure<Report>(DomainErrors.ReportError.NotFound);
         }
     }

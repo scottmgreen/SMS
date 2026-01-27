@@ -11,8 +11,8 @@ public class CreateRiskAnalysisCommand : BaseCommandBundle, IRequest<Result<Risk
 
     public void SetCreatedBy(string userId, DateTime timestamp)
     {
-        RiskAnalysis.CreatedBy = userId;
-        RiskAnalysis.CreatedDate = timestamp;
+        //RiskAnalysis.CreatedBy = userId;
+        //RiskAnalysis.CreatedDate = timestamp;
     }
 
     public void SetUpdatedBy(string userId, DateTime timestamp)

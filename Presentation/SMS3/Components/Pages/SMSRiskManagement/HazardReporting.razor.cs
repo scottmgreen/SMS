@@ -1,4 +1,6 @@
-﻿using Microsoft.JSInterop;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.JSInterop;
+
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
@@ -277,7 +279,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             Logger.LogInformation("Loading report {ReportCode} for editing", reportCode);
 
             // Get the report details
-            var reportQuery = new GetReportByIdQuery(new ReportID(reportCode));
+            var reportQuery = new GetReportByCodeQuery(new ReportID(reportCode));
             var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
 
             if (reportResult.IsFailure || reportResult.Value == null)
@@ -1155,6 +1157,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         EditingReport.ReportedOn = HazardReport.ReportedOn;
         EditingReport.Department = HazardReport.ReportingDepartment;
         EditingReport.UpdatedDate = DateTime.UtcNow;
+        EditingReport.UpdatedBy = AuthService.CurrentUserDisplayName;
 
         var updateReportCommand = new UpdateReportCommand(EditingReport);
         var reportUpdateResult = await Mediator.SendAsync(updateReportCommand, CancellationToken.None);
@@ -1178,6 +1181,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         EditingHazard.ReportingDepartment = HazardReport.ReportingDepartment;
         EditingHazard.IsConfidential = HazardReport.IsConfidential;
         EditingHazard.UpdatedDate = DateTime.UtcNow;
+        EditingHazard.UpdatedBy = AuthService.CurrentUserDisplayName;
 
         // Handle location updates
         await UpdateHazardLocation(EditingHazard);
@@ -1238,7 +1242,9 @@ public partial class HazardReporting : ComponentBase, IDisposable
             Department = HazardReport.ReportingDepartment,
             Description = HazardReport.Description,
             Stage = "Initial",
-            Status = "Initial"
+            Status = "Initial",
+            CreatedBy = AuthService.CurrentUserDisplayName,
+            CreatedDate = DateTime.UtcNow
         };
 
         var reportResult = await Mediator.SendAsync(new CreateReportCommand(report), CancellationToken.None);
@@ -1267,7 +1273,9 @@ public partial class HazardReporting : ComponentBase, IDisposable
             IsConfidential = HazardReport.IsConfidential,
             IsAnonymous = false,
             ReportCode = actualReportCode,
-            IsInitialHazard = true // Mark as the initial hazard for this report
+            IsInitialHazard = true ,
+            CreatedBy = AuthService.CurrentUserDisplayName,
+            CreatedDate = DateTime.UtcNow
         };
 
         var createHazardCommand = new CreateHazardCommand(hazard);
@@ -1336,8 +1344,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             try
             {
                 // Check if HazardLocation already exists for this hazard
-                var hazardLocationResult = await Mediator.SendAsync(
-                    new GetHazardLocationsByHazardCodeQuery(hazard.Code), CancellationToken.None);
+                var hazardLocationResult = await Mediator.SendAsync(new GetHazardLocationsByHazardCodeQuery(hazard.Code), CancellationToken.None);
 
                 HazardLocation? hazardLocation = null;
 
@@ -1351,10 +1358,11 @@ public partial class HazardReporting : ComponentBase, IDisposable
                         hazardLocation.Latitude = SelectedGeoLocation.Latitude;
                         hazardLocation.Longitude = SelectedGeoLocation.Longitude;
                         hazardLocation.Description = SelectedGeoLocation.Description ?? "Map selected location";
+                        hazardLocation.UpdatedBy = AuthService.CurrentUserDisplayName;
+                        hazardLocation.UpdatedDate = DateTime.UtcNow;
                         hazard.HazardLocation = hazardLocation;
-
-                        var locationUpdateResult = await Mediator.SendAsync(
-                            new UpdateHazardLocationCommand(hazardLocation), CancellationToken.None);
+                        
+                        var locationUpdateResult = await Mediator.SendAsync(new UpdateHazardLocationCommand(hazardLocation), CancellationToken.None);
 
                         if (locationUpdateResult.IsSuccess)
                         {
@@ -1374,7 +1382,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                         Latitude = SelectedGeoLocation.Latitude,
                         Longitude = SelectedGeoLocation.Longitude,
                         Description = SelectedGeoLocation.Description ?? "Map selected location",
-                        CreatedBy = HazardReport.ReportedBy ?? "SYSTEM",
+                        CreatedBy = AuthService.CurrentUserDisplayName,
                         CreatedDate = DateTime.UtcNow,
                         IsValid = true
                     };
@@ -1448,7 +1456,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                             FileSizeBytes = attachedFile.Size,
                             StorageType = "Database",
                             FileData = fileData,
-                            UploadedBy = HazardReport.ReportedBy ?? "SYSTEM",
+                            UploadedBy = HazardReport.ReportedBy ?? AuthService.CurrentUserDisplayName,
                             UploadedDate = DateTime.UtcNow,
                             IsActive = true,
                             IsConfidential = HazardReport.IsConfidential
@@ -1608,9 +1616,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
         
         HazardReport = new HazardReportForm
         {
-            ReportedBy = currentUser ?? "Unknown User",
-            ReportedOn = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day,
-                tenMinutesAgo.Hour, tenMinutesAgo.Minute, 0)
+            ReportedBy = AuthService.CurrentUserDisplayName ?? "Unknown",
+            ReportedOn = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day,tenMinutesAgo.Hour, tenMinutesAgo.Minute, 0)
         };
 
         SelectedGeoLocation = new GeoLocationData

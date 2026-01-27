@@ -60,7 +60,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCategory, riskAssessment.RiskAssessmentCategory.ToString()));
 
             // Audit fields
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, riskAssessment.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
             // Output parameters
@@ -237,8 +237,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCurrentStep, riskAssessment.CurrentStep));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletedDate, riskAssessment.CompletedDate ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletedBy, riskAssessment.CompletedBy ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmParentAssessmentId, riskAssessment.ParentAssessmentId ?? (object)DBNull.Value));
-
+            
             // Step 1 - System Description Fields
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSystemDescription, riskAssessment.SystemDescription ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSystemBoundaries, riskAssessment.SystemBoundaries ?? (object)DBNull.Value));
@@ -271,7 +270,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletionPercentage, completionPercentage));
 
             // Audit fields
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, riskAssessment.UpdatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
@@ -302,7 +301,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
         string fiveMResources,
         string fiveMPhysicalEnvironment,
         string fiveMOperationalEnvironment,
-        string updatedBy = "SYSTEM",
+        string updatedBy ,
         CancellationToken ct = default)
     {
         try
@@ -347,7 +346,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
         RiskAssessmentID riskAssessmentId,
         string riskAnalysisMethod,
         string riskCriteria,
-        string updatedBy = "SYSTEM",
+        string updatedBy ,
         CancellationToken ct = default)
     {
         try
@@ -388,7 +387,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
         string finalRiskLevel,
         string riskTolerability,
         string assessmentRationale,
-        string updatedBy = "SYSTEM",
+        string updatedBy ,
         CancellationToken ct = default)
     {
         try
@@ -427,7 +426,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
     /// </summary>
     public async Task<Result<RiskAssessment>> UpdateStep5Async(
         RiskAssessmentID riskAssessmentId,
-        string updatedBy = "SYSTEM",
+        string updatedBy ,
         CancellationToken ct = default)
     {
         try
@@ -500,16 +499,16 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
         }
     }
 
-    public async Task<Result<bool>> DeleteRiskAssessmentAsync(RiskAssessmentID id, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteRiskAssessmentAsync(RiskAssessmentID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<bool>.Failure<bool>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_RiskAssessment_Delete} ID:{id}", null);
+            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_RiskAssessment_Delete} Code:{code}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_RiskAssessment_Delete, sql)
@@ -517,7 +516,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -534,7 +533,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
 
     #region Interface Implementation
 
-    public async Task<Result<RiskAssessment>> GetByIdAsync(RiskAssessmentID id)
+    public async Task<Result<RiskAssessment>> GetByCodeAsync(RiskAssessmentID id)
     {
         return await GetRiskAssessmentByCodeAsync(id);
     }

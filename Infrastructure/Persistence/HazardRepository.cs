@@ -114,9 +114,7 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
             var createdByParam = DataAccess.Parameter(ParameterNames.pmCreatedBy, hazard.CreatedBy);
             var createdDateParam = DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow);
 
-            _logger.LogInformation("🔍 SQL PARAM DEBUG - @pCreatedBy: '{Value}', ParameterName: '{ParamName}'",
-                createdByParam.Value ?? "NULL", createdByParam.ParameterName);
-
+            
             cmd.Parameters.Add(createdByParam);
             cmd.Parameters.Add(createdDateParam);
 

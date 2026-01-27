@@ -73,7 +73,7 @@ public partial class AirportSharedDataset : ComponentBase
             }
 
             // Load report details
-            var reportQuery = new GetReportByIdQuery(new ReportID(ReportId));
+            var reportQuery = new GetReportByCodeQuery(new ReportID(ReportId));
             var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
 
             if (reportResult.IsSuccess)

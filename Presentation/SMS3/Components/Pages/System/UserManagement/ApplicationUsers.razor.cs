@@ -6,12 +6,13 @@ namespace SMS3.Components.Pages.System.UserManagement;
 /// </summary>
 public partial class ApplicationUsers : ComponentBase
 {
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<ApplicationUsers> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
-    [Inject] private ISMSSessionService SessionService { get; set; } = default!;
+    //[Inject] private ISMSSessionService SessionService { get; set; } = default!;
 
     [Parameter] public string? Id { get; set; }
 
@@ -209,7 +210,7 @@ public partial class ApplicationUsers : ComponentBase
 
             // Update user role
             user.UserRole = selectedRole;
-            user.UpdatedBy = SessionService.GetCurrentUserId() ?? "SYSTEM";
+            user.UpdatedBy = AuthService.CurrentUserDisplayName;
             user.UpdatedDate = DateTime.UtcNow;
 
             // Update user
@@ -268,7 +269,7 @@ public partial class ApplicationUsers : ComponentBase
 
             // Remove role
             user.UserRole = null;
-            user.UpdatedBy = SessionService.GetCurrentUserId() ?? "SYSTEM";
+            user.UpdatedBy = AuthService.CurrentUserDisplayName;
             user.UpdatedDate = DateTime.UtcNow;
 
             // Update user
@@ -343,7 +344,7 @@ public partial class ApplicationUsers : ComponentBase
                 UserRole = selectedRole, // ?? NEW: Assign role during creation
                 IsActive = true,
                 SMSUserType = "Application",
-                CreatedBy = SessionService.GetCurrentUserId() ?? "SYSTEM",
+                CreatedBy = AuthService.CurrentUserDisplayName,
                 CreatedDate = DateTime.UtcNow
             };
 
@@ -407,7 +408,7 @@ public partial class ApplicationUsers : ComponentBase
             CurrentUser.LastName = LastName.Create(model.LastName).Value;
 
             // Set the UpdatedBy field to the currently logged-in user's ID
-            CurrentUser.UpdatedBy = SessionService.GetCurrentUserId() ?? "SYSTEM";
+            CurrentUser.UpdatedBy = AuthService.CurrentUserDisplayName;
             CurrentUser.UpdatedDate = DateTime.UtcNow;
 
             var updateCommand = new UpdateSMSApplicationUserCommand(CurrentUser);

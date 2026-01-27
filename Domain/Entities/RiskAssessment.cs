@@ -16,13 +16,13 @@
 /// 
 /// 3. PrimaryHazardId: If AssessmentType = "Initial", PrimaryHazardId MUST be set to currentHazardId
 /// 
-/// 4. RiskAssessmentCategory: ONLY "Technical" or "Preliminary"
+/// 4. RiskAssessmentCategory: ONLY "Technical" 
 ///    - Technical: Full 5-step SMS process (IS the 5-step, no redundancy needed)
-///    - Preliminary: Streamlined 1-step assessment
+///    
 /// 
 /// 5. CurrentStep Rules:
 ///    - Technical (5-step): CurrentStep reflects last step finished (1-5)
-///    - Preliminary: CurrentStep is always 1 (single step process)
+///    
 /// 
 /// WORKFLOW CONSTRAINTS:
 /// - Initial assessments are created first with a hazard
@@ -49,22 +49,11 @@ public sealed class RiskAssessment : BaseAuditableEntity
         Name = name;
         LeadAssessorId = leadAssessorId;
         HazardCode = hazardCode;
-        Status = RiskAssessmentStatus.Created; // BUSINESS RULE: Always start as "Created"
-        AssessmentType = assessmentType ?? RiskAssessmentType.Initial; // BUSINESS RULE: Default to Initial
-
-        // BUSINESS RULE: If Initial assessment, PrimaryHazardId MUST be set to currentHazardId
-        if (AssessmentType == RiskAssessmentType.Initial && !string.IsNullOrEmpty(primaryHazardId))
-        {
-            PrimaryHazardId = primaryHazardId;
-        }
-        else if (AssessmentType == RiskAssessmentType.Residual)
-        {
-            PrimaryHazardId = primaryHazardId; // Can be null for residual assessments
-        }
-
-        // BUSINESS RULE: Default to Technical category (5-step process)
+        Status = RiskAssessmentStatus.Created; 
+        AssessmentType = assessmentType ?? RiskAssessmentType.Initial; 
+        PrimaryHazardId = primaryHazardId;
         RiskAssessmentCategory = RiskAssessmentCategory.Technical;
-        CurrentStep = 1; // BUSINESS RULE: Always start at step 1
+        CurrentStep = 1; 
         UpdatedDate = DateTime.UtcNow;
     }
 
@@ -76,7 +65,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
     public string LeadAssessorId { get; set; } = string.Empty;
 
     /// <summary>
-    /// Primary Hazard ID - BUSINESS RULE: MUST be set for Initial assessments
+    /// Primary Hazard ID - BUSINESS RULE: MUST be set for assessments
     /// </summary>
     public string? PrimaryHazardId { get; set; }
 
@@ -91,7 +80,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
     public RiskAssessmentType AssessmentType { get; set; } = RiskAssessmentType.Initial;
 
     /// <summary>
-    /// Risk Assessment HazardCategory - BUSINESS RULE: Only "Technical" or "Preliminary"
+    /// Risk Assessment HazardCategory - BUSINESS RULE: Only "Technical" 
     /// Technical = 5-step process, Preliminary = 1-step process
     /// </summary>
     public RiskAssessmentCategory RiskAssessmentCategory { get; set; } = RiskAssessmentCategory.Technical;
@@ -106,8 +95,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
     public string? Stage { get; set; }
     public DateTime? CompletedDate { get; set; }
     public string? CompletedBy { get; set; }
-    public string? ParentAssessmentId { get; set; }
-
+    
     // Risk Scoring Properties
     public int? FinalSeverityScore { get; set; }
     public int? FinalLikelihoodScore { get; set; }
@@ -158,28 +146,34 @@ public sealed class RiskAssessment : BaseAuditableEntity
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.InvalidLeadAssessor);
         }
 
-        // BUSINESS RULE ENFORCEMENT: HazardCategory can only be Technical or Preliminary
+        // BUSINESS RULE ENFORCEMENT: HazardCategory can only be Technical 
         var assessmentCategory = category ?? RiskAssessmentCategory.Technical;
 
-        var assessment = new RiskAssessment(id, name, leadAssessorId, RiskAssessmentType.Initial, primaryHazardId, hazardCode);
-        assessment.RiskAssessmentCategory = assessmentCategory;
-        assessment.Stage = "Created";
-        assessment.Code = $"RA-0000";
-
-        // BUSINESS RULE: Initial assessment MUST have PrimaryHazardId
-        if (!string.IsNullOrEmpty(primaryHazardId))
+        var assessment = new RiskAssessment(id)
         {
-            assessment.PrimaryHazardId = primaryHazardId;
-        }
+            Name = name,
+            LeadAssessorId = leadAssessorId,
+            AssessmentType = RiskAssessmentType.Initial,
+            RiskAssessmentCategory = assessmentCategory,
+            HazardCode = hazardCode,
+            PrimaryHazardId = primaryHazardId,
+            Stage = "Created",
+            Code = "RS-0000",
+            Status = RiskAssessmentStatus.Created,
+            CurrentStep = 1,
+            UpdatedDate = DateTime.UtcNow
+        };
 
         return Result<RiskAssessment>.Success(assessment);
     }
+
+    /// <summary
 
     /// <summary>
     /// Factory method to create new Residual Risk Assessment (after mitigations)
     /// BUSINESS RULE: Residual assessments are created after mitigations
     /// </summary>
-    public static Result<RiskAssessment> CreateResidual(RiskAssessmentID id, string name, string leadAssessorId, string parentAssessmentId, string? primaryHazardId = null, string? hazardCode = null)
+    public static Result<RiskAssessment> CreateResidual(RiskAssessmentID id, string name, string leadAssessorId, string? primaryHazardId = null, string? hazardCode = null)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -191,29 +185,24 @@ public sealed class RiskAssessment : BaseAuditableEntity
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.InvalidLeadAssessor);
         }
 
-        if (string.IsNullOrWhiteSpace(parentAssessmentId))
+        var assessment = new RiskAssessment(id)
         {
-            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.InvalidParentAssessment);
-        }
-
-        var assessment = new RiskAssessment(id, name, leadAssessorId, RiskAssessmentType.Residual, primaryHazardId, hazardCode);
-        assessment.ParentAssessmentId = parentAssessmentId;
-
-        // BUSINESS RULE: Residual assessments typically use same category as parent, default to Technical
-        assessment.RiskAssessmentCategory = RiskAssessmentCategory.Technical;
-        assessment.Stage = "Created";
-        assessment.Code = $"RRA-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
+            Name = name,
+            LeadAssessorId = leadAssessorId,
+            AssessmentType = RiskAssessmentType.Residual,
+            RiskAssessmentCategory = RiskAssessmentCategory.Technical,
+            HazardCode = hazardCode,
+            PrimaryHazardId = primaryHazardId,
+            Stage = "Created",
+            Code = "RS-0000",
+            Status = RiskAssessmentStatus.Created,
+            CurrentStep = 1,
+            UpdatedDate = DateTime.UtcNow
+        };
 
         return Result<RiskAssessment>.Success(assessment);
     }
 
-    /// <summary>
-    /// Factory method for backward compatibility - defaults to Initial assessment
-    /// </summary>
-    public static Result<RiskAssessment> Create(RiskAssessmentID id, string name, string leadAssessorId, string? primaryHazardId = null)
-    {
-        return CreateInitial(id, name, leadAssessorId, RiskAssessmentCategory.Technical, primaryHazardId);
-    }
 
     // ✅ METHODS WITH BUSINESS RULE ENFORCEMENT
 

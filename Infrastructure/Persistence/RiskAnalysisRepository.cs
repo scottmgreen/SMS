@@ -42,7 +42,7 @@ public sealed class RiskAnalysisRepository : BaseRepository<RiskAnalysisReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisWorstCredibleOutcome, riskAnalysis.WorstCredibleOutcome));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisRootCause, riskAnalysis.RootCause));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisAdditionalComments, riskAnalysis.AdditionalComments));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, riskAnalysis.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };

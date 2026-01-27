@@ -96,12 +96,7 @@ public partial class ReportProcessing : ComponentBase
                 reports = reportsResult.Value ?? new List<Report>();
                 Logger.LogWarning("? Successfully loaded {Count} reports from database", reports.Count);
 
-                // Log first few report details for debugging
-                foreach (var report in reports.Take(3))
-                {
-                    Logger.LogWarning("?? Report: {Code} | Status: {Status} | Created: {Created}",
-                        report.Code, report.Status, report.CreatedDate);
-                }
+                
             }
             else
             {
@@ -237,6 +232,7 @@ public partial class ReportProcessing : ComponentBase
                     ReportId = report.Code ?? "Unknown",
                     ReportDescription = report.Description ?? "No description",
                     ReportStatus = report.Status ?? "New",
+                    ReportStage = report.Stage ?? "New",
                     CreatedBy = report.CreatedBy ?? "Unknown",
                     CreatedDate = report.CreatedDate ?? DateTime.UtcNow,
 
@@ -721,35 +717,53 @@ public partial class ReportProcessing : ComponentBase
         builder.AddAttribute(23, "Width", "300px");
         builder.CloseComponent();
 
-        // Stage Column
+        // Status Column
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(30);
         builder.AddAttribute(31, "Property", "ReportStatus");
-        builder.AddAttribute(32, "Title", "Stage");
+        builder.AddAttribute(32, "Title", "Status");
         builder.AddAttribute(33, "Width", "120px");
         builder.AddAttribute(34, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "BadgeStyle", BadgeStyle.Info);
-                templateBuilder.AddAttribute(2, "Text", "Validation");
+                templateBuilder.AddAttribute(1, "BadgeStyle", BadgeStyle.Base);
+                templateBuilder.AddAttribute(2, "Text", report.ReportStatus);
                 templateBuilder.AddAttribute(3, "Variant", Variant.Flat);
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
 
-        // Priority Column
+        // Stage Column
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(40);
-        builder.AddAttribute(41, "Property", "Priority");
-        builder.AddAttribute(42, "Title", "Priority");
-        builder.AddAttribute(43, "Width", "100px");
+        builder.AddAttribute(41, "Property", "ReportStage");
+        builder.AddAttribute(42, "Title", "Stage");
+        builder.AddAttribute(43, "Width", "120px");
         builder.AddAttribute(44, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenBadge>(0);
+                templateBuilder.AddAttribute(1, "BadgeStyle", BadgeStyle.Base);
+                templateBuilder.AddAttribute(2, "Text", report.ReportStage);
+                templateBuilder.AddAttribute(3, "Variant", Variant.Flat);
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+
+
+        // Priority Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(50);
+        builder.AddAttribute(51, "Property", "Priority");
+        builder.AddAttribute(52, "Title", "Priority");
+        builder.AddAttribute(53, "Width", "100px");
+        builder.AddAttribute(54, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
                 var badgeStyle = report.Priority switch
                 {
                     "High" => BadgeStyle.Danger,
                     "Medium" => BadgeStyle.Warning,
-                    _ => BadgeStyle.Info
+                    _ => BadgeStyle.Base
                 };
                 templateBuilder.OpenComponent<RadzenBadge>(0);
                 templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
@@ -759,11 +773,11 @@ public partial class ReportProcessing : ComponentBase
         builder.CloseComponent();
 
         // Reported By Column (FIXED: Ensure proper data binding)
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(50);
-        builder.AddAttribute(51, "Property", "ReportedBy");
-        builder.AddAttribute(52, "Title", "Reported By");
-        builder.AddAttribute(53, "Width", "150px");
-        builder.AddAttribute(54, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(60);
+        builder.AddAttribute(61, "Property", "ReportedBy");
+        builder.AddAttribute(62, "Title", "Reported By");
+        builder.AddAttribute(63, "Width", "150px");
+        builder.AddAttribute(64, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
@@ -774,11 +788,11 @@ public partial class ReportProcessing : ComponentBase
         builder.CloseComponent();
 
         // Days in Stage Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(60);
-        builder.AddAttribute(61, "Property", "DaysInStage");
-        builder.AddAttribute(62, "Title", "Days in Stage");
-        builder.AddAttribute(63, "Width", "120px");
-        builder.AddAttribute(64, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(70);
+        builder.AddAttribute(71, "Property", "DaysInStage");
+        builder.AddAttribute(72, "Title", "Days in Stage");
+        builder.AddAttribute(73, "Width", "120px");
+        builder.AddAttribute(74, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
                 var badgeStyle = report.DaysInStage > 2 ? BadgeStyle.Warning : BadgeStyle.Secondary;
@@ -790,10 +804,10 @@ public partial class ReportProcessing : ComponentBase
         builder.CloseComponent();
 
         // Actions Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(70);
-        builder.AddAttribute(71, "Title", "Actions");
-        builder.AddAttribute(72, "Width", "150px");
-        builder.AddAttribute(73, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(80);
+        builder.AddAttribute(81, "Title", "Actions");
+        builder.AddAttribute(82, "Width", "150px");
+        builder.AddAttribute(83, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenButton>(0);
@@ -1425,6 +1439,8 @@ public partial class ReportProcessing : ComponentBase
         public string ReportId { get; set; } = string.Empty;
         public string ReportDescription { get; set; } = string.Empty;
         public string ReportStatus { get; set; } = string.Empty;
+
+        public string ReportStage { get; set; } = string.Empty;
         public string CreatedBy { get; set; } = string.Empty;
         public DateTime CreatedDate { get; set; }
 

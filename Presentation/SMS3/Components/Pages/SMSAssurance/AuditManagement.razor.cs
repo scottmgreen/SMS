@@ -3,6 +3,7 @@ namespace SMS3.Components.Pages.SMSAssurance;
 public partial class AuditManagement : ComponentBase
 {
     #region Injected Services
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<AuditManagement> Logger { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
@@ -293,7 +294,7 @@ public partial class AuditManagement : ComponentBase
             var result = await DialogService.OpenAsync<Components.AuditPlanDialog>("Create Audit Plan",
                 new Dictionary<string, object>()
                 {
-                    { "AuditPlan", new SMSAuditPlan(new SMSAuditPlanID("AP-0000"), "SYSTEM") },
+                    { "AuditPlan", new SMSAuditPlan(new SMSAuditPlanID("AP-0000"), AuthService.CurrentUserDisplayName) },
                     { "IsNew", true }
                 },
                 new DialogOptions() { Width = "1200px", Height = "900px", Resizable = true });
@@ -416,7 +417,7 @@ public partial class AuditManagement : ComponentBase
 
             if (confirm == true)
             {
-                var command = new DeleteSMSAuditPlanCommand(plan.Code, "SYSTEM");
+                var command = new DeleteSMSAuditPlanCommand(plan.Code, AuthService.CurrentUserDisplayName);
                 var result = await Mediator.SendAsync(command, CancellationToken.None);
 
                 if (result.IsSuccess)

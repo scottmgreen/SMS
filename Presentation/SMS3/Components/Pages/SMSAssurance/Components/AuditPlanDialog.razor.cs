@@ -8,6 +8,7 @@ public partial class AuditPlanDialog : ComponentBase
     #endregion
 
     #region Injected Services
+
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<AuditPlanDialog> Logger { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;

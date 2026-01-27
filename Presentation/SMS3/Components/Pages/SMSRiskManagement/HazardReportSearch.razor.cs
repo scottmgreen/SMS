@@ -887,7 +887,7 @@ public partial class HazardReportSearch : ComponentBase
             {
                 try
                 {
-                    var reportQuery = new GetReportByIdQuery(new ReportID(tracking.ReportCode));
+                    var reportQuery = new GetReportByCodeQuery(new ReportID(tracking.ReportCode));
                     var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
 
                     if (reportResult.IsSuccess && reportResult.Value != null)

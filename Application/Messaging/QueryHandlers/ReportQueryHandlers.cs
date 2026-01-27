@@ -8,28 +8,28 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // REPORT QUERY HANDLERS
 // =============================================
 
-public class GetReportByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetReportByIdQuery, Result<Report>>
+public class GetReportByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetReportByCodeQuery, Result<Report>>
 {
     private readonly ReportDataService _reportDataService;
-    private readonly ILogger<GetReportByIdQueryHandler> _logger;
+    private readonly ILogger<GetReportByCodeQueryHandler> _logger;
 
-    public GetReportByIdQueryHandler(ReportDataService reportDataService, ILogger<GetReportByIdQueryHandler> logger)
+    public GetReportByCodeQueryHandler(ReportDataService reportDataService, ILogger<GetReportByCodeQueryHandler> logger)
     {
         _reportDataService = reportDataService ?? throw new ArgumentNullException(nameof(reportDataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<Report>> HandleAsync(GetReportByIdQuery request, CancellationToken ct = default)
+    public async Task<Result<Report>> HandleAsync(GetReportByCodeQuery request, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Processing GetReportByIdQuery for ID: {Id}", request.ReportId);
-            var result = await _reportDataService.GetReportByIdAsync(request.ReportId, ct).ConfigureAwait(false);
+            _logger.LogInformation("Processing GetReportByCodeQuery for Code: {Code}", request.ReportCode);
+            var result = await _reportDataService.GetReportByCodeAsync(request.ReportCode, ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("Error processing GetReportByIdQuery for ID: {Id}", ApplicationEventIds.Error, ex);
+            _logger.LogApplicationError("Error processing GetReportByCodeQuery for Code: {Code}", ApplicationEventIds.Error, ex);
             return Result<Report>.Failure<Report>(DomainErrors.ReportError.NotFound);
         }
     }

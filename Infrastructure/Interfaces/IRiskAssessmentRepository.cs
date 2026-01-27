@@ -6,7 +6,7 @@ namespace SMS_Infrastructure.Interfaces;
 /// </summary>
 public interface IRiskAssessmentRepository
 {
-    Task<Result<RiskAssessment>> GetByIdAsync(RiskAssessmentID id);
+    Task<Result<RiskAssessment>> GetByCodeAsync(RiskAssessmentID id);
     Task<Result<RiskAssessment>> AddAsync(RiskAssessment riskAssessment);
     Task<Result<bool>> UpdateAsync(RiskAssessment riskAssessment);
     Task<Result<bool>> DeleteAsync(RiskAssessmentID id);

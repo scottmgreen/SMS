@@ -4,13 +4,13 @@ namespace SMS_Application.Messaging.Queries;
 // REPORT QUERIES
 // =============================================
 
-public class GetReportByIdQuery : BaseQueryBundle, IRequest<Result<Report>>
+public class GetReportByCodeQuery : BaseQueryBundle, IRequest<Result<Report>>
 {
-    public ReportID ReportId { get; set; }
+    public ReportID ReportCode { get; set; }
 
-    public GetReportByIdQuery(ReportID reportId)
+    public GetReportByCodeQuery(ReportID reportcode)
     {
-        ReportId = reportId ?? throw new ArgumentNullException(nameof(reportId));
+        ReportCode = reportcode ?? throw new ArgumentNullException(nameof(reportcode));
     }
 }
 

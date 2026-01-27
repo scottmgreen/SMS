@@ -29,7 +29,7 @@ public abstract class BaseRepository<TEntity, TModel> : IBaseRepository<TEntity,
     }
 
     //public abstract Task<List<TModel>> GetAllAsync();
-    //public abstract Task<TModel> GetByIdAsync(string id);
+    //public abstract Task<TModel> GetByCodeAsync(string id);
     //public abstract Task<TModel> AddAsync(TModel model);
     //public abstract Task<bool> UpdateAsync(TModel model);
     //public abstract Task<bool> DeleteAsync(TModel model);

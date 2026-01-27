@@ -456,7 +456,7 @@
             // PLACEHOLDER: In a real implementation, this would load via CQRS
             // foreach (var hazard in AvailableHazards)
             // {
-            //     var query = new GetRiskAnalysisByHazardIdQuery(new HazardID(hazard.Code));
+            //     var query = new GetRiskAnalysisByHazardCodeQuery(new HazardID(hazard.Code));
             //     var result = await Mediator.SendAsync(query, CancellationToken.None);
             //     ... load existing data if linked to ResidualRiskAssessment.Code
             // }
@@ -658,7 +658,7 @@
                 GetResidualWorstOutcome(hazard), GetResidualRootCause(hazard), GetResidualAdditionalComments(hazard));
 
             // PLACEHOLDER: In a real implementation, this would save via CQRS
-            // var query = new GetRiskAnalysisByHazardIdQuery(new HazardID(hazard.Code));
+            // var query = new GetRiskAnalysisByHazardCodeQuery(new HazardID(hazard.Code));
             // var result = await Mediator.SendAsync(query, CancellationToken.None);
             // ... create or update RiskAnalysis entity with ResidualRiskAssessment.Code
             

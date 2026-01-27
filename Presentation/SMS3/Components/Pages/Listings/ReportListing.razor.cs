@@ -140,7 +140,7 @@ public partial class ReportListing : ComponentBase
             StateHasChanged();
 
             // Get detailed report information
-            var reportQuery = new GetReportByIdQuery(new ReportID(report.Code));
+            var reportQuery = new GetReportByCodeQuery(new ReportID(report.Code));
             var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
 
             if (reportResult.IsSuccess && reportResult.Value != null)

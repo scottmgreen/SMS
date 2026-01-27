@@ -6,6 +6,7 @@ public partial class ReportValidation : ComponentBase
 {
     [Parameter] public string ReportId { get; set; } = "";
 
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<ReportValidation> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
@@ -40,7 +41,7 @@ public partial class ReportValidation : ComponentBase
     // Dropdown Options
     private List<DropdownOption> ValidationTypeOptions { get; set; } = new()
     {
-        new DropdownOption { Value = "Preliminary", Text = "Preliminary Assessment" },
+        //new DropdownOption { Value = "Preliminary", Text = "Preliminary Assessment" },
         new DropdownOption { Value = "Technical", Text = "Technical Assessment" }
     };
 
@@ -69,7 +70,7 @@ public partial class ReportValidation : ComponentBase
             var reportCode = new ReportID(ReportId);
 
             // Load report details
-            var reportResult = await Mediator.SendAsync(new GetReportByIdQuery(reportCode), CancellationToken.None);
+            var reportResult = await Mediator.SendAsync(new GetReportByCodeQuery(reportCode), CancellationToken.None);
             if (reportResult.IsSuccess)
             {
                 ReportDetails = reportResult.Value;
@@ -264,11 +265,11 @@ public partial class ReportValidation : ComponentBase
                 ExistingValidation.ValidationDecision = ValidationDecisionValue;
                 ExistingValidation.ValidationComments = ValidationComments;
                 ExistingValidation.ValidationType = ValidationType ?? "Technical";
-                ExistingValidation.ValidatedBy = GetCurrentUserCode();
+                ExistingValidation.ValidatedBy = AuthService.CurrentUserDisplayName; 
                 ExistingValidation.Status = "Completed";
                 ExistingValidation.Stage = "Complete";
                 ExistingValidation.ValidatedDate = DateTime.UtcNow;
-                ExistingValidation.UpdatedBy = GetCurrentUserCode();
+                ExistingValidation.UpdatedBy = AuthService.CurrentUserDisplayName; 
                 ExistingValidation.UpdatedDate = DateTime.UtcNow;
 
                 var updateCommand = new UpdateReportValidationCommand(ExistingValidation);
@@ -293,14 +294,14 @@ public partial class ReportValidation : ComponentBase
                 {
                     Code = validationId.Value,
                     ReportCode = ReportId,
-                    ValidatedBy = GetCurrentUserCode(),
+                    ValidatedBy = AuthService.CurrentUserDisplayName,
                     ValidationDecision = ValidationDecisionValue,
                     ValidationComments = ValidationComments,
                     ValidationType = ValidationType ?? "Technical",
                     Status = "Completed",
                     Stage = "Complete",
                     ValidatedDate = DateTime.UtcNow,
-                    CreatedBy = GetCurrentUserCode(),
+                    CreatedBy = AuthService.CurrentUserDisplayName,
                     CreatedDate = DateTime.UtcNow
                 };
 
@@ -360,7 +361,7 @@ public partial class ReportValidation : ComponentBase
             var assessmentType = ValidationType?.ToLower() switch
             {
                 "technical" => "TechnicalAssessment",
-                "preliminary" => "PreliminaryRiskAssessment",
+                //"preliminary" => "PreliminaryRiskAssessment",
                 _ => "TechnicalAssessment"
             };
 
@@ -428,9 +429,9 @@ public partial class ReportValidation : ComponentBase
                 var investigationId = new InvestigationID(investigationCode);
                 Investigation investigation = new Investigation(investigationId);
                 investigation.HazardCode = ReportHazard.Code;
-                investigation.CreatedBy = GetCurrentUserCode();
+                investigation.CreatedBy = AuthService.CurrentUserDisplayName;
                 investigation.ReportCode = ReportId;
-                investigation.AssignedInvestigatorId = GetCurrentUserCode();
+                investigation.AssignedInvestigatorId = AuthService.CurrentUserDisplayName;
                 investigation.InvestigationObjectives = $"Investigation required based on validation decision for hazard {ReportHazard.Code}";
                 investigation.InvestigationNotes = $"Investigation initiated from report validation. Validation comments: {ValidationComments}";
 
@@ -526,11 +527,11 @@ public partial class ReportValidation : ComponentBase
     }
 
     /// <summary>
-    /// Get current user code from HttpContext
+    /// Get current user code from AuthService
     /// </summary>
     private string GetCurrentUserCode()
     {
-        return "SYSTEM_USER"; // Replace with actual user identification logic
+        return AuthService.CurrentUserDisplayName; 
     }
 
     #endregion

@@ -15,8 +15,8 @@ public class CreateRiskAssessmentCommand : BaseCommandBundle, IRequest<Result<Ri
 
     public void SetCreatedBy(string userId, DateTime timestamp)
     {
-        RiskAssessment.CreatedBy = userId;
-        RiskAssessment.CreatedDate = timestamp;
+        //RiskAssessment.CreatedBy = userId;
+        //RiskAssessment.CreatedDate = timestamp;
     }
 
     public void SetUpdatedBy(string userId, DateTime timestamp)
@@ -41,8 +41,8 @@ public class UpdateRiskAssessmentCommand : BaseCommandBundle, IRequest<Result<Ri
 
     public void SetUpdatedBy(string userId, DateTime timestamp)
     {
-        RiskAssessment.UpdatedBy = userId;
-        RiskAssessment.UpdatedDate = timestamp;
+        //RiskAssessment.UpdatedBy = userId;
+        //RiskAssessment.UpdatedDate = timestamp;
     }
 }
 
@@ -169,8 +169,6 @@ public class SaveStep4Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
         string assessmentRationale)
     {
         RiskAssessmentId = riskAssessmentId ?? throw new ArgumentNullException(nameof(riskAssessmentId));
-        //TolerabilityFramework = tolerabilityFramework ?? "PDX-SMS Default";
-        //RiskAcceptanceCriteria = riskAcceptanceCriteria ?? string.Empty;
         FinalSeverityScore = finalSeverityScore;
         FinalLikelihoodScore = finalLikelihoodScore;
         FinalRiskLevel = finalRiskLevel ?? string.Empty;
@@ -185,7 +183,7 @@ public class SaveStep4Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
 
     public void SetUpdatedBy(string userId, DateTime timestamp)
     {
-        UpdatedBy = userId;
+        //UpdatedBy = userId;
     }
 }
 
@@ -211,7 +209,7 @@ public class SaveStep5Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
 
     public void SetUpdatedBy(string userId, DateTime timestamp)
     {
-        UpdatedBy = userId;
+        //UpdatedBy = userId;
     }
 }
 
@@ -251,6 +249,6 @@ public class UpdateProgressCommand : BaseCommandBundle, IRequest<Result<RiskAsse
 
     public void SetUpdatedBy(string userId, DateTime timestamp)
     {
-        UpdatedBy = userId;
+        //UpdatedBy = userId;
     }
 }

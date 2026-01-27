@@ -238,7 +238,7 @@ public partial class ReportCalendar : ComponentBase
             StateHasChanged();
 
             // Get detailed report information
-            var reportQuery = new GetReportByIdQuery(new ReportID(reportItem.ReportCode));
+            var reportQuery = new GetReportByCodeQuery(new ReportID(reportItem.ReportCode));
             var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
 
             if (reportResult.IsSuccess && reportResult.Value != null)
