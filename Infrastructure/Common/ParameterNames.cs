@@ -850,6 +850,12 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmRiskAnalysisCode = new Lazy<string>(() => "@pRiskAnalysisCode");
     public static string pmRiskAnalysisCode => _pmRiskAnalysisCode.Value;
 
+    
+
+        private static readonly Lazy<string> _pmRiskAnalysisType = new Lazy<string>(() => "@pRiskAnalysisType");
+    public static string pmRiskAnalysisType => _pmRiskAnalysisType.Value;
+
+
     private static readonly Lazy<string> _pmRiskAnalysisHazardCode = new Lazy<string>(() => "@pRiskAnalysisHazardCode");
     public static string pmRiskAnalysisHazardCode => _pmRiskAnalysisHazardCode.Value;
 

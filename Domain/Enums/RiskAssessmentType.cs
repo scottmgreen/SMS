@@ -6,16 +6,12 @@ namespace SMS_Domain.Enums;
 /// </summary>
 public abstract class RiskAssessmentType : BaseEnum<RiskAssessmentType>
 {
-    protected RiskAssessmentType(string value, string name, string description, bool requiresPrimaryHazard, bool requiresParentAssessment) : base(value, name)
+    protected RiskAssessmentType(string value, string name) : base(value, name)
     {
-        Description = description;
-        RequiresPrimaryHazard = requiresPrimaryHazard;
-        RequiresParentAssessment = requiresParentAssessment;
+        
     }
 
-    public string Description { get; }
-    public bool RequiresPrimaryHazard { get; }
-    public bool RequiresParentAssessment { get; }
+    
 
     #region Risk Assessment Types
 
@@ -31,45 +27,61 @@ public abstract class RiskAssessmentType : BaseEnum<RiskAssessmentType>
 
     private sealed class InitialType : RiskAssessmentType
     {
-        public InitialType() : base("Initial", "Initial",
-            "Original risk assessment before any mitigations are implemented", true, false)
+        public InitialType() : base("Initial", "Initial")
         {
         }
     }
 
     private sealed class ResidualType : RiskAssessmentType
     {
-        public ResidualType() : base("Residual", "Residual",
-            "Risk assessment after mitigations have been implemented", false, true)
+        public ResidualType() : base("Residual", "Residual")
         {
         }
     }
 
     #endregion
 
-    /// <summary>
-    /// Gets types that require a primary hazard
-    /// </summary>
-    public static IEnumerable<RiskAssessmentType> GetTypesRequiringPrimaryHazard()
+    
+}
+
+
+
+public abstract class RiskAnalysisType : BaseEnum<RiskAnalysisType>
+{
+    protected RiskAnalysisType(string value, string name) : base(value, name)
     {
-        return GetAllValues().Where(rat => rat.RequiresPrimaryHazard);
+
     }
 
-    /// <summary>
-    /// Gets types that require a parent assessment
-    /// </summary>
-    public static IEnumerable<RiskAssessmentType> GetTypesRequiringParentAssessment()
+
+
+    #region Risk Assessment Types
+
+    /// <summary>Original risk assessment before mitigations - PrimaryHazardId MUST be set</summary>
+    public static readonly RiskAnalysisType Initial = new InitialType();
+
+    /// <summary>Risk assessment after mitigations have been implemented</summary>
+    public static readonly RiskAnalysisType Residual = new ResidualType();
+
+    #endregion
+
+    #region Implementations
+
+    private sealed class InitialType : RiskAnalysisType
     {
-        return GetAllValues().Where(rat => rat.RequiresParentAssessment);
+        public InitialType() : base("Initial", "Initial")
+        {
+        }
     }
 
-    /// <summary>
-    /// Checks if this is an initial assessment
-    /// </summary>
-    public bool IsInitial => this == Initial;
+    private sealed class ResidualType : RiskAnalysisType
+    {
+        public ResidualType() : base("Residual", "Residual")
+        {
+        }
+    }
 
-    /// <summary>
-    /// Checks if this is a residual assessment
-    /// </summary>
-    public bool IsResidual => this == Residual;
+    #endregion
+
+
 }

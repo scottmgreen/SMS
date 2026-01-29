@@ -59,7 +59,7 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
             ScoringPanelID scoringPanelId = new(newCodeValue);
 
-            return await GetScoringPanelByIdAsync(scoringPanelId, ct).ConfigureAwait(false);
+            return await GetScoringPanelByCodeAsync(scoringPanelId, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -68,24 +68,24 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
         }
     }
 
-    public async Task<Result<ScoringPanel>> GetScoringPanelByIdAsync(ScoringPanelID id, CancellationToken ct = default)
+    public async Task<Result<ScoringPanel>> GetScoringPanelByCodeAsync(ScoringPanelID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<ScoringPanel>.Failure<ScoringPanel>(DomainErrors.ScoringPanelError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_ScoringPanel_GetById} {id}", null);
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_ScoringPanel_GetByCode} {code}", null);
 
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_ScoringPanel_GetById, sql)
+            using SqlCommand cmd = new(StoredProcs.pr_ScoringPanel_GetByCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             ScoringPanel? response = null;
 
@@ -223,7 +223,7 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetScoringPanelByIdAsync((ScoringPanelID)scoringPanel.Id, ct).ConfigureAwait(false);
+            return await GetScoringPanelByCodeAsync((ScoringPanelID)scoringPanel.Id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -232,16 +232,16 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
         }
     }
 
-    public async Task<Result<bool>> DeleteScoringPanelAsync(ScoringPanelID id, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteScoringPanelAsync(ScoringPanelID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<bool>.Failure<bool>(DomainErrors.ScoringPanelError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_ScoringPanel_Delete} ID:{id}", null);
+            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_ScoringPanel_Delete} Code:{code}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_ScoringPanel_Delete, sql)
@@ -249,7 +249,7 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

@@ -365,18 +365,41 @@ public class Step3Model
             return;
         }
 
+        // ? FIXED: Filter by AssessmentType.Initial for Step3 (Initial Risk Analysis)
         var initialAssessmentCodes = assessmentsResult.Value
             .Where(a => a.AssessmentType == RiskAssessmentType.Initial)
             .Select(a => a.Code)
             .ToHashSet();
 
+        // ? FIXED: Filter by both hazard codes AND AssessmentType = Initial for Step3
         var initialAnalyses = allAnalysisResult.Value
             .Where(ra => hazardCodes.Contains(ra.HazardCode) && 
-                        initialAssessmentCodes.Contains(ra.RiskAssessmentCode))
+                        initialAssessmentCodes.Contains(ra.RiskAssessmentCode) &&
+                        ra.AssessmentType == RiskAnalysisType.Initial) // ? CRITICAL: Filter by Initial AssessmentType for Step3
             .ToList();
 
         foreach (var analysis in initialAnalyses)
         {
+            // ? ENHANCED: Ensure AssessmentType is properly set to Initial for Step3
+            if (analysis.AssessmentType != RiskAnalysisType.Initial)
+            {
+                analysis.AssessmentType = RiskAnalysisType.Initial;
+            }
+
+            // Ensure the RiskAssessmentCode is set correctly for Initial assessments
+            if (string.IsNullOrEmpty(analysis.RiskAssessmentCode) || analysis.RiskAssessmentCode == "RA-0000")
+            {
+                // Find the correct Initial assessment code for this analysis
+                var initialAssessment = assessmentsResult.Value
+                    .FirstOrDefault(a => a.AssessmentType == RiskAssessmentType.Initial && 
+                                        hazardCodes.Contains(a.HazardCode ?? string.Empty));
+                
+                if (initialAssessment != null)
+                {
+                    analysis.RiskAssessmentCode = initialAssessment.Code;
+                }
+            }
+            
             HazardRiskAnalyses[analysis.HazardCode] = analysis;
         }
     }
@@ -428,12 +451,40 @@ public class Step3Model
                 var analysis = analysisKvp.Value;
                 var hazardCode = analysisKvp.Key;
                 
-                var updateCommand = new UpdateRiskAnalysisCommand(analysis);
-                var updateResult = await mediator.SendAsync(updateCommand, CancellationToken.None);
-                
-                if (updateResult.IsSuccess)
+                // ? ENHANCED: Ensure AssessmentType is set to Initial for Step3 (Initial Risk Analysis)
+                if (analysis.AssessmentType != RiskAnalysisType.Initial)
                 {
-                    HazardRiskAnalyses[hazardCode] = updateResult.Value;
+                    analysis.AssessmentType = RiskAnalysisType.Initial;
+                }
+
+                // ? ENHANCED: Ensure RiskAssessmentCode is properly set
+                if (string.IsNullOrEmpty(analysis.RiskAssessmentCode) && assessment != null)
+                {
+                    analysis.RiskAssessmentCode = assessment.Code;
+                }
+
+                // Create or update logic for RiskAnalysis
+                if (string.IsNullOrEmpty(analysis.Code) || analysis.Code == NEW_RISK_ANALYSIS_SEED_CODE)
+                {
+                    // Create new RiskAnalysis
+                    var createCommand = new CreateRiskAnalysisCommand(analysis);
+                    var createResult = await mediator.SendAsync(createCommand, CancellationToken.None);
+                    
+                    if (createResult.IsSuccess)
+                    {
+                        HazardRiskAnalyses[hazardCode] = createResult.Value;
+                    }
+                }
+                else
+                {
+                    // Update existing RiskAnalysis
+                    var updateCommand = new UpdateRiskAnalysisCommand(analysis);
+                    var updateResult = await mediator.SendAsync(updateCommand, CancellationToken.None);
+                    
+                    if (updateResult.IsSuccess)
+                    {
+                        HazardRiskAnalyses[hazardCode] = updateResult.Value;
+                    }
                 }
             }
             catch (Exception ex)
@@ -619,7 +670,7 @@ public class Step4Model
         return (severity, likelihood, finalRiskLevel, rationale);
     }
 
-    private (int? severity, int? likelihood) ParseMatrixCode(string matrixCode)
+    private (int? severity, int? likelihood) ParseMatrixCode(String matrixCode)
     {
         if (string.IsNullOrEmpty(matrixCode) || matrixCode.Length < 2)
             return (null, null);
@@ -822,6 +873,7 @@ public class Step5Model
             Code = NEW_RISK_ANALYSIS_SEED_CODE,
             HazardCode = hazardCode,
             RiskAssessmentCode = riskAssessmentCode,
+            AssessmentType = RiskAnalysisType.Residual, // ? FIXED: Ensure correct AssessmentType for Step5
             WorstCredibleOutcome = string.Empty,
             RootCause = string.Empty,
             AdditionalComments = string.Empty
@@ -853,19 +905,28 @@ public class Step5Model
             return;
         }
 
+        // ? ENHANCED: Filter by AssessmentType.Residual instead of RiskAssessmentType.Residual
         var residualAssessmentCodes = assessmentsResult.Value
             .Where(a => a.AssessmentType == RiskAssessmentType.Residual)
             .Select(a => a.Code)
             .ToHashSet();
 
+        // ? ENHANCED: Filter by both hazard codes AND AssessmentType = Residual
         var residualAnalyses = allAnalysisResult.Value
             .Where(ra => hazardCodes.Contains(ra.HazardCode) && 
-                        residualAssessmentCodes.Contains(ra.RiskAssessmentCode))
+                        residualAssessmentCodes.Contains(ra.RiskAssessmentCode) &&
+                        ra.AssessmentType == RiskAnalysisType.Residual) // ? CRITICAL: Filter by Residual AssessmentType
             .ToList();
 
         foreach (var analysis in residualAnalyses)
         {
-            // Ensure the RiskAssessmentCode is set correctly
+            // ? ENHANCED: Ensure AssessmentType is properly set to Residual
+            if (analysis.AssessmentType != RiskAnalysisType.Residual)
+            {
+                analysis.AssessmentType = RiskAnalysisType.Residual;
+            }
+
+            // Ensure the RiskAssessmentCode is set correctly for Residual assessments
             if (string.IsNullOrEmpty(analysis.RiskAssessmentCode) || analysis.RiskAssessmentCode == "RA-0000")
             {
                 // Find the correct Residual assessment code for this analysis
@@ -879,7 +940,7 @@ public class Step5Model
                 }
             }
             
-            HazardResidualRiskAnalyses[analysis.HazardCode] = analysis;
+            this.HazardResidualRiskAnalyses[analysis.HazardCode] = analysis;
         }
     }
 
@@ -917,12 +978,40 @@ public class Step5Model
                 var analysis = analysisKvp.Value;
                 var hazardCode = analysisKvp.Key;
                 
-                var updateCommand = new UpdateRiskAnalysisCommand(analysis);
-                var updateResult = await mediator.SendAsync(updateCommand, CancellationToken.None);
-                
-                if (updateResult.IsSuccess)
+                // ? CRITICAL: Ensure AssessmentType is set to Residual before saving
+                if (analysis.AssessmentType != RiskAnalysisType.Residual)
                 {
-                    HazardResidualRiskAnalyses[hazardCode] = updateResult.Value;
+                    analysis.AssessmentType = RiskAnalysisType.Residual;
+                }
+
+                // ? ENHANCED: Ensure RiskAssessmentCode is properly set
+                if (string.IsNullOrEmpty(analysis.RiskAssessmentCode) && assessment != null)
+                {
+                    analysis.RiskAssessmentCode = assessment.Code;
+                }
+
+                // ? Choose correct CQRS command based on entity state
+                if (string.IsNullOrEmpty(analysis.Code) || analysis.Code == NEW_RISK_ANALYSIS_SEED_CODE)
+                {
+                    // Create new RiskAnalysis
+                    var createCommand = new CreateRiskAnalysisCommand(analysis);
+                    var createResult = await mediator.SendAsync(createCommand, CancellationToken.None);
+                    
+                    if (createResult.IsSuccess)
+                    {
+                        HazardResidualRiskAnalyses[hazardCode] = createResult.Value;
+                    }
+                }
+                else
+                {
+                    // Update existing RiskAnalysis
+                    var updateCommand = new UpdateRiskAnalysisCommand(analysis);
+                    var updateResult = await mediator.SendAsync(updateCommand, CancellationToken.None);
+                    
+                    if (updateResult.IsSuccess)
+                    {
+                        HazardResidualRiskAnalyses[hazardCode] = updateResult.Value;
+                    }
                 }
             }
             catch (Exception ex)

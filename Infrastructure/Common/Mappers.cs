@@ -1,5 +1,7 @@
 ﻿using Domain.Entities;
 
+using SMS_Domain.Entities;
+
 namespace SMS_Infrastructure.Common;
 
 public static partial class Mappers
@@ -542,6 +544,11 @@ public static partial class Mappers
         RiskAnalysis riskAnalysis = new(riskAnalysisID);
 
         riskAnalysis.Code = reader.GetValue<string>(FieldNames.fRiskAnalysisCode).Trim();
+        var assessmentTypeValue = reader.GetValue<string>(FieldNames.fRiskAnalysisType)?.Trim();
+        if (!string.IsNullOrEmpty(assessmentTypeValue))
+        {
+            riskAnalysis.AssessmentType = RiskAnalysisType.FromValue(assessmentTypeValue) ?? RiskAnalysisType.Initial;
+        }
         riskAnalysis.HazardCode = reader.GetValue<string>(FieldNames.fRiskAnalysisHazardCode).Trim();
         riskAnalysis.RiskAssessmentCode = reader.GetValue<string>(FieldNames.fRiskAnalysisRiskAssessmentCode).Trim();
         riskAnalysis.WorstCredibleOutcome = reader.GetValue<string>(FieldNames.fRiskAnalysisWorstCredibleOutcome);

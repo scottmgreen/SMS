@@ -24,50 +24,67 @@
     <RadzenStack Gap="1rem">
         <!-- Hazard Header -->
         <RadzenRow AlignItems="AlignItems.Center">
-            <RadzenColumn Size="2">
-                <RadzenStack Gap="0.25rem">
-                        <RadzenText Text="@Hazard.Code" TextStyle="TextStyle.H6" />
-                </RadzenStack>
-            </RadzenColumn>
-            <RadzenColumn Size="6">
-                <RadzenStack Gap="0.25rem">
-                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
-                        <RadzenText TextStyle="TextStyle.Subtitle1"
-                                    Text="@GetHazardDisplayText(Hazard)"
-                                    Style="margin: 0; font-weight: bold; color: var(--rz-primary);" />
+                <RadzenColumn Size="2">
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenText TextStyle="TextStyle.Subtitle1">
+                              <strong>Hazard: </strong>  @Hazard.Code
+                            </RadzenText>
                     </RadzenStack>
-                </RadzenStack>
-            </RadzenColumn>
-            <RadzenColumn Size="2">
-                <RadzenStack Gap="0.25rem">
-                    @{
-                        var average = GetAverageScore();
-                        var completedCount = GetCompletedScoreCount();
-                        var totalCount = HazardScoringPanels.Count;
-                    }
-                    @if (average.HasValue)
-                    {
-                        <span style="@GetAverageScoreStyle(average.Value)" class="risk-score-display">
-                            @GetHazardMatrixCodeFromPanels()
-                        </span>
-                    }
-                    else if (totalCount > 0)
-                    {
-                        <RadzenText Text="@($"{completedCount}/{totalCount} Scored")" TextStyle="TextStyle.H6" />
-                    }
-                    else
-                    {
-                        @* <RadzenBadge Text="No Panel" BadgeStyle="BadgeStyle.Secondary" /> *@
-                    }
-                </RadzenStack>
-            </RadzenColumn>
-            <RadzenColumn Size="2">
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
-                    <RadzenButton Text="Manage Panel" Icon="people" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
-                                  Click="@OpenPanelDialog" />
-                   
-                </RadzenStack>
-            </RadzenColumn>
+                </RadzenColumn>
+                <RadzenColumn Size="6">
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                            <RadzenText TextStyle="TextStyle.Subtitle1"
+                                        Text="@GetHazardDisplayText(Hazard)"
+                                        Style="margin: 0; color: var(--rz-primary);" />
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenColumn>
+            
+           
+            
+            
+                <RadzenColumn Size="2">
+                    <RadzenStack Gap="0.25rem">
+                        @{
+                            var average = GetAverageScore();
+                            var completedCount = GetCompletedScoreCount();
+                            var totalCount = HazardScoringPanels.Count;
+                        }
+                        @if (average.HasValue)
+                        {
+                            <span style="@GetAverageScoreStyle(average.Value)" class="risk-score-display">
+                                @GetHazardMatrixCodeFromPanels()
+                            </span>
+                        }
+                        else if (totalCount > 0)
+                        {
+                            <RadzenText Text="@($"{completedCount}/{totalCount} Scored")" TextStyle="TextStyle.Subtitle1" />
+                        }
+                        else
+                        {
+                            @* <RadzenBadge Text="No Panel" BadgeStyle="BadgeStyle.Secondary" /> *@
+                        }
+                    </RadzenStack>
+                </RadzenColumn>
+                <RadzenColumn Size="2">
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                        <RadzenButton Text="Manage Panel" Icon="people" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Medium"
+                                      Click="@OpenPanelDialog" />
+
+                    </RadzenStack>
+                </RadzenColumn>
+            
+                <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenText TextStyle="TextStyle.Subtitle1">
+                            <strong>Scoring Panelists: </strong>  @HazardScoringPanels.Count
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenColumn>
+                </RadzenRow>
+            
         </RadzenRow>
 
         <!-- Scoring Panel -->
@@ -79,7 +96,7 @@
                         <RadzenDataGridColumn TItem="ScoringPanel" Title="Panel Member" Width="200px" TextAlign="TextAlign.Start">
                             <Template Context="panel">
                                 <RadzenStack Gap="0.25rem">
-                                    <RadzenText TextStyle="TextStyle.H6" Text="@GetMemberName(panel.SMSUserCode)" Style="margin: 0;" />
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" Text="@GetMemberName(panel.SMSUserCode)" Style="margin: 0;" />
                                 </RadzenStack>
                             </Template>
                         </RadzenDataGridColumn>
@@ -90,7 +107,7 @@
                                 {
                                     <RadzenStack AlignItems="AlignItems.Start" Gap="0.25rem">
                                         @* <RadzenBadge Text="@panel.Severity.ToString()" BadgeStyle="BadgeStyle.Primary" /> *@
-                                        <RadzenText Text="@GetSeverityLabel(panel.Severity.Value)" TextStyle="TextStyle.H6" />
+                                        <RadzenText Text="@GetSeverityLabel(panel.Severity.Value)" TextStyle="TextStyle.Subtitle1" />
                                     </RadzenStack>
                                     
                                 }
@@ -112,7 +129,7 @@
                                 @if (HasScore(panel))
                                 {
                                     <RadzenStack AlignItems="AlignItems.Start" Gap="0.25rem">
-                                        <RadzenText Text="@GetLikelihoodLabel(panel.Likelihood.Value)" TextStyle="TextStyle.H6" />
+                                        <RadzenText Text="@GetLikelihoodLabel(panel.Likelihood.Value)" TextStyle="TextStyle.Subtitle1" />
                                         @* <RadzenText TextStyle="TextStyle.Caption" Text="@GetLikelihoodLabel(panel.Likelihood.Value)" /> *@
                                     </RadzenStack>
                                     
@@ -536,6 +553,83 @@
         }
     }
 
+    // private async Task SavePanelChanges(List<string> selectedStakeholderCodes)
+    // {
+    //     try
+    //     {
+    //         Logger.LogInformation("Updating panel for hazard {HazardCode} with {Count} members", Hazard.Code, selectedStakeholderCodes.Count);
+
+    //         // 🎯 SMART: Get the correct risk assessment code based on current context
+    //         var targetRiskAssessmentCode = GetTargetRiskAssessmentCode();
+    //         Logger.LogInformation("Using target risk assessment code: {TargetCode}", targetRiskAssessmentCode);
+
+    //         // Remove panels for unselected stakeholders
+    //         var panelsToRemove = HazardScoringPanels.Where(p => !selectedStakeholderCodes.Contains(p.SMSUserCode!)).ToList();
+    //         foreach (var panel in panelsToRemove)
+    //         {
+    //             var deleteCommand = new DeleteScoringPanelCommand(new ScoringPanelID(panel.Id.Value));
+    //             await Mediator.SendAsync(deleteCommand, CancellationToken.None);
+    //         }
+
+    //         // Add panels for newly selected stakeholders
+    //         var existingCodes = HazardScoringPanels.Select(p => p.SMSUserCode).ToList();
+    //         var newStakeholderCodes = selectedStakeholderCodes.Except(existingCodes).ToList();
+            
+    //         foreach (var stakeholderCode in newStakeholderCodes)
+    //         {
+    //             var step4Panel = new ScoringPanel(new ScoringPanelID("SP-0000"))
+    //             {
+    //                 Code = "SP-0000", // Will be generated by database
+    //                 HazardCode = Hazard.Code,
+    //                 SMSUserCode = stakeholderCode,
+    //                 Severity = null,
+    //                 Likelihood = null,
+    //                 Score = null,
+    //                 RiskAssessmentCode = InitialRiskAssessment.Code // ✅ FIXED: Use correct assessment code
+    //             };
+
+    //             // Logger.LogInformation("Creating new panel for {StakeholderCode} with assessment code: {AssessmentCode}", 
+    //             //     stakeholderCode, targetRiskAssessmentCode);
+
+    //             var step4Command = new CreateScoringPanelCommand(step4Panel);
+    //             await Mediator.SendAsync(step4Command, CancellationToken.None);
+
+
+    //             var step5Panel = new ScoringPanel(new ScoringPanelID("SP-0000"))
+    //             {
+    //                 Code = "SP-0000", // Will be generated by database
+    //                 HazardCode = Hazard.Code,
+    //                 SMSUserCode = stakeholderCode,
+    //                 Severity = null,
+    //                 Likelihood = null,
+    //                 Score = null,
+    //                 RiskAssessmentCode = ResidualRiskAssessment.Code // ✅ FIXED: Use correct assessment code
+    //             };
+
+    //             // Logger.LogInformation("Creating new panel for {StakeholderCode} with assessment code: {AssessmentCode}",
+    //             //     stakeholderCode, targetRiskAssessmentCode);
+
+    //             var step5Command = new CreateScoringPanelCommand(step5Panel);
+    //             await Mediator.SendAsync(step5Command, CancellationToken.None);
+
+
+
+
+
+
+    //         }
+
+    //         // Reload the panels
+    //         await LoadHazardScoringPanelsInternal();
+            
+    //         Logger.LogInformation("Panel updated successfully for hazard {HazardCode}", Hazard.Code);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Logger.LogError(ex, "Error updating panel for hazard {HazardCode}", Hazard.Code);
+    //     }
+    // }
+
     private async Task SavePanelChanges(List<string> selectedStakeholderCodes)
     {
         try
@@ -543,23 +637,40 @@
             Logger.LogInformation("Updating panel for hazard {HazardCode} with {Count} members", Hazard.Code, selectedStakeholderCodes.Count);
 
             // 🎯 SMART: Get the correct risk assessment code based on current context
-            var targetRiskAssessmentCode = GetTargetRiskAssessmentCode();
-            Logger.LogInformation("Using target risk assessment code: {TargetCode}", targetRiskAssessmentCode);
+            // var targetRiskAssessmentCode = GetTargetRiskAssessmentCode();
+            // Logger.LogInformation("Using target risk assessment code: {TargetCode}", targetRiskAssessmentCode);
 
-            // Remove panels for unselected stakeholders
-            var panelsToRemove = HazardScoringPanels.Where(p => !selectedStakeholderCodes.Contains(p.SMSUserCode!)).ToList();
-            foreach (var panel in panelsToRemove)
+            // 🔥 FIX: Get ALL panels for this hazard (both Initial and Residual) for deletion
+            var query = new GetScoringPanelsByHazardCodeQuery(Hazard.Code);
+            var allPanelsResult = await Mediator.SendAsync(query, CancellationToken.None);
+
+            if (allPanelsResult.IsSuccess && allPanelsResult.Value != null)
             {
-                var deleteCommand = new DeleteScoringPanelCommand(new ScoringPanelID(panel.Id.Value));
-                await Mediator.SendAsync(deleteCommand, CancellationToken.None);
+                // Find all panels for unselected stakeholders (both Initial and Residual)
+                var allPanelsToRemove = allPanelsResult.Value
+                    .Where(p => !selectedStakeholderCodes.Contains(p.SMSUserCode!))
+                    .ToList();
+
+                Logger.LogInformation("🗑️ Removing {Count} panels (both Initial and Residual) for unselected stakeholders", allPanelsToRemove.Count);
+
+                // Delete ALL panels for unselected stakeholders
+                foreach (var panel in allPanelsToRemove)
+                {
+                    Logger.LogInformation("Deleting panel {PanelCode} for stakeholder {StakeholderCode} in assessment {AssessmentCode}",
+                        panel.Code, panel.SMSUserCode, panel.RiskAssessmentCode);
+
+                    var deleteCommand = new DeleteScoringPanelCommand(new ScoringPanelID(panel.Id.Value));
+                    await Mediator.SendAsync(deleteCommand, CancellationToken.None);
+                }
             }
 
-            // Add panels for newly selected stakeholders
+            // Add panels for newly selected stakeholders (create BOTH Initial and Residual)
             var existingCodes = HazardScoringPanels.Select(p => p.SMSUserCode).ToList();
             var newStakeholderCodes = selectedStakeholderCodes.Except(existingCodes).ToList();
-            
+
             foreach (var stakeholderCode in newStakeholderCodes)
             {
+                // Create Initial Risk Assessment panel (Step 4)
                 var step4Panel = new ScoringPanel(new ScoringPanelID("SP-0000"))
                 {
                     Code = "SP-0000", // Will be generated by database
@@ -571,13 +682,13 @@
                     RiskAssessmentCode = InitialRiskAssessment.Code // ✅ FIXED: Use correct assessment code
                 };
 
-                // Logger.LogInformation("Creating new panel for {StakeholderCode} with assessment code: {AssessmentCode}", 
-                //     stakeholderCode, targetRiskAssessmentCode);
+                Logger.LogInformation("Creating Initial panel for {StakeholderCode} with assessment code: {AssessmentCode}",
+                    stakeholderCode, InitialRiskAssessment.Code);
 
                 var step4Command = new CreateScoringPanelCommand(step4Panel);
                 await Mediator.SendAsync(step4Command, CancellationToken.None);
 
-
+                // Create Residual Risk Assessment panel (Step 5)
                 var step5Panel = new ScoringPanel(new ScoringPanelID("SP-0000"))
                 {
                     Code = "SP-0000", // Will be generated by database
@@ -589,22 +700,16 @@
                     RiskAssessmentCode = ResidualRiskAssessment.Code // ✅ FIXED: Use correct assessment code
                 };
 
-                // Logger.LogInformation("Creating new panel for {StakeholderCode} with assessment code: {AssessmentCode}",
-                //     stakeholderCode, targetRiskAssessmentCode);
+                Logger.LogInformation("Creating Residual panel for {StakeholderCode} with assessment code: {AssessmentCode}",
+                    stakeholderCode, ResidualRiskAssessment.Code);
 
                 var step5Command = new CreateScoringPanelCommand(step5Panel);
                 await Mediator.SendAsync(step5Command, CancellationToken.None);
-
-
-
-
-
-
             }
 
             // Reload the panels
             await LoadHazardScoringPanelsInternal();
-            
+
             Logger.LogInformation("Panel updated successfully for hazard {HazardCode}", Hazard.Code);
         }
         catch (Exception ex)

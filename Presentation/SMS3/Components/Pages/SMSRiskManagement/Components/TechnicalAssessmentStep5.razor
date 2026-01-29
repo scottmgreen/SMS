@@ -57,9 +57,9 @@
                                 Step 5: Risk Mitigation & Residual Assessment
                             </RadzenText>
                         </RadzenColumn>
-                        <RadzenColumn Size="2">
+                        @* <RadzenColumn Size="2">
                             <RadzenBadge Text="@($"{GetHazardsNeedingMitigation()} Need Mitigation")" BadgeStyle="BadgeStyle.Warning" />
-                        </RadzenColumn>
+                        </RadzenColumn> *@
                     </RadzenRow>
 
                     <RadzenText TextStyle="TextStyle.Body2">
@@ -82,25 +82,23 @@
                         <RadzenStack Gap="1.5rem">
                             <!-- Hazard Header -->
                             <RadzenRow AlignItems="AlignItems.Center">
-                                <RadzenColumn Size="8">
+                                <RadzenColumn Size="2">
                                     <RadzenStack Gap="0.25rem">
-                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: color:#212e61;">
-                                            <RadzenIcon Icon="warning" Style="margin-right: 0.5rem;" />
-                                            @hazard.Code: @hazard.Description
+                                        <RadzenText TextStyle="TextStyle.Subtitle1">
+                                            <strong>Hazard: </strong>  @hazard.Code
                                         </RadzenText>
-                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                                            @if (!string.IsNullOrEmpty(hazard.HazardType))
-                                            {
-                                                <RadzenBadge Text="@hazard.HazardType" BadgeStyle="BadgeStyle.Base" />
-                                            }
-                                            @if (GetInitialRiskLevel(hazard) != "Unknown")
-                                            {
-                                                <RadzenBadge Text="@($"Initial Risk: {GetInitialRiskLevel(hazard)}")" BadgeStyle="@GetRiskLevelBadgeStyle(GetInitialRiskLevel(hazard))" />
-                                            }
+                                    </RadzenStack>
+                                </RadzenColumn>
+                                <RadzenColumn Size="6">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                            <RadzenText TextStyle="TextStyle.Subtitle1"
+                                                        Text="@GetHazardDisplayText(hazard)"
+                                                        Style="margin: 0; color: var(--rz-primary);" />
                                         </RadzenStack>
                                     </RadzenStack>
                                 </RadzenColumn>
-                                <RadzenColumn Size="4">
+                                <RadzenColumn Size="2">
                                     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
                                         <!-- ✅ NEW: Collapse All / Expand All Button -->
                                         <RadzenButton Icon="@(AreAllSectionsCollapsed(hazard.Code) ? "unfold_more" : "unfold_less")" 
@@ -109,22 +107,7 @@
                                                       Title="@(AreAllSectionsCollapsed(hazard.Code) ? "Expand all sections" : "Collapse all sections")"
                                                       Click="@(() => ToggleAllSections(hazard.Code))" />
                                         
-                                        <!-- Status Badge -->
-                                        @if (needsMitigation)
-                                        {
-                                            @if (hasMitigations)
-                                            {
-                                                <RadzenBadge Text="Mitigated" BadgeStyle="BadgeStyle.Success" />
-                                            }
-                                            else
-                                            {
-                                                <RadzenBadge Text="Needs Mitigation" BadgeStyle="BadgeStyle.Warning" />
-                                            }
-                                        }
-                                        else
-                                        {
-                                            <RadzenBadge Text="Monitor Only" BadgeStyle="BadgeStyle.Success" />
-                                        }
+                                        
                                     </RadzenStack>
                                 </RadzenColumn>
                             </RadzenRow>
@@ -180,12 +163,12 @@
                                                    style="cursor: pointer; padding: 0.5rem; margin: -0.5rem;" 
                                                    @onclick="@(() => ToggleSectionCollapse(hazard.Code, "mitigation"))">
                                             <RadzenColumn Size="10">
-                                                <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color:#212e61;">
+                                                <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color:#212e61;">
                                                     <RadzenIcon Icon="build" Style="margin-right: 0.5rem;" />
                                                     Mitigation Strategies
                                                 </RadzenText>
                                             </RadzenColumn>
-                                            <RadzenColumn Size="2">
+                                            @* <RadzenColumn Size="2">
                                                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
                                                     <RadzenButton Icon="@GetCollapseIcon(hazard.Code, "mitigation")" 
                                                                   ButtonStyle="ButtonStyle.Light" 
@@ -194,7 +177,7 @@
                                                                   Title="@GetCollapseTooltip(hazard.Code, "mitigation")"
                                                                   Click="@((args) => ToggleSectionCollapse(hazard.Code, "mitigation"))" />
                                                 </RadzenStack>
-                                            </RadzenColumn>
+                                            </RadzenColumn> *@
                                         </RadzenRow>
                                         
                                         <!-- ✅ Collapsible Content -->
@@ -210,11 +193,7 @@
                                                                       InitialRiskAssessment="@InitialRiskAssessment"
                                                                       ResidualRiskAssessment="@ResidualRiskAssessment"
                                                                       OnMitigationUpdated="@OnMitigationUpdated"
-                                                                      OnResidualHazardScored="@HandleResidualHazardScored"
-                                                                      OnResidualAnalysisFieldChanged="@OnResidualAnalysisFieldChanged"
-                                                                      GetResidualWorstOutcome="@GetResidualWorstOutcome"
-                                                                      GetResidualRootCause="@GetResidualRootCause"
-                                                                      GetResidualAdditionalComments="@GetResidualAdditionalComments" />
+                                                                      OnResidualHazardScored="@HandleResidualHazardScored" />
                                             </div>
                                         }
                                     </RadzenStack>
@@ -234,12 +213,12 @@
                                                    style="cursor: pointer; padding: 0.5rem; margin: -0.5rem;" 
                                                    @onclick="@(() => ToggleSectionCollapse(hazard.Code, "scoring"))">
                                             <RadzenColumn Size="10">
-                                                <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: #212e61;">
+                                                <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: #212e61;">
                                                     <RadzenIcon Icon="people" Style="margin-right: 0.5rem;" />
                                                     Hazard Scoring Panel
                                                 </RadzenText>
                                             </RadzenColumn>
-                                            <RadzenColumn Size="2">
+                                            @* <RadzenColumn Size="2">
                                                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
                                                     <RadzenButton Icon="@GetCollapseIcon(hazard.Code, "scoring")" 
                                                                   ButtonStyle="ButtonStyle.Light" 
@@ -248,7 +227,7 @@
                                                                   Title="@GetCollapseTooltip(hazard.Code, "scoring")"
                                                                   Click="@((args) => ToggleSectionCollapse(hazard.Code, "scoring"))" />
                                                 </RadzenStack>
-                                            </RadzenColumn>
+                                            </RadzenColumn> *@
                                         </RadzenRow>
                                         
                                         <!-- ✅ Collapsible Content -->
@@ -281,12 +260,12 @@
                                                    style="cursor: pointer; padding: 0.5rem; margin: -0.5rem;" 
                                                    @onclick="@(() => ToggleSectionCollapse(hazard.Code, "analysis"))">
                                             <RadzenColumn Size="10">
-                                                <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color:#212e61;">
+                                                <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color:#212e61;">
                                                     <RadzenIcon Icon="analytics" Style="margin-right: 0.5rem;" />
                                                     Residual Risk Analysis
                                                 </RadzenText>
                                             </RadzenColumn>
-                                            <RadzenColumn Size="2">
+                                           @*  <RadzenColumn Size="2">
                                                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
                                                     <RadzenButton Icon="@GetCollapseIcon(hazard.Code, "analysis")" 
                                                                   ButtonStyle="ButtonStyle.Light" 
@@ -295,25 +274,56 @@
                                                                   Title="@GetCollapseTooltip(hazard.Code, "analysis")"
                                                                   Click="@(() => ToggleSectionCollapse(hazard.Code, "analysis"))" />
                                                 </RadzenStack>
-                                            </RadzenColumn>
+                                            </RadzenColumn> *@
                                         </RadzenRow>
                                         
                                         <!-- ✅ Collapsible Content -->
                                         @if (!IsSectionCollapsed(hazard.Code, "analysis"))
                                         {
                                             <div class="collapsible-content">
-                                                @* <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small">
-                                                    <RadzenText TextStyle="TextStyle.Body2" 
-                                                                Text="Analyze the remaining risk after mitigation implementation. Consider how effective the mitigation strategies will be." />
-                                                </RadzenAlert> *@
-
+                                                <RadzenRow AlignItems="AlignItems.Center">
+                                                <RadzenColumn Size="2">
+                                                    <RadzenStack Gap="0.25rem">
+                                                        <RadzenText TextStyle="TextStyle.Subtitle1">
+                                                            <strong>Hazard: </strong>  @hazard.Code
+                                                        </RadzenText>
+                                                    </RadzenStack>
+                                                </RadzenColumn>
+                                                <RadzenColumn Size="6">
+                                                    <RadzenStack Gap="0.25rem">
+                                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                                            <RadzenText TextStyle="TextStyle.Subtitle1"
+                                                                        Text="@GetHazardDisplayText(hazard)"
+                                                                        Style="margin: 0; color: var(--rz-primary);" />
+                                                        </RadzenStack>
+                                                    </RadzenStack>
+                                                </RadzenColumn>
+                                                </RadzenRow>
+                                                <RadzenRow AlignItems="AlignItems.Center">
+                                                    <RadzenColumn Size="2">
+                                                        <RadzenStack Gap="0.25rem">
+                                                            <RadzenText TextStyle="TextStyle.Subtitle1">
+                                                                <strong>Risk Analysis: </strong>  @hazard.Code
+                                                            </RadzenText>
+                                                        </RadzenStack>
+                                                    </RadzenColumn>
+                                                    <RadzenColumn Size="6">
+                                                        <RadzenStack Gap="0.25rem">
+                                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                                                <RadzenText TextStyle="TextStyle.Subtitle1"
+                                                                            Text="@GetHazardDisplayText(hazard)"
+                                                                            Style="margin: 0; color: var(--rz-primary);" />
+                                                            </RadzenStack>
+                                                        </RadzenStack>
+                                                    </RadzenColumn>
+                                                </RadzenRow>
                                                 <!-- Risk Analysis Fields for Residual Risk -->
                                                 <RadzenRow Gap="1rem">
                                                     <RadzenColumn Size="12" SizeMD="6">
                                                         <RadzenStack Gap="0.5rem">
                                                             <RadzenFormField Text="Residual Worst Credible Outcome *" Variant="Variant.Outlined">
-                                                                <RadzenTextArea Value="@GetResidualWorstOutcome(hazard)"
-                                                                                ValueChanged="@((string value) => OnResidualAnalysisFieldChanged(hazard, "WorstOutcome", value))"
+                                                                <RadzenTextArea @bind-Value="@(Step5.GetHazardResidualAnalysis(hazard.Code).WorstCredibleOutcome)"
+                                                                                @oninput="@((args) => OnResidualAnalysisFieldChanged(hazard, "WorstCredibleOutcome", args))"
                                                                                 Rows="3"
                                                                                 Placeholder="After mitigation implementation, what is the worst outcome that could still occur..."
                                                                                 Style="width: 100%;" />
@@ -324,8 +334,8 @@
                                                     <RadzenColumn Size="12" SizeMD="6">
                                                         <RadzenStack Gap="0.5rem">
                                                             <RadzenFormField Text="Residual Root Cause Analysis *" Variant="Variant.Outlined">
-                                                                <RadzenTextArea Value="@GetResidualRootCause(hazard)"
-                                                                                ValueChanged="@((string value) => OnResidualAnalysisFieldChanged(hazard, "RootCause", value))"
+                                                                <RadzenTextArea @bind-Value="@(Step5.GetHazardResidualAnalysis(hazard.Code).RootCause)"
+                                                                                @oninput="@((args) => OnResidualAnalysisFieldChanged(hazard, "RootCause", args))"
                                                                                 Rows="3"
                                                                                 Placeholder="What root causes remain after mitigation implementation..."
                                                                                 Style="width: 100%;" />
@@ -336,8 +346,8 @@
                                                 </RadzenRow>
 
                                                 <RadzenFormField Text="Additional Residual Analysis Comments" Variant="Variant.Outlined">
-                                                    <RadzenTextArea Value="@GetResidualAdditionalComments(hazard)"
-                                                                    ValueChanged="@((string value) => OnResidualAnalysisFieldChanged(hazard, "AdditionalComments", value))"
+                                                    <RadzenTextArea @bind-Value="@(Step5.GetHazardResidualAnalysis(hazard.Code).AdditionalComments)"
+                                                                    @oninput="@((args) => OnResidualAnalysisFieldChanged(hazard, "AdditionalComments", args))"
                                                                     Rows="2"
                                                                     Placeholder="Document assumptions about mitigation effectiveness, residual vulnerabilities, or monitoring requirements..."
                                                                     Style="width: 100%;" />
@@ -421,22 +431,35 @@
         "Aircraft Rescue & Firefighting", "Airport Security", "Air Traffic Control", 
         "Ground Handling Services", "Cargo Operations", "External Contractor"
     };
+    private string GetHazardCategoryDisplay(string? categoryValue)
+    {
+        if (string.IsNullOrEmpty(categoryValue)) return "";
 
+        var category = HazardCategory.FromValue(categoryValue);
+        return category?.Name ?? categoryValue.Replace("_", " ");
+    }
+
+    private string GetHazardTypeDisplay(string? typeValue)
+    {
+        if (string.IsNullOrEmpty(typeValue)) return "";
+
+        var hazardType = HazardType.FromValue(typeValue);
+        return hazardType?.Name ?? typeValue.Replace("_", " ");
+    }
+
+    private string GetHazardDisplayText(Hazard hazard)
+    {
+        var category = GetHazardCategoryDisplay(hazard.HazardCategory);
+        var type = GetHazardTypeDisplay(hazard.HazardType);
+        return $"{category.ToUpper()} - {type.ToUpper()}";
+    }
     protected override async Task OnInitializedAsync()
     {
-        // Set default values if not already set
-        // if (Step5.OverallTargetDate == null)
-        // {
-        //     Step5.OverallTargetDate = DateTime.Now.AddMonths(6);
-        // }
-
-        // ✅ Load existing residual risk analysis data if available
-        await LoadExistingResidualAnalysisData();
-        
-        // ✅ NEW: Load existing mitigations for all hazards
+        // ✅ Load existing mitigations for all hazards
         await LoadExistingMitigationsForAllHazards();
         
-        // Note: Individual HazardMitigationPanel components also load their own mitigations
+        // Note: Residual risk analysis data loading is now handled by Step5Model.LoadExistingResidualRiskAnalysesAsync
+        // which is called from the parent component's LoadStepDataFromAssessment method
     }
     
     /// <summary>
@@ -591,82 +614,127 @@
         };
     }
 
-    #region ? Residual Risk Analysis Methods
-
-    private string GetResidualWorstOutcome(Hazard hazard)
-    {
-        return ResidualWorstOutcomes.GetValueOrDefault(hazard.Code, string.Empty);
-    }
-
-    private string GetResidualRootCause(Hazard hazard)
-    {
-        return ResidualRootCauses.GetValueOrDefault(hazard.Code, string.Empty);
-    }
-
-    private string GetResidualAdditionalComments(Hazard hazard)
-    {
-        return ResidualAdditionalComments.GetValueOrDefault(hazard.Code, string.Empty);
-    }
+    #region ✅ Residual Risk Analysis Methods - REFACTORED to use @bind-Value pattern
 
     /// <summary>
-    /// ? Handle residual risk analysis field changes and save to database
+    /// ✅ Handle residual risk analysis field changes using proper Domain Entities - Updated to match Step3 pattern
     /// </summary>
-    private async Task OnResidualAnalysisFieldChanged(Hazard hazard, string fieldName, string? value)
+    private async Task OnResidualAnalysisFieldChanged(Hazard hazard, string fieldName, ChangeEventArgs args)
     {
         try
         {
-            // Update local dictionary
+            var newValue = args.Value?.ToString() ?? string.Empty;
+            
+            Logger.LogInformation("🎯 OnResidualAnalysisFieldChanged: Hazard={HazardCode}, Field={FieldName}", 
+                hazard.Code, fieldName);
+
+            // ✅ Get the RiskAnalysis domain entity for this hazard
+            var analysis = Step5.GetHazardResidualAnalysis(hazard.Code);
+            
+            // ✅ Set the correct AssessmentType and RiskAssessmentCode for Residual
+            if (analysis.AssessmentType != RiskAnalysisType.Residual)
+            {
+                analysis.AssessmentType = RiskAnalysisType.Residual;
+            }
+            
+            if (string.IsNullOrEmpty(analysis.RiskAssessmentCode) && ResidualRiskAssessment != null)
+            {
+                analysis.RiskAssessmentCode = ResidualRiskAssessment.Code;
+            }
+
+            // ✅ Update the domain entity properties
             switch (fieldName)
             {
-                case "WorstOutcome":
-                    ResidualWorstOutcomes[hazard.Code] = value ?? string.Empty;
+                case "WorstCredibleOutcome":
+                    analysis.WorstCredibleOutcome = newValue;
                     break;
                 case "RootCause":
-                    ResidualRootCauses[hazard.Code] = value ?? string.Empty;
+                    analysis.RootCause = newValue;
                     break;
                 case "AdditionalComments":
-                    ResidualAdditionalComments[hazard.Code] = value ?? string.Empty;
+                    analysis.AdditionalComments = newValue;
                     break;
             }
 
-            // Save to database via RiskAnalysis entity linked to ResidualRiskAssessment
-            await SaveResidualAnalysisToDatabase(hazard);
+            // ✅ Ensure the updated entity is maintained in the dictionary
+            Step5.HazardResidualRiskAnalyses[hazard.Code] = analysis;
+
+            // ✅ Save to database via proper CQRS commands
+            await SaveResidualAnalysisToDatabase(analysis);
             
-            // Trigger UI update
+            // Trigger UI update and notify parent component
             await InvokeAsync(StateHasChanged);
+            await Step5Changed.InvokeAsync(Step5);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error updating residual analysis field {FieldName} for hazard {HazardCode}", fieldName, hazard.Code);
+            Logger.LogError(ex, "❌ Error updating residual analysis field {FieldName} for hazard {HazardCode}", fieldName, hazard.Code);
         }
     }
 
     /// <summary>
-    /// ? Save residual risk analysis to database using ResidualRiskAssessment.Code
+    /// ✅ Save residual risk analysis using proper RiskAnalysis domain entity and CQRS
     /// </summary>
-    private async Task SaveResidualAnalysisToDatabase(Hazard hazard)
+    private async Task SaveResidualAnalysisToDatabase(RiskAnalysis analysis)
     {
-        if (ResidualRiskAssessment == null) return;
+        if (ResidualRiskAssessment == null || analysis == null) return;
 
         try
         {
-            // TODO: Implement proper RiskAnalysis CQRS commands
-            // For now, just log the save operation
-            Logger.LogInformation("Saving residual risk analysis for hazard {HazardCode} to ResidualRiskAssessment {AssessmentCode}: " +
-                "WorstOutcome('{WorstOutcome}'), RootCause('{RootCause}'), Comments('{Comments}')" , 
-                hazard.Code, ResidualRiskAssessment.Code,
-                GetResidualWorstOutcome(hazard), GetResidualRootCause(hazard), GetResidualAdditionalComments(hazard));
+            Logger.LogInformation("💾 Saving residual risk analysis for hazard {HazardCode} to ResidualRiskAssessment {AssessmentCode}", 
+                analysis.HazardCode, ResidualRiskAssessment.Code);
 
-            // PLACEHOLDER: In a real implementation, this would save via CQRS
-            // var query = new GetRiskAnalysisByHazardCodeQuery(new HazardID(hazard.Code));
-            // var result = await Mediator.SendAsync(query, CancellationToken.None);
-            // ... create or update RiskAnalysis entity with ResidualRiskAssessment.Code
-            
-            await Task.CompletedTask; // Placeholder
+            // ✅ Use proper CQRS commands - check if entity exists first
+            if (string.IsNullOrEmpty(analysis.Code) || analysis.Code == "RA-0000")
+            {
+                Logger.LogInformation("🆕 Creating new residual RiskAnalysis for hazard {HazardCode}", analysis.HazardCode);
+                
+                // Create new RiskAnalysis
+                var createCommand = new CreateRiskAnalysisCommand(analysis);
+                var createResult = await Mediator.SendAsync(createCommand, CancellationToken.None);
+                
+                if (createResult.IsSuccess && createResult.Value != null)
+                {
+                    // Update the Step5 model with the saved entity (which has a proper ID/Code)
+                    Step5.HazardResidualRiskAnalyses[analysis.HazardCode] = createResult.Value;
+                    Logger.LogInformation("✅ Created new residual RiskAnalysis for hazard {HazardCode} with code {Code}", 
+                        analysis.HazardCode, createResult.Value.Code);
+                }
+                else
+                {
+                    Logger.LogError("❌ Failed to create residual RiskAnalysis for hazard {HazardCode}: {Error}", 
+                        analysis.HazardCode, createResult.Error?.Message ?? "Unknown error");
+                }
+            }
+            else
+            {
+                Logger.LogInformation("🔄 Updating existing residual RiskAnalysis {Code} for hazard {HazardCode}", 
+                    analysis.Code, analysis.HazardCode);
+                
+                // Update existing RiskAnalysis
+                var updateCommand = new UpdateRiskAnalysisCommand(analysis);
+                var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+                
+                if (updateResult.IsSuccess && updateResult.Value != null)
+                {
+                    // Update the Step5 model with the updated entity
+                    Step5.HazardResidualRiskAnalyses[analysis.HazardCode] = updateResult.Value;
+                    Logger.LogInformation("✅ Updated residual RiskAnalysis for hazard {HazardCode} with code {Code}", 
+                        analysis.HazardCode, updateResult.Value.Code);
+                }
+                else
+                {
+                    Logger.LogError("❌ Failed to update residual RiskAnalysis for hazard {HazardCode}: {Error}", 
+                        analysis.HazardCode, updateResult.Error?.Message ?? "Unknown error");
+                }
+            }
+
+            // ✅ Notify parent about Step5 changes
+            await Step5Changed.InvokeAsync(Step5);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error saving residual risk analysis for hazard {HazardCode}", hazard.Code);
+            Logger.LogError(ex, "❌ Error saving residual risk analysis for hazard {HazardCode}", analysis.HazardCode ?? "Unknown");
         }
     }
 

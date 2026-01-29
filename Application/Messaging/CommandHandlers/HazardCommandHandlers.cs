@@ -88,8 +88,6 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
                     initialRiskAssessmentCode = existingAssessments.InitialAssessment.Code;
                     residualRiskAssessmentCode = existingAssessments.ResidualAssessment.Code;
                     
-                    _logger.LogInformation("? REUSING existing shared RiskAssessments for Report {ReportCode}: Initial={InitialCode}, Residual={ResidualCode}",
-                        hazard.ReportCode, initialRiskAssessmentCode, residualRiskAssessmentCode);
                 }
                 else
                 {
@@ -98,16 +96,11 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
                     initialRiskAssessmentCode = initialCode;
                     residualRiskAssessmentCode = residualCode;
                     
-                    _logger.LogInformation("? Created NEW shared RiskAssessments for Report {ReportCode}: Initial={InitialCode}, Residual={ResidualCode}",
-                        hazard.ReportCode, initialRiskAssessmentCode, residualRiskAssessmentCode);
                 }
 
                 // ? ALWAYS create RiskAnalysis records linking this hazard to the shared assessments
                 await CreateRiskAnalysisForHazard(hazard.Code, initialRiskAssessmentCode, residualRiskAssessmentCode, ct);
 
-                _logger.LogInformation("? Created RiskAnalyses for Hazard: {HazardCode} linked to shared assessments", hazard.Code);
-                _logger.LogInformation("    ?? Initial Assessment: {InitialCode}", initialRiskAssessmentCode);
-                _logger.LogInformation("    ?? Residual Assessment: {ResidualCode}", residualRiskAssessmentCode);
             }
 
             _logger.LogApplicationInformation(ApplicationEventIds.Information, "? SMS Backend: Hazard saved via data service - {Code}", hazard.Code);
@@ -165,27 +158,25 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
     {
         // Create Initial RiskAnalysis (used in Step 3)
         RiskAnalysis initialRiskAnalysis = new RiskAnalysis(new RiskAnalysisID("RA-0000"));
+        initialRiskAnalysis.AssessmentType = RiskAnalysisType.Initial;
         initialRiskAnalysis.HazardCode = hazardCode;
         initialRiskAnalysis.RiskAssessmentCode = initialAssessmentCode;
         await _riskAnalysisDataService.CreateRiskAnalysisAsync(initialRiskAnalysis, ct);
 
         // Create Residual RiskAnalysis (used in Step 5)
         RiskAnalysis residualRiskAnalysis = new RiskAnalysis(new RiskAnalysisID("RA-0000"));
+        residualRiskAnalysis.AssessmentType = RiskAnalysisType.Residual;
         residualRiskAnalysis.HazardCode = hazardCode;
         residualRiskAnalysis.RiskAssessmentCode = residualAssessmentCode;
         await _riskAnalysisDataService.CreateRiskAnalysisAsync(residualRiskAnalysis, ct);
-        
-        _logger.LogInformation("? Created RiskAnalyses for Hazard {HazardCode}:", hazardCode);
-        _logger.LogInformation("    ?? Initial RiskAnalysis for Assessment: {InitialCode}", initialAssessmentCode);
-        _logger.LogInformation("    ?? Residual RiskAnalysis for Assessment: {ResidualCode}", residualAssessmentCode);
+
     }
 
     /// <summary>
     /// ? CRITICAL METHOD: Find existing RiskAssessments for this report using proper code-based matching
     /// This prevents creating duplicate RiskAssessments when adding hazards to existing reports
     /// </summary>
-    private async Task<(RiskAssessment? InitialAssessment, RiskAssessment? ResidualAssessment)> FindExistingRiskAssessmentsForReport(
-        string reportCode, CancellationToken ct)
+    private async Task<(RiskAssessment? InitialAssessment, RiskAssessment? ResidualAssessment)> FindExistingRiskAssessmentsForReport(string reportCode, CancellationToken ct)
     {
         try
         {

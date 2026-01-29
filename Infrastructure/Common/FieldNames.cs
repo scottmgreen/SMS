@@ -842,6 +842,9 @@ public static class FieldNames
     private static readonly Lazy<string> _fRiskAnalysisCode = new Lazy<string>(() => "fldv_Code");
     public static string fRiskAnalysisCode => _fRiskAnalysisCode.Value;
 
+    private static readonly Lazy<string> _fRiskAnalysisType = new Lazy<string>(() => "fldv_AssessmentType");
+    public static string fRiskAnalysisType => _fRiskAnalysisType.Value;
+
     private static readonly Lazy<string> _fRiskAnalysisHazardCode = new Lazy<string>(() => "fldv_HazardCode");
     public static string fRiskAnalysisHazardCode => _fRiskAnalysisHazardCode.Value;
 

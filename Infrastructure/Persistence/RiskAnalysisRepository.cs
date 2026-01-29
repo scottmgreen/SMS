@@ -1,4 +1,5 @@
-﻿using SMS_Domain.Errors;
+﻿using SMS_Domain.Entities;
+using SMS_Domain.Errors;
 
 using SMS_Infrastructure.Interfaces;
 
@@ -37,6 +38,7 @@ public sealed class RiskAnalysisRepository : BaseRepository<RiskAnalysisReposito
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisCode, riskAnalysis.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisType, riskAnalysis.AssessmentType.ToString()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisHazardCode, riskAnalysis.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisRiskAssessmentCode, riskAnalysis.RiskAssessmentCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisWorstCredibleOutcome, riskAnalysis.WorstCredibleOutcome));

@@ -16,7 +16,7 @@
                     <ChildContent>
                                                 
                         <RadzenRow Gap="0.5rem">
-                            <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenColumn Size="2" >
                                 <RadzenStack Gap="0.5rem">
                                     <RadzenFormField Text="Lead Assessor *" Variant="Variant.Outlined">
                                         @if (AvailableAssessors != null && AvailableAssessors.Any())
@@ -40,11 +40,10 @@
                                                           Style="width: 100%; background-color: #f5f5f5;" />
                                         }
                                     </RadzenFormField>
-                                    <RadzenText TextStyle="TextStyle.Caption" Text="Person responsible for conducting this risk assessment" />
                                     <RadzenText TextStyle="TextStyle.Caption" Text="@GetLeadAssessorValidation()" />
                                 </RadzenStack>
                             </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenColumn Size="5" >
                                 <RadzenStack Gap="0.5rem">
                                     <RadzenFormField Text="System Description *" Variant="Variant.Outlined">
                                         <RadzenTextArea @bind-Value="@Step1.SystemDescription" Rows="4" Placeholder="Provide a comprehensive description of the system being assessed..." Style="width: 100%;"
@@ -54,7 +53,7 @@
                                     <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step1.SystemDescription, 10)" />
                                 </RadzenStack>
                             </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenColumn Size="5" >
                                 <RadzenStack Gap="0.5rem">
                                     <RadzenFormField Text="System Boundaries *" Variant="Variant.Outlined">
                                         <RadzenTextArea @bind-Value="@Step1.SystemBoundaries" Rows="4" Placeholder="Define what is included and excluded from this assessment..." Style="width: 100%;"

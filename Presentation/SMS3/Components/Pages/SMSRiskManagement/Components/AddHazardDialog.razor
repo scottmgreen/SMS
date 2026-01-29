@@ -20,18 +20,7 @@
                 </div>
                 <div class="modal-body">
                     <RadzenStack Gap="1rem">
-                        <!-- Hazard Description -->
-                        <RadzenFormField Text="Hazard Description *" Variant="Variant.Outlined">
-                            <RadzenTextArea @bind-Value="@NewHazardDescription" Rows="3" 
-                                            Placeholder="Describe the hazard clearly and specifically..." 
-                                            Style="width: 100%;" />
-                        </RadzenFormField>
-                        @if (!string.IsNullOrWhiteSpace(NewHazardDescription) && NewHazardDescription.Trim().Length < 10)
-                        {
-                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger);">
-                                Description must be at least 10 characters (currently @(NewHazardDescription.Trim().Length))
-                            </RadzenText>
-                        }
+                        
                         
                         <!-- Category and Hazard Type -->
                         <RadzenRow Gap="1rem">
@@ -68,6 +57,7 @@
                                 }
                             </RadzenColumn>
                         </RadzenRow>
+                        
 
                         <!-- Guidance Panel for Selected Hazard Type -->
                         @if (!string.IsNullOrEmpty(NewHazardType))
@@ -117,7 +107,18 @@
                                 </RadzenStack>
                             </RadzenCard>
                         }
-
+                        <!-- Hazard Description -->
+                        <RadzenFormField Text="Hazard Description *" Variant="Variant.Outlined">
+                            <RadzenTextArea @bind-Value="@NewHazardDescription" Rows="3"
+                                            Placeholder="Describe the hazard clearly and specifically..."
+                                            Style="width: 100%;" />
+                        </RadzenFormField>
+                        @if (!string.IsNullOrWhiteSpace(NewHazardDescription) && NewHazardDescription.Trim().Length < 10)
+                        {
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger);">
+                                Description must be at least 10 characters (currently @(NewHazardDescription.Trim().Length))
+                            </RadzenText>
+                        }
                         <!-- Location Selection - EXACTLY like HazardReporting -->
                         <RadzenFieldset Text="Location Selection" Style="margin-bottom: 1rem;">
                             <div class="location-row rz-mt-1">
@@ -159,7 +160,7 @@
                         </RadzenFieldset>
 
                         <!-- DEBUG: Location Status Display -->
-                        <RadzenCard Variant="Variant.Text" Style="background-color: #f8f9fa; border: 1px dashed #dee2e6;">
+                        @* <RadzenCard Variant="Variant.Text" Style="background-color: #f8f9fa; border: 1px dashed #dee2e6;">
                             <RadzenStack Gap="0.5rem" Style="padding: 0.75rem;">
                                 <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">Debug: Location Status</RadzenText>
                                 <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
@@ -184,7 +185,7 @@
                                     </RadzenText>
                                 }
                             </RadzenStack>
-                        </RadzenCard>
+                        </RadzenCard> *@
                     </RadzenStack>
                 </div>
                 <div class="modal-footer">

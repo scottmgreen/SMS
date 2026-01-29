@@ -89,7 +89,7 @@
                 }
                 else if (StepNumber == 4)
                 {
-                    <div>
+                    @* <div>
                         <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom: 0.5rem;">Risk Assessment Criteria:</RadzenText>
                         <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.875rem;">
                             <li>Tolerability thresholds</li>
@@ -98,16 +98,43 @@
                             <li>Industry standards</li>
                             <li>Organizational policies</li>
                         </ul>
-                    </div>
+                    </div> *@
 
-                    <!-- Simple Risk Matrix Quick Reference -->
-                    <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-50);">
-                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="5x5 Risk Matrix:" Style="margin-bottom: 0.5rem;" />
-                        <div style="font-size: 0.75rem;">
-                            <RadzenText TextStyle="TextStyle.Caption" Style="font-weight: bold;">Severity:</RadzenText> Minor ? Moderate ? Serious ? Major ? Catastrophic<br/>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="font-weight: bold;">Likelihood:</RadzenText> Rare ? Unlikely ? Possible ? Likely ? Frequent<br/>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="font-weight: bold;">Result:</RadzenText> Very Low ? Low ? Medium ? High ? Very High
-                        </div>
+                    <!-- Risk Matrix Guide -->
+                    <RadzenCard Variant="Variant.Outlined">
+                        <RadzenStack Gap="1rem">
+                            <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-info); margin: 0;">
+                                <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
+                                Risk Scoring Guide
+                            </RadzenText>
+
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Subtitle2" Text="Severity Scale:" Style="margin: 0;" />
+                                <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                                    • <strong>5 - Catastrophic:</strong> Multiple fatalities, total loss<br />
+                                    • <strong>4 - Major:</strong> Single fatality, major damage<br />
+                                    • <strong>3 - Serious:</strong> Serious injury, significant damage<br />
+                                    • <strong>2 - Moderate:</strong> Minor injury, minor damage<br />
+                                    • <strong>1 - Minor:</strong> No injury, negligible damage
+                                </RadzenText>
+                            </RadzenStack>
+
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Subtitle2" Text="Likelihood Scale:" Style="margin: 0;" />
+                                <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                                    • <strong>5 - Frequent:</strong> Will occur repeatedly<br />
+                                    • <strong>4 - Likely:</strong> Will occur several times<br />
+                                    • <strong>3 - Possible:</strong> Will occur sometimes<br />
+                                    • <strong>2 - Unlikely:</strong> Will occur rarely<br />
+                                    • <strong>1 - Rare:</strong> Will occur very rarely
+                                </RadzenText>
+                            </RadzenStack>
+
+                            @* <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small">
+                                <strong>Risk Score = Severity × Likelihood</strong><br />
+                                Click on matrix cells to see which hazards fall into each risk category.
+                            </RadzenAlert> *@
+                        </RadzenStack>
                     </RadzenCard>
                 }
                 else if (StepNumber == 5)

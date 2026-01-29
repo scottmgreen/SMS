@@ -30,7 +30,7 @@ public class ScoringPanelDataService : BaseDataService<ScoringPanelDataService>
 
     public Task<Result<ScoringPanel>> GetScoringPanelByIdAsync(ScoringPanelID id, CancellationToken ct = default)
     {
-        return _repo.GetScoringPanelByIdAsync(id, ct);
+        return _repo.GetScoringPanelByCodeAsync(id, ct);
     }
 
     public Task<Result<List<ScoringPanel>>> GetAllScoringPanelsAsync(CancellationToken ct = default)

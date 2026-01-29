@@ -36,32 +36,32 @@
         <!-- Hazard Header -->
         <RadzenRow AlignItems="AlignItems.Center">
             <RadzenColumn Size="8">
-                <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color:#212e61;">
-                    @* <RadzenIcon Icon="build" Style="margin-right: 0.5rem;" /> *@
+                @* <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color:#212e61;">
+                    
                     &nbsp;
-                </RadzenText>
-                <RadzenStack AlignItems="AlignItems.Start" Gap="0.25rem">
+                </RadzenText> *@
+                @* <RadzenStack AlignItems="AlignItems.Start" Gap="0.25rem">
                     @if (NeedsMitigation)
                     {
                         @if (HasMitigations())
                         {
-                            <RadzenText TextStyle="TextStyle.H6" Text="@($"{GetMitigationCount()} strategies implemented")" Style="margin:0.5rem; color: #212e61;" />
-                            @* <RadzenText TextStyle="TextStyle.Caption" Text="@($"{GetMitigationCount()} strategies implemented")" /> *@
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Text="@($"Strategy Count {GetMitigationCount()} ")" Style="margin:0.5rem; color: #212e61;" />
+                           
                         }
                         else
                         {
-                            <RadzenText TextStyle="TextStyle.H6" Text="Mitigation Required" Style="margin:0.5rem; color: var(--rz-warning);" />
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Text="Mitigation Required" Style="margin:0.5rem; color: var(--rz-warning);" />
                         }
                     }
                     else
                     {
-                        <RadzenText TextStyle="TextStyle.H6" Text="Monitor Only" Style="margin:0.5rem; color: var(--rz-success);" />
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Text="Monitor Only" Style="margin:0.5rem; color: var(--rz-success);" />
                     }
-                </RadzenStack>
+                </RadzenStack> *@
             </RadzenColumn>
             <RadzenColumn Size="4">
                 <RadzenStack AlignItems="AlignItems.End" Gap="0.25rem">
-                    <RadzenButton Text="Add Strategy" Icon="add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                    <RadzenButton Text="Add Strategy" Icon="build" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Medium"
                                   Click="@AddMitigationStrategy" Style="float: right;" Disabled="@IsLoading" />
                 </RadzenStack>
             </RadzenColumn>
@@ -76,7 +76,7 @@
                     <!-- Mitigation Strategies List -->
                     @if (IsLoading)
                     {
-                        <RadzenAlert AlertStyle="AlertStyle.Info" Icon="hourglass_empty" ShowIcon="true">
+                        <RadzenAlert AlertStyle="AlertStyle.Base" Icon="hourglass_empty" ShowIcon="true">
                             <RadzenText TextStyle="TextStyle.Body2" Text="Loading mitigation strategies..." />
                         </RadzenAlert>
                     }
@@ -85,6 +85,32 @@
                         <br />
                         @foreach (var mitigation in LoadedMitigations.OrderBy(m => m.Priority).ThenBy(m => m.TargetDate))
                         {
+                            <RadzenRow>
+                                <RadzenColumn Size="3">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenText TextStyle="TextStyle.Subtitle1">
+                                            <strong>Mitigation: </strong>  @mitigation.Code
+                                        </RadzenText>
+                                    </RadzenStack>
+                                </RadzenColumn>
+                                <RadzenColumn Size="9">
+                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.25rem">
+                                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small"
+                                                      Click="@(() => EditMitigation(mitigation))" Disabled="@IsLoading" />
+                                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                                      Click="@(() => DeleteMitigation(mitigation))" Disabled="@IsLoading" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                                @* <RadzenColumn Size="6">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                            <RadzenText TextStyle="TextStyle.Subtitle1"
+                                                        Text="@GetHazardDisplayText(Hazard)"
+                                                        Style="margin: 0; color: var(--rz-primary);" />
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                </RadzenColumn> *@
+                            </RadzenRow>
                             <RadzenCard Style="background-color: #fff8e1; border-left: 4px solid #ff9800;">
                                 <RadzenStack Gap="1rem">
                                     <RadzenRow AlignItems="AlignItems.Center">
@@ -92,8 +118,8 @@
                                             <RadzenStack Gap="0.25rem">
                                                 <RadzenText TextStyle="TextStyle.Subtitle2" Text="@($"{mitigation.Name}")" Style="margin: 0; color: #212e61;" />
                                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                                                    <RadzenBadge Text="@mitigation.Status" BadgeStyle="@GetStatusBadgeStyle(mitigation.Status)" />
-                                                    <RadzenBadge Text="@(mitigation.Priority ?? "Medium")" BadgeStyle="@GetPriorityBadgeStyle(mitigation.Priority ?? "Medium")" />
+                                                    @* <RadzenBadge Text="@mitigation.Status" BadgeStyle="@GetStatusBadgeStyle(mitigation.Status)" />
+                                                    <RadzenBadge Text="@(mitigation.Priority ?? "Medium")" BadgeStyle="@GetPriorityBadgeStyle(mitigation.Priority ?? "Medium")" /> *@
                                                     @if (mitigation.Progress > 0)
                                                     {
                                                         <RadzenBadge Text="@($"{mitigation.Progress}% Complete")" BadgeStyle="BadgeStyle.Info" />
@@ -101,14 +127,7 @@
                                                 </RadzenStack>
                                             </RadzenStack>
                                         </RadzenColumn>
-                                        <RadzenColumn Size="3">
-                                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.25rem">
-                                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small"
-                                                              Click="@(() => EditMitigation(mitigation))" Disabled="@IsLoading" />
-                                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
-                                                              Click="@(() => DeleteMitigation(mitigation))" Disabled="@IsLoading" />
-                                            </RadzenStack>
-                                        </RadzenColumn>
+                                        
                                     </RadzenRow>
 
                                     <RadzenText TextStyle="TextStyle.Body2" Text="@mitigation.Description" />
@@ -377,11 +396,7 @@
     [Parameter] public EventCallback<string> OnMitigationUpdated { get; set; }
     [Parameter] public EventCallback<string> OnResidualHazardScored { get; set; } // ✅ NEW: For residual scoring callbacks
 
-    // ✅ NEW: Parameters for residual risk analysis data
-    [Parameter] public Func<Hazard, string, string, Task> OnResidualAnalysisFieldChanged { get; set; } = (_, _, _) => Task.CompletedTask;
-    [Parameter] public Func<Hazard, string> GetResidualWorstOutcome { get; set; } = _ => string.Empty;
-    [Parameter] public Func<Hazard, string> GetResidualRootCause { get; set; } = _ => string.Empty;
-    [Parameter] public Func<Hazard, string> GetResidualAdditionalComments { get; set; } = _ => string.Empty;
+      
 
     // State properties
     private bool IsLoading { get; set; } = true;
@@ -772,63 +787,63 @@
     /// <summary>
     /// ✅ NEW: Handle residual analysis field changes
     /// </summary>
-    private async Task OnResidualAnalysisFieldChangedHandler(string fieldName, string value)
-    {
-        try
-        {
-            if (OnResidualAnalysisFieldChanged != null)
-            {
-                await OnResidualAnalysisFieldChanged(Hazard, fieldName, value);
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error handling residual analysis field change for hazard {HazardCode}, field {FieldName}", 
-                Hazard.Code, fieldName);
-        }
-    }
+    // private async Task OnResidualAnalysisFieldChangedHandler(string fieldName, string value)
+    // {
+    //     try
+    //     {
+    //         if (OnResidualAnalysisFieldChanged != null)
+    //         {
+    //             await OnResidualAnalysisFieldChanged(Hazard, fieldName, value);
+    //         }
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Logger.LogError(ex, "Error handling residual analysis field change for hazard {HazardCode}, field {FieldName}", 
+    //             Hazard.Code, fieldName);
+    //     }
+    // }
 
-    private async Task HandleResidualHazardScoredAsync()
-    {
-        try
-        {
-            Logger.LogInformation("Residual risk scoring completed for hazard: {HazardCode}", Hazard.Code);
+    // private async Task HandleResidualHazardScoredAsync()
+    // {
+    //     try
+    //     {
+    //         Logger.LogInformation("Residual risk scoring completed for hazard: {HazardCode}", Hazard.Code);
             
-            // Notify parent component about the residual scoring completion
-            if (OnResidualHazardScored.HasDelegate)
-            {
-                await OnResidualHazardScored.InvokeAsync(Hazard.Code);
-            }
+    //         // Notify parent component about the residual scoring completion
+    //         if (OnResidualHazardScored.HasDelegate)
+    //         {
+    //             await OnResidualHazardScored.InvokeAsync(Hazard.Code);
+    //         }
             
-            // Also trigger mitigation updated to refresh overall state
-            await OnMitigationUpdated.InvokeAsync(Hazard.Code);
+    //         // Also trigger mitigation updated to refresh overall state
+    //         await OnMitigationUpdated.InvokeAsync(Hazard.Code);
             
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error handling residual hazard scored for {HazardCode}", Hazard.Code);
-        }
-    }
+    //         StateHasChanged();
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Logger.LogError(ex, "Error handling residual hazard scored for {HazardCode}", Hazard.Code);
+    //     }
+    // }
 
-    /// <summary>
-    /// ✅ NEW: Toggle the analysis section collapsed state
-    /// </summary>
-    private void ToggleAnalysisSectionAsync()
-    {
-        try
-        {
-            IsAnalysisSectionCollapsed = !IsAnalysisSectionCollapsed;
-            InvokeAsync(StateHasChanged);
+    // /// <summary>
+    // /// ✅ NEW: Toggle the analysis section collapsed state
+    // /// </summary>
+    // private void ToggleAnalysisSectionAsync()
+    // {
+    //     try
+    //     {
+    //         IsAnalysisSectionCollapsed = !IsAnalysisSectionCollapsed;
+    //         InvokeAsync(StateHasChanged);
             
-            Logger.LogInformation("Toggled analysis section for hazard {HazardCode} to {State}", 
-                Hazard.Code, IsAnalysisSectionCollapsed ? "collapsed" : "expanded");
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error toggling analysis section for hazard {HazardCode}", Hazard.Code);
-        }
-    }
+    //         Logger.LogInformation("Toggled analysis section for hazard {HazardCode} to {State}", 
+    //             Hazard.Code, IsAnalysisSectionCollapsed ? "collapsed" : "expanded");
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Logger.LogError(ex, "Error toggling analysis section for hazard {HazardCode}", Hazard.Code);
+    //     }
+    // }
 
     private async Task UpdateResidualPanel()
     {

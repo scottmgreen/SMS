@@ -217,42 +217,7 @@
                 </RadzenCard>
             }
 
-            <!-- Risk Matrix Guide -->
-            <RadzenCard Variant="Variant.Outlined">
-                <RadzenStack Gap="1rem">
-                    <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-info); margin: 0;">
-                        <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
-                        Risk Scoring Guide
-                    </RadzenText>
-                    
-                    <RadzenStack Gap="0.5rem">
-                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="Severity Scale:" Style="margin: 0;" />
-                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                            • <strong>5 - Catastrophic:</strong> Multiple fatalities, total loss<br/>
-                            • <strong>4 - Major:</strong> Single fatality, major damage<br/>
-                            • <strong>3 - Serious:</strong> Serious injury, significant damage<br/>
-                            • <strong>2 - Moderate:</strong> Minor injury, minor damage<br/>
-                            • <strong>1 - Minor:</strong> No injury, negligible damage
-                        </RadzenText>
-                    </RadzenStack>
-                    
-                    <RadzenStack Gap="0.5rem">
-                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="Likelihood Scale:" Style="margin: 0;" />
-                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                            • <strong>5 - Frequent:</strong> Will occur repeatedly<br/>
-                            • <strong>4 - Likely:</strong> Will occur several times<br/>
-                            • <strong>3 - Possible:</strong> Will occur sometimes<br/>
-                            • <strong>2 - Unlikely:</strong> Will occur rarely<br/>
-                            • <strong>1 - Rare:</strong> Will occur very rarely
-                        </RadzenText>
-                    </RadzenStack>
-                    
-                    <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small">
-                        <strong>Risk Score = Severity × Likelihood</strong><br/>
-                        Click on matrix cells to see which hazards fall into each risk category.
-                    </RadzenAlert>
-                </RadzenStack>
-            </RadzenCard>
+            
 
             <!-- Guidance Panel -->
             <TechnicalAssessmentGuidancePanel StepNumber="4" />
