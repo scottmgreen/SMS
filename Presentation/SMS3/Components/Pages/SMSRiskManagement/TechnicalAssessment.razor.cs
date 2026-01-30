@@ -85,11 +85,11 @@ public partial class TechnicalAssessment : ComponentBase
         if (CurrentStep == 5)
         {
             var residualAssessment = ResidualRiskAssessment ?? currentAssessment;
-            return $"{ReportId} {residualAssessment?.Code}"; // - {stepName}";
+            return $"Hazard Report:{ReportId} Residual Risk Assessment:{residualAssessment?.Code}"; // - {stepName}";
         }
 
         // For Steps 1-4, show Initial assessment
-        return $"{ReportId} {currentAssessment?.Code}"; // - {stepName}";
+        return $"Hazard Report:{ReportId} Initial Assessment: {currentAssessment?.Code}"; // - {stepName}";
     }
     public string GetStepName(int stepNumber)
     {

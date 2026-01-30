@@ -130,78 +130,8 @@ public sealed class RiskAssessment : BaseAuditableEntity
     public IReadOnlyList<string> StakeholderIds => _stakeholderIds.AsReadOnly();
     public IReadOnlyList<int> CompletedSteps => _completedSteps.AsReadOnly();
 
-    /// <summary>
-    /// Factory method to create new Initial Risk Assessment
-    /// BUSINESS RULE: Initial assessments MUST have primaryHazardId set
-    /// </summary>
-    public static Result<RiskAssessment> CreateInitial(RiskAssessmentID id, string name, string leadAssessorId, RiskAssessmentCategory? category = null, string? primaryHazardId = null, string? hazardCode = null)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.InvalidName);
-        }
-
-        if (string.IsNullOrWhiteSpace(leadAssessorId))
-        {
-            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.InvalidLeadAssessor);
-        }
-
-        // BUSINESS RULE ENFORCEMENT: HazardCategory can only be Technical 
-        var assessmentCategory = category ?? RiskAssessmentCategory.Technical;
-
-        var assessment = new RiskAssessment(id)
-        {
-            Name = name,
-            LeadAssessorId = leadAssessorId,
-            AssessmentType = RiskAssessmentType.Initial,
-            RiskAssessmentCategory = assessmentCategory,
-            HazardCode = hazardCode,
-            PrimaryHazardId = primaryHazardId,
-            Stage = "Created",
-            Code = "RS-0000",
-            Status = RiskAssessmentStatus.Created,
-            CurrentStep = 1,
-            UpdatedDate = DateTime.UtcNow
-        };
-
-        return Result<RiskAssessment>.Success(assessment);
-    }
-
-    /// <summary
-
-    /// <summary>
-    /// Factory method to create new Residual Risk Assessment (after mitigations)
-    /// BUSINESS RULE: Residual assessments are created after mitigations
-    /// </summary>
-    public static Result<RiskAssessment> CreateResidual(RiskAssessmentID id, string name, string leadAssessorId, string? primaryHazardId = null, string? hazardCode = null)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.InvalidName);
-        }
-
-        if (string.IsNullOrWhiteSpace(leadAssessorId))
-        {
-            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.InvalidLeadAssessor);
-        }
-
-        var assessment = new RiskAssessment(id)
-        {
-            Name = name,
-            LeadAssessorId = leadAssessorId,
-            AssessmentType = RiskAssessmentType.Residual,
-            RiskAssessmentCategory = RiskAssessmentCategory.Technical,
-            HazardCode = hazardCode,
-            PrimaryHazardId = primaryHazardId,
-            Stage = "Created",
-            Code = "RS-0000",
-            Status = RiskAssessmentStatus.Created,
-            CurrentStep = 1,
-            UpdatedDate = DateTime.UtcNow
-        };
-
-        return Result<RiskAssessment>.Success(assessment);
-    }
+    
+        
 
 
     // ✅ METHODS WITH BUSINESS RULE ENFORCEMENT

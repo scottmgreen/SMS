@@ -47,21 +47,9 @@ public abstract class RiskAssessmentCategory : BaseEnum<RiskAssessmentCategory>
 
     #endregion
 
-    /// <summary>
-    /// Gets categories that use the full SMS process
-    /// </summary>
-    public static IEnumerable<RiskAssessmentCategory> GetFullProcessCategories()
-    {
-        return GetAllValues().Where(rac => rac.IsFullProcess);
-    }
+    
 
-    /// <summary>
-    /// Gets categories that use streamlined process
-    /// </summary>
-    public static IEnumerable<RiskAssessmentCategory> GetStreamlinedCategories()
-    {
-        return GetAllValues().Where(rac => !rac.IsFullProcess);
-    }
+    
 
     /// <summary>
     /// Validates if a step number is valid for this category

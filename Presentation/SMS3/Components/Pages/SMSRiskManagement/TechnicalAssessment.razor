@@ -37,7 +37,7 @@
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="4">
                         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
-                            <RadzenBadge Text="@($"{CurrentStep}/5")" IsPill="true" BadgeStyle="BadgeStyle.Info" />
+                            <RadzenBadge Text="@($"{CurrentStep}/5")" IsPill="true" BadgeStyle="BadgeStyle.Base" />
                             @if (!string.IsNullOrWhiteSpace(LeadAssessorName))
                             {
                                 <RadzenBadge Text="@LeadAssessorName" IsPill="true" BadgeStyle="BadgeStyle.Success" />
@@ -63,10 +63,10 @@
                                 var buttonStyle = isCurrentStep ? ButtonStyle.Primary : (isCompleted ? ButtonStyle.Success : ButtonStyle.Light);
                                 var icon = isCompleted ? "check_circle" : (isCurrentStep ? "edit" : "radio_button_unchecked");
 
-                                <RadzenButton Text="@($"Step {step}")" 
-                                            Icon="@icon"
+                                <RadzenButton Text="@($"Step {step} {GetStepName(step)}")"
+                                              Icon="@icon"
                                             ButtonStyle="@buttonStyle" 
-                                            Size="ButtonSize.ExtraSmall"
+                                            Size="ButtonSize.Medium"
                                             Click="@(() => NavigateToStep(stepNumber))"
                                             Disabled="@IsSaving"
                                             title="@($"Step {step}: {GetStepName(step)}")" />

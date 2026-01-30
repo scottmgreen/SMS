@@ -166,7 +166,7 @@
                         {
                             <RadzenFieldset Text="Assessment Assignment" Style="margin-top: 1rem;">
                                 <RadzenRow Gap="1rem">
-                                    <RadzenColumn Size="12" SizeMD="6">
+                                    @* <RadzenColumn Size="12" SizeMD="6">
                                         <RadzenFormField Text="Risk Assessment Type" Variant="Variant.Outlined">
                                             <RadzenDropDown @bind-Value="@ValidationType" 
                                                           Data="@ValidationTypeOptions" 
@@ -175,7 +175,7 @@
                                                           Placeholder="-- Select Assessment Type --"
                                                           Style="width: 100%; min-width: 100%;" />
                                         </RadzenFormField>
-                                    </RadzenColumn>
+                                    </RadzenColumn> *@
                                     <RadzenColumn Size="12" SizeMD="6">
                                         <RadzenFormField Text="Assigned Assessor" Variant="Variant.Outlined">
                                             <RadzenDropDown @bind-Value="@ValidatedBy" 

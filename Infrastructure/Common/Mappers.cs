@@ -1,6 +1,7 @@
 ﻿using Domain.Entities;
 
 using SMS_Domain.Entities;
+using SMS_Domain.Interfaces;
 
 namespace SMS_Infrastructure.Common;
 
@@ -764,6 +765,12 @@ public static partial class Mappers
             reportValidation.Status = reader.GetValue<string>(FieldNames.fReportValidationStatus);
             reportValidation.Stage = reader.GetValue<string>(FieldNames.fReportValidationStage);
             reportValidation.ValidationType = reader.GetValue<string>(FieldNames.fReportValidationType);
+
+            var assessmentTypeValue = reader.GetValue<string>(FieldNames.fReportValidationType)?.Trim();
+            if (!string.IsNullOrEmpty(assessmentTypeValue))
+            {
+                reportValidation.ValidationType = RiskAssessmentCategory.FromValue(assessmentTypeValue) ?? RiskAssessmentCategory.Technical;
+            }
             reportValidation.ValidationComments = reader.GetValue<string>(FieldNames.fReportValidationComments);
             reportValidation.ValidatedBy = reader.GetValue<string>(FieldNames.fReportValidationValidatedBy);
             // Set audit properties using reflection since they have private setters

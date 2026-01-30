@@ -16,7 +16,7 @@ public partial class ReportValidation : ComponentBase
     // Form Data Properties - Using Smart Enum
     private ValidationDecision? SelectedValidationDecision { get; set; }
     private string ValidationComments { get; set; } = "";
-    private string ValidationType { get; set; } = "Technical";
+    private RiskAssessmentCategory ValidationType { get; set; } = RiskAssessmentCategory.Technical;
     private string ValidatedBy { get; set; } = "";
 
     // Helper property for string-based UI binding - renamed to avoid conflicts
@@ -100,7 +100,7 @@ public partial class ReportValidation : ComponentBase
                     }
                 }
                 ValidationComments = ExistingValidation.ValidationComments ?? "";
-                ValidationType = ExistingValidation.ValidationType ?? "Technical";
+                ValidationType = RiskAssessmentCategory.Technical ;
                 ValidatedBy = ExistingValidation.ValidatedBy ?? "";
 
                 Logger.LogInformation("Found existing ReportValidation for report {ReportId} - Decision: {Decision}",
@@ -113,7 +113,7 @@ public partial class ReportValidation : ComponentBase
                 // Set defaults for new validation
                 SelectedValidationDecision = null;
                 ValidatedBy = "";
-                ValidationType = "Technical";
+                ValidationType = RiskAssessmentCategory.Technical;
                 ValidationComments = "";
             }
 
@@ -264,7 +264,7 @@ public partial class ReportValidation : ComponentBase
                 // Update the existing validation with new values
                 ExistingValidation.ValidationDecision = ValidationDecisionValue;
                 ExistingValidation.ValidationComments = ValidationComments;
-                ExistingValidation.ValidationType = ValidationType ?? "Technical";
+                ExistingValidation.ValidationType = RiskAssessmentCategory.Technical;
                 ExistingValidation.ValidatedBy = AuthService.CurrentUserDisplayName; 
                 ExistingValidation.Status = "Completed";
                 ExistingValidation.Stage = "Complete";
@@ -358,7 +358,7 @@ public partial class ReportValidation : ComponentBase
             // User skipped dataset creation - proceed directly to assessment
             Logger.LogInformation("User skipped Airport Shared Dataset creation for Report: {ReportId}", ReportId);
 
-            var assessmentType = ValidationType?.ToLower() switch
+            var assessmentType = ValidationType.Value.ToLower() switch
             {
                 "technical" => "TechnicalAssessment",
                 //"preliminary" => "PreliminaryRiskAssessment",

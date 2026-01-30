@@ -61,7 +61,7 @@ public class ReportValidation : BaseAuditableEntity, IReportValidation
     public string? ValidationComments { get; set; }
 
     /// <summary>
-    /// Type of validation (Standard, Expedited, Complex)
+    /// 
     /// </summary>
     public string? ValidationType { get; set; }
 
@@ -102,43 +102,8 @@ public class ReportValidation : BaseAuditableEntity, IReportValidation
 
     #region Business Logic
 
-    /// <summary>
-    /// Complete the validation with a decision
-    /// </summary>
-    public void CompleteValidation(string decision, string comments, string? validationType = null)
-    {
-        ValidationDecision = decision;
-        ValidationComments = comments;
-        ValidatedDate = DateTime.UtcNow;
-        Status = "Completed";
-
-        if (!string.IsNullOrWhiteSpace(validationType))
-        {
-            ValidationType = validationType;
-        }
-    }
-
-    /// <summary>
-    /// Save as draft
-    /// </summary>
-    public void SaveAsDraft(string? comments = null)
-    {
-        Status = "Draft";
-        if (!string.IsNullOrWhiteSpace(comments))
-        {
-            ValidationComments = comments;
-        }
-    }
-
-    /// <summary>
-    /// Check if validation is completed
-    /// </summary>
-    public bool IsCompleted => Status == "Completed";
-
-    /// <summary>
-    /// Check if validation is in draft state
-    /// </summary>
-    public bool IsDraft => Status == "Draft";
+    
+    
 
     #endregion
 }
