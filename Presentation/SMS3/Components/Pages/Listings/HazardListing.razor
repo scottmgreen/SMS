@@ -64,11 +64,15 @@
                                   Click="@(() => OnEditHazardAsync(hazard))"
                                   title="Edit Hazard"
                                   Icon="edit" />
-                    <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                                  Size="ButtonSize.Small"
-                                  Click="@(() => OnDeleteHazardAsync(hazard))"
-                                  title="Delete Hazard"
-                                  Icon="delete" />
+                    @if (!hazard.IsInitialHazard)
+                    {
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                                      Size="ButtonSize.Small"
+                                      Click="@(() => OnDeleteHazardAsync(hazard))"
+                                      title="Delete Hazard"
+                                      Icon="delete" />
+                    }
+                    
                 </RadzenStack>
             </Template>
         </RadzenDataGridColumn>

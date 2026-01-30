@@ -195,8 +195,7 @@ public partial class ReportValidation : ComponentBase
             IsProcessing = true;
             StateHasChanged();
 
-            Logger.LogInformation("HandleSubmit called for ReportId: {ReportId}, Decision: {Decision}",
-                ReportId, SelectedValidationDecision?.Value);
+            Logger.LogInformation("HandleSubmit called for ReportId: {ReportId}, Decision: {Decision}", ReportId, SelectedValidationDecision?.Value);
 
             // Manual validation
             if (SelectedValidationDecision == null)
@@ -253,8 +252,7 @@ public partial class ReportValidation : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Smart validation record processing for ReportId: {ReportId}, HasExisting: {HasExisting}",
-                ReportId, ExistingValidation != null);
+            Logger.LogInformation("Smart validation record processing for ReportId: {ReportId}, HasExisting: {HasExisting}",ReportId, ExistingValidation != null);
 
             if (ExistingValidation != null)
             {

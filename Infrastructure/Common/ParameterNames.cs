@@ -1222,9 +1222,6 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmMitigationTargetDate = new Lazy<string>(() => "@pMitigationTargetDate");
     public static string pmMitigationTargetDate => _pmMitigationTargetDate.Value;
 
-    private static readonly Lazy<string> _pmMitigationImplementationDate = new Lazy<string>(() => "@pMitigationImplementationDate");
-    public static string pmMitigationImplementationDate => _pmMitigationImplementationDate.Value;
-
     private static readonly Lazy<string> _pmMitigationCompletionDate = new Lazy<string>(() => "@pMitigationCompletionDate");
     public static string pmMitigationCompletionDate => _pmMitigationCompletionDate.Value;
 

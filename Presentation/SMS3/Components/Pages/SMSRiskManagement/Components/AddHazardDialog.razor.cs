@@ -13,6 +13,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     [Parameter] public Hazard? EditingHazard { get; set; }
     [Parameter] public bool IsEditMode { get; set; } = false;
 
+    [Inject] AuthenticationService AuthService { get; set; }
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<AddHazardDialog>? Logger { get; set; }
@@ -409,19 +410,20 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
 
         // Set properties using the selected category and type
         hazard.Code = "HZ-0000";
-        hazard.Name = NewHazardDescription.Trim();
+        hazard.Name = $"{NewHazardCategory} - {NewHazardType}";
         hazard.Description = NewHazardDescription.Trim();
         hazard.HazardCategory = NewHazardCategory;
         hazard.HazardType = NewHazardType;
         hazard.ReportCode = ReportId ?? "";
-        hazard.ReportedBy = "Technical Assessment User";
+        hazard.ReportedBy = AuthService.CurrentUserDisplayName;
         hazard.ReportingDepartment = "Technical Assessment";
         hazard.IsConfidential = false;
         hazard.IsAnonymous = false;
         hazard.Status = HazardStatus.Active;
         hazard.Priority = HazardPriority.Medium;
         hazard.ReportedOn = DateTime.UtcNow;
-
+        hazard.CreatedBy = AuthService.CurrentUserDisplayName;
+        hazard.CreatedDate = DateTime.UtcNow;
         // Handle location for new hazard - EXACTLY like HazardReporting
         await UpdateHazardLocationForHazard(hazard);
 

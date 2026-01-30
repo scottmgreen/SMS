@@ -48,7 +48,7 @@ public sealed class MitigationRepository : BaseRepository<MitigationRepository, 
 
             // Timeline Properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationTargetDate, mitigation.TargetDate ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationImplementationDate, mitigation.ImplementationDate ?? (object)DBNull.Value));
+         
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationCompletionDate, mitigation.CompletionDate ?? (object)DBNull.Value));
 
             // Assignment Properties
@@ -253,7 +253,7 @@ public sealed class MitigationRepository : BaseRepository<MitigationRepository, 
 
             // Timeline Properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationTargetDate, mitigation.TargetDate ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationImplementationDate, mitigation.ImplementationDate ?? (object)DBNull.Value));
+            
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationCompletionDate, mitigation.CompletionDate ?? (object)DBNull.Value));
 
             // Assignment Properties

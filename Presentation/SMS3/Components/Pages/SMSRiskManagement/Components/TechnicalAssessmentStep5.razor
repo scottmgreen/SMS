@@ -660,7 +660,7 @@
             Step5.HazardResidualRiskAnalyses[hazard.Code] = analysis;
 
             // ✅ Save to database via proper CQRS commands
-            await SaveResidualAnalysisToDatabase(analysis);
+           // await SaveResidualAnalysisToDatabase(analysis);
             
             // Trigger UI update and notify parent component
             await InvokeAsync(StateHasChanged);
@@ -671,6 +671,9 @@
             Logger.LogError(ex, "❌ Error updating residual analysis field {FieldName} for hazard {HazardCode}", fieldName, hazard.Code);
         }
     }
+
+    
+
 
     /// <summary>
     /// ✅ Save residual risk analysis using proper RiskAnalysis domain entity and CQRS

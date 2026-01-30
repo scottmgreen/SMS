@@ -1,6 +1,7 @@
-@page "/SMSRiskManagement/ReportProcessing"
+﻿@page "/SMSRiskManagement/ReportProcessing"
 @using SMS3.Components.Shared
 @using SMS_Application.Messaging.Queries
+@using SMS_Application.Messaging.Commands
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
 @using Radzen
@@ -18,7 +19,8 @@
                 <RadzenButton ButtonStyle="ButtonStyle.Light" 
                              Text="Refresh All" 
                              Icon="refresh"
-                             Size="ButtonSize.Small" />
+                             Size="ButtonSize.Small"
+                             Click="@LoadDataAsync" />
                 <RadzenButton ButtonStyle="ButtonStyle.Info" 
                              Text="Export" 
                              Icon="download"
@@ -44,11 +46,193 @@
                     <RadzenTabsItem Text="@($"Mitigation ({InMitigation.Count})")" Icon="build">
                         @RenderMitigationTab()
                     </RadzenTabsItem>
-                    <RadzenTabsItem Text="@($"Closed ({ClosedReferred.Count})")" Icon="archive">
+                    @* <RadzenTabsItem Text="@($"Closed ({ClosedReferred.Count})")" Icon="archive">
                         @RenderClosedTab()
-                    </RadzenTabsItem>
+                    </RadzenTabsItem> *@
                 </Tabs>
             </RadzenTabs>
         </RadzenColumn>
     </RadzenRow>
 </div>
+
+<!-- 🚀 NEW: Bulk Mitigation Approval Confirmation Dialog -->
+@if (ShowBulkApprovalDialog && SelectedReportForApproval != null)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-lg">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-warning">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <h5 class="sms-modal-title mb-0">
+                            <i class="fas fa-check-double"></i> Bulk Mitigation Approval
+                        </h5>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                    Variant="Variant.Text"
+                                    Icon="close"
+                                    Size="ButtonSize.Small"
+                                    @* Click="@CloseBulkApprovalDialog" /> *@
+                            />
+                    </div>
+                </div>
+                <div class="sms-modal-body">
+                    
+                    <!-- Confirmation Information -->
+                    <RadzenCard Variant="Variant.Outlined" Class="mb-3">
+                        <div class="p-3">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-exclamation-triangle text-warning"></i> Confirmation Required
+                            </h6>
+                            <p class="mb-3">
+                                You are about to <strong>approve ALL mitigations</strong> for the following report:
+                            </p>
+                            <div class="row mb-3">
+                                <div class="col-sm-6">
+                                    <strong>Report ID:</strong> @SelectedReportForApproval.ReportId<br>
+                                    <strong>Hazard ID:</strong> @SelectedReportForApproval.HazardId<br>
+                                </div>
+                                <div class="col-sm-6">
+                                    <strong>Total Mitigations:</strong> @SelectedReportForApproval.MitigationCount<br>
+                                    <strong>Status:</strong> <RadzenBadge Text="@SelectedReportForApproval.ReportStatus" BadgeStyle="BadgeStyle.Info" />
+                                </div>
+                            </div>
+                            <div class="bg-light p-2 rounded mb-3">
+                                <strong>Description:</strong> @SelectedReportForApproval.HazardDescription
+                            </div>
+                        </div>
+                    </RadzenCard>
+
+                    <!-- Mitigation List Preview -->
+                    <RadzenCard Variant="Variant.Outlined" Class="mb-3">
+                        <div class="p-3">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-list"></i> Mitigations to be Approved
+                            </h6>
+                            @if (SelectedReportForApproval.HasMitigations)
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Code</th>
+                                                <th>Name</th>
+                                                <th>Current Status</th>
+                                                <th>Hazard</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var mitigation in SelectedReportForApproval.AllMitigations)
+                                            {
+                                                <tr>
+                                                    <td><code>@mitigation.MitigationCode</code></td>
+                                                    <td>@mitigation.MitigationName</td>
+                                                    <td>
+                                                        <RadzenBadge Text="@mitigation.Status" 
+                                                                   BadgeStyle="@(mitigation.Status == "Approved" ? BadgeStyle.Success : BadgeStyle.Secondary)" />
+                                                    </td>
+                                                    <td>@mitigation.HazardCode</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted">No mitigations found for this report.</p>
+                            }
+                        </div>
+                    </RadzenCard>
+
+                    <!-- Warning Message -->
+                    <RadzenAlert AlertStyle="AlertStyle.Warning" Icon="warning" ShowIcon="true" Class="mb-3">
+                        <strong>Important:</strong> This action will set the status of ALL listed mitigations to "Approved".
+                        This action cannot be undone. Please review the mitigations carefully before proceeding.
+                    </RadzenAlert>
+                    
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end gap-2">
+                        <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
+                                    Text="Cancel" 
+                                    Icon="close"
+                                    
+                                    Size="ButtonSize.Medium"
+                                    Disabled="@IsProcessingApproval" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Success" 
+                                    Text="@(IsProcessingApproval ? "Processing..." : $"Approve All {SelectedReportForApproval.MitigationCount} Mitigations")" 
+                                    Icon="@(IsProcessingApproval ? "hourglass_empty" : "verified")"
+                                   
+                                    Size="ButtonSize.Medium"
+                                    Disabled="@IsProcessingApproval" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    /* Modal Overlay and Dialog */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1050;
+        padding: 1rem;
+    }
+
+    .sms-modal-dialog {
+        position: relative;
+        margin: 0 auto;
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+    }
+
+    .sms-modal-lg {
+        max-width: 900px;
+        width: 100%;
+    }
+
+    .sms-modal-content {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+    }
+
+    .sms-modal-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .sms-header-warning {
+        background-color: #ff9800; /* SMS Orange */
+        color: white;
+    }
+
+    .sms-modal-title {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .sms-modal-body {
+        padding: 1.5rem;
+    }
+
+    .sms-modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e9ecef;
+        border-radius: 0 0 0.5rem 0.5rem;
+    }
+
+    .text-muted {
+        color: var(--rz-text-disabled-color);
+        font-style: italic;
+    }
+</style>

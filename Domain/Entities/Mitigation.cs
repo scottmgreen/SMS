@@ -46,7 +46,7 @@ public sealed class Mitigation : BaseAuditableEntity
     public string? Type { get; set; }
 
     /// <summary>Current status (Proposed, Approved, InProgress, Completed, Cancelled, OnHold)</summary>
-    public string Status { get; set; } = "Proposed";
+    public string Status { get; set; } = "PROPOSED";
 
     /// <summary>Priority level (Critical, High, Medium, Low)</summary>
     public string? Priority { get; set; }
@@ -60,9 +60,6 @@ public sealed class Mitigation : BaseAuditableEntity
 
     /// <summary>Target completion date</summary>
     public DateTime? TargetDate { get; set; }
-
-    /// <summary>Actual implementation start date</summary>
-    public DateTime? ImplementationDate { get; set; }
 
     /// <summary>Actual completion date</summary>
     public DateTime? CompletionDate { get; set; }
@@ -290,7 +287,7 @@ public sealed class Mitigation : BaseAuditableEntity
         else if (progressPercentage > 0 && Status == "Proposed")
         {
             Status = "InProgress";
-            ImplementationDate ??= DateTime.UtcNow;
+           // ImplementationDate ??= DateTime.UtcNow;
         }
 
         return Result<bool>.Success(true);

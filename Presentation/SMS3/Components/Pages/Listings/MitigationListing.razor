@@ -123,10 +123,7 @@
                                     {
                                         <strong>Target Date:</strong> @SelectedMitigation.TargetDate.Value.ToString("MMM dd, yyyy")<br>
                                     }
-                                    @if (SelectedMitigation.ImplementationDate.HasValue)
-                                    {
-                                        <strong>Implementation Date:</strong> @SelectedMitigation.ImplementationDate.Value.ToString("MMM dd, yyyy")<br>
-                                    }
+                                   
                                 </div>
                                 <div class="col-sm-6">
                                     @if (!string.IsNullOrWhiteSpace(SelectedMitigation.AssignedDepartment))

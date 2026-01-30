@@ -416,7 +416,6 @@ public static partial class Mappers
         report.Name = reader.GetValue<string>(FieldNames.fReportName);
         report.Description = reader.GetValue<string>(FieldNames.fReportDescription);
         report.Status = reader.GetValue<string>(FieldNames.fReportStatus)?.Trim(); 
-        report.Stage = reader.GetValue<string>(FieldNames.fReportStage)?.Trim();   
         report.ReportedBy = reader.GetValue<string>(FieldNames.fReportedBy)?.Trim();
         report.ReportedOn= reader.GetValue<DateTime>(FieldNames.fReportedOn);
         return report;
@@ -658,7 +657,6 @@ public static partial class Mappers
 
         // Date Properties
         mitigation.TargetDate = reader.IsDBNull(FieldNames.fMitigationTargetDate) ? null : reader.GetValue<DateTime?>(FieldNames.fMitigationTargetDate);
-        mitigation.ImplementationDate = reader.IsDBNull(FieldNames.fMitigationImplementationDate) ? null : reader.GetValue<DateTime?>(FieldNames.fMitigationImplementationDate);
         mitigation.CompletionDate = reader.IsDBNull(FieldNames.fMitigationCompletionDate) ? null : reader.GetValue<DateTime?>(FieldNames.fMitigationCompletionDate);
 
         // Assignment Properties

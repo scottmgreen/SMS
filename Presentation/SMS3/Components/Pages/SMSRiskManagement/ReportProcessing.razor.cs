@@ -1,7 +1,187 @@
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 
+using SMS_Domain.Entities;
+using SMS_Application.Messaging.Commands;
+using SMS_Application.Messaging.Queries;
+
 namespace SMS3.Components.Pages.SMSRiskManagement;
+
+#region Models
+
+public enum ProcessingStatusCategory
+{
+    Validation,
+    RiskAssessment,
+    Investigation,
+    Mitigation,
+    Closed
+}
+
+public class ReportProcessingSummary
+{
+    public string ReportId { get; set; } = string.Empty;
+    public string ReportDescription { get; set; } = string.Empty;
+    public string ReportStatus { get; set; } = string.Empty;
+
+    public string ReportStage { get; set; } = string.Empty;
+    public string CreatedBy { get; set; } = string.Empty;
+    public DateTime CreatedDate { get; set; }
+
+    public string? HazardId { get; set; }
+    public string HazardType { get; set; } = string.Empty;
+    public string HazardCategory { get; set; } = string.Empty;
+    public string HazardDescription { get; set; } = string.Empty;
+    public string Location { get; set; } = string.Empty;
+    public string Priority { get; set; } = string.Empty;
+    public string ReportedBy { get; set; } = string.Empty;
+    public DateTime ReportedDate { get; set; }
+    public bool IsConfidential { get; set; }
+
+    // ENHANCED: Risk Assessment Information
+    public string? RiskAssessmentId { get; set; }
+    public int CurrentAssessmentStep { get; set; } = 0;
+    public string RiskAssessmentStatus { get; set; } = string.Empty;
+    public string AssessmentStage { get; set; } = string.Empty;
+    public string AssessmentType { get; set; } = string.Empty; // NEW: Technical vs Preliminary
+    public bool HasRiskAssessment => !string.IsNullOrEmpty(RiskAssessmentId);
+
+    // ENHANCED: Report Validation Information
+    public string? ReportValidationId { get; set; }
+    public string ValidationType { get; set; } = string.Empty; // NEW: Preliminary vs Technical
+    public string ValidationDecision { get; set; } = string.Empty;
+    public bool HasReportValidation => !string.IsNullOrEmpty(ReportValidationId);
+
+    // NEW: Investigation Information
+    public string? InvestigationId { get; set; }
+    public string InvestigationStatus { get; set; } = string.Empty;
+    public string? AssignedInvestigator { get; set; }
+    public string? InvestigationNotes { get; set; }
+    public int InterviewCount { get; set; } = 0;
+    public bool HasInvestigation => !string.IsNullOrEmpty(InvestigationId);
+
+    // ? NEW: All Mitigations for All Hazards in Report
+    public List<MitigationSummary> AllMitigations { get; set; } = new();
+    public bool HasMitigations => AllMitigations?.Any() == true;
+    public int MitigationCount => AllMitigations?.Count ?? 0;
+
+    public ProcessingStatusCategory StatusCategory { get; set; }
+    public int DaysInStage { get; set; }
+    public string? AssignedTo { get; set; }
+    public string ValidationUrl { get; set; } = string.Empty;
+
+    public string DisplayId => !string.IsNullOrEmpty(HazardId) ? HazardId : ReportId;
+
+    // ENHANCED: Smart validation URL based on validation type and assessment progress
+    public string SmartValidationUrl
+    {
+        get
+        {
+            // VALIDATION TAB: Reports without ReportValidation record
+            if (StatusCategory == ProcessingStatusCategory.Validation)
+            {
+                return $"/SMSRiskManagement/ReportValidation/{ReportId}";
+            }
+
+            // RISK ASSESSMENT TAB: Reports with ReportValidation - route based on ValidationType
+            if (StatusCategory == ProcessingStatusCategory.RiskAssessment)
+            {
+                // Determine assessment type from ValidationType
+                if (ValidationType?.ToLower() == "preliminary")
+                {
+                    // Preliminary Assessment - always single step
+                    return $"/SMSRiskManagement/PreliminaryRiskAssessment/{ReportId}";
+                }
+                else if (ValidationType?.ToLower() == "technical")
+                {
+                    // Technical Assessment - multi-step, smart navigation
+                    if (HasRiskAssessment && CurrentAssessmentStep > 0)
+                    {
+                        // Continue to next step of existing assessment
+                        var nextStep = CurrentAssessmentStep < 5 ? CurrentAssessmentStep + 1 : CurrentAssessmentStep;
+                        return $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{HazardId}/{nextStep}";
+                    }
+                    else if (!string.IsNullOrEmpty(HazardId))
+                    {
+                        // Start new technical assessment
+                        return $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{HazardId}/1";
+                    }
+                }
+            }
+
+            // INVESTIGATION TAB: Navigate to investigation if available
+            if (StatusCategory == ProcessingStatusCategory.Investigation)
+            {
+                if (HasInvestigation && !string.IsNullOrEmpty(HazardId))
+                {
+                    return $"/SMSRiskManagement/Investigations/{InvestigationId}/{HazardId}";
+                }
+            }
+
+            // Fallback to report validation
+            return $"/SMSRiskManagement/ReportValidation/{ReportId}";
+        }
+    }
+
+    // ENHANCED: Smart button text based on validation type and progress
+    public string ActionButtonText
+    {
+        get
+        {
+            return StatusCategory switch
+            {
+                ProcessingStatusCategory.Validation => "Start Validation",
+                ProcessingStatusCategory.RiskAssessment => GetRiskAssessmentButtonText(),
+                ProcessingStatusCategory.Investigation => HasInvestigation ? "Continue Investigation" : "Start Investigation",
+                ProcessingStatusCategory.Mitigation => "View Mitigation",
+                ProcessingStatusCategory.Closed => "View Closed",
+                _ => "Process"
+            };
+        }
+    }
+
+    private string GetRiskAssessmentButtonText()
+    {
+        // Determine button text based on ValidationType
+        if (ValidationType?.ToLower() == "preliminary")
+        {
+            return "Start Preliminary Assessment";
+        }
+        else if (ValidationType?.ToLower() == "technical")
+        {
+            if (HasRiskAssessment && CurrentAssessmentStep > 0)
+            {
+                return CurrentAssessmentStep < 5 ? $"Continue Step {CurrentAssessmentStep + 1}" : "Review Assessment";
+            }
+            else
+            {
+                return "Start Technical Assessment";
+            }
+        }
+        else
+        {
+            return "Start Risk Assessment";
+        }
+    }
+}
+
+/// <summary>
+/// ? NEW: Summary information for a mitigation within a report context
+/// </summary>
+public class MitigationSummary
+{
+    public string MitigationCode { get; set; } = string.Empty;
+    public string MitigationName { get; set; } = string.Empty;
+    public string HazardCode { get; set; } = string.Empty;
+    public string HazardDescription { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string ResponsibleParty { get; set; } = string.Empty;
+    public DateTime? TargetDate { get; set; }
+    public string Priority { get; set; } = string.Empty;
+    public bool IsOverdue => TargetDate.HasValue && TargetDate.Value < DateTime.UtcNow && Status != "Completed";
+}
+
+#endregion
 
 /// <summary>
 /// Code-behind for ReportProcessing page
@@ -23,6 +203,11 @@ public partial class ReportProcessing : ComponentBase
 
     private int selectedTabIndex = 0;
     private bool IsLoading { get; set; } = true;
+
+    // ?? NEW: Bulk approval properties
+    private bool ShowBulkApprovalDialog { get; set; } = false;
+    private ReportProcessingSummary? SelectedReportForApproval { get; set; }
+    private bool IsProcessingApproval { get; set; } = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -53,7 +238,7 @@ public partial class ReportProcessing : ComponentBase
             }
 
             // Create report summaries and categorize - ENHANCED with investigations and interviews
-            var reportSummaries = CreateReportSummaries(reports, hazards, riskAssessments, reportValidations, investigations, interviews);
+            var reportSummaries = await CreateReportSummariesAsync(reports, hazards, riskAssessments, reportValidations, investigations, interviews);
 
             Logger.LogWarning("?? DEBUG: Created {SummaryCount} report summaries", reportSummaries.Count);
 
@@ -96,7 +281,7 @@ public partial class ReportProcessing : ComponentBase
                 reports = reportsResult.Value ?? new List<Report>();
                 Logger.LogWarning("? Successfully loaded {Count} reports from database", reports.Count);
 
-                
+
             }
             else
             {
@@ -280,6 +465,146 @@ public partial class ReportProcessing : ComponentBase
         }
 
         Logger.LogInformation("Created {SummaryCount} report summaries", summaries.Count);
+        return summaries;
+    }
+
+    private async Task<List<ReportProcessingSummary>> CreateReportSummariesAsync(List<Report> reports, List<Hazard> hazards, List<RiskAssessment> riskAssessments, List<SMS_Domain.Entities.ReportValidation> reportValidations, List<Investigation> investigations, List<Interview> interviews)
+    {
+        var summaries = new List<ReportProcessingSummary>();
+
+        Logger.LogInformation("Creating report summaries - Reports: {ReportCount}, Hazards: {HazardCount}, RiskAssessments: {AssessmentCount}, ReportValidations: {ValidationCount}, Investigations: {InvestigationCount}, Interviews: {InterviewCount}",
+            reports.Count, hazards.Count, riskAssessments.Count, reportValidations.Count, investigations.Count, interviews.Count);
+
+        foreach (var report in reports)
+        {
+            try
+            {
+                // ? NEW: Find ALL hazards for this report instead of just the first one
+                var reportHazards = hazards.Where(h => h.ReportCode?.Trim() == report.Code?.Trim()).ToList();
+
+                // Use the first/primary hazard for backward compatibility with existing logic
+                var primaryHazard = reportHazards.FirstOrDefault();
+
+                // Find matching risk assessment using primary hazard
+                var riskAssessment = primaryHazard != null ?
+                    riskAssessments.FirstOrDefault(ra => ra.HazardCode?.Trim() == primaryHazard.Code?.Trim() &&
+                                                        ra.AssessmentType == RiskAssessmentType.Initial) :
+                    null;
+
+                // CRITICAL: Find matching report validation
+                var reportValidation = reportValidations.FirstOrDefault(rv => rv.ReportCode?.Trim() == report.Code?.Trim());
+
+                // NEW: Find matching investigation using primary hazard
+                var investigation = primaryHazard != null ?
+                    investigations.FirstOrDefault(inv => inv.HazardCode?.Trim() == primaryHazard.Code?.Trim()) :
+                    null;
+
+                // NEW: Find matching interviews for this investigation
+                var investigationInterviews = investigation != null ?
+                    interviews.Where(iv => iv.InvestigationCode?.Trim() == investigation.Code?.Trim()).ToList() :
+                    new List<Interview>();
+
+                // ?? NEW: Load all mitigations for ALL hazards in this report and group by code
+                var allMitigations = new List<MitigationSummary>();
+                var uniqueMitigationsDict = new Dictionary<string, MitigationSummary>();
+
+                foreach (var hazard in reportHazards)
+                {
+                    try
+                    {
+                        var mitigationQuery = new GetMitigationsByHazardCodeQuery(hazard.Code);
+                        var mitigationResult = await Mediator.SendAsync(mitigationQuery, CancellationToken.None);
+
+                        if (mitigationResult.IsSuccess && mitigationResult.Value?.Any() == true)
+                        {
+                            var hazardMitigations = mitigationResult.Value.Select(m => new MitigationSummary
+                            {
+                                MitigationCode = m.Code ?? "Unknown",
+                                MitigationName = m.Name ?? "Unnamed Mitigation",
+                                HazardCode = hazard.Code,
+                                HazardDescription = hazard.Description ?? "No description",
+                                Status = m.Status ?? "Unknown",
+                                //ResponsibleParty = m.ResponsibleParty ?? "Not Assigned",
+                                TargetDate = m.TargetDate,
+                                Priority = m.Priority?.ToString() ?? "Medium"
+                            });
+
+                            // ?? FIXED: Group by mitigation code to eliminate duplicates
+                            foreach (var mitigation in hazardMitigations)
+                            {
+                                if (!uniqueMitigationsDict.ContainsKey(mitigation.MitigationCode))
+                                {
+                                    uniqueMitigationsDict[mitigation.MitigationCode] = mitigation;
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError(ex, "Error loading mitigations for hazard {HazardCode} in report {ReportCode}", hazard.Code, report.Code);
+                    }
+                }
+
+                // Convert dictionary values to list
+                allMitigations = uniqueMitigationsDict.Values.ToList();
+
+                var summary = new ReportProcessingSummary
+                {
+                    ReportId = report.Code ?? "Unknown",
+                    ReportDescription = report.Description ?? "No description",
+                    ReportStatus = report.Status ?? "New",
+                    ReportStage = report.Stage ?? "New",
+                    CreatedBy = report.CreatedBy ?? "Unknown",
+                    CreatedDate = report.CreatedDate ?? DateTime.UtcNow,
+
+                    HazardId = primaryHazard?.Code,
+                    HazardType = primaryHazard?.HazardType ?? "Unknown",
+                    HazardDescription = primaryHazard?.Description ?? report.Description ?? "No description",
+                    Location = primaryHazard?.HazardLocation?.Description ?? primaryHazard?.LocationArea ?? "Not specified",
+                    Priority = GetPriorityString(primaryHazard?.Priority),
+                    ReportedBy = primaryHazard?.ReportedBy ?? report.CreatedBy ?? report.UpdatedBy ?? "Unknown", // ENHANCED: Added fallback to UpdatedBy
+                    ReportedDate = primaryHazard?.ReportedOn ?? report.CreatedDate ?? DateTime.UtcNow,
+                    IsConfidential = primaryHazard?.IsConfidential ?? false,
+
+                    // Risk Assessment Information
+                    RiskAssessmentId = riskAssessment?.Code,
+                    CurrentAssessmentStep = riskAssessment?.CurrentStep ?? 0,
+                    RiskAssessmentStatus = riskAssessment?.Status?.ToString() ?? "",
+                    AssessmentStage = riskAssessment?.Stage ?? "",
+                    AssessmentType = riskAssessment?.RiskAssessmentCategory?.ToString() ?? "",
+
+                    // Report Validation Information - NEW
+                    ReportValidationId = reportValidation?.Code,
+                    ValidationType = reportValidation?.ValidationType ?? "", // NEW: Key for smart routing
+                    ValidationDecision = reportValidation?.ValidationDecision ?? "",
+
+                    // Investigation Information - NEW
+                    InvestigationId = investigation?.Code,
+                    InvestigationStatus = investigation?.Status?.ToString() ?? "",
+                    AssignedInvestigator = investigation?.AssignedInvestigatorId,
+                    InvestigationNotes = investigation?.InvestigationNotes,
+                    InterviewCount = investigationInterviews.Count,
+
+                    // ? NEW: All mitigations for all hazards
+                    AllMitigations = allMitigations,
+
+                    // Status determination
+                    StatusCategory = DetermineStatusCategory(report, primaryHazard, riskAssessment, reportValidation, investigation),
+                    DaysInStage = CalculateDaysInStage(report, primaryHazard, riskAssessment, reportValidation),
+                    AssignedTo = DetermineAssignedTo(report, primaryHazard, riskAssessment, reportValidation, investigation),
+                    ValidationUrl = GetValidationUrl(report, primaryHazard, reportValidation)
+                };
+
+                summaries.Add(summary);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error creating summary for report {ReportCode}", report.Code);
+            }
+        }
+
+        Logger.LogInformation("Created {SummaryCount} report summaries with {TotalMitigationCount} total mitigations",
+            summaries.Count, summaries.Sum(s => s.MitigationCount));
         return summaries;
     }
 
@@ -1060,10 +1385,16 @@ public partial class ReportProcessing : ComponentBase
                     stackBuilder.AddAttribute(3, "Text", report.HazardId ?? "N/A");
                     stackBuilder.CloseComponent();
 
-                    stackBuilder.OpenComponent<RadzenText>(5);
-                    stackBuilder.AddAttribute(6, "TextStyle", TextStyle.Caption);
-                    stackBuilder.AddAttribute(7, "Style", "color: var(--rz-warning); font-weight: 500;");
-                    stackBuilder.AddAttribute(8, "Text", "Investigation Required");
+                    stackBuilder.OpenComponent<RadzenText>(4);
+                    stackBuilder.AddAttribute(5, "TextStyle", TextStyle.Body1);
+                    stackBuilder.AddAttribute(6, "Style", "font-weight: 600;");
+                    stackBuilder.AddAttribute(7, "Text", report.ReportId ?? "N/A");
+                    stackBuilder.CloseComponent();
+
+                    stackBuilder.OpenComponent<RadzenText>(8);
+                    stackBuilder.AddAttribute(9, "TextStyle", TextStyle.Caption);
+                    stackBuilder.AddAttribute(10, "Style", "color: var(--rz-warning); font-weight: 500;");
+                    stackBuilder.AddAttribute(11, "Text", "Investigation Required");
                     stackBuilder.CloseComponent();
                 }));
                 templateBuilder.CloseComponent();
@@ -1167,413 +1498,236 @@ public partial class ReportProcessing : ComponentBase
         builder.CloseComponent();
 
         // Actions Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(50);
-        builder.AddAttribute(51, "Title", "Actions");
-        builder.AddAttribute(52, "Width", "150px");
-        builder.AddAttribute(53, "Sortable", false);
-        builder.AddAttribute(54, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                var buttonText = report.HasInvestigation ? "Continue Investigation" : "Start Investigation";
-                var buttonIcon = report.HasInvestigation ? "edit" : "search";
-                var buttonStyle = report.HasInvestigation ? ButtonStyle.Primary : ButtonStyle.Warning;
+        //builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(50);
+        //builder.AddAttribute(51, "Title", "Actions");
+        //builder.AddAttribute(52, "Width", "150px");
+        //builder.AddAttribute(53, "Sortable", false);
+        //builder.AddAttribute(54, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+        //    (templateBuilder =>
+        //    {
+        //        var buttonText = report.HasInvestigation ? "Continue Investigation" : "Start Investigation";
+        //        var buttonIcon = report.HasInvestigation ? "edit" : "search";
+        //        var buttonStyle = report.HasInvestigation ? ButtonStyle.Primary : ButtonStyle.Warning;
 
-                templateBuilder.OpenComponent<RadzenButton>(0);
-                templateBuilder.AddAttribute(1, "Text", buttonText);
-                templateBuilder.AddAttribute(2, "Icon", buttonIcon);
-                templateBuilder.AddAttribute(3, "ButtonStyle", buttonStyle);
-                templateBuilder.AddAttribute(4, "Size", ButtonSize.Small);
-                templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
-                    (args) => NavigateToInvestigation(report)));
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
+        //        templateBuilder.OpenComponent<RadzenButton>(0);
+        //        templateBuilder.AddAttribute(1, "Text", buttonText);
+        //        templateBuilder.AddAttribute(2, "Icon", buttonIcon);
+        //        templateBuilder.AddAttribute(3, "ButtonStyle", buttonStyle);
+        //        templateBuilder.AddAttribute(4, "Size", ButtonSize.Small);
+        //        templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
+        //            (args) => NavigateToInvestigation(report)));
+        //        templateBuilder.CloseComponent();
+        //    })));
+        //builder.CloseComponent();
     }
 
     private void RenderMitigationColumns(RenderTreeBuilder builder)
     {
-        // Hazard ID Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(0);
-        builder.AddAttribute(1, "Property", "HazardId");
-        builder.AddAttribute(2, "Title", "Hazard ID");
-        builder.AddAttribute(3, "Width", "150px");
-        builder.AddAttribute(4, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+        // Use the standard columns first
+        RenderStandardColumns(builder, false);
+
+        // Add a simple Mitigation Count Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(100);
+        builder.AddAttribute(101, "Property", "MitigationCount");
+        builder.AddAttribute(102, "Title", "Mitigations");
+        builder.AddAttribute(103, "Width", "120px");
+        builder.AddAttribute(104, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+            (templateBuilder =>
+            {
+                var badgeStyle = report.HasMitigations ? BadgeStyle.Success : BadgeStyle.Light;
+                templateBuilder.OpenComponent<RadzenBadge>(0);
+                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
+                templateBuilder.AddAttribute(2, "Text", $"{report.MitigationCount} Items");
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        // Add Actions Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(110);
+        builder.AddAttribute(111, "Title", "Actions");
+        builder.AddAttribute(112, "Width", "200px");
+        builder.AddAttribute(113, "Sortable", false);
+        builder.AddAttribute(114, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenStack>(0);
-                templateBuilder.AddAttribute(1, "Orientation", Orientation.Vertical);
-                templateBuilder.AddAttribute(2, "Gap", "0.25rem");
+                templateBuilder.AddAttribute(1, "Orientation", Orientation.Horizontal);
+                templateBuilder.AddAttribute(2, "Gap", "0.5rem");
                 templateBuilder.AddAttribute(3, "ChildContent", (RenderFragment)(stackBuilder =>
                 {
-                    stackBuilder.OpenComponent<RadzenText>(0);
-                    stackBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
-                    stackBuilder.AddAttribute(2, "Style", "font-weight: 600;");
-                    stackBuilder.AddAttribute(3, "Text", report.HazardId ?? "N/A");
-                    stackBuilder.CloseComponent();
+                    if (report.HasMitigations)
+                    {
+                        stackBuilder.OpenComponent<RadzenButton>(0);
+                        stackBuilder.AddAttribute(1, "Text", $"Approve All ({report.MitigationCount})");
+                        stackBuilder.AddAttribute(2, "Icon", "verified");
+                        stackBuilder.AddAttribute(3, "ButtonStyle", ButtonStyle.Success);
+                        stackBuilder.AddAttribute(4, "Size", ButtonSize.Small);
+                        stackBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
+                            (args) => ShowBulkApprovalConfirmation(report)));
+                        stackBuilder.AddAttribute(6, "Disabled", IsProcessingApproval);
+                        stackBuilder.CloseComponent();
+                    }
 
-                    stackBuilder.OpenComponent<RadzenText>(5);
-                    stackBuilder.AddAttribute(6, "TextStyle", TextStyle.Caption);
-                    stackBuilder.AddAttribute(7, "Style", "color: var(--rz-success); font-weight: 500;");
-                    stackBuilder.AddAttribute(8, "Text", "Ready for Mitigation");
+                    stackBuilder.OpenComponent<RadzenButton>(10);
+                    stackBuilder.AddAttribute(11, "Text", "View Report");
+                    stackBuilder.AddAttribute(12, "Icon", "visibility");
+                    stackBuilder.AddAttribute(13, "ButtonStyle", ButtonStyle.Info);
+                    stackBuilder.AddAttribute(14, "Size", ButtonSize.Small);
+                    stackBuilder.AddAttribute(15, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
+                        (args) => Navigation.NavigateTo($"/SMSRiskManagement/ReportValidation/{report.ReportId}")));
                     stackBuilder.CloseComponent();
                 }));
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
+    }
 
-        // Description Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(10);
-        builder.AddAttribute(11, "Property", "HazardDescription");
-        builder.AddAttribute(12, "Title", "Description");
-        builder.AddAttribute(13, "Width", "300px");
-        builder.CloseComponent();
+    #endregion
 
-        // Risk Assessment Status Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(15);
-        builder.AddAttribute(16, "Property", "RiskAssessmentStatus");
-        builder.AddAttribute(17, "Title", "Assessment Status");
-        builder.AddAttribute(18, "Width", "150px");
-        builder.AddAttribute(19, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                var badgeStyle = report.RiskAssessmentStatus?.Contains("Complete") == true ?
-                    BadgeStyle.Success : BadgeStyle.Primary;
-                var statusText = report.RiskAssessmentStatus ?? "Completed";
+    #region Helper Methods for Rendering
 
-                templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
-                templateBuilder.AddAttribute(2, "Text", statusText);
-                templateBuilder.AddAttribute(3, "Variant", Variant.Flat);
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
+    private void ShowBulkApprovalConfirmation(ReportProcessingSummary report)
+    {
+        // NEW: Show confirmation dialog for bulk approval
+        //Confirmation?.Show(new ConfirmationDialogParameters
+        //{
+        //    Title = "Confirm Bulk Approval",
+        //    Message = $"Are you sure you want to approve all mitigations for report '{report.ReportId}'?",
+        //    OnClose = async (confirmed) =>
+        //    {
+        //        if (confirmed)
+        //        {
+        //            await ApproveAllMitigationsAsync(report);
+        //        }
+        //    }
+        //});
+    }
 
-        // Assessment Type Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(20);
-        builder.AddAttribute(21, "Property", "AssessmentType");
-        builder.AddAttribute(22, "Title", "Assessment Type");
-        builder.AddAttribute(23, "Width", "120px");
-        builder.AddAttribute(24, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                var badgeStyle = report.AssessmentType?.ToLower() == "technical" ?
-                    BadgeStyle.Info : BadgeStyle.Secondary;
-                var typeText = report.AssessmentType ?? "Standard";
+    private async Task ApproveAllMitigationsAsync(ReportProcessingSummary report)
+    {
+        //try
+        //{
+        //    IsProcessingApproval = true;
+        //    StateHasChanged();
 
-                templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
-                templateBuilder.AddAttribute(2, "Text", typeText);
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
+        //    Logger.LogInformation("Approving all mitigations for report {ReportId}...", report.ReportId);
 
-        // Priority Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(30);
-        builder.AddAttribute(31, "Property", "Priority");
-        builder.AddAttribute(32, "Title", "Priority");
-        builder.AddAttribute(33, "Width", "100px");
-        builder.AddAttribute(34, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                var badgeStyle = report.Priority switch
-                {
-                    "High" => BadgeStyle.Danger,
-                    "Medium" => BadgeStyle.Warning,
-                    _ => BadgeStyle.Info
-                };
-                templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
-                templateBuilder.AddAttribute(2, "Text", report.Priority);
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
+        //    // Loop through each hazard and approve its mitigations
+        //    foreach (var hazard in report.AllHazards ?? Enumerable.Empty<Hazard>())
+        //    {
+        //        // Get all mitigations for this hazard
+        //        var mitigationsQuery = new GetMitigationsByHazardCodeQuery(hazard.Code);
+        //        var mitigationsResult = await Mediator.SendAsync(mitigationsQuery, CancellationToken.None);
 
-        // Assigned To Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(40);
-        builder.AddAttribute(41, "Property", "AssignedTo");
-        builder.AddAttribute(42, "Title", "Assigned To");
-        builder.AddAttribute(43, "Width", "150px");
-        builder.CloseComponent();
+        //        if (mitigationsResult.IsSuccess && mitigationsResult.Value != null)
+        //        {
+        //            foreach (var mitigation in mitigationsResult.Value)
+        //            {
+        //                // Approve each mitigation - ENHANCED: Use a single command for bulk approval
+        //                var approveCommand = new ApproveMitigationCommand(mitigation.Code);
+        //                var approveResult = await Mediator.SendAsync(approveCommand, CancellationToken.None);
 
-        // Days in Stage Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(50);
-        builder.AddAttribute(51, "Property", "DaysInStage");
-        builder.AddAttribute(52, "Title", "Days in Stage");
-        builder.AddAttribute(53, "Width", "120px");
-        builder.AddAttribute(54, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                var badgeStyle = report.DaysInStage > 5 ? BadgeStyle.Danger :
-                               report.DaysInStage > 2 ? BadgeStyle.Warning : BadgeStyle.Secondary;
-                templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
-                templateBuilder.AddAttribute(2, "Text", $"{report.DaysInStage} days");
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
+        //                if (approveResult.IsSuccess)
+        //                {
+        //                    Logger.LogInformation("Approved mitigation {MitigationCode} for hazard {HazardCode}",
+        //                        mitigation.Code, hazard.Code);
+        //                }
+        //                else
+        //                {
+        //                    Logger.LogError("Failed to approve mitigation {MitigationCode}: {Error}",
+        //                        mitigation.Code, approveResult.Error?.Message);
+        //                }
+        //            }
+        //        }
+        //        else
+        //        {
+        //            Logger.LogWarning("No mitigations found for hazard {HazardCode}",
+        //                hazard.Code);
+        //        }
+        //    }
 
-        // Actions Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(60);
-        builder.AddAttribute(61, "Title", "Actions");
-        builder.AddAttribute(62, "Width", "150px");
-        builder.AddAttribute(63, "Sortable", false);
-        builder.AddAttribute(64, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                templateBuilder.OpenComponent<RadzenButton>(0);
-                templateBuilder.AddAttribute(1, "Text", "Manage Mitigation");
-                templateBuilder.AddAttribute(2, "Icon", "build");
-                templateBuilder.AddAttribute(3, "ButtonStyle", ButtonStyle.Success);
-                templateBuilder.AddAttribute(4, "Size", ButtonSize.Small);
-                templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
-                    (args) => NavigateToMitigation(report)));
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
+        //    NotificationService.Notify(new NotificationMessage
+        //    {
+        //        Severity = NotificationSeverity.Success,
+        //        Summary = "Bulk Approval Successful",
+        //        Detail = $"All mitigations for report '{report.ReportId}' have been approved.",
+        //        Duration = 5000
+        //    });
+
+        //    // Reload data to reflect changes
+        //    await LoadDataAsync();
+        //}
+        //catch (Exception ex)
+        //{
+        //    Logger.LogError(ex, "Error approving mitigations for report {ReportId}", report.ReportId);
+
+        //    NotificationService.Notify(new NotificationMessage
+        //    {
+        //        Severity = NotificationSeverity.Error,
+        //        Summary = "Approval Failed",
+        //        Detail = $"An error occurred while approving mitigations for report '{report.ReportId}': {ex.Message}",
+        //        Duration = 10000
+        //    });
+        //}
+        //finally
+        //{
+        //    IsProcessingApproval = false;
+        //    StateHasChanged();
+        //}
     }
 
     private string GetAssessmentIcon(ReportProcessingSummary report)
     {
-        if (report.ValidationType?.ToLower() == "preliminary")
-            return "speed"; // Fast/quick assessment icon
-        else if (report.ValidationType?.ToLower() == "technical")
-            return report.HasRiskAssessment ? "edit" : "engineering"; // Technical assessment icon
-        else
+        if (report.StatusCategory == ProcessingStatusCategory.Validation)
+        {
+            return "check";
+        }
+        else if (report.StatusCategory == ProcessingStatusCategory.RiskAssessment)
+        {
             return "assessment";
+        }
+        else if (report.StatusCategory == ProcessingStatusCategory.Investigation)
+        {
+            return "search";
+        }
+        else if (report.StatusCategory == ProcessingStatusCategory.Mitigation)
+        {
+            return "build";
+        }
+        else if (report.StatusCategory == ProcessingStatusCategory.Closed)
+        {
+            return "archive";
+        }
+
+        // Default icon
+        return "description";
     }
 
     private ButtonStyle GetAssessmentButtonStyle(ReportProcessingSummary report)
     {
-        if (report.ValidationType?.ToLower() == "preliminary")
+        if (report.StatusCategory == ProcessingStatusCategory.Validation)
+        {
             return ButtonStyle.Success;
-        else if (report.ValidationType?.ToLower() == "technical")
-            return report.HasRiskAssessment ? ButtonStyle.Primary : ButtonStyle.Info;
-        else
+        }
+        else if (report.StatusCategory == ProcessingStatusCategory.RiskAssessment)
+        {
+            return ButtonStyle.Primary;
+        }
+        else if (report.StatusCategory == ProcessingStatusCategory.Investigation)
+        {
+            return ButtonStyle.Warning;
+        }
+        else if (report.StatusCategory == ProcessingStatusCategory.Mitigation)
+        {
             return ButtonStyle.Secondary;
-    }
-
-    #endregion
-
-    #region Navigation Methods
-
-    private void NavigateToInvestigation(ReportProcessingSummary report)
-    {
-        try
-        {
-            string navigationUrl;
-
-            if (report.HasInvestigation && !string.IsNullOrEmpty(report.HazardId))
-            {
-                // Navigate to existing investigation
-                navigationUrl = $"/SMSRiskManagement/Investigations/{report.InvestigationId}/{report.HazardId}";
-                Logger.LogInformation("Navigating to existing investigation: {InvestigationId} for hazard: {HazardId}",
-                    report.InvestigationId, report.HazardId);
-            }
-            else if (!string.IsNullOrEmpty(report.HazardId))
-            {
-                // Navigate to investigation page with hazard (will create investigation if needed)
-                navigationUrl = $"/SMSRiskManagement/Investigations/{report.HazardId}";
-                Logger.LogInformation("Navigating to start investigation for hazard: {HazardId}", report.HazardId);
-            }
-            else
-            {
-                // Navigate to general investigation page
-                navigationUrl = "/SMSRiskManagement/Investigations";
-                Logger.LogInformation("Navigating to general investigation page for report: {ReportId}", report.ReportId);
-            }
-
-            Navigation.NavigateTo(navigationUrl);
         }
-        catch (Exception ex)
+        else if (report.StatusCategory == ProcessingStatusCategory.Closed)
         {
-            Logger.LogError(ex, "Error navigating to investigation for report: {ReportId}", report.ReportId);
-            ShowErrorNotification("Error navigating to investigation page");
-        }
-    }
-
-    private void NavigateToMitigation(ReportProcessingSummary report)
-    {
-        try
-        {
-            // For now, navigate to the mitigation listings page
-            // Later this could be enhanced to create/edit specific mitigation records
-            string navigationUrl = "/Listings/Mitigations";
-
-            Logger.LogInformation("Navigating to mitigation management for hazard: {HazardId}", report.HazardId);
-            Navigation.NavigateTo(navigationUrl);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error navigating to mitigation for report: {ReportId}", report.ReportId);
-            ShowErrorNotification("Error navigating to mitigation page");
-        }
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Navigation Error",
-            Detail = message,
-            Duration = 5000
-        });
-        Logger.LogError("Error: {Message}", message);
-    }
-
-    #endregion
-
-    #region Models
-
-    public enum ProcessingStatusCategory
-    {
-        Validation,
-        RiskAssessment,
-        Investigation,
-        Mitigation,
-        Closed
-    }
-
-    public class ReportProcessingSummary
-    {
-        public string ReportId { get; set; } = string.Empty;
-        public string ReportDescription { get; set; } = string.Empty;
-        public string ReportStatus { get; set; } = string.Empty;
-
-        public string ReportStage { get; set; } = string.Empty;
-        public string CreatedBy { get; set; } = string.Empty;
-        public DateTime CreatedDate { get; set; }
-
-        public string? HazardId { get; set; }
-        public string HazardType { get; set; } = string.Empty;
-        public string HazardCategory { get; set; } = string.Empty;
-        public string HazardDescription { get; set; } = string.Empty;
-        public string Location { get; set; } = string.Empty;
-        public string Priority { get; set; } = string.Empty;
-        public string ReportedBy { get; set; } = string.Empty;
-        public DateTime ReportedDate { get; set; }
-        public bool IsConfidential { get; set; }
-
-        // ENHANCED: Risk Assessment Information
-        public string? RiskAssessmentId { get; set; }
-        public int CurrentAssessmentStep { get; set; } = 0;
-        public string RiskAssessmentStatus { get; set; } = string.Empty;
-        public string AssessmentStage { get; set; } = string.Empty;
-        public string AssessmentType { get; set; } = string.Empty; // NEW: Technical vs Preliminary
-        public bool HasRiskAssessment => !string.IsNullOrEmpty(RiskAssessmentId);
-
-        // ENHANCED: Report Validation Information
-        public string? ReportValidationId { get; set; }
-        public string ValidationType { get; set; } = string.Empty; // NEW: Preliminary vs Technical
-        public string ValidationDecision { get; set; } = string.Empty;
-        public bool HasReportValidation => !string.IsNullOrEmpty(ReportValidationId);
-
-        // NEW: Investigation Information
-        public string? InvestigationId { get; set; }
-        public string InvestigationStatus { get; set; } = string.Empty;
-        public string? AssignedInvestigator { get; set; }
-        public string? InvestigationNotes { get; set; }
-        public int InterviewCount { get; set; } = 0;
-        public bool HasInvestigation => !string.IsNullOrEmpty(InvestigationId);
-
-        public ProcessingStatusCategory StatusCategory { get; set; }
-        public int DaysInStage { get; set; }
-        public string? AssignedTo { get; set; }
-        public string ValidationUrl { get; set; } = string.Empty;
-
-        public string DisplayId => !string.IsNullOrEmpty(HazardId) ? HazardId : ReportId;
-
-        // ENHANCED: Smart validation URL based on validation type and assessment progress
-        public string SmartValidationUrl
-        {
-            get
-            {
-                // VALIDATION TAB: Reports without ReportValidation record
-                if (StatusCategory == ProcessingStatusCategory.Validation)
-                {
-                    return $"/SMSRiskManagement/ReportValidation/{ReportId}";
-                }
-
-                // RISK ASSESSMENT TAB: Reports with ReportValidation - route based on ValidationType
-                if (StatusCategory == ProcessingStatusCategory.RiskAssessment)
-                {
-                    // Determine assessment type from ValidationType
-                    if (ValidationType?.ToLower() == "preliminary")
-                    {
-                        // Preliminary Assessment - always single step
-                        return $"/SMSRiskManagement/PreliminaryRiskAssessment/{ReportId}";
-                    }
-                    else if (ValidationType?.ToLower() == "technical")
-                    {
-                        // Technical Assessment - multi-step, smart navigation
-                        if (HasRiskAssessment && CurrentAssessmentStep > 0)
-                        {
-                            // Continue to next step of existing assessment
-                            var nextStep = CurrentAssessmentStep < 5 ? CurrentAssessmentStep + 1 : CurrentAssessmentStep;
-                            return $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{HazardId}/{nextStep}";
-                        }
-                        else if (!string.IsNullOrEmpty(HazardId))
-                        {
-                            // Start new technical assessment
-                            return $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{HazardId}/1";
-                        }
-                    }
-                }
-
-                // INVESTIGATION TAB: Navigate to investigation if available
-                if (StatusCategory == ProcessingStatusCategory.Investigation)
-                {
-                    if (HasInvestigation && !string.IsNullOrEmpty(HazardId))
-                    {
-                        return $"/SMSRiskManagement/Investigations/{InvestigationId}/{HazardId}";
-                    }
-                }
-
-                // Fallback to report validation
-                return $"/SMSRiskManagement/ReportValidation/{ReportId}";
-            }
+            return ButtonStyle.Info;
         }
 
-        // ENHANCED: Smart button text based on validation type and progress
-        public string ActionButtonText
-        {
-            get
-            {
-                return StatusCategory switch
-                {
-                    ProcessingStatusCategory.Validation => "Start Validation",
-                    ProcessingStatusCategory.RiskAssessment => GetRiskAssessmentButtonText(),
-                    ProcessingStatusCategory.Investigation => HasInvestigation ? "Continue Investigation" : "Start Investigation",
-                    ProcessingStatusCategory.Mitigation => "View Mitigation",
-                    ProcessingStatusCategory.Closed => "View Closed",
-                    _ => "Process"
-                };
-            }
-        }
-
-        private string GetRiskAssessmentButtonText()
-        {
-            // Determine button text based on ValidationType
-            if (ValidationType?.ToLower() == "preliminary")
-            {
-                return "Start Preliminary Assessment";
-            }
-            else if (ValidationType?.ToLower() == "technical")
-            {
-                if (HasRiskAssessment && CurrentAssessmentStep > 0)
-                {
-                    return CurrentAssessmentStep < 5 ? $"Continue Step {CurrentAssessmentStep + 1}" : "Review Assessment";
-                }
-                else
-                {
-                    return "Start Technical Assessment";
-                }
-            }
-            else
-            {
-                return "Start Risk Assessment";
-            }
-        }
+        // Default style
+        return ButtonStyle.Secondary;
     }
 
     #endregion

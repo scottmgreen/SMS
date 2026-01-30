@@ -998,9 +998,7 @@ public static class FieldNames
     private static readonly Lazy<string> _fMitigationTargetDate = new Lazy<string>(() => "fldd_TargetDate");
     public static string fMitigationTargetDate => _fMitigationTargetDate.Value;
 
-    private static readonly Lazy<string> _fMitigationImplementationDate = new Lazy<string>(() => "fldd_ImplementationDate");
-    public static string fMitigationImplementationDate => _fMitigationImplementationDate.Value;
-
+    
     private static readonly Lazy<string> _fMitigationCompletionDate = new Lazy<string>(() => "fldd_CompletionDate");
     public static string fMitigationCompletionDate => _fMitigationCompletionDate.Value;
 
