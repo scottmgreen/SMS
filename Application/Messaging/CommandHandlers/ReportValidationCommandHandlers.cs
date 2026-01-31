@@ -13,12 +13,18 @@ public class CreateReportValidationCommandHandler : BaseCommandBundle, IRequestH
 {
     private readonly ReportValidationDataService _dataService;
     private readonly ILogger<CreateReportValidationCommandHandler> _logger;
-    
-    public CreateReportValidationCommandHandler(ReportValidationDataService dataService, ILogger<CreateReportValidationCommandHandler> logger)
+    private readonly HazardDataService _hazardDataService;
+    private readonly RiskAssessmentDataService _riskAssessmentDataService;
+    private readonly RiskAnalysisDataService _riskAnalysisDataService;
+    public CreateReportValidationCommandHandler(ReportValidationDataService dataService, HazardDataService hazardDataService,
+        RiskAssessmentDataService riskAssessmentDataService,
+        RiskAnalysisDataService riskAnalysisDataService, ILogger<CreateReportValidationCommandHandler> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        
+        _hazardDataService = hazardDataService;
+        _riskAssessmentDataService = riskAssessmentDataService ?? throw new ArgumentNullException(nameof(riskAssessmentDataService));
+        _riskAnalysisDataService = riskAnalysisDataService ?? throw new ArgumentNullException(nameof(riskAnalysisDataService));
     }
 
     public async Task<Result<ReportValidation>> HandleAsync(CreateReportValidationCommand request, CancellationToken ct = default)
@@ -37,85 +43,17 @@ public class CreateReportValidationCommandHandler : BaseCommandBundle, IRequestH
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created ReportValidation with ID: {Id}, Code: {Code}",
-                    result.Value?.Id, result.Value?.Code);
+                _logger.LogInformation("Successfully created ReportValidation with ID: {Id}, Code: {Code}",result.Value?.Id, result.Value?.Code);
             }
             else
             {
-                _logger.LogApplicationError("Failed to create ReportValidation with Code: {Code}. Error: {Error}",
-                    ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("Failed to create ReportValidation with Code: {Code}. Error: {Error}",ApplicationEventIds.Error, null);
             }
-
-            
-
-
-
-
-            return result;
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogWarning("CreateReportValidationCommand operation was cancelled");
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError("Unexpected error occurred while creating ReportValidation", ApplicationEventIds.Error, ex);
-            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.CreateFailed);
-        }
-    }
-
-    
-}
-
-public class UpdateReportValidationCommandHandler : BaseCommandBundle, IRequestHandler<UpdateReportValidationCommand, Result<ReportValidation>>
-{
-    private readonly ReportValidationDataService _dataService;
-    private readonly HazardDataService _hazardDataService;
-    private readonly RiskAssessmentDataService _riskAssessmentDataService;
-    private readonly RiskAnalysisDataService _riskAnalysisDataService;
-    private readonly ILogger<UpdateReportValidationCommandHandler> _logger;
-
-    public UpdateReportValidationCommandHandler(ReportValidationDataService dataService, HazardDataService hazardDataService,
-        RiskAssessmentDataService riskAssessmentDataService,
-        RiskAnalysisDataService riskAnalysisDataService,
-        ILogger<UpdateReportValidationCommandHandler> logger)
-    {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _hazardDataService = hazardDataService;
-        _riskAssessmentDataService = riskAssessmentDataService ?? throw new ArgumentNullException(nameof(riskAssessmentDataService));
-        _riskAnalysisDataService = riskAnalysisDataService ?? throw new ArgumentNullException(nameof(riskAnalysisDataService));
-    }
-
-    public async Task<Result<ReportValidation>> HandleAsync(UpdateReportValidationCommand request, CancellationToken ct = default)
-    {
-        try
-        {
-            if (request?.ReportValidation is null)
-            {
-                _logger.LogApplicationError("UpdateReportValidationCommand received with null ReportValidation", ApplicationEventIds.Error, null);
-                return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.NullOrEmpty);
-            }
-
-            _logger.LogInformation("Processing UpdateReportValidationCommand for Code: {Code}",  request.ReportValidation.Code);
-
-            var updateresult = await _dataService.UpdateReportValidationAsync(request.ReportValidation, ct).ConfigureAwait(false);
-
-            if (updateresult.IsSuccess)
-            {
-                _logger.LogInformation("Successfully updated ReportValidation with Code: {Code}", request.ReportValidation.Code);
-            }
-            else
-            {
-                _logger.LogApplicationError("Failed to update ReportValidation with Code: {Code}. Error: {Error}", ApplicationEventIds.Error, null);
-            }
-
 
             //IF SMS_RISK Create the RiskAssessments and RiskAnalysis
             //This was moved from AddHazard Command Handler.
 
-            if (request.ReportValidation.ValidationDecision == ValidationDecision.SmsRisk.Name)
+            if (request.ReportValidation.ValidationDecision == ValidationDecision.SmsRisk.Value)
             {
                 var hazards = _hazardDataService.GetHazardsByReportIdAsync(new ReportID(request.ReportValidation.ReportCode));
                 var hazard = hazards.Result.Value.FirstOrDefault();
@@ -126,7 +64,7 @@ public class UpdateReportValidationCommandHandler : BaseCommandBundle, IRequestH
                 else
                 {
                     // ? CORRECT DESIGN: Check for existing RiskAssessments for this report first
-                    var existingAssessments = await FindExistingRiskAssessmentsForReport(request.ReportValidation.ReportCode, ct);
+                    var existingAssessments = await FindExistingRiskAssessmentsForReport(result.Value.ReportCode, ct);
 
                     string initialRiskAssessmentCode;
                     string residualRiskAssessmentCode;
@@ -158,27 +96,19 @@ public class UpdateReportValidationCommandHandler : BaseCommandBundle, IRequestH
             }
 
 
-
-
-
-
-
-
-
-            return updateresult;
+            return result;
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateReportValidationCommand operation was cancelled");
+            _logger.LogWarning("CreateReportValidationCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("Unexpected error occurred while updating ReportValidation with ID: {Id}", ApplicationEventIds.Error, ex);
-            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.UpdateFailed);
+            _logger.LogApplicationError("Unexpected error occurred while creating ReportValidation", ApplicationEventIds.Error, ex);
+            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.CreateFailed);
         }
     }
-
 
     /// <summary>
     /// Create RiskAnalysis records linking this hazard to its RiskAssessments
@@ -243,8 +173,7 @@ public class UpdateReportValidationCommandHandler : BaseCommandBundle, IRequestH
                     // Log details of found assessments
                     foreach (var assessment in reportAssessments)
                     {
-                        _logger.LogInformation("  ?? Assessment {Code}: Type={Type}, HazardCode={HazardCode}",
-                            assessment.Code, assessment.AssessmentType, assessment.HazardCode);
+                        _logger.LogInformation("  ?? Assessment {Code}: Type={Type}, HazardCode={HazardCode}",assessment.Code, assessment.AssessmentType, assessment.HazardCode);
                     }
 
                     if (reportAssessments.Any())
@@ -319,6 +248,70 @@ public class UpdateReportValidationCommandHandler : BaseCommandBundle, IRequestH
 
         return (initialCode, residualCode);
     }
+}
+
+public class UpdateReportValidationCommandHandler : BaseCommandBundle, IRequestHandler<UpdateReportValidationCommand, Result<ReportValidation>>
+{
+    private readonly ReportValidationDataService _dataService;
+    
+    private readonly ILogger<UpdateReportValidationCommandHandler> _logger;
+
+    public UpdateReportValidationCommandHandler(ReportValidationDataService dataService,ILogger<UpdateReportValidationCommandHandler> logger)
+    {
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        
+    }
+
+    public async Task<Result<ReportValidation>> HandleAsync(UpdateReportValidationCommand request, CancellationToken ct = default)
+    {
+        try
+        {
+            if (request?.ReportValidation is null)
+            {
+                _logger.LogApplicationError("UpdateReportValidationCommand received with null ReportValidation", ApplicationEventIds.Error, null);
+                return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Processing UpdateReportValidationCommand for Code: {Code}",  request.ReportValidation.Code);
+
+            var updateresult = await _dataService.UpdateReportValidationAsync(request.ReportValidation, ct).ConfigureAwait(false);
+
+            if (updateresult.IsSuccess)
+            {
+                _logger.LogInformation("Successfully updated ReportValidation with Code: {Code}", request.ReportValidation.Code);
+            }
+            else
+            {
+                _logger.LogApplicationError("Failed to update ReportValidation with Code: {Code}. Error: {Error}", ApplicationEventIds.Error, null);
+            }
+
+
+            
+
+
+
+
+
+
+
+
+            return updateresult;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("UpdateReportValidationCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error occurred while updating ReportValidation with ID: {Id}", ApplicationEventIds.Error, ex);
+            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.UpdateFailed);
+        }
+    }
+
+
+    
 
 
 
