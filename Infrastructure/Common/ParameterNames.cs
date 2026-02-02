@@ -335,11 +335,23 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmHazardReportCode = new Lazy<string>(() => "@pHazardReportCode");
     public static string pmHazardReportCode => _pmHazardReportCode.Value;
 
-    private static readonly Lazy<string> _pmHazardScoringPanelRiskMatrixCode = new Lazy<string>(() => "@pHazardScoringPanelRiskMatrixCode");
-    public static string pmHazardScoringPanelRiskMatrixCode => _pmHazardScoringPanelRiskMatrixCode.Value;
+    private static readonly Lazy<string> _pmHazardInitialRiskMatrixCode = new Lazy<string>(() => "@pHazardInitialRiskMatrixCode");
+    public static string pmHazardInitialRiskMatrixCode => _pmHazardInitialRiskMatrixCode.Value;
 
-    private static readonly Lazy<string> _pmHazardAverageScore = new Lazy<string>(() => "@pHazardAverageScore");
-    public static string pmHazardAverageScore => _pmHazardAverageScore.Value;
+    private static readonly Lazy<string> _pmHazardInitialAverageScore = new Lazy<string>(() => "@pHazardInitialAverageScore");
+    public static string pmHazardInitialAverageScore => _pmHazardInitialAverageScore.Value;
+
+
+    private static readonly Lazy<string> _pmHazardResidualRiskMatrixCode = new Lazy<string>(() => "@pHazardResidualRiskMatrixCode");
+    public static string pmHazardResidualRiskMatrixCode => _pmHazardResidualRiskMatrixCode.Value;
+
+    private static readonly Lazy<string> _pmHazardResidualAverageScore = new Lazy<string>(() => "@pHazardResidualAverageScore");
+    public static string pmHazardResidualAverageScore => _pmHazardResidualAverageScore.Value;
+
+
+
+
+
 
     // Additional Hazard parameters for comprehensive SMS support
 
@@ -382,11 +394,11 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmHazardRiskLevel = new Lazy<string>(() => "@pHazardRiskLevel");
     public static string pmHazardRiskLevel => _pmHazardRiskLevel.Value;
 
-    private static readonly Lazy<string> _pmHazardWorstCredibleOutcome = new Lazy<string>(() => "@pHazardWorstCredibleOutcome");
-    public static string pmHazardWorstCredibleOutcome => _pmHazardWorstCredibleOutcome.Value;
+    private static readonly Lazy<string> _pmHazardInitialWorstCredibleOutcome = new Lazy<string>(() => "@pHazardInitialWorstCredibleOutcome");
+    public static string pmHazardInitialWorstCredibleOutcome => _pmHazardInitialWorstCredibleOutcome.Value;
 
-    private static readonly Lazy<string> _pmHazardRootCause = new Lazy<string>(() => "@pHazardRootCause");
-    public static string pmHazardRootCause => _pmHazardRootCause.Value;
+    private static readonly Lazy<string> _pmHazardInitialRootCause = new Lazy<string>(() => "@pHazardInitialRootCause");
+    public static string pmHazardInitialRootCause => _pmHazardInitialRootCause.Value;
 
     private static readonly Lazy<string> _pmHazardCurrentMitigations = new Lazy<string>(() => "@pHazardCurrentMitigations");
     public static string pmHazardCurrentMitigations => _pmHazardCurrentMitigations.Value;
@@ -661,11 +673,11 @@ public static class ParameterNames
     /// <summary>
     /// Risk Assessment - Step 3 Parameters
     /// </summary>
-    private static readonly Lazy<string> _pmRiskAnalysisMethod = new Lazy<string>(() => "@pRiskAnalysisMethod");
-    public static string pmRiskAnalysisMethod => _pmRiskAnalysisMethod.Value;
+    //private static readonly Lazy<string> _pmRiskAnalysisMethod = new Lazy<string>(() => "@pRiskAnalysisMethod");
+    //public static string pmRiskAnalysisMethod => _pmRiskAnalysisMethod.Value;
 
-    private static readonly Lazy<string> _pmRiskCriteria = new Lazy<string>(() => "@pRiskCriteria");
-    public static string pmRiskCriteria => _pmRiskCriteria.Value;
+    //private static readonly Lazy<string> _pmRiskCriteria = new Lazy<string>(() => "@pRiskCriteria");
+    //public static string pmRiskCriteria => _pmRiskCriteria.Value;
 
     /// <summary>
     /// Risk Assessment - Step 4 Parameters
@@ -684,9 +696,6 @@ public static class ParameterNames
 
     private static readonly Lazy<string> _pmFinalRiskLevel = new Lazy<string>(() => "@pFinalRiskLevel");
     public static string pmFinalRiskLevel => _pmFinalRiskLevel.Value;
-
-    private static readonly Lazy<string> _pmRiskTolerability = new Lazy<string>(() => "@pRiskTolerability");
-    public static string pmRiskTolerability => _pmRiskTolerability.Value;
 
     private static readonly Lazy<string> _pmAssessmentRationale = new Lazy<string>(() => "@pAssessmentRationale");
     public static string pmAssessmentRationale => _pmAssessmentRationale.Value;
@@ -862,14 +871,35 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmRiskAnalysisRiskAssessmentCode = new Lazy<string>(() => "@pRiskAnalysisRiskAssessmentCode");
     public static string pmRiskAnalysisRiskAssessmentCode => _pmRiskAnalysisRiskAssessmentCode.Value;
 
-    private static readonly Lazy<string> _pmRiskAnalysisWorstCredibleOutcome = new Lazy<string>(() => "@pRiskAnalysisWorstCredibleOutcome");
-    public static string pmRiskAnalysisWorstCredibleOutcome => _pmRiskAnalysisWorstCredibleOutcome.Value;
+    private static readonly Lazy<string> _pmRiskAnalysisInitialWorstCredibleOutcome = new Lazy<string>(() => "@pRiskAnalysisInitialWorstCredibleOutcome");
+    public static string pmRiskAnalysisInitialWorstCredibleOutcome => _pmRiskAnalysisInitialWorstCredibleOutcome.Value;
 
-    private static readonly Lazy<string> _pmRiskAnalysisRootCause = new Lazy<string>(() => "@pRiskAnalysisRootCause");
-    public static string pmRiskAnalysisRootCause => _pmRiskAnalysisRootCause.Value;
+    private static readonly Lazy<string> _pmRiskAnalysisInitialRootCause = new Lazy<string>(() => "@pRiskAnalysisInitialRootCause");
+    public static string pmRiskAnalysisInitialRootCause => _pmRiskAnalysisInitialRootCause.Value;
 
-    private static readonly Lazy<string> _pmRiskAnalysisAdditionalComments = new Lazy<string>(() => "@pRiskAnalysisAdditionalComments");
-    public static string pmRiskAnalysisAdditionalComments => _pmRiskAnalysisAdditionalComments.Value;
+    private static readonly Lazy<string> _pmRiskAnalysisInitialAdditionalComments = new Lazy<string>(() => "@pRiskAnalysisInitialAdditionalComments");
+    public static string pmRiskAnalysisInitialAdditionalComments => _pmRiskAnalysisInitialAdditionalComments.Value;
+
+    private static readonly Lazy<string> _pmRiskAnalysisResidualWorstCredibleOutcome = new Lazy<string>(() => "@pRiskAnalysisResidualWorstCredibleOutcome");
+    public static string pmRiskAnalysisResidualWorstCredibleOutcome => _pmRiskAnalysisResidualWorstCredibleOutcome.Value;
+
+    private static readonly Lazy<string> _pmRiskAnalysisResidualRootCause = new Lazy<string>(() => "@pRiskAnalysisResidualRootCause");
+    public static string pmRiskAnalysisResidualRootCause => _pmRiskAnalysisResidualRootCause.Value;
+
+    private static readonly Lazy<string> _pmRiskAnalysisResidualAdditionalComments = new Lazy<string>(() => "@pRiskAnalysisResidualAdditionalComments");
+    public static string pmRiskAnalysisResidualAdditionalComments => _pmRiskAnalysisResidualAdditionalComments.Value;
+
+
+
+
+
+
+
+
+
+
+
+
 
     /// <summary>
     /// Scoring Panel parameters (restored from accidental removal)

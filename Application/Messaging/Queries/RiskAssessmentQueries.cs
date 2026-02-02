@@ -4,11 +4,11 @@ namespace SMS_Application.Messaging.Queries;
 // RISK ASSESSMENT QUERIES
 // =============================================
 
-public class GetRiskAssessmentByIdQuery : BaseQueryBundle, IRequest<Result<RiskAssessment>>
+public class GetRiskAssessmentByCodeQuery : BaseQueryBundle, IRequest<Result<RiskAssessment>>
 {
     public RiskAssessmentID RiskAssessmentId { get; set; }
 
-    public GetRiskAssessmentByIdQuery(RiskAssessmentID riskAssessmentId)
+    public GetRiskAssessmentByCodeQuery(RiskAssessmentID riskAssessmentId)
     {
         RiskAssessmentId = riskAssessmentId ?? throw new ArgumentNullException(nameof(riskAssessmentId));
     }

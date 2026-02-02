@@ -31,7 +31,7 @@ public sealed class Hazard : BaseAuditableEntity
     public string? Name { get; set; }
     public string Description { get; set; } = string.Empty;
 
-    public FiveMComponent? FiveMComponent { get; set; } // Man, Machine, Method, Material, Milieu - Smart Enum
+    
     public HazardStatus Status { get; set; } = HazardStatus.Active;
     public HazardPriority Priority { get; set; } = HazardPriority.Medium;
 
@@ -85,11 +85,17 @@ public sealed class Hazard : BaseAuditableEntity
     #region Assessment and Risk Properties
 
     public string ReportCode { get; set; } = string.Empty;
-    public string? RiskMatrixCode { get; set; }
-    public decimal? AverageScore { get; set; }
+    public string? InitialRiskMatrixCode { get; set; }
+    public decimal? InitialAverageScore { get; set; }
+
+    public string? ResidualRiskMatrixCode { get; set; }
+    public decimal? ResidualAverageScore { get; set; }
+
+
+
     public string? RiskLevel { get; set; } // Very Low, Low, Medium, High, Very High
-    public string? WorstCredibleOutcome { get; set; }
-    public string? RootCause { get; set; }
+    public string? InitialWorstCredibleOutcome { get; set; }
+    public string? InitialRootCause { get; set; }
 
     #endregion
 
@@ -121,100 +127,11 @@ public sealed class Hazard : BaseAuditableEntity
     //    return CreateComprehensive(hazardId, description, category, "SYSTEM", null, null, component);
     //}
 
-    /// <summary>
-    /// Create a comprehensive hazard with all required SMS information
-    /// </summary>
-    public static Result<Hazard> CreateComprehensive(string code, string description, string category, string reportedBy, string? reportingDepartment = null, string? hazardType = null,
-        FiveMComponent? fiveMComponent = null, bool isConfidential = false, bool isAnonymous = false)
-    {
-        if (string.IsNullOrWhiteSpace(code))
-        {
-            return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.CodeRequired);
-        }
+    
+    
 
-        if (string.IsNullOrWhiteSpace(description))
-        {
-            return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NullOrEmpty);
-        }
-
-        if (description.Length < 10)
-        {
-            return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.InvalidCode);
-        }
-
-        if (string.IsNullOrWhiteSpace(reportedBy))
-        {
-            return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.ReportedByRequired);
-        }
-
-        var hazardId = new HazardID(code);
-        var hazard = new Hazard(hazardId)
-        {
-            FiveMComponent = fiveMComponent,
-            HazardType = hazardType,
-            ReportedBy = reportedBy,
-            ReportingDepartment = reportingDepartment,
-            IsConfidential = isConfidential,
-            IsAnonymous = isAnonymous
-        };
-
-        // Auto-analyze Five M component if not provided
-        if (fiveMComponent == null)
-        {
-            var analysisResult = hazard.AnalyzeFiveMComponent();
-            if (analysisResult.IsSuccess && analysisResult.Value != null)
-            {
-                hazard.FiveMComponent = analysisResult.Value;
-            }
-        }
-
-        return Result<Hazard>.Success(hazard);
-    }
-
-    /// <summary>
-    /// Create hazard from hazard reporting form
-    /// </summary>
-    public static Result<Hazard> CreateFromHazardReport(string description, string category, string reportedBy,
-        string? reportingDepartment, string? hazardType = null, HazardLocation location = null,
-        bool isConfidential = false, bool isAnonymous = false)
-    {
-        // Auto-generate code
-        var code = $"HZ-0000"; // These are generated in the Database via stored proc so the initial code is HZ-0000
-
-        var result = CreateComprehensive(code, description, category, reportedBy, reportingDepartment, hazardType, null, isConfidential, isAnonymous); // Let auto-analysis determine Five M component
-
-        if (result.IsFailure)
-        {
-            return result;
-        }
-
-        var hazard = result.Value;
-        hazard.HazardLocation = location;
-
-        // Set the Name property based on hazard type or use a default
-        hazard.Name = GetHazardNameFromType(hazardType) ?? $"Hazard Report - {DateTime.UtcNow:yyyy-MM-dd}";
-
-        return Result<Hazard>.Success(hazard);
-    }
-
-    /// <summary>
-    /// Get a user-friendly name based on hazard type
-    /// </summary>
-    private static string? GetHazardNameFromType(string? hazardType)
-    {
-        return hazardType switch
-        {
-            "RWY_INCURSION" => "Runway Incursion",
-            "ACFT_DAMAGE" => "Aircraft Damage",
-            "GROUND_VEHICLE" => "Ground Vehicle Incident",
-            "WILDLIFE_STRIKE" => "Wildlife Strike",
-            "FOD" => "Foreign Object Debris",
-            "EQUIPMENT_FAIL" => "Equipment Failure",
-            "PERSONNEL_INJURY" => "Personnel Injury",
-            "OTHER" => "Other Hazard",
-            _ => hazardType // Return as-is if not a known type
-        };
-    }
+    
+    
 
     #endregion
 
@@ -297,16 +214,7 @@ public sealed class Hazard : BaseAuditableEntity
     /// <summary>
     /// Analyze and suggest Five M component based on hazard description
     /// </summary>
-    public Result<FiveMComponent?> AnalyzeFiveMComponent()
-    {
-        if (string.IsNullOrWhiteSpace(Description))
-        {
-            return Result<FiveMComponent?>.Success((FiveMComponent?)null);
-        }
-
-        var suggestedComponent = Enums.FiveMComponent.AnalyzeFromDescription(Description);
-        return Result<FiveMComponent?>.Success(suggestedComponent);
-    }
+    
 
 
 

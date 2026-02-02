@@ -341,7 +341,6 @@
                 finalSeverity,
                 finalLikelihood,
                 finalRiskLevel,
-                DetermineRiskTolerability(finalRiskLevel),
                 assessmentRationale);
 
             var result = await Mediator.SendAsync(saveStep4Command, CancellationToken.None);
@@ -429,21 +428,6 @@
         };
 
         return (severity, likelihood);
-    }
-
-    /// <summary>
-    /// Determine risk tolerability based on risk level
-    /// </summary>
-    private string DetermineRiskTolerability(string riskLevel)
-    {
-        return riskLevel switch
-        {
-            "High" => "Unacceptable",
-            "Medium" => "Tolerable",
-            "Low" => "Acceptable", 
-            "Acceptable" => "Acceptable",
-            _ => "Under Review"
-        };
     }
 
     /// <summary>

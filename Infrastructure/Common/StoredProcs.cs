@@ -384,9 +384,7 @@
         /// <summary>
         /// Report Management Operations
         /// </summary>
-        private static readonly Lazy<string> _pr_AddReport = new Lazy<string>(() => "pr_AddReport");
-        public static string pr_AddReport => _pr_AddReport.Value;
-
+        
         private static readonly Lazy<string> _pr_Report_GetAll = new Lazy<string>(() => "pr_Report_GetAll");
         public static string pr_Report_GetAll => _pr_Report_GetAll.Value;
 
@@ -553,12 +551,12 @@
         private static readonly Lazy<string> _pr_RiskAnalysis_Insert = new Lazy<string>(() => "pr_RiskAnalysis_Insert");
         public static string pr_RiskAnalysis_Insert => _pr_RiskAnalysis_Insert.Value;
 
-        private static readonly Lazy<string> _pr_RiskAnalysis_GetById = new Lazy<string>(() => "pr_RiskAnalysis_GetById");
-        public static string pr_RiskAnalysis_GetById => _pr_RiskAnalysis_GetById.Value;
+        private static readonly Lazy<string> _pr_RiskAnalysis_GetByCode = new Lazy<string>(() => "pr_RiskAnalysis_GetByCode");
+        public static string pr_RiskAnalysis_GetByCode => _pr_RiskAnalysis_GetByCode.Value;
 
 
-        private static readonly Lazy<string> _pr_RiskAnalysis_GetByHazardId = new Lazy<string>(() => "pr_RiskAnalysis_GetByHazardId");
-        public static string pr_RiskAnalysis_GetByHazardId => _pr_RiskAnalysis_GetByHazardId.Value;
+        private static readonly Lazy<string> _pr_RiskAnalysis_GetByHazardCode = new Lazy<string>(() => "pr_RiskAnalysis_GetByHazardCode");
+        public static string pr_RiskAnalysis_GetByHazardCode => _pr_RiskAnalysis_GetByHazardCode.Value;
 
 
 

@@ -351,11 +351,25 @@ public static class FieldNames
     private static readonly Lazy<string> _fHazardReportCode = new Lazy<string>(() => "fldv_ReportCode");
     public static string fHazardReportCode => _fHazardReportCode.Value;
 
-    private static readonly Lazy<string> _fHazardScoringPanelRiskMatrixCode = new Lazy<string>(() => "fldv_RiskMatrixCode");
-    public static string fHazardScoringPanelRiskMatrixCode => _fHazardScoringPanelRiskMatrixCode.Value;
+    private static readonly Lazy<string> _fHazardInitialRiskMatrixCode = new Lazy<string>(() => "fldv_InitialRiskMatrixCode");
+    public static string fHazardInitialRiskMatrixCode => _fHazardInitialRiskMatrixCode.Value;
 
-    private static readonly Lazy<string> _fHazardAverageScore = new Lazy<string>(() => "fldv_AverageScore");
-    public static string fHazardAverageScore => _fHazardAverageScore.Value;
+    private static readonly Lazy<string> _fHazardInitialAverageScore = new Lazy<string>(() => "fldv_InitialAverageScore");
+    public static string fHazardInitialAverageScore => _fHazardInitialAverageScore.Value;
+
+    private static readonly Lazy<string> _fHazardResidualRiskMatrixCode = new Lazy<string>(() => "fldv_ResidualRiskMatrixCode");
+    public static string fHazardResidualRiskMatrixCode => _fHazardResidualRiskMatrixCode.Value;
+
+    private static readonly Lazy<string> _fHazardResidualAverageScore = new Lazy<string>(() => "fldv_ResidualAverageScore");
+    public static string fHazardResidualAverageScore => _fHazardResidualAverageScore.Value;
+
+
+
+
+
+
+
+
 
     // Additional Hazard fields for comprehensive SMS support
     private static readonly Lazy<string> _fHazardType = new Lazy<string>(() => "fldv_HazardType");
@@ -397,11 +411,11 @@ public static class FieldNames
     private static readonly Lazy<string> _fHazardRiskLevel = new Lazy<string>(() => "fldv_RiskLevel");
     public static string fHazardRiskLevel => _fHazardRiskLevel.Value;
 
-    private static readonly Lazy<string> _fHazardWorstCredibleOutcome = new Lazy<string>(() => "fldv_WorstCredibleOutcome");
-    public static string fHazardWorstCredibleOutcome => _fHazardWorstCredibleOutcome.Value;
+    private static readonly Lazy<string> _fHazardInitialWorstCredibleOutcome = new Lazy<string>(() => "fldv_InitialWorstCredibleOutcome");
+    public static string fHazardInitialWorstCredibleOutcome => _fHazardInitialWorstCredibleOutcome.Value;
 
-    private static readonly Lazy<string> _fHazardRootCause = new Lazy<string>(() => "fldv_RootCause");
-    public static string fHazardRootCause => _fHazardRootCause.Value;
+    private static readonly Lazy<string> _fHazardInitialRootCause = new Lazy<string>(() => "fldv_InitialRootCause");
+    public static string fHazardInitialRootCause => _fHazardInitialRootCause.Value;
 
     private static readonly Lazy<string> _fHazardCurrentMitigations = new Lazy<string>(() => "fldv_CurrentMitigations");
     public static string fHazardCurrentMitigations => _fHazardCurrentMitigations.Value;
@@ -851,14 +865,27 @@ public static class FieldNames
     private static readonly Lazy<string> _fRiskAnalysisRiskAssessmentCode = new Lazy<string>(() => "fldv_RiskAssessmentCode");
     public static string fRiskAnalysisRiskAssessmentCode => _fRiskAnalysisRiskAssessmentCode.Value;
 
-    private static readonly Lazy<string> _fRiskAnalysisWorstCredibleOutcome = new Lazy<string>(() => "fldv_WorstCredibleOutcome");
-    public static string fRiskAnalysisWorstCredibleOutcome => _fRiskAnalysisWorstCredibleOutcome.Value;
+    private static readonly Lazy<string> _fRiskAnalysisInitialWorstCredibleOutcome = new Lazy<string>(() => "fldv_InitialWorstCredibleOutcome");
+    public static string fRiskAnalysisInitialWorstCredibleOutcome => _fRiskAnalysisInitialWorstCredibleOutcome.Value;
 
-    private static readonly Lazy<string> _fRiskAnalysisRootCause = new Lazy<string>(() => "fldv_RootCause");
-    public static string fRiskAnalysisRootCause => _fRiskAnalysisRootCause.Value;
+    private static readonly Lazy<string> _fRiskAnalysisInitialRootCause = new Lazy<string>(() => "fldv_InitialRootCause");
+    public static string fRiskAnalysisInitialRootCause => _fRiskAnalysisInitialRootCause.Value;
 
-    private static readonly Lazy<string> _fRiskAnalysisAdditionalComments = new Lazy<string>(() => "fldv_AdditionalComments");
-    public static string fRiskAnalysisAdditionalComments => _fRiskAnalysisAdditionalComments.Value;
+    private static readonly Lazy<string> _fRiskAnalysisInitialAdditionalComments = new Lazy<string>(() => "fldv_InitialAdditionalComments");
+    public static string fRiskAnalysisInitialAdditionalComments => _fRiskAnalysisInitialAdditionalComments.Value;
+
+
+    private static readonly Lazy<string> _fRiskAnalysisResidualWorstCredibleOutcome = new Lazy<string>(() => "fldv_ResidualWorstCredibleOutcome");
+    public static string fRiskAnalysisResidualWorstCredibleOutcome => _fRiskAnalysisResidualWorstCredibleOutcome.Value;
+
+    private static readonly Lazy<string> _fRiskAnalysisResidualRootCause = new Lazy<string>(() => "fldv_ResidualRootCause");
+    public static string fRiskAnalysisResidualRootCause => _fRiskAnalysisResidualRootCause.Value;
+
+    private static readonly Lazy<string> _fRiskAnalysisResidualAdditionalComments = new Lazy<string>(() => "fldv_ResidualAdditionalComments");
+    public static string fRiskAnalysisResidualAdditionalComments => _fRiskAnalysisResidualAdditionalComments.Value;
+
+
+
 
     #endregion
 
@@ -938,12 +965,7 @@ public static class FieldNames
     public static string fRiskAssessmentFiveMOperationalEnvironment => _fRiskAssessmentFiveMOperationalEnvironment.Value;
 
     // Step 3 fields
-    private static readonly Lazy<string> _fRiskAssessmentRiskAnalysisMethod = new Lazy<string>(() => "fldv_RiskAnalysisMethod");
-    public static string fRiskAssessmentRiskAnalysisMethod => _fRiskAssessmentRiskAnalysisMethod.Value;
-
-    private static readonly Lazy<string> _fRiskAssessmentRiskCriteria = new Lazy<string>(() => "fldv_RiskCriteria");
-    public static string fRiskAssessmentRiskCriteria => _fRiskAssessmentRiskCriteria.Value;
-
+    
     // Step 4 fields
 
     private static readonly Lazy<string> _fRiskAssessmentFinalSeverityScore = new Lazy<string>(() => "fldi_FinalSeverityScore");
@@ -954,9 +976,6 @@ public static class FieldNames
 
     private static readonly Lazy<string> _fRiskAssessmentFinalRiskLevel = new Lazy<string>(() => "fldv_FinalRiskLevel");
     public static string fRiskAssessmentFinalRiskLevel => _fRiskAssessmentFinalRiskLevel.Value;
-
-    private static readonly Lazy<string> _fRiskAssessmentRiskTolerability = new Lazy<string>(() => "fldv_RiskTolerability");
-    public static string fRiskAssessmentRiskTolerability => _fRiskAssessmentRiskTolerability.Value;
 
     private static readonly Lazy<string> _fRiskAssessmentAssessmentRationale = new Lazy<string>(() => "fldv_AssessmentRationale");
     public static string fRiskAssessmentAssessmentRationale => _fRiskAssessmentAssessmentRationale.Value;

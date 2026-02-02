@@ -9,6 +9,6 @@ public interface IRiskAnalysis
     string? HazardCode { get; set; }
     string? Status { get; set; }
     string? Stage { get; set; }
-    string? WorstCredibleOutcome { get; set; }
-    string? RootCause { get; set; }
+    string? InitialWorstCredibleOutcome { get; set; }
+    string? InitialRootCause { get; set; }
 }

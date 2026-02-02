@@ -51,12 +51,12 @@ public sealed class RiskAssessmentService
         }
     }
 
-    public async Task<Result<RiskAssessment>> GetRiskAssessmentByIdAsync(RiskAssessmentID id, CancellationToken ct = default)
+    public async Task<Result<RiskAssessment>> GetRiskAssessmentByCodeAsync(RiskAssessmentID id, CancellationToken ct = default)
     {
         try
         {
             _logger.LogInformation("Retrieving risk assessment with ID: {Id}", id);
-            return await _dataService.GetRiskAssessmentByIdAsync(id, ct).ConfigureAwait(false);
+            return await _dataService.GetRiskAssessmentByCodeAsync(id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -64,16 +64,16 @@ public sealed class RiskAssessmentService
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NotFound);
         }
     }
-    public async Task<Result<List<RiskAssessment>>> GetRiskAssessmentsByHazardIdAsync(HazardID id, CancellationToken ct = default)
+    public async Task<Result<List<RiskAssessment>>> GetRiskAssessmentsByHazardCodeAsync(HazardID code, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Retrieving risk assessment with ID: {Id}", id);
-            return await _dataService.GetRiskAssessmentsByHazardCodeAsync(id, ct).ConfigureAwait(false);
+            _logger.LogInformation("Retrieving risk assessment with ID: {Id}", code);
+            return await _dataService.GetRiskAssessmentsByHazardCodeAsync(code, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving risk assessment with Hazard ID: {Id}", id);
+            _logger.LogError(ex, "Unexpected error retrieving risk assessment with Hazard ID: {Id}", code);
             return Result<List<RiskAssessment>>.Failure<List<RiskAssessment>>(DomainErrors.RiskAssessmentError.NotFound);
         }
     }
@@ -266,7 +266,6 @@ public sealed class RiskAssessmentService
                 finalSeverityScore,
                 finalLikelihoodScore,
                 finalRiskLevel,
-                riskTolerability,
                 assessmentRationale);
 
             var result = await _mediator.SendAsync(command, ct).ConfigureAwait(false);

@@ -225,60 +225,60 @@ public class SaveStep1CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
     }
 }
 
-public class SaveStep3CommandHandler : BaseCommandBundle, IRequestHandler<SaveStep3Command, Result<RiskAssessment>>
-{
-    private readonly RiskAssessmentDataService _dataService;
-    private readonly ILogger<SaveStep3CommandHandler> _logger;
+//public class SaveStep3CommandHandler : BaseCommandBundle, IRequestHandler<SaveStep3Command, Result<RiskAssessment>>
+//{
+//    private readonly RiskAssessmentDataService _dataService;
+//    private readonly ILogger<SaveStep3CommandHandler> _logger;
 
-    public SaveStep3CommandHandler(RiskAssessmentDataService dataService, ILogger<SaveStep3CommandHandler> logger)
-    {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
+//    public SaveStep3CommandHandler(RiskAssessmentDataService dataService, ILogger<SaveStep3CommandHandler> logger)
+//    {
+//        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+//        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+//    }
 
-    public async Task<Result<RiskAssessment>> HandleAsync(SaveStep3Command request, CancellationToken ct = default)
-    {
-        try
-        {
-            if (request is null)
-            {
-                _logger.LogApplicationError("SaveStep3Command received with null request", ApplicationEventIds.Error, null);
-                return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
-            }
+//    public async Task<Result<RiskAssessment>> HandleAsync(SaveStep3Command request, CancellationToken ct = default)
+//    {
+//        try
+//        {
+//            if (request is null)
+//            {
+//                _logger.LogApplicationError("SaveStep3Command received with null request", ApplicationEventIds.Error, null);
+//                return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
+//            }
 
-            _logger.LogInformation("Processing SaveStep3Command for RiskAssessment: {Id}", request.RiskAssessmentId.Value);
+//            _logger.LogInformation("Processing SaveStep3Command for RiskAssessment: {Id}", request.RiskAssessmentId.Value);
 
-            var result = await _dataService.SaveStep3Async(
-                request.RiskAssessmentId,
-                request.RiskAnalysisMethod,
-                request.RiskCriteria,
-                request.UpdatedBy,
-                ct).ConfigureAwait(false);
+//            var result = await _dataService.SaveStep3Async(
+//                request.RiskAssessmentId,
+//                request.RiskAnalysisMethod,
+//                request.RiskCriteria,
+//                request.UpdatedBy,
+//                ct).ConfigureAwait(false);
 
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Successfully saved Step 3 for RiskAssessment: {Id}", request.RiskAssessmentId);
-            }
-            else
-            {
-                _logger.LogApplicationError("Failed to save Step 3 for RiskAssessment: {Id}. Error: {Error}",
-                    ApplicationEventIds.Error, null);
-            }
+//            if (result.IsSuccess)
+//            {
+//                _logger.LogInformation("Successfully saved Step 3 for RiskAssessment: {Id}", request.RiskAssessmentId);
+//            }
+//            else
+//            {
+//                _logger.LogApplicationError("Failed to save Step 3 for RiskAssessment: {Id}. Error: {Error}",
+//                    ApplicationEventIds.Error, null);
+//            }
 
-            return result;
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogWarning("SaveStep3Command operation was cancelled");
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError("Unexpected error occurred while saving Step 3 for RiskAssessment: {Id}", ApplicationEventIds.Error, ex);
-            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
-        }
-    }
-}
+//            return result;
+//        }
+//        catch (OperationCanceledException)
+//        {
+//            _logger.LogWarning("SaveStep3Command operation was cancelled");
+//            throw;
+//        }
+//        catch (Exception ex)
+//        {
+//            _logger.LogApplicationError("Unexpected error occurred while saving Step 3 for RiskAssessment: {Id}", ApplicationEventIds.Error, ex);
+//            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
+//        }
+//    }
+//}
 
 public class SaveStep4CommandHandler : BaseCommandBundle, IRequestHandler<SaveStep4Command, Result<RiskAssessment>>
 {
@@ -308,7 +308,6 @@ public class SaveStep4CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
                 request.FinalSeverityScore,
                 request.FinalLikelihoodScore,
                 request.FinalRiskLevel,
-                request.RiskTolerability,
                 request.AssessmentRationale,
                 request.UpdatedBy,
                 ct).ConfigureAwait(false);

@@ -8,7 +8,11 @@ public sealed class RiskAnalysis : BaseAuditableEntity
     public RiskAnalysisType AssessmentType { get; set; } = RiskAnalysisType.Initial;
     public string? HazardCode { get; set; }
     public string? RiskAssessmentCode { get; set; }
-    public string? WorstCredibleOutcome { get; set; }
-    public string? RootCause { get; set; }
-    public string? AdditionalComments { get; set; }
+    public string? InitialWorstCredibleOutcome { get; set; }
+    public string? InitialRootCause { get; set; }
+    public string? InitialAdditionalComments { get; set; }
+
+    public string? ResidualWorstCredibleOutcome { get; set; }
+    public string? ResidualRootCause { get; set; }
+    public string? ResidualAdditionalComments { get; set; }
 }

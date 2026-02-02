@@ -105,10 +105,11 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardDescription, hazard.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardType, hazard.HazardType));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardCategory, hazard.HazardCategory));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFiveMComponent, hazard.FiveMComponent?.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardReportCode, hazard.ReportCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardScoringPanelRiskMatrixCode, hazard.RiskMatrixCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardAverageScore, hazard.AverageScore));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardInitialRiskMatrixCode, hazard.InitialRiskMatrixCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardInitialAverageScore, hazard.InitialAverageScore));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardResidualRiskMatrixCode, hazard.ResidualRiskMatrixCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardResidualAverageScore, hazard.ResidualAverageScore));
 
             // 🔥 DEBUG: Log what we're about to send to the stored proc
             var createdByParam = DataAccess.Parameter(ParameterNames.pmCreatedBy, hazard.CreatedBy);
@@ -327,10 +328,11 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardDescription, hazard.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardType, hazard.HazardType));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardCategory, hazard.HazardCategory));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFiveMComponent, hazard.FiveMComponent?.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardReportCode, hazard.ReportCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardScoringPanelRiskMatrixCode, hazard.RiskMatrixCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardAverageScore, hazard.AverageScore));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardInitialRiskMatrixCode, hazard.InitialRiskMatrixCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardInitialAverageScore, hazard.InitialAverageScore));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardResidualRiskMatrixCode, hazard.ResidualRiskMatrixCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardResidualAverageScore, hazard.ResidualAverageScore));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, hazard.UpdatedBy ?? "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 

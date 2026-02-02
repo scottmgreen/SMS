@@ -249,14 +249,13 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEnvironmentFactors, riskAssessment.FiveMPhysicalEnvironment ?? (object)DBNull.Value));
 
             // Step 3 - Risk Analysis Fields
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisMethod, riskAssessment.RiskAnalysisMethod ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskCriteria, riskAssessment.RiskCriteria ?? (object)DBNull.Value));
+            //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisMethod, riskAssessment.RiskAnalysisMethod ?? (object)DBNull.Value));
+            //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskCriteria, riskAssessment.RiskCriteria ?? (object)DBNull.Value));
 
             // Step 4 - Risk Assessment Fields
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalSeverityScore, riskAssessment.FinalSeverityScore ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalLikelihoodScore, riskAssessment.FinalLikelihoodScore ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalRiskLevel, riskAssessment.FinalRiskLevel ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskTolerability, riskAssessment.RiskTolerability ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssessmentRationale, riskAssessment.AssessmentRationale ?? (object)DBNull.Value));
 
             // Step 5 - Implementation Fields
@@ -360,8 +359,8 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCode, riskAssessmentId));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisMethod, riskAnalysisMethod));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskCriteria, riskCriteria));
+            //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisMethod, riskAnalysisMethod));
+            //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskCriteria, riskCriteria));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, updatedBy));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
@@ -385,7 +384,6 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
         int? finalSeverityScore,
         int? finalLikelihoodScore,
         string finalRiskLevel,
-        string riskTolerability,
         string assessmentRationale,
         string updatedBy ,
         CancellationToken ct = default)
@@ -404,7 +402,6 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalSeverityScore, finalSeverityScore ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalLikelihoodScore, finalLikelihoodScore ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalRiskLevel, finalRiskLevel));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskTolerability, riskTolerability));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssessmentRationale, assessmentRationale));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, updatedBy));
 

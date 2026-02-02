@@ -87,7 +87,7 @@
                         <RadzenText Text="Loading assessment data..." />
                     </RadzenStack>
                 }
-                else if (InitialRiskAssessment == null)
+                else if (TechRiskAssessment == null)
                 {
                     <RadzenAlert AlertStyle="AlertStyle.Danger" Icon="error" Title="Assessment Not Found">
                         The requested assessment could not be loaded. Please check the assessment ID and try again.
@@ -128,9 +128,9 @@
                                                      AvailableHazards="@AvailableHazards"
                                                      AvailableStakeholders="@AvailableStakeholders"
                                                      AvailableAssessors="@AvailableAssessors"
-                                                     InitialRiskAssessment="@InitialRiskAssessment"
-                                                     ResidualRiskAssessment="@ResidualRiskAssessment"
-                                                     RiskAssessmentId="@(InitialRiskAssessment?.Id != null ? new RiskAssessmentID(InitialRiskAssessment.Id.Value) : null)" />
+                                                      InitialRiskAssessment="@TechRiskAssessment"
+                                                      ResidualRiskAssessment="@TechRiskAssessment"
+                                                      RiskAssessmentId="@(TechRiskAssessment?.Id != null ? new RiskAssessmentID(TechRiskAssessment.Id.Value) : null)" />
                             break;
                         case 5:
                             <TechnicalAssessmentStep5 Step4="@Step4"
@@ -139,8 +139,8 @@
                                                      AvailableHazards="AvailableHazards"
                                                      AvailableStakeholders="AvailableStakeholders"
                                                      AvailableAssessors="AvailableAssessors"
-                                                     InitialRiskAssessment="@InitialRiskAssessment"
-                                                     ResidualRiskAssessment="@ResidualRiskAssessment" />
+                                                      InitialRiskAssessment="@TechRiskAssessment"
+                                                      ResidualRiskAssessment="@TechRiskAssessment" />
                             break;
                         default:
                             <RadzenAlert AlertStyle="AlertStyle.Warning" Text="Invalid step number. Please select a valid step." />
@@ -151,7 +151,7 @@
         </RadzenCard>
 
         <!-- Navigation Buttons -->
-        @if (InitialRiskAssessment != null && !IsLoading)
+        @if (TechRiskAssessment != null && !IsLoading)
         {
             <RadzenCard Style="margin-top: 1rem;">
                 <RadzenCard>

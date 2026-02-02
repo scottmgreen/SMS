@@ -79,14 +79,14 @@ public class CreateReportValidationCommandHandler : BaseCommandBundle, IRequestH
                     else
                     {
                         // ? Create NEW shared RiskAssessments only if none exist (first hazard in the report)
-                        var (initialCode, residualCode) = await CreateRiskAssessmentsForReport(hazard, ct);
+                        var initialCode = await CreateRiskAssessmentsForReport(hazard, ct);
                         initialRiskAssessmentCode = initialCode;
-                        residualRiskAssessmentCode = residualCode;
+                        //residualRiskAssessmentCode = residualCode;
 
                     }
 
                     // ? ALWAYS create RiskAnalysis records linking this hazard to the shared assessments
-                    await CreateRiskAnalysisForHazard(hazard.Code, initialRiskAssessmentCode, residualRiskAssessmentCode, ct);
+                    await CreateRiskAnalysisForHazard(hazard.Code, initialRiskAssessmentCode, ct);
 
 
 
@@ -113,7 +113,7 @@ public class CreateReportValidationCommandHandler : BaseCommandBundle, IRequestH
     /// <summary>
     /// Create RiskAnalysis records linking this hazard to its RiskAssessments
     /// </summary>
-    private async Task CreateRiskAnalysisForHazard(string hazardCode, string initialAssessmentCode, string residualAssessmentCode, CancellationToken ct)
+    private async Task CreateRiskAnalysisForHazard(string hazardCode, string initialAssessmentCode, CancellationToken ct)
     {
         // Create Initial RiskAnalysis (used in Step 3)
         RiskAnalysis initialRiskAnalysis = new RiskAnalysis(new RiskAnalysisID("RA-0000"));
@@ -123,11 +123,11 @@ public class CreateReportValidationCommandHandler : BaseCommandBundle, IRequestH
         await _riskAnalysisDataService.CreateRiskAnalysisAsync(initialRiskAnalysis, ct);
 
         // Create Residual RiskAnalysis (used in Step 5)
-        RiskAnalysis residualRiskAnalysis = new RiskAnalysis(new RiskAnalysisID("RA-0000"));
-        residualRiskAnalysis.AssessmentType = RiskAnalysisType.Residual;
-        residualRiskAnalysis.HazardCode = hazardCode;
-        residualRiskAnalysis.RiskAssessmentCode = residualAssessmentCode;
-        await _riskAnalysisDataService.CreateRiskAnalysisAsync(residualRiskAnalysis, ct);
+        //RiskAnalysis residualRiskAnalysis = new RiskAnalysis(new RiskAnalysisID("RA-0000"));
+        //residualRiskAnalysis.AssessmentType = RiskAnalysisType.Residual;
+        //residualRiskAnalysis.HazardCode = hazardCode;
+        //residualRiskAnalysis.RiskAssessmentCode = residualAssessmentCode;
+        //await _riskAnalysisDataService.CreateRiskAnalysisAsync(residualRiskAnalysis, ct);
 
     }
 
@@ -179,21 +179,21 @@ public class CreateReportValidationCommandHandler : BaseCommandBundle, IRequestH
                     if (reportAssessments.Any())
                     {
                         var initialAssessment = reportAssessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Initial);
-                        var residualAssessment = reportAssessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Residual);
+                        //var residualAssessment = reportAssessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Residual);
 
-                        if (initialAssessment != null && residualAssessment != null)
-                        {
-                            _logger.LogInformation("? Found BOTH existing RiskAssessments for Report {ReportCode}: Initial={InitialCode}, Residual={ResidualCode}", reportCode, initialAssessment.Code, residualAssessment.Code);
-                            return (initialAssessment, residualAssessment);
-                        }
-                        else if (initialAssessment != null || residualAssessment != null)
-                        {
-                            _logger.LogWarning("?? Found PARTIAL RiskAssessments for Report {ReportCode}: Initial={InitialCode}, Residual={ResidualCode}", reportCode, initialAssessment?.Code ?? "NULL", residualAssessment?.Code ?? "NULL");
-                        }
-                        else
-                        {
-                            _logger.LogWarning("?? Found {Count} assessments linked to report hazards but none are Initial or Residual type", reportAssessments.Count);
-                        }
+                        //if (initialAssessment != null && residualAssessment != null)
+                        //{
+                        //    _logger.LogInformation("? Found BOTH existing RiskAssessments for Report {ReportCode}: Initial={InitialCode}, Residual={ResidualCode}", reportCode, initialAssessment.Code, residualAssessment.Code);
+                        //    return (initialAssessment, residualAssessment);
+                        //}
+                        //else if (initialAssessment != null || residualAssessment != null)
+                        //{
+                        //    _logger.LogWarning("?? Found PARTIAL RiskAssessments for Report {ReportCode}: Initial={InitialCode}, Residual={ResidualCode}", reportCode, initialAssessment?.Code ?? "NULL", residualAssessment?.Code ?? "NULL");
+                        //}
+                        //else
+                        //{
+                        //    _logger.LogWarning("?? Found {Count} assessments linked to report hazards but none are Initial or Residual type", reportAssessments.Count);
+                        //}
                     }
                 }
                 else
@@ -219,7 +219,7 @@ public class CreateReportValidationCommandHandler : BaseCommandBundle, IRequestH
     /// <summary>
     /// Create shared RiskAssessments for this report (first hazard creates them, subsequent hazards reuse them)
     /// </summary>
-    private async Task<(string InitialCode, string ResidualCode)> CreateRiskAssessmentsForReport(Hazard hazard, CancellationToken ct)
+    private async Task<string> CreateRiskAssessmentsForReport(Hazard hazard, CancellationToken ct)
     {
         // Create Initial RiskAssessment for this report (shared by all hazards)
         RiskAssessment initialRiskAssessment = new RiskAssessment(new RiskAssessmentID("RS-0000"));
@@ -234,19 +234,19 @@ public class CreateReportValidationCommandHandler : BaseCommandBundle, IRequestH
         var initialResult = await _riskAssessmentDataService.CreateRiskAssessmentAsync(initialRiskAssessment, ct);
         var initialCode = initialResult.Value.Code;
 
-        // Create Residual RiskAssessment for this report (shared by all hazards)
-        RiskAssessment residualRiskAssessment = new RiskAssessment(new RiskAssessmentID("RS-0000"));
-        residualRiskAssessment.HazardCode = hazard.Code;
-        residualRiskAssessment.AssessmentType = RiskAssessmentType.Residual;
-        residualRiskAssessment.PrimaryHazardId = hazard.Code;
-        residualRiskAssessment.RiskAssessmentCategory = RiskAssessmentCategory.Technical;
-        residualRiskAssessment.Description = $"Residual Risk Assessment for Report {hazard.ReportCode}";
-        residualRiskAssessment.Name = $"Residual Risk Assessment - {hazard.ReportCode}";
+        //// Create Residual RiskAssessment for this report (shared by all hazards)
+        //RiskAssessment residualRiskAssessment = new RiskAssessment(new RiskAssessmentID("RS-0000"));
+        //residualRiskAssessment.HazardCode = hazard.Code;
+        //residualRiskAssessment.AssessmentType = RiskAssessmentType.Residual;
+        //residualRiskAssessment.PrimaryHazardId = hazard.Code;
+        //residualRiskAssessment.RiskAssessmentCategory = RiskAssessmentCategory.Technical;
+        //residualRiskAssessment.Description = $"Residual Risk Assessment for Report {hazard.ReportCode}";
+        //residualRiskAssessment.Name = $"Residual Risk Assessment - {hazard.ReportCode}";
 
-        var residualResult = await _riskAssessmentDataService.CreateRiskAssessmentAsync(residualRiskAssessment, ct);
-        var residualCode = residualResult.Value.Code;
+        //var residualResult = await _riskAssessmentDataService.CreateRiskAssessmentAsync(residualRiskAssessment, ct);
+        //var residualCode = residualResult.Value.Code;
 
-        return (initialCode, residualCode);
+        return (initialCode);
     }
 }
 

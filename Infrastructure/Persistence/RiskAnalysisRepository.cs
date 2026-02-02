@@ -41,9 +41,12 @@ public sealed class RiskAnalysisRepository : BaseRepository<RiskAnalysisReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisType, riskAnalysis.AssessmentType.ToString()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisHazardCode, riskAnalysis.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisRiskAssessmentCode, riskAnalysis.RiskAssessmentCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisWorstCredibleOutcome, riskAnalysis.WorstCredibleOutcome));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisRootCause, riskAnalysis.RootCause));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisAdditionalComments, riskAnalysis.AdditionalComments));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisInitialWorstCredibleOutcome, riskAnalysis.InitialWorstCredibleOutcome));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisInitialRootCause, riskAnalysis.InitialRootCause));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisInitialAdditionalComments, riskAnalysis.InitialAdditionalComments));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisResidualWorstCredibleOutcome, riskAnalysis.ResidualWorstCredibleOutcome));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisResidualRootCause, riskAnalysis.ResidualRootCause));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisResidualAdditionalComments, riskAnalysis.ResidualAdditionalComments));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, riskAnalysis.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
@@ -60,7 +63,7 @@ public sealed class RiskAnalysisRepository : BaseRepository<RiskAnalysisReposito
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
             RiskAnalysisID riskAnalysisId = new(newCodeValue);
 
-            return await GetRiskAnalysisByIdAsync(riskAnalysisId, ct).ConfigureAwait(false);
+            return await GetRiskAnalysisByCodeAsync(riskAnalysisId, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -69,7 +72,7 @@ public sealed class RiskAnalysisRepository : BaseRepository<RiskAnalysisReposito
         }
     }
 
-    public async Task<Result<RiskAnalysis>> GetRiskAnalysisByIdAsync(RiskAnalysisID id, CancellationToken ct = default)
+    public async Task<Result<RiskAnalysis>> GetRiskAnalysisByCodeAsync(RiskAnalysisID id, CancellationToken ct = default)
     {
         try
         {
@@ -78,10 +81,10 @@ public sealed class RiskAnalysisRepository : BaseRepository<RiskAnalysisReposito
                 return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_RiskAnalysis_GetById} {id}", null);
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_RiskAnalysis_GetByCode} {id}", null);
 
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_RiskAnalysis_GetById, sql)
+            using SqlCommand cmd = new(StoredProcs.pr_RiskAnalysis_GetByCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
@@ -116,24 +119,24 @@ public sealed class RiskAnalysisRepository : BaseRepository<RiskAnalysisReposito
         }
     }
 
-    public async Task<Result<RiskAnalysis>> GetRiskAnalysisByHazardIdAsync(HazardID id, CancellationToken ct = default)
+    public async Task<Result<RiskAnalysis>> GetRiskAnalysisByHazardCodeAsync(HazardID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_RiskAnalysis_GetById} {id}", null);
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_RiskAnalysis_GetByHazardCode} {code}", null);
 
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_RiskAnalysis_GetByHazardId, sql)
+            using SqlCommand cmd = new(StoredProcs.pr_RiskAnalysis_GetByHazardCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardId, code.Value));
 
             RiskAnalysis? response = null;
 
@@ -219,9 +222,12 @@ public sealed class RiskAnalysisRepository : BaseRepository<RiskAnalysisReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisCode, riskAnalysis.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisHazardCode, riskAnalysis.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisRiskAssessmentCode, riskAnalysis.RiskAssessmentCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisWorstCredibleOutcome, riskAnalysis.WorstCredibleOutcome));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisRootCause, riskAnalysis.RootCause));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisAdditionalComments, riskAnalysis.AdditionalComments));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisInitialWorstCredibleOutcome, riskAnalysis.InitialWorstCredibleOutcome));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisInitialRootCause, riskAnalysis.InitialRootCause));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisInitialAdditionalComments, riskAnalysis.InitialAdditionalComments));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisResidualWorstCredibleOutcome, riskAnalysis.ResidualWorstCredibleOutcome));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisResidualRootCause, riskAnalysis.ResidualRootCause));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisResidualAdditionalComments, riskAnalysis.ResidualAdditionalComments));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
@@ -229,7 +235,7 @@ public sealed class RiskAnalysisRepository : BaseRepository<RiskAnalysisReposito
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetRiskAnalysisByIdAsync((RiskAnalysisID)riskAnalysis.Id, ct).ConfigureAwait(false);
+            return await GetRiskAnalysisByCodeAsync((RiskAnalysisID)riskAnalysis.Id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

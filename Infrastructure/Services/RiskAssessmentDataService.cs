@@ -34,7 +34,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
         return _repo.CreateRiskAssessmentAsync(riskAssessment, ct);
     }
 
-    public async Task<Result<RiskAssessment>> GetRiskAssessmentByIdAsync(RiskAssessmentID riskAssessmentId, CancellationToken cancellationToken = default)
+    public async Task<Result<RiskAssessment>> GetRiskAssessmentByCodeAsync(RiskAssessmentID riskAssessmentId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -226,7 +226,6 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
         int? finalSeverityScore,
         int? finalLikelihoodScore,
         string finalRiskLevel,
-        string riskTolerability,
         string assessmentRationale,
         string updatedBy = "SYSTEM",
         CancellationToken ct = default)
@@ -240,7 +239,6 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
                 finalSeverityScore,
                 finalLikelihoodScore,
                 finalRiskLevel,
-                riskTolerability,
                 assessmentRationale,
                 updatedBy,
                 ct).ConfigureAwait(false);
@@ -424,7 +422,6 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
                     stepData.GetValueOrDefault("FinalSeverityScore", null) as int?,
                     stepData.GetValueOrDefault("FinalLikelihoodScore", null) as int?,
                     stepData.GetValueOrDefault("FinalRiskLevel", "")?.ToString() ?? "",
-                    stepData.GetValueOrDefault("RiskTolerability", "")?.ToString() ?? "",
                     stepData.GetValueOrDefault("AssessmentRationale", "")?.ToString() ?? "",
                     updatedBy, ct),
 
@@ -456,7 +453,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     {
         try
         {
-            var assessmentResult = await GetRiskAssessmentByIdAsync(new RiskAssessmentID(riskAssessmentId), ct);
+            var assessmentResult = await GetRiskAssessmentByCodeAsync(new RiskAssessmentID(riskAssessmentId), ct);
 
             if (assessmentResult.IsFailure)
             {
@@ -495,7 +492,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     {
         try
         {
-            var assessmentResult = await GetRiskAssessmentByIdAsync(new RiskAssessmentID(riskAssessmentId), ct);
+            var assessmentResult = await GetRiskAssessmentByCodeAsync(new RiskAssessmentID(riskAssessmentId), ct);
 
             if (assessmentResult.IsFailure)
             {

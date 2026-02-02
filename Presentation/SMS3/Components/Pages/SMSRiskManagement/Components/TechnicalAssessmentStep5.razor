@@ -322,7 +322,7 @@
                                                     <RadzenColumn Size="12" SizeMD="6">
                                                         <RadzenStack Gap="0.5rem">
                                                             <RadzenFormField Text="Residual Worst Credible Outcome *" Variant="Variant.Outlined">
-                                                                <RadzenTextArea @bind-Value="@(Step5.GetHazardResidualAnalysis(hazard.Code).WorstCredibleOutcome)"
+                                                                <RadzenTextArea @bind-Value="@(Step5.GetHazardResidualAnalysis(hazard.Code).ResidualWorstCredibleOutcome)"
                                                                                 @oninput="@((args) => OnResidualAnalysisFieldChanged(hazard, "WorstCredibleOutcome", args))"
                                                                                 Rows="3"
                                                                                 Placeholder="After mitigation implementation, what is the worst outcome that could still occur..."
@@ -334,7 +334,7 @@
                                                     <RadzenColumn Size="12" SizeMD="6">
                                                         <RadzenStack Gap="0.5rem">
                                                             <RadzenFormField Text="Residual Root Cause Analysis *" Variant="Variant.Outlined">
-                                                                <RadzenTextArea @bind-Value="@(Step5.GetHazardResidualAnalysis(hazard.Code).RootCause)"
+                                                                <RadzenTextArea @bind-Value="@(Step5.GetHazardResidualAnalysis(hazard.Code).ResidualRootCause)"
                                                                                 @oninput="@((args) => OnResidualAnalysisFieldChanged(hazard, "RootCause", args))"
                                                                                 Rows="3"
                                                                                 Placeholder="What root causes remain after mitigation implementation..."
@@ -346,7 +346,7 @@
                                                 </RadzenRow>
 
                                                 <RadzenFormField Text="Additional Residual Analysis Comments" Variant="Variant.Outlined">
-                                                    <RadzenTextArea @bind-Value="@(Step5.GetHazardResidualAnalysis(hazard.Code).AdditionalComments)"
+                                                    <RadzenTextArea @bind-Value="@(Step5.GetHazardResidualAnalysis(hazard.Code).ResidualAdditionalComments)"
                                                                     @oninput="@((args) => OnResidualAnalysisFieldChanged(hazard, "AdditionalComments", args))"
                                                                     Rows="2"
                                                                     Placeholder="Document assumptions about mitigation effectiveness, residual vulnerabilities, or monitoring requirements..."
@@ -646,13 +646,13 @@
             switch (fieldName)
             {
                 case "WorstCredibleOutcome":
-                    analysis.WorstCredibleOutcome = newValue;
+                    analysis.ResidualWorstCredibleOutcome = newValue;
                     break;
                 case "RootCause":
-                    analysis.RootCause = newValue;
+                    analysis.ResidualRootCause = newValue;
                     break;
                 case "AdditionalComments":
-                    analysis.AdditionalComments = newValue;
+                    analysis.ResidualAdditionalComments = newValue;
                     break;
             }
 

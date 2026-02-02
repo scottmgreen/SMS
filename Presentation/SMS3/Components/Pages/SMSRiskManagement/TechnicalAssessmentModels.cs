@@ -268,10 +268,7 @@ public class Step2Model
 /// </summary>
 public class Step3Model
 {
-    private const string NEW_RISK_ANALYSIS_SEED_CODE = "RA-0000";
-
-    public string RiskAnalysisMethod { get; set; } = "SMS Risk Matrix";
-    public string RiskCriteria { get; set; } = string.Empty;
+    
     public Dictionary<string, RiskAnalysis> HazardRiskAnalyses { get; set; } = new();
 
     public (bool isValid, string message) Validate(List<Hazard> availableHazards = null)
@@ -288,9 +285,9 @@ public class Step3Model
         {
             if (HazardRiskAnalyses.TryGetValue(hazard.Code, out var analysis))
             {
-                var worstOutcomeValid = !string.IsNullOrWhiteSpace(analysis.WorstCredibleOutcome) && analysis.WorstCredibleOutcome.Length >= 10;
-                var rootCauseValid = !string.IsNullOrWhiteSpace(analysis.RootCause) && analysis.RootCause.Length >= 10;
-                var additionalCommentsValid = !string.IsNullOrWhiteSpace(analysis.AdditionalComments) && analysis.AdditionalComments.Length >= 10;
+                var worstOutcomeValid = !string.IsNullOrWhiteSpace(analysis.InitialWorstCredibleOutcome) && analysis.InitialWorstCredibleOutcome.Length >= 10;
+                var rootCauseValid = !string.IsNullOrWhiteSpace(analysis.InitialRootCause) && analysis.InitialRootCause.Length >= 10;
+                var additionalCommentsValid = !string.IsNullOrWhiteSpace(analysis.InitialAdditionalComments) && analysis.InitialAdditionalComments.Length >= 10;
 
                 if (!worstOutcomeValid && !rootCauseValid && !additionalCommentsValid)
                 {
@@ -332,14 +329,13 @@ public class Step3Model
 
     private RiskAnalysis CreateNewRiskAnalysis(string hazardCode, string riskAssessmentCode)
     {
-        return new RiskAnalysis(new RiskAnalysisID(NEW_RISK_ANALYSIS_SEED_CODE))
+        return new RiskAnalysis(new RiskAnalysisID("RA-0000"))
         {
-            Code = NEW_RISK_ANALYSIS_SEED_CODE,
             HazardCode = hazardCode,
             RiskAssessmentCode = riskAssessmentCode,
-            WorstCredibleOutcome = string.Empty,
-            RootCause = string.Empty,
-            AdditionalComments = string.Empty
+            InitialWorstCredibleOutcome = string.Empty,
+            InitialRootCause = string.Empty,
+            InitialAdditionalComments = string.Empty
         };
     }
 
@@ -417,21 +413,15 @@ public class Step3Model
         }
     }
 
-    public void ApplyToAssessment(RiskAssessment assessment)
-    {
-        assessment.RiskAnalysisMethod = RiskAnalysisMethod;
-        assessment.RiskCriteria = RiskCriteria;
-        assessment.CompleteStep(3);
-    }
-
+    
     public async Task ApplyToAssessmentAsync(RiskAssessment assessment, IMediator mediator, List<Hazard> availableHazards)
     {
         if (mediator == null || assessment == null || availableHazards == null) return;
 
         try
         {
-            assessment.RiskAnalysisMethod = RiskAnalysisMethod;
-            assessment.RiskCriteria = RiskCriteria;
+            //assessment.RiskAnalysisMethod = RiskAnalysisMethod;
+            //assessment.RiskCriteria = RiskCriteria;
             assessment.CompleteStep(3);
 
             await SaveRiskAnalysesAsync(mediator, assessment);
@@ -464,7 +454,7 @@ public class Step3Model
                 }
 
                 // Create or update logic for RiskAnalysis
-                if (string.IsNullOrEmpty(analysis.Code) || analysis.Code == NEW_RISK_ANALYSIS_SEED_CODE)
+                if (string.IsNullOrEmpty(analysis.Code)) /*|| analysis.Code == NEW_RISK_ANALYSIS_SEED_CODE*/
                 {
                     // Create new RiskAnalysis
                     var createCommand = new CreateRiskAnalysisCommand(analysis);
@@ -498,16 +488,7 @@ public class Step3Model
     {
         if (assessment == null) return;
 
-        if (string.IsNullOrEmpty(RiskAnalysisMethod) && !string.IsNullOrEmpty(assessment.RiskAnalysisMethod))
-        {
-            RiskAnalysisMethod = assessment.RiskAnalysisMethod;
-        }
-
-        if (string.IsNullOrEmpty(RiskCriteria) && !string.IsNullOrEmpty(assessment.RiskCriteria))
-        {
-            RiskCriteria = assessment.RiskCriteria;
-        }
-
+        
         await LoadExistingRiskAnalysesAsync(mediator, reportHazards);
     }
 
@@ -515,16 +496,7 @@ public class Step3Model
     {
         if (assessment == null) return;
 
-        if (string.IsNullOrEmpty(RiskAnalysisMethod) && !string.IsNullOrEmpty(assessment.RiskAnalysisMethod))
-        {
-            RiskAnalysisMethod = assessment.RiskAnalysisMethod;
-        }
-
-        if (string.IsNullOrEmpty(RiskCriteria) && !string.IsNullOrEmpty(assessment.RiskCriteria))
-        {
-            RiskCriteria = assessment.RiskCriteria;
-        }
-
+       
         InitializeHazardAnalyses(reportHazards);
     }
 }
@@ -615,7 +587,6 @@ public class Step4Model
                 finalSeverity,
                 finalLikelihood,
                 finalRiskLevel,
-                "Acceptable",
                 assessmentRationale);
 
             var result = await mediator.SendAsync(saveStep4Command, CancellationToken.None);
@@ -874,75 +845,75 @@ public class Step5Model
             HazardCode = hazardCode,
             RiskAssessmentCode = riskAssessmentCode,
             AssessmentType = RiskAnalysisType.Residual, // ? FIXED: Ensure correct AssessmentType for Step5
-            WorstCredibleOutcome = string.Empty,
-            RootCause = string.Empty,
-            AdditionalComments = string.Empty
+            InitialWorstCredibleOutcome = string.Empty,
+            InitialRootCause = string.Empty,
+            InitialAdditionalComments = string.Empty
         };
     }
 
     /// <summary>
     /// Load existing Residual RiskAnalysis entities from the database for each hazard
     /// </summary>
-    public async Task LoadExistingResidualRiskAnalysesAsync(IMediator mediator, List<Hazard> availableHazards)
-    {
-        if (mediator == null || availableHazards == null) return;
+    //public async Task LoadExistingResidualRiskAnalysesAsync(IMediator mediator, List<Hazard> availableHazards)
+    //{
+    //    if (mediator == null || availableHazards == null) return;
 
-        var hazardCodes = availableHazards.Select(h => h.Code).ToList();
+    //    var hazardCodes = availableHazards.Select(h => h.Code).ToList();
         
-        var allAnalysisQuery = new GetAllRiskAnalysisQuery();
-        var allAnalysisResult = await mediator.SendAsync(allAnalysisQuery, CancellationToken.None);
+    //    var allAnalysisQuery = new GetAllRiskAnalysisQuery();
+    //    var allAnalysisResult = await mediator.SendAsync(allAnalysisQuery, CancellationToken.None);
         
-        if (!allAnalysisResult.IsSuccess || allAnalysisResult.Value == null)
-        {
-            return;
-        }
+    //    if (!allAnalysisResult.IsSuccess || allAnalysisResult.Value == null)
+    //    {
+    //        return;
+    //    }
 
-        var allAssessmentsQuery = new GetAllRiskAssessmentsQuery();
-        var assessmentsResult = await mediator.SendAsync(allAssessmentsQuery, CancellationToken.None);
+    //    var allAssessmentsQuery = new GetAllRiskAssessmentsQuery();
+    //    var assessmentsResult = await mediator.SendAsync(allAssessmentsQuery, CancellationToken.None);
         
-        if (!assessmentsResult.IsSuccess || assessmentsResult.Value == null)
-        {
-            return;
-        }
+    //    if (!assessmentsResult.IsSuccess || assessmentsResult.Value == null)
+    //    {
+    //        return;
+    //    }
 
-        // ? ENHANCED: Filter by AssessmentType.Residual instead of RiskAssessmentType.Residual
-        var residualAssessmentCodes = assessmentsResult.Value
-            .Where(a => a.AssessmentType == RiskAssessmentType.Residual)
-            .Select(a => a.Code)
-            .ToHashSet();
+    //    // ? ENHANCED: Filter by AssessmentType.Residual instead of RiskAssessmentType.Residual
+    //    var residualAssessmentCodes = assessmentsResult.Value
+    //        .Where(a => a.AssessmentType == RiskAssessmentType.Residual)
+    //        .Select(a => a.Code)
+    //        .ToHashSet();
 
-        // ? ENHANCED: Filter by both hazard codes AND AssessmentType = Residual
-        var residualAnalyses = allAnalysisResult.Value
-            .Where(ra => hazardCodes.Contains(ra.HazardCode) && 
-                        residualAssessmentCodes.Contains(ra.RiskAssessmentCode) &&
-                        ra.AssessmentType == RiskAnalysisType.Residual) // ? CRITICAL: Filter by Residual AssessmentType
-            .ToList();
+    //    // ? ENHANCED: Filter by both hazard codes AND AssessmentType = Residual
+    //    var residualAnalyses = allAnalysisResult.Value
+    //        .Where(ra => hazardCodes.Contains(ra.HazardCode) && 
+    //                    residualAssessmentCodes.Contains(ra.RiskAssessmentCode) &&
+    //                    ra.AssessmentType == RiskAnalysisType.Residual) // ? CRITICAL: Filter by Residual AssessmentType
+    //        .ToList();
 
-        foreach (var analysis in residualAnalyses)
-        {
-            // ? ENHANCED: Ensure AssessmentType is properly set to Residual
-            if (analysis.AssessmentType != RiskAnalysisType.Residual)
-            {
-                analysis.AssessmentType = RiskAnalysisType.Residual;
-            }
+    //    foreach (var analysis in residualAnalyses)
+    //    {
+    //        // ? ENHANCED: Ensure AssessmentType is properly set to Residual
+    //        if (analysis.AssessmentType != RiskAnalysisType.Residual)
+    //        {
+    //            analysis.AssessmentType = RiskAnalysisType.Residual;
+    //        }
 
-            // Ensure the RiskAssessmentCode is set correctly for Residual assessments
-            if (string.IsNullOrEmpty(analysis.RiskAssessmentCode) || analysis.RiskAssessmentCode == "RA-0000")
-            {
-                // Find the correct Residual assessment code for this analysis
-                var residualAssessment = assessmentsResult.Value
-                    .FirstOrDefault(a => a.AssessmentType == RiskAssessmentType.Residual && 
-                                        hazardCodes.Contains(a.HazardCode ?? string.Empty));
+    //        // Ensure the RiskAssessmentCode is set correctly for Residual assessments
+    //        if (string.IsNullOrEmpty(analysis.RiskAssessmentCode) || analysis.RiskAssessmentCode == "RA-0000")
+    //        {
+    //            // Find the correct Residual assessment code for this analysis
+    //            var residualAssessment = assessmentsResult.Value
+    //                .FirstOrDefault(a => a.AssessmentType == RiskAssessmentType.Residual && 
+    //                                    hazardCodes.Contains(a.HazardCode ?? string.Empty));
                 
-                if (residualAssessment != null)
-                {
-                    analysis.RiskAssessmentCode = residualAssessment.Code;
-                }
-            }
+    //            if (residualAssessment != null)
+    //            {
+    //                analysis.RiskAssessmentCode = residualAssessment.Code;
+    //            }
+    //        }
             
-            this.HazardResidualRiskAnalyses[analysis.HazardCode] = analysis;
-        }
-    }
+    //        this.HazardResidualRiskAnalyses[analysis.HazardCode] = analysis;
+    //    }
+    //}
 
     public (bool isValid, string message) Validate()
     {
@@ -1030,7 +1001,7 @@ public class Step5Model
         if (mediator != null && availableHazards?.Any() == true)
         {
             await LoadMitigationEntitiesAsync(mediator, availableHazards);
-            await LoadExistingResidualRiskAnalysesAsync(mediator, availableHazards);
+            //await LoadExistingResidualRiskAnalysesAsync(mediator, availableHazards);
         }
     }
 

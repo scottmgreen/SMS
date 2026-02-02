@@ -121,8 +121,8 @@ public class SaveStep1Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
 public class SaveStep3Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IHasAuditFields
 {
     public RiskAssessmentID RiskAssessmentId { get; set; }
-    public string RiskAnalysisMethod { get; set; }
-    public string RiskCriteria { get; set; }
+    //public string RiskAnalysisMethod { get; set; }
+    //public string RiskCriteria { get; set; }
     public string UpdatedBy { get; set; }
 
     public SaveStep3Command(
@@ -131,8 +131,8 @@ public class SaveStep3Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
         string riskCriteria)
     {
         RiskAssessmentId = riskAssessmentId ?? throw new ArgumentNullException(nameof(riskAssessmentId));
-        RiskAnalysisMethod = riskAnalysisMethod ?? "SMS Risk Matrix";
-        RiskCriteria = riskCriteria ?? string.Empty;
+        //RiskAnalysisMethod = riskAnalysisMethod ?? "SMS Risk Matrix";
+        //RiskCriteria = riskCriteria ?? string.Empty;
     }
 
     public void SetCreatedBy(string userId, DateTime timestamp)
@@ -156,7 +156,6 @@ public class SaveStep4Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
     public int? FinalSeverityScore { get; set; }
     public int? FinalLikelihoodScore { get; set; }
     public string FinalRiskLevel { get; set; }
-    public string RiskTolerability { get; set; }
     public string AssessmentRationale { get; set; }
     public string UpdatedBy { get; set; }
 
@@ -165,14 +164,12 @@ public class SaveStep4Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
         int? finalSeverityScore,
         int? finalLikelihoodScore,
         string finalRiskLevel,
-        string riskTolerability,
         string assessmentRationale)
     {
         RiskAssessmentId = riskAssessmentId ?? throw new ArgumentNullException(nameof(riskAssessmentId));
         FinalSeverityScore = finalSeverityScore;
         FinalLikelihoodScore = finalLikelihoodScore;
         FinalRiskLevel = finalRiskLevel ?? string.Empty;
-        RiskTolerability = riskTolerability ?? string.Empty;
         AssessmentRationale = assessmentRationale ?? string.Empty;
     }
 

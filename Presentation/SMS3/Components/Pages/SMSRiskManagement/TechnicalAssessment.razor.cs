@@ -32,8 +32,8 @@ public partial class TechnicalAssessment : ComponentBase
 
     #region Core Assessment Data
 
-    public RiskAssessment? InitialRiskAssessment { get; set; }
-    public RiskAssessment? ResidualRiskAssessment { get; set; }
+    public RiskAssessment? TechRiskAssessment { get; set; }
+    
 
     public RiskAnalysis? InitialRiskAnalysis { get; set; }
     public RiskAnalysis? ResidualRiskAnalysis { get; set; }
@@ -63,7 +63,7 @@ public partial class TechnicalAssessment : ComponentBase
     // CRITICAL: Make this a property that can trigger change detection
     public List<Hazard> AvailableHazards { get; private set; } = new();
 
-    public List<Step4Model.PanelMemberScoreData> CompletedScores => Step4?.CompletedScores ?? new();
+    //public List<Step4Model.PanelMemberScoreData> CompletedScores => Step4?.CompletedScores ?? new();
 
     #endregion
 
@@ -72,8 +72,8 @@ public partial class TechnicalAssessment : ComponentBase
     {
         return CurrentStep switch
         {
-            5 => ResidualRiskAssessment ?? InitialRiskAssessment,
-            _ => InitialRiskAssessment
+            5 => TechRiskAssessment ?? TechRiskAssessment,
+            _ => TechRiskAssessment
         };
     }
     private string GetCurrentAssessmentName()
@@ -84,7 +84,7 @@ public partial class TechnicalAssessment : ComponentBase
         // For Step 5, emphasize it's the Residual assessment
         if (CurrentStep == 5)
         {
-            var residualAssessment = ResidualRiskAssessment ?? currentAssessment;
+            var residualAssessment = TechRiskAssessment; //ResidualRiskAssessment ?? currentAssessment;
             return $"Hazard Report:{ReportId} Residual Risk Assessment:{residualAssessment?.Code}"; // - {stepName}";
         }
 
@@ -132,8 +132,7 @@ public partial class TechnicalAssessment : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
-        Logger.LogInformation("TechnicalAssessment OnInitializedAsync - ReportId: {ReportId}, StepNumber: {StepNumber}, HazardId: {HazardId}",
-            ReportId, StepNumber, HazardId);
+        Logger.LogInformation("TechnicalAssessment OnInitializedAsync - ReportId: {ReportId}, StepNumber: {StepNumber}, HazardId: {HazardId}", ReportId, StepNumber, HazardId);
 
         // If no step number provided, redirect to step 1
         if (string.IsNullOrEmpty(StepNumber) || CurrentStep < 1 || CurrentStep > 5)
@@ -171,9 +170,9 @@ public partial class TechnicalAssessment : ComponentBase
         {
             Logger.LogInformation("Navigating to Step 3 - reloading Step3 data to ensure HazardRiskAnalyses is complete");
             
-            if (InitialRiskAssessment != null && ReportHazards?.Any() == true)
+            if (TechRiskAssessment != null && ReportHazards?.Any() == true)
             {
-                await Step3.LoadFromAssessmentAsync(InitialRiskAssessment, Mediator, ReportHazards);
+                await Step3.LoadFromAssessmentAsync(TechRiskAssessment, Mediator, ReportHazards);
             }
             else
             {
@@ -240,7 +239,7 @@ public partial class TechnicalAssessment : ComponentBase
         }
 
         // Validate that we found assessments
-        if (InitialRiskAssessment == null)
+        if (TechRiskAssessment == null)
         {
             throw new InvalidOperationException($"No Initial Risk Assessment found. HazardId: {HazardId}, ReportId: {ReportId}");
         }
@@ -252,11 +251,10 @@ public partial class TechnicalAssessment : ComponentBase
         // Update the AssessmentId parameter if it wasn't provided but we found an assessment
         if (string.IsNullOrWhiteSpace(ReportId) || ReportId == "RS-0000")
         {
-            ReportId = InitialRiskAssessment.Code;
+            ReportId = TechRiskAssessment.Code;
         }
 
-        Logger.LogInformation("Successfully loaded assessments - Initial: {InitialCode}, Residual: {ResidualCode}",
-            InitialRiskAssessment.Code, ResidualRiskAssessment?.Code ?? "None");
+        //Logger.LogInformation("Successfully loaded assessments - Initial: {InitialCode}, Residual: {ResidualCode}", InitialRiskAssessment.Code, ResidualRiskAssessment?.Code ?? "None");
     }
 
     private async Task LoadAssessmentsByHazardCodeAsync()
@@ -270,8 +268,8 @@ public partial class TechnicalAssessment : ComponentBase
         {
             var assessments = allAssessmentsResult.Value.ToList();
 
-            InitialRiskAssessment = assessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Initial);
-            ResidualRiskAssessment = assessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Residual);
+            TechRiskAssessment = assessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Initial);
+            //ResidualRiskAssessment = assessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Residual);
 
             Logger.LogInformation("Found {Count} assessments for hazard {HazardId}", assessments.Count, HazardId);
         }
@@ -293,8 +291,8 @@ public partial class TechnicalAssessment : ComponentBase
         {
             var anlysis = allAllAnalysisResult.Value.ToList();
 
-            InitialRiskAnalysis = anlysis.FirstOrDefault(x => x.HazardCode == HazardId & x.RiskAssessmentCode.Trim() == InitialRiskAssessment.Code);
-            ResidualRiskAnalysis = anlysis.FirstOrDefault(x => x.HazardCode == HazardId & x.RiskAssessmentCode.Trim() == ResidualRiskAssessment.Code);
+            InitialRiskAnalysis = anlysis.FirstOrDefault(x => x.HazardCode == HazardId & x.RiskAssessmentCode.Trim() == TechRiskAssessment.Code);
+            ResidualRiskAnalysis = anlysis.FirstOrDefault(x => x.HazardCode == HazardId & x.RiskAssessmentCode.Trim() == TechRiskAssessment.Code);
 
             Logger.LogInformation("Found {Count} Risk Analysis for hazard {HazardId}", anlysis.Count, HazardId);
         }
@@ -317,10 +315,10 @@ public partial class TechnicalAssessment : ComponentBase
             // If ReportId looks like a Report ID (RP-xxxx), try to find assessments for this report
             if (ReportId?.StartsWith("RP-") == true)
             {
-                await LoadAssessmentsByReportIdAsync();
+                await LoadAssessmentsByReportCodeAsync();
 
                 // If no assessments found, create them
-                if (InitialRiskAssessment == null && !string.IsNullOrEmpty(HazardId))
+                if (TechRiskAssessment == null && !string.IsNullOrEmpty(HazardId))
                 {
                     await CreateAssessmentsForReport();
                 }
@@ -368,34 +366,34 @@ public partial class TechnicalAssessment : ComponentBase
                 throw new Exception($"Failed to create Initial assessment: {initialResult.Error?.Message}");
             }
 
-            InitialRiskAssessment = initialResult.Value;
+            TechRiskAssessment = initialResult.Value;
 
             // Create Residual assessment
-            var residualAssessment = new RiskAssessment(new RiskAssessmentID(residualId))
-            {
-                Name = $"Residual Risk Assessment for Report {ReportId}",
-                LeadAssessorId = LeadAssessorName,
-                AssessmentType = RiskAssessmentType.Residual,
-                RiskAssessmentCategory = RiskAssessmentCategory.Technical,
-                HazardCode = HazardId,
-                PrimaryHazardId = HazardId,
-                Description = $"Created from Initial Assessment {InitialRiskAssessment.Code}",
-                Stage = "Created",
-                Code = residualId,
-                Status = RiskAssessmentStatus.Created,
-                CurrentStep = 1,
-                UpdatedDate = DateTime.UtcNow,
-                UpdatedBy = AuthService.CurrentUserDisplayName
-            };
+            //var residualAssessment = new RiskAssessment(new RiskAssessmentID(residualId))
+            //{
+            //    Name = $"Residual Risk Assessment for Report {ReportId}",
+            //    LeadAssessorId = LeadAssessorName,
+            //    AssessmentType = RiskAssessmentType.Residual,
+            //    RiskAssessmentCategory = RiskAssessmentCategory.Technical,
+            //    HazardCode = HazardId,
+            //    PrimaryHazardId = HazardId,
+            //    Description = $"Created from Initial Assessment {InitialRiskAssessment.Code}",
+            //    Stage = "Created",
+            //    Code = residualId,
+            //    Status = RiskAssessmentStatus.Created,
+            //    CurrentStep = 1,
+            //    UpdatedDate = DateTime.UtcNow,
+            //    UpdatedBy = AuthService.CurrentUserDisplayName
+            //};
 
             // Save Residual assessment
-            var createResidualCommand = new CreateRiskAssessmentCommand(residualAssessment);
-            var residualResult = await Mediator.SendAsync(createResidualCommand, CancellationToken.None);
+            //var createResidualCommand = new CreateRiskAssessmentCommand(residualAssessment);
+            //var residualResult = await Mediator.SendAsync(createResidualCommand, CancellationToken.None);
 
-            if (residualResult.IsSuccess)
-            {
-                ResidualRiskAssessment = residualResult.Value;
-            }
+            //if (residualResult.IsSuccess)
+            //{
+            //    ResidualRiskAssessment = residualResult.Value;
+            //}
 
             Logger.LogInformation("Created assessments - Initial: {InitialId}, Residual: {ResidualId}",
                 initialId, residualId);
@@ -407,7 +405,7 @@ public partial class TechnicalAssessment : ComponentBase
         }
     }
     
-    private async Task LoadAssessmentsByReportIdAsync()
+    private async Task LoadAssessmentsByReportCodeAsync()
     {
         Logger.LogInformation("Loading assessments via ReportId: {ReportId}", ReportId);
 
@@ -431,21 +429,21 @@ public partial class TechnicalAssessment : ComponentBase
                     var assessments = assessmentsResult.Value.ToList();
 
                     // Take the first valid set of assessments we find
-                    if (InitialRiskAssessment == null)
+                    if (TechRiskAssessment == null)
                     {
-                        InitialRiskAssessment = assessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Initial);
+                        TechRiskAssessment = assessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Initial);
                         HazardId = hazard.Code; // Update HazardId for consistency
                     }
 
-                    if (ResidualRiskAssessment == null)
-                    {
-                        ResidualRiskAssessment = assessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Residual);
-                    }
+                    //if (ResidualRiskAssessment == null)
+                    //{
+                    //    ResidualRiskAssessment = assessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Residual);
+                    //}
 
                     Logger.LogInformation("Found assessments via hazard {HazardCode}", hazard.Code);
 
                     // If we found what we need, no need to check other hazards
-                    if (InitialRiskAssessment != null) break;
+                    if (TechRiskAssessment != null) break;
                 }
             }
         }
@@ -494,9 +492,9 @@ public partial class TechnicalAssessment : ComponentBase
             }
 
             // Load hazards identified in Step 2
-            if (InitialRiskAssessment?.IdentifiedHazardIds?.Any() == true)
+            if (TechRiskAssessment?.IdentifiedHazardIds?.Any() == true)
             {
-                foreach (var hazardIdString in InitialRiskAssessment.IdentifiedHazardIds)
+                foreach (var hazardIdString in TechRiskAssessment.IdentifiedHazardIds)
                 {
                     try
                     {
@@ -532,20 +530,20 @@ public partial class TechnicalAssessment : ComponentBase
 
     private async Task LoadStepDataFromAssessment()
     {
-        if (InitialRiskAssessment == null) return;
+        if (TechRiskAssessment == null) return;
 
         try
         {
-            Step1.LoadFromAssessment(InitialRiskAssessment);
-            Step2.LoadFromAssessment(InitialRiskAssessment);
+            Step1.LoadFromAssessment(TechRiskAssessment);
+            Step2.LoadFromAssessment(TechRiskAssessment);
 
-            await Step3.LoadFromAssessmentAsync(InitialRiskAssessment, Mediator, ReportHazards);
+            await Step3.LoadFromAssessmentAsync(TechRiskAssessment, Mediator, ReportHazards);
             
-            Step4.LoadFromAssessment(InitialRiskAssessment);
+            Step4.LoadFromAssessment(TechRiskAssessment);
             await Step4.LoadExistingScoringPanelsAsync(Mediator, ReportHazards);
 
             // Step 5 uses ResidualRiskAssessment for loading residual analyses
-            var step5Assessment = ResidualRiskAssessment ?? InitialRiskAssessment;
+            var step5Assessment = TechRiskAssessment;//ResidualRiskAssessment ?? InitialRiskAssessment;
             await Step5.LoadFromAssessmentAsync(step5Assessment, Mediator, ReportHazards);
 
             Logger.LogInformation("Step models loaded from assessment, including RiskAnalysis entities");
@@ -848,7 +846,7 @@ public partial class TechnicalAssessment : ComponentBase
 
     private async Task<(bool success, string message)> SaveCurrentStepAsync()
     {
-        if (InitialRiskAssessment == null)
+        if (TechRiskAssessment == null)
         {
             return (false, "Assessment not loaded");
         }
@@ -859,30 +857,30 @@ public partial class TechnicalAssessment : ComponentBase
             await ApplyCurrentStepToAssessmentAsync();
 
             // ENHANCEMENT: Update the current step in the assessment
-            InitialRiskAssessment.CurrentStep = CurrentStep;
-            ResidualRiskAssessment.CurrentStep = CurrentStep;
+            TechRiskAssessment.CurrentStep = CurrentStep;
+            //ResidualRiskAssessment.CurrentStep = CurrentStep;
 
             // ENHANCEMENT: Update status based on current step
             UpdateAssessmentAndReportStatus();
 
             // Save to database
-            var updateCommand = new UpdateRiskAssessmentCommand(InitialRiskAssessment);
+            var updateCommand = new UpdateRiskAssessmentCommand(TechRiskAssessment);
             var initalresult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
 
 
-            updateCommand = new UpdateRiskAssessmentCommand(ResidualRiskAssessment);
-            var residualresult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+            //updateCommand = new UpdateRiskAssessmentCommand(ResidualRiskAssessment);
+            //var residualresult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
 
 
-            if (initalresult.IsSuccess && residualresult.IsSuccess)
+            if (initalresult.IsSuccess)
             {
-                InitialRiskAssessment = initalresult.Value; // Update with latest data
-                ResidualRiskAssessment = residualresult.Value;
+                TechRiskAssessment = initalresult.Value; // Update with latest data
+                //ResidualRiskAssessment = residualresult.Value;
 
                 // ENHANCEMENT: Also update the associated Hazard status
                 await UpdateHazardStatusForProgress();
 
-                Logger.LogInformation("Step {CurrentStep} saved successfully for assessment {AssessmentCode}",CurrentStep, InitialRiskAssessment.Code);
+                Logger.LogInformation("Step {CurrentStep} saved successfully for assessment {AssessmentCode}",CurrentStep, TechRiskAssessment.Code);
 
                 return (true, $"Step {CurrentStep} saved successfully");
             }
@@ -904,20 +902,20 @@ public partial class TechnicalAssessment : ComponentBase
     /// </summary>
     private void UpdateAssessmentAndReportStatus()
     {
-        if (InitialRiskAssessment == null) return;
+        if (TechRiskAssessment == null) return;
 
         // Update assessment status (enum) based on current step
-        InitialRiskAssessment.Status = CurrentStep > 0 ? RiskAssessmentStatus.InProgress : RiskAssessmentStatus.Created;
-        ResidualRiskAssessment.Status = CurrentStep > 0 ? RiskAssessmentStatus.InProgress : RiskAssessmentStatus.Created;
+        TechRiskAssessment.Status = CurrentStep > 0 ? RiskAssessmentStatus.InProgress : RiskAssessmentStatus.Created;
+        //ResidualRiskAssessment.Status = CurrentStep > 0 ? RiskAssessmentStatus.InProgress : RiskAssessmentStatus.Created;
 
         // Update last modified info
-        InitialRiskAssessment.UpdatedDate = DateTime.UtcNow;
-        InitialRiskAssessment.UpdatedBy = AuthService.CurrentUserDisplayName; 
-        ResidualRiskAssessment.UpdatedDate = DateTime.UtcNow;
-        ResidualRiskAssessment.UpdatedBy = AuthService.CurrentUserDisplayName;
+        TechRiskAssessment.UpdatedDate = DateTime.UtcNow;
+        TechRiskAssessment.UpdatedBy = AuthService.CurrentUserDisplayName; 
+        //ResidualRiskAssessment.UpdatedDate = DateTime.UtcNow;
+        //ResidualRiskAssessment.UpdatedBy = AuthService.CurrentUserDisplayName;
 
-        Logger.LogInformation("Updated InitialRiskAssessment stage to: {Stage} and status to: {Status} for step {Step}", InitialRiskAssessment.Stage, InitialRiskAssessment.Status.Name, CurrentStep);
-        Logger.LogInformation("Updated ResidualRiskAssessment stage to: {Stage} and status to: {Status} for step {Step}", ResidualRiskAssessment.Stage, ResidualRiskAssessment.Status.Name, CurrentStep);
+        //Logger.LogInformation("Updated InitialRiskAssessment stage to: {Stage} and status to: {Status} for step {Step}", InitialRiskAssessment.Stage, InitialRiskAssessment.Status.Name, CurrentStep);
+        //Logger.LogInformation("Updated ResidualRiskAssessment stage to: {Stage} and status to: {Status} for step {Step}", ResidualRiskAssessment.Stage, ResidualRiskAssessment.Status.Name, CurrentStep);
     }
 
     /// <summary>
@@ -1064,13 +1062,13 @@ public partial class TechnicalAssessment : ComponentBase
 
     private async Task CompleteAssessmentProcess()
     {
-        if (InitialRiskAssessment == null) return;
+        if (TechRiskAssessment == null) return;
 
         // Apply all steps to ensure everything is saved - ENHANCED: Use async method
         await ApplyCurrentStepToAssessmentAsync();
 
         // Save final state
-        var updateCommand = new UpdateRiskAssessmentCommand(InitialRiskAssessment);
+        var updateCommand = new UpdateRiskAssessmentCommand(TechRiskAssessment);
         await Mediator.SendAsync(updateCommand, CancellationToken.None);
     }
 
@@ -1101,20 +1099,20 @@ public partial class TechnicalAssessment : ComponentBase
         switch (CurrentStep)
         {
             case 1:
-                Step1.ApplyToAssessment(InitialRiskAssessment!);
-                Step1.ApplyToAssessment(ResidualRiskAssessment!);
+                Step1.ApplyToAssessment(TechRiskAssessment!);
+                //Step1.ApplyToAssessment(ResidualRiskAssessment!);
                 break;
             case 2:
-                Step2.ApplyToAssessment(InitialRiskAssessment!);
+                Step2.ApplyToAssessment(TechRiskAssessment!);
                 break;
             case 3:
-                await Step3.ApplyToAssessmentAsync(InitialRiskAssessment!, Mediator, AvailableHazards);
+                await Step3.ApplyToAssessmentAsync(TechRiskAssessment!, Mediator, AvailableHazards);
                 break;
             case 4:
-                await Step4.ApplyToAssessmentAsync(InitialRiskAssessment!, Mediator, AvailableHazards);
+                await Step4.ApplyToAssessmentAsync(TechRiskAssessment!, Mediator, AvailableHazards);
                 break;
             case 5:
-                Step5.ApplyToAssessment(InitialRiskAssessment!);
+                Step5.ApplyToAssessment(TechRiskAssessment!);
                 break;
         }
     }
@@ -1194,9 +1192,9 @@ public partial class TechnicalAssessment : ComponentBase
             }
 
             // ✅ FIXED: Also update the assessment's IdentifiedHazardIds list
-            if (InitialRiskAssessment != null && !InitialRiskAssessment.IdentifiedHazardIds.Contains(newHazard.Code))
+            if (TechRiskAssessment != null && !TechRiskAssessment.IdentifiedHazardIds.Contains(newHazard.Code))
             {
-                InitialRiskAssessment.AddIdentifiedHazard(newHazard.Code, newHazard.Description ?? string.Empty);
+                TechRiskAssessment.AddIdentifiedHazard(newHazard.Code, newHazard.Description ?? string.Empty);
                 Logger.LogInformation("Added hazard {HazardCode} to assessment's IdentifiedHazardIds", newHazard.Code);
             }
 
@@ -1287,17 +1285,17 @@ public partial class TechnicalAssessment : ComponentBase
                 }
 
                 // ✅ FIXED: Also remove from assessment's IdentifiedHazardIds
-                if (InitialRiskAssessment != null)
+                if (TechRiskAssessment != null)
                 {
                     // Clear and re-add all remaining hazards
-                    InitialRiskAssessment.ClearIdentifiedHazards();
+                    TechRiskAssessment.ClearIdentifiedHazards();
                     foreach (var remainingHazardId in Step2.HazardIds)
                     {
                         var hazardIndex = Step2.HazardIds.IndexOf(remainingHazardId);
                         var hazardDescription = hazardIndex < Step2.HazardDescriptions.Count
                             ? Step2.HazardDescriptions[hazardIndex]
                             : $"Hazard {remainingHazardId}";
-                        InitialRiskAssessment.AddIdentifiedHazard(remainingHazardId, hazardDescription);
+                        TechRiskAssessment.AddIdentifiedHazard(remainingHazardId, hazardDescription);
                     }
                     Logger.LogInformation("Removed hazard {HazardCode} from assessment's IdentifiedHazardIds", hazardToDelete.Code);
                 }

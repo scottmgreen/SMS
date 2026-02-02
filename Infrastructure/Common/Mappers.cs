@@ -265,11 +265,15 @@ public static partial class Mappers
         hazard.Description = reader.GetValue<string>(FieldNames.fHazardDescription).Trim() ?? string.Empty;
         hazard.HazardCategory = reader.GetValue<string>(FieldNames.fHazardCategory).Trim();
         hazard.ReportCode = reader.GetValue<string>(FieldNames.fHazardReportCode) ?? string.Empty;
-        hazard.RiskMatrixCode = reader.GetValue<string>(FieldNames.fHazardScoringPanelRiskMatrixCode);
+        
+        hazard.InitialRiskMatrixCode = reader.GetValue<string>(FieldNames.fHazardInitialRiskMatrixCode);
+        var initialaverageScore = reader.IsDBNull(FieldNames.fHazardInitialAverageScore) ? (decimal?)null : reader.GetDecimal(FieldNames.fHazardInitialAverageScore);
+        hazard.InitialAverageScore = initialaverageScore ?? 0;
 
-        // ✅ FIXED: HazardAverageScore is actually a decimal in database, not string
-        var averageScore = reader.IsDBNull(FieldNames.fHazardAverageScore) ? (decimal?)null : reader.GetDecimal(FieldNames.fHazardAverageScore);
-        hazard.AverageScore = averageScore ?? 0;
+        hazard.ResidualRiskMatrixCode = reader.GetValue<string>(FieldNames.fHazardResidualRiskMatrixCode);
+        var residualaverageScore = reader.IsDBNull(FieldNames.fHazardResidualAverageScore) ? (decimal?)null : reader.GetDecimal(FieldNames.fHazardResidualAverageScore);
+        hazard.ResidualAverageScore = residualaverageScore ?? 0;
+
 
         // NOTE: HazardLocation is NOT populated here - it must be populated at the Application Service layer
         // to maintain proper separation of concerns and avoid circular dependencies
@@ -329,16 +333,16 @@ public static partial class Mappers
             }
 
             // Step 3 Risk Analysis Fields
-            var worstCredibleOutcome = reader.GetValue<string>(FieldNames.fHazardWorstCredibleOutcome);
+            var worstCredibleOutcome = reader.GetValue<string>(FieldNames.fHazardInitialWorstCredibleOutcome);
             if (!string.IsNullOrEmpty(worstCredibleOutcome))
             {
-                hazard.WorstCredibleOutcome = worstCredibleOutcome;
+                hazard.InitialWorstCredibleOutcome = worstCredibleOutcome;
             }
 
-            var rootCause = reader.GetValue<string>(FieldNames.fHazardRootCause);
+            var rootCause = reader.GetValue<string>(FieldNames.fHazardInitialRootCause);
             if (!string.IsNullOrEmpty(rootCause))
             {
-                hazard.RootCause = rootCause;
+                hazard.InitialRootCause = rootCause;
             }
 
             // Investigation Properties
@@ -371,11 +375,7 @@ public static partial class Mappers
             }
 
             // 5M Component (Smart Enum)
-            var fiveMComponentValue = reader.GetValue<string>(FieldNames.fHazardFiveMComponent);
-            if (!string.IsNullOrEmpty(fiveMComponentValue))
-            {
-                hazard.FiveMComponent = FiveMComponent.FromValue(fiveMComponentValue) ?? FiveMComponent.FromName(fiveMComponentValue);
-            }
+            
         }
         catch (Exception)
         {
@@ -551,9 +551,13 @@ public static partial class Mappers
         }
         riskAnalysis.HazardCode = reader.GetValue<string>(FieldNames.fRiskAnalysisHazardCode).Trim();
         riskAnalysis.RiskAssessmentCode = reader.GetValue<string>(FieldNames.fRiskAnalysisRiskAssessmentCode).Trim();
-        riskAnalysis.WorstCredibleOutcome = reader.GetValue<string>(FieldNames.fRiskAnalysisWorstCredibleOutcome);
-        riskAnalysis.RootCause = reader.GetValue<string>(FieldNames.fRiskAnalysisRootCause);
-        riskAnalysis.AdditionalComments = reader.GetValue<string>(FieldNames.fRiskAnalysisAdditionalComments);
+        riskAnalysis.InitialWorstCredibleOutcome = reader.GetValue<string>(FieldNames.fRiskAnalysisInitialWorstCredibleOutcome);
+        riskAnalysis.InitialRootCause = reader.GetValue<string>(FieldNames.fRiskAnalysisInitialRootCause);
+        riskAnalysis.InitialAdditionalComments = reader.GetValue<string>(FieldNames.fRiskAnalysisInitialAdditionalComments);
+
+        riskAnalysis.ResidualWorstCredibleOutcome = reader.GetValue<string>(FieldNames.fRiskAnalysisResidualWorstCredibleOutcome);
+        riskAnalysis.ResidualRootCause = reader.GetValue<string>(FieldNames.fRiskAnalysisResidualRootCause);
+        riskAnalysis.ResidualAdditionalComments = reader.GetValue<string>(FieldNames.fRiskAnalysisResidualAdditionalComments);
 
         return riskAnalysis;
     }
@@ -619,19 +623,15 @@ public static partial class Mappers
         riskAssessment.FiveMProcedures = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMProcedures) ?? string.Empty;
         riskAssessment.FiveMResources = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMResources) ?? string.Empty;
         riskAssessment.FiveMPhysicalEnvironment = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMPhysicalEnvironment) ?? string.Empty;
-        //     riskAssessment.FiveMOperationalEnvironment = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMOperationalEnvironment) ?? string.Empty;
-
+        
         // ✅ Step 3 - Risk Analysis Fields
-        riskAssessment.RiskAnalysisMethod = reader.GetValue<string>(FieldNames.fRiskAssessmentRiskAnalysisMethod) ?? "SMS Risk Matrix";
-        riskAssessment.RiskCriteria = reader.GetValue<string>(FieldNames.fRiskAssessmentRiskCriteria) ?? string.Empty;
+        
 
         // ✅ Step 4 - Risk Assessment Fields
         riskAssessment.FinalSeverityScore = reader.IsDBNull(FieldNames.fRiskAssessmentFinalSeverityScore) ? null : reader.GetValue<int?>(FieldNames.fRiskAssessmentFinalSeverityScore);
         riskAssessment.FinalLikelihoodScore = reader.IsDBNull(FieldNames.fRiskAssessmentFinalLikelihoodScore) ? null : reader.GetValue<int?>(FieldNames.fRiskAssessmentFinalLikelihoodScore);
         riskAssessment.FinalRiskLevel = reader.GetValue<string>(FieldNames.fRiskAssessmentFinalRiskLevel);
-        riskAssessment.RiskTolerability = reader.GetValue<string>(FieldNames.fRiskAssessmentRiskTolerability) ?? "ALARP";
-        riskAssessment.AssessmentRationale = reader.GetValue<string>(FieldNames.fRiskAssessmentAssessmentRationale);
-
+        
         // ✅ Step 5 - Implementation Fields
         
         return riskAssessment;

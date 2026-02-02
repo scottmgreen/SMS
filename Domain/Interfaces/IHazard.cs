@@ -17,7 +17,6 @@ public interface IHazard
     #region Hazard Classification
     string? HazardType { get; set; }           // Type/category of hazard
     string Category { get; set; }              // Aircraft Operations, Ground Operations, etc.
-    SMS_Domain.Enums.FiveMComponent? FiveMComponent { get; set; }       // Man, Machine, Method, Material, Milieu
     SMS_Domain.Enums.HazardStatus Status { get; set; }          // Active, UnderInvestigation, etc.
     SMS_Domain.Enums.HazardPriority Priority { get; set; }     // Low, Medium, High, Critical
     #endregion
@@ -44,8 +43,8 @@ public interface IHazard
     string? ScoringPanelCode { get; set; }
     string? AverageScore { get; set; }
     string? RiskLevel { get; set; }           // Very Low, Low, Medium, High, Very High
-    string? WorstCredibleOutcome { get; set; }
-    string? RootCause { get; set; }
+    //string? WorstCredibleOutcome { get; set; }
+    //string? RootCause { get; set; }
     #endregion
 
     #region Mitigation Properties

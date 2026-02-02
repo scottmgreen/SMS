@@ -8,18 +8,18 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // RISK ASSESSMENT QUERY HANDLERS
 // =============================================
 
-public class GetRiskAssessmentByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetRiskAssessmentByIdQuery, Result<RiskAssessment>>
+public class GetRiskAssessmentByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetRiskAssessmentByCodeQuery, Result<RiskAssessment>>
 {
     private readonly RiskAssessmentService _appService;
-    private readonly ILogger<GetRiskAssessmentByIdQueryHandler> _logger;
+    private readonly ILogger<GetRiskAssessmentByCodeQueryHandler> _logger;
 
-    public GetRiskAssessmentByIdQueryHandler(RiskAssessmentService appService, ILogger<GetRiskAssessmentByIdQueryHandler> logger)
+    public GetRiskAssessmentByCodeQueryHandler(RiskAssessmentService appService, ILogger<GetRiskAssessmentByCodeQueryHandler> logger)
     {
         _appService = appService ?? throw new ArgumentNullException(nameof(appService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<RiskAssessment>> HandleAsync(GetRiskAssessmentByIdQuery request, CancellationToken ct = default)
+    public async Task<Result<RiskAssessment>> HandleAsync(GetRiskAssessmentByCodeQuery request, CancellationToken ct = default)
     {
         try
         {
@@ -31,7 +31,7 @@ public class GetRiskAssessmentByIdQueryHandler : BaseQueryBundle, IRequestHandle
 
             _logger.LogInformation("Processing GetRiskAssessmentByIdQuery for ID: {Id}", request.RiskAssessmentId.Value);
 
-            var result = await _appService.GetRiskAssessmentByIdAsync(request.RiskAssessmentId, ct).ConfigureAwait(false);
+            var result = await _appService.GetRiskAssessmentByCodeAsync(request.RiskAssessmentId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
@@ -60,12 +60,12 @@ public class GetRiskAssessmentByIdQueryHandler : BaseQueryBundle, IRequestHandle
 
 public class GetRiskAssessmentByHazardCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetRiskAssessmentsByHazardCodeQuery, Result<List<RiskAssessment>>>
 {
-    private readonly RiskAssessmentDataService _appService;
+    private readonly RiskAssessmentService _dataService;
     private readonly ILogger<GetRiskAssessmentByHazardCodeQueryHandler> _logger;
 
-    public GetRiskAssessmentByHazardCodeQueryHandler(RiskAssessmentDataService dataService, ILogger<GetRiskAssessmentByHazardCodeQueryHandler> logger)
+    public GetRiskAssessmentByHazardCodeQueryHandler(RiskAssessmentService dataService, ILogger<GetRiskAssessmentByHazardCodeQueryHandler> logger)
     {
-        _appService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -81,7 +81,7 @@ public class GetRiskAssessmentByHazardCodeQueryHandler : BaseQueryBundle, IReque
 
             _logger.LogInformation("Processing GetRiskAssessmentByIdQuery for ID: {Id}", request.HazardCode.Value);
 
-            var result = await _appService.GetRiskAssessmentsByHazardCodeAsync(request.HazardCode, ct).ConfigureAwait(false);
+            var result = await _dataService.GetRiskAssessmentsByHazardCodeAsync(request.HazardCode, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
@@ -111,12 +111,12 @@ public class GetRiskAssessmentByHazardCodeQueryHandler : BaseQueryBundle, IReque
 
 public class GetAllRiskAssessmentsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllRiskAssessmentsQuery, Result<List<RiskAssessment>>>
 {
-    private readonly RiskAssessmentDataService _dataService;
+    private readonly RiskAssessmentService _appService;
     private readonly ILogger<GetAllRiskAssessmentsQueryHandler> _logger;
 
-    public GetAllRiskAssessmentsQueryHandler(RiskAssessmentDataService dataService, ILogger<GetAllRiskAssessmentsQueryHandler> logger)
+    public GetAllRiskAssessmentsQueryHandler(RiskAssessmentService appService, ILogger<GetAllRiskAssessmentsQueryHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _appService = appService ?? throw new ArgumentNullException(nameof(appService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -126,7 +126,7 @@ public class GetAllRiskAssessmentsQueryHandler : BaseQueryBundle, IRequestHandle
         {
             _logger.LogInformation("Processing GetAllRiskAssessmentsQuery");
 
-            var result = await _dataService.GetAllRiskAssessmentsAsync(ct).ConfigureAwait(false);
+            var result = await _appService.GetAllRiskAssessmentsAsync(ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {

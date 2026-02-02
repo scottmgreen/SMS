@@ -100,7 +100,6 @@ public sealed class RiskAssessment : BaseAuditableEntity
     public int? FinalSeverityScore { get; set; }
     public int? FinalLikelihoodScore { get; set; }
     public string? FinalRiskLevel { get; set; }
-    public string? RiskTolerability { get; set; } = "ALARP";
     public string? AssessmentRationale { get; set; }
 
     // Step 1 - System Description Properties
@@ -117,8 +116,8 @@ public sealed class RiskAssessment : BaseAuditableEntity
     public string FiveMOperationalEnvironment { get; set; } = string.Empty;
 
     // Step 3 - Risk Analysis Properties
-    public string RiskAnalysisMethod { get; set; } = "SMS Risk Matrix";
-    public string RiskCriteria { get; set; } = string.Empty;
+    //public string RiskAnalysisMethod { get; set; } = "SMS Risk Matrix";
+    //public string RiskCriteria { get; set; } = string.Empty;
 
     // Step 4 - Risk Assessment Properties
    

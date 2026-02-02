@@ -19,7 +19,7 @@ public abstract class RiskAssessmentType : BaseEnum<RiskAssessmentType>
     public static readonly RiskAssessmentType Initial = new InitialType();
 
     /// <summary>Risk assessment after mitigations have been implemented</summary>
-    public static readonly RiskAssessmentType Residual = new ResidualType();
+    //public static readonly RiskAssessmentType Residual = new ResidualType();
 
     #endregion
 
@@ -32,12 +32,12 @@ public abstract class RiskAssessmentType : BaseEnum<RiskAssessmentType>
         }
     }
 
-    private sealed class ResidualType : RiskAssessmentType
-    {
-        public ResidualType() : base("Residual", "Residual")
-        {
-        }
-    }
+    //private sealed class ResidualType : RiskAssessmentType
+    //{
+    //    public ResidualType() : base("Residual", "Residual")
+    //    {
+    //    }
+    //}
 
     #endregion
 
