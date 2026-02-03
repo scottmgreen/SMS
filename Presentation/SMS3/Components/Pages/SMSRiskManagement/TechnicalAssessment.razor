@@ -109,7 +109,7 @@
                             <TechnicalAssessmentStep2 Step1="@Step1"
                                                      Step2="@Step2" 
                                                      Step2Changed="@UpdateStep2"
-                                                     AvailableHazards="AvailableHazards"
+                                                     Step2Hazards="@ReportedHazards"
                                                      ReportId="@ReportId"
                                                      InitialHazardId="@HazardId"
                                                      OnHazardAdded="@AddHazard"
@@ -120,27 +120,31 @@
                             <TechnicalAssessmentStep3 Step1="@Step1"
                                                      Step3="@Step3" 
                                                      Step3Changed="@UpdateStep3"
-                                                     AvailableHazards="AvailableHazards" />
+                                                     Step3Hazards="@ReportedHazards" />
                             break;
                         case 4:
                             <TechnicalAssessmentStep4 Step4="@Step4" 
                                                      Step4Changed="@UpdateStep4"
-                                                     AvailableHazards="@AvailableHazards"
+                                                     Step4Hazards="@ReportedHazards"
                                                      AvailableStakeholders="@AvailableStakeholders"
                                                      AvailableAssessors="@AvailableAssessors"
-                                                      InitialRiskAssessment="@TechRiskAssessment"
-                                                      ResidualRiskAssessment="@TechRiskAssessment"
-                                                      RiskAssessmentId="@(TechRiskAssessment?.Id != null ? new RiskAssessmentID(TechRiskAssessment.Id.Value) : null)" />
+                                                     CurrentStep="@CurrentStep"
+                                                     CurrentRiskAssessment="@TechRiskAssessment"
+                                                     InitialRiskAssessment="@TechRiskAssessment"
+                                                     ResidualRiskAssessment="@TechRiskAssessment"
+                                                     RiskAssessmentId="@(TechRiskAssessment?.Id != null ? new RiskAssessmentID(TechRiskAssessment.Id.Value) : null)" />
                             break;
                         case 5:
                             <TechnicalAssessmentStep5 Step4="@Step4"
                                                      Step5="@Step5" 
                                                      Step5Changed="@UpdateStep5"
-                                                     AvailableHazards="AvailableHazards"
+                                                     Step5Hazards="@ReportedHazards"
                                                      AvailableStakeholders="AvailableStakeholders"
                                                      AvailableAssessors="AvailableAssessors"
-                                                      InitialRiskAssessment="@TechRiskAssessment"
-                                                      ResidualRiskAssessment="@TechRiskAssessment" />
+                                                     CurrentStep="@CurrentStep"
+                                                     CurrentRiskAssessment="@TechRiskAssessment"
+                                                     InitialRiskAssessment="@TechRiskAssessment"
+                                                     ResidualRiskAssessment="@TechRiskAssessment" />
                             break;
                         default:
                             <RadzenAlert AlertStyle="AlertStyle.Warning" Text="Invalid step number. Please select a valid step." />
@@ -163,19 +167,7 @@
                                      Disabled="@(CurrentStep <= 1 || IsSaving)"
                                      Click="@PreviousStep" />
 
-                        <!-- Middle Section - Manual Save -->
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                            <RadzenButton Text="Save Draft" 
-                                         Icon="save" 
-                                         ButtonStyle="ButtonStyle.Secondary"
-                                         Disabled="IsSaving"
-                                         Click="@SaveCurrentStep" />
-                            
-                            @if (IsSaving)
-                            {
-                                <RadzenProgressBarCircular ShowValue="false" Size="ProgressBarCircularSize.Small" />
-                            }
-                        </RadzenStack>
+                                                
 
                         <!-- Next/Complete Button -->
                         @if (CurrentStep < 5)

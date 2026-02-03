@@ -181,7 +181,7 @@
             Logger.LogInformation("Loading hazards for report: {ReportCode}", ReportCode);
 
             // Execute GetHazardsByReportCodeQuery via Mediator
-            var query = new GetHazardsByReportCodeQuery(ReportCode);
+            var query = new GetHazardsByReportCodeQuery(new ReportID(ReportCode));
             var result = await Mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)

@@ -214,11 +214,7 @@ public class Step2Model
     public List<string> HazardDescriptions { get; set; } = new();
     public List<string> HazardCategories { get; set; } = new();
 
-    public (bool isValid, string message) Validate()
-    {
-        return (true, "Step 2 validation handled by main validator");
-    }
-
+    
     public void LoadFromAssessment(RiskAssessment assessment)
     {
         if (assessment == null) return;
@@ -269,9 +265,15 @@ public class Step2Model
 public class Step3Model
 {
     
-    public Dictionary<string, RiskAnalysis> HazardRiskAnalyses { get; set; } = new();
+  
+    public Dictionary<string, RiskAnalysis> Step3RiskAnalyses { get; set; } = new();
 
     public (bool isValid, string message) Validate(List<Hazard> availableHazards = null)
+    {
+        return Validate(availableHazards, 3);
+    }
+    
+    public (bool isValid, string message) Validate(List<Hazard> availableHazards, int currentStep)
     {
         if (availableHazards == null || !availableHazards.Any())
         {
@@ -283,11 +285,25 @@ public class Step3Model
 
         foreach (var hazard in availableHazards)
         {
-            if (HazardRiskAnalyses.TryGetValue(hazard.Code, out var analysis))
+            if (Step3RiskAnalyses.TryGetValue(hazard.Code, out var analysis))
             {
-                var worstOutcomeValid = !string.IsNullOrWhiteSpace(analysis.InitialWorstCredibleOutcome) && analysis.InitialWorstCredibleOutcome.Length >= 10;
-                var rootCauseValid = !string.IsNullOrWhiteSpace(analysis.InitialRootCause) && analysis.InitialRootCause.Length >= 10;
-                var additionalCommentsValid = !string.IsNullOrWhiteSpace(analysis.InitialAdditionalComments) && analysis.InitialAdditionalComments.Length >= 10;
+                // Determine which properties to validate based on CurrentStep
+                bool worstOutcomeValid, rootCauseValid, additionalCommentsValid;
+                
+                if (currentStep == 5)
+                {
+                    // Step 5: Validate Residual properties
+                    worstOutcomeValid = !string.IsNullOrWhiteSpace(analysis.ResidualWorstCredibleOutcome) && analysis.ResidualWorstCredibleOutcome.Length >= 10;
+                    rootCauseValid = !string.IsNullOrWhiteSpace(analysis.ResidualRootCause) && analysis.ResidualRootCause.Length >= 10;
+                    additionalCommentsValid = !string.IsNullOrWhiteSpace(analysis.ResidualAdditionalComments) && analysis.ResidualAdditionalComments.Length >= 10;
+                }
+                else
+                {
+                    // Steps 1-4: Validate Initial properties
+                    worstOutcomeValid = !string.IsNullOrWhiteSpace(analysis.InitialWorstCredibleOutcome) && analysis.InitialWorstCredibleOutcome.Length >= 10;
+                    rootCauseValid = !string.IsNullOrWhiteSpace(analysis.InitialRootCause) && analysis.InitialRootCause.Length >= 10;
+                    additionalCommentsValid = !string.IsNullOrWhiteSpace(analysis.InitialAdditionalComments) && analysis.InitialAdditionalComments.Length >= 10;
+                }
 
                 if (!worstOutcomeValid && !rootCauseValid && !additionalCommentsValid)
                 {
@@ -309,37 +325,17 @@ public class Step3Model
             return (false, $"Risk analysis incomplete for {incompleteHazards.Count}/{availableHazards.Count} hazards: {string.Join("; ", incompleteHazards)}");
         }
 
-        return (true, $"Step 3 validation passed - {analysisCount}/{availableHazards.Count} hazards have complete risk analysis");
+        var stageName = currentStep == 5 ? "Residual" : "Initial";
+        return (true, $"Step 3 validation passed - {analysisCount}/{availableHazards.Count} hazards have complete {stageName} risk analysis");
     }
 
     public RiskAnalysis GetHazardAnalysis(string hazardCode)
     {
-        if (string.IsNullOrEmpty(hazardCode))
-        {
-            return CreateNewRiskAnalysis(hazardCode ?? string.Empty, string.Empty);
-        }
-
-        if (!HazardRiskAnalyses.ContainsKey(hazardCode))
-        {
-            HazardRiskAnalyses[hazardCode] = CreateNewRiskAnalysis(hazardCode, string.Empty);
-        }
-
-        return HazardRiskAnalyses[hazardCode];
+        return Step3RiskAnalyses[hazardCode];
     }
 
-    private RiskAnalysis CreateNewRiskAnalysis(string hazardCode, string riskAssessmentCode)
-    {
-        return new RiskAnalysis(new RiskAnalysisID("RA-0000"))
-        {
-            HazardCode = hazardCode,
-            RiskAssessmentCode = riskAssessmentCode,
-            InitialWorstCredibleOutcome = string.Empty,
-            InitialRootCause = string.Empty,
-            InitialAdditionalComments = string.Empty
-        };
-    }
-
-    public async Task LoadExistingRiskAnalysesAsync(IMediator mediator, List<Hazard> availableHazards)
+    
+    public async Task LoadExistingRiskAnalysesAsync(IMediator mediator,List<Hazard> availableHazards)
     {
         if (mediator == null || availableHazards == null) return;
 
@@ -361,68 +357,49 @@ public class Step3Model
             return;
         }
 
-        // ? FIXED: Filter by AssessmentType.Initial for Step3 (Initial Risk Analysis)
+        
         var initialAssessmentCodes = assessmentsResult.Value
-            .Where(a => a.AssessmentType == RiskAssessmentType.Initial)
             .Select(a => a.Code)
             .ToHashSet();
 
-        // ? FIXED: Filter by both hazard codes AND AssessmentType = Initial for Step3
         var initialAnalyses = allAnalysisResult.Value
-            .Where(ra => hazardCodes.Contains(ra.HazardCode) && 
-                        initialAssessmentCodes.Contains(ra.RiskAssessmentCode) &&
-                        ra.AssessmentType == RiskAnalysisType.Initial) // ? CRITICAL: Filter by Initial AssessmentType for Step3
+            .Where(ra => hazardCodes.Contains(ra.HazardCode) && initialAssessmentCodes.Contains(ra.RiskAssessmentCode)  ) 
             .ToList();
 
         foreach (var analysis in initialAnalyses)
         {
-            // ? ENHANCED: Ensure AssessmentType is properly set to Initial for Step3
-            if (analysis.AssessmentType != RiskAnalysisType.Initial)
-            {
-                analysis.AssessmentType = RiskAnalysisType.Initial;
-            }
-
+            
             // Ensure the RiskAssessmentCode is set correctly for Initial assessments
             if (string.IsNullOrEmpty(analysis.RiskAssessmentCode) || analysis.RiskAssessmentCode == "RA-0000")
             {
                 // Find the correct Initial assessment code for this analysis
                 var initialAssessment = assessmentsResult.Value
-                    .FirstOrDefault(a => a.AssessmentType == RiskAssessmentType.Initial && 
-                                        hazardCodes.Contains(a.HazardCode ?? string.Empty));
+                    .FirstOrDefault(a => hazardCodes.Contains(a.HazardCode ?? string.Empty));
                 
                 if (initialAssessment != null)
                 {
                     analysis.RiskAssessmentCode = initialAssessment.Code;
                 }
             }
-            
-            HazardRiskAnalyses[analysis.HazardCode] = analysis;
-        }
-    }
 
-    public void InitializeHazardAnalyses(List<Hazard> availableHazards)
-    {
-        if (availableHazards == null) return;
-
-        foreach (var hazard in availableHazards)
-        {
-            if (!HazardRiskAnalyses.ContainsKey(hazard.Code))
-            {
-                HazardRiskAnalyses[hazard.Code] = CreateNewRiskAnalysis(hazard.Code, string.Empty);
-            }
+            Step3RiskAnalyses[analysis.HazardCode] = analysis;
         }
     }
 
     
-    public async Task ApplyToAssessmentAsync(RiskAssessment assessment, IMediator mediator, List<Hazard> availableHazards)
+    
+    public async Task ApplyToAssessmentAsync(IMediator mediator, RiskAssessment assessment, List<Hazard> availableHazards)
+    {
+        await ApplyToAssessmentAsync(mediator, assessment, availableHazards, 3);
+    }
+    
+    public async Task ApplyToAssessmentAsync(IMediator mediator, RiskAssessment assessment, List<Hazard> availableHazards, int currentStep)
     {
         if (mediator == null || assessment == null || availableHazards == null) return;
 
         try
         {
-            //assessment.RiskAnalysisMethod = RiskAnalysisMethod;
-            //assessment.RiskCriteria = RiskCriteria;
-            assessment.CompleteStep(3);
+            assessment.CompleteStep(currentStep == 5 ? 5 : 3);
 
             await SaveRiskAnalysesAsync(mediator, assessment);
         }
@@ -434,48 +411,42 @@ public class Step3Model
 
     private async Task SaveRiskAnalysesAsync(IMediator mediator, RiskAssessment assessment)
     {
-        foreach (var analysisKvp in HazardRiskAnalyses)
+        await SaveRiskAnalysesAsync(mediator, assessment, 3);
+    }
+    
+    private async Task SaveRiskAnalysesAsync(IMediator mediator, RiskAssessment assessment, int currentStep)
+    {
+        foreach (var analysisKvp in Step3RiskAnalyses)
         {
             try
             {
                 var analysis = analysisKvp.Value;
                 var hazardCode = analysisKvp.Key;
                 
-                // ? ENHANCED: Ensure AssessmentType is set to Initial for Step3 (Initial Risk Analysis)
-                if (analysis.AssessmentType != RiskAnalysisType.Initial)
+                // Determine AssessmentType based on CurrentStep
+                var expectedAssessmentType = currentStep == 5 ? RiskAnalysisType.Residual : RiskAnalysisType.Initial;
+                
+                if (analysis.AssessmentType != expectedAssessmentType)
                 {
-                    analysis.AssessmentType = RiskAnalysisType.Initial;
+                    analysis.AssessmentType = expectedAssessmentType;
                 }
 
-                // ? ENHANCED: Ensure RiskAssessmentCode is properly set
+                // Ensure RiskAssessmentCode is properly set
                 if (string.IsNullOrEmpty(analysis.RiskAssessmentCode) && assessment != null)
                 {
                     analysis.RiskAssessmentCode = assessment.Code;
                 }
 
-                // Create or update logic for RiskAnalysis
-                if (string.IsNullOrEmpty(analysis.Code)) /*|| analysis.Code == NEW_RISK_ANALYSIS_SEED_CODE*/
-                {
-                    // Create new RiskAnalysis
-                    var createCommand = new CreateRiskAnalysisCommand(analysis);
-                    var createResult = await mediator.SendAsync(createCommand, CancellationToken.None);
+                               
+                // Update existing RiskAnalysis
+                var updateCommand = new UpdateRiskAnalysisCommand(analysis);
+                var updateResult = await mediator.SendAsync(updateCommand, CancellationToken.None);
                     
-                    if (createResult.IsSuccess)
-                    {
-                        HazardRiskAnalyses[hazardCode] = createResult.Value;
-                    }
-                }
-                else
+                if (updateResult.IsSuccess)
                 {
-                    // Update existing RiskAnalysis
-                    var updateCommand = new UpdateRiskAnalysisCommand(analysis);
-                    var updateResult = await mediator.SendAsync(updateCommand, CancellationToken.None);
-                    
-                    if (updateResult.IsSuccess)
-                    {
-                        HazardRiskAnalyses[hazardCode] = updateResult.Value;
-                    }
+                    Step3RiskAnalyses[hazardCode] = updateResult.Value;
                 }
+                
             }
             catch (Exception ex)
             {
@@ -484,7 +455,7 @@ public class Step3Model
         }
     }
 
-    public async Task LoadFromAssessmentAsync(RiskAssessment assessment, IMediator mediator, List<Hazard> reportHazards)
+    public async Task LoadFromAssessmentAsync(IMediator mediator, RiskAssessment assessment, List<Hazard> reportHazards)
     {
         if (assessment == null) return;
 
@@ -492,13 +463,7 @@ public class Step3Model
         await LoadExistingRiskAnalysesAsync(mediator, reportHazards);
     }
 
-    public void LoadFromAssessment(RiskAssessment assessment, List<Hazard> reportHazards)
-    {
-        if (assessment == null) return;
-
-       
-        InitializeHazardAnalyses(reportHazards);
-    }
+    
 }
 
 /// <summary>
@@ -579,15 +544,14 @@ public class Step4Model
 
         try
         {
-            var (finalSeverity, finalLikelihood, finalRiskLevel, assessmentRationale) = CalculateOverallRiskAssessment(availableHazards);
+            var (finalSeverity, finalLikelihood, finalRiskLevel) = CalculateOverallRiskAssessment(availableHazards);
             var riskAssessmentId = new RiskAssessmentID(assessment.Code);
 
             var saveStep4Command = new SaveStep4Command(
                 riskAssessmentId,
                 finalSeverity,
                 finalLikelihood,
-                finalRiskLevel,
-                assessmentRationale);
+                finalRiskLevel);
 
             var result = await mediator.SendAsync(saveStep4Command, CancellationToken.None);
 
@@ -606,13 +570,13 @@ public class Step4Model
         }
     }
 
-    private (int? finalSeverity, int? finalLikelihood, string finalRiskLevel, string assessmentRationale) CalculateOverallRiskAssessment(List<Hazard> availableHazards)
+    private (int? finalSeverity, int? finalLikelihood, string finalRiskLevel) CalculateOverallRiskAssessment(List<Hazard> availableHazards)
     {
         var completedHazards = HazardAverageScores.Keys.ToList();
 
         if (!completedHazards.Any())
         {
-            return (null, null, "Unknown", "No hazard assessments completed yet.");
+            return (null, null, "Unknown");
         }
 
         var avgScores = HazardAverageScores.Values.ToList();
@@ -638,7 +602,7 @@ public class Step4Model
                        $"Matrix codes assessed: {string.Join(", ", HazardMatrixCodes.Select(kvp => $"{kvp.Key}:{kvp.Value}"))}. " +
                        $"Assessment completed on {DateTime.UtcNow:yyyy-MM-dd HH:mm}.";
 
-        return (severity, likelihood, finalRiskLevel, rationale);
+        return (severity, likelihood, finalRiskLevel);
     }
 
     private (int? severity, int? likelihood) ParseMatrixCode(String matrixCode)
@@ -820,9 +784,17 @@ public class Step5Model
     public Dictionary<string, RiskAnalysis> HazardResidualRiskAnalyses { get; set; } = new();
 
     /// <summary>
-    /// Gets the Residual RiskAnalysis entity for a specific hazard, creating a new one if it doesn't exist
+    /// Gets the RiskAnalysis entity for a specific hazard based on CurrentStep, creating a new one if it doesn't exist
     /// </summary>
     public RiskAnalysis GetHazardResidualAnalysis(string hazardCode)
+    {
+        return GetHazardResidualAnalysis(hazardCode, 5);
+    }
+    
+    /// <summary>
+    /// Gets the RiskAnalysis entity for a specific hazard based on CurrentStep, creating a new one if it doesn't exist
+    /// </summary>
+    public RiskAnalysis GetHazardResidualAnalysis(string hazardCode, int currentStep)
     {
         if (string.IsNullOrEmpty(hazardCode))
         {
@@ -834,7 +806,15 @@ public class Step5Model
             HazardResidualRiskAnalyses[hazardCode] = CreateNewRiskAnalysis(hazardCode, string.Empty);
         }
 
-        return HazardResidualRiskAnalyses[hazardCode];
+        // Update the AssessmentType based on CurrentStep
+        var analysis = HazardResidualRiskAnalyses[hazardCode];
+        var expectedType = currentStep == 5 ? RiskAnalysisType.Residual : RiskAnalysisType.Initial;
+        if (analysis.AssessmentType != expectedType)
+        {
+            analysis.AssessmentType = expectedType;
+        }
+
+        return analysis;
     }
 
     private RiskAnalysis CreateNewRiskAnalysis(string hazardCode, string riskAssessmentCode)
@@ -844,7 +824,7 @@ public class Step5Model
             Code = NEW_RISK_ANALYSIS_SEED_CODE,
             HazardCode = hazardCode,
             RiskAssessmentCode = riskAssessmentCode,
-            AssessmentType = RiskAnalysisType.Residual, // ? FIXED: Ensure correct AssessmentType for Step5
+            AssessmentType = RiskAnalysisType.Residual, // Default to Residual for Step5Model
             InitialWorstCredibleOutcome = string.Empty,
             InitialRootCause = string.Empty,
             InitialAdditionalComments = string.Empty

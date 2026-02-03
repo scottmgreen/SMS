@@ -156,21 +156,20 @@ public class SaveStep4Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
     public int? FinalSeverityScore { get; set; }
     public int? FinalLikelihoodScore { get; set; }
     public string FinalRiskLevel { get; set; }
-    public string AssessmentRationale { get; set; }
     public string UpdatedBy { get; set; }
 
     public SaveStep4Command(
         RiskAssessmentID riskAssessmentId,
         int? finalSeverityScore,
         int? finalLikelihoodScore,
-        string finalRiskLevel,
-        string assessmentRationale)
+        string finalRiskLevel
+        )
     {
         RiskAssessmentId = riskAssessmentId ?? throw new ArgumentNullException(nameof(riskAssessmentId));
         FinalSeverityScore = finalSeverityScore;
         FinalLikelihoodScore = finalLikelihoodScore;
         FinalRiskLevel = finalRiskLevel ?? string.Empty;
-        AssessmentRationale = assessmentRationale ?? string.Empty;
+        
     }
 
     public void SetCreatedBy(string userId, DateTime timestamp)

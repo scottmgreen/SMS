@@ -290,7 +290,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             EditingReport = reportResult.Value;
 
             // Get associated hazards to populate the form
-            var hazardsQuery = new GetHazardsByReportCodeQuery(reportCode);
+            var hazardsQuery = new GetHazardsByReportCodeQuery(new ReportID(reportCode));
             var hazardsResult = await Mediator.SendAsync(hazardsQuery, CancellationToken.None);
 
             if (hazardsResult.IsSuccess && hazardsResult.Value?.Any() == true)

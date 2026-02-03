@@ -326,7 +326,7 @@ public partial class ReportListing : ComponentBase
         {
             Logger.LogInformation("Loading hazards for report: {ReportCode}", reportCode);
 
-            var hazardsQuery = new GetHazardsByReportCodeQuery(reportCode);
+            var hazardsQuery = new GetHazardsByReportCodeQuery(new ReportID(reportCode));
             var hazardsResult = await Mediator.SendAsync(hazardsQuery, CancellationToken.None);
 
             if (hazardsResult.IsSuccess && hazardsResult.Value != null)

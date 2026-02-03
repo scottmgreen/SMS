@@ -308,7 +308,6 @@ public class SaveStep4CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
                 request.FinalSeverityScore,
                 request.FinalLikelihoodScore,
                 request.FinalRiskLevel,
-                request.AssessmentRationale,
                 request.UpdatedBy,
                 ct).ConfigureAwait(false);
 

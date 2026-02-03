@@ -39,23 +39,10 @@ public sealed class RiskAssessment : BaseAuditableEntity
     private readonly List<int> _completedSteps = new();
 
 
-    // Public constructor following the pattern
+    
     public RiskAssessment(RiskAssessmentID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
 
-    // Private constructor for creation - ENFORCES BUSINESS RULES
-    private RiskAssessment(RiskAssessmentID id, string name, string leadAssessorId, RiskAssessmentType? assessmentType = null, string? primaryHazardId = null, string? hazardCode = null)
-        : base(id, "SYSTEM", DateTime.UtcNow)
-    {
-        Name = name;
-        LeadAssessorId = leadAssessorId;
-        HazardCode = hazardCode;
-        Status = RiskAssessmentStatus.Created; 
-        AssessmentType = assessmentType ?? RiskAssessmentType.Initial; 
-        PrimaryHazardId = primaryHazardId;
-        RiskAssessmentCategory = RiskAssessmentCategory.Technical;
-        CurrentStep = 1; 
-        UpdatedDate = DateTime.UtcNow;
-    }
+       
 
     // ✅ PROPERTIES WITH BUSINESS RULE ENFORCEMENT
     public string Name { get; set; } = string.Empty;
@@ -100,8 +87,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
     public int? FinalSeverityScore { get; set; }
     public int? FinalLikelihoodScore { get; set; }
     public string? FinalRiskLevel { get; set; }
-    public string? AssessmentRationale { get; set; }
-
+    
     // Step 1 - System Description Properties
     public string SystemDescription { get; set; } = string.Empty;
     public string SystemBoundaries { get; set; } = string.Empty;

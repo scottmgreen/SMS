@@ -53,22 +53,21 @@
             </RadzenCard> *@
 
             <!-- Hazard Scoring Panels -->
-            @if (AvailableHazards?.Any() == true)
+            @if (Step4Hazards?.Any() == true)
             {
                 <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-success); margin: 0;">
                     <RadzenIcon Icon="assignment" Style="margin-right: 0.5rem;" />
-                    Hazard Risk Scoring (@AvailableHazards.Count Hazards)
+                    Hazard Risk Scoring (@Step4Hazards.Count Hazards)
                 </RadzenText>
 
-                @foreach (var hazard in AvailableHazards)
+                @foreach (var hazard in Step4Hazards)
                 {
                     <HazardScoringPanel @key="@($"panel-{hazard.Code}")" 
                                         Hazard="@hazard" 
                                         AvailableStakeholders="@AvailableStakeholders"
                                         AvailableAssessors="@AvailableAssessors"
-                                        CurrentRiskAssessment="@InitialRiskAssessment"
-                                        InitialRiskAssessment="@InitialRiskAssessment"
-                                        ResidualRiskAssessment="@ResidualRiskAssessment"
+                                        CurrentRiskAssessment="@Step4RiskAssessment"
+                                        CurrentStep="4"
                                         RiskAssessmentId="@RiskAssessmentId"
                                         OnHazardScored="@(() => HandleHazardScored(hazard.Code))" />
                 }
@@ -111,7 +110,7 @@
     <RadzenColumn Size="12" SizeLG="4">
         <RadzenStack Gap="1rem">
             <!-- 5x5 Risk Matrix Visualization -->
-            @if (AvailableHazards?.Any() == true && Step4.HazardAverageScores.Any())
+            @if (Step4Hazards?.Any() == true && Step4.HazardAverageScores.Any())
             {
                 <RadzenCard Variant="Variant.Outlined">
                     <RadzenStack Gap="1rem">
@@ -228,11 +227,10 @@
 @code {
     [Parameter] public Step4Model Step4 { get; set; } = new();
     [Parameter] public EventCallback<Step4Model> Step4Changed { get; set; }
-    [Parameter] public List<Hazard> AvailableHazards { get; set; } = new();
+    [Parameter] public List<Hazard> Step4Hazards { get; set; } = new();
     [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
     [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
-    [Parameter] public RiskAssessment? InitialRiskAssessment { get; set; } // 🚀 NEW: For Step 4 scoring
-    [Parameter] public RiskAssessment? ResidualRiskAssessment { get; set; } // 🚀 NEW: For creating Step 5 panels  
+    [Parameter] public RiskAssessment? Step4RiskAssessment { get; set; } // 🚀 NEW: For Step 4 scoring
     [Parameter] public RiskAssessmentID? RiskAssessmentId { get; set; }  // Pass assessment ID from parent
 
     [Inject] private IMediator Mediator { get; set; } = default!;
@@ -263,9 +261,9 @@
 
     private string GetHazardListHash()
     {
-        if (AvailableHazards?.Any() != true) return "empty";
-        var codes = string.Join(",", AvailableHazards.Select(h => h.Code).OrderBy(c => c));
-        return $"{AvailableHazards.Count}:{codes.GetHashCode()}";
+        if (Step4Hazards?.Any() != true) return "empty";
+        var codes = string.Join(",", Step4Hazards.Select(h => h.Code).OrderBy(c => c));
+        return $"{Step4Hazards.Count}:{codes.GetHashCode()}";
     }
 
     private async Task InitializeStep4Data()
@@ -276,7 +274,7 @@
         {
             _isRefreshing = true;
             await LoadHazardAverages();
-            Logger.LogInformation("Initialized Step 4 data for {Count} hazards", AvailableHazards?.Count ?? 0);
+            Logger.LogInformation("Initialized Step 4 data for {Count} hazards", Step4Hazards?.Count ?? 0);
         }
         catch (Exception ex)
         {
@@ -295,7 +293,6 @@
             Logger.LogInformation("Handling hazard scored: {HazardCode}", hazardCode);
             await LoadHazardAverages();
             
-            // CRITICAL: Save Step 4 assessment data whenever hazard scores are updated
             await SaveCurrentRiskAssessmentAsync();
             
             if (Step4Changed.HasDelegate)
@@ -318,14 +315,14 @@
     {
         try
         {
-            if (AvailableHazards?.Any() != true || !Step4.HazardAverageScores.Any())
+            if (Step4Hazards?.Any() != true || !Step4.HazardAverageScores.Any())
             {
                 Logger.LogInformation("Skipping risk assessment save - no completed hazard assessments");
                 return;
             }
 
             // Calculate overall final scores from all hazard averages
-            var (finalSeverity, finalLikelihood, finalRiskLevel, assessmentRationale) = CalculateOverallRiskAssessment();
+            var (finalSeverity, finalLikelihood, finalRiskLevel) = CalculateOverallRiskAssessment();
 
             // Get the risk assessment ID from the current context
             var riskAssessmentId = GetCurrentRiskAssessmentId();
@@ -340,8 +337,7 @@
                 new RiskAssessmentID(riskAssessmentId),
                 finalSeverity,
                 finalLikelihood,
-                finalRiskLevel,
-                assessmentRationale);
+                finalRiskLevel);
 
             var result = await Mediator.SendAsync(saveStep4Command, CancellationToken.None);
 
@@ -363,13 +359,13 @@
     /// <summary>
     /// Calculate overall risk assessment from all completed hazard assessments
     /// </summary>
-    private (int? finalSeverity, int? finalLikelihood, string finalRiskLevel, string assessmentRationale) CalculateOverallRiskAssessment()
+    private (int? finalSeverity, int? finalLikelihood, string finalRiskLevel) CalculateOverallRiskAssessment()
     {
         var completedHazards = Step4.HazardAverageScores.Keys.ToList();
         
         if (!completedHazards.Any())
         {
-            return (null, null, "Unknown", "No hazard assessments completed yet.");
+            return (null, null, "Unknown");
         }
 
         // Use highest risk approach for final severity/likelihood
@@ -396,15 +392,9 @@
         var matrixCodesSummary = string.Join(", ", Step4.HazardMatrixCodes.Select(kvp => $"{kvp.Key}:{kvp.Value}"));
         var riskLevelsSummary = string.Join(", ", Step4.HazardRiskLevels.Select(kvp => $"{kvp.Key}:{kvp.Value}"));
 
-        var rationale = $"Risk assessment based on {completedHazards.Count} hazard(s). " +
-                       $"Highest risk hazard: {highestRiskHazardCode} (Matrix: {highestRiskMatrixCode}, Risk Level: {Step4.HazardRiskLevels.GetValueOrDefault(highestRiskHazardCode, "Unknown")}). " +
-                       $"Score statistics: Average={avgScore:F2}, Maximum={maxScore:F2}. " +
-                       $"Matrix codes: {matrixCodesSummary}. " +
-                       $"Risk levels: {riskLevelsSummary}. " +
-                       $"Final assessment: {finalRiskLevel} risk based on worst-case scenario approach. " +
-                       $"Assessment completed on {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC.";
+        
 
-        return (severity, likelihood, finalRiskLevel, rationale);
+        return (severity, likelihood, finalRiskLevel);
     }
 
     /// <summary>
@@ -480,7 +470,7 @@
 
     private async Task LoadHazardAverages()
     {
-        if (AvailableHazards?.Any() != true) return;
+        if (Step4Hazards?.Any() != true) return;
         
         try
         {
@@ -488,7 +478,7 @@
             Step4.HazardRiskLevels.Clear();
             Step4.HazardMatrixCodes.Clear();
 
-            foreach (var hazard in AvailableHazards)
+            foreach (var hazard in Step4Hazards)
             {
                 var query = new GetScoringPanelsByHazardCodeQuery(hazard.Code);
                 var result = await Mediator.SendAsync(query, CancellationToken.None);

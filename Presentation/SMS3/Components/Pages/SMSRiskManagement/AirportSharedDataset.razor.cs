@@ -88,7 +88,7 @@ public partial class AirportSharedDataset : ComponentBase
             // Load hazard details if HazardId provided
             if (!string.IsNullOrWhiteSpace(HazardId))
             {
-                var hazardQuery = new GetHazardByIdQuery(new HazardID(HazardId));
+                var hazardQuery = new GetHazardByCodeQuery(new HazardID(HazardId));
                 var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
 
                 if (hazardResult.IsSuccess)

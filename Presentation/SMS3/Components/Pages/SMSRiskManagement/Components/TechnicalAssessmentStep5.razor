@@ -71,9 +71,9 @@
             </RadzenCard>
 
             <!-- ? ENHANCED: Per-Hazard Comprehensive Assessment -->
-            @if (AvailableHazards?.Any() == true)
+            @if (Step5Hazards?.Any() == true)
             {
-                @foreach (var hazard in AvailableHazards)
+                @foreach (var hazard in Step5Hazards)
                 {
                     var needsMitigation = DetermineIfNeedsMitigation(hazard);
                     var hasMitigations = HasMitigations(hazard);
@@ -190,8 +190,8 @@
                                                                       NeedsMitigation="@needsMitigation"
                                                                       AvailableStakeholders="@AvailableStakeholders"
                                                                       AvailableAssessors="@AvailableAssessors"
-                                                                      InitialRiskAssessment="@InitialRiskAssessment"
-                                                                      ResidualRiskAssessment="@ResidualRiskAssessment"
+                                                                       InitialRiskAssessment="@Step5RiskAssessment"
+                                                                       ResidualRiskAssessment="@Step5RiskAssessment"
                                                                       OnMitigationUpdated="@OnMitigationUpdated"
                                                                       OnResidualHazardScored="@HandleResidualHazardScored" />
                                             </div>
@@ -239,9 +239,8 @@
                                                                    Step5="@Step5"
                                                                    AvailableStakeholders="@AvailableStakeholders"
                                                                    AvailableAssessors="@AvailableAssessors"
-                                                                   CurrentRiskAssessment="@ResidualRiskAssessment"
-                                                                   InitialRiskAssessment="@InitialRiskAssessment"
-                                                                   ResidualRiskAssessment="@ResidualRiskAssessment"
+                                                                   CurrentRiskAssessment="@Step5RiskAssessment"
+                                                                   CurrentStep="5"
                                                                    OnHazardScored="@HandleResidualHazardScored" />
                                             </div>
                                         }
@@ -250,7 +249,7 @@
                             }
 
                             <!-- ✅ SECTION 3: Residual Risk Analysis (Collapsible) -->
-                            @if (hasMitigations && ResidualRiskAssessment != null)
+                            @if (hasMitigations && Step5RiskAssessment != null)
                             {
                                 <RadzenCard Variant="Variant.Text" Style="background-color: #e3f2fd; border: 1px solid #90caf9;">
                                     <RadzenStack Gap="1rem">
@@ -392,11 +391,11 @@
     [Parameter] public Step4Model Step4 { get; set; } = new();
     [Parameter] public Step5Model Step5 { get; set; } = new();
     [Parameter] public EventCallback<Step5Model> Step5Changed { get; set; }
-    [Parameter] public List<Hazard> AvailableHazards { get; set; } = new();
+    [Parameter] public List<Hazard> Step5Hazards { get; set; } = new();
     [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
     [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
-    [Parameter] public RiskAssessment? InitialRiskAssessment { get; set; } // For mitigation creation
-    [Parameter] public RiskAssessment? ResidualRiskAssessment { get; set; } // ? For residual risk scoring and analysis
+    [Parameter] public RiskAssessment? Step5RiskAssessment { get; set; } // For mitigation creation
+    
 
     // ? NEW: Store residual risk analysis data per hazard
     private Dictionary<string, string> ResidualWorstOutcomes { get; set; } = new();
@@ -467,14 +466,13 @@
     /// </summary>
     private async Task LoadExistingResidualAnalysisData()
     {
-        if (ResidualRiskAssessment == null || AvailableHazards?.Any() != true) return;
+        if (Step5RiskAssessment == null || Step5Hazards?.Any() != true) return;
 
         try
         {
             // TODO: Implement proper RiskAnalysis CQRS queries
             // For now, just initialize empty data
-            Logger.LogInformation("Loading residual risk analysis data for {Count} hazards linked to ResidualRiskAssessment {AssessmentCode}", 
-                AvailableHazards.Count, ResidualRiskAssessment.Code);
+            Logger.LogInformation("Loading residual risk analysis data for {Count} hazards linked to ResidualRiskAssessment {AssessmentCode}", Step5Hazards.Count, Step5RiskAssessment.Code);
 
             // PLACEHOLDER: In a real implementation, this would load via CQRS
             // foreach (var hazard in AvailableHazards)
@@ -497,11 +495,11 @@
     /// </summary>
     private async Task LoadExistingMitigationsForAllHazards()
     {
-        if (AvailableHazards?.Any() != true) return;
+        if (Step5Hazards?.Any() != true) return;
 
         try
         {
-            Logger.LogInformation("Loading existing mitigations for {Count} hazards in Step5", AvailableHazards.Count);
+            Logger.LogInformation("Loading existing mitigations for {Count} hazards in Step5", Step5Hazards.Count);
 
             // Initialize dictionaries if needed
             if (Step5.HazardMitigations == null)
@@ -510,7 +508,7 @@
                 Step5.SavedMitigationStrategies = new Dictionary<string, List<string>>();
 
             // Load mitigations for each hazard
-            foreach (var hazard in AvailableHazards)
+            foreach (var hazard in Step5Hazards)
             {
                 try
                 {
@@ -637,9 +635,9 @@
                 analysis.AssessmentType = RiskAnalysisType.Residual;
             }
             
-            if (string.IsNullOrEmpty(analysis.RiskAssessmentCode) && ResidualRiskAssessment != null)
+            if (string.IsNullOrEmpty(analysis.RiskAssessmentCode) && Step5RiskAssessment != null)
             {
-                analysis.RiskAssessmentCode = ResidualRiskAssessment.Code;
+                analysis.RiskAssessmentCode = Step5RiskAssessment.Code;
             }
 
             // ✅ Update the domain entity properties
@@ -680,12 +678,12 @@
     /// </summary>
     private async Task SaveResidualAnalysisToDatabase(RiskAnalysis analysis)
     {
-        if (ResidualRiskAssessment == null || analysis == null) return;
+        if (Step5RiskAssessment == null || analysis == null) return;
 
         try
         {
             Logger.LogInformation("💾 Saving residual risk analysis for hazard {HazardCode} to ResidualRiskAssessment {AssessmentCode}", 
-                analysis.HazardCode, ResidualRiskAssessment.Code);
+                analysis.HazardCode, Step5RiskAssessment.Code);
 
             // ✅ Use proper CQRS commands - check if entity exists first
             if (string.IsNullOrEmpty(analysis.Code) || analysis.Code == "RA-0000")
@@ -771,7 +769,7 @@
 
     private int GetHazardsNeedingMitigation()
     {
-        return AvailableHazards?.Count(h => DetermineIfNeedsMitigation(h)) ?? 0;
+        return Step5Hazards?.Count(h => DetermineIfNeedsMitigation(h)) ?? 0;
     }
 
     private async Task OnMitigationUpdated(string hazardId)

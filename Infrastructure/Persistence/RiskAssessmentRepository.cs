@@ -256,7 +256,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalSeverityScore, riskAssessment.FinalSeverityScore ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalLikelihoodScore, riskAssessment.FinalLikelihoodScore ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalRiskLevel, riskAssessment.FinalRiskLevel ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssessmentRationale, riskAssessment.AssessmentRationale ?? (object)DBNull.Value));
+            
 
             // Step 5 - Implementation Fields
             
@@ -384,7 +384,6 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
         int? finalSeverityScore,
         int? finalLikelihoodScore,
         string finalRiskLevel,
-        string assessmentRationale,
         string updatedBy ,
         CancellationToken ct = default)
     {
@@ -402,7 +401,6 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalSeverityScore, finalSeverityScore ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalLikelihoodScore, finalLikelihoodScore ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalRiskLevel, finalRiskLevel));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssessmentRationale, assessmentRationale));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, updatedBy));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);

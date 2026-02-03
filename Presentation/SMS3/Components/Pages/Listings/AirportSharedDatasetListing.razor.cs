@@ -138,7 +138,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
             }
 
             // Get the hazard to find the report code
-            var hazardQuery = new GetHazardByIdQuery(new HazardID(dataset.HazardCode));
+            var hazardQuery = new GetHazardByCodeQuery(new HazardID(dataset.HazardCode));
             var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
 
             if (hazardResult.IsSuccess && hazardResult.Value != null)

@@ -977,8 +977,7 @@ public static class FieldNames
     private static readonly Lazy<string> _fRiskAssessmentFinalRiskLevel = new Lazy<string>(() => "fldv_FinalRiskLevel");
     public static string fRiskAssessmentFinalRiskLevel => _fRiskAssessmentFinalRiskLevel.Value;
 
-    private static readonly Lazy<string> _fRiskAssessmentAssessmentRationale = new Lazy<string>(() => "fldv_AssessmentRationale");
-    public static string fRiskAssessmentAssessmentRationale => _fRiskAssessmentAssessmentRationale.Value;
+    
 
     // Step 5 fields
     
@@ -1213,17 +1212,39 @@ public static class FieldNames
     private static readonly Lazy<string> _fScoringPanelSMSUserCode = new Lazy<string>(() => "fldv_SMSUserCode");
     public static string fScoringPanelSMSUserCode => _fScoringPanelSMSUserCode.Value;
 
-    private static readonly Lazy<string> _fScoringPanelLikelihood = new Lazy<string>(() => "fldi_Likelyhood");
-    public static string fScoringPanelLikelihood => _fScoringPanelLikelihood.Value;
+    private static readonly Lazy<string> _fScoringPanelResidualLikelihood = new Lazy<string>(() => "fldi_ResidualLikelyhood");
+    public static string fScoringPanelResidualLikelihood => _fScoringPanelResidualLikelihood.Value;
 
-    private static readonly Lazy<string> _fScoringPanelSeverity = new Lazy<string>(() => "fldi_Severity");
-    public static string fScoringPanelSeverity => _fScoringPanelSeverity.Value;
+    private static readonly Lazy<string> _fScoringPanelResidualSeverity = new Lazy<string>(() => "fldi_ResidualSeverity");
+    public static string fScoringPanelResidualSeverity => _fScoringPanelResidualSeverity.Value;
 
-    private static readonly Lazy<string> _fScoringPanelScore = new Lazy<string>(() => "fldm_Score");
-    public static string fScoringPanelScore => _fScoringPanelScore.Value;
+    private static readonly Lazy<string> _fScoringPanelResidualScore = new Lazy<string>(() => "fldm_ResidualScore");
+    public static string fScoringPanelResidualScore => _fScoringPanelResidualScore.Value;
 
-    private static readonly Lazy<string> _fScoringPanelRationale = new Lazy<string>(() => "fldv_ScoreRationale");
-    public static string fScoringPanelRationale => _fScoringPanelRationale.Value;
+    private static readonly Lazy<string> _fScoringPanelResidualRationale = new Lazy<string>(() => "fldv_ResidualScoreRationale");
+    public static string fScoringPanelResidualRationale => _fScoringPanelResidualRationale.Value;
+
+
+    private static readonly Lazy<string> _fScoringPanelInitialLikelihood = new Lazy<string>(() => "fldi_InitialLikelyhood");
+    public static string fScoringPanelInitialLikelihood => _fScoringPanelInitialLikelihood.Value;
+
+    private static readonly Lazy<string> _fScoringPanelInitialSeverity = new Lazy<string>(() => "fldi_InitialSeverity");
+    public static string fScoringPanelInitialSeverity => _fScoringPanelInitialSeverity.Value;
+
+    private static readonly Lazy<string> _fScoringPanelInitialScore = new Lazy<string>(() => "fldm_InitialScore");
+    public static string fScoringPanelInitialScore => _fScoringPanelInitialScore.Value;
+
+    private static readonly Lazy<string> _fScoringPanelInitialRationale = new Lazy<string>(() => "fldv_InitialScoreRationale");
+    public static string fScoringPanelInitialRationale => _fScoringPanelInitialRationale.Value;
+
+
+
+
+
+
+
+
+
 
     #endregion
 

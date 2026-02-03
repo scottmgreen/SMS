@@ -697,8 +697,7 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmFinalRiskLevel = new Lazy<string>(() => "@pFinalRiskLevel");
     public static string pmFinalRiskLevel => _pmFinalRiskLevel.Value;
 
-    private static readonly Lazy<string> _pmAssessmentRationale = new Lazy<string>(() => "@pAssessmentRationale");
-    public static string pmAssessmentRationale => _pmAssessmentRationale.Value;
+    
 
     /// <summary>
     /// Risk Assessment - Step 5 Parameters
@@ -919,17 +918,37 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmScoringPanelSMSUserCode = new Lazy<string>(() => "@pScoringPanelSMSUserCode");
     public static string pmScoringPanelSMSUserCode => _pmScoringPanelSMSUserCode.Value;
 
-    private static readonly Lazy<string> _pmScoringPanelLikelihood = new Lazy<string>(() => "@pScoringPanelLikelihood");
-    public static string pmScoringPanelLikelihood => _pmScoringPanelLikelihood.Value;
+    private static readonly Lazy<string> _pmScoringPanelInitialLikelihood = new Lazy<string>(() => "@pScoringPanelInitialLikelihood");
+    public static string pmScoringPanelInitialLikelihood => _pmScoringPanelInitialLikelihood.Value;
 
-    private static readonly Lazy<string> _pmScoringPanelSeverity = new Lazy<string>(() => "@pScoringPanelSeverity");
-    public static string pmScoringPanelSeverity => _pmScoringPanelSeverity.Value;
+    private static readonly Lazy<string> _pmScoringPanelInitialSeverity = new Lazy<string>(() => "@pScoringPanelInitialSeverity");
+    public static string pmScoringPanelInitialSeverity => _pmScoringPanelInitialSeverity.Value;
 
-    private static readonly Lazy<string> _pmScoringPanelScore = new Lazy<string>(() => "@pScoringPanelScore");
-    public static string pmScoringPanelScore => _pmScoringPanelScore.Value;
+    private static readonly Lazy<string> _pmScoringPanelInitialScore = new Lazy<string>(() => "@pScoringPanelInitialScore");
+    public static string pmScoringPanelInitialScore => _pmScoringPanelInitialScore.Value;
 
-    private static readonly Lazy<string> _pmScoringPanelRationale = new Lazy<string>(() => "@pScoringPanelRationale");
-    public static string pmScoringPanelRationale => _pmScoringPanelRationale.Value;
+    private static readonly Lazy<string> _pmScoringPanelInitialRationale = new Lazy<string>(() => "@pScoringPanelInitialRationale");
+    public static string pmScoringPanelInitialRationale => _pmScoringPanelInitialRationale.Value;
+
+
+    private static readonly Lazy<string> _pmScoringPanelResidualLikelihood = new Lazy<string>(() => "@pScoringPanelResidualLikelihood");
+    public static string pmScoringPanelResidualLikelihood => _pmScoringPanelResidualLikelihood.Value;
+
+    private static readonly Lazy<string> _pmScoringPanelResidualSeverity = new Lazy<string>(() => "@pScoringPanelResidualSeverity");
+    public static string pmScoringPanelResidualSeverity => _pmScoringPanelResidualSeverity.Value;
+
+    private static readonly Lazy<string> _pmScoringPanelResidualScore = new Lazy<string>(() => "@pScoringPanelResidualScore");
+    public static string pmScoringPanelResidualScore => _pmScoringPanelResidualScore.Value;
+
+    private static readonly Lazy<string> _pmScoringPanelResidualRationale = new Lazy<string>(() => "@pScoringPanelResidualRationale");
+    public static string pmScoringPanelResidualRationale => _pmScoringPanelResidualRationale.Value;
+
+
+
+
+
+
+
 
     /// <summary>
     /// Report Validation parameters (restored from accidental removal)

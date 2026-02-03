@@ -803,10 +803,14 @@ public static partial class Mappers
         scoringPanel.HazardCode = reader.GetValue<string>(FieldNames.fScoringPanelHazardCode);
         scoringPanel.RiskAssessmentCode = reader.GetValue<string>(FieldNames.fScoringPanelRiskAssessmentCode);
         scoringPanel.SMSUserCode = reader.GetValue<string>(FieldNames.fScoringPanelSMSUserCode);
-        scoringPanel.Likelihood = reader.GetValue<int?>(FieldNames.fScoringPanelLikelihood);
-        scoringPanel.Severity = reader.GetValue<int?>(FieldNames.fScoringPanelSeverity);
-        scoringPanel.Score = reader.GetValue<decimal?>(FieldNames.fScoringPanelScore);
-        scoringPanel.Rationale = reader.GetValue<string>(FieldNames.fScoringPanelRationale);
+        scoringPanel.InitialLikelihood = reader.GetValue<int?>(FieldNames.fScoringPanelInitialLikelihood);
+        scoringPanel.InitialSeverity = reader.GetValue<int?>(FieldNames.fScoringPanelInitialSeverity);
+        scoringPanel.InitialScore = reader.GetValue<decimal?>(FieldNames.fScoringPanelInitialScore);
+        scoringPanel.InitialRationale = reader.GetValue<string>(FieldNames.fScoringPanelInitialRationale);
+        scoringPanel.ResidualLikelihood = reader.GetValue<int?>(FieldNames.fScoringPanelResidualLikelihood);
+        scoringPanel.ResidualSeverity = reader.GetValue<int?>(FieldNames.fScoringPanelResidualSeverity);
+        scoringPanel.ResidualScore = reader.GetValue<decimal?>(FieldNames.fScoringPanelResidualScore);
+        scoringPanel.ResidualRationale = reader.GetValue<string>(FieldNames.fScoringPanelResidualRationale);
 
         return scoringPanel;
     }

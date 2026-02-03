@@ -226,7 +226,6 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
         int? finalSeverityScore,
         int? finalLikelihoodScore,
         string finalRiskLevel,
-        string assessmentRationale,
         string updatedBy = "SYSTEM",
         CancellationToken ct = default)
     {
@@ -239,7 +238,6 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
                 finalSeverityScore,
                 finalLikelihoodScore,
                 finalRiskLevel,
-                assessmentRationale,
                 updatedBy,
                 ct).ConfigureAwait(false);
 
@@ -422,7 +420,6 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
                     stepData.GetValueOrDefault("FinalSeverityScore", null) as int?,
                     stepData.GetValueOrDefault("FinalLikelihoodScore", null) as int?,
                     stepData.GetValueOrDefault("FinalRiskLevel", "")?.ToString() ?? "",
-                    stepData.GetValueOrDefault("AssessmentRationale", "")?.ToString() ?? "",
                     updatedBy, ct),
 
                 5 => await SaveStep5Async(

@@ -254,7 +254,6 @@ public sealed class RiskAssessmentService
         int? finalLikelihoodScore,
         string finalRiskLevel,
         string riskTolerability,
-        string assessmentRationale,
         CancellationToken ct = default)
     {
         try
@@ -265,8 +264,8 @@ public sealed class RiskAssessmentService
                 riskAssessmentId,
                 finalSeverityScore,
                 finalLikelihoodScore,
-                finalRiskLevel,
-                assessmentRationale);
+                finalRiskLevel
+                );
 
             var result = await _mediator.SendAsync(command, ct).ConfigureAwait(false);
 

@@ -40,9 +40,12 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelHazardCode, scoringPanel.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelRiskAssessmentCode, scoringPanel.RiskAssessmentCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelSMSUserCode, scoringPanel.SMSUserCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelLikelihood, scoringPanel.Likelihood ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelSeverity, scoringPanel.Severity ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelScore, scoringPanel.Score ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelInitialLikelihood, scoringPanel.InitialLikelihood ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelInitialSeverity, scoringPanel.InitialSeverity ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelInitialScore, scoringPanel.InitialScore ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelResidualLikelihood, scoringPanel.ResidualLikelihood ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelResidualSeverity, scoringPanel.ResidualSeverity ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelResidualScore, scoringPanel.ResidualScore ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, scoringPanel.CreatedBy ?? "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
@@ -212,10 +215,14 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelHazardCode, scoringPanel.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelRiskAssessmentCode, scoringPanel.RiskAssessmentCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelSMSUserCode, scoringPanel.SMSUserCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelLikelihood, scoringPanel.Likelihood ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelSeverity, scoringPanel.Severity ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelScore, scoringPanel.Score ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelRationale, scoringPanel.Rationale));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelInitialLikelihood, scoringPanel.InitialLikelihood ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelInitialSeverity, scoringPanel.InitialSeverity ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelInitialScore, scoringPanel.InitialScore ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelInitialRationale, scoringPanel.InitialRationale));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelResidualLikelihood, scoringPanel.ResidualLikelihood ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelResidualSeverity, scoringPanel.ResidualSeverity ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelResidualScore, scoringPanel.ResidualScore ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelResidualRationale, scoringPanel.ResidualRationale));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, scoringPanel.UpdatedBy ?? "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 

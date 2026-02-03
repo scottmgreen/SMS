@@ -8,7 +8,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // HAZARD QUERY HANDLERS
 // =============================================
 
-public class GetHazardByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardByIdQuery, Result<Hazard>>
+public class GetHazardByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardByCodeQuery, Result<Hazard>>
 {
     private readonly HazardDataService _hazardDataService;
     private readonly HazardLocationDataService _locationDataService;
@@ -21,7 +21,7 @@ public class GetHazardByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetHaz
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<Hazard>> HandleAsync(GetHazardByIdQuery request, CancellationToken ct = default)
+    public async Task<Result<Hazard>> HandleAsync(GetHazardByCodeQuery request, CancellationToken ct = default)
     {
         try
         {
@@ -78,7 +78,7 @@ public class GetAllHazardsQueryHandler : BaseQueryBundle, IRequestHandler<GetAll
     }
 }
 
-public class GetHazardsByReportIdQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardsByReportIdQuery, Result<List<Hazard>>>
+public class GetHazardsByReportIdQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardsByReportCodeQuery, Result<List<Hazard>>>
 {
     private readonly HazardDataService _hazardDataService;
     private readonly HazardLocationDataService _hazardLocationDataService;
@@ -92,7 +92,7 @@ public class GetHazardsByReportIdQueryHandler : BaseQueryBundle, IRequestHandler
     }
 
 
-    public async Task<Result<List<Hazard>>> HandleAsync(GetHazardsByReportIdQuery request, CancellationToken ct = default)
+    public async Task<Result<List<Hazard>>> HandleAsync(GetHazardsByReportCodeQuery request, CancellationToken ct = default)
     {
         try
         {
@@ -136,10 +136,10 @@ public class GetHazardsByReportCodeQueryHandler : BaseQueryBundle, IRequestHandl
     {
         try
         {
-            _logger.LogInformation("Processing GetHazardsByReportCodeQuery for ReportCode: {ReportCode}", request.ReportCode);
+            _logger.LogInformation("Processing GetHazardsByReportCodeQuery for ReportCode: {ReportCode}", request.ReportId.Value);
 
             // Convert report code to ReportID and use existing method
-            var reportId = new ReportID(request.ReportCode);
+            var reportId = new ReportID(request.ReportId.Value);
 
             // ? FIXED: Use the clean method that doesn't include complex mitigation joins
             var result = await _hazardDataService.GetHazardsByReportIdAsync(reportId, ct).ConfigureAwait(false);
@@ -192,15 +192,15 @@ public class GetHazardByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetH
     {
         try
         {
-            _logger.LogInformation("Processing GetHazardByCodeQuery for Code: {Code}", request.Code);
+            _logger.LogInformation("Processing GetHazardByCodeQuery for Code: {Code}", request.HazardId.Value);
 
             // Convert string code to HazardID and use existing method
-            var hazardId = new HazardID(request.Code);
+            var hazardId = new HazardID(request.HazardId.Value);
             var result = await _hazardDataService.GetHazardByCodeAsync(hazardId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess && result.Value != null)
             {
-                var location = await _locationDataService.GetHazardLocationsByHazardCodeAsync(request.Code, ct);
+                var location = await _locationDataService.GetHazardLocationsByHazardCodeAsync(request.HazardId.Value, ct);
                 if (location.IsSuccess && location.Value?.Any() == true)
                 {
                     result.Value.HazardLocation = location.Value.FirstOrDefault();

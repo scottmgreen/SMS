@@ -398,7 +398,7 @@ public partial class ReportCalendar : ComponentBase
             // Try using GetHazardsByReportCodeQuery if it exists, otherwise fallback to GetAllHazardsQuery with filtering
             try
             {
-                var hazardsQuery = new GetHazardsByReportCodeQuery(reportCode);
+                var hazardsQuery = new GetHazardsByReportCodeQuery(new ReportID(reportCode));
                 var hazardsResult = await Mediator.SendAsync(hazardsQuery, CancellationToken.None);
 
                 if (hazardsResult.IsSuccess && hazardsResult.Value != null)

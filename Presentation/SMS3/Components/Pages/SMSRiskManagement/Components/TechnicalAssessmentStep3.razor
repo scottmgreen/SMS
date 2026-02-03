@@ -19,7 +19,7 @@
                         <RadzenColumn Size="10">
                             <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-secondary); margin: 0;">
                                 <RadzenIcon Icon="assignment" Style="margin-right: 0.5rem;" />
-                                Hazard Risk Analysis (@GetAnalyzedCount()/@(AvailableHazards?.Count ?? 0) completed)
+                            Hazard Risk Analysis (@GetAnalyzedCount()/@(Step3Hazards?.Count ?? 0) completed)
                             </RadzenText>
                         </RadzenColumn>
                         <RadzenColumn Size="2">
@@ -27,9 +27,9 @@
                         </RadzenColumn>
                     </RadzenRow>
 
-                    @if (AvailableHazards?.Any() == true)
+                @if (Step3Hazards?.Any() == true)
                     {
-                        @foreach (var hazard in AvailableHazards)
+                    @foreach (var hazard in Step3Hazards)
                         {
                             var analysis = Step3.GetHazardAnalysis(hazard.Code);
                             
@@ -143,7 +143,7 @@
     [Parameter] public Step1Model Step1 { get; set; } = new();
     [Parameter] public Step3Model Step3 { get; set; } = new();
     [Parameter] public EventCallback<Step3Model> Step3Changed { get; set; }
-    [Parameter] public List<Hazard> AvailableHazards { get; set; } = new();
+    [Parameter] public List<Hazard> Step3Hazards { get; set; } = new();
 
     #endregion
 
@@ -168,7 +168,7 @@
     /// <returns>Number of hazards with complete analysis</returns>
     private int GetAnalyzedCount()
     {
-        return Step3.HazardRiskAnalyses?.Count(ha => IsAnalysisComplete(ha.Value)) ?? 0;
+        return Step3.Step3RiskAnalyses?.Count(ha => IsAnalysisComplete(ha.Value)) ?? 0;
     }
 
     /// <summary>
@@ -177,7 +177,7 @@
     /// <returns>Percentage of completion (0-100)</returns>
     private int GetAnalysisProgress()
     {
-        var totalHazards = AvailableHazards?.Count ?? 0;
+        var totalHazards = Step3Hazards?.Count ?? 0;
         if (totalHazards == 0) return 0;
         
         return (GetAnalyzedCount() * 100) / totalHazards;
@@ -224,7 +224,7 @@
     /// <returns>Summary validation message</returns>
     private string GetValidationSummary()
     {
-        var totalHazards = AvailableHazards?.Count ?? 0;
+        var totalHazards = Step3Hazards?.Count ?? 0;
         var analyzedCount = GetAnalyzedCount();
         
         if (totalHazards == 0)
@@ -251,7 +251,7 @@
         var newValue = args.Value?.ToString() ?? string.Empty;
         
         // Update the specific field in the RiskAnalysis entity
-        if (Step3.HazardRiskAnalyses.TryGetValue(hazardCode, out var analysis))
+        if (Step3.Step3RiskAnalyses.TryGetValue(hazardCode, out var analysis))
         {
             switch (fieldName)
             {
@@ -267,7 +267,7 @@
             }
             
             // Ensure the updated entity is maintained in the dictionary
-            Step3.HazardRiskAnalyses[hazardCode] = analysis;
+            Step3.Step3RiskAnalyses[hazardCode] = analysis;
         }
         
         // Trigger UI refresh and notify parent component of changes

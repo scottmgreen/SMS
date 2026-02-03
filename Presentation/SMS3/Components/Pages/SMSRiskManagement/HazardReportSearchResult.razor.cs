@@ -142,7 +142,7 @@ public partial class HazardReportSearchResult : ComponentBase
 
         try
         {
-            var hazardQuery = new GetHazardByCodeQuery(hazardCode);
+            var hazardQuery = new GetHazardByCodeQuery(new HazardID(hazardCode));
             var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
 
             if (hazardResult.IsSuccess && hazardResult.Value != null)
