@@ -1,6 +1,7 @@
 ﻿@using SMS3.Components.Shared
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
+@using SMS3.Components.Pages.SMSRiskManagement
 @using SMS3.Components.Pages.SMSRiskManagement.Components
 @using SMS_Application.Messaging.Queries
 @using SMS_Application.Interfaces
@@ -26,31 +27,7 @@
                 </RadzenStack>
             </RadzenCard>
 
-            <!-- Risk Assessment Framework -->
-        @*     <RadzenCard Variant="Variant.Outlined">
-                <RadzenStack Gap="1rem">
-                    <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-info); margin: 0;">
-                        <RadzenIcon Icon="settings" Style="margin-right: 0.5rem;" />
-                        Assessment Framework
-                    </RadzenText>
-                    
-                     <RadzenRow Gap="1rem">
-                        <RadzenColumn Size="12" SizeMD="6">
-                            <RadzenFormField Text="Tolerability Framework" Variant="Variant.Outlined">
-                                <RadzenTextBox @bind-Value="@Step4.TolerabilityFramework" 
-                                             Style="width: 100%;" />
-                            </RadzenFormField>
-                        </RadzenColumn>
-                        <RadzenColumn Size="12" SizeMD="6">
-                            <RadzenFormField Text="Risk Acceptance Criteria" Variant="Variant.Outlined">
-                                <RadzenTextBox @bind-Value="@Step4.RiskAcceptanceCriteria" 
-                                             Placeholder="Define risk acceptance criteria..."
-                                             Style="width: 100%;" />
-                            </RadzenFormField>
-                        </RadzenColumn>
-                    </RadzenRow> 
-                </RadzenStack>
-            </RadzenCard> *@
+           
 
             <!-- Hazard Scoring Panels -->
             @if (Step4Hazards?.Any() == true)
@@ -66,7 +43,7 @@
                                         Hazard="@hazard" 
                                         AvailableStakeholders="@AvailableStakeholders"
                                         AvailableAssessors="@AvailableAssessors"
-                                        CurrentRiskAssessment="@Step4RiskAssessment"
+                                        CurrentRiskAssessment="@CurrentRiskAssessment"
                                         CurrentStep="4"
                                         RiskAssessmentId="@RiskAssessmentId"
                                         OnHazardScored="@(() => HandleHazardScored(hazard.Code))" />
@@ -230,8 +207,9 @@
     [Parameter] public List<Hazard> Step4Hazards { get; set; } = new();
     [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
     [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
-    [Parameter] public RiskAssessment? Step4RiskAssessment { get; set; } // 🚀 NEW: For Step 4 scoring
+    [Parameter] public RiskAssessment? CurrentRiskAssessment { get; set; } // For unified assessment access
     [Parameter] public RiskAssessmentID? RiskAssessmentId { get; set; }  // Pass assessment ID from parent
+    [Parameter] public int CurrentStep { get; set; } = 4; // Current step parameter
 
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<TechnicalAssessmentStep4> Logger { get; set; } = default!;
@@ -519,4 +497,4 @@
             Logger.LogError(ex, "Error loading hazard averages");
         }
     }
-}}
+}

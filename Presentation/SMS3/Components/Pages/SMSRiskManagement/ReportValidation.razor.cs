@@ -359,8 +359,7 @@ public partial class ReportValidation : ComponentBase
             var assessmentType = ValidationType.Value.ToLower() switch
             {
                 "technical" => "TechnicalAssessment",
-                //"preliminary" => "PreliminaryRiskAssessment",
-                _ => "TechnicalAssessment"
+                 _ => "TechnicalAssessment"
             };
 
             string navigationUrl;

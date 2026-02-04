@@ -68,9 +68,9 @@
                         </h5>
                         <RadzenButton ButtonStyle="ButtonStyle.Light" 
                                     Variant="Variant.Text"
-                                    Icon="close"
+                                    Icon="close" it..
                                     Size="ButtonSize.Small"
-                                    @* Click="@CloseBulkApprovalDialog" /> *@
+                                    
                             />
                     </div>
                 </div>
@@ -155,13 +155,13 @@
                         <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
                                     Text="Cancel" 
                                     Icon="close"
-                                    
+                                      Click="@CloseBulkApprovalConfirmation"  
                                     Size="ButtonSize.Medium"
                                     Disabled="@IsProcessingApproval" />
                         <RadzenButton ButtonStyle="ButtonStyle.Success" 
                                     Text="@(IsProcessingApproval ? "Processing..." : $"Approve All {SelectedReportForApproval.MitigationCount} Mitigations")" 
                                     Icon="@(IsProcessingApproval ? "hourglass_empty" : "verified")"
-                                   
+                                       Click="@ProcessBulkApprovalConfirmation"  
                                     Size="ButtonSize.Medium"
                                     Disabled="@IsProcessingApproval" />
                     </div>

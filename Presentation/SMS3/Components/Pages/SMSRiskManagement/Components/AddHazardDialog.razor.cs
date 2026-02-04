@@ -370,6 +370,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         EditingHazard.Description = NewHazardDescription.Trim();
         EditingHazard.HazardCategory = NewHazardCategory;
         EditingHazard.HazardType = NewHazardType;
+        EditingHazard.IsInitialHazard = false;
         EditingHazard.UpdatedDate = DateTime.UtcNow;
 
         // Handle location updates - EXACTLY like HazardReporting
@@ -414,6 +415,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         hazard.Description = NewHazardDescription.Trim();
         hazard.HazardCategory = NewHazardCategory;
         hazard.HazardType = NewHazardType;
+        hazard.IsInitialHazard = false;
         hazard.ReportCode = ReportId ?? "";
         hazard.ReportedBy = AuthService.CurrentUserDisplayName;
         hazard.ReportingDepartment = "Technical Assessment";
@@ -438,14 +440,17 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         }
 
         var createdHazard = hazardResult.Value;
-        Logger?.LogInformation("Successfully created hazard: {HazardCode} with Category: {Category}, Type: {Type}", 
-            createdHazard?.Code, NewHazardCategory, NewHazardType);
+        Logger?.LogInformation("Successfully created hazard: {HazardCode} with Category: {Category}, Type: {Type}",  createdHazard?.Code, NewHazardCategory, NewHazardType);
 
         // Create the HazardLocation after hazard is created
         if (HasGeoLocation)
         {
             await CreateHazardLocation(createdHazard);
         }
+
+        
+
+
 
         // Invoke callback with the created hazard
         await OnHazardAdded.InvokeAsync(createdHazard);

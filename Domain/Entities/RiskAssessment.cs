@@ -174,16 +174,12 @@ public sealed class RiskAssessment : BaseAuditableEntity
             UpdatedDate = DateTime.UtcNow;
 
             // Update status based on progress - BUSINESS RULE: Only Created/InProgress/Completed
-            if (RiskAssessmentCategory.IsPreliminary && stepNumber == 1)
+            if (stepNumber == 5)
             {
                 Status = RiskAssessmentStatus.Completed;
                 Stage = "Complete";
             }
-            else if (RiskAssessmentCategory.IsTechnical && _completedSteps.Count == 5)
-            {
-                Status = RiskAssessmentStatus.Completed;
-                Stage = "Complete";
-            }
+           
             else
             {
                 Status = RiskAssessmentStatus.InProgress;

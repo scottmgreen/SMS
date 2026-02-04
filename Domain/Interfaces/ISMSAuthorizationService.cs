@@ -16,11 +16,7 @@ public interface ISMSAuthorizationService
     Task<Result<bool>> CanUserApproveRiskAsync(string userId, RiskLevel riskLevel);
     Task<Result<bool>> CanUserEscalateAsync(string userId, string escalationType);
 
-    // Committee Authorization
-    Task<Result<bool>> CanUserParticipateInCommitteeAsync(string userId, CommitteeType committeeType);
-    Task<Result<bool>> CanUserChairCommitteeAsync(string userId, CommitteeType committeeType);
-    Task<Result<bool>> CanUserCreateCommitteeAsync(string userId, CommitteeType committeeType);
-
+    
     // Investigation Authorization
     Task<Result<bool>> CanUserInitiateInvestigationAsync(string userId, string investigationType);
     Task<Result<bool>> CanUserLeadInvestigationAsync(string userId, string investigationType);
@@ -31,9 +27,7 @@ public interface ISMSAuthorizationService
     Task<Result<bool>> CanUserPerformCrossDepartmentActionAsync(string userId, string action);
 
     // Workflow Authorization
-    Task<Result<bool>> CanUserExecuteWorkflowAsync(string userId, string workflowType, string stage);
-    Task<Result<string>> GetRequiredApproverForRiskAsync(RiskLevel riskLevel, string department);
-    Task<Result<IEnumerable<string>>> GetEligibleApproversAsync(DecisionAuthority requiredAuthority, string? department = null);
+   
 
     // Stakeholder-Specific Authorization
     Task<Result<bool>> CanStakeholderAccessOperationalDataAsync(string userId, string dataScope);

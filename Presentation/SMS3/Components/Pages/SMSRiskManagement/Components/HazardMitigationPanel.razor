@@ -387,8 +387,7 @@
     [Parameter] public bool NeedsMitigation { get; set; }
     [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
     [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
-    [Parameter] public RiskAssessment? InitialRiskAssessment { get; set; }
-    [Parameter] public RiskAssessment? ResidualRiskAssessment { get; set; } // ✅ NEW: For residual risk scoring
+    [Parameter] public RiskAssessment? CurrentRiskAssessment { get; set; }   // ✅ SINGLE risk assessment parameter
     [Parameter] public EventCallback<string> OnMitigationUpdated { get; set; }
     [Parameter] public EventCallback<string> OnResidualHazardScored { get; set; } // ✅ NEW: For residual scoring callbacks
 
@@ -506,7 +505,7 @@
                 CurrentMitigation = newMitigationResult.Value;
                 
                 // CRITICAL: Assign the RiskAssessmentCode from the current assessment
-                CurrentMitigation.RiskAssessmentCode = InitialRiskAssessment?.Code ?? string.Empty;
+                CurrentMitigation.RiskAssessmentCode = CurrentRiskAssessment?.Code ?? string.Empty;
                 
                 // Set defaults
                 CurrentMitigation.Status = "Proposed";
@@ -567,7 +566,7 @@
 
             // Ensure critical fields are set
             CurrentMitigation.HazardCode = Hazard.Code;
-            CurrentMitigation.RiskAssessmentCode = InitialRiskAssessment?.Code ?? string.Empty;
+            CurrentMitigation.RiskAssessmentCode = CurrentRiskAssessment?.Code ?? string.Empty;
 
             Result<Mitigation> result;
 

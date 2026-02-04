@@ -1,0 +1,32 @@
+﻿Hazard Status (validation option in parentheses)
+-	Investigation (Investigate)
+-	Validated and Sent for Assessment (SMS Risk)
+-	Referred to Risk Owner (No SMS Risk)
+-	Invalid (No SMS Risk)
+
+Investigation Status
+-	Investigator Assigned
+-	Investigation Underway
+-	Investigation Complete
+
+Interview Status
+-	Interviewee Identified
+-	Interview Scheduled
+-	Interview Complete
+-	Unable to Conduct
+
+Risk Assessment Status
+-	Assigned to Assessor
+-	Assessment Scheduled
+-	Assessment Underway
+-	Assessment Complete
+
+Mitigation Status
+-	Mitigation Pending Approval
+-	Mitigation Approved
+-	Mitigation in Progress – Due Date
+-	Mitigation Rejected
+	Initial Risk Accepted
+	Reassess Hazard
+-	Mitigation Complete
+-	Monitoring Hazard

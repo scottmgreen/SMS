@@ -5,6 +5,7 @@ using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
 using SMS_Application.Interfaces;
 using SMS3.Components.Shared;
+using SMS3.Components.Pages.SMSRiskManagement; // Add this for Step4Model and Step5Model
 using Radzen;
 using Radzen.Blazor;
 using Microsoft.AspNetCore.Components;
@@ -18,12 +19,10 @@ public partial class HazardScoringPanel : ComponentBase
     [Parameter] public Step5Model Step5 { get; set; } = new();
     [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
     [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
-    [Parameter] public RiskAssessment? CurrentRiskAssessment { get; set; }   // 🎯 Current risk assessment context
-    [Parameter] public int CurrentStep { get; set; }   // 🎯 Current risk assessment context
-    [Parameter] public RiskAssessment? TechnicalRiskAssessment { get; set; }   // 🎯 For Step 4 data lookup  
-   
+    [Parameter] public RiskAssessment? CurrentRiskAssessment { get; set; }   // ✅ SINGLE risk assessment parameter
+    [Parameter] public int CurrentStep { get; set; }   // Current step (4 or 5)
     [Parameter] public EventCallback OnHazardScored { get; set; }
-    [Parameter] public RiskAssessmentID? RiskAssessmentId { get; set; } // NEW: Pass assessment ID to link scoring panels
+    [Parameter] public RiskAssessmentID? RiskAssessmentId { get; set; } // For backward compatibility
 
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<HazardScoringPanel> Logger { get; set; } = default!;
@@ -223,17 +222,52 @@ public partial class HazardScoringPanel : ComponentBase
 
         try
         {
-            // Local variable to track rationale input with reactive updates
+            // Local variable to track rationale input
             string rationaleInput = panel.Rationale ?? string.Empty;
+            bool dialogResult = false;
 
-            // Show rationale dialog before submitting
-            var rationaleResult = await DialogService.OpenAsync("Score Rationale", 
-                ds => BuildRationaleDialog(ds, rationaleInput, panel, (value) => { rationaleInput = value; ds.Refresh(); }),
-                new DialogOptions { Width = "700px", Height = "450px", Resizable = true });
+            // Show rationale dialog using proper component
+            var rationaleResult = await DialogService.OpenAsync("Score Rationale",
+                ds => 
+                {
+                    return builder =>
+                    {
+                        builder.OpenComponent<RationaleInputDialog>(0);
+                        builder.AddAttribute(1, "MemberName", GetMemberName(panel.SMSUserCode));
+                        builder.AddAttribute(2, "HazardCode", Hazard.Code);
+                        builder.AddAttribute(3, "MatrixCode", GetPreviewMatrixCode(panel));
+                        builder.AddAttribute(4, "RationaleInput", rationaleInput);
+                        builder.AddAttribute(5, "RationaleInputChanged", EventCallback.Factory.Create<string>(this, value => 
+                        {
+                            rationaleInput = value;
+                            var logText = value?.Length > 50 ? value.Substring(0, 50) + "..." : value ?? "";
+                            Logger.LogInformation("Rationale updated: {Rationale}", logText);
+                        }));
+                        builder.AddAttribute(6, "OnResult", EventCallback.Factory.Create<bool>(this, result => 
+                        {
+                            dialogResult = result;
+                            var rationaleLength = rationaleInput?.Length ?? 0;
+                            Logger.LogInformation("Dialog result: {Result}, Rationale length: {Length}", result, rationaleLength);
+                            ds.Close(result);
+                        }));
+                        builder.CloseComponent();
+                    };
+                },
+                new DialogOptions { Width = "750px", Height = "400px", Resizable = true });
 
-            // If user cancelled or didn't provide rationale, don't submit
-            if (rationaleResult != true || string.IsNullOrWhiteSpace(rationaleInput))
+            var hasRationale = !string.IsNullOrWhiteSpace(rationaleInput);
+            
+
+            // Check both the dialog result and the rationale content
+            if (rationaleResult != true && !dialogResult)
             {
+                Logger.LogInformation("Dialog was cancelled by user");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(rationaleInput))
+            {
+                Logger.LogWarning("Dialog returned success but rationale is empty");
                 return;
             }
 
@@ -255,9 +289,9 @@ public partial class HazardScoringPanel : ComponentBase
 
             if (result.IsSuccess)
             {
+                var logRationale = string.IsNullOrEmpty(panel.Rationale) ? "" : panel.Rationale.Substring(0, Math.Min(50, panel.Rationale.Length));
                 Logger.LogInformation("Score submitted for panel {PanelCode}: {Severity} x {Likelihood} = {Score} with rationale: {Rationale}",
-                    panel.Code, panel.Severity, panel.Likelihood, panel.Score,
-                    string.IsNullOrEmpty(panel.Rationale) ? "" : panel.Rationale.Substring(0, Math.Min(50, panel.Rationale.Length)));
+                    panel.Code, panel.Severity, panel.Likelihood, panel.Score, logRationale);
 
                 // Reload ONLY this component's data
                 await LoadHazardScoringPanelsInternal();
@@ -287,179 +321,59 @@ public partial class HazardScoringPanel : ComponentBase
         }
     }
 
-    private RenderFragment BuildRationaleDialog(DialogService ds, string rationaleInput, ScoringPanel panel, Action<string> onValueChanged)
+    private void EditScore(ScoringPanel panel)
     {
-        return builder =>
-        {
-            builder.OpenComponent<RadzenStack>(0);
-            builder.AddAttribute(1, "Gap", "1rem");
-            
-            // Header div
-            builder.OpenElement(2, "div");
-            builder.AddAttribute(3, "style", "background-color: #212e61 !important; color: white; padding: 1rem 1.25rem; margin: -1rem -1rem 0 -1rem; border-radius: 8px 8px 0 0;");
-            
-            builder.OpenElement(4, "div");
-            builder.AddAttribute(5, "style", "display: flex; align-items: center; gap: 0.75rem;");
-            
-            builder.OpenElement(6, "i");
-            builder.AddAttribute(7, "class", "fas fa-comment-dots");
-            builder.AddAttribute(8, "style", "font-size: 1.25rem; opacity: 0.9;");
-            builder.CloseElement();
-            
-            builder.OpenElement(9, "div");
-            builder.OpenElement(10, "h5");
-            builder.AddAttribute(11, "style", "margin: 0; font-weight: 600; font-size: 1.1rem;");
-            builder.AddContent(12, $"Please provide {GetMemberName(panel.SMSUserCode)} rationale for scoring {Hazard.Code} as {GetPreviewMatrixCode(panel)}");
-            builder.CloseElement();
-            builder.CloseElement();
-            
-            builder.CloseElement();
-            builder.CloseElement();
-            
-            // Form field
-            builder.OpenComponent<RadzenFormField>(13);
-            builder.AddAttribute(14, "Text", "Rationale");
-            builder.AddAttribute(15, "Variant", Variant.Outlined);
-            
-            builder.OpenComponent<RadzenTextArea>(16);
-            builder.AddAttribute(17, "Value", rationaleInput);
-            builder.AddAttribute(18, "ValueChanged", EventCallback.Factory.Create<string>(this, onValueChanged));
-            builder.AddAttribute(19, "Rows", 6);
-            builder.AddAttribute(20, "Style", "width: 100%;");
-            builder.AddAttribute(21, "Placeholder", "Enter your rationale for this risk assessment score...\n\nConsider:\n• Why this severity level is appropriate\n• Why this likelihood level is justified\n• Any supporting evidence or experience");
-            builder.CloseComponent();
-            
-            builder.CloseComponent();
-            
-            // Button stack
-            builder.OpenComponent<RadzenStack>(22);
-            builder.AddAttribute(23, "Orientation", Orientation.Horizontal);
-            builder.AddAttribute(24, "JustifyContent", JustifyContent.End);
-            builder.AddAttribute(25, "Gap", "0.5rem");
-            
-            builder.OpenComponent<RadzenButton>(26);
-            builder.AddAttribute(27, "Text", "Cancel");
-            builder.AddAttribute(28, "ButtonStyle", ButtonStyle.Light);
-            builder.AddAttribute(29, "Click", EventCallback.Factory.Create(this, () => ds.Close(false)));
-            builder.CloseComponent();
-            
-            builder.OpenComponent<RadzenButton>(30);
-            builder.AddAttribute(31, "Text", "Submit Score");
-            builder.AddAttribute(32, "Icon", "save");
-            builder.AddAttribute(33, "ButtonStyle", ButtonStyle.Success);
-            builder.AddAttribute(34, "Click", EventCallback.Factory.Create(this, () => { panel.Rationale = rationaleInput; ds.Close(!string.IsNullOrWhiteSpace(rationaleInput)); }));
-            builder.AddAttribute(35, "Disabled", string.IsNullOrWhiteSpace(rationaleInput));
-            builder.CloseComponent();
-            
-            builder.CloseComponent();
-            
-            builder.CloseComponent();
-        };
+        panel.Severity = null;
+        panel.Likelihood = null;
+        panel.Score = null;
+        panel.Rationale = null; // Also clear rationale when editing
+        panel.RiskAssessmentCode = CurrentRiskAssessment?.Code ?? string.Empty;
+        // Don't call StateHasChanged() here to prevent render loops
     }
 
-    private void EditScore(ScoringPanel panel)
-{
-    panel.Severity = null;
-    panel.Likelihood = null;
-    panel.Score = null;
-    panel.Rationale = null; // Also clear rationale when editing
-    panel.RiskAssessmentCode = CurrentRiskAssessment?.Code ?? string.Empty;
-    // Don't call StateHasChanged() here to prevent render loops
-}
-
-private async Task ShowRationale(ScoringPanel panel)
-{
-    if (string.IsNullOrEmpty(panel.Rationale)) return;
-
-    await DialogService.OpenAsync($"Score by {GetMemberName(panel.SMSUserCode)} Rationale",
-        ds => BuildRationaleViewDialog(ds, panel),
-        new DialogOptions { Width = "700px", Height = "450px", Resizable = true });
-}
-
-private RenderFragment BuildRationaleViewDialog(DialogService ds, ScoringPanel panel)
-{
-    return builder =>
+    private async Task ShowRationale(ScoringPanel panel)
     {
-        builder.OpenComponent<RadzenStack>(0);
-        builder.AddAttribute(1, "Gap", "1rem");
-        
-        // Header div
-        builder.OpenElement(2, "div");
-        builder.AddAttribute(3, "style", "background-color: #212e61 !important; color: white; padding: 1rem 1.25rem; margin: -1rem -1rem 0 -1rem; border-radius: 8px 8px 0 0;");
-        
-        builder.OpenElement(4, "div");
-        builder.AddAttribute(5, "style", "display: flex; align-items: center; gap: 0.75rem;");
-        
-        builder.OpenElement(6, "i");
-        builder.AddAttribute(7, "class", "fas fa-user-check");
-        builder.AddAttribute(8, "style", "font-size: 1.25rem; opacity: 0.9;");
-        builder.CloseElement();
-        
-        builder.OpenElement(9, "div");
-        builder.OpenElement(10, "h5");
-        builder.AddAttribute(11, "style", "margin: 0; font-weight: 600; font-size: 1.1rem;");
-        builder.AddContent(12, $"Rationale for {Hazard.Code} risk assessment {GetPanelMatrixCode(panel)} score");
-        builder.CloseElement();
-        builder.CloseElement();
-        
-        builder.CloseElement();
-        builder.CloseElement();
-        
-        // Form field
-        builder.OpenComponent<RadzenFormField>(13);
-        builder.AddAttribute(14, "Text", "Rationale");
-        builder.AddAttribute(15, "Variant", Variant.Outlined);
-        
-        builder.OpenComponent<RadzenTextArea>(16);
-        builder.AddAttribute(17, "Value", panel.Rationale);
-        builder.AddAttribute(18, "ReadOnly", true);
-        builder.AddAttribute(19, "Rows", 8);
-        builder.AddAttribute(20, "Style", "width: 100%; background-color: #f8f9fa; border: 2px solid #e9ecef;");
-        builder.CloseComponent();
-        
-        builder.CloseComponent();
-        
-        // Button stack
-        builder.OpenComponent<RadzenStack>(21);
-        builder.AddAttribute(22, "Orientation", Orientation.Horizontal);
-        builder.AddAttribute(23, "JustifyContent", JustifyContent.End);
-        
-        builder.OpenComponent<RadzenButton>(24);
-        builder.AddAttribute(25, "Text", "Close");
-        builder.AddAttribute(26, "Icon", "close");
-        builder.AddAttribute(27, "ButtonStyle", ButtonStyle.Primary);
-        builder.AddAttribute(28, "Click", EventCallback.Factory.Create(this, () => ds.Close()));
-        builder.CloseComponent();
-        
-        builder.CloseComponent();
-        
-        builder.CloseComponent();
-    };
-}
+        if (string.IsNullOrEmpty(panel.Rationale)) return;
+
+        await DialogService.OpenAsync($"Score by {GetMemberName(panel.SMSUserCode)} Rationale",
+        ds =>
+        {
+            return builder =>
+            {
+                builder.OpenComponent<RationaleViewDialog>(0);
+                builder.AddAttribute(1, "HazardCode", Hazard.Code);
+                builder.AddAttribute(2, "MatrixCode", GetPanelMatrixCode(panel));
+                builder.AddAttribute(3, "Rationale", panel.Rationale);
+                builder.AddAttribute(4, "OnClose", EventCallback.Factory.Create(this, () => ds.Close()));
+                builder.CloseComponent();
+            };
+        },
+        new DialogOptions { Width = "700px", Height = "450px", Resizable = true });
+    }
 
     private double? GetAverageScore()
-{
-    var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
-    if (!completedPanels.Any()) return null;
+    {
+        var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
+        if (!completedPanels.Any()) return null;
 
-    return completedPanels.Average(p => (double)p.Score!.Value);
-}
+        return completedPanels.Average(p => (double)p.Score!.Value);
+    }
 
-private int GetCompletedScoreCount()
-{
-    return HazardScoringPanels.Count(HasScore);
-}
+    private int GetCompletedScoreCount()
+    {
+        return HazardScoringPanels.Count(HasScore);
+    }
 
-private async Task OpenPanelDialog()
-{
-    // Get currently selected stakeholder codes from existing panels
-    var selectedCodes = HazardScoringPanels.Select(p => p.SMSUserCode!).ToList();
+    private async Task OpenPanelDialog()
+    {
+        // Get currently selected stakeholder codes from existing panels
+        var selectedCodes = HazardScoringPanels.Select(p => p.SMSUserCode!).ToList();
 
-    // Debug logging to see what we're passing
-    Logger.LogInformation("Opening panel dialog for hazard {HazardCode} with {Count} existing panel members: {Members}",
+        // Debug logging to see what we're passing
+        Logger.LogInformation("Opening panel dialog for hazard {HazardCode} with {Count} existing panel members: {Members}",
         Hazard.Code, selectedCodes.Count, string.Join(", ", selectedCodes));
 
-    var result = await DialogService.OpenAsync<PanelManagementDialog>($"Manage  Panel for {Hazard.Code}",
+        var result = await DialogService.OpenAsync<PanelManagementDialog>($"Manage  Panel for {Hazard.Code}",
         new Dictionary<string, object>
         {
                 { "HazardCode", Hazard.Code },
@@ -469,494 +383,555 @@ private async Task OpenPanelDialog()
         },
         new DialogOptions { Width = "700px", Height = "600px" });
 
-    if (result is List<string> newSelectedCodes)
-    {
-        Logger.LogInformation("Panel dialog returned {Count} selected codes: {Members}",
-            newSelectedCodes.Count, string.Join(", ", newSelectedCodes));
-        await SavePanelChanges(newSelectedCodes);
-    }
-    else
-    {
-        Logger.LogInformation("Panel dialog was cancelled or returned null");
-    }
-}
-
-private async Task SavePanelChanges(List<string> selectedStakeholderCodes)
-{
-    try
-    {
-        Logger.LogInformation("Updating panel for hazard {HazardCode} with {Count} members", Hazard.Code, selectedStakeholderCodes.Count);
-
-        // 🎯 SMART: Get the correct risk assessment code based on current context
-        // var targetRiskAssessmentCode = GetTargetRiskAssessmentCode();
-        // Logger.LogInformation("Using target risk assessment code: {TargetCode}", targetRiskAssessmentCode);
-
-        // 🔥 FIX: Get ALL panels for this hazard (both Initial and Residual) for deletion
-        var query = new GetScoringPanelsByHazardCodeQuery(Hazard.Code);
-        var allPanelsResult = await Mediator.SendAsync(query, CancellationToken.None);
-
-        if (allPanelsResult.IsSuccess && allPanelsResult.Value != null)
+        if (result is List<string> newSelectedCodes)
         {
-            // Find all panels for unselected stakeholders (both Initial and Residual)
-            var allPanelsToRemove = allPanelsResult.Value
-                .Where(p => !selectedStakeholderCodes.Contains(p.SMSUserCode!))
-                .ToList();
+            Logger.LogInformation("Panel dialog returned {Count} selected codes: {Members}",
+                newSelectedCodes.Count, string.Join(", ", newSelectedCodes));
+            await SavePanelChanges(newSelectedCodes);
+        }
+        else
+        {
+            Logger.LogInformation("Panel dialog was cancelled or returned null");
+        }
+    }
 
-            Logger.LogInformation("🗑️ Removing {Count} panels (both Initial and Residual) for unselected stakeholders", allPanelsToRemove.Count);
+    private async Task SavePanelChanges(List<string> selectedStakeholderCodes)
+    {
+        try
+        {
+            Logger.LogInformation("Updating panel for hazard {HazardCode} with {Count} members", Hazard.Code, selectedStakeholderCodes.Count);
 
-            // Delete ALL panels for unselected stakeholders
-            foreach (var panel in allPanelsToRemove)
+            // Validate we have a valid risk assessment
+            if (CurrentRiskAssessment?.Code == null)
             {
-                Logger.LogInformation("Deleting panel {PanelCode} for stakeholder {StakeholderCode} in assessment {AssessmentCode}",
-                    panel.Code, panel.SMSUserCode, panel.RiskAssessmentCode);
-
-                var deleteCommand = new DeleteScoringPanelCommand(new ScoringPanelID(panel.Id.Value));
-                await Mediator.SendAsync(deleteCommand, CancellationToken.None);
+                Logger.LogError("Cannot save panel changes - CurrentRiskAssessment is null for hazard {HazardCode}", Hazard.Code);
+                return;
             }
-        }
 
-        // Add panels for newly selected stakeholders (create BOTH Initial and Residual)
-        var existingCodes = HazardScoringPanels.Select(p => p.SMSUserCode).ToList();
-        var newStakeholderCodes = selectedStakeholderCodes.Except(existingCodes).ToList();
+            var targetAssessmentCode = CurrentRiskAssessment.Code.Trim();
+            Logger.LogInformation("Using risk assessment code: {AssessmentCode}", targetAssessmentCode);
 
-        foreach (var stakeholderCode in newStakeholderCodes)
-        {
-            // Create Initial Risk Assessment panel (Step 4)
-            var step4Panel = new ScoringPanel(new ScoringPanelID("SP-0000"))
+            // Get ALL panels for this hazard for deletion
+            var query = new GetScoringPanelsByHazardCodeQuery(Hazard.Code);
+            var allPanelsResult = await Mediator.SendAsync(query, CancellationToken.None);
+
+            if (allPanelsResult.IsSuccess && allPanelsResult.Value != null)
             {
-                Code = "SP-0000", // Will be generated by database
-                HazardCode = Hazard.Code,
-                SMSUserCode = stakeholderCode,
-                Severity = null,
-                Likelihood = null,
-                Score = null,
-                RiskAssessmentCode = TechnicalRiskAssessment.Code // ✅ FIXED: Use correct assessment code
-            };
+                // Find panels for this assessment that should be removed
+                var panelsToRemove = allPanelsResult.Value
+                    .Where(p => p.RiskAssessmentCode.Trim() == targetAssessmentCode && 
+                               !selectedStakeholderCodes.Contains(p.SMSUserCode!))
+                    .ToList();
 
-            Logger.LogInformation("Creating Initial panel for {StakeholderCode} with assessment code: {AssessmentCode}",stakeholderCode, TechnicalRiskAssessment.Code);
+                Logger.LogInformation("Removing {Count} panels for unselected stakeholders in assessment {AssessmentCode}", 
+                    panelsToRemove.Count, targetAssessmentCode);
 
-            var step4Command = new CreateScoringPanelCommand(step4Panel);
-            await Mediator.SendAsync(step4Command, CancellationToken.None);
+                // Delete panels for unselected stakeholders
+                foreach (var panel in panelsToRemove)
+                {
+                    Logger.LogInformation("Deleting panel {PanelCode} for stakeholder {StakeholderCode}",
+                        panel.Code, panel.SMSUserCode);
 
-           
-        }
-
-        // Reload the panels
-        await LoadHazardScoringPanelsInternal();
-
-        Logger.LogInformation("Panel updated successfully for hazard {HazardCode}", Hazard.Code);
-    }
-    catch (Exception ex)
-    {
-        Logger.LogError(ex, "Error updating panel for hazard {HazardCode}", Hazard.Code);
-    }
-}
-
-private string GetSeverityLabel(int severity)
-{
-    return severity switch
-    {
-        1 => "Minor",
-        2 => "Moderate",
-        3 => "Serious",
-        4 => "Major",
-        5 => "Catastrophic",
-        _ => ""
-    };
-}
-
-private string GetLikelihoodLabel(int likelihood)
-{
-    return likelihood switch
-    {
-        1 => "Rare",
-        2 => "Unlikely",
-        3 => "Possible",
-        4 => "Likely",
-        5 => "Frequent",
-        _ => ""
-    };
-}
-
-private string GetHazardMatrixCode(double averageScore)
-{
-    // DEPRECATED: This method calculates from score averages (incorrect for aviation standards)
-    // Use GetHazardMatrixCodeFromPanels() instead
-    var bestMatch = GetBestSeverityLikelihoodMatch(averageScore);
-    return AviationRiskMatrixCalculator.GetMatrixCode(bestMatch.severity, bestMatch.likelihood);
-}
-
-/// <summary>
-/// Calculate hazard matrix code using CORRECT aviation methodology
-/// This averages severity and likelihood separately, then determines matrix code
-/// </summary>
-private string GetHazardMatrixCodeFromPanels()
-{
-    var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
-    if (!completedPanels.Any()) return "-";
-
-    // Aviation standard: Average severity and likelihood separately
-    var averageSeverity = completedPanels.Average(p => (double)p.Severity!.Value);
-    var averageLikelihood = completedPanels.Average(p => (double)p.Likelihood!.Value);
-
-    Logger.LogInformation("Hazard {HazardCode} calculation: AvgSev={AvgSev:F2}, AvgLike={AvgLike:F2}",
-        Hazard.Code, averageSeverity, averageLikelihood);
-
-    // Use the authoritative calculator method
-    return AviationRiskMatrixCalculator.GetAverageMatrixCode(averageSeverity, averageLikelihood);
-}
-
-private string GetPanelMatrixCode(ScoringPanel panel)
-{
-    return AviationRiskMatrixCalculator.GetPanelMatrixCode(panel);
-}
-
-private string GetPreviewMatrixCode(ScoringPanel panel)
-{
-    return AviationRiskMatrixCalculator.GetPanelMatrixCode(panel);
-}
-
-private string GetPanelScoreStyle(ScoringPanel panel)
-{
-    if (!panel.Severity.HasValue || !panel.Likelihood.HasValue)
-        return "background: #6c757d; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9rem; display: inline-block; text-align: center; min-width: 30px;";
-
-    return AviationRiskMatrixCalculator.GetScoreDisplayStyle(panel.Severity.Value, panel.Likelihood.Value, false);
-}
-
-private string GetPreviewScoreStyle(ScoringPanel panel)
-{
-    if (!panel.Severity.HasValue || !panel.Likelihood.HasValue)
-        return "background: #6c757d; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9rem; display: inline-block; text-align: center; min-width: 30px;";
-
-    return AviationRiskMatrixCalculator.GetScoreDisplayStyle(panel.Severity.Value, panel.Likelihood.Value, true);
-}
-
-private string GetAverageScoreStyle(double averageScore)
-{
-    // Get the correct aviation matrix code from panels, not from score average
-    var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
-    if (!completedPanels.Any())
-        return "background: #6c757d; color: white; padding: 6px 10px; border-radius: 4px; font-weight: bold; font-size: 1rem; display: inline-block; text-align: center; min-width: 35px; border: 1px solid rgba(0,0,0,0.2);";
-
-    // Use correct aviation calculation
-    var averageSeverity = completedPanels.Average(p => (double)p.Severity!.Value);
-    var averageLikelihood = completedPanels.Average(p => (double)p.Likelihood!.Value);
-    var roundedSeverity = (int)Math.Round(averageSeverity);
-    var roundedLikelihood = (int)Math.Round(averageLikelihood);
-
-    var backgroundColor = AviationRiskMatrixCalculator.GetAviationMatrixColor(roundedSeverity, roundedLikelihood);
-    var textColor = AviationRiskMatrixCalculator.IsLightColor(backgroundColor) ? "#000" : "#fff";
-
-    return $"background: {backgroundColor}; color: {textColor}; padding: 6px 10px; border-radius: 4px; font-weight: bold; font-size: 1rem; display: inline-block; text-align: center; min-width: 35px; border: 1px solid rgba(0,0,0,0.2);";
-}
-
-private string GetAviationMatrixColor(int severity, int likelihood)
-{
-    return AviationRiskMatrixCalculator.GetAviationMatrixColor(severity, likelihood);
-}
-
-private bool IsLightColor(string hexColor)
-{
-    return AviationRiskMatrixCalculator.IsLightColor(hexColor);
-}
-
-private (int severity, int likelihood) GetBestSeverityLikelihoodMatch(double score)
-{
-    var bestMatch = (severity: 1, likelihood: 1);
-    var bestDistance = double.MaxValue;
-
-    for (int severity = 1; severity <= 5; severity++)
-    {
-        for (int likelihood = 1; likelihood <= 5; likelihood++)
-        {
-            var calculatedScore = severity * likelihood;
-            var distance = Math.Abs(calculatedScore - score);
-
-            if (distance < bestDistance)
-            {
-                bestDistance = distance;
-                bestMatch = (severity, likelihood);
+                    var deleteCommand = new DeleteScoringPanelCommand(new ScoringPanelID(panel.Id.Value));
+                    await Mediator.SendAsync(deleteCommand, CancellationToken.None);
+                }
             }
+
+            // Add panels for newly selected stakeholders
+            var existingCodes = HazardScoringPanels.Select(p => p.SMSUserCode).ToList();
+            var newStakeholderCodes = selectedStakeholderCodes.Except(existingCodes).ToList();
+
+            foreach (var stakeholderCode in newStakeholderCodes)
+            {
+                // Create new panel for the current assessment
+                var newPanel = new ScoringPanel(new ScoringPanelID("SP-0000"))
+                {
+                    Code = "SP-0000", // Will be generated by database
+                    HazardCode = Hazard.Code,
+                    SMSUserCode = stakeholderCode,
+                    InitialSeverity = null,
+                    InitialLikelihood = null,
+                    InitialScore = null,
+                    InitialRationale = null,
+                    ResidualSeverity = null,
+                    ResidualLikelihood = null,
+                    ResidualScore = null,
+                    ResidualRationale = null,
+                    RiskAssessmentCode = targetAssessmentCode
+                };
+
+                Logger.LogInformation("Creating panel for stakeholder {StakeholderCode} in assessment {AssessmentCode}",
+                    stakeholderCode, targetAssessmentCode);
+
+                var createCommand = new CreateScoringPanelCommand(newPanel);
+                await Mediator.SendAsync(createCommand, CancellationToken.None);
+            }
+
+            // Reload the panels
+            await LoadHazardScoringPanelsInternal();
+
+            Logger.LogInformation("Panel updated successfully for hazard {HazardCode}", Hazard.Code);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error updating panel for hazard {HazardCode}", Hazard.Code);
         }
     }
 
-    return bestMatch;
-}
-
-private bool AllScoresComplete()
-{
-    return HazardScoringPanels.Any() && HazardScoringPanels.All(HasScore);
-}
-
-/// <summary>
-/// Get the current calculated hazard scoring data (for debugging/inspection)
-/// </summary>
-public (double? AverageScore, string MatrixCode, string RiskLevel) GetCalculatedScoringData()
-{
-    return (CalculatedAverageScore, CalculatedMatrixCode, CalculatedRiskLevel);
-}
-
-/// <summary>
-/// Debug method to show detailed calculation breakdown for hazard average
-/// </summary>
-public string GetCalculationDebugInfo()
-{
-    var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
-    if (!completedPanels.Any()) return "No completed panels";
-
-    var info = $"=== HAZARD {Hazard.Code} CALCULATION DEBUG ===\n";
-    info += $"Panel Count: {completedPanels.Count}\n";
-
-    foreach (var panel in completedPanels)
+    private string GetSeverityLabel(int severity)
     {
-        var panelCode = GetPanelMatrixCode(panel);
-        info += $"  {GetMemberName(panel.SMSUserCode)}: Sev={panel.Severity}, Like={panel.Likelihood}, Score={panel.Score}, Code={panelCode}\n";
+        return severity switch
+        {
+            1 => "Minor",
+            2 => "Moderate",
+            3 => "Serious",
+            4 => "Major",
+            5 => "Catastrophic",
+            _ => ""
+        };
     }
 
-    var avgSeverity = completedPanels.Average(p => (double)p.Severity!.Value);
-    var avgLikelihood = completedPanels.Average(p => (double)p.Likelihood!.Value);
-    var avgScore = completedPanels.Average(p => (double)p.Score!.Value);
-    var roundedSev = (int)Math.Round(avgSeverity);
-    var roundedLike = (int)Math.Round(avgLikelihood);
-    var matrixCode = AviationRiskMatrixCalculator.GetMatrixCode(roundedSev, roundedLike);
-
-    info += $"Averages: Sev={avgSeverity:F2}→{roundedSev}, Like={avgLikelihood:F2}→{roundedLike}, Score={avgScore:F2}\n";
-    info += $"CORRECT MATRIX CODE: {matrixCode}\n";
-    info += "=== END DEBUG ===";
-
-    return info;
-}
-
-/// <summary>
-/// Recalculate the hazard's average scoring data from all completed panels
-/// This prepares the data for future database update (not saving yet)
-/// </summary>
-private async Task RecalculateHazardScoringData()
-{
-    var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
-
-    if (completedPanels.Any())
+    private string GetLikelihoodLabel(int likelihood)
     {
-        // Calculate averages separately for severity and likelihood (aviation standard)
+        return likelihood switch
+        {
+            1 => "Rare",
+            2 => "Unlikely",
+            3 => "Possible",
+            4 => "Likely",
+            5 => "Frequent",
+            _ => ""
+        };
+    }
+
+    private string GetHazardMatrixCode(double averageScore)
+    {
+        // DEPRECATED: This method calculates from score averages (incorrect for aviation standards)
+        // Use GetHazardMatrixCodeFromPanels() instead
+        var bestMatch = GetBestSeverityLikelihoodMatch(averageScore);
+        return AviationRiskMatrixCalculator.GetMatrixCode(bestMatch.severity, bestMatch.likelihood);
+    }
+
+    /// <summary>
+    /// Calculate hazard matrix code using CORRECT aviation methodology
+    /// This averages severity and likelihood separately, then determines matrix code
+    /// </summary>
+    private string GetHazardMatrixCodeFromPanels()
+    {
+        var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
+        if (!completedPanels.Any()) return "-";
+
+        // Aviation standard: Average severity and likelihood separately
         var averageSeverity = completedPanels.Average(p => (double)p.Severity!.Value);
         var averageLikelihood = completedPanels.Average(p => (double)p.Likelihood!.Value);
-        var averageScore = completedPanels.Average(p => (double)p.Score!.Value);
 
-        // Use aviation standard calculation for matrix code
-        var matrixCode = AviationRiskMatrixCalculator.GetAverageMatrixCode(averageSeverity, averageLikelihood);
+        Logger.LogInformation("Hazard {HazardCode} calculation: AvgSev={AvgSev:F2}, AvgLike={AvgLike:F2}",
+            Hazard.Code, averageSeverity, averageLikelihood);
+
+        // Use the authoritative calculator method
+        return AviationRiskMatrixCalculator.GetAverageMatrixCode(averageSeverity, averageLikelihood);
+    }
+
+    private string GetPanelMatrixCode(ScoringPanel panel)
+    {
+        return AviationRiskMatrixCalculator.GetPanelMatrixCode(panel);
+    }
+
+    private string GetPreviewMatrixCode(ScoringPanel panel)
+    {
+        return AviationRiskMatrixCalculator.GetPanelMatrixCode(panel);
+    }
+
+    private string GetPanelScoreStyle(ScoringPanel panel)
+    {
+        if (!panel.Severity.HasValue || !panel.Likelihood.HasValue)
+            return "background: #6c757d; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9rem; display: inline-block; text-align: center; min-width: 30px;";
+
+        return AviationRiskMatrixCalculator.GetScoreDisplayStyle(panel.Severity.Value, panel.Likelihood.Value, false);
+    }
+
+    private string GetPreviewScoreStyle(ScoringPanel panel)
+    {
+        if (!panel.Severity.HasValue || !panel.Likelihood.HasValue)
+            return "background: #6c757d; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9rem; display: inline-block; text-align: center; min-width: 30px;";
+
+        return AviationRiskMatrixCalculator.GetScoreDisplayStyle(panel.Severity.Value, panel.Likelihood.Value, true);
+    }
+
+    private string GetAverageScoreStyle(double averageScore)
+    {
+        // Get the correct aviation matrix code from panels, not from score average
+        var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
+        if (!completedPanels.Any())
+            return "background: #6c757d; color: white; padding: 6px 10px; border-radius: 4px; font-weight: bold; font-size: 1rem; display: inline-block; text-align: center; min-width: 35px; border: 1px solid rgba(0,0,0,0.2);";
+
+        // Use correct aviation calculation
+        var averageSeverity = completedPanels.Average(p => (double)p.Severity!.Value);
+        var averageLikelihood = completedPanels.Average(p => (double)p.Likelihood!.Value);
         var roundedSeverity = (int)Math.Round(averageSeverity);
         var roundedLikelihood = (int)Math.Round(averageLikelihood);
-        var riskLevel = AviationRiskMatrixCalculator.GetAviationRiskLevel(roundedSeverity, roundedLikelihood);
 
-        // Store calculated values locally
-        CalculatedAverageScore = averageScore;  // Keep score average for reporting
-        CalculatedMatrixCode = matrixCode;      // Use correct aviation matrix code
-        CalculatedRiskLevel = riskLevel;
+        var backgroundColor = AviationRiskMatrixCalculator.GetAviationMatrixColor(roundedSeverity, roundedLikelihood);
+        var textColor = AviationRiskMatrixCalculator.IsLightColor(backgroundColor) ? "#000" : "#fff";
 
-        Logger.LogInformation("Recalculated hazard {HazardCode} scoring data: AvgSev={Severity:F2}→{RoundedSev}, AvgLike={Likelihood:F2}→{RoundedLike}, Matrix={MatrixCode}, Risk={RiskLevel}",
-            Hazard.Code, averageSeverity, roundedSeverity, averageLikelihood, roundedLikelihood, matrixCode, riskLevel);
-
-        // NEW: Update the Hazard entity and save to database
-        await UpdateHazardWithScoringData();
-    }
-    else
-    {
-        // Clear calculated values if no scores available
-        CalculatedAverageScore = null;
-        CalculatedMatrixCode = string.Empty;
-        CalculatedRiskLevel = string.Empty;
-
-        Logger.LogInformation("Cleared hazard {HazardCode} scoring data - no completed panel scores available", Hazard.Code);
-
-        // NEW: Clear hazard scoring data in database too
-        await UpdateHazardWithScoringData();
-    }
-}
-
-/// <summary>
-/// Update the Hazard entity with calculated scoring data and save to database
-/// </summary>
-private async Task UpdateHazardWithScoringData()
-{
-    try
-    {
-        // Validate we have a valid hazard to update
-        if (Hazard == null || string.IsNullOrEmpty(Hazard.Code) || Hazard.Code == "HZ-0000")
-        {
-            Logger.LogWarning("Skipping hazard update - invalid hazard data");
-            return;
-        }
-
-        Logger.LogInformation("Updating hazard {HazardCode} with calculated scoring data in database", Hazard.Code);
-
-        if (CurrentRiskAssessment.AssessmentType == RiskAssessmentType.Initial)
-        {
-            Hazard.InitialAverageScore = (decimal?)CalculatedAverageScore;
-            Hazard.InitialRiskMatrixCode = CalculatedMatrixCode;  // Aviation matrix code (like "2B", "3D")
-        }
-        else
-        {
-            Hazard.ResidualAverageScore = (decimal?)CalculatedAverageScore;
-            Hazard.ResidualRiskMatrixCode = CalculatedMatrixCode;  // Aviation matrix code (like "2B", "3D")
-        }
-
-
-
-
-        Hazard.RiskLevel = CalculatedRiskLevel;
-        Hazard.UpdatedDate = DateTime.UtcNow;
-        Hazard.UpdatedBy = "SYSTEM"; // Set updated by system for scoring updates
-
-        // Save via CQRS
-        var updateHazardCommand = new UpdateHazardCommand(Hazard);
-        var result = await Mediator.SendAsync(updateHazardCommand, CancellationToken.None);
-
-        if (result.IsSuccess)
-        {
-            Logger.LogInformation("Successfully updated hazard {HazardCode} in database: AverageScore={AverageScore}, RiskMatrixCode={RiskMatrixCode}, RiskLevel={RiskLevel}",
-                Hazard.Code, Hazard.InitialAverageScore?.ToString("F2") ?? "null", Hazard.InitialRiskMatrixCode ?? "null", Hazard.RiskLevel ?? "null");
-        }
-        else
-        {
-            Logger.LogError("Failed to update hazard {HazardCode} in database: {Error}", Hazard.Code, result.Error?.Message ?? "Unknown error");
-        }
-    }
-    catch (Exception ex)
-    {
-        Logger.LogError(ex, "Error updating hazard {HazardCode} with scoring data in database", Hazard.Code);
-    }
-}
-
-/// <summary>
-/// 🎯 NEW: Get the target risk assessment code based on current context
-/// </summary>
-private string GetTargetRiskAssessmentCode()
-{
-    // Prefer CurrentRiskAssessment, fall back to RiskAssessmentId
-    if (CurrentRiskAssessment?.Code != null)
-    {
-        return CurrentRiskAssessment.Code;
+        return $"background: {backgroundColor}; color: {textColor}; padding: 6px 10px; border-radius: 4px; font-weight: bold; font-size: 1rem; display: inline-block; text-align: center; min-width: 35px; border: 1px solid rgba(0,0,0,0.2);";
     }
 
-    if (RiskAssessmentId?.Value != null)
+    private string GetAviationMatrixColor(int severity, int likelihood)
     {
-        return RiskAssessmentId.Value;
+        return AviationRiskMatrixCalculator.GetAviationMatrixColor(severity, likelihood);
     }
 
-    // Final fallback - determine from available assessments
-    
-
-    return string.Empty;
-}
-
-/// <summary>
-/// 🎯 Copy Step 4 scores to existing Step 5 panels if needed
-/// </summary>
-private async Task CopyStep4ScoresToStep5IfNeeded(IEnumerable<ScoringPanel> allPanels)
-{
-    try
+    private bool IsLightColor(string hexColor)
     {
-        // Only proceed if we have the required assessment references
-        if (TechnicalRiskAssessment?.Code.Trim() == null )
+        return AviationRiskMatrixCalculator.IsLightColor(hexColor);
+    }
+
+    private (int severity, int likelihood) GetBestSeverityLikelihoodMatch(double score)
+    {
+        var bestMatch = (severity: 1, likelihood: 1);
+        var bestDistance = double.MaxValue;
+
+        for (int severity = 1; severity <= 5; severity++)
         {
-            return;
-        }
-
-        // Get existing Step 5 panels
-        var existingStep5Panels = allPanels
-            .Where(p => p.RiskAssessmentCode.Trim() == TechnicalRiskAssessment.Code)
-            .ToList();
-
-        if (!existingStep5Panels.Any())
-        {
-            Logger.LogInformation("No panels found to update");
-            return;
-        }
-
-        // Find Step 4 panels to copy from
-        var step4Panels = allPanels
-            .Where(p => p.RiskAssessmentCode.Trim() == TechnicalRiskAssessment.Code && p.Severity.HasValue && p.Likelihood.HasValue)
-            .ToList();
-
-        if (!step4Panels.Any())
-        {
-            Logger.LogInformation("No Step 4 panels with scores found to copy from");
-            return;
-        }
-
-        Logger.LogInformation("🎯 Updating {Count} Step 5 panels with Step 4 scoring values for hazard {HazardCode}",
-            existingStep5Panels.Count, Hazard.Code);
-
-        // Update existing Step 5 panels with Step 4 data
-        var updatedCount = 0;
-        foreach (var step5Panel in existingStep5Panels)
-        {
-            // Find matching Step 4 panel by stakeholder code
-            var matchingStep4Panel = step4Panels
-                .FirstOrDefault(p => p.SMSUserCode == step5Panel.SMSUserCode);
-
-            if (matchingStep4Panel != null)
+            for (int likelihood = 1; likelihood <= 5; likelihood++)
             {
-                // Only update if Step 5 panel doesn't already have scoring data
-                if (!step5Panel.Severity.HasValue || !step5Panel.Likelihood.HasValue)
+                var calculatedScore = severity * likelihood;
+                var distance = Math.Abs(calculatedScore - score);
+
+                if (distance < bestDistance)
                 {
-                    step5Panel.Severity = matchingStep4Panel.Severity;     // ✅ COPY from Step 4
-                    step5Panel.Likelihood = matchingStep4Panel.Likelihood; // ✅ COPY from Step 4
-                                                                           // Score and Rationale remain null - requires explicit Step 5 submission
+                    bestDistance = distance;
+                    bestMatch = (severity, likelihood);
+                }
+            }
+        }
 
-                    // var updateCommand = new UpdateScoringPanelCommand(step5Panel);
-                    // var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+        return bestMatch;
+    }
 
-                    if (true) //updateResult.IsSuccess)
-                    {
-                        updatedCount++;
-                        Logger.LogInformation("✅ Updated Step 5 panel for {StakeholderCode}: Severity={Severity}, Likelihood={Likelihood}",
-                            step5Panel.SMSUserCode, matchingStep4Panel.Severity, matchingStep4Panel.Likelihood);
-                    }
-                    else
-                    {
-                        //Logger.LogError("❌ Failed to update Step 5 panel for {StakeholderCode}: {Error}", 
-                        //    step5Panel.SMSUserCode, updateResult.Error?.Message);
-                    }
+    private bool AllScoresComplete()
+    {
+        return HazardScoringPanels.Any() && HazardScoringPanels.All(HasScore);
+    }
+
+    /// <summary>
+    /// Get the current calculated hazard scoring data (for debugging/inspection)
+    /// </summary>
+    public (double? AverageScore, string MatrixCode, string RiskLevel) GetCalculatedScoringData()
+    {
+        return (CalculatedAverageScore, CalculatedMatrixCode, CalculatedRiskLevel);
+    }
+
+    /// <summary>
+    /// Debug method to show detailed calculation breakdown for hazard average
+    /// </summary>
+    public string GetCalculationDebugInfo()
+    {
+        var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
+        if (!completedPanels.Any()) return "No completed panels";
+
+        var info = $"=== HAZARD {Hazard.Code} CALCULATION DEBUG ===\n";
+        info += $"Panel Count: {completedPanels.Count}\n";
+
+        foreach (var panel in completedPanels)
+        {
+            var panelCode = GetPanelMatrixCode(panel);
+            info += $"  {GetMemberName(panel.SMSUserCode)}: Sev={panel.Severity}, Like={panel.Likelihood}, Score={panel.Score}, Code={panelCode}\n";
+        }
+
+        var avgSeverity = completedPanels.Average(p => (double)p.Severity!.Value);
+        var avgLikelihood = completedPanels.Average(p => (double)p.Likelihood!.Value);
+        var avgScore = completedPanels.Average(p => (double)p.Score!.Value);
+        var roundedSev = (int)Math.Round(avgSeverity);
+        var roundedLike = (int)Math.Round(avgLikelihood);
+        var matrixCode = AviationRiskMatrixCalculator.GetMatrixCode(roundedSev, roundedLike);
+
+        info += $"Averages: Sev={avgSeverity:F2}→{roundedSev}, Like={avgLikelihood:F2}→{roundedLike}, Score={avgScore:F2}\n";
+        info += $"CORRECT MATRIX CODE: {matrixCode}\n";
+        info += "=== END DEBUG ===";
+
+        return info;
+    }
+
+    /// <summary>
+    /// Recalculate the hazard's average scoring data from all completed panels
+    /// This prepares the data for future database update (not saving yet)
+    /// </summary>
+    private async Task RecalculateHazardScoringData()
+    {
+        var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
+
+        if (completedPanels.Any())
+        {
+            // Calculate averages separately for severity and likelihood (aviation standard)
+            var averageSeverity = completedPanels.Average(p => (double)p.Severity!.Value);
+            var averageLikelihood = completedPanels.Average(p => (double)p.Likelihood!.Value);
+            var averageScore = completedPanels.Average(p => (double)p.Score!.Value);
+
+            // Use aviation standard calculation for matrix code
+            var matrixCode = AviationRiskMatrixCalculator.GetAverageMatrixCode(averageSeverity, averageLikelihood);
+            var roundedSeverity = (int)Math.Round(averageSeverity);
+            var roundedLikelihood = (int)Math.Round(averageLikelihood);
+            var riskLevel = AviationRiskMatrixCalculator.GetAviationRiskLevel(roundedSeverity, roundedLikelihood);
+
+            // Store calculated values locally
+            CalculatedAverageScore = averageScore;  // Keep score average for reporting
+            CalculatedMatrixCode = matrixCode;      // Use correct aviation matrix code
+            CalculatedRiskLevel = riskLevel;
+
+            Logger.LogInformation("Recalculated hazard {HazardCode} scoring data: AvgSev={Severity:F2}→{RoundedSev}, AvgLike={Likelihood:F2}→{RoundedLike}, Matrix={MatrixCode}, Risk={RiskLevel}",
+                Hazard.Code, averageSeverity, roundedSeverity, averageLikelihood, roundedLikelihood, matrixCode, riskLevel);
+
+            // NEW: Update the Hazard entity and save to database
+            await UpdateHazardWithScoringData();
+        }
+        else
+        {
+            // Clear calculated values if no scores available
+            CalculatedAverageScore = null;
+            CalculatedMatrixCode = string.Empty;
+            CalculatedRiskLevel = string.Empty;
+
+            Logger.LogInformation("Cleared hazard {HazardCode} scoring data - no completed panel scores available", Hazard.Code);
+
+            // NEW: Clear hazard scoring data in database too
+            await UpdateHazardWithScoringData();
+        }
+    }
+
+    /// <summary>
+    /// Update the Hazard entity with calculated scoring data and save to database
+    /// </summary>
+    private async Task UpdateHazardWithScoringData()
+    {
+        try
+        {
+            // Validate we have a valid hazard to update
+            if (Hazard == null || string.IsNullOrEmpty(Hazard.Code) || Hazard.Code == "HZ-0000")
+            {
+                Logger.LogWarning("Skipping hazard update - invalid hazard data");
+                return;
+            }
+
+            Logger.LogInformation("Updating hazard {HazardCode} with calculated scoring data in database", Hazard.Code);
+
+            if (CurrentStep == 4)
+            {
+                Hazard.InitialAverageScore = (decimal?)CalculatedAverageScore;
+                Hazard.InitialRiskMatrixCode = CalculatedMatrixCode;  // Aviation matrix code (like "2B", "3D")
+            }
+            else
+            {
+                Hazard.ResidualAverageScore = (decimal?)CalculatedAverageScore;
+                Hazard.ResidualRiskMatrixCode = CalculatedMatrixCode;  // Aviation matrix code (like "2B", "3D")
+            }
+
+
+
+
+            Hazard.RiskLevel = CalculatedRiskLevel;
+            Hazard.UpdatedDate = DateTime.UtcNow;
+            Hazard.UpdatedBy = "SYSTEM"; // Set updated by system for scoring updates
+
+            // Save via CQRS
+            var updateHazardCommand = new UpdateHazardCommand(Hazard);
+            var result = await Mediator.SendAsync(updateHazardCommand, CancellationToken.None);
+
+            if (result.IsSuccess)
+            {
+                Logger.LogInformation("Successfully updated hazard {HazardCode} in database: AverageScore={AverageScore}, RiskMatrixCode={RiskMatrixCode}, RiskLevel={RiskLevel}",
+                    Hazard.Code, Hazard.InitialAverageScore?.ToString("F2") ?? "null", Hazard.InitialRiskMatrixCode ?? "null", Hazard.RiskLevel ?? "null");
+            }
+            else
+            {
+                Logger.LogError("Failed to update hazard {HazardCode} in database: {Error}", Hazard.Code, result.Error?.Message ?? "Unknown error");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error updating hazard {HazardCode} with scoring data in database", Hazard.Code);
+        }
+    }
+
+    /// <summary>
+    /// 🎯 NEW: Get the target risk assessment code based on current context
+    /// </summary>
+    private string GetTargetRiskAssessmentCode()
+    {
+        // Use the single CurrentRiskAssessment parameter
+        if (!string.IsNullOrEmpty(CurrentRiskAssessment?.Code))
+        {
+            return CurrentRiskAssessment.Code.Trim();
+        }
+
+        // Fall back to RiskAssessmentId for backward compatibility
+        if (!string.IsNullOrEmpty(RiskAssessmentId?.Value))
+        {
+            return RiskAssessmentId.Value.Trim();
+        }
+
+        Logger.LogWarning("No valid risk assessment code found for hazard {HazardCode} scoring panel", Hazard.Code);
+        return string.Empty;
+    }
+
+    /// <summary>
+    /// 🎯 Copy Step 4 scores to existing Step 5 panels if needed
+    /// </summary>
+    //private async Task CopyStep4ScoresToStep5IfNeeded(IEnumerable<ScoringPanel> allPanels)
+    //{
+    //    try
+    //    {
+    //        // Only proceed if we have the required assessment reference
+    //        if (string.IsNullOrEmpty(CurrentRiskAssessment?.Code))
+    //        {
+    //            Logger.LogInformation("No CurrentRiskAssessment available for copying Step 4 scores");
+    //            return;
+    //        }
+
+    //        var targetCode = CurrentRiskAssessment.Code.Trim();
+
+    //        // Get existing panels for the current assessment
+    //        var existingPanels = allPanels
+    //            .Where(p => p.RiskAssessmentCode.Trim() == targetCode)
+    //            .ToList();
+
+    //        if (!existingPanels.Any())
+    //        {
+    //            Logger.LogInformation("No panels found for assessment {AssessmentCode}", targetCode);
+    //            return;
+    //        }
+
+    //        // Find panels with scores that can be copied (typically Step 4 panels)
+    //        var panelsWithScores = existingPanels
+    //            .Where(p => p.Severity.HasValue && p.Likelihood.HasValue)
+    //            .ToList();
+
+    //        if (!panelsWithScores.Any())
+    //        {
+    //            Logger.LogInformation("No panels with scores found to copy from for assessment {AssessmentCode}", targetCode);
+    //            return;
+    //        }
+
+    //        Logger.LogInformation("Found {Count} panels with scores for hazard {HazardCode} in assessment {AssessmentCode}",
+    //            panelsWithScores.Count, Hazard.Code, targetCode);
+
+    //        // If this is Step 5 and we have Step 4 data, we could copy it, but for now just log
+    //        if (CurrentStep == 5)
+    //        {
+    //            Logger.LogInformation("Step 5 context detected - panels will use existing assessment data");
+    //        }
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        Logger.LogError(ex, "Error in CopyStep4ScoresToStep5IfNeeded for hazard {HazardCode}", Hazard.Code);
+    //    }
+    //}
+
+    /// <summary>
+    /// 🎯 Copy Step 4 scores to existing Step 5 panels ONLY if Residual scores are empty
+    /// </summary>
+    private async Task CopyStep4ScoresToStep5IfNeeded(IEnumerable<ScoringPanel> allPanels)
+    {
+        try
+        {
+            // Only proceed if we're in Step 5 and have the required assessment reference
+            if (CurrentStep != 5 || string.IsNullOrEmpty(CurrentRiskAssessment?.Code))
+            {
+                return;
+            }
+
+            var targetCode = CurrentRiskAssessment.Code.Trim();
+
+            // Get existing panels for the current assessment
+            var existingPanels = allPanels
+                .Where(p => p.RiskAssessmentCode.Trim() == targetCode)
+                .ToList();
+
+            if (!existingPanels.Any())
+            {
+                Logger.LogInformation("No panels found for assessment {AssessmentCode} to copy scores", targetCode);
+                return;
+            }
+
+            // ✅ KEY CONDITION: Find panels that have Initial scores but EMPTY Residual scores
+            var panelsNeedingCopy = existingPanels
+                .Where(p =>
+                    // Has Initial scores from Step 4
+                    p.InitialSeverity.HasValue && p.InitialLikelihood.HasValue && p.InitialScore.HasValue &&
+                    // AND Residual scores are empty (haven't been set in Step 5 yet)
+                    !p.ResidualSeverity.HasValue && !p.ResidualLikelihood.HasValue && !p.ResidualScore.HasValue)
+                .ToList();
+
+            if (!panelsNeedingCopy.Any())
+            {
+                Logger.LogInformation("No panels need score copying for hazard {HazardCode} - either no Initial scores or Residual scores already exist",
+                    Hazard.Code);
+                return;
+            }
+
+            Logger.LogInformation("Copying Initial scores to empty Residual scores for {Count} panels on hazard {HazardCode}",
+                panelsNeedingCopy.Count, Hazard.Code);
+
+            bool anyUpdated = false;
+
+            foreach (var panel in panelsNeedingCopy)
+            {
+                // Copy Initial scores to Residual as starting point (only if Residual is empty)
+                panel.ResidualSeverity = panel.InitialSeverity;
+                panel.ResidualLikelihood = panel.InitialLikelihood;
+                panel.ResidualScore = panel.InitialScore;
+                panel.ResidualRationale = $"Initial assessment: {panel.InitialRationale ?? "No rationale provided"}"; // Prefix to indicate copied
+
+                Logger.LogInformation("Copying Initial scores to empty Residual for panel {PanelCode}: {Sev}x{Like}={Score}",
+                    panel.Code, panel.InitialSeverity, panel.InitialLikelihood, panel.InitialScore);
+
+                // Save the updated panel
+                var updateCommand = new UpdateScoringPanelCommand(panel);
+                var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+
+                if (result.IsSuccess)
+                {
+                    Logger.LogInformation("✅ Successfully copied Initial scores to empty Residual for panel {PanelCode}", panel.Code);
+                    anyUpdated = true;
                 }
                 else
                 {
-                    Logger.LogInformation("Step 5 panel for {StakeholderCode} already has scoring data - skipping",
-                        step5Panel.SMSUserCode);
+                    Logger.LogError("❌ Failed to copy scores for panel {PanelCode}: {Error}",
+                        panel.Code, result.Error?.Message ?? "Unknown error");
                 }
             }
+
+            if (anyUpdated)
+            {
+                Logger.LogInformation("✅ Completed copying Initial scores to empty Residual scores for hazard {HazardCode}", Hazard.Code);
+            }
         }
-
-        Logger.LogInformation("🎉 Updated {UpdatedCount} Step 5 panels with Step 4 scoring values", updatedCount);
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error copying Step 4 scores to Step 5 for hazard {HazardCode}", Hazard.Code);
+        }
     }
-    catch (Exception ex)
+    private string GetHazardCategoryDisplay(string? categoryValue)
     {
-        Logger.LogError(ex, "Error copying Step 4 scores to existing Step 5 panels");
+        if (string.IsNullOrEmpty(categoryValue)) return "";
+
+        var category = HazardCategory.FromValue(categoryValue);
+        return category?.Name ?? categoryValue.Replace("_", " ");
     }
-}
 
+    private string GetHazardTypeDisplay(string? typeValue)
+    {
+        if (string.IsNullOrEmpty(typeValue)) return "";
 
-private string GetHazardCategoryDisplay(string? categoryValue)
-{
-    if (string.IsNullOrEmpty(categoryValue)) return "";
+        var hazardType = HazardType.FromValue(typeValue);
+        return hazardType?.Name ?? typeValue.Replace("_", " ");
+    }
 
-    var category = HazardCategory.FromValue(categoryValue);
-    return category?.Name ?? categoryValue.Replace("_", " ");
-}
-
-private string GetHazardTypeDisplay(string? typeValue)
-{
-    if (string.IsNullOrEmpty(typeValue)) return "";
-
-    var hazardType = HazardType.FromValue(typeValue);
-    return hazardType?.Name ?? typeValue.Replace("_", " ");
-}
-
-private string GetHazardDisplayText(Hazard hazard)
-{
-    var category = GetHazardCategoryDisplay(hazard.HazardCategory);
-    var type = GetHazardTypeDisplay(hazard.HazardType);
-    return $"{category.ToUpper()} - {type.ToUpper()}";
-}
+    private string GetHazardDisplayText(Hazard hazard)
+    {
+        var category = GetHazardCategoryDisplay(hazard.HazardCategory);
+        var type = GetHazardTypeDisplay(hazard.HazardType);
+        return $"{category.ToUpper()} - {type.ToUpper()}";
+    }
 }

@@ -1,0 +1,39 @@
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenStack Gap="1rem">
+    <!-- Header -->
+    <div style="background-color: #212e61 !important; color: white; padding: 1rem 1.25rem; margin: -1rem -1rem 0 -1rem; border-radius: 8px 8px 0 0;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <i class="fas fa-user-check" style="font-size: 1.25rem; opacity: 0.9;"></i>
+            <div>
+                <h5 style="margin: 0; font-weight: 600; font-size: 1.1rem;">
+                    Rationale for @HazardCode risk assessment @MatrixCode score
+                </h5>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rationale display -->
+    <RadzenFormField Text="Rationale" Variant="Variant.Outlined">
+        <RadzenTextArea Value="@Rationale"
+                        ReadOnly="true"
+                        Rows="8"
+                        Style="width: 100%; background-color: #f8f9fa; border: 2px solid #e9ecef;" />
+    </RadzenFormField>
+
+    <!-- Close button -->
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+        <RadzenButton Text="Close" 
+                      Icon="close"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Click="@OnClose" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public string HazardCode { get; set; } = string.Empty;
+    [Parameter] public string MatrixCode { get; set; } = string.Empty;
+    [Parameter] public string Rationale { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnClose { get; set; }
+}

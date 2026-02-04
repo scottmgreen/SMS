@@ -130,8 +130,6 @@
                                                      AvailableAssessors="@AvailableAssessors"
                                                      CurrentStep="@CurrentStep"
                                                      CurrentRiskAssessment="@TechRiskAssessment"
-                                                     InitialRiskAssessment="@TechRiskAssessment"
-                                                     ResidualRiskAssessment="@TechRiskAssessment"
                                                      RiskAssessmentId="@(TechRiskAssessment?.Id != null ? new RiskAssessmentID(TechRiskAssessment.Id.Value) : null)" />
                             break;
                         case 5:
@@ -143,8 +141,7 @@
                                                      AvailableAssessors="AvailableAssessors"
                                                      CurrentStep="@CurrentStep"
                                                      CurrentRiskAssessment="@TechRiskAssessment"
-                                                     InitialRiskAssessment="@TechRiskAssessment"
-                                                     ResidualRiskAssessment="@TechRiskAssessment" />
+                                                      />
                             break;
                         default:
                             <RadzenAlert AlertStyle="AlertStyle.Warning" Text="Invalid step number. Please select a valid step." />

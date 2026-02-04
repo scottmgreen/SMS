@@ -92,7 +92,7 @@
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="Hazard" Title="Actions">
                                     <Template Context="hazard">
-                                        @if (IsInitialHazard(hazard))
+                                        @if (hazard.IsInitialHazard)
                                         {
                                             <RadzenBadge Text="Initial Hazard" BadgeStyle="BadgeStyle.Base" />
                                         }
@@ -192,14 +192,6 @@
             return true;
         }
 
-        // Alternative check: If this hazard's ReportedBy indicates it's from the original report
-        if (hazard.ReportedBy != "Technical Assessment User")
-        {
-            return true;
-        }
-
-        // Alternative check: If the hazard was created before the assessment started
-        // (newly added hazards will have "Technical Assessment User" as ReportedBy)
         return false;
     }
 

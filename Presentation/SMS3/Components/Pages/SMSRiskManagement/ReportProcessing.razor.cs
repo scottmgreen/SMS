@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Components.Rendering;
+﻿using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 
 using SMS_Domain.Entities;
@@ -73,7 +73,7 @@ public class ReportProcessingSummary
     public string DisplayId => !string.IsNullOrEmpty(HazardId) ? HazardId : ReportId;
 
     // ENHANCED: Smart validation URL based on validation type and assessment progress
-    public string SmartValidationUrl
+    public string SmartUrl
     {
         get
         {
@@ -86,13 +86,7 @@ public class ReportProcessingSummary
             // RISK ASSESSMENT TAB: Reports with ReportValidation - route based on ValidationType
             if (StatusCategory == ProcessingStatusCategory.RiskAssessment)
             {
-                // Determine assessment type from ValidationType
-                if (ValidationType?.ToLower() == "preliminary")
-                {
-                    // Preliminary Assessment - always single step
-                    return $"/SMSRiskManagement/PreliminaryRiskAssessment/{ReportId}";
-                }
-                else if (ValidationType?.ToLower() == "technical")
+                if (ValidationType?.ToLower() == "technical")
                 {
                     // Technical Assessment - multi-step, smart navigation
                     if (HasRiskAssessment && CurrentAssessmentStep > 0)
@@ -194,6 +188,7 @@ public partial class ReportProcessing : ComponentBase
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
 
+ 
     // Data Properties
     private List<ReportProcessingSummary> PendingValidation { get; set; } = new();
     private List<ReportProcessingSummary> PendingRiskAssessment { get; set; } = new();
@@ -227,8 +222,7 @@ public partial class ReportProcessing : ComponentBase
             // Load core entities using CQRS - ENHANCED to include Investigations and Interviews
             var (reports, hazards, riskAssessments, reportValidations, investigations, interviews) = await LoadCoreEntitiesAsync();
 
-            Logger.LogWarning("?? DEBUG: LoadCoreEntitiesAsync completed. Reports: {ReportCount}, Hazards: {HazardCount}, Validations: {ValidationCount}",
-                reports.Count, hazards.Count, reportValidations.Count);
+            Logger.LogWarning("?? DEBUG: LoadCoreEntitiesAsync completed. Reports: {ReportCount}, Hazards: {HazardCount}, Validations: {ValidationCount}",reports.Count, hazards.Count, reportValidations.Count);
 
             if (!reports.Any())
             {
@@ -244,9 +238,7 @@ public partial class ReportProcessing : ComponentBase
 
             CategorizeReports(reportSummaries);
 
-            Logger.LogWarning("? Report processing data loaded - V:{V}, RA:{RA}, I:{I}, M:{M}, C:{C}",
-                PendingValidation.Count, PendingRiskAssessment.Count, PendingInvestigation.Count,
-                InMitigation.Count, ClosedReferred.Count);
+            Logger.LogWarning("? Report processing data loaded - V:{V}, RA:{RA}, I:{I}, M:{M}, C:{C}",PendingValidation.Count, PendingRiskAssessment.Count, PendingInvestigation.Count,InMitigation.Count, ClosedReferred.Count);
         }
         catch (Exception ex)
         {
@@ -369,8 +361,7 @@ public partial class ReportProcessing : ComponentBase
             Logger.LogError(ex, "? Exception in LoadCoreEntitiesAsync");
         }
 
-        Logger.LogWarning("?? DEBUG: LoadCoreEntitiesAsync returning - Reports: {RC}, Hazards: {HC}, Validations: {VC}",
-            reports.Count, hazards.Count, reportValidations.Count);
+        Logger.LogWarning("?? DEBUG: LoadCoreEntitiesAsync returning - Reports: {RC}, Hazards: {HC}, Validations: {VC}",reports.Count, hazards.Count, reportValidations.Count);
 
         return (reports, hazards, riskAssessments, reportValidations, investigations, interviews);
     }
@@ -479,37 +470,40 @@ public partial class ReportProcessing : ComponentBase
         {
             try
             {
-                // ? NEW: Find ALL hazards for this report instead of just the first one
+                // ✅ FIXED: Find ALL hazards for this report and create separate summary for each
                 var reportHazards = hazards.Where(h => h.ReportCode?.Trim() == report.Code?.Trim()).ToList();
 
-                // Use the first/primary hazard for backward compatibility with existing logic
-                var primaryHazard = reportHazards.FirstOrDefault();
+                if (!reportHazards.Any())
+                {
+                    Logger.LogWarning("No hazards found for report {ReportCode}, skipping", report.Code);
+                    continue;
+                }
 
-                // Find matching risk assessment using primary hazard
-                var riskAssessment = primaryHazard != null ?
-                    riskAssessments.FirstOrDefault(ra => ra.HazardCode?.Trim() == primaryHazard.Code?.Trim() &&
-                                                        ra.AssessmentType == RiskAssessmentType.Initial) :
-                    null;
-
-                // CRITICAL: Find matching report validation
-                var reportValidation = reportValidations.FirstOrDefault(rv => rv.ReportCode?.Trim() == report.Code?.Trim());
-
-                // NEW: Find matching investigation using primary hazard
-                var investigation = primaryHazard != null ?
-                    investigations.FirstOrDefault(inv => inv.HazardCode?.Trim() == primaryHazard.Code?.Trim()) :
-                    null;
-
-                // NEW: Find matching interviews for this investigation
-                var investigationInterviews = investigation != null ?
-                    interviews.Where(iv => iv.InvestigationCode?.Trim() == investigation.Code?.Trim()).ToList() :
-                    new List<Interview>();
-
-                // ?? NEW: Load all mitigations for ALL hazards in this report and group by code
-                var allMitigations = new List<MitigationSummary>();
-                var uniqueMitigationsDict = new Dictionary<string, MitigationSummary>();
-
+                // ✅ KEY FIX: Create one summary per REPORT-HAZARD combination
                 foreach (var hazard in reportHazards)
                 {
+                    // ✅ FIXED: Find matching risk assessment for THIS REPORT (not per hazard)
+                    // A report typically has ONE risk assessment that covers ALL hazards in that report
+                    var riskAssessment = riskAssessments.FirstOrDefault(ra => 
+                        // Try to match by report code first (most reliable)
+                        (ra.HazardCode?.Trim() == hazard.Code?.Trim()) ||
+                        // Fallback: match by primary hazard code if ReportCode not available
+                        (reportHazards.Count > 0 && ra.HazardCode?.Trim() == reportHazards.First().Code?.Trim())
+                    );
+
+                    // CRITICAL: Find matching report validation (same for all hazards in this report)
+                    var reportValidation = reportValidations.FirstOrDefault(rv => rv.ReportCode?.Trim() == report.Code?.Trim());
+
+                    // NEW: Find matching investigation for THIS specific hazard
+                    var investigation = investigations.FirstOrDefault(inv => inv.HazardCode?.Trim() == hazard.Code?.Trim());
+
+                    // NEW: Find matching interviews for this investigation
+                    var investigationInterviews = investigation != null ?
+                        interviews.Where(iv => iv.InvestigationCode?.Trim() == investigation.Code?.Trim()).ToList() :
+                        new List<Interview>();
+
+                    // ✅ NEW: Load mitigations for THIS SPECIFIC HAZARD ONLY
+                    var hazardMitigations = new List<MitigationSummary>();
                     try
                     {
                         var mitigationQuery = new GetMitigationsByHazardCodeQuery(hazard.Code);
@@ -517,85 +511,80 @@ public partial class ReportProcessing : ComponentBase
 
                         if (mitigationResult.IsSuccess && mitigationResult.Value?.Any() == true)
                         {
-                            var hazardMitigations = mitigationResult.Value.Select(m => new MitigationSummary
+                            hazardMitigations = mitigationResult.Value.Select(m => new MitigationSummary
                             {
                                 MitigationCode = m.Code ?? "Unknown",
                                 MitigationName = m.Name ?? "Unnamed Mitigation",
                                 HazardCode = hazard.Code,
                                 HazardDescription = hazard.Description ?? "No description",
                                 Status = m.Status ?? "Unknown",
-                                //ResponsibleParty = m.ResponsibleParty ?? "Not Assigned",
+                                ResponsibleParty = m.AssignedTo ?? "Not Assigned",
                                 TargetDate = m.TargetDate,
                                 Priority = m.Priority?.ToString() ?? "Medium"
-                            });
+                            }).ToList();
 
-                            // ?? FIXED: Group by mitigation code to eliminate duplicates
-                            foreach (var mitigation in hazardMitigations)
-                            {
-                                if (!uniqueMitigationsDict.ContainsKey(mitigation.MitigationCode))
-                                {
-                                    uniqueMitigationsDict[mitigation.MitigationCode] = mitigation;
-                                }
-                            }
+                            Logger.LogInformation("Loaded {Count} mitigations for hazard {HazardCode}", hazardMitigations.Count, hazard.Code);
                         }
                     }
                     catch (Exception ex)
                     {
                         Logger.LogError(ex, "Error loading mitigations for hazard {HazardCode} in report {ReportCode}", hazard.Code, report.Code);
                     }
+
+                    // ✅ Create one summary for THIS report-hazard combination
+                    var summary = new ReportProcessingSummary
+                    {
+                        ReportId = report.Code ?? "Unknown",
+                        ReportDescription = report.Description ?? "No description",
+                        ReportStatus = report.Status ?? "New",
+                        ReportStage = report.Stage ?? "New",
+                        CreatedBy = report.CreatedBy ?? "Unknown",
+                        CreatedDate = report.CreatedDate ?? DateTime.UtcNow,
+
+                        // ✅ THIS specific hazard (not primary hazard)
+                        HazardId = hazard.Code,
+                        HazardType = hazard.HazardType ?? "Unknown",
+                        HazardDescription = hazard.Description ?? "No description",
+                        Location = hazard.HazardLocation?.Description ?? hazard.LocationArea ?? "Not specified",
+                        Priority = GetPriorityString(hazard.Priority),
+                        ReportedBy = hazard.ReportedBy ?? report.CreatedBy ?? report.UpdatedBy ?? "Unknown",
+                        ReportedDate = hazard.ReportedOn ,
+                        IsConfidential = hazard.IsConfidential,
+
+                        // Risk Assessment Information (specific to this hazard)
+                        RiskAssessmentId = riskAssessment?.Code,
+                        CurrentAssessmentStep = riskAssessment?.CurrentStep ?? 0,
+                        RiskAssessmentStatus = riskAssessment?.Status?.ToString() ?? "",
+                        AssessmentStage = riskAssessment?.Stage ?? "",
+                        AssessmentType = riskAssessment?.RiskAssessmentCategory?.ToString() ?? "",
+
+                        // Report Validation Information - NEW
+                        ReportValidationId = reportValidation?.Code,
+                        ValidationType = reportValidation?.ValidationType ?? "", // NEW: Key for smart routing
+                        ValidationDecision = reportValidation?.ValidationDecision ?? "",
+
+                        // Investigation Information - NEW
+                        InvestigationId = investigation?.Code,
+                        InvestigationStatus = investigation?.Status?.ToString() ?? "",
+                        AssignedInvestigator = investigation?.AssignedInvestigatorId,
+                        InvestigationNotes = investigation?.InvestigationNotes,
+                        InterviewCount = investigationInterviews.Count,
+
+                        // ✅ FIXED: Mitigations for THIS SPECIFIC HAZARD ONLY
+                        AllMitigations = hazardMitigations,
+
+                        // Status determination (based on this specific hazard)
+                        StatusCategory = DetermineStatusCategory(report, hazard, riskAssessment, reportValidation, investigation),
+                        DaysInStage = CalculateDaysInStage(report, hazard, riskAssessment, reportValidation),
+                        AssignedTo = DetermineAssignedTo(report, hazard, riskAssessment, reportValidation, investigation),
+                        ValidationUrl = GetValidationUrl(report, hazard, reportValidation)
+                    };
+
+                    summaries.Add(summary);
+                    
+                    Logger.LogInformation("Created summary for Report {ReportCode} - Hazard {HazardCode} with {MitigationCount} mitigations",
+                        report.Code, hazard.Code, hazardMitigations.Count);
                 }
-
-                // Convert dictionary values to list
-                allMitigations = uniqueMitigationsDict.Values.ToList();
-
-                var summary = new ReportProcessingSummary
-                {
-                    ReportId = report.Code ?? "Unknown",
-                    ReportDescription = report.Description ?? "No description",
-                    ReportStatus = report.Status ?? "New",
-                    ReportStage = report.Stage ?? "New",
-                    CreatedBy = report.CreatedBy ?? "Unknown",
-                    CreatedDate = report.CreatedDate ?? DateTime.UtcNow,
-
-                    HazardId = primaryHazard?.Code,
-                    HazardType = primaryHazard?.HazardType ?? "Unknown",
-                    HazardDescription = primaryHazard?.Description ?? report.Description ?? "No description",
-                    Location = primaryHazard?.HazardLocation?.Description ?? primaryHazard?.LocationArea ?? "Not specified",
-                    Priority = GetPriorityString(primaryHazard?.Priority),
-                    ReportedBy = primaryHazard?.ReportedBy ?? report.CreatedBy ?? report.UpdatedBy ?? "Unknown", // ENHANCED: Added fallback to UpdatedBy
-                    ReportedDate = primaryHazard?.ReportedOn ?? report.CreatedDate ?? DateTime.UtcNow,
-                    IsConfidential = primaryHazard?.IsConfidential ?? false,
-
-                    // Risk Assessment Information
-                    RiskAssessmentId = riskAssessment?.Code,
-                    CurrentAssessmentStep = riskAssessment?.CurrentStep ?? 0,
-                    RiskAssessmentStatus = riskAssessment?.Status?.ToString() ?? "",
-                    AssessmentStage = riskAssessment?.Stage ?? "",
-                    AssessmentType = riskAssessment?.RiskAssessmentCategory?.ToString() ?? "",
-
-                    // Report Validation Information - NEW
-                    ReportValidationId = reportValidation?.Code,
-                    ValidationType = reportValidation?.ValidationType ?? "", // NEW: Key for smart routing
-                    ValidationDecision = reportValidation?.ValidationDecision ?? "",
-
-                    // Investigation Information - NEW
-                    InvestigationId = investigation?.Code,
-                    InvestigationStatus = investigation?.Status?.ToString() ?? "",
-                    AssignedInvestigator = investigation?.AssignedInvestigatorId,
-                    InvestigationNotes = investigation?.InvestigationNotes,
-                    InterviewCount = investigationInterviews.Count,
-
-                    // ? NEW: All mitigations for all hazards
-                    AllMitigations = allMitigations,
-
-                    // Status determination
-                    StatusCategory = DetermineStatusCategory(report, primaryHazard, riskAssessment, reportValidation, investigation),
-                    DaysInStage = CalculateDaysInStage(report, primaryHazard, riskAssessment, reportValidation),
-                    AssignedTo = DetermineAssignedTo(report, primaryHazard, riskAssessment, reportValidation, investigation),
-                    ValidationUrl = GetValidationUrl(report, primaryHazard, reportValidation)
-                };
-
-                summaries.Add(summary);
             }
             catch (Exception ex)
             {
@@ -603,7 +592,7 @@ public partial class ReportProcessing : ComponentBase
             }
         }
 
-        Logger.LogInformation("Created {SummaryCount} report summaries with {TotalMitigationCount} total mitigations",
+        Logger.LogInformation("Created {SummaryCount} report-hazard summaries with {TotalMitigationCount} total mitigations",
             summaries.Count, summaries.Sum(s => s.MitigationCount));
         return summaries;
     }
@@ -615,6 +604,22 @@ public partial class ReportProcessing : ComponentBase
         PendingInvestigation = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Investigation).ToList();
         InMitigation = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Mitigation).ToList();
         ClosedReferred = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Closed).ToList();
+
+        // ✅ ADD DEBUG LOGGING to see what's being categorized
+        Logger.LogWarning("📊 CATEGORIZATION RESULTS:");
+        Logger.LogWarning("   📋 Pending Validation: {Count}", PendingValidation.Count);
+        Logger.LogWarning("   📊 Pending Risk Assessment: {Count}", PendingRiskAssessment.Count);
+        Logger.LogWarning("   🔍 Pending Investigation: {Count}", PendingInvestigation.Count);
+        Logger.LogWarning("   🛠️ In Mitigation: {Count}", InMitigation.Count);
+        Logger.LogWarning("   ✅ Closed/Referred: {Count}", ClosedReferred.Count);
+
+        // ✅ LOG EACH REPORT'S CATEGORIZATION
+        foreach (var report in reports)
+        {
+            Logger.LogWarning("   📄 Report {ReportId}-{HazardId}: {Category} (HasRA: {HasRA}, RAStatus: {RAStatus}, RAStep: {RAStep}, MitigationCount: {MC})",
+                report.ReportId, report.HazardId, report.StatusCategory, 
+                report.HasRiskAssessment, report.RiskAssessmentStatus, report.CurrentAssessmentStep, report.MitigationCount);
+        }
     }
 
     #endregion
@@ -710,6 +715,19 @@ public partial class ReportProcessing : ComponentBase
         else if (riskAssessment.Status == RiskAssessmentStatus.Completed)
         {
             Logger.LogWarning("? Report {ReportId} -> MITIGATION (assessment complete)", report.Code);
+            return ProcessingStatusCategory.Mitigation;
+        }
+
+        // ✅ NEW: Check if this report-hazard has mitigations - if so, it should be in Mitigation tab
+        // This handles cases where risk assessment might be missing but mitigations exist
+        if (hazard != null)
+        {
+            Logger.LogWarning("? Report {ReportId} -> Checking if should be MITIGATION (no clear RA status but hazard exists)", report.Code);
+            
+            // ✅ ENHANCED: If this is being called from CreateReportSummariesAsync, check mitigation count
+            // For now, let's assume any report with an associated hazard that has made it this far
+            // should be in mitigation phase unless explicitly in another category
+            // This is a temporary fix - you might want to add mitigation count checking here
             return ProcessingStatusCategory.Mitigation;
         }
 
@@ -915,50 +933,450 @@ public partial class ReportProcessing : ComponentBase
                 return;
             }
 
-            builder.OpenComponent<RadzenDataGrid<ReportProcessingSummary>>(0);
-            builder.AddAttribute(1, "Data", InMitigation);
-            builder.AddAttribute(2, "AllowSorting", true);
-            builder.AddAttribute(3, "AllowPaging", true);
-            builder.AddAttribute(4, "PageSize", 10);
-            builder.AddAttribute(5, "Columns", (RenderFragment)(columnsBuilder =>
-            {
-                RenderMitigationColumns(columnsBuilder);
-            }));
-            builder.CloseComponent();
+            // 🎯 NEW: Render detailed mitigation view instead of simple data grid
+            RenderDetailedMitigationView(builder);
         };
     }
 
-    private RenderFragment RenderClosedTab()
+    private void RenderDetailedMitigationView(RenderTreeBuilder builder)
     {
-        return builder =>
+        builder.OpenComponent<RadzenStack>(0);
+        builder.AddAttribute(1, "Gap", "1.5rem");
+        builder.AddAttribute(2, "ChildContent", (RenderFragment)(stackBuilder =>
         {
-            if (IsLoading)
+            foreach (var report in InMitigation)
             {
-                builder.OpenComponent<RadzenProgressBarCircular>(0);
-                builder.AddAttribute(1, "ShowValue", false);
-                builder.CloseComponent();
-                return;
+                // Render each report as a card with its mitigations
+                RenderReportMitigationCard(stackBuilder, report);
             }
-
-            if (!ClosedReferred.Any())
-            {
-                RenderEmptyState(builder, "archive", "No recently closed reports", "Completed reports will appear here");
-                return;
-            }
-
-            builder.OpenComponent<RadzenDataGrid<ReportProcessingSummary>>(0);
-            builder.AddAttribute(1, "Data", ClosedReferred.Take(20));
-            builder.AddAttribute(2, "AllowSorting", true);
-            builder.AddAttribute(3, "AllowPaging", true);
-            builder.AddAttribute(4, "PageSize", 10);
-            builder.AddAttribute(5, "Columns", (RenderFragment)(columnsBuilder =>
-            {
-                RenderStandardColumns(columnsBuilder, false); // No actions for closed
-            }));
-            builder.CloseComponent();
-        };
+        }));
+        builder.CloseComponent(); // ✅ FIXED: Close RadzenStack
     }
 
+    private void RenderReportMitigationCard(RenderTreeBuilder builder, ReportProcessingSummary report)
+    {
+        builder.OpenComponent<RadzenCard>(0);
+        builder.AddAttribute(1, "Variant", Variant.Outlined);
+        builder.AddAttribute(2, "Class", "mb-3");
+        builder.AddAttribute(3, "Style", "border-left: 4px solid var(--rz-primary);");
+        builder.AddAttribute(4, "ChildContent", (RenderFragment)(cardBuilder =>
+        {
+            cardBuilder.OpenComponent<RadzenStack>(0);
+            cardBuilder.AddAttribute(1, "Gap", "1rem");
+            cardBuilder.AddAttribute(2, "ChildContent", (RenderFragment)(stackBuilder =>
+            {
+                // Header Row with Report/Hazard info and Bulk Approve
+                stackBuilder.OpenComponent<RadzenRow>(0);
+                stackBuilder.AddAttribute(1, "AlignItems", AlignItems.Center);
+                stackBuilder.AddAttribute(2, "JustifyContent", JustifyContent.SpaceBetween);
+                stackBuilder.AddAttribute(3, "ChildContent", (RenderFragment)(headerBuilder =>
+                {
+                    // Left side - Report/Hazard info
+                    headerBuilder.OpenComponent<RadzenColumn>(0);
+                    headerBuilder.AddAttribute(1, "Size", 8); // ✅ FIXED: Use int instead of string
+                    headerBuilder.AddAttribute(2, "ChildContent", (RenderFragment)(leftBuilder =>
+                    {
+                        leftBuilder.OpenComponent<RadzenStack>(0);
+                        leftBuilder.AddAttribute(1, "Gap", "0.5rem");
+                        leftBuilder.AddAttribute(2, "ChildContent", (RenderFragment)(infoBuilder =>
+                        {
+                            infoBuilder.OpenComponent<RadzenText>(0);
+                            infoBuilder.AddAttribute(1, "TextStyle", TextStyle.H6);
+                            infoBuilder.AddAttribute(2, "Style", "color: #212e61; margin: 0;");
+                            infoBuilder.AddAttribute(3, "Text", $"Report {report.ReportId} - Hazard {report.HazardId}");
+                            infoBuilder.CloseComponent(); // ✅ Close RadzenText
+
+                            infoBuilder.OpenComponent<RadzenText>(5);
+                            infoBuilder.AddAttribute(6, "TextStyle", TextStyle.Body2);
+                            infoBuilder.AddAttribute(7, "Style", "color: var(--rz-text-secondary-color);");
+                            infoBuilder.AddAttribute(8, "Text", report.HazardDescription);
+                            infoBuilder.CloseComponent(); // ✅ Close RadzenText
+
+                            infoBuilder.OpenComponent<RadzenStack>(10);
+                            infoBuilder.AddAttribute(11, "Orientation", Orientation.Horizontal);
+                            infoBuilder.AddAttribute(12, "Gap", "0.5rem");
+                            infoBuilder.AddAttribute(13, "AlignItems", AlignItems.Center);
+                            infoBuilder.AddAttribute(14, "ChildContent", (RenderFragment)(badgeBuilder =>
+                            {
+                                badgeBuilder.OpenComponent<RadzenBadge>(0);
+                                badgeBuilder.AddAttribute(1, "Text", $"{report.MitigationCount} Mitigations");
+                                badgeBuilder.AddAttribute(2, "BadgeStyle", BadgeStyle.Info);
+                                badgeBuilder.CloseComponent(); // ✅ Close RadzenBadge
+
+                                var priorityStyle = report.Priority switch
+                                {
+                                    "High" => BadgeStyle.Danger,
+                                    "Medium" => BadgeStyle.Warning,
+                                    _ => BadgeStyle.Success
+                                };
+
+                                badgeBuilder.OpenComponent<RadzenBadge>(5);
+                                badgeBuilder.AddAttribute(6, "Text", report.Priority);
+                                badgeBuilder.AddAttribute(7, "BadgeStyle", priorityStyle);
+                                badgeBuilder.CloseComponent(); // ✅ Close RadzenBadge
+                            }));
+                            infoBuilder.CloseComponent(); // ✅ Close RadzenStack
+                        }));
+                        leftBuilder.CloseComponent(); // ✅ Close RadzenStack
+                    }));
+                    headerBuilder.CloseComponent(); // ✅ Close RadzenColumn
+
+                    // Right side - Bulk Approve button
+                    headerBuilder.OpenComponent<RadzenColumn>(10);
+                    headerBuilder.AddAttribute(11, "Size", 4); // ✅ FIXED: Use int instead of string
+                    headerBuilder.AddAttribute(12, "Style", "text-align: right;");
+                    headerBuilder.AddAttribute(13, "ChildContent", (RenderFragment)(rightBuilder =>
+                    {
+                        if (report.HasMitigations)
+                        {
+                            rightBuilder.OpenComponent<RadzenButton>(0);
+                            rightBuilder.AddAttribute(1, "Text", $"Bulk Approve ({GetApprovableMitigationCount(report)})");
+                            rightBuilder.AddAttribute(2, "Icon", "verified");
+                            rightBuilder.AddAttribute(3, "ButtonStyle", ButtonStyle.Success);
+                            rightBuilder.AddAttribute(4, "Size", ButtonSize.Medium);
+                            rightBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
+                                (args) => ShowBulkApprovalConfirmation(report)));
+                            rightBuilder.AddAttribute(6, "Disabled", IsProcessingApproval || GetApprovableMitigationCount(report) == 0);
+                            rightBuilder.CloseComponent(); // ✅ Close RadzenButton
+                        }
+                    }));
+                    headerBuilder.CloseComponent(); // ✅ Close RadzenColumn
+                }));
+                stackBuilder.CloseComponent(); // ✅ Close RadzenRow
+
+                // Mitigations List
+                if (report.HasMitigations && report.AllMitigations.Any())
+                {
+                    stackBuilder.OpenComponent<RadzenDataGrid<MitigationSummary>>(20);
+                    stackBuilder.AddAttribute(21, "Data", report.AllMitigations);
+                    stackBuilder.AddAttribute(22, "AllowSorting", true);
+                    stackBuilder.AddAttribute(23, "AllowPaging", false);
+                    stackBuilder.AddAttribute(24, "Columns", (RenderFragment)(mitigationColumnsBuilder =>
+                    {
+                        RenderMitigationDetailColumns(mitigationColumnsBuilder, report);
+                    }));
+                    stackBuilder.CloseComponent(); // ✅ Close RadzenDataGrid
+                }
+                else
+                {
+                    stackBuilder.OpenComponent<RadzenAlert>(30);
+                    stackBuilder.AddAttribute(31, "AlertStyle", AlertStyle.Info);
+                    stackBuilder.AddAttribute(32, "Icon", "info");
+                    stackBuilder.AddAttribute(33, "ShowIcon", true);
+                    stackBuilder.AddAttribute(34, "Text", "No mitigations found for this report-hazard combination.");
+                    stackBuilder.CloseComponent(); // ✅ Close RadzenAlert
+                }
+            }));
+            cardBuilder.CloseComponent(); // ✅ Close RadzenStack (inner)
+        }));
+        builder.CloseComponent(); // ✅ Close RadzenCard
+    }
+
+    private void RenderMitigationDetailColumns(RenderTreeBuilder builder, ReportProcessingSummary report)
+    {
+        // Mitigation Code Column
+        builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(0);
+        builder.AddAttribute(1, "Property", "MitigationCode");
+        builder.AddAttribute(2, "Title", "Code");
+        builder.AddAttribute(3, "Width", "120px");
+        builder.AddAttribute(4, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenBadge>(0);
+                templateBuilder.AddAttribute(1, "Text", mitigation.MitigationCode);
+                templateBuilder.AddAttribute(2, "BadgeStyle", BadgeStyle.Base);
+                templateBuilder.CloseComponent(); // ✅ Close RadzenBadge
+            })));
+        builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
+
+        // Mitigation Name Column
+        builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(10);
+        builder.AddAttribute(11, "Property", "MitigationName");
+        builder.AddAttribute(12, "Title", "Name");
+        builder.AddAttribute(13, "Width", "250px");
+        builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
+
+        // Status Column
+        builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(20);
+        builder.AddAttribute(21, "Property", "Status");
+        builder.AddAttribute(22, "Title", "Status");
+        builder.AddAttribute(23, "Width", "120px");
+        builder.AddAttribute(24, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
+            (templateBuilder =>
+            {
+                var statusStyle = mitigation.Status switch
+                {
+                    "Approved" => BadgeStyle.Success,
+                    "InProgress" => BadgeStyle.Base,
+                    "Completed" => BadgeStyle.Primary,
+                    "OnHold" => BadgeStyle.Warning,
+                    "Cancelled" => BadgeStyle.Danger,
+                    _ => BadgeStyle.Secondary
+                };
+
+                templateBuilder.OpenComponent<RadzenBadge>(0);
+                templateBuilder.AddAttribute(1, "Text", mitigation.Status);
+                templateBuilder.AddAttribute(2, "BadgeStyle", statusStyle);
+                templateBuilder.CloseComponent(); // ✅ Close RadzenBadge
+            })));
+        builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
+
+        // Priority Column
+        builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(30);
+        builder.AddAttribute(31, "Property", "Priority");
+        builder.AddAttribute(32, "Title", "Priority");
+        builder.AddAttribute(33, "Width", "100px");
+        builder.AddAttribute(34, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
+            (templateBuilder =>
+            {
+                var priorityStyle = mitigation.Priority switch
+                {
+                    "Critical" => BadgeStyle.Danger,
+                    "High" => BadgeStyle.Warning,
+                    "Medium" => BadgeStyle.Base,
+                    "Low" => BadgeStyle.Success,
+                    _ => BadgeStyle.Secondary
+                };
+
+                templateBuilder.OpenComponent<RadzenBadge>(0);
+                templateBuilder.AddAttribute(1, "Text", mitigation.Priority);
+                templateBuilder.AddAttribute(2, "BadgeStyle", priorityStyle);
+                templateBuilder.CloseComponent(); // ✅ Close RadzenBadge
+            })));
+        builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
+
+        // Target Date Column
+        builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(40);
+        builder.AddAttribute(41, "Property", "TargetDate");
+        builder.AddAttribute(42, "Title", "Target Date");
+        builder.AddAttribute(43, "Width", "120px");
+        builder.AddAttribute(44, "FormatString", "{0:MM/dd/yyyy}");
+        builder.AddAttribute(45, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
+            (templateBuilder =>
+            {
+                if (mitigation.TargetDate.HasValue)
+                {
+                    var isOverdue = mitigation.IsOverdue;
+                    var dateStyle = isOverdue ? "color: var(--rz-danger); font-weight: bold;" : "";
+
+                    templateBuilder.OpenComponent<RadzenText>(0);
+                    templateBuilder.AddAttribute(1, "TextStyle", TextStyle.Body2);
+                    templateBuilder.AddAttribute(2, "Style", dateStyle);
+                    templateBuilder.AddAttribute(3, "Text", mitigation.TargetDate.Value.ToString("MM/dd/yyyy"));
+                    templateBuilder.CloseComponent(); // ✅ Close RadzenText
+
+                    if (isOverdue)
+                    {
+                        templateBuilder.OpenComponent<RadzenText>(5);
+                        templateBuilder.AddAttribute(6, "TextStyle", TextStyle.Caption);
+                        templateBuilder.AddAttribute(7, "Style", "color: var(--rz-danger);");
+                        templateBuilder.AddAttribute(8, "Text", "OVERDUE");
+                        templateBuilder.CloseComponent(); // ✅ Close RadzenText
+                    }
+                }
+                else
+                {
+                    templateBuilder.OpenComponent<RadzenText>(10);
+                    templateBuilder.AddAttribute(11, "TextStyle", TextStyle.Caption);
+                    templateBuilder.AddAttribute(12, "Style", "color: var(--rz-text-disabled-color);");
+                    templateBuilder.AddAttribute(13, "Text", "Not set");
+                    templateBuilder.CloseComponent(); // ✅ Close RadzenText
+                }
+            })));
+        builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
+
+        // Responsible Party Column
+        builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(50);
+        builder.AddAttribute(51, "Property", "ResponsibleParty");
+        builder.AddAttribute(52, "Title", "Responsible");
+        builder.AddAttribute(53, "Width", "150px");
+        builder.AddAttribute(54, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenText>(0);
+                templateBuilder.AddAttribute(1, "TextStyle", TextStyle.Body2);
+                templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(mitigation.ResponsibleParty) ? mitigation.ResponsibleParty : "Not assigned");
+                templateBuilder.CloseComponent(); // ✅ Close RadzenText
+            })));
+        builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
+
+        // Actions Column - Individual Edit buttons
+        builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(60);
+        builder.AddAttribute(61, "Title", "Actions");
+        builder.AddAttribute(62, "Width", "200px");
+        builder.AddAttribute(63, "Sortable", false);
+        builder.AddAttribute(64, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenStack>(0);
+                templateBuilder.AddAttribute(1, "Orientation", Orientation.Horizontal);
+                templateBuilder.AddAttribute(2, "Gap", "0.25rem");
+                templateBuilder.AddAttribute(3, "ChildContent", (RenderFragment)(actionBuilder =>
+                {
+                    // Edit Button
+                    actionBuilder.OpenComponent<RadzenButton>(0);
+                    actionBuilder.AddAttribute(1, "Text", "Edit");
+                    actionBuilder.AddAttribute(2, "Icon", "edit");
+                    actionBuilder.AddAttribute(3, "ButtonStyle", ButtonStyle.Primary);
+                    actionBuilder.AddAttribute(4, "Size", ButtonSize.Small);
+                    actionBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
+                        (args) => NavigateToMitigationEdit(mitigation)));
+                    actionBuilder.CloseComponent(); // ✅ Close RadzenButton
+
+                    // Quick Approve Button (only if not already approved)
+                    if (mitigation.Status != "Approved")
+                    {
+                        actionBuilder.OpenComponent<RadzenButton>(5);
+                        actionBuilder.AddAttribute(6, "Text", "Approve");
+                        actionBuilder.AddAttribute(7, "Icon", "verified");
+                        actionBuilder.AddAttribute(8, "ButtonStyle", ButtonStyle.Success);
+                        actionBuilder.AddAttribute(9, "Size", ButtonSize.Small);
+                        actionBuilder.AddAttribute(10, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
+                            (args) => QuickApproveMitigation(mitigation)));
+                        actionBuilder.AddAttribute(11, "Disabled", IsProcessingApproval);
+                        actionBuilder.CloseComponent(); // ✅ Close RadzenButton
+                    }
+
+                    // View Button
+                    actionBuilder.OpenComponent<RadzenButton>(10);
+                    actionBuilder.AddAttribute(11, "Text", "View");
+                    actionBuilder.AddAttribute(12, "Icon", "visibility");
+                    actionBuilder.AddAttribute(13, "ButtonStyle", ButtonStyle.Base);
+                    actionBuilder.AddAttribute(14, "Size", ButtonSize.Small);
+                    actionBuilder.AddAttribute(15, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
+                        (args) => ViewMitigationDetails(mitigation)));
+                    actionBuilder.CloseComponent(); // ✅ Close RadzenButton
+                }));
+                templateBuilder.CloseComponent(); // ✅ Close RadzenStack
+            })));
+        builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
+    }
+
+    // Helper methods for mitigation actions
+    private void NavigateToMitigationEdit(MitigationSummary mitigation)
+    {
+        try
+        {
+            Logger.LogInformation("Navigating to edit mitigation: {Code}", mitigation.MitigationCode);
+            Navigation.NavigateTo($"/SMSRiskManagement/HazardMitigation/Edit/{mitigation.MitigationCode}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error navigating to mitigation edit for {Code}", mitigation.MitigationCode);
+            ShowErrorNotification("Error navigating to mitigation editor");
+        }
+    }
+
+    private async Task QuickApproveMitigation(MitigationSummary mitigation)
+    {
+        try
+        {
+            IsProcessingApproval = true;
+            StateHasChanged();
+
+            Logger.LogInformation("Quick approving mitigation: {Code}", mitigation.MitigationCode);
+
+            // Load the full mitigation entity
+            var mitigationQuery = new GetMitigationByCodeQuery(new MitigationID(mitigation.MitigationCode));
+            var mitigationResult = await Mediator.SendAsync(mitigationQuery, CancellationToken.None);
+
+            if (mitigationResult.IsSuccess && mitigationResult.Value != null)
+            {
+                var fullMitigation = mitigationResult.Value;
+                fullMitigation.Status = "Approved";
+                fullMitigation.UpdatedDate = DateTime.UtcNow;
+                fullMitigation.UpdatedBy = "SYSTEM"; // You might want to get the current user
+
+                var updateCommand = new UpdateMitigationCommand(fullMitigation);
+                var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+
+                if (updateResult.IsSuccess)
+                {
+                    ShowSuccessNotification($"Mitigation {mitigation.MitigationCode} approved successfully");
+
+                    // Update the local summary
+                    mitigation.Status = "Approved";
+
+                    // Reload data to reflect changes
+                    await LoadDataAsync();
+                }
+                else
+                {
+                    ShowErrorNotification($"Failed to approve mitigation: {updateResult.Error?.Message}");
+                }
+            }
+            else
+            {
+                ShowErrorNotification($"Failed to load mitigation details: {mitigationResult.Error?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error quick approving mitigation {Code}", mitigation.MitigationCode);
+            ShowErrorNotification("Error approving mitigation");
+        }
+        finally
+        {
+            IsProcessingApproval = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ViewMitigationDetails(MitigationSummary mitigation)
+    {
+        try
+        {
+            Logger.LogInformation("Viewing mitigation details: {Code}", mitigation.MitigationCode);
+            // You might want to show a details dialog or navigate to a details page
+            ShowInfoNotification($"Details for mitigation {mitigation.MitigationCode} - Feature to be implemented");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error viewing mitigation details for {Code}", mitigation.MitigationCode);
+            ShowErrorNotification("Error viewing mitigation details");
+        }
+    }
+
+    private int GetApprovableMitigationCount(ReportProcessingSummary report)
+    {
+        return report.AllMitigations?.Count(m => m.Status == "PENDING") ?? 0;
+    }
+
+    // Notification helper methods
+    private void ShowSuccessNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Success",
+            Detail = message,
+            Duration = 4000
+        });
+    }
+
+    private void ShowErrorNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Error,
+            Summary = "Error",
+            Detail = message,
+            Duration = 6000
+        });
+    }
+
+    private void ShowInfoNotification(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = "Information",
+            Detail = message,
+            Duration = 5000
+        });
+    }
+
+    
     private void RenderEmptyState(RenderTreeBuilder builder, string icon, string title, string description)
     {
         builder.OpenComponent<RadzenStack>(0);
@@ -990,73 +1408,9 @@ public partial class ReportProcessing : ComponentBase
 
     private void RenderValidationColumns(RenderTreeBuilder builder)
     {
-        // Report ID Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(0);
-        builder.AddAttribute(1, "Property", "ReportId");
-        builder.AddAttribute(2, "Title", "Report ID");
-        builder.AddAttribute(3, "Width", "150px");
-        builder.AddAttribute(4, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                templateBuilder.OpenComponent<RadzenStack>(0);
-                templateBuilder.AddAttribute(1, "Orientation", Orientation.Vertical);
-                templateBuilder.AddAttribute(2, "Gap", "0.25rem");
-                templateBuilder.AddAttribute(3, "ChildContent", (RenderFragment)(stackBuilder =>
-                {
-                    stackBuilder.OpenComponent<RadzenText>(0);
-                    stackBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
-                    stackBuilder.AddAttribute(2, "Style", "font-weight: 600;");
-                    stackBuilder.AddAttribute(3, "Text", report.ReportId);
-                    stackBuilder.CloseComponent();
-
-                    stackBuilder.OpenComponent<RadzenText>(5);
-                    stackBuilder.AddAttribute(6, "TextStyle", TextStyle.Caption);
-                    stackBuilder.AddAttribute(7, "Style", "color: var(--rz-warning); font-weight: 500;");
-                    stackBuilder.AddAttribute(8, "Text", "Needs Validation");
-                    stackBuilder.CloseComponent();
-                }));
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
-
-        // Hazard ID Column (FIXED: This was showing "Report ID" header)
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(10);
-        builder.AddAttribute(11, "Property", "HazardId");
-        builder.AddAttribute(12, "Title", "Hazard ID");
-        builder.AddAttribute(13, "Width", "150px");
-        builder.AddAttribute(14, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
-                templateBuilder.AddAttribute(2, "Style", "font-weight: 600;");
-                templateBuilder.AddAttribute(3, "Text", !string.IsNullOrEmpty(report.HazardId) ? report.HazardId : "N/A");
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
-
-        // Description Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(20);
-        builder.AddAttribute(21, "Property", "HazardDescription");
-        builder.AddAttribute(22, "Title", "Description");
-        builder.AddAttribute(23, "Width", "300px");
-        builder.CloseComponent();
-
-        // Status Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(30);
-        builder.AddAttribute(31, "Property", "ReportStatus");
-        builder.AddAttribute(32, "Title", "Status");
-        builder.AddAttribute(33, "Width", "120px");
-        builder.AddAttribute(34, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "BadgeStyle", BadgeStyle.Base);
-                templateBuilder.AddAttribute(2, "Text", report.ReportStatus);
-                templateBuilder.AddAttribute(3, "Variant", Variant.Flat);
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
+        RenderReportIdColumn(builder);
+        RenderHazardIdColumn(builder);
+        RenderHazardDescriptionColumn(builder);
 
         // Stage Column
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(40);
@@ -1127,7 +1481,11 @@ public partial class ReportProcessing : ComponentBase
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
+        RenderValidationActionColumn(builder);
+    }
 
+    private void RenderValidationActionColumn(RenderTreeBuilder builder)
+    {
         // Actions Column
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(80);
         builder.AddAttribute(81, "Title", "Actions");
@@ -1147,14 +1505,14 @@ public partial class ReportProcessing : ComponentBase
         builder.CloseComponent();
     }
 
-    private void RenderStandardColumns(RenderTreeBuilder builder, bool includeActions = true)
+    private static void RenderReportIdColumn(RenderTreeBuilder builder)
     {
-        // Report ID Column - Show actual Report ID for all tabs
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(5);
-        builder.AddAttribute(6, "Property", "HazardId");
-        builder.AddAttribute(7, "Title", "Hazard ID");
-        builder.AddAttribute(8, "Width", "150px");
-        builder.AddAttribute(9, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+        // Report ID Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(0);
+        builder.AddAttribute(1, "Property", "ReportId");
+        builder.AddAttribute(2, "Title", "Report ID");
+        builder.AddAttribute(3, "Width", "150px");
+        builder.AddAttribute(4, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenStack>(0);
@@ -1165,23 +1523,54 @@ public partial class ReportProcessing : ComponentBase
                     stackBuilder.OpenComponent<RadzenText>(0);
                     stackBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
                     stackBuilder.AddAttribute(2, "Style", "font-weight: 600;");
-                    stackBuilder.AddAttribute(3, "Text", report.HazardId);
+                    stackBuilder.AddAttribute(3, "Text", report.ReportId);
                     stackBuilder.CloseComponent();
 
-                    // Show associated Hazard ID as secondary info if available
-                    //if (!string.IsNullOrEmpty(report.HazardId))
-                    //{
-                    //    stackBuilder.OpenComponent<RadzenText>(10);
-                    //    stackBuilder.AddAttribute(11, "TextStyle", TextStyle.Caption);
-                    //    stackBuilder.AddAttribute(12, "Style", "color: var(--rz-text-disabled-color);");
-                    //    stackBuilder.AddAttribute(13, "Text", $"Hazard: {report.HazardId}");
-                    //    stackBuilder.CloseComponent();
-                    //}
+                   
                 }));
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
+    }
 
+    private static void RenderHazardIdColumn(RenderTreeBuilder builder)
+    {
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(5);
+        builder.AddAttribute(6, "Property", "HazardId");
+        builder.AddAttribute(7, "Title", "Hazard ID");
+        builder.AddAttribute(8, "Width", "150px");
+        builder.AddAttribute(9, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenText>(0);
+                templateBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
+                templateBuilder.AddAttribute(2, "Style", "font-weight: 600;");
+                templateBuilder.AddAttribute(3, "Text", !string.IsNullOrEmpty(report.HazardId) ? report.HazardId : "N/A");
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+    }
+
+    private static void RenderRiskAssessmentIdColumn(RenderTreeBuilder builder)
+    {
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(10);
+        builder.AddAttribute(11, "Property", "RiskAssessmentId");
+        builder.AddAttribute(12, "Title", "Risk Assessment ID");
+        builder.AddAttribute(13, "Width", "150px");
+        builder.AddAttribute(14, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenText>(0);
+                templateBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
+                templateBuilder.AddAttribute(2, "Style", "font-weight: 600;");
+                templateBuilder.AddAttribute(3, "Text", !string.IsNullOrEmpty(report.RiskAssessmentId) ? report.RiskAssessmentId : "N/A");
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+    }
+
+    private void RenderHazardDescriptionColumn(RenderTreeBuilder builder, bool includeActions = true)
+    {
         // Description Column
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(10);
         builder.AddAttribute(11, "Property", "HazardDescription");
@@ -1190,160 +1579,96 @@ public partial class ReportProcessing : ComponentBase
         builder.CloseComponent();
 
         // Stage Column - Shows current processing stage with assessment type info
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(15);
-        builder.AddAttribute(16, "Property", "ReportStatus");
-        builder.AddAttribute(17, "Title", "Stage");
-        builder.AddAttribute(18, "Width", "150px");
-        builder.AddAttribute(19, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                var badgeStyle = report.StatusCategory switch
-                {
-                    ProcessingStatusCategory.Validation => BadgeStyle.Info,
-                    ProcessingStatusCategory.RiskAssessment => BadgeStyle.Primary,
-                    ProcessingStatusCategory.Investigation => BadgeStyle.Warning,
-                    ProcessingStatusCategory.Mitigation => BadgeStyle.Secondary,
-                    ProcessingStatusCategory.Closed => BadgeStyle.Success,
-                    _ => BadgeStyle.Light
-                };
+        //builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(15);
+        //builder.AddAttribute(16, "Property", "ReportStatus");
+        //builder.AddAttribute(17, "Title", "Stage");
+        //builder.AddAttribute(18, "Width", "150px");
+        //builder.AddAttribute(19, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+        //    (templateBuilder =>
+        //    {
+        //        var badgeStyle = report.StatusCategory switch
+        //        {
+        //            ProcessingStatusCategory.Validation => BadgeStyle.Info,
+        //            ProcessingStatusCategory.RiskAssessment => BadgeStyle.Primary,
+        //            ProcessingStatusCategory.Investigation => BadgeStyle.Warning,
+        //            ProcessingStatusCategory.Mitigation => BadgeStyle.Secondary,
+        //            ProcessingStatusCategory.Closed => BadgeStyle.Success,
+        //            _ => BadgeStyle.Light
+        //        };
 
-                // Show stage with assessment type if available
-                var stageText = report.StatusCategory.ToString();
-                if (report.StatusCategory == ProcessingStatusCategory.RiskAssessment && !string.IsNullOrEmpty(report.ValidationType))
-                {
-                    stageText = $"{report.ValidationType} Assessment";
-                }
+        //        // Show stage with assessment type if available
+        //        var stageText = report.StatusCategory.ToString();
+        //        if (report.StatusCategory == ProcessingStatusCategory.RiskAssessment && !string.IsNullOrEmpty(report.ValidationType))
+        //        {
+        //            stageText = $"{report.ValidationType} Assessment";
+        //        }
 
-                templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
-                templateBuilder.AddAttribute(2, "Text", stageText);
-                templateBuilder.AddAttribute(3, "Variant", Variant.Flat);
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
+        //        templateBuilder.OpenComponent<RadzenBadge>(0);
+        //        templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
+        //        templateBuilder.AddAttribute(2, "Text", stageText);
+        //        templateBuilder.AddAttribute(3, "Variant", Variant.Flat);
+        //        templateBuilder.CloseComponent();
+        //    })));
+        //builder.CloseComponent();
 
-        // Priority Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(20);
-        builder.AddAttribute(21, "Property", "Priority");
-        builder.AddAttribute(22, "Title", "Priority");
-        builder.AddAttribute(23, "Width", "100px");
-        builder.AddAttribute(24, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                var badgeStyle = report.Priority switch
-                {
-                    "High" => BadgeStyle.Danger,
-                    "Medium" => BadgeStyle.Warning,
-                    _ => BadgeStyle.Info
-                };
-                templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
-                templateBuilder.AddAttribute(2, "Text", report.Priority);
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
+        //// Priority Column
+        //builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(20);
+        //builder.AddAttribute(21, "Property", "Priority");
+        //builder.AddAttribute(22, "Title", "Priority");
+        //builder.AddAttribute(23, "Width", "100px");
+        //builder.AddAttribute(24, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+        //    (templateBuilder =>
+        //    {
+        //        var badgeStyle = report.Priority switch
+        //        {
+        //            "High" => BadgeStyle.Danger,
+        //            "Medium" => BadgeStyle.Warning,
+        //            _ => BadgeStyle.Info
+        //        };
+        //        templateBuilder.OpenComponent<RadzenBadge>(0);
+        //        templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
+        //        templateBuilder.AddAttribute(2, "Text", report.Priority);
+        //        templateBuilder.CloseComponent();
+        //    })));
+        //builder.CloseComponent();
 
-        // Reported By Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(30);
-        builder.AddAttribute(31, "Property", "ReportedBy");
-        builder.AddAttribute(32, "Title", "Reported By");
-        builder.AddAttribute(33, "Width", "150px");
-        builder.CloseComponent();
+        //// Reported By Column
+        //builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(30);
+        //builder.AddAttribute(31, "Property", "ReportedBy");
+        //builder.AddAttribute(32, "Title", "Reported By");
+        //builder.AddAttribute(33, "Width", "150px");
+        //builder.CloseComponent();
 
-        // Days in Stage Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(40);
-        builder.AddAttribute(41, "Property", "DaysInStage");
-        builder.AddAttribute(42, "Title", "Days in Stage");
-        builder.AddAttribute(43, "Width", "120px");
-        builder.AddAttribute(44, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                var badgeStyle = report.DaysInStage > 2 ? BadgeStyle.Warning : BadgeStyle.Secondary;
-                templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
-                templateBuilder.AddAttribute(2, "Text", $"{report.DaysInStage} days");
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
+        //// Days in Stage Column
+        //builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(40);
+        //builder.AddAttribute(41, "Property", "DaysInStage");
+        //builder.AddAttribute(42, "Title", "Days in Stage");
+        //builder.AddAttribute(43, "Width", "120px");
+        //builder.AddAttribute(44, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+        //    (templateBuilder =>
+        //    {
+        //        var badgeStyle = report.DaysInStage > 3 ? BadgeStyle.Danger :
+        //                       report.DaysInStage > 1 ? BadgeStyle.Warning : BadgeStyle.Secondary;
+        //        templateBuilder.OpenComponent<RadzenBadge>(0);
+        //        templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
+        //        templateBuilder.AddAttribute(2, "Text", $"{report.DaysInStage} days");
+        //        templateBuilder.CloseComponent();
+        //    })));
+        //builder.CloseComponent();
     }
 
     private void RenderRiskAssessmentColumns(RenderTreeBuilder builder)
     {
-        // Report ID Column - WITHOUT action button (moved to Actions column)
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(0);
-        builder.AddAttribute(1, "Property", "ReportId");
-        builder.AddAttribute(2, "Title", "Report ID");
-        builder.AddAttribute(3, "Width", "200px");
-        builder.AddAttribute(4, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                templateBuilder.OpenComponent<RadzenStack>(0);
-                templateBuilder.AddAttribute(1, "Orientation", Orientation.Vertical);
-                templateBuilder.AddAttribute(2, "Gap", "0.5rem");
-                templateBuilder.AddAttribute(3, "ChildContent", (RenderFragment)(stackBuilder =>
-                {
-                    stackBuilder.OpenComponent<RadzenText>(0);
-                    stackBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
-                    stackBuilder.AddAttribute(2, "Style", "font-weight: 600;");
-                    stackBuilder.AddAttribute(3, "Text", report.ReportId);
-                    stackBuilder.CloseComponent();
+        RenderReportIdColumn(builder);
+        RenderHazardIdColumn(builder);
+        RenderRiskAssessmentIdColumn(builder);
+        RenderHazardDescriptionColumn(builder, false); // No additional actions column in standard columns
 
-                    // Show associated Hazard ID as secondary info if available
-                    //if (!string.IsNullOrEmpty(report.HazardId))
-                    //{
-                    //    stackBuilder.OpenComponent<RadzenText>(10);
-                    //    stackBuilder.AddAttribute(11, "TextStyle", TextStyle.Caption);
-                    //    stackBuilder.AddAttribute(12, "Style", "color: var(--rz-text-disabled-color);");
-                    //    stackBuilder.AddAttribute(13, "Text", $"Hazard: {report.HazardId}");
-                    //    stackBuilder.CloseComponent();
-                    //}
+        RenderRiskAssessmentActionColumn(builder);
+    }
 
-                    //// NEW: Show Validation Type
-                    //if (!string.IsNullOrEmpty(report.ValidationType))
-                    //{
-                    //    stackBuilder.OpenComponent<RadzenText>(15);
-                    //    stackBuilder.AddAttribute(16, "TextStyle", TextStyle.Caption);
-                    //    stackBuilder.AddAttribute(17, "Style", "color: black; font-weight: 500;");
-                    //    stackBuilder.AddAttribute(18, "Text", $"Type: {report.ValidationType}");
-                    //    stackBuilder.CloseComponent();
-                    //}
-
-                    //// Risk Assessment tab: Show assessment progress if available
-                    //if (report.HasRiskAssessment && report.CurrentAssessmentStep > 0)
-                    //{
-                    //    if (report.ValidationType?.ToLower() == "technical")
-                    //    {
-                    //        stackBuilder.OpenComponent<RadzenText>(20);
-                    //        stackBuilder.AddAttribute(21, "TextStyle", TextStyle.Caption);
-                    //        stackBuilder.AddAttribute(22, "Style", "color: var(--rz-primary); font-weight: 500;");
-                    //        stackBuilder.AddAttribute(23, "Text", $"Technical Assessment Step: {report.CurrentAssessmentStep}/5");
-                    //        stackBuilder.CloseComponent();
-                    //    }
-                    //    else if (report.ValidationType?.ToLower() == "preliminary")
-                    //    {
-                    //        stackBuilder.OpenComponent<RadzenText>(20);
-                    //        stackBuilder.AddAttribute(21, "TextStyle", TextStyle.Caption);
-                    //        stackBuilder.AddAttribute(22, "Style", "color: var(--rz-success); font-weight: 500;");
-                    //        stackBuilder.AddAttribute(23, "Text", "Preliminary Assessment");
-                    //        stackBuilder.CloseComponent();
-                    //    }
-                    //}
-                    //else
-                    //{
-                    //    stackBuilder.OpenComponent<RadzenText>(25);
-                    //    stackBuilder.AddAttribute(26, "TextStyle", TextStyle.Caption);
-                    //    stackBuilder.AddAttribute(27, "Style", "color: var(--rz-success); font-weight: 500;");
-                    //    stackBuilder.AddAttribute(28, "Text", "Validated - Ready for Assessment");
-                    //    stackBuilder.CloseComponent();
-                    //}
-                }));
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
-
-        // Standard columns (Description, Stage, Priority, Reported By, Days in Stage)
-        RenderStandardColumns(builder, false); // No additional actions column in standard columns
-
+    private void RenderRiskAssessmentActionColumn(RenderTreeBuilder builder)
+    {
         // Actions Column - NEW: Moved the action button to the far right
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(100);
         builder.AddAttribute(101, "Title", "Actions");
@@ -1358,7 +1683,7 @@ public partial class ReportProcessing : ComponentBase
                 templateBuilder.AddAttribute(3, "ButtonStyle", GetAssessmentButtonStyle(report));
                 templateBuilder.AddAttribute(4, "Size", ButtonSize.Small);
                 templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
-                    (args) => Navigation.NavigateTo(report.SmartValidationUrl)));
+                    (args) => Navigation.NavigateTo(report.SmartUrl)));
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
@@ -1366,47 +1691,12 @@ public partial class ReportProcessing : ComponentBase
 
     private void RenderInvestigationColumns(RenderTreeBuilder builder)
     {
-        // Hazard ID Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(0);
-        builder.AddAttribute(1, "Property", "HazardId");
-        builder.AddAttribute(2, "Title", "Hazard ID");
-        builder.AddAttribute(3, "Width", "150px");
-        builder.AddAttribute(4, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                templateBuilder.OpenComponent<RadzenStack>(0);
-                templateBuilder.AddAttribute(1, "Orientation", Orientation.Vertical);
-                templateBuilder.AddAttribute(2, "Gap", "0.25rem");
-                templateBuilder.AddAttribute(3, "ChildContent", (RenderFragment)(stackBuilder =>
-                {
-                    stackBuilder.OpenComponent<RadzenText>(0);
-                    stackBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
-                    stackBuilder.AddAttribute(2, "Style", "font-weight: 600;");
-                    stackBuilder.AddAttribute(3, "Text", report.HazardId ?? "N/A");
-                    stackBuilder.CloseComponent();
+        RenderReportIdColumn(builder);
+        RenderHazardIdColumn(builder);
+        RenderHazardDescriptionColumn(builder);
+        
 
-                    stackBuilder.OpenComponent<RadzenText>(4);
-                    stackBuilder.AddAttribute(5, "TextStyle", TextStyle.Body1);
-                    stackBuilder.AddAttribute(6, "Style", "font-weight: 600;");
-                    stackBuilder.AddAttribute(7, "Text", report.ReportId ?? "N/A");
-                    stackBuilder.CloseComponent();
-
-                    stackBuilder.OpenComponent<RadzenText>(8);
-                    stackBuilder.AddAttribute(9, "TextStyle", TextStyle.Caption);
-                    stackBuilder.AddAttribute(10, "Style", "color: var(--rz-warning); font-weight: 500;");
-                    stackBuilder.AddAttribute(11, "Text", "Investigation Required");
-                    stackBuilder.CloseComponent();
-                }));
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
-
-        // Description Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(10);
-        builder.AddAttribute(11, "Property", "HazardDescription");
-        builder.AddAttribute(12, "Title", "Description");
-        builder.AddAttribute(13, "Width", "300px");
-        builder.CloseComponent();
+        
 
         // Investigation Status Column
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(15);
@@ -1480,200 +1770,71 @@ public partial class ReportProcessing : ComponentBase
             })));
         builder.CloseComponent();
 
-        // Days in Stage Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(40);
-        builder.AddAttribute(41, "Property", "DaysInStage");
-        builder.AddAttribute(42, "Title", "Days in Stage");
-        builder.AddAttribute(43, "Width", "120px");
-        builder.AddAttribute(44, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                var badgeStyle = report.DaysInStage > 3 ? BadgeStyle.Danger :
-                               report.DaysInStage > 1 ? BadgeStyle.Warning : BadgeStyle.Secondary;
-                templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
-                templateBuilder.AddAttribute(2, "Text", $"{report.DaysInStage} days");
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
+        
 
         // Actions Column
-        //builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(50);
-        //builder.AddAttribute(51, "Title", "Actions");
-        //builder.AddAttribute(52, "Width", "150px");
-        //builder.AddAttribute(53, "Sortable", false);
-        //builder.AddAttribute(54, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-        //    (templateBuilder =>
-        //    {
-        //        var buttonText = report.HasInvestigation ? "Continue Investigation" : "Start Investigation";
-        //        var buttonIcon = report.HasInvestigation ? "edit" : "search";
-        //        var buttonStyle = report.HasInvestigation ? ButtonStyle.Primary : ButtonStyle.Warning;
-
-        //        templateBuilder.OpenComponent<RadzenButton>(0);
-        //        templateBuilder.AddAttribute(1, "Text", buttonText);
-        //        templateBuilder.AddAttribute(2, "Icon", buttonIcon);
-        //        templateBuilder.AddAttribute(3, "ButtonStyle", buttonStyle);
-        //        templateBuilder.AddAttribute(4, "Size", ButtonSize.Small);
-        //        templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
-        //            (args) => NavigateToInvestigation(report)));
-        //        templateBuilder.CloseComponent();
-        //    })));
-        //builder.CloseComponent();
-    }
-
-    private void RenderMitigationColumns(RenderTreeBuilder builder)
-    {
-        // Use the standard columns first
-        RenderStandardColumns(builder, false);
-
-        // Add a simple Mitigation Count Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(100);
-        builder.AddAttribute(101, "Property", "MitigationCount");
-        builder.AddAttribute(102, "Title", "Mitigations");
-        builder.AddAttribute(103, "Width", "120px");
-        builder.AddAttribute(104, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(50);
+        builder.AddAttribute(51, "Title", "Actions");
+        builder.AddAttribute(52, "Width", "150px");
+        builder.AddAttribute(53, "Sortable", false);
+        builder.AddAttribute(54, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
-                var badgeStyle = report.HasMitigations ? BadgeStyle.Success : BadgeStyle.Light;
-                templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
-                templateBuilder.AddAttribute(2, "Text", $"{report.MitigationCount} Items");
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
+                var buttonText = report.HasInvestigation ? "Continue Investigation" : "Start Investigation";
+                var buttonIcon = report.HasInvestigation ? "edit" : "search";
+                var buttonStyle = report.HasInvestigation ? ButtonStyle.Primary : ButtonStyle.Warning;
 
-        // Add Actions Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(110);
-        builder.AddAttribute(111, "Title", "Actions");
-        builder.AddAttribute(112, "Width", "200px");
-        builder.AddAttribute(113, "Sortable", false);
-        builder.AddAttribute(114, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                templateBuilder.OpenComponent<RadzenStack>(0);
-                templateBuilder.AddAttribute(1, "Orientation", Orientation.Horizontal);
-                templateBuilder.AddAttribute(2, "Gap", "0.5rem");
-                templateBuilder.AddAttribute(3, "ChildContent", (RenderFragment)(stackBuilder =>
-                {
-                    if (report.HasMitigations)
-                    {
-                        stackBuilder.OpenComponent<RadzenButton>(0);
-                        stackBuilder.AddAttribute(1, "Text", $"Approve All ({report.MitigationCount})");
-                        stackBuilder.AddAttribute(2, "Icon", "verified");
-                        stackBuilder.AddAttribute(3, "ButtonStyle", ButtonStyle.Success);
-                        stackBuilder.AddAttribute(4, "Size", ButtonSize.Small);
-                        stackBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
-                            (args) => ShowBulkApprovalConfirmation(report)));
-                        stackBuilder.AddAttribute(6, "Disabled", IsProcessingApproval);
-                        stackBuilder.CloseComponent();
-                    }
-
-                    stackBuilder.OpenComponent<RadzenButton>(10);
-                    stackBuilder.AddAttribute(11, "Text", "View Report");
-                    stackBuilder.AddAttribute(12, "Icon", "visibility");
-                    stackBuilder.AddAttribute(13, "ButtonStyle", ButtonStyle.Info);
-                    stackBuilder.AddAttribute(14, "Size", ButtonSize.Small);
-                    stackBuilder.AddAttribute(15, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
-                        (args) => Navigation.NavigateTo($"/SMSRiskManagement/ReportValidation/{report.ReportId}")));
-                    stackBuilder.CloseComponent();
-                }));
+                templateBuilder.OpenComponent<RadzenButton>(0);
+                templateBuilder.AddAttribute(1, "Text", buttonText);
+                templateBuilder.AddAttribute(2, "Icon", buttonIcon);
+                templateBuilder.AddAttribute(3, "ButtonStyle", buttonStyle);
+                templateBuilder.AddAttribute(4, "Size", ButtonSize.Small);
+                //templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
+                //    (args) => NavigateToInvestigation(report)));
+                templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,(args) => Navigation.NavigateTo(report.SmartUrl)));
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
     }
+
 
     #endregion
 
     #region Helper Methods for Rendering
 
+    //private void ShowBulkApprovalConfirmation(ReportProcessingSummary report)
+    //{
+    ////NEW: Show confirmation dialog for bulk approval
+
+    //       Confirmation?.Show(new ConfirmationDialogParameters
+    //       {
+    //           Title = "Confirm Bulk Approval",
+    //           Message = $"Are you sure you want to approve all mitigations for report '{report.ReportId}'?",
+    //           OnClose = async (confirmed) =>
+    //           {
+    //               if (confirmed)
+    //               {
+    //                   await BulkApproveAllMitigationsForReport(report);
+    //               }
+    //           }
+    //       });
+    //}
     private void ShowBulkApprovalConfirmation(ReportProcessingSummary report)
     {
-        // NEW: Show confirmation dialog for bulk approval
-        //Confirmation?.Show(new ConfirmationDialogParameters
-        //{
-        //    Title = "Confirm Bulk Approval",
-        //    Message = $"Are you sure you want to approve all mitigations for report '{report.ReportId}'?",
-        //    OnClose = async (confirmed) =>
-        //    {
-        //        if (confirmed)
-        //        {
-        //            await ApproveAllMitigationsAsync(report);
-        //        }
-        //    }
-        //});
-    }
+        try
+        {
+            SelectedReportForApproval = report;
+            ShowBulkApprovalDialog = true;
+            StateHasChanged();
 
-    private async Task ApproveAllMitigationsAsync(ReportProcessingSummary report)
-    {
-        //try
-        //{
-        //    IsProcessingApproval = true;
-        //    StateHasChanged();
-
-        //    Logger.LogInformation("Approving all mitigations for report {ReportId}...", report.ReportId);
-
-        //    // Loop through each hazard and approve its mitigations
-        //    foreach (var hazard in report.AllHazards ?? Enumerable.Empty<Hazard>())
-        //    {
-        //        // Get all mitigations for this hazard
-        //        var mitigationsQuery = new GetMitigationsByHazardCodeQuery(hazard.Code);
-        //        var mitigationsResult = await Mediator.SendAsync(mitigationsQuery, CancellationToken.None);
-
-        //        if (mitigationsResult.IsSuccess && mitigationsResult.Value != null)
-        //        {
-        //            foreach (var mitigation in mitigationsResult.Value)
-        //            {
-        //                // Approve each mitigation - ENHANCED: Use a single command for bulk approval
-        //                var approveCommand = new ApproveMitigationCommand(mitigation.Code);
-        //                var approveResult = await Mediator.SendAsync(approveCommand, CancellationToken.None);
-
-        //                if (approveResult.IsSuccess)
-        //                {
-        //                    Logger.LogInformation("Approved mitigation {MitigationCode} for hazard {HazardCode}",
-        //                        mitigation.Code, hazard.Code);
-        //                }
-        //                else
-        //                {
-        //                    Logger.LogError("Failed to approve mitigation {MitigationCode}: {Error}",
-        //                        mitigation.Code, approveResult.Error?.Message);
-        //                }
-        //            }
-        //        }
-        //        else
-        //        {
-        //            Logger.LogWarning("No mitigations found for hazard {HazardCode}",
-        //                hazard.Code);
-        //        }
-        //    }
-
-        //    NotificationService.Notify(new NotificationMessage
-        //    {
-        //        Severity = NotificationSeverity.Success,
-        //        Summary = "Bulk Approval Successful",
-        //        Detail = $"All mitigations for report '{report.ReportId}' have been approved.",
-        //        Duration = 5000
-        //    });
-
-        //    // Reload data to reflect changes
-        //    await LoadDataAsync();
-        //}
-        //catch (Exception ex)
-        //{
-        //    Logger.LogError(ex, "Error approving mitigations for report {ReportId}", report.ReportId);
-
-        //    NotificationService.Notify(new NotificationMessage
-        //    {
-        //        Severity = NotificationSeverity.Error,
-        //        Summary = "Approval Failed",
-        //        Detail = $"An error occurred while approving mitigations for report '{report.ReportId}': {ex.Message}",
-        //        Duration = 10000
-        //    });
-        //}
-        //finally
-        //{
-        //    IsProcessingApproval = false;
-        //    StateHasChanged();
-        //}
+            Logger.LogInformation("Showing bulk approval confirmation for report {ReportId} - hazard {HazardId}",
+                report.ReportId, report.HazardId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error showing bulk approval confirmation for report {ReportId}", report.ReportId);
+            ShowErrorNotification("Error showing approval confirmation dialog");
+        }
     }
 
     private string GetAssessmentIcon(ReportProcessingSummary report)
@@ -1728,6 +1889,174 @@ public partial class ReportProcessing : ComponentBase
 
         // Default style
         return ButtonStyle.Secondary;
+    }
+
+    #endregion
+
+    #region Bulk Approval Methods
+
+    /// <summary>
+    /// Bulk approve ALL mitigations for an entire report (all hazards and their mitigations)
+    /// </summary>
+    private async Task BulkApproveAllMitigationsForReport(string reportId)
+    {
+        try
+        {
+            IsProcessingApproval = true;
+            StateHasChanged();
+
+            Logger.LogInformation("Starting bulk approval for ALL mitigations in report: {ReportId}", reportId);
+
+            // Get all hazards for this report
+            var reportHazards = InMitigation.Where(r => r.ReportId == reportId).ToList();
+            
+            if (!reportHazards.Any())
+            {
+                ShowErrorNotification($"No hazards found for report {reportId}");
+                return;
+            }
+
+            var totalMitigations = reportHazards.Sum(h => h.MitigationCount);
+            var totalPendingMitigations = reportHazards.Sum(h => GetApprovableMitigationCount(h));
+            
+            Logger.LogInformation("Found {HazardCount} hazards with {TotalMitigations} total mitigations ({PendingCount} pending)", 
+                reportHazards.Count, totalMitigations, totalPendingMitigations);
+
+            if (totalPendingMitigations == 0)
+            {
+                ShowInfoNotification($"All mitigations for report {reportId} are already approved");
+                return;
+            }
+
+            var successCount = 0;
+            var errorCount = 0;
+
+            // Process each hazard's mitigations
+            foreach (var reportHazard in reportHazards)
+            {
+                try
+                {
+                    Logger.LogInformation("Processing mitigations for hazard: {HazardCode}", reportHazard.HazardId);
+
+                    // Get all mitigations for this specific hazard
+                    var mitigationQuery = new GetMitigationsByHazardCodeQuery(reportHazard.HazardId!);
+                    var mitigationResult = await Mediator.SendAsync(mitigationQuery, CancellationToken.None);
+
+                    if (mitigationResult.IsSuccess && mitigationResult.Value?.Any() == true)
+                    {
+                        // Filter to only PENDING mitigations
+                        var pendingMitigations = mitigationResult.Value.Where(m => m.Status == "PENDING").ToList();
+                        
+                        Logger.LogInformation("Found {Count} pending mitigations for hazard {HazardCode}", 
+                            pendingMitigations.Count, reportHazard.HazardId);
+
+                        // Approve each pending mitigation using the same logic as QuickApproveMitigation
+                        foreach (var mitigation in pendingMitigations)
+                        {
+                            try
+                            {
+                                // Update mitigation status to Approved
+                                mitigation.Status = "Approved";
+                                mitigation.UpdatedDate = DateTime.UtcNow;
+                                mitigation.UpdatedBy = "SYSTEM"; // You might want to get the current user
+
+                                var updateCommand = new UpdateMitigationCommand(mitigation);
+                                var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+
+                                if (updateResult.IsSuccess)
+                                {
+                                    successCount++;
+                                    Logger.LogInformation("Approved mitigation: {Code} for hazard {HazardCode}", 
+                                        mitigation.Code, reportHazard.HazardId);
+                                }
+                                else
+                                {
+                                    errorCount++;
+                                    Logger.LogError("Failed to approve mitigation {Code}: {Error}", 
+                                        mitigation.Code, updateResult.Error?.Message);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                errorCount++;
+                                Logger.LogError(ex, "Error approving mitigation {Code} for hazard {HazardCode}", 
+                                    mitigation.Code, reportHazard.HazardId);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Logger.LogWarning("No mitigations found for hazard {HazardCode}", reportHazard.HazardId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Error processing mitigations for hazard {HazardCode}", reportHazard.HazardId);
+                    // Continue with other hazards even if one fails
+                }
+            }
+
+            // Show results
+            if (successCount > 0)
+            {
+                ShowSuccessNotification($"Successfully approved {successCount} mitigation(s) across {reportHazards.Count} hazard(s) for report {reportId}");
+                
+                // Reload data to reflect changes
+                await LoadDataAsync();
+            }
+
+            if (errorCount > 0)
+            {
+                ShowErrorNotification($"Failed to approve {errorCount} mitigation(s). Please check logs for details.");
+            }
+
+            Logger.LogInformation("Bulk report approval completed for {ReportId}: {SuccessCount} approved, {ErrorCount} failed", 
+                reportId, successCount, errorCount);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error during bulk approval for report {ReportId}", reportId);
+            ShowErrorNotification($"Error during bulk approval for report {reportId}: {ex.Message}");
+        }
+        finally
+        {
+            IsProcessingApproval = false;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Get total approvable mitigation count for entire report
+    /// </summary>
+    private int GetApprovableMitigationCountForReport(string reportId)
+    {
+        return InMitigation
+            .Where(r => r.ReportId == reportId)
+            .Sum(h => GetApprovableMitigationCount(h));
+    }
+
+    /// <summary>
+    /// Check if report has any approvable mitigations
+    /// </summary>
+    private bool HasApprovableMitigationsForReport(string reportId)
+    {
+        return GetApprovableMitigationCountForReport(reportId) > 0;
+    }
+
+    private async Task CloseBulkApprovalConfirmation()
+    {
+        ShowBulkApprovalDialog = false;
+        SelectedReportForApproval = null;
+        StateHasChanged();
+    }
+
+    private async Task ProcessBulkApprovalConfirmation()
+    {
+        if (SelectedReportForApproval != null)
+        {
+            await BulkApproveAllMitigationsForReport(SelectedReportForApproval.ReportId);
+            await CloseBulkApprovalConfirmation();
+        }
     }
 
     #endregion

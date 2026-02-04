@@ -190,8 +190,7 @@
                                                                       NeedsMitigation="@needsMitigation"
                                                                       AvailableStakeholders="@AvailableStakeholders"
                                                                       AvailableAssessors="@AvailableAssessors"
-                                                                       InitialRiskAssessment="@Step5RiskAssessment"
-                                                                       ResidualRiskAssessment="@Step5RiskAssessment"
+                                                                      CurrentRiskAssessment="@CurrentRiskAssessment"
                                                                       OnMitigationUpdated="@OnMitigationUpdated"
                                                                       OnResidualHazardScored="@HandleResidualHazardScored" />
                                             </div>
@@ -218,16 +217,7 @@
                                                     Hazard Scoring Panel
                                                 </RadzenText>
                                             </RadzenColumn>
-                                            @* <RadzenColumn Size="2">
-                                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
-                                                    <RadzenButton Icon="@GetCollapseIcon(hazard.Code, "scoring")" 
-                                                                  ButtonStyle="ButtonStyle.Light" 
-                                                                  Size="ButtonSize.Small"
-                                                                  class="collapse-button"
-                                                                  Title="@GetCollapseTooltip(hazard.Code, "scoring")"
-                                                                  Click="@((args) => ToggleSectionCollapse(hazard.Code, "scoring"))" />
-                                                </RadzenStack>
-                                            </RadzenColumn> *@
+                                            
                                         </RadzenRow>
                                         
                                         <!-- ✅ Collapsible Content -->
@@ -239,7 +229,7 @@
                                                                    Step5="@Step5"
                                                                    AvailableStakeholders="@AvailableStakeholders"
                                                                    AvailableAssessors="@AvailableAssessors"
-                                                                   CurrentRiskAssessment="@Step5RiskAssessment"
+                                                                   CurrentRiskAssessment="@CurrentRiskAssessment"
                                                                    CurrentStep="5"
                                                                    OnHazardScored="@HandleResidualHazardScored" />
                                             </div>
@@ -249,7 +239,7 @@
                             }
 
                             <!-- ✅ SECTION 3: Residual Risk Analysis (Collapsible) -->
-                            @if (hasMitigations && Step5RiskAssessment != null)
+                            @if (hasMitigations && CurrentRiskAssessment != null)
                             {
                                 <RadzenCard Variant="Variant.Text" Style="background-color: #e3f2fd; border: 1px solid #90caf9;">
                                     <RadzenStack Gap="1rem">
@@ -264,16 +254,7 @@
                                                     Residual Risk Analysis
                                                 </RadzenText>
                                             </RadzenColumn>
-                                           @*  <RadzenColumn Size="2">
-                                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
-                                                    <RadzenButton Icon="@GetCollapseIcon(hazard.Code, "analysis")" 
-                                                                  ButtonStyle="ButtonStyle.Light" 
-                                                                  Size="ButtonSize.Small"
-                                                                  class="collapse-button"
-                                                                  Title="@GetCollapseTooltip(hazard.Code, "analysis")"
-                                                                  Click="@(() => ToggleSectionCollapse(hazard.Code, "analysis"))" />
-                                                </RadzenStack>
-                                            </RadzenColumn> *@
+                                          
                                         </RadzenRow>
                                         
                                         <!-- ✅ Collapsible Content -->
@@ -322,7 +303,7 @@
                                                         <RadzenStack Gap="0.5rem">
                                                             <RadzenFormField Text="Residual Worst Credible Outcome *" Variant="Variant.Outlined">
                                                                 <RadzenTextArea @bind-Value="@(Step5.GetHazardResidualAnalysis(hazard.Code).ResidualWorstCredibleOutcome)"
-                                                                                @oninput="@((args) => OnResidualAnalysisFieldChanged(hazard, "WorstCredibleOutcome", args))"
+                                                                                @oninput="@((args) => OnAnalysisFieldChanged(hazard.Code, "WorstCredibleOutcome", args))"
                                                                                 Rows="3"
                                                                                 Placeholder="After mitigation implementation, what is the worst outcome that could still occur..."
                                                                                 Style="width: 100%;" />
@@ -334,7 +315,7 @@
                                                         <RadzenStack Gap="0.5rem">
                                                             <RadzenFormField Text="Residual Root Cause Analysis *" Variant="Variant.Outlined">
                                                                 <RadzenTextArea @bind-Value="@(Step5.GetHazardResidualAnalysis(hazard.Code).ResidualRootCause)"
-                                                                                @oninput="@((args) => OnResidualAnalysisFieldChanged(hazard, "RootCause", args))"
+                                                                                @oninput="@((args) => OnAnalysisFieldChanged(hazard.Code, "RootCause", args))"
                                                                                 Rows="3"
                                                                                 Placeholder="What root causes remain after mitigation implementation..."
                                                                                 Style="width: 100%;" />
@@ -346,7 +327,7 @@
 
                                                 <RadzenFormField Text="Additional Residual Analysis Comments" Variant="Variant.Outlined">
                                                     <RadzenTextArea @bind-Value="@(Step5.GetHazardResidualAnalysis(hazard.Code).ResidualAdditionalComments)"
-                                                                    @oninput="@((args) => OnResidualAnalysisFieldChanged(hazard, "AdditionalComments", args))"
+                                                                    @oninput="@((args) => OnAnalysisFieldChanged(hazard.Code, "AdditionalComments", args))"
                                                                     Rows="2"
                                                                     Placeholder="Document assumptions about mitigation effectiveness, residual vulnerabilities, or monitoring requirements..."
                                                                     Style="width: 100%;" />
@@ -394,8 +375,9 @@
     [Parameter] public List<Hazard> Step5Hazards { get; set; } = new();
     [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
     [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
-    [Parameter] public RiskAssessment? Step5RiskAssessment { get; set; } // For mitigation creation
-    
+    [Parameter] public RiskAssessment? CurrentRiskAssessment { get; set; } // For unified assessment access
+
+    [Parameter] public int CurrentStep { get; set; } = 5; // Current step parameter
 
     // ? NEW: Store residual risk analysis data per hazard
     private Dictionary<string, string> ResidualWorstOutcomes { get; set; } = new();
@@ -456,23 +438,23 @@
     {
         // ✅ Load existing mitigations for all hazards
         await LoadExistingMitigationsForAllHazards();
-        
+
         // Note: Residual risk analysis data loading is now handled by Step5Model.LoadExistingResidualRiskAnalysesAsync
         // which is called from the parent component's LoadStepDataFromAssessment method
     }
-    
+
     /// <summary>
     /// ? Load existing residual risk analysis data from RiskAnalysis entities linked to ResidualRiskAssessment
     /// </summary>
     private async Task LoadExistingResidualAnalysisData()
     {
-        if (Step5RiskAssessment == null || Step5Hazards?.Any() != true) return;
+        if (CurrentRiskAssessment == null || Step5Hazards?.Any() != true) return;
 
         try
         {
             // TODO: Implement proper RiskAnalysis CQRS queries
             // For now, just initialize empty data
-            Logger.LogInformation("Loading residual risk analysis data for {Count} hazards linked to ResidualRiskAssessment {AssessmentCode}", Step5Hazards.Count, Step5RiskAssessment.Code);
+            Logger.LogInformation("Loading residual risk analysis data for {Count} hazards linked to ResidualRiskAssessment {AssessmentCode}", Step5Hazards.Count, CurrentRiskAssessment.Code);
 
             // PLACEHOLDER: In a real implementation, this would load via CQRS
             // foreach (var hazard in AvailableHazards)
@@ -518,7 +500,7 @@
                     if (result.IsSuccess && result.Value?.Any() == true)
                     {
                         var mitigations = result.Value.ToList();
-                        
+
                         // ✅ FIXED: Now using correct Mitigation entities
                         Step5.HazardMitigations[hazard.Code] = mitigations;
                         Step5.SavedMitigationStrategies[hazard.Code] = mitigations.Select(m => m.Name ?? "Unnamed Mitigation").ToList();
@@ -559,7 +541,7 @@
             // Assume scores > 10 need mitigation (adjust based on your 5x5 matrix)
             return averageScore > 10;
         }
-        
+
         // Default to needing mitigation if no score available
         return true;
     }
@@ -568,29 +550,29 @@
     {
         // ✅ IMPROVED: Use multiple data sources and prioritize Step5 model data first
         Logger.LogInformation("🔍 HasMitigations DEBUG for hazard {HazardCode}:", hazard.Code);
-        
+
         // First check Step5 HazardMitigations dictionary (most reliable after sync)
         var hazardMitigationsHas = Step5.HazardMitigations?.ContainsKey(hazard.Code) == true && 
                                   Step5.HazardMitigations[hazard.Code]?.Any() == true;
         Logger.LogInformation("  - Step5.HazardMitigations[{HazardCode}]: {HasMitigations} (Count: {Count})", 
             hazard.Code, hazardMitigationsHas, 
             Step5.HazardMitigations?.GetValueOrDefault(hazard.Code)?.Count ?? 0);
-        
+
         // Check Step5 saved mitigation strategies
         var savedStrategiesHas = Step5.SavedMitigationStrategies?.ContainsKey(hazard.Code) == true && 
                                 Step5.SavedMitigationStrategies[hazard.Code]?.Any() == true;
         Logger.LogInformation("  - Step5.SavedMitigationStrategies[{HazardCode}]: {HasMitigations} (Count: {Count})", 
             hazard.Code, savedStrategiesHas,
             Step5.SavedMitigationStrategies?.GetValueOrDefault(hazard.Code)?.Count ?? 0);
-        
+
         // Use the most reliable source (HazardMitigations first, then SavedMitigationStrategies)
         var hasMitigationsResult = hazardMitigationsHas || savedStrategiesHas;
-        
+
         Logger.LogInformation("  - FINAL RESULT: {HasMitigations}", hasMitigationsResult);
-        
+
         return hasMitigationsResult;
     }
-    
+
     private string GetInitialRiskLevel(Hazard hazard)
     {
         if (Step4.HazardRiskLevels.ContainsKey(hazard.Code))
@@ -617,56 +599,40 @@
     /// <summary>
     /// ✅ Handle residual risk analysis field changes using proper Domain Entities - Updated to match Step3 pattern
     /// </summary>
-    private async Task OnResidualAnalysisFieldChanged(Hazard hazard, string fieldName, ChangeEventArgs args)
+    private async Task OnAnalysisFieldChanged(string hazardCode, string fieldName, ChangeEventArgs args)
     {
         try
         {
             var newValue = args.Value?.ToString() ?? string.Empty;
-            
-            Logger.LogInformation("🎯 OnResidualAnalysisFieldChanged: Hazard={HazardCode}, Field={FieldName}", 
-                hazard.Code, fieldName);
-
-            // ✅ Get the RiskAnalysis domain entity for this hazard
-            var analysis = Step5.GetHazardResidualAnalysis(hazard.Code);
-            
-            // ✅ Set the correct AssessmentType and RiskAssessmentCode for Residual
-            if (analysis.AssessmentType != RiskAnalysisType.Residual)
+            newValue = newValue.Trim();
+            if (Step5.HazardResidualRiskAnalyses.TryGetValue(hazardCode, out var analysis))
             {
-                analysis.AssessmentType = RiskAnalysisType.Residual;
-            }
-            
-            if (string.IsNullOrEmpty(analysis.RiskAssessmentCode) && Step5RiskAssessment != null)
-            {
-                analysis.RiskAssessmentCode = Step5RiskAssessment.Code;
-            }
 
-            // ✅ Update the domain entity properties
-            switch (fieldName)
-            {
-                case "WorstCredibleOutcome":
-                    analysis.ResidualWorstCredibleOutcome = newValue;
-                    break;
-                case "RootCause":
-                    analysis.ResidualRootCause = newValue;
-                    break;
-                case "AdditionalComments":
-                    analysis.ResidualAdditionalComments = newValue;
-                    break;
-            }
 
+                // ✅ Update the domain entity properties
+                switch (fieldName)
+                {
+                    case "WorstCredibleOutcome":
+                        analysis.ResidualWorstCredibleOutcome = newValue.Trim();
+                        break;
+                    case "RootCause":
+                        analysis.ResidualRootCause = newValue.Trim();
+                        break;
+                    case "AdditionalComments":
+                        analysis.ResidualAdditionalComments = newValue.Trim();
+                        break;
+                }
+            }
             // ✅ Ensure the updated entity is maintained in the dictionary
-            Step5.HazardResidualRiskAnalyses[hazard.Code] = analysis;
+            Step5.HazardResidualRiskAnalyses[hazardCode] = analysis;
 
-            // ✅ Save to database via proper CQRS commands
-           // await SaveResidualAnalysisToDatabase(analysis);
-            
             // Trigger UI update and notify parent component
             await InvokeAsync(StateHasChanged);
             await Step5Changed.InvokeAsync(Step5);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "❌ Error updating residual analysis field {FieldName} for hazard {HazardCode}", fieldName, hazard.Code);
+            Logger.LogError(ex, "❌ Error updating residual analysis field {FieldName} for hazard {HazardCode}", fieldName, hazardCode);
         }
     }
 
@@ -678,12 +644,11 @@
     /// </summary>
     private async Task SaveResidualAnalysisToDatabase(RiskAnalysis analysis)
     {
-        if (Step5RiskAssessment == null || analysis == null) return;
+        if (CurrentRiskAssessment == null || analysis == null) return;
 
         try
         {
-            Logger.LogInformation("💾 Saving residual risk analysis for hazard {HazardCode} to ResidualRiskAssessment {AssessmentCode}", 
-                analysis.HazardCode, Step5RiskAssessment.Code);
+            Logger.LogInformation("💾 Saving residual risk analysis for hazard {HazardCode} to ResidualRiskAssessment {AssessmentCode}", analysis.HazardCode, CurrentRiskAssessment.Code);
 
             // ✅ Use proper CQRS commands - check if entity exists first
             if (string.IsNullOrEmpty(analysis.Code) || analysis.Code == "RA-0000")
@@ -720,13 +685,11 @@
                 {
                     // Update the Step5 model with the updated entity
                     Step5.HazardResidualRiskAnalyses[analysis.HazardCode] = updateResult.Value;
-                    Logger.LogInformation("✅ Updated residual RiskAnalysis for hazard {HazardCode} with code {Code}", 
-                        analysis.HazardCode, updateResult.Value.Code);
+                    Logger.LogInformation("✅ Updated residual RiskAnalysis for hazard {HazardCode} with code {Code}", analysis.HazardCode, updateResult.Value.Code);
                 }
                 else
                 {
-                    Logger.LogError("❌ Failed to update residual RiskAnalysis for hazard {HazardCode}: {Error}", 
-                        analysis.HazardCode, updateResult.Error?.Message ?? "Unknown error");
+                    Logger.LogError("❌ Failed to update residual RiskAnalysis for hazard {HazardCode}: {Error}", analysis.HazardCode, updateResult.Error?.Message ?? "Unknown error");
                 }
             }
 

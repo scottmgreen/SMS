@@ -1,4 +1,4 @@
-namespace SMS3.Components.Pages.Listings;
+﻿namespace SMS3.Components.Pages.Listings;
 
 public partial class RiskAssessmentListing : ComponentBase
 {
@@ -117,13 +117,8 @@ public partial class RiskAssessmentListing : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Editing risk assessment: {Code} - Type: {Type}", assessment.Code, assessment.AssessmentType);
-
-            // Smart navigation based on assessment type and category
-            string navigationUrl = DetermineEditUrl(assessment);
-
-            Logger.LogInformation("Navigating to: {Url}", navigationUrl);
-            Navigation.NavigateTo(navigationUrl);
+            Logger.LogInformation("Editing risk assessment: {Code}", assessment.Code);
+            await NavigateToTechnicalAssessment(assessment);
         }
         catch (Exception ex)
         {
@@ -132,117 +127,74 @@ public partial class RiskAssessmentListing : ComponentBase
         }
     }
 
-    private string DetermineEditUrl(RiskAssessment assessment)
-    {
-        // Determine the correct edit URL based on assessment type and category
-        var assessmentType = assessment.AssessmentType?.Name?.ToLowerInvariant() ?? "";
-        var category = assessment.RiskAssessmentCategory?.Name?.ToLowerInvariant() ?? "";
-        var hazardCode = assessment.HazardCode ?? "";
+   
 
-        // Check if it's a preliminary assessment
-        if (assessmentType.Contains("preliminary") || category.Contains("preliminary"))
-        {
-            // Navigate to Preliminary Risk Assessment
-            if (!string.IsNullOrEmpty(hazardCode))
-            {
-                return $"/SMSRiskManagement/PreliminaryRiskAssessment/{assessment.Code}/{hazardCode}";
-            }
-            else
-            {
-                return $"/SMSRiskManagement/PreliminaryRiskAssessment/{assessment.Code}";
-            }
-        }
-        // Check if it's a technical assessment
-        else if (assessmentType.Contains("technical") || category.Contains("technical"))
-        {
-            // Navigate to Technical Assessment
-            // For technical assessments, we need to determine the report ID
-            var reportId = ExtractReportIdFromAssessment(assessment);
-
-            if (!string.IsNullOrEmpty(reportId) && !string.IsNullOrEmpty(hazardCode))
-            {
-                return $"/SMSRiskManagement/TechnicalAssessment/{reportId}/{hazardCode}/1";
-            }
-            else if (!string.IsNullOrEmpty(reportId))
-            {
-                return $"/SMSRiskManagement/TechnicalAssessment/{reportId}";
-            }
-            else if (!string.IsNullOrEmpty(hazardCode))
-            {
-                return $"/SMSRiskManagement/TechnicalAssessment/{assessment.Code}/{hazardCode}/1";
-            }
-            else
-            {
-                return $"/SMSRiskManagement/TechnicalAssessment/{assessment.Code}";
-            }
-        }
-        // Default to preliminary if type is unclear
-        else
-        {
-            Logger.LogWarning("Could not determine assessment type for {Code}, defaulting to Preliminary", assessment.Code);
-
-            if (!string.IsNullOrEmpty(hazardCode))
-            {
-                return $"/SMSRiskManagement/PreliminaryRiskAssessment/{assessment.Code}/{hazardCode}";
-            }
-            else
-            {
-                return $"/SMSRiskManagement/PreliminaryRiskAssessment/{assessment.Code}";
-            }
-        }
-    }
-
-    private string ExtractReportIdFromAssessment(RiskAssessment assessment)
-    {
-        // Try to extract report ID from assessment code or description
-        // Risk assessment codes often follow patterns like RS-0269 (from report RP-0269)
-        if (assessment.Code?.StartsWith("RS-") == true)
-        {
-            return assessment.Code.Replace("RS-", "RP-");
-        }
-
-        // Check if there's report information in the description
-        if (!string.IsNullOrEmpty(assessment.Description) && assessment.Description.Contains("Report"))
-        {
-            // Try to extract report ID from description like "Created from Report RP-0269"
-            var reportMatch = Regex.Match(assessment.Description, @"RP-\d+");
-            if (reportMatch.Success)
-            {
-                return reportMatch.Value;
-            }
-        }
-
-        // Fallback: use the assessment code as-is
-        return assessment.Code ?? assessment.Id.Value;
-    }
-
-    private async Task DuplicateAssessment(RiskAssessment assessment)
+    
+    private async Task NavigateToTechnicalAssessment(RiskAssessment assessment)
     {
         try
         {
-            Logger.LogInformation("Duplicating risk assessment: {Code}", assessment.Code);
-            ShowInfoNotification($"Duplicate functionality for assessment {assessment.Code} will be available in a future update");
+            // ✅ PROPER WAY: Get ReportCode via HazardCode using CQRS
+            var reportCode = await GetReportCodeFromAssessmentAsync(assessment);
+
+            if (string.IsNullOrEmpty(reportCode))
+            {
+                Logger.LogWarning("Could not determine ReportCode for assessment {AssessmentCode}", assessment.Code);
+                // You could either show an error or use a fallback
+                return;
+            }
+
+            var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{reportCode}/{assessment.HazardCode}/1";
+
+            Logger.LogInformation("Navigating to Technical Assessment: {Url}", navigationUrl);
+            Navigation.NavigateTo(navigationUrl);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error duplicating risk assessment {Code}", assessment.Code);
-            ShowErrorNotification("Error duplicating risk assessment");
+            Logger.LogError(ex, "Error navigating to Technical Assessment for {AssessmentCode}", assessment.Code);
+            ShowErrorNotification("Failed to navigate to Technical Assessment");
         }
     }
-
-    private async Task ViewHistory(RiskAssessment assessment)
+    private async Task<string?> GetReportCodeFromAssessmentAsync(RiskAssessment assessment)
     {
         try
         {
-            Logger.LogInformation("Viewing history for risk assessment: {Code}", assessment.Code);
-            ShowInfoNotification($"History functionality for assessment {assessment.Code} will be available in a future update");
+            // Use the HazardCode from the assessment to get the proper ReportCode
+            if (string.IsNullOrEmpty(assessment.HazardCode))
+            {
+                Logger.LogWarning("Assessment {AssessmentCode} has no HazardCode", assessment.Code);
+                return null;
+            }
+
+            Logger.LogInformation("Getting ReportCode via HazardCode {HazardCode} from assessment {AssessmentCode}",
+                assessment.HazardCode, assessment.Code);
+
+            var hazardQuery = new GetHazardByCodeQuery(new HazardID(assessment.HazardCode));
+            var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
+
+            if (hazardResult.IsSuccess && hazardResult.Value != null)
+            {
+                var reportCode = hazardResult.Value.ReportCode;
+                Logger.LogInformation("Found ReportCode {ReportCode} for HazardCode {HazardCode}",
+                    reportCode, assessment.HazardCode);
+                return reportCode;
+            }
+            else
+            {
+                Logger.LogWarning("Failed to load Hazard {HazardCode}: {Error}",
+                    assessment.HazardCode, hazardResult.Error?.Message ?? "Unknown error");
+                return null;
+            }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error viewing history for risk assessment {Code}", assessment.Code);
-            ShowErrorNotification("Error viewing risk assessment history");
+            Logger.LogError(ex, "Error getting ReportCode from assessment {AssessmentCode} via HazardCode {HazardCode}",
+                assessment.Code, assessment.HazardCode);
+            return null;
         }
     }
+
+
 
     private async Task DeleteAssessment(RiskAssessment assessment)
     {

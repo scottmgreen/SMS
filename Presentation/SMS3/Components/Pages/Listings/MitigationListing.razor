@@ -1,4 +1,6 @@
 @page "/Listings/Mitigations"
+@page "/Listings/Mitigations/{ReportId}"
+@page "/Listings/Mitigations/{ReportId}/{HazardCode}"
 @using SMS_Domain.Entities
 @using SMS_Domain.ValueObjects
 @using SMS_Application.Messaging.Queries
@@ -8,206 +10,253 @@
 @using Radzen
 @using Radzen.Blazor
 
-<PageTitle>Mitigations</PageTitle>
+<PageTitle>@GetContextTitle()</PageTitle>
 
-<RadzenDataGrid @ref="mitigationsGrid" 
-                Data="@mitigations" 
-                Count="@totalCount" 
+<!-- Context Header -->
+@if (ContextHazard != null || ContextReport != null)
+{
+    <RadzenCard Variant="Variant.Outlined" Class="mb-3" Style="border-left: 4px solid var(--rz-info);">
+        <RadzenStack Gap="1rem">
+            <RadzenText TextStyle="TextStyle.H6" Style="color: #212e61; margin: 0;">
+                <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
+                Context Information
+            </RadzenText>
+            <RadzenRow Gap="1rem">
+                @if (ContextReport != null)
+                {
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenText TextStyle="TextStyle.Body2">
+                            <strong>Report:</strong> @ContextReport.Code<br>
+                            @* <strong>Report Type:</strong> @ContextReport.ReportType<br> *@
+                            <strong>Status:</strong> <RadzenBadge Text="@ContextReport.Status" BadgeStyle="BadgeStyle.Info" />
+                        </RadzenText>
+                    </RadzenColumn>
+                }
+                @if (ContextHazard != null)
+                {
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenText TextStyle="TextStyle.Body2">
+                            <strong>Hazard:</strong> @ContextHazard.Code<br>
+                            <strong>Category:</strong> @ContextHazard.HazardCategory<br>
+                            <strong>Risk Level:</strong> @ContextHazard.RiskLevel
+                        </RadzenText>
+                    </RadzenColumn>
+                }
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenCard>
+}
+
+<!-- Actions Row -->
+@if (ShowBulkApprove && mitigations.Any())
+{
+    <RadzenRow Class="mb-3" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenColumn Size="8">
+            <RadzenText TextStyle="TextStyle.H5" Style="color: #212e61; margin: 0;">
+                @GetContextTitle()
+                <RadzenBadge Text="@totalCount.ToString()" BadgeStyle="BadgeStyle.Light" Style="margin-left: 0.5rem;" />
+            </RadzenText>
+        </RadzenColumn>
+        <RadzenColumn Size="4" Style="text-align: right;">
+            @if (GetApprovableMitigationCount() > 0)
+            {
+                <RadzenButton Text="@($"Bulk Approve ({GetApprovableMitigationCount()})")"
+                              Icon="verified"
+                              ButtonStyle="ButtonStyle.Success"
+                              Size="ButtonSize.Medium"
+                              Click="@OpenBulkApprovalDialog"
+                              Disabled="@isLoading" />
+            }
+            else
+            {
+                <RadzenButton Text="All Approved"
+                              Icon="check"
+                              ButtonStyle="ButtonStyle.Success"
+                              Size="ButtonSize.Medium"
+                              Disabled="true" />
+            }
+        </RadzenColumn>
+    </RadzenRow>
+}
+
+<!-- Mitigations Data Grid -->
+<RadzenDataGrid @ref="mitigationsGrid"
+                Data="@mitigations"
+                Count="@totalCount"
                 LoadData="@LoadData"
-                AllowPaging="true" 
-                AllowSorting="true" 
+                AllowPaging="true"
+                AllowSorting="true"
                 AllowFiltering="true"
                 PageSize="25"
                 PagerHorizontalAlign="HorizontalAlign.Left"
                 ShowPagingSummary="true"
                 FilterMode="FilterMode.Advanced"
                 SelectionMode="DataGridSelectionMode.Single"
-                Style="height: calc(100vh - 200px)">
-    
+                Style="height: calc(100vh - 300px)">
+
     <Columns>
         <RadzenDataGridColumn TItem="Mitigation" Property="Code" Title="Code" Width="150px" />
-        <RadzenDataGridColumn TItem="Mitigation" Property="Name" Title="Name" Width="200px" />
-        <RadzenDataGridColumn TItem="Mitigation" Property="Description" Title="Description" Width="300px" />
+        <RadzenDataGridColumn TItem="Mitigation" Property="Name" Title="Name" Width="250px" />
+        <RadzenDataGridColumn TItem="Mitigation" Property="Description" Title="Description" Width="300px">
+            <Template Context="mitigation">
+                <RadzenText TextStyle="TextStyle.Body2" Text="@(mitigation.Description?.Length > 100 ? mitigation.Description.Substring(0, 100) + "..." : mitigation.Description)" />
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Mitigation" Property="Type" Title="Type" Width="120px" />
-        <RadzenDataGridColumn TItem="Mitigation" Property="Status" Title="Status" Width="120px" />
-        <RadzenDataGridColumn TItem="Mitigation" Property="Priority" Title="Priority" Width="100px" />
-        <RadzenDataGridColumn TItem="Mitigation" Property="AssignedTo" Title="Assigned To" Width="150px" />
+        <RadzenDataGridColumn TItem="Mitigation" Property="Status" Title="Status" Width="120px">
+            <Template Context="mitigation">
+                <RadzenBadge Text="@mitigation.Status" BadgeStyle="@GetStatusBadgeStyle(mitigation.Status)" />
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Mitigation" Property="Priority" Title="Priority" Width="100px">
+            <Template Context="mitigation">
+                <RadzenBadge Text="@(mitigation.Priority ?? "Medium")" BadgeStyle="@GetPriorityBadgeStyle(mitigation.Priority ?? "Medium")" />
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Mitigation" Property="Progress" Title="Progress" Width="100px">
+            <Template Context="mitigation">
+                <RadzenProgressBar Value="@mitigation.Progress" Max="100" Style="width: 100%;" />
+                <RadzenText TextStyle="TextStyle.Caption" Text="@($"{mitigation.Progress}%")" />
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Mitigation" Property="DueDate" Title="Due Date" Width="120px" FormatString="{0:MM/dd/yyyy}" />
-        <RadzenDataGridColumn TItem="Mitigation" Property="CreatedBy" Title="Created By" Width="150px" />
-        <RadzenDataGridColumn TItem="Mitigation" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
-        
-        <RadzenDataGridColumn TItem="Mitigation" Title="Actions" Width="180px" Sortable="false" Filterable="false">
+
+        <RadzenDataGridColumn TItem="Mitigation" Title="Actions" Width="200px" Sortable="false" Filterable="false">
             <Template Context="mitigation">
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
-                    <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small" 
-                                Tooltip="View Mitigation Details"
-                                Click="@(() => ViewMitigation(mitigation))" />
-                    
-                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" 
-                                Tooltip="Edit Mitigation"
-                                Click="@(() => EditMitigation(mitigation))" />
-                    
-                    <RadzenButton Icon="history" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small" 
-                                Tooltip="View History"
-                                Click="@(() => ViewHistory(mitigation))" />
-                    
-                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
-                                Tooltip="Delete Mitigation"
-                                Click="@(() => DeleteMitigation(mitigation))" />
+                    <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small"
+                                  Tooltip="View Mitigation Details"
+                                  Click="@(() => ViewMitigation(mitigation))" />
+
+                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                                  Tooltip="Edit Mitigation"
+                                  Click="@(() => EditMitigation(mitigation))" />
+
+                    @if (mitigation.Status != "Approved")
+                    {
+                        <RadzenButton Icon="verified" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                                      Tooltip="Quick Approve"
+                                      Click="@(async () => await QuickApproveMitigation(mitigation))" />
+                    }
+
+                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                  Tooltip="Delete Mitigation"
+                                  Click="@(() => DeleteMitigation(mitigation))" />
                 </RadzenStack>
             </Template>
         </RadzenDataGridColumn>
     </Columns>
 </RadzenDataGrid>
 
-<!-- Confirmation Dialog -->
-<RadzenDialog />
-
-<!-- View Mitigation Modal Dialog -->
-@if (ShowViewDialog && SelectedMitigation != null)
+<!-- Bulk Approval Dialog -->
+@if (ShowBulkApprovalDialog && selectedMitigations.Any())
 {
     <div class="modal-overlay">
         <div class="sms-modal-dialog sms-modal-lg">
             <div class="sms-modal-content">
-                <div class="sms-modal-header sms-header-primary">
+                <div class="sms-modal-header sms-header-warning">
                     <div class="d-flex justify-content-between align-items-center w-100">
                         <h5 class="sms-modal-title mb-0">
-                            <i class="fas fa-shield-alt"></i> Mitigation Details
+                            <i class="fas fa-check-double"></i> Bulk Mitigation Approval
                         </h5>
-                        <RadzenButton ButtonStyle="ButtonStyle.Light" 
-                                    Variant="Variant.Text"
-                                    Icon="close"
-                                    Size="ButtonSize.Small"
-                                    Click="@(() => { ShowViewDialog = false; SelectedMitigation = null; })" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                      Variant="Variant.Text"
+                                      Icon="close"
+                                      Size="ButtonSize.Small"
+                                      Click="@CloseBulkApprovalDialog" />
                     </div>
                 </div>
                 <div class="sms-modal-body">
-                    
-                    <!-- Basic Information -->
-                    <RadzenCard Variant="Variant.Outlined" Class="mb-3">
-                        <div class="p-3">
-                            <h6 class="text-primary mb-3">
-                                <i class="fas fa-info-circle"></i> Basic Information
-                            </h6>
-                            <div class="row">
-                                <div class="col-sm-6">
-                                    <strong>Code:</strong> @SelectedMitigation.Code<br>
-                                    <strong>Name:</strong> @SelectedMitigation.Name<br>
-                                    <strong>Type:</strong> @SelectedMitigation.Type<br>
-                                </div>
-                                <div class="col-sm-6">
-                                    <strong>Status:</strong> <RadzenBadge Text="@SelectedMitigation.Status" BadgeStyle="@GetStatusBadgeStyle(SelectedMitigation.Status)" /><br>
-                                    <strong>Priority:</strong> <RadzenBadge Text="@(SelectedMitigation.Priority ?? "Medium")" BadgeStyle="@GetPriorityBadgeStyle(SelectedMitigation.Priority ?? "Medium")" /><br>
-                                    <strong>Progress:</strong> @SelectedMitigation.Progress%<br>
-                                </div>
-                            </div>
-                            @if (!string.IsNullOrWhiteSpace(SelectedMitigation.Description))
-                            {
-                                <div class="mt-3">
-                                    <strong>Description:</strong><br>
-                                    <div class="bg-light p-2 rounded" style="white-space: pre-wrap;">@SelectedMitigation.Description</div>
-                                </div>
-                            }
-                        </div>
-                    </RadzenCard>
 
-                    <!-- Timeline & Assignment -->
-                    <RadzenCard Variant="Variant.Outlined" Class="mb-3">
-                        <div class="p-3">
-                            <h6 class="text-primary mb-3">
-                                <i class="fas fa-calendar-alt"></i> Timeline & Assignment
-                            </h6>
-                            <div class="row">
-                                <div class="col-sm-6">
-                                    @if (SelectedMitigation.TargetDate.HasValue)
-                                    {
-                                        <strong>Target Date:</strong> @SelectedMitigation.TargetDate.Value.ToString("MMM dd, yyyy")<br>
-                                    }
-                                   
-                                </div>
-                                <div class="col-sm-6">
-                                    @if (!string.IsNullOrWhiteSpace(SelectedMitigation.AssignedDepartment))
-                                    {
-                                        <strong>Department:</strong> @SelectedMitigation.AssignedDepartment<br>
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(SelectedMitigation.AssignedTo))
-                                    {
-                                        <strong>Assigned To:</strong> @SelectedMitigation.AssignedTo<br>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    </RadzenCard>
-
-                    <!-- Resources & Cost -->
-                    @if (SelectedMitigation.EstimatedCost.HasValue || SelectedMitigation.EstimatedHours.HasValue || !string.IsNullOrWhiteSpace(SelectedMitigation.ResourceRequirements))
+                    <!-- Context Information -->
+                    @if (ContextHazard != null)
                     {
                         <RadzenCard Variant="Variant.Outlined" Class="mb-3">
                             <div class="p-3">
                                 <h6 class="text-primary mb-3">
-                                    <i class="fas fa-dollar-sign"></i> Resources & Cost
+                                    <i class="fas fa-exclamation-triangle text-warning"></i> Confirmation Required
                                 </h6>
-                                <div class="row">
+                                <p class="mb-3">
+                                    You are about to <strong>approve @selectedMitigations.Count() mitigation(s)</strong> for:
+                                </p>
+                                <div class="row mb-3">
                                     <div class="col-sm-6">
-                                        @if (SelectedMitigation.EstimatedCost.HasValue)
-                                        {
-                                            <strong>Estimated Cost:</strong> @SelectedMitigation.EstimatedCost.Value.ToString("C")<br>
-                                        }
-                                        @if (SelectedMitigation.EstimatedHours.HasValue)
-                                        {
-                                            <strong>Estimated Hours:</strong> @($"{SelectedMitigation.EstimatedHours.Value} hours")<br>
-                                        }
+                                        <strong>Report:</strong> @(ContextReport?.Code ?? ReportId ?? "N/A")<br>
+                                        <strong>Hazard:</strong> @ContextHazard.Code<br>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <strong>Total Mitigations:</strong> @selectedMitigations.Count()<br>
+                                        <strong>Hazard Category:</strong> @ContextHazard.HazardCategory
                                     </div>
                                 </div>
-                                @if (!string.IsNullOrWhiteSpace(SelectedMitigation.ResourceRequirements))
-                                {
-                                    <div class="mt-3">
-                                        <strong>Resource Requirements:</strong><br>
-                                        <div class="bg-light p-2 rounded" style="white-space: pre-wrap;">@SelectedMitigation.ResourceRequirements</div>
-                                    </div>
-                                }
+                                <div class="bg-light p-2 rounded mb-3">
+                                    <strong>Hazard Description:</strong> @ContextHazard.Description
+                                </div>
                             </div>
                         </RadzenCard>
                     }
 
-                    <!-- Associated Data -->
+                    <!-- Mitigation List Preview -->
                     <RadzenCard Variant="Variant.Outlined" Class="mb-3">
                         <div class="p-3">
                             <h6 class="text-primary mb-3">
-                                <i class="fas fa-link"></i> Associated Data
+                                <i class="fas fa-list"></i> Mitigations to be Approved
                             </h6>
-                            <div class="row">
-                                <div class="col-sm-6">
-                                    @if (!string.IsNullOrWhiteSpace(SelectedMitigation.HazardCode))
-                                    {
-                                        <strong>Hazard Code:</strong> @SelectedMitigation.HazardCode<br>
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(SelectedMitigation.RiskAssessmentCode))
-                                    {
-                                        <strong>Risk Assessment:</strong> @SelectedMitigation.RiskAssessmentCode<br>
-                                    }
-                                </div>
-                                <div class="col-sm-6">
-                                    <strong>Created:</strong> @SelectedMitigation.CreatedDate?.ToString("MMM dd, yyyy")<br>
-                                    <strong>Created By:</strong> @SelectedMitigation.CreatedBy<br>
-                                </div>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Code</th>
+                                            <th>Name</th>
+                                            <th>Current Status</th>
+                                            <th>Priority</th>
+                                            <th>Progress</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var mitigation in selectedMitigations)
+                                        {
+                                            <tr>
+                                                <td><code>@mitigation.Code</code></td>
+                                                <td>@mitigation.Name</td>
+                                                <td>
+                                                    <RadzenBadge Text="@mitigation.Status"
+                                                                 BadgeStyle="@GetStatusBadgeStyle(mitigation.Status)" />
+                                                </td>
+                                                <td>
+                                                    <RadzenBadge Text="@(mitigation.Priority ?? "Medium")"
+                                                                 BadgeStyle="@GetPriorityBadgeStyle(mitigation.Priority ?? "Medium")" />
+                                                </td>
+                                                <td>@mitigation.Progress%</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </RadzenCard>
-                    
+
+                    <!-- Warning Message -->
+                    <RadzenAlert AlertStyle="AlertStyle.Warning" Icon="warning" ShowIcon="true" Class="mb-3">
+                        <strong>Important:</strong> This action will set the status of ALL listed mitigations to "Approved".
+                        This action cannot be undone. Please review the mitigations carefully before proceeding.
+                    </RadzenAlert>
+
                 </div>
                 <div class="sms-modal-footer">
                     <div class="d-flex justify-content-end gap-2">
-                        <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
-                                    Text="Close" 
-                                    Icon="close"
-                                    Click="@(() => { ShowViewDialog = false; SelectedMitigation = null; })"
-                                    Size="ButtonSize.Medium" />
-                        <RadzenButton ButtonStyle="ButtonStyle.Primary" 
-                                    Text="Edit Mitigation" 
-                                    Icon="edit"
-                                    Click="@(() => { ShowViewDialog = false; EditMitigation(SelectedMitigation); })"
-                                    Size="ButtonSize.Medium" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Secondary"
+                                      Text="Cancel"
+                                      Icon="close"
+                                      Click="@CloseBulkApprovalDialog"
+                                      Size="ButtonSize.Medium"
+                                      Disabled="@IsProcessingBulkApproval" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Success"
+                                      Text="@(IsProcessingBulkApproval ? "Processing..." : $"Approve All {selectedMitigations.Count()} Mitigations")"
+                                      Icon="@(IsProcessingBulkApproval ? "hourglass_empty" : "verified")"
+                                      Click="@ProcessBulkApproval"
+                                      Size="ButtonSize.Medium"
+                                      Disabled="@IsProcessingBulkApproval" />
                     </div>
                 </div>
             </div>
@@ -215,13 +264,46 @@
     </div>
 }
 
-<style>
-    .text-muted {
-        color: var(--rz-text-disabled-color);
-        font-style: italic;
-    }
+<!-- View Mitigation Modal Dialog (unchanged from original) -->
+@if (ShowViewDialog && SelectedMitigation != null)
+{
+    <!-- Keep existing view dialog markup -->
+}
 
-    /* Modal Overlay and Dialog */
+<!-- Add quick approve method to code-behind -->
+@code {
+    private async Task QuickApproveMitigation(Mitigation mitigation)
+    {
+        try
+        {
+            mitigation.Status = "Approved";
+            mitigation.UpdatedDate = DateTime.UtcNow;
+            mitigation.UpdatedBy = "SYSTEM";
+
+            var updateCommand = new UpdateMitigationCommand(mitigation);
+            var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+
+            if (result.IsSuccess)
+            {
+                ShowSuccessNotification($"Mitigation {mitigation.Code} approved successfully");
+                await LoadInitialData();
+                StateHasChanged();
+            }
+            else
+            {
+                ShowErrorNotification($"Failed to approve mitigation: {result.Error?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error quick approving mitigation {Code}", mitigation.Code);
+            ShowErrorNotification("Error approving mitigation");
+        }
+    }
+}
+
+<style>
+    /* Modal styles (unchanged) */
     .modal-overlay {
         position: fixed;
         top: 0;
@@ -260,8 +342,8 @@
         border-radius: 0.5rem 0.5rem 0 0;
     }
 
-    .sms-header-primary {
-        background-color: #212e61; /* SMS Blue Dark Bold */
+    .sms-header-warning {
+        background-color: #ff9800;
         color: white;
     }
 

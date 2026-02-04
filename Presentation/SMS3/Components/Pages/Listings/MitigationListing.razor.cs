@@ -1,7 +1,12 @@
-namespace SMS3.Components.Pages.Listings;
+﻿namespace SMS3.Components.Pages.Listings;
 
 public partial class MitigationListing : ComponentBase
 {
+    [Parameter] public string? ReportId { get; set; }
+    [Parameter] public string? HazardCode { get; set; }
+    [Parameter] public bool ShowBulkApprove { get; set; } = true;
+    [Parameter] public string Title { get; set; } = "Mitigations";
+
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<MitigationListing> Logger { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
@@ -10,39 +15,131 @@ public partial class MitigationListing : ComponentBase
 
     private RadzenDataGrid<Mitigation>? mitigationsGrid;
     private IEnumerable<Mitigation> mitigations = new List<Mitigation>();
+    private IEnumerable<Mitigation> selectedMitigations = new List<Mitigation>();
     private int totalCount;
     private bool isLoading = false;
     private bool ShowViewDialog = false;
+    private bool ShowBulkApprovalDialog = false;
+    private bool IsProcessingBulkApproval = false;
     private Mitigation? SelectedMitigation = null;
+
+    // For context display
+    private Hazard? ContextHazard = null;
+    private Report? ContextReport = null;
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadContextData();
         await LoadInitialData();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Reload data when parameters change
+        await LoadContextData();
+        await LoadInitialData();
+    }
+
+    private async Task LoadContextData()
+    {
+        try
+        {
+            // Load hazard context if provided
+            if (!string.IsNullOrEmpty(HazardCode))
+            {
+                var hazardQuery = new GetHazardByCodeQuery(new HazardID(HazardCode));
+                var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
+
+                if (hazardResult.IsSuccess && hazardResult.Value != null)
+                {
+                    ContextHazard = hazardResult.Value;
+                    Logger.LogInformation("Loaded context hazard: {HazardCode}", HazardCode);
+                }
+            }
+
+            // Load report context if provided
+            if (!string.IsNullOrEmpty(ReportId))
+            {
+                var reportQuery = new GetReportByCodeQuery(new ReportID(ReportId));
+                var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
+
+                if (reportResult.IsSuccess && reportResult.Value != null)
+                {
+                    ContextReport = reportResult.Value;
+                    Logger.LogInformation("Loaded context report: {ReportId}", ReportId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading context data for Report: {ReportId}, Hazard: {HazardCode}", ReportId, HazardCode);
+        }
     }
 
     private async Task LoadInitialData()
     {
         try
         {
-            var query = new GetAllMitigationsQuery();
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            isLoading = true;
+            StateHasChanged();
 
-            if (result.IsSuccess && result.Value != null)
+            if (!string.IsNullOrEmpty(HazardCode))
             {
-                mitigations = result.Value;
-                totalCount = mitigations.Count();
-                Logger.LogInformation("Loaded {Count} mitigations", totalCount);
+                // Load mitigations for specific hazard
+                var query = new GetMitigationsByHazardCodeQuery(HazardCode);
+                var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+                if (result.IsSuccess && result.Value != null)
+                {
+                    var hazardMitigations = result.Value.ToList();
+
+                    // Further filter by report if provided
+                    if (!string.IsNullOrEmpty(ReportId) && ContextHazard?.ReportCode != null)
+                    {
+                        hazardMitigations = hazardMitigations
+                            .Where(m => ContextHazard.ReportCode.Equals(ReportId, StringComparison.OrdinalIgnoreCase))
+                            .ToList();
+                    }
+
+                    mitigations = hazardMitigations;
+                    totalCount = mitigations.Count();
+                    Logger.LogInformation("Loaded {Count} mitigations for hazard {HazardCode}", totalCount, HazardCode);
+                }
+                else
+                {
+                    mitigations = new List<Mitigation>();
+                    totalCount = 0;
+                    Logger.LogInformation("No mitigations found for hazard {HazardCode}", HazardCode);
+                }
             }
             else
             {
-                ShowErrorNotification("Failed to load mitigations");
-                Logger.LogError("Failed to load mitigations: {Error}", result.Error?.Message);
+                // Load all mitigations (original behavior)
+                var query = new GetAllMitigationsQuery();
+                var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+                if (result.IsSuccess && result.Value != null)
+                {
+                    mitigations = result.Value;
+                    totalCount = mitigations.Count();
+                    Logger.LogInformation("Loaded {Count} total mitigations", totalCount);
+                }
+                else
+                {
+                    ShowErrorNotification("Failed to load mitigations");
+                    Logger.LogError("Failed to load mitigations: {Error}", result.Error?.Message);
+                }
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading mitigations");
             ShowErrorNotification("Error loading mitigations");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
         }
     }
 
@@ -129,6 +226,113 @@ public partial class MitigationListing : ComponentBase
         }
     }
 
+    // ✅ NEW: Bulk Approve functionality
+    private async Task OpenBulkApprovalDialog()
+    {
+        try
+        {
+            var approvableMitigations = mitigations.Where(m => m.Status != "Approved").ToList();
+
+            if (!approvableMitigations.Any())
+            {
+                ShowInfoNotification("All mitigations are already approved");
+                return;
+            }
+
+            selectedMitigations = approvableMitigations;
+            ShowBulkApprovalDialog = true;
+            StateHasChanged();
+
+            Logger.LogInformation("Opening bulk approval dialog for {Count} mitigations", approvableMitigations.Count);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error opening bulk approval dialog");
+            ShowErrorNotification("Error opening bulk approval dialog");
+        }
+    }
+
+    private async Task CloseBulkApprovalDialog()
+    {
+        ShowBulkApprovalDialog = false;
+        selectedMitigations = new List<Mitigation>();
+        StateHasChanged();
+    }
+
+    private async Task ProcessBulkApproval()
+    {
+        try
+        {
+            IsProcessingBulkApproval = true;
+            StateHasChanged();
+
+            var mitigationsToApprove = selectedMitigations.ToList();
+            var successCount = 0;
+            var errorCount = 0;
+
+            Logger.LogInformation("Starting bulk approval for {Count} mitigations", mitigationsToApprove.Count);
+
+            foreach (var mitigation in mitigationsToApprove)
+            {
+                try
+                {
+                    // Update mitigation status to Approved
+                    mitigation.Status = "Approved";
+                    mitigation.UpdatedDate = DateTime.UtcNow;
+                    mitigation.UpdatedBy = "SYSTEM"; // You might want to get the current user
+
+                    var updateCommand = new UpdateMitigationCommand(mitigation);
+                    var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+
+                    if (result.IsSuccess)
+                    {
+                        successCount++;
+                        Logger.LogInformation("Approved mitigation: {Code}", mitigation.Code);
+                    }
+                    else
+                    {
+                        errorCount++;
+                        Logger.LogError("Failed to approve mitigation {Code}: {Error}", mitigation.Code, result.Error?.Message);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errorCount++;
+                    Logger.LogError(ex, "Error approving mitigation {Code}", mitigation.Code);
+                }
+            }
+
+            if (successCount > 0)
+            {
+                ShowSuccessNotification($"Successfully approved {successCount} mitigation(s)");
+            }
+
+            if (errorCount > 0)
+            {
+                ShowErrorNotification($"Failed to approve {errorCount} mitigation(s)");
+            }
+
+            // Refresh the data
+            await LoadInitialData();
+
+            // Close the dialog
+            await CloseBulkApprovalDialog();
+
+            Logger.LogInformation("Bulk approval completed: {SuccessCount} approved, {ErrorCount} failed",
+                successCount, errorCount);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error processing bulk approval");
+            ShowErrorNotification("Error processing bulk approval");
+        }
+        finally
+        {
+            IsProcessingBulkApproval = false;
+            StateHasChanged();
+        }
+    }
+
     private async Task ViewHistory(Mitigation mitigation)
     {
         try
@@ -191,6 +395,31 @@ public partial class MitigationListing : ComponentBase
         }
     }
 
+    // Helper methods for context display
+    private string GetContextTitle()
+    {
+        if (ContextHazard != null && ContextReport != null)
+        {
+            return $"Mitigations for Report {ReportId} - Hazard {HazardCode}";
+        }
+        else if (ContextHazard != null)
+        {
+            return $"Mitigations for Hazard {HazardCode}";
+        }
+        else if (ContextReport != null)
+        {
+            return $"Mitigations for Report {ReportId}";
+        }
+
+        return Title;
+    }
+
+    private int GetApprovableMitigationCount()
+    {
+        return mitigations.Count(m => m.Status != "Approved");
+    }
+
+    // Notification methods (unchanged)
     private void ShowSuccessNotification(string message)
     {
         NotificationService.Notify(new NotificationMessage

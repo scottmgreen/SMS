@@ -983,28 +983,7 @@ public partial class TechnicalAssessment : ComponentBase
         await Mediator.SendAsync(updateCommand, CancellationToken.None);
     }
 
-    //private void ApplyCurrentStepToAssessment()
-    //{
-    //    switch (CurrentStep)
-    //    {
-    //        case 1:
-    //            Step1.ApplyToAssessment(InitialRiskAssessment!);
-    //            break;
-    //        case 2:
-    //            Step2.ApplyToAssessment(InitialRiskAssessment!);
-    //            break;
-    //        case 3:
-    //            Step3.ApplyToAssessment(InitialRiskAssessment!);
-    //            break;
-    //        case 4:
-    //            Step4.ApplyToAssessment(InitialRiskAssessment!);
-    //            break;
-    //        case 5:
-    //            Step5.ApplyToAssessment(InitialRiskAssessment!);
-    //            break;
-    //    }
-    //}
-
+   
     private async Task ApplyCurrentStepToAssessmentAsync()
     {
         switch (CurrentStep)
