@@ -21,6 +21,8 @@ public partial class HazardReportSearchResult : ComponentBase
     [Inject] private ILogger<HazardReportSearchResult> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
+
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
     #endregion
 
     #region State Properties
@@ -155,7 +157,7 @@ public partial class HazardReportSearchResult : ComponentBase
                 ReportDetails.ReportedOn = hazard.ReportedOn;
                 ReportDetails.Department = hazard.ReportingDepartment ?? "";
                 ReportDetails.CurrentStatus = hazard.Status ?? "Unknown";
-                ReportDetails.IsConfidential = hazard.IsConfidential;
+                ReportDetails.IsAnonymous = hazard.IsAnonymous;
                 
                 // Add location information for fallback display
                 ReportDetails.LocationArea = hazard.LocationArea ?? "";
@@ -549,7 +551,7 @@ public partial class HazardReportSearchResult : ComponentBase
         public string Department { get; set; } = string.Empty;
         public string CurrentStatus { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public bool IsConfidential { get; set; }
+        public bool IsAnonymous { get; set; }
         public DateTime CreatedDate { get; set; }
 
         // Location fallback properties for text-based location info

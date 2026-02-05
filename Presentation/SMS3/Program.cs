@@ -172,7 +172,6 @@ public class Program
                     ReportedBy = "EXTERNAL_SYSTEM",
                     ReportedOn = DateTime.UtcNow,
                     ReportingDepartment = request.SourceSystem ?? "External System",
-                    IsConfidential = true, // Always confidential for external API
                     IsAnonymous = true,
                     ReportCode = actualReportCode,
                     IsInitialHazard = true,

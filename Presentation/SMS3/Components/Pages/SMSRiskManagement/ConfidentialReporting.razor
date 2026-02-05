@@ -374,10 +374,10 @@ else
                         <RadzenRow Gap="1rem" Class="rz-border-top-1 rz-pt-3">
                             <RadzenColumn>
                                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="0.5rem">
-                                    <RadzenCheckBox @bind-Value="@HazardReport.IsConfidential"
-                                                    Name="IsConfidential"
+                                    <RadzenCheckBox @bind-Value="@HazardReport.IsAnonymous"
+                                                    Name="IsAnonymous"
                                                     TriState="false" />
-                                    <RadzenLabel Style="font-weight:600"  Text="Submit as Confidential Report" Component="IsConfidential" />
+                                    <RadzenLabel Style="font-weight:600" Text="Submit as Confidential Report" Component="IsAnonymous" />
                                 </RadzenStack>
                             </RadzenColumn>
                             
@@ -618,10 +618,10 @@ else
                     
                     <div class="d-flex justify-content-center gap-3">
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                            <RadzenCheckBox @bind-Value="@HazardReport.IsConfidential"
-                                            Name="IsConfidential"
+                            <RadzenCheckBox @bind-Value="@HazardReport.IsAnonymous"
+                                            Name="IsAnonymous"
                                             TriState="false" />
-                            <RadzenLabel Text="Submit as Confidential Report" Component="IsConfidential" />
+                            <RadzenLabel Text="Submit as Confidential Report" Component="IsAnonymous" />
                         </RadzenStack>
                         <RadzenButton ButtonStyle="ButtonStyle.Warning"
                                       Text="No, Continue Editing"

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace SMS3.Components.Pages.SMSRiskManagement;
+namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 
 /// <summary>
 /// Step 1: System Description and 5M Framework Analysis

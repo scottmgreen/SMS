@@ -306,9 +306,7 @@ public static partial class Mappers
             }
 
             // Privacy and Confidentiality
-            var isConfidential = reader.IsDBNull(FieldNames.fHazardIsConfidential) ? false : reader.GetBoolean(FieldNames.fHazardIsConfidential);
-            hazard.IsConfidential = isConfidential;
-
+            
             var isAnonymous = reader.IsDBNull(FieldNames.fHazardIsAnonymous) ? false : reader.GetBoolean(FieldNames.fHazardIsAnonymous);
             hazard.IsAnonymous = isAnonymous;
 
@@ -316,7 +314,7 @@ public static partial class Mappers
             var statusValue = reader.GetValue<string>(FieldNames.fHazardStatus)?.Trim(); // ✅ FIXED: Trim whitespace
             if (!string.IsNullOrEmpty(statusValue))
             {
-                hazard.Status = HazardStatus.FromValue(statusValue) ?? HazardStatus.Active;
+                hazard.Status = HazardStatus.FromValue(statusValue) ?? HazardStatus.StatusUnknown;
             }
 
             var priorityValue = reader.GetValue<string>(FieldNames.fHazardPriority)?.Trim(); // ✅ FIXED: Trim whitespace
@@ -444,24 +442,7 @@ public static partial class Mappers
         // ✅ ENHANCED: Handle both old and new status format during transition
         var statusValue = reader.GetValue<string>(FieldNames.fInvestigationStatus);
         var mappedStatus = InvestigationStatus.FromValue(statusValue);
-
-        // If Smart Enum mapping fails, try legacy format conversion
-        if (mappedStatus == null && !string.IsNullOrEmpty(statusValue))
-        {
-            var legacyStatusConverted = statusValue.Trim() switch
-            {
-                "Completed" => "COMPLETED",
-                "InProgress" or "In Progress" => "IN_PROGRESS",
-                "OnHold" or "On Hold" => "ON_HOLD",
-                "Cancelled" => "CANCELLED",
-                "Assigned" => "IN_PROGRESS", // Map legacy "Assigned" to IN_PROGRESS
-                _ => statusValue.ToUpperInvariant().Replace(" ", "_")
-            };
-
-            mappedStatus = InvestigationStatus.FromValue(legacyStatusConverted);
-        }
-
-        investigation.Status = mappedStatus?.Value ?? InvestigationStatus.InProgress.Value;
+        investigation.Status = mappedStatus?.Value ?? InvestigationStatus.StatusUnknown.Value;
 
         investigation.CompletedDate = reader.GetValue<DateTime?>(FieldNames.fInvestigationCompletedDate);
         investigation.InvestigationPlan = reader.GetValue<string>(FieldNames.fInvestigationPlan);
@@ -506,7 +487,7 @@ public static partial class Mappers
 
         // Status and scheduling
         var statusValue = reader.GetValue<string>(FieldNames.fInterviewStatus);
-        interview.Status = InterviewStatus.FromValue(statusValue) ?? InterviewStatus.Scheduled;
+        interview.Status = InterviewStatus.FromValue(statusValue) ?? InterviewStatus.InterviewScheduled;
 
         interview.InterviewDate = reader.GetValue<DateTime?>(FieldNames.fInterviewDate);
         interview.DurationMinutes = reader.GetValue<int?>(FieldNames.fInterviewDurationMinutes);
@@ -590,7 +571,7 @@ public static partial class Mappers
         var statusValue = reader.GetValue<string>(FieldNames.fRiskAssessmentStatus)?.Trim();
         if (!string.IsNullOrEmpty(statusValue))
         {
-            riskAssessment.Status = RiskAssessmentStatus.FromValue(statusValue) ?? RiskAssessmentStatus.Created;
+            riskAssessment.Status = RiskAssessmentStatus.FromValue(statusValue) ?? RiskAssessmentStatus.AssessmentCreate;
         }
 
         // ✅ Direct assignment for simple properties

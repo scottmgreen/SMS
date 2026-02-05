@@ -263,10 +263,11 @@ public partial class ReportValidation : ComponentBase
                 ExistingValidation.ValidationDecision = ValidationDecisionValue;
                 ExistingValidation.ValidationComments = ValidationComments;
                 ExistingValidation.ValidationType = RiskAssessmentCategory.Technical;
-                ExistingValidation.ValidatedBy = AuthService.CurrentUserDisplayName; 
+                ExistingValidation.ValidatedBy = ValidatedBy; 
                 ExistingValidation.Status = "Completed";
                 ExistingValidation.Stage = "Complete";
                 ExistingValidation.ValidatedDate = DateTime.UtcNow;
+
                 ExistingValidation.UpdatedBy = AuthService.CurrentUserDisplayName; 
                 ExistingValidation.UpdatedDate = DateTime.UtcNow;
 
@@ -292,7 +293,7 @@ public partial class ReportValidation : ComponentBase
                 {
                     Code = validationId.Value,
                     ReportCode = ReportId,
-                    ValidatedBy = AuthService.CurrentUserDisplayName,
+                    ValidatedBy = ValidatedBy,
                     ValidationDecision = ValidationDecisionValue,
                     ValidationComments = ValidationComments,
                     ValidationType = ValidationType ?? "Technical",

@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 
-using SMS_Domain.Entities;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
+
+using SMS_Domain.Entities;
+using SMS_Domain.Interfaces;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -36,7 +38,7 @@ public class ReportProcessingSummary
     public string Priority { get; set; } = string.Empty;
     public string ReportedBy { get; set; } = string.Empty;
     public DateTime ReportedDate { get; set; }
-    public bool IsConfidential { get; set; }
+    public bool IsAnonymous { get; set; }
 
     // ENHANCED: Risk Assessment Information
     public string? RiskAssessmentId { get; set; }
@@ -188,7 +190,8 @@ public partial class ReportProcessing : ComponentBase
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
 
- 
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+
     // Data Properties
     private List<ReportProcessingSummary> PendingValidation { get; set; } = new();
     private List<ReportProcessingSummary> PendingRiskAssessment { get; set; } = new();
@@ -308,8 +311,7 @@ public partial class ReportProcessing : ComponentBase
                 // Log which reports have been validated for debugging
                 foreach (var validation in reportValidations.Take(3))
                 {
-                    Logger.LogWarning("?? Validation: Report {ReportCode} | Decision: {Decision} | Type: {Type}",
-                        validation.ReportCode, validation.ValidationDecision, validation.ValidationType);
+                    Logger.LogWarning("?? Validation: Report {ReportCode} | Decision: {Decision} | Type: {Type}",validation.ReportCode, validation.ValidationDecision, validation.ValidationType);
                 }
             }
             else
@@ -370,95 +372,7 @@ public partial class ReportProcessing : ComponentBase
 
     #region Report Processing
 
-    private List<ReportProcessingSummary> CreateReportSummaries(List<Report> reports, List<Hazard> hazards, List<RiskAssessment> riskAssessments, List<SMS_Domain.Entities.ReportValidation> reportValidations, List<Investigation> investigations, List<Interview> interviews)
-    {
-        var summaries = new List<ReportProcessingSummary>();
-
-        Logger.LogInformation("Creating report summaries - Reports: {ReportCount}, Hazards: {HazardCount}, RiskAssessments: {AssessmentCount}, ReportValidations: {ValidationCount}, Investigations: {InvestigationCount}, Interviews: {InterviewCount}",
-            reports.Count, hazards.Count, riskAssessments.Count, reportValidations.Count, investigations.Count, interviews.Count);
-
-        foreach (var report in reports)
-        {
-            try
-            {
-                // Find matching hazard
-                var hazard = hazards.FirstOrDefault(h => h.ReportCode?.Trim() == report.Code?.Trim());
-
-                // Find matching risk assessment
-                var riskAssessment = hazard != null ?
-                    riskAssessments.FirstOrDefault(ra => ra.HazardCode?.Trim() == hazard.Code?.Trim() &&
-                                                        ra.AssessmentType == RiskAssessmentType.Initial) :
-                    null;
-
-                // CRITICAL: Find matching report validation
-                var reportValidation = reportValidations.FirstOrDefault(rv => rv.ReportCode?.Trim() == report.Code?.Trim());
-
-                // NEW: Find matching investigation
-                var investigation = hazard != null ?
-                    investigations.FirstOrDefault(inv => inv.HazardCode?.Trim() == hazard.Code?.Trim()) :
-                    null;
-
-                // NEW: Find matching interviews for this investigation
-                var investigationInterviews = investigation != null ?
-                    interviews.Where(iv => iv.InvestigationCode?.Trim() == investigation.Code?.Trim()).ToList() :
-                    new List<Interview>();
-
-                var summary = new ReportProcessingSummary
-                {
-                    ReportId = report.Code ?? "Unknown",
-                    ReportDescription = report.Description ?? "No description",
-                    ReportStatus = report.Status ?? "New",
-                    ReportStage = report.Stage ?? "New",
-                    CreatedBy = report.CreatedBy ?? "Unknown",
-                    CreatedDate = report.CreatedDate ?? DateTime.UtcNow,
-
-                    HazardId = hazard?.Code,
-                    HazardType = hazard?.HazardType ?? "Unknown",
-                    HazardDescription = hazard?.Description ?? report.Description ?? "No description",
-                    Location = hazard?.HazardLocation?.Description ?? hazard?.LocationArea ?? "Not specified",
-                    Priority = GetPriorityString(hazard?.Priority),
-                    ReportedBy = hazard?.ReportedBy ?? report.CreatedBy ?? report.UpdatedBy ?? "Unknown", // ENHANCED: Added fallback to UpdatedBy
-                    ReportedDate = hazard?.ReportedOn ?? report.CreatedDate ?? DateTime.UtcNow,
-                    IsConfidential = hazard?.IsConfidential ?? false,
-
-                    // Risk Assessment Information
-                    RiskAssessmentId = riskAssessment?.Code,
-                    CurrentAssessmentStep = riskAssessment?.CurrentStep ?? 0,
-                    RiskAssessmentStatus = riskAssessment?.Status?.ToString() ?? "",
-                    AssessmentStage = riskAssessment?.Stage ?? "",
-                    AssessmentType = riskAssessment?.RiskAssessmentCategory?.ToString() ?? "", // NEW: Technical vs Preliminary
-
-                    // Report Validation Information - NEW
-                    ReportValidationId = reportValidation?.Code,
-                    ValidationType = reportValidation?.ValidationType ?? "", // NEW: Key for smart routing
-                    ValidationDecision = reportValidation?.ValidationDecision ?? "",
-
-                    // Investigation Information - NEW
-                    InvestigationId = investigation?.Code,
-                    InvestigationStatus = investigation?.Status?.ToString() ?? "",
-                    AssignedInvestigator = investigation?.AssignedInvestigatorId,
-                    InvestigationNotes = investigation?.InvestigationNotes,
-                    InterviewCount = investigationInterviews.Count,
-
-                    // Status determination - UPDATED: Include investigation
-                    StatusCategory = DetermineStatusCategory(report, hazard, riskAssessment, reportValidation, investigation),
-                    DaysInStage = CalculateDaysInStage(report, hazard, riskAssessment, reportValidation),
-                    AssignedTo = DetermineAssignedTo(report, hazard, riskAssessment, reportValidation, investigation),
-                    ValidationUrl = GetValidationUrl(report, hazard, reportValidation)
-                };
-
-                summaries.Add(summary);
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Error creating summary for report {ReportCode}", report.Code);
-            }
-        }
-
-        Logger.LogInformation("Created {SummaryCount} report summaries", summaries.Count);
-        return summaries;
-    }
-
+    
     private async Task<List<ReportProcessingSummary>> CreateReportSummariesAsync(List<Report> reports, List<Hazard> hazards, List<RiskAssessment> riskAssessments, List<SMS_Domain.Entities.ReportValidation> reportValidations, List<Investigation> investigations, List<Interview> interviews)
     {
         var summaries = new List<ReportProcessingSummary>();
@@ -470,7 +384,7 @@ public partial class ReportProcessing : ComponentBase
         {
             try
             {
-                // ✅ FIXED: Find ALL hazards for this report and create separate summary for each
+                // Find ALL hazards for this report
                 var reportHazards = hazards.Where(h => h.ReportCode?.Trim() == report.Code?.Trim()).ToList();
 
                 if (!reportHazards.Any())
@@ -479,59 +393,138 @@ public partial class ReportProcessing : ComponentBase
                     continue;
                 }
 
-                // ✅ KEY FIX: Create one summary per REPORT-HAZARD combination
-                foreach (var hazard in reportHazards)
+                // ✅ FIXED: Get unique risk assessments for this report (not one per hazard)
+                var uniqueRiskAssessments = riskAssessments
+                    .Where(ra => reportHazards.Any(h => h.Code?.Trim() == ra.HazardCode?.Trim()))
+                    .GroupBy(ra => ra.Code) // Group by assessment code to get unique assessments
+                    .Select(g => g.First()) // Take first from each group
+                    .ToList();
+
+                // CRITICAL: Find matching report validation (same for all assessments in this report)
+                var reportValidation = reportValidations.FirstOrDefault(rv => rv.ReportCode?.Trim() == report.Code?.Trim());
+
+                if (uniqueRiskAssessments.Any())
                 {
-                    // ✅ FIXED: Find matching risk assessment for THIS REPORT (not per hazard)
-                    // A report typically has ONE risk assessment that covers ALL hazards in that report
-                    var riskAssessment = riskAssessments.FirstOrDefault(ra => 
-                        // Try to match by report code first (most reliable)
-                        (ra.HazardCode?.Trim() == hazard.Code?.Trim()) ||
-                        // Fallback: match by primary hazard code if ReportCode not available
-                        (reportHazards.Count > 0 && ra.HazardCode?.Trim() == reportHazards.First().Code?.Trim())
-                    );
+                    // ✅ FIXED: Create ONE summary per unique RiskAssessment (not per hazard)
+                    foreach (var riskAssessment in uniqueRiskAssessments)
+                    {
+                        // Find the primary hazard for this assessment
+                        var primaryHazard = reportHazards.FirstOrDefault(h => h.Code?.Trim() == riskAssessment.HazardCode?.Trim())
+                                           ?? reportHazards.First(); // Fallback to first hazard
 
-                    // CRITICAL: Find matching report validation (same for all hazards in this report)
-                    var reportValidation = reportValidations.FirstOrDefault(rv => rv.ReportCode?.Trim() == report.Code?.Trim());
+                        // Find matching investigation for the primary hazard
+                        var investigation = investigations.FirstOrDefault(inv => inv.HazardCode?.Trim() == primaryHazard.Code?.Trim());
 
-                    // NEW: Find matching investigation for THIS specific hazard
-                    var investigation = investigations.FirstOrDefault(inv => inv.HazardCode?.Trim() == hazard.Code?.Trim());
+                        // Find matching interviews for this investigation
+                        var investigationInterviews = investigation != null ?
+                            interviews.Where(iv => iv.InvestigationCode?.Trim() == investigation.Code?.Trim()).ToList() :
+                            new List<Interview>();
 
-                    // NEW: Find matching interviews for this investigation
+                        // ✅ Load mitigations for ALL hazards in this report (since one assessment covers all)
+                        var allReportMitigations = new List<MitigationSummary>();
+                        var processedMitigationCodes = new HashSet<string>(); // ✅ Track processed mitigations
+                        try
+                        {
+                            foreach (var hazard in reportHazards)
+                            {
+                                var mitigationQuery = new GetMitigationsByHazardCodeQuery(hazard.Code);
+                                var mitigationResult = await Mediator.SendAsync(mitigationQuery, CancellationToken.None);
+
+                                if (mitigationResult.IsSuccess && mitigationResult.Value?.Any() == true)
+                                {
+                                    var hazardMitigations = mitigationResult.Value
+                                        .Where(m => !string.IsNullOrEmpty(m.Code) && !processedMitigationCodes.Contains(m.Code)) // ✅ Skip duplicates
+                                        .Select(m => new MitigationSummary
+                                        {
+                                            MitigationCode = m.Code ?? "Unknown",
+                                            MitigationName = m.Name ?? "Unnamed Mitigation",
+                                            HazardCode = hazard.Code,
+                                            HazardDescription = hazard.Description ?? "No description",
+                                            Status = m.Status ?? "Unknown",
+                                            ResponsibleParty = m.AssignedTo ?? "Not Assigned",
+                                            TargetDate = m.TargetDate,
+                                            Priority = m.Priority?.ToString() ?? "Medium"
+                                        }).ToList();
+
+                                    // ✅ Track mitigation codes to prevent duplicates
+                                    foreach (var mitigation in hazardMitigations)
+                                    {
+                                        processedMitigationCodes.Add(mitigation.MitigationCode);
+                                    }
+
+                                    allReportMitigations.AddRange(hazardMitigations);
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.LogError(ex, "Error loading mitigations for report {ReportCode}", report.Code);
+                        }
+
+                        // ✅ Create ONE summary for this RiskAssessment covering all hazards
+                        var summary = new ReportProcessingSummary
+                        {
+                            ReportId = report.Code ?? "Unknown",
+                            ReportDescription = report.Description ?? "No description",
+                            ReportStatus = report.Status ?? "New",
+                            ReportStage = report.Stage ?? "New",
+                            CreatedBy = report.CreatedBy ?? "Unknown",
+                            CreatedDate = report.CreatedDate ?? DateTime.UtcNow,
+
+                            // Use PRIMARY hazard info for display
+                            HazardId = primaryHazard.Code,
+                            HazardType = primaryHazard.HazardType ?? "Unknown",
+                            HazardDescription = primaryHazard.Description ?? "No description",
+                            Location = primaryHazard.HazardLocation?.Description ?? primaryHazard.LocationArea ?? "Not specified",
+                            Priority = GetPriorityString(primaryHazard.Priority),
+                            ReportedBy = primaryHazard.ReportedBy ?? report.CreatedBy ?? report.UpdatedBy ?? "Unknown",
+                            ReportedDate = primaryHazard.ReportedOn,
+                            IsAnonymous = primaryHazard.IsAnonymous,
+
+                            // Risk Assessment Information
+                            RiskAssessmentId = riskAssessment.Code,
+                            CurrentAssessmentStep = riskAssessment.CurrentStep,
+                            RiskAssessmentStatus = riskAssessment.Status?.ToString() ?? "",
+                            AssessmentStage = riskAssessment.Stage ?? "",
+                            AssessmentType = riskAssessment.RiskAssessmentCategory?.ToString() ?? "",
+
+                            // Report Validation Information
+                            ReportValidationId = reportValidation?.Code,
+                            ValidationType = reportValidation?.ValidationType ?? "",
+                            ValidationDecision = reportValidation?.ValidationDecision ?? "",
+
+                            // Investigation Information
+                            InvestigationId = investigation?.Code,
+                            InvestigationStatus = investigation?.Status?.ToString() ?? "",
+                            AssignedInvestigator = investigation?.AssignedInvestigatorId,
+                            InvestigationNotes = investigation?.InvestigationNotes,
+                            InterviewCount = investigationInterviews.Count,
+
+                            // ✅ ALL mitigations from ALL hazards in this report
+                            AllMitigations = allReportMitigations,
+
+                            // Status determination
+                            StatusCategory = DetermineStatusCategory(report, primaryHazard, riskAssessment, reportValidation, investigation),
+                            DaysInStage = CalculateDaysInStage(report, primaryHazard, riskAssessment, reportValidation),
+                            AssignedTo = DetermineAssignedTo(report, primaryHazard, riskAssessment, reportValidation, investigation),
+                            ValidationUrl = GetValidationUrl(report, primaryHazard, reportValidation)
+                        };
+
+                        summaries.Add(summary);
+                        
+                        Logger.LogInformation("Created summary for Report {ReportCode} - RiskAssessment {AssessmentCode} covering {HazardCount} hazards with {MitigationCount} total mitigations",
+                            report.Code, riskAssessment.Code, reportHazards.Count, allReportMitigations.Count);
+                    }
+                }
+                else
+                {
+                    // No risk assessments - create summary with first hazard for other processing categories
+                    var primaryHazard = reportHazards.First();
+                    var investigation = investigations.FirstOrDefault(inv => inv.HazardCode?.Trim() == primaryHazard.Code?.Trim());
                     var investigationInterviews = investigation != null ?
                         interviews.Where(iv => iv.InvestigationCode?.Trim() == investigation.Code?.Trim()).ToList() :
                         new List<Interview>();
 
-                    // ✅ NEW: Load mitigations for THIS SPECIFIC HAZARD ONLY
-                    var hazardMitigations = new List<MitigationSummary>();
-                    try
-                    {
-                        var mitigationQuery = new GetMitigationsByHazardCodeQuery(hazard.Code);
-                        var mitigationResult = await Mediator.SendAsync(mitigationQuery, CancellationToken.None);
-
-                        if (mitigationResult.IsSuccess && mitigationResult.Value?.Any() == true)
-                        {
-                            hazardMitigations = mitigationResult.Value.Select(m => new MitigationSummary
-                            {
-                                MitigationCode = m.Code ?? "Unknown",
-                                MitigationName = m.Name ?? "Unnamed Mitigation",
-                                HazardCode = hazard.Code,
-                                HazardDescription = hazard.Description ?? "No description",
-                                Status = m.Status ?? "Unknown",
-                                ResponsibleParty = m.AssignedTo ?? "Not Assigned",
-                                TargetDate = m.TargetDate,
-                                Priority = m.Priority?.ToString() ?? "Medium"
-                            }).ToList();
-
-                            Logger.LogInformation("Loaded {Count} mitigations for hazard {HazardCode}", hazardMitigations.Count, hazard.Code);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.LogError(ex, "Error loading mitigations for hazard {HazardCode} in report {ReportCode}", hazard.Code, report.Code);
-                    }
-
-                    // ✅ Create one summary for THIS report-hazard combination
                     var summary = new ReportProcessingSummary
                     {
                         ReportId = report.Code ?? "Unknown",
@@ -541,49 +534,45 @@ public partial class ReportProcessing : ComponentBase
                         CreatedBy = report.CreatedBy ?? "Unknown",
                         CreatedDate = report.CreatedDate ?? DateTime.UtcNow,
 
-                        // ✅ THIS specific hazard (not primary hazard)
-                        HazardId = hazard.Code,
-                        HazardType = hazard.HazardType ?? "Unknown",
-                        HazardDescription = hazard.Description ?? "No description",
-                        Location = hazard.HazardLocation?.Description ?? hazard.LocationArea ?? "Not specified",
-                        Priority = GetPriorityString(hazard.Priority),
-                        ReportedBy = hazard.ReportedBy ?? report.CreatedBy ?? report.UpdatedBy ?? "Unknown",
-                        ReportedDate = hazard.ReportedOn ,
-                        IsConfidential = hazard.IsConfidential,
+                        HazardId = primaryHazard.Code,
+                        HazardType = primaryHazard.HazardType ?? "Unknown",
+                        HazardDescription = primaryHazard.Description ?? "No description",
+                        Location = primaryHazard.HazardLocation?.Description ?? primaryHazard.LocationArea ?? "Not specified",
+                        Priority = GetPriorityString(primaryHazard.Priority),
+                        ReportedBy = primaryHazard.ReportedBy ?? report.CreatedBy ?? report.UpdatedBy ?? "Unknown",
+                        ReportedDate = primaryHazard.ReportedOn,
+                        IsAnonymous = primaryHazard.IsAnonymous,
 
-                        // Risk Assessment Information (specific to this hazard)
-                        RiskAssessmentId = riskAssessment?.Code,
-                        CurrentAssessmentStep = riskAssessment?.CurrentStep ?? 0,
-                        RiskAssessmentStatus = riskAssessment?.Status?.ToString() ?? "",
-                        AssessmentStage = riskAssessment?.Stage ?? "",
-                        AssessmentType = riskAssessment?.RiskAssessmentCategory?.ToString() ?? "",
+                        // No risk assessment information
+                        RiskAssessmentId = null,
+                        CurrentAssessmentStep = 0,
+                        RiskAssessmentStatus = "",
+                        AssessmentStage = "",
+                        AssessmentType = "",
 
-                        // Report Validation Information - NEW
+                        // Report Validation Information
                         ReportValidationId = reportValidation?.Code,
-                        ValidationType = reportValidation?.ValidationType ?? "", // NEW: Key for smart routing
+                        ValidationType = reportValidation?.ValidationType ?? "",
                         ValidationDecision = reportValidation?.ValidationDecision ?? "",
 
-                        // Investigation Information - NEW
+                        // Investigation Information
                         InvestigationId = investigation?.Code,
                         InvestigationStatus = investigation?.Status?.ToString() ?? "",
                         AssignedInvestigator = investigation?.AssignedInvestigatorId,
                         InvestigationNotes = investigation?.InvestigationNotes,
                         InterviewCount = investigationInterviews.Count,
 
-                        // ✅ FIXED: Mitigations for THIS SPECIFIC HAZARD ONLY
-                        AllMitigations = hazardMitigations,
+                        // Empty mitigations
+                        AllMitigations = new List<MitigationSummary>(),
 
-                        // Status determination (based on this specific hazard)
-                        StatusCategory = DetermineStatusCategory(report, hazard, riskAssessment, reportValidation, investigation),
-                        DaysInStage = CalculateDaysInStage(report, hazard, riskAssessment, reportValidation),
-                        AssignedTo = DetermineAssignedTo(report, hazard, riskAssessment, reportValidation, investigation),
-                        ValidationUrl = GetValidationUrl(report, hazard, reportValidation)
+                        // Status determination
+                        StatusCategory = DetermineStatusCategory(report, primaryHazard, null, reportValidation, investigation),
+                        DaysInStage = CalculateDaysInStage(report, primaryHazard, null, reportValidation),
+                        AssignedTo = DetermineAssignedTo(report, primaryHazard, null, reportValidation, investigation),
+                        ValidationUrl = GetValidationUrl(report, primaryHazard, reportValidation)
                     };
 
                     summaries.Add(summary);
-                    
-                    Logger.LogInformation("Created summary for Report {ReportCode} - Hazard {HazardCode} with {MitigationCount} mitigations",
-                        report.Code, hazard.Code, hazardMitigations.Count);
                 }
             }
             catch (Exception ex)
@@ -592,7 +581,7 @@ public partial class ReportProcessing : ComponentBase
             }
         }
 
-        Logger.LogInformation("Created {SummaryCount} report-hazard summaries with {TotalMitigationCount} total mitigations",
+        Logger.LogInformation("Created {SummaryCount} report summaries with {TotalMitigationCount} total mitigations",
             summaries.Count, summaries.Sum(s => s.MitigationCount));
         return summaries;
     }
@@ -695,7 +684,7 @@ public partial class ReportProcessing : ComponentBase
         }
 
         // Has risk assessment - determine stage based on progress
-        if (riskAssessment.Status == RiskAssessmentStatus.Created || riskAssessment.Status == RiskAssessmentStatus.InProgress)
+        if (riskAssessment.Status == RiskAssessmentStatus.AssessmentCreate || riskAssessment.Status == RiskAssessmentStatus.AssessmentUnderway)
         {
             // Risk assessment in progress
             var category = riskAssessment.CurrentStep switch
@@ -712,7 +701,7 @@ public partial class ReportProcessing : ComponentBase
                 report.Code, category, riskAssessment.CurrentStep);
             return category;
         }
-        else if (riskAssessment.Status == RiskAssessmentStatus.Completed)
+        else if (riskAssessment.Status == RiskAssessmentStatus.AssessmentComplete)
         {
             Logger.LogWarning("? Report {ReportId} -> MITIGATION (assessment complete)", report.Code);
             return ProcessingStatusCategory.Mitigation;
@@ -1106,11 +1095,13 @@ public partial class ReportProcessing : ComponentBase
             {
                 var statusStyle = mitigation.Status switch
                 {
-                    "Approved" => BadgeStyle.Success,
-                    "InProgress" => BadgeStyle.Base,
-                    "Completed" => BadgeStyle.Primary,
-                    "OnHold" => BadgeStyle.Warning,
-                    "Cancelled" => BadgeStyle.Danger,
+                    // ✅ Use the actual enum Values, not hardcoded strings
+                    var status when status == MitigationStatus.Approved.Value => BadgeStyle.Success,
+                    var status when status == MitigationStatus.InProgressDueDate.Value => BadgeStyle.Base,
+                    var status when status == MitigationStatus.Complete.Value => BadgeStyle.Primary,
+                    var status when status == MitigationStatus.PendingApproval.Value => BadgeStyle.Warning,
+                    var status when status == MitigationStatus.Rejected.Value => BadgeStyle.Danger,
+                    var status when status == MitigationStatus.MonitoringHazard.Value => BadgeStyle.Base,
                     _ => BadgeStyle.Secondary
                 };
 
@@ -1224,7 +1215,7 @@ public partial class ReportProcessing : ComponentBase
                     actionBuilder.CloseComponent(); // ✅ Close RadzenButton
 
                     // Quick Approve Button (only if not already approved)
-                    if (mitigation.Status != "Approved")
+                    if (mitigation.Status != MitigationStatus.Approved.Value)
                     {
                         actionBuilder.OpenComponent<RadzenButton>(5);
                         actionBuilder.AddAttribute(6, "Text", "Approve");
@@ -1283,9 +1274,9 @@ public partial class ReportProcessing : ComponentBase
             if (mitigationResult.IsSuccess && mitigationResult.Value != null)
             {
                 var fullMitigation = mitigationResult.Value;
-                fullMitigation.Status = "Approved";
+                fullMitigation.Status = MitigationStatus.Approved.Value;
                 fullMitigation.UpdatedDate = DateTime.UtcNow;
-                fullMitigation.UpdatedBy = "SYSTEM"; // You might want to get the current user
+                fullMitigation.UpdatedBy = AuthService.CurrentUser.Code; // You might want to get the current user
 
                 var updateCommand = new UpdateMitigationCommand(fullMitigation);
                 var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
@@ -1295,7 +1286,7 @@ public partial class ReportProcessing : ComponentBase
                     ShowSuccessNotification($"Mitigation {mitigation.MitigationCode} approved successfully");
 
                     // Update the local summary
-                    mitigation.Status = "Approved";
+                    mitigation.Status = MitigationStatus.Approved.Value;
 
                     // Reload data to reflect changes
                     await LoadDataAsync();
@@ -1339,7 +1330,7 @@ public partial class ReportProcessing : ComponentBase
 
     private int GetApprovableMitigationCount(ReportProcessingSummary report)
     {
-        return report.AllMitigations?.Count(m => m.Status == "PENDING") ?? 0;
+        return report.AllMitigations?.Count(m => m.Status == MitigationStatus.PendingApproval.Value) ?? 0;
     }
 
     // Notification helper methods
@@ -1578,83 +1569,7 @@ public partial class ReportProcessing : ComponentBase
         builder.AddAttribute(13, "Width", "300px");
         builder.CloseComponent();
 
-        // Stage Column - Shows current processing stage with assessment type info
-        //builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(15);
-        //builder.AddAttribute(16, "Property", "ReportStatus");
-        //builder.AddAttribute(17, "Title", "Stage");
-        //builder.AddAttribute(18, "Width", "150px");
-        //builder.AddAttribute(19, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-        //    (templateBuilder =>
-        //    {
-        //        var badgeStyle = report.StatusCategory switch
-        //        {
-        //            ProcessingStatusCategory.Validation => BadgeStyle.Info,
-        //            ProcessingStatusCategory.RiskAssessment => BadgeStyle.Primary,
-        //            ProcessingStatusCategory.Investigation => BadgeStyle.Warning,
-        //            ProcessingStatusCategory.Mitigation => BadgeStyle.Secondary,
-        //            ProcessingStatusCategory.Closed => BadgeStyle.Success,
-        //            _ => BadgeStyle.Light
-        //        };
-
-        //        // Show stage with assessment type if available
-        //        var stageText = report.StatusCategory.ToString();
-        //        if (report.StatusCategory == ProcessingStatusCategory.RiskAssessment && !string.IsNullOrEmpty(report.ValidationType))
-        //        {
-        //            stageText = $"{report.ValidationType} Assessment";
-        //        }
-
-        //        templateBuilder.OpenComponent<RadzenBadge>(0);
-        //        templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
-        //        templateBuilder.AddAttribute(2, "Text", stageText);
-        //        templateBuilder.AddAttribute(3, "Variant", Variant.Flat);
-        //        templateBuilder.CloseComponent();
-        //    })));
-        //builder.CloseComponent();
-
-        //// Priority Column
-        //builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(20);
-        //builder.AddAttribute(21, "Property", "Priority");
-        //builder.AddAttribute(22, "Title", "Priority");
-        //builder.AddAttribute(23, "Width", "100px");
-        //builder.AddAttribute(24, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-        //    (templateBuilder =>
-        //    {
-        //        var badgeStyle = report.Priority switch
-        //        {
-        //            "High" => BadgeStyle.Danger,
-        //            "Medium" => BadgeStyle.Warning,
-        //            _ => BadgeStyle.Info
-        //        };
-        //        templateBuilder.OpenComponent<RadzenBadge>(0);
-        //        templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
-        //        templateBuilder.AddAttribute(2, "Text", report.Priority);
-        //        templateBuilder.CloseComponent();
-        //    })));
-        //builder.CloseComponent();
-
-        //// Reported By Column
-        //builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(30);
-        //builder.AddAttribute(31, "Property", "ReportedBy");
-        //builder.AddAttribute(32, "Title", "Reported By");
-        //builder.AddAttribute(33, "Width", "150px");
-        //builder.CloseComponent();
-
-        //// Days in Stage Column
-        //builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(40);
-        //builder.AddAttribute(41, "Property", "DaysInStage");
-        //builder.AddAttribute(42, "Title", "Days in Stage");
-        //builder.AddAttribute(43, "Width", "120px");
-        //builder.AddAttribute(44, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-        //    (templateBuilder =>
-        //    {
-        //        var badgeStyle = report.DaysInStage > 3 ? BadgeStyle.Danger :
-        //                       report.DaysInStage > 1 ? BadgeStyle.Warning : BadgeStyle.Secondary;
-        //        templateBuilder.OpenComponent<RadzenBadge>(0);
-        //        templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
-        //        templateBuilder.AddAttribute(2, "Text", $"{report.DaysInStage} days");
-        //        templateBuilder.CloseComponent();
-        //    })));
-        //builder.CloseComponent();
+       
     }
 
     private void RenderRiskAssessmentColumns(RenderTreeBuilder builder)
@@ -1907,8 +1822,17 @@ public partial class ReportProcessing : ComponentBase
 
             Logger.LogInformation("Starting bulk approval for ALL mitigations in report: {ReportId}", reportId);
 
-            // Get all hazards for this report
-            var reportHazards = InMitigation.Where(r => r.ReportId == reportId).ToList();
+            // ✅ FIXED: Load fresh hazard data instead of using cached InMitigation list
+            var hazardsQuery = new GetAllHazardsQuery();
+            var hazardsResult = await Mediator.SendAsync(hazardsQuery, CancellationToken.None);
+            
+            if (!hazardsResult.IsSuccess || hazardsResult.Value == null)
+            {
+                ShowErrorNotification("Failed to load hazard data");
+                return;
+            }
+
+            var reportHazards = hazardsResult.Value.Where(h => h.ReportCode?.Trim() == reportId?.Trim()).ToList();
             
             if (!reportHazards.Any())
             {
@@ -1916,49 +1840,46 @@ public partial class ReportProcessing : ComponentBase
                 return;
             }
 
-            var totalMitigations = reportHazards.Sum(h => h.MitigationCount);
-            var totalPendingMitigations = reportHazards.Sum(h => GetApprovableMitigationCount(h));
-            
-            Logger.LogInformation("Found {HazardCount} hazards with {TotalMitigations} total mitigations ({PendingCount} pending)", 
-                reportHazards.Count, totalMitigations, totalPendingMitigations);
-
-            if (totalPendingMitigations == 0)
-            {
-                ShowInfoNotification($"All mitigations for report {reportId} are already approved");
-                return;
-            }
-
             var successCount = 0;
             var errorCount = 0;
+            var processedMitigationCodes = new HashSet<string>(); // Track processed mitigations to avoid duplicates
 
-            // Process each hazard's mitigations
-            foreach (var reportHazard in reportHazards)
+            // ✅ FIXED: Process each hazard's mitigations with fresh data
+            foreach (var hazard in reportHazards)
             {
                 try
                 {
-                    Logger.LogInformation("Processing mitigations for hazard: {HazardCode}", reportHazard.HazardId);
+                    Logger.LogInformation("Processing mitigations for hazard: {HazardCode}", hazard.Code);
 
-                    // Get all mitigations for this specific hazard
-                    var mitigationQuery = new GetMitigationsByHazardCodeQuery(reportHazard.HazardId!);
+                    // Get fresh mitigations for this specific hazard
+                    var mitigationQuery = new GetMitigationsByHazardCodeQuery(hazard.Code);
                     var mitigationResult = await Mediator.SendAsync(mitigationQuery, CancellationToken.None);
 
                     if (mitigationResult.IsSuccess && mitigationResult.Value?.Any() == true)
                     {
-                        // Filter to only PENDING mitigations
-                        var pendingMitigations = mitigationResult.Value.Where(m => m.Status == "PENDING").ToList();
+                        // ✅ FIXED: Filter for PENDING_APPROVAL using enum value and avoid duplicates
+                        var pendingMitigations = mitigationResult.Value
+                            .Where(m => !string.IsNullOrEmpty(m.Code) && 
+                                       !processedMitigationCodes.Contains(m.Code) && 
+                                       string.Equals(m.Status, MitigationStatus.PendingApproval.Value, StringComparison.OrdinalIgnoreCase))
+                            .ToList();
                         
-                        Logger.LogInformation("Found {Count} pending mitigations for hazard {HazardCode}", 
-                            pendingMitigations.Count, reportHazard.HazardId);
+                        Logger.LogInformation("Found {Count} pending mitigations for hazard {HazardCode}: {MitigationCodes}", 
+                            pendingMitigations.Count, hazard.Code,
+                            string.Join(", ", pendingMitigations.Select(m => $"{m.Code}({m.Status})")));
 
-                        // Approve each pending mitigation using the same logic as QuickApproveMitigation
+                        // Approve each pending mitigation
                         foreach (var mitigation in pendingMitigations)
                         {
                             try
                             {
-                                // Update mitigation status to Approved
-                                mitigation.Status = "Approved";
+                                // Track this mitigation to avoid processing duplicates
+                                processedMitigationCodes.Add(mitigation.Code);
+
+                                // Update mitigation status to Approved using enum value
+                                mitigation.Status = MitigationStatus.Approved.Value;
                                 mitigation.UpdatedDate = DateTime.UtcNow;
-                                mitigation.UpdatedBy = "SYSTEM"; // You might want to get the current user
+                                mitigation.UpdatedBy = AuthService.CurrentUser.Code;  // You might want to get the current user
 
                                 var updateCommand = new UpdateMitigationCommand(mitigation);
                                 var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
@@ -1967,7 +1888,7 @@ public partial class ReportProcessing : ComponentBase
                                 {
                                     successCount++;
                                     Logger.LogInformation("Approved mitigation: {Code} for hazard {HazardCode}", 
-                                        mitigation.Code, reportHazard.HazardId);
+                                        mitigation.Code, hazard.Code);
                                 }
                                 else
                                 {
@@ -1980,18 +1901,18 @@ public partial class ReportProcessing : ComponentBase
                             {
                                 errorCount++;
                                 Logger.LogError(ex, "Error approving mitigation {Code} for hazard {HazardCode}", 
-                                    mitigation.Code, reportHazard.HazardId);
+                                    mitigation.Code, hazard.Code);
                             }
                         }
                     }
                     else
                     {
-                        Logger.LogWarning("No mitigations found for hazard {HazardCode}", reportHazard.HazardId);
+                        Logger.LogWarning("No mitigations found for hazard {HazardCode}", hazard.Code);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Error processing mitigations for hazard {HazardCode}", reportHazard.HazardId);
+                    Logger.LogError(ex, "Error processing mitigations for hazard {HazardCode}", hazard.Code);
                     // Continue with other hazards even if one fails
                 }
             }
@@ -2003,6 +1924,10 @@ public partial class ReportProcessing : ComponentBase
                 
                 // Reload data to reflect changes
                 await LoadDataAsync();
+            }
+            else if (errorCount == 0)
+            {
+                ShowInfoNotification($"No pending mitigations found for report {reportId}");
             }
 
             if (errorCount > 0)

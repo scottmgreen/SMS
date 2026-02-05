@@ -12,8 +12,7 @@ public partial class ApplicationUsers : ComponentBase
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
-    //[Inject] private ISMSSessionService SessionService { get; set; } = default!;
-
+    
     [Parameter] public string? Id { get; set; }
 
     // Data Properties - renamed to avoid conflict

@@ -1,4 +1,4 @@
-namespace SMS3.Components.Pages.SMSRiskManagement;
+namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 
 /// <summary>
 /// Step 4: Risk Assessment & Scoring Panel
@@ -139,7 +139,7 @@ public class Step4Model
         return (severity, likelihood, finalRiskLevel);
     }
 
-    private (int? severity, int? likelihood) ParseMatrixCode(String matrixCode)
+    private (int? severity, int? likelihood) ParseMatrixCode(string matrixCode)
     {
         if (string.IsNullOrEmpty(matrixCode) || matrixCode.Length < 2)
             return (null, null);

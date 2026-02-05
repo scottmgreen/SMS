@@ -393,9 +393,6 @@ public static class FieldNames
     private static readonly Lazy<string> _fHazardReportingDepartment = new Lazy<string>(() => "fldv_ReportingDepartment");
     public static string fHazardReportingDepartment => _fHazardReportingDepartment.Value;
 
-    private static readonly Lazy<string> _fHazardIsConfidential = new Lazy<string>(() => "fldb_IsConfidential");
-    public static string fHazardIsConfidential => _fHazardIsConfidential.Value;
-
     private static readonly Lazy<string> _fHazardIsAnonymous = new Lazy<string>(() => "fldb_IsAnonymous");
     public static string fHazardIsAnonymous => _fHazardIsAnonymous.Value;
 

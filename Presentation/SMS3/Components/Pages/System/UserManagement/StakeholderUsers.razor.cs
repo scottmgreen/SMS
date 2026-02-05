@@ -12,6 +12,8 @@ public partial class StakeholderUsers : ComponentBase
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
 
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+
     // Data Properties
     private List<SMSStakeholderUser> StakeholderUsersList { get; set; } = new();
     private List<SMSUserRole> UserRoles { get; set; } = new();

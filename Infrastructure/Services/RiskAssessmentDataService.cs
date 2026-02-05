@@ -460,7 +460,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
             var assessment = assessmentResult.Value;
 
             // Check if assessment is in a state that allows editing
-            if (assessment.Status == RiskAssessmentStatus.Completed)
+            if (assessment.Status == RiskAssessmentStatus.AssessmentComplete)
             {
                 return Result<bool>.Failure<bool>(DomainErrors.RiskAssessmentError.CannotModifyCompleted);
             }

@@ -12,8 +12,8 @@ public partial class HazardMitigation : ComponentBase
     [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private ILogger<HazardMitigation> Logger { get; set; } = default!;
 
-    [CascadingParameter(Name = "AuthService")]
-    public AuthenticationService AuthService { get; set; } = default!;
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+
     #endregion
 
     #region Parameters
@@ -48,12 +48,11 @@ public partial class HazardMitigation : ComponentBase
         "Proposed", "Approved", "InProgress", "Completed", "Cancelled", "OnHold"
     };
 
-    private readonly List<string> Departments = new()
-    {
-        "Airport Operations", "Safety Management", "Maintenance & Engineering",
-        "Aircraft Rescue & Firefighting", "Airport Security", "Air Traffic Control",
-        "Ground Handling Services", "Cargo Operations", "External Contractor"
-    };
+    // ✅ UPDATED: Replace hardcoded department list with SMSDepartment enum
+    private List<string> Departments => SMSDepartment.GetAllDepartments()
+        .Select(d => d.Name)
+        .OrderBy(name => name)
+        .ToList();
     #endregion
 
     #region Lifecycle Methods
@@ -307,23 +306,9 @@ public partial class HazardMitigation : ComponentBase
     /// </summary>
     protected string GetCurrentUserId()
     {
-        return AuthService?.CurrentUserId ?? "SYSTEM";
+        return AuthService?.CurrentUser.Code ?? "SYSTEM";
     }
 
-    /// <summary>
-    /// Get the current authenticated user display name
-    /// </summary>
-    protected string GetCurrentUserDisplayName()
-    {
-        return AuthService?.CurrentUserDisplayName ?? "System User";
-    }
-
-    /// <summary>
-    /// Check if user is authenticated
-    /// </summary>
-    protected bool IsUserAuthenticated()
-    {
-        return AuthService?.IsAuthenticated ?? false;
-    }
+    
     #endregion
 }

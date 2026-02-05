@@ -512,7 +512,7 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationCode, investigationCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationStatus, InvestigationStatus.Completed.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationStatus, InvestigationStatus.InvestigationComplete.ToString()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationCompletedDate, DateTime.UtcNow));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));

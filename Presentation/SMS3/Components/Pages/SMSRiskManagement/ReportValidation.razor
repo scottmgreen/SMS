@@ -22,13 +22,7 @@
             <RadzenCard Variant="Variant.Outlined">
                 <!-- Card Header Section -->
                 <RadzenStack Gap="0.5rem" Style="padding: 0.5rem;">
-                    @* <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="border-bottom: 1px solid var(--rz-border-color); padding-bottom: 1rem;">
-                        <RadzenIcon Icon="assignment" Style="color: var(--rz-primary);" />
-                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
-                            SMS Report Validation Decision
-                        </RadzenText>
-                    </RadzenStack> *@
-
+                   
                     <!-- Report Description Display with Metadata in 3 Columns -->
                     <RadzenCard Variant="Variant.Outlined" Style="background: var(--rz-base-50);">
                         <RadzenStack Gap="1rem" Style="padding: 1rem;">
@@ -166,16 +160,6 @@
                         {
                             <RadzenFieldset Text="Assessment Assignment" Style="margin-top: 1rem;">
                                 <RadzenRow Gap="1rem">
-                                    @* <RadzenColumn Size="12" SizeMD="6">
-                                        <RadzenFormField Text="Risk Assessment Type" Variant="Variant.Outlined">
-                                            <RadzenDropDown @bind-Value="@ValidationType" 
-                                                          Data="@ValidationTypeOptions" 
-                                                          TextProperty="Text" 
-                                                          ValueProperty="Value"
-                                                          Placeholder="-- Select Assessment Type --"
-                                                          Style="width: 100%; min-width: 100%;" />
-                                        </RadzenFormField>
-                                    </RadzenColumn> *@
                                     <RadzenColumn Size="12" SizeMD="6">
                                         <RadzenFormField Text="Assigned Assessor" Variant="Variant.Outlined">
                                             <RadzenDropDown @bind-Value="@ValidatedBy" 

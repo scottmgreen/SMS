@@ -8,10 +8,10 @@ public partial class Hazards : ComponentBase
     [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
-    // **CASCADING PARAMETER**: Get authentication from MainLayout (same pattern as Reports.razor)
-    [CascadingParameter(Name = "AuthState")]
-    public AuthenticationState? AuthState { get; set; }
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
 
+    // **CASCADING PARAMETER**: Get authentication from MainLayout (same pattern as Reports.razor)
+    
     // Radzen DataList Reference
     private RadzenDataList<Hazard>? hazardsDataList;
 
@@ -21,8 +21,8 @@ public partial class Hazards : ComponentBase
     private string ErrorMessage { get; set; } = string.Empty;
 
     // Authentication Properties (same pattern as Reports.razor)
-    private bool IsAuthenticated => AuthState?.IsAuthenticated == true;
-    private string? CurrentUserName => AuthState?.DisplayName;
+    private bool IsAuthenticated => AuthService?.IsAuthenticated == true;
+    private string? CurrentUserName => AuthService?.CurrentUserDisplayName;
 
     // Pagination Properties
     private int PageSize { get; set; } = 10;
@@ -290,13 +290,13 @@ Created: {hazard.CreatedDate?.ToString("MM/dd/yyyy") ?? "N/A"}";
     {
         return status?.ToUpper() switch
         {
-            "ACTIVE" => BadgeStyle.Success,
-            "CLOSED" => BadgeStyle.Secondary,
-            "INVESTIGATION" => BadgeStyle.Warning,
-            "PENDING" => BadgeStyle.Info,
-            "UNDER_REVIEW" => BadgeStyle.Info,
-            "ESCALATED" => BadgeStyle.Warning,
-            _ => BadgeStyle.Secondary
+            //HazardStatus.InitialRiskAssessment.Name.ToString() => BadgeStyle.Success,
+            //"CLOSED" => BadgeStyle.Secondary,
+            //"INVESTIGATION" => BadgeStyle.Warning,
+            //"PENDING" => BadgeStyle.Info,
+            //"UNDER_REVIEW" => BadgeStyle.Info,
+            //"ESCALATED" => BadgeStyle.Warning,
+            _ => BadgeStyle.Success
         };
     }
 

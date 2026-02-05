@@ -88,20 +88,11 @@ public partial class SPIConfiguration
             SPIMeasurementFrequency.Annually
         };
 
-        // Load departments
-        availableDepartments = new List<string>
-        {
-            "Safety Department",
-            "Operations",
-            "Human Resources",
-            "Maintenance",
-            "Security",
-            "Ground Services",
-            "Air Traffic Control",
-            "Emergency Services",
-            "Quality Assurance",
-            "Training Department"
-        };
+        // ? UPDATED: Load departments from SMSDepartment enum instead of hardcoded list
+        availableDepartments = SMSDepartment.GetAllDepartments()
+            .Select(d => d.Name)
+            .OrderBy(name => name)
+            .ToList();
     }
 
     private async Task LoadSPIs()

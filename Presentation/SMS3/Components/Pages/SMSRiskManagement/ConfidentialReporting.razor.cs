@@ -776,7 +776,6 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                 ReportedBy = "CONFIDENTIAL_USER",
                 ReportedOn = HazardReport.ReportedOn,
                 ReportingDepartment = "CONFIDENTIAL",
-                IsConfidential = true, // Always confidential for this page
                 IsAnonymous = true,
                 ReportCode = actualReportCode,
                 IsInitialHazard = true // Mark as the initial hazard for this report
@@ -1084,7 +1083,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
             ReportedBy = "Anonymous Reporter",
             ReportedOn = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day,
                 tenMinutesAgo.Hour, tenMinutesAgo.Minute, 0),
-            IsConfidential = true // Always true for confidential reporting
+            IsAnonymous = true // Always true for confidential reporting
         };
 
         SelectedGeoLocation = new GeoLocationData

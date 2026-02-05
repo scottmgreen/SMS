@@ -1,12 +1,13 @@
-﻿@using SMS3.Components.Shared
-@using SMS_Domain.Entities
-@using SMS_Domain.Enums
+﻿@using Radzen
+@using Radzen.Blazor
 @using SMS3.Components.Pages.SMSRiskManagement
 @using SMS3.Components.Pages.SMSRiskManagement.Components
-@using SMS_Application.Messaging.Queries
+@using SMS3.Components.Pages.SMSRiskManagement.Models
+@using SMS3.Components.Shared
 @using SMS_Application.Interfaces
-@using Radzen
-@using Radzen.Blazor
+@using SMS_Application.Messaging.Queries
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
 
 <RadzenRow Gap="1rem">
     <!-- Main Content Column -->
@@ -14,7 +15,7 @@
         <RadzenStack Gap="1.5rem">
             
             <!-- Step 4 Introduction -->
-            <RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid var(--rz-primary);">
+            @* <RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid var(--rz-primary);">
                 <RadzenStack Gap="1rem">
                     <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
                         <RadzenIcon Icon="balance" Style="margin-right: 0.5rem;" />
@@ -25,7 +26,7 @@
                         Panel consensus will determine the overall risk level for each hazard.
                     </RadzenText>
                 </RadzenStack>
-            </RadzenCard>
+            </RadzenCard> *@
 
            
 
@@ -446,15 +447,70 @@
         return AviationRiskMatrixCalculator.GetAviationRiskLevel(severity, likelihood);
     }
 
+    // private async Task LoadHazardAverages()
+    // {
+    //     if (Step4Hazards?.Any() != true) return;
+        
+    //     try
+    //     {
+    //         Step4.HazardAverageScores.Clear();
+    //         Step4.HazardRiskLevels.Clear();
+    //         Step4.HazardMatrixCodes.Clear();
+
+    //         foreach (var hazard in Step4Hazards)
+    //         {
+    //             var query = new GetScoringPanelsByHazardCodeQuery(hazard.Code);
+    //             var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+    //             if (result.IsSuccess && result.Value?.Any() == true)
+    //             {
+    //                 var completedPanels = result.Value
+    //                     .Where(p => p.Severity.HasValue && p.Likelihood.HasValue && p.Score.HasValue)
+    //                     .ToList();
+
+    //                 if (completedPanels.Any())
+    //                 {
+    //                     // Use centralized calculator for consistency
+    //                     var matrixCode = AviationRiskMatrixCalculator.CalculateHazardMatrixCodeWithDebug(
+    //                         hazard.Code, 
+    //                         completedPanels, 
+    //                         msg => Logger.LogInformation(msg));
+                        
+    //                     // Calculate other values using centralized methods
+    //                     var avgSeverity = completedPanels.Average(p => p.Severity!.Value);
+    //                     var avgLikelihood = completedPanels.Average(p => p.Likelihood!.Value);
+    //                     var avgScore = completedPanels.Average(p => (double)p.Score!.Value);
+                        
+    //                     var roundedSeverity = (int)Math.Round(avgSeverity);
+    //                     var roundedLikelihood = (int)Math.Round(avgLikelihood);
+                        
+    //                     Step4.HazardAverageScores[hazard.Code] = avgScore;
+    //                     Step4.HazardRiskLevels[hazard.Code] = AviationRiskMatrixCalculator.GetAviationRiskLevel(roundedSeverity, roundedLikelihood);
+    //                     Step4.HazardMatrixCodes[hazard.Code] = matrixCode;
+    //                 }
+    //             }
+    //         }
+            
+    //         Logger.LogInformation("Loaded averages for {Count} hazards", Step4.HazardAverageScores.Count);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Logger.LogError(ex, "Error loading hazard averages");
+    //     }
+    // }
     private async Task LoadHazardAverages()
     {
         if (Step4Hazards?.Any() != true) return;
-        
+
         try
         {
             Step4.HazardAverageScores.Clear();
             Step4.HazardRiskLevels.Clear();
             Step4.HazardMatrixCodes.Clear();
+
+            // ✅ FIX: Get the current risk assessment code for filtering
+            var targetRiskAssessmentCode = GetCurrentRiskAssessmentCode();
+            Logger.LogInformation("LoadHazardAverages filtering by assessment: {AssessmentCode}", targetRiskAssessmentCode);
 
             foreach (var hazard in Step4Hazards)
             {
@@ -463,7 +519,21 @@
 
                 if (result.IsSuccess && result.Value?.Any() == true)
                 {
-                    var completedPanels = result.Value
+                    // ✅ FIX: Filter panels by current risk assessment (same as HazardScoringPanel)
+                    var filteredPanels = result.Value
+                        .Where(p => p.RiskAssessmentCode.Trim() == targetRiskAssessmentCode)
+                        .ToList();
+
+                    Logger.LogInformation("Hazard {HazardCode}: Found {TotalPanels} total panels, {FilteredPanels} for assessment {AssessmentCode}",
+                        hazard.Code, result.Value.Count(), filteredPanels.Count, targetRiskAssessmentCode);
+
+                    // ✅ FIX: Map properties based on current step (same as HazardScoringPanel)
+                    foreach (var panel in filteredPanels)
+                    {
+                        MapPropertiesBasedOnStep(panel);
+                    }
+
+                    var completedPanels = filteredPanels
                         .Where(p => p.Severity.HasValue && p.Likelihood.HasValue && p.Score.HasValue)
                         .ToList();
 
@@ -471,30 +541,87 @@
                     {
                         // Use centralized calculator for consistency
                         var matrixCode = AviationRiskMatrixCalculator.CalculateHazardMatrixCodeWithDebug(
-                            hazard.Code, 
-                            completedPanels, 
+                            hazard.Code,
+                            completedPanels,
                             msg => Logger.LogInformation(msg));
-                        
+
                         // Calculate other values using centralized methods
                         var avgSeverity = completedPanels.Average(p => p.Severity!.Value);
                         var avgLikelihood = completedPanels.Average(p => p.Likelihood!.Value);
                         var avgScore = completedPanels.Average(p => (double)p.Score!.Value);
-                        
+
                         var roundedSeverity = (int)Math.Round(avgSeverity);
                         var roundedLikelihood = (int)Math.Round(avgLikelihood);
-                        
+
                         Step4.HazardAverageScores[hazard.Code] = avgScore;
                         Step4.HazardRiskLevels[hazard.Code] = AviationRiskMatrixCalculator.GetAviationRiskLevel(roundedSeverity, roundedLikelihood);
                         Step4.HazardMatrixCodes[hazard.Code] = matrixCode;
+
+                        Logger.LogInformation("✅ Added hazard {HazardCode} to Step4.HazardAverageScores: Score={AvgScore:F2}, MatrixCode={MatrixCode}, RiskLevel={RiskLevel}",
+                            hazard.Code, avgScore, matrixCode, Step4.HazardRiskLevels[hazard.Code]);
+                    }
+                    else
+                    {
+                        Logger.LogInformation("Hazard {HazardCode}: No completed panels found ({CompletedCount}/{TotalCount})",
+                            hazard.Code, completedPanels.Count, filteredPanels.Count);
                     }
                 }
+                else
+                {
+                    Logger.LogInformation("Hazard {HazardCode}: No scoring panels found", hazard.Code);
+                }
             }
-            
-            Logger.LogInformation("Loaded averages for {Count} hazards", Step4.HazardAverageScores.Count);
+
+            Logger.LogInformation("✅ LoadHazardAverages completed: {Count} hazards with scores in Step4.HazardAverageScores",
+                Step4.HazardAverageScores.Count);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading hazard averages");
+        }
+    }
+
+    /// <summary>
+    /// ✅ FIX: Add method to get current risk assessment code (same as HazardScoringPanel)
+    /// </summary>
+    private string GetCurrentRiskAssessmentCode()
+    {
+        // Use the single CurrentRiskAssessment parameter
+        if (!string.IsNullOrEmpty(CurrentRiskAssessment?.Code))
+        {
+            return CurrentRiskAssessment.Code.Trim();
+        }
+
+        // Fall back to RiskAssessmentId for backward compatibility
+        if (!string.IsNullOrEmpty(RiskAssessmentId?.Value))
+        {
+            return RiskAssessmentId.Value.Trim();
+        }
+
+        Logger.LogWarning("No valid risk assessment code found for Step4 LoadHazardAverages");
+        return string.Empty;
+    }
+
+    /// <summary>
+    /// ✅ FIX: Add method to map properties based on current step (same as HazardScoringPanel)
+    /// </summary>
+    private void MapPropertiesBasedOnStep(ScoringPanel panel)
+    {
+        if (CurrentStep == 5)
+        {
+            // Step 5: Map from Residual properties
+            panel.Likelihood = panel.ResidualLikelihood;
+            panel.Severity = panel.ResidualSeverity;
+            panel.Score = panel.ResidualScore;
+            panel.Rationale = panel.ResidualRationale;
+        }
+        else
+        {
+            // Step 4 (default): Map from Initial properties
+            panel.Likelihood = panel.InitialLikelihood;
+            panel.Severity = panel.InitialSeverity;
+            panel.Score = panel.InitialScore;
+            panel.Rationale = panel.InitialRationale;
         }
     }
 }

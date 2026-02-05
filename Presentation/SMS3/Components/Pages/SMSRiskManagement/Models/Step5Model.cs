@@ -1,4 +1,4 @@
-﻿namespace SMS3.Components.Pages.SMSRiskManagement;
+﻿namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 
 /// <summary>
 /// Step 5: Risk Mitigation & Implementation

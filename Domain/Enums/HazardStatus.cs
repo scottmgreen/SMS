@@ -1,92 +1,116 @@
+﻿using SMS_Domain.Common;
+using System.Reflection;
+
 namespace SMS_Domain.Enums;
 
 /// <summary>
-/// Hazard status enumeration for tracking hazard lifecycle
-/// Provides rich behavior and metadata for hazard workflow management
+/// Hazard Status Smart Enumeration - REVISED FOR RISK ASSESSMENT WORKFLOW
+/// Represents the approved final hazard workflow progression statuses through 5-step Technical Assessment
+/// Based on approved final "Hazard Status REVISED" list from StatusList.txt
+/// This tracks progression through Technical Risk Assessment Steps 1-5, not validation decisions
 /// </summary>
 public abstract class HazardStatus : BaseEnum<HazardStatus>
 {
-    protected HazardStatus(string value, string name, string description, bool allowsModification, bool requiresApproval, int workflowOrder) : base(value, name)
+    protected HazardStatus(string value, string name, string description, int stepNumber, string stage, int workflowOrder) : base(value, name)
     {
         Description = description;
-        AllowsModification = allowsModification;
-        RequiresApproval = requiresApproval;
+        StepNumber = stepNumber;
+        Stage = stage;
         WorkflowOrder = workflowOrder;
     }
 
     public string Description { get; }
-    public bool AllowsModification { get; }
-    public bool RequiresApproval { get; }
+    public int StepNumber { get; }
+    public string Stage { get; }
     public int WorkflowOrder { get; }
 
-    #region Hazard Status Types
+    #region ✅ APPROVED FINAL HAZARD STATUS REVISED VALUES FROM StatusList.txt
 
-    /// <summary>Hazard is active and being tracked</summary>
-    public static readonly HazardStatus Active = new ActiveStatus();
+    /// <summary>Step 1 & Step 2 - Initial Risk Assessment phase (System Description & Hazard Identification)</summary>
+    public static readonly HazardStatus StatusUnknown = new InitialRiskAssessmentStatus();
 
-    /// <summary>Hazard is under active investigation</summary>
-    public static readonly HazardStatus UnderInvestigation = new UnderInvestigationStatus();
 
-    /// <summary>Hazard is under management review</summary>
-    public static readonly HazardStatus UnderReview = new UnderReviewStatus();
 
-    /// <summary>Hazard has been closed and resolved</summary>
-    public static readonly HazardStatus Closed = new ClosedStatus();
+    /// <summary>Step 1 & Step 2 - Initial Risk Assessment phase (System Description & Hazard Identification)</summary>
+    public static readonly HazardStatus InitialRiskAssessment = new InitialRiskAssessmentStatus();
 
-    /// <summary>Hazard has been cancelled</summary>
-    public static readonly HazardStatus Cancelled = new CancelledStatus();
+    /// <summary>Step 3 - Initial Risk Analysis phase (Risk Analysis)</summary>
+    public static readonly HazardStatus InitialRiskAnalysis = new InitialRiskAnalysisStatus();
 
-    /// <summary>Hazard processing is on hold</summary>
-    public static readonly HazardStatus OnHold = new OnHoldStatus();
+    /// <summary>Step 4 - Initial Hazard Scoring phase (Risk Assessment & Scoring)</summary>
+    public static readonly HazardStatus InitialHazardScoring = new InitialHazardScoringStatus();
+
+    /// <summary>Step 5 - Residual Risk Assessment phase (Post-Mitigation Assessment)</summary>
+    public static readonly HazardStatus ResidualRiskAssessment = new ResidualRiskAssessmentStatus();
+
+    /// <summary>Step 5 - Residual Risk Mitigation phase (Mitigation Implementation)</summary>
+    public static readonly HazardStatus ResidualRiskMitigation = new ResidualRiskMitigationStatus();
+
+    /// <summary>Step 5 - Residual Hazard Scoring phase (Final Scoring Post-Mitigation)</summary>
+    public static readonly HazardStatus ResidualHazardScoring = new ResidualHazardScoringStatus();
+
+    public static readonly HazardStatus ResidualRiskAnalysis = new ResidualRiskAssessmentStatus();
 
     #endregion
 
     #region Implementations
 
-    private sealed class ActiveStatus : HazardStatus
+    private sealed class InitialRiskAssessmentStatus : HazardStatus
     {
-        public ActiveStatus() : base("ACTIVE", "Active",
-            "Hazard is active and being tracked in the system", true, false, 1)
+        public InitialRiskAssessmentStatus() : base("INITIAL_RISK_ASSESSMENT", "Initial Risk Assessment",
+            "Hazard is in initial risk assessment phase covering system description and hazard identification (Steps 1-2)", 2, "Initial", 1)
+        {
+        }
+    }
+    private sealed class UnknownStatus : HazardStatus
+    {
+        public UnknownStatus() : base("UNKNOWN_STATUS", "Unknown Status",
+            "Hazard is Unknown", 2, "Initial", 1)
+        {
+        }
+    }
+    private sealed class InitialRiskAnalysisStatus : HazardStatus
+    {
+        public InitialRiskAnalysisStatus() : base("INITIAL_RISK_ANALYSIS", "Initial Risk Analysis",
+            "Hazard is undergoing initial risk analysis to identify contributing factors and consequences (Step 3)", 3, "Initial", 2)
         {
         }
     }
 
-    private sealed class UnderInvestigationStatus : HazardStatus
+    private sealed class InitialHazardScoringStatus : HazardStatus
     {
-        public UnderInvestigationStatus() : base("UNDER_INVESTIGATION", "Under Investigation",
-            "Hazard is under active investigation to determine root causes and impacts", false, false, 2)
+        public InitialHazardScoringStatus() : base("INITIAL_HAZARD_SCORING", "Initial Hazard Scoring",
+            "Hazard is being scored for initial risk assessment with stakeholder input (Step 4)", 4, "Initial", 3)
         {
         }
     }
 
-    private sealed class UnderReviewStatus : HazardStatus
+    private sealed class ResidualRiskAssessmentStatus : HazardStatus
     {
-        public UnderReviewStatus() : base("UNDER_REVIEW", "Under Review",
-            "Hazard is under management review for risk assessment and mitigation decisions", false, true, 3)
+        public ResidualRiskAssessmentStatus() : base("RESIDUAL_RISK_ASSESSMENT", "Residual Risk Assessment",
+            "Hazard is in residual risk assessment phase after mitigation planning (Step 5)", 5, "Residual", 4)
+        {
+        }
+    }
+    private sealed class ResidualRiskAnalysisStatus : HazardStatus
+    {
+        public ResidualRiskAnalysisStatus() : base("RESIDUAL_RISK_ANALYSIS", "Residual Risk Analysis",
+            "Hazard is undergoing residual risk analysis to identify contributing factors and consequences (Step 5)", 5, "Residual", 5)
+        {
+        }
+    }
+    private sealed class ResidualRiskMitigationStatus : HazardStatus
+    {
+        public ResidualRiskMitigationStatus() : base("RESIDUAL_RISK_MITIGATION", "Residual Risk Mitigation",
+            "Hazard mitigations are being implemented and managed (Step 5)", 5, "Residual", 5)
         {
         }
     }
 
-    private sealed class ClosedStatus : HazardStatus
+    private sealed class ResidualHazardScoringStatus : HazardStatus
     {
-        public ClosedStatus() : base("CLOSED", "Closed",
-            "Hazard has been resolved and closed with appropriate mitigations implemented", false, true, 5)
-        {
-        }
-    }
-
-    private sealed class CancelledStatus : HazardStatus
-    {
-        public CancelledStatus() : base("CANCELLED", "Cancelled",
-            "Hazard has been cancelled due to invalid submission or duplicate entry", false, true, 6)
-        {
-        }
-    }
-
-    private sealed class OnHoldStatus : HazardStatus
-    {
-        public OnHoldStatus() : base("ON_HOLD", "On Hold",
-            "Hazard processing is temporarily on hold pending additional information or resources", true, false, 4)
+        public ResidualHazardScoringStatus() : base("RESIDUAL_HAZARD_SCORING", "Residual Hazard Scoring",
+            "Hazard is being scored for residual risk after mitigation implementation (Step 5)", 5, "Residual", 6)
         {
         }
     }
@@ -107,40 +131,40 @@ public abstract class HazardStatus : BaseEnum<HazardStatus>
     }
 
     /// <summary>
-    /// Gets active status values that allow processing
+    /// Gets status values in the Initial risk assessment stage
     /// </summary>
-    public static IEnumerable<HazardStatus> GetActiveStatuses()
+    public static IEnumerable<HazardStatus> GetInitialStageStatuses()
     {
-        return GetAllValues().Where(hs => hs.AllowsModification || hs == Active || hs == UnderInvestigation);
+        return GetAllValues().Where(hs => hs.Stage == "Initial");
     }
 
     /// <summary>
-    /// Gets final status values that conclude hazard processing
+    /// Gets status values in the Residual risk assessment stage
     /// </summary>
-    public static IEnumerable<HazardStatus> GetFinalStatuses()
+    public static IEnumerable<HazardStatus> GetResidualStageStatuses()
     {
-        return GetAllValues().Where(hs => hs == Closed || hs == Cancelled);
+        return GetAllValues().Where(hs => hs.Stage == "Residual");
     }
 
     /// <summary>
-    /// Determines if this status is a final state
+    /// Gets the appropriate status for a given Technical Assessment step
     /// </summary>
-    public bool IsFinalStatus => this == Closed || this == Cancelled;
-
-    /// <summary>
-    /// Determines if this status is an active processing state
-    /// </summary>
-    public bool IsActiveStatus => this == Active || this == UnderInvestigation || this == UnderReview || this == OnHold;
-
-    /// <summary>
-    /// Determines if this status allows hazard to be reopened
-    /// </summary>
-    public bool CanBeReopened => this == Closed || this == OnHold;
-
-    /// <summary>
-    /// Determines if this status requires management approval for changes
-    /// </summary>
-    public bool RequiresManagementApproval => RequiresApproval;
+    public static HazardStatus GetStatusForAssessmentStep(int stepNumber, string substep = "")
+    {
+        return stepNumber switch
+        {
+            1 or 2 => InitialRiskAssessment, // Steps 1-2 are combined
+            3 => InitialRiskAnalysis,
+            4 => InitialHazardScoring,
+            5 => substep.ToLowerInvariant() switch
+            {
+                "mitigation" or "mitigations" => ResidualRiskMitigation,
+                "scoring" or "score" => ResidualHazardScoring,
+                _ => ResidualRiskAssessment // Default for Step 5
+            },
+            _ => InitialRiskAssessment
+        };
+    }
 
     /// <summary>
     /// Gets the next logical workflow status
@@ -149,11 +173,12 @@ public abstract class HazardStatus : BaseEnum<HazardStatus>
     {
         return this switch
         {
-            var s when s == Active => UnderInvestigation,
-            var s when s == UnderInvestigation => UnderReview,
-            var s when s == UnderReview => Closed,
-            var s when s == OnHold => Active,
-            _ => null
+            var s when s == InitialRiskAssessment => InitialRiskAnalysis,
+            var s when s == InitialRiskAnalysis => InitialHazardScoring,
+            var s when s == InitialHazardScoring => ResidualRiskAssessment,
+            var s when s == ResidualRiskAssessment => ResidualRiskMitigation,
+            var s when s == ResidualRiskMitigation => ResidualHazardScoring,
+            _ => null // ResidualHazardScoring is final
         };
     }
 
@@ -162,15 +187,102 @@ public abstract class HazardStatus : BaseEnum<HazardStatus>
     /// </summary>
     public bool CanTransitionTo(HazardStatus targetStatus)
     {
+        // Allow progression forward in workflow
+        var nextStatus = GetNextWorkflowStatus();
+        if (nextStatus != null && targetStatus == nextStatus)
+            return true;
+
+        // Allow movement within Step 5 substeps
+        if (StepNumber == 5 && targetStatus.StepNumber == 5)
+            return true;
+
+        // Allow backward movement for corrections
+        if (targetStatus.WorkflowOrder < WorkflowOrder)
+            return true;
+
+        return false;
+    }
+
+    /// <summary>
+    /// Determines if this status is in the Initial assessment stage
+    /// </summary>
+    public bool IsInitialStage => Stage == "Initial";
+
+    /// <summary>
+    /// Determines if this status is in the Residual assessment stage  
+    /// </summary>
+    public bool IsResidualStage => Stage == "Residual";
+
+    /// <summary>
+    /// Determines if this status indicates assessment is complete
+    /// </summary>
+    public bool IsAssessmentComplete => this == ResidualHazardScoring;
+
+    /// <summary>
+    /// Gets the UI color for this status based on stage and progress
+    /// </summary>
+    public string GetDisplayColor()
+    {
         return this switch
         {
-            var s when s == Active => targetStatus == UnderInvestigation || targetStatus == OnHold || targetStatus == Cancelled,
-            var s when s == UnderInvestigation => targetStatus == UnderReview || targetStatus == Active || targetStatus == OnHold,
-            var s when s == UnderReview => targetStatus == Closed || targetStatus == Active || targetStatus == OnHold,
-            var s when s == OnHold => targetStatus == Active || targetStatus == Cancelled,
-            var s when s == Closed => targetStatus == Active, // Can reopen
-            var s when s == Cancelled => false, // Cannot transition from cancelled
-            _ => false
+            var s when s == InitialRiskAssessment => "#17a2b8", // Info blue
+            var s when s == InitialRiskAnalysis => "#007bff", // Primary blue  
+            var s when s == InitialHazardScoring => "#6f42c1", // Purple
+            var s when s == ResidualRiskAssessment => "#fd7e14", // Orange
+            var s when s == ResidualRiskMitigation => "#ffc107", // Warning yellow
+            var s when s == ResidualHazardScoring => "#28a745", // Success green
+            _ => "#6c757d"
+        };
+    }
+
+    /// <summary>
+    /// Gets the workflow description for this status
+    /// </summary>
+    public string GetWorkflowDescription()
+    {
+        return this switch
+        {
+            var s when s == InitialRiskAssessment => "System description and hazard identification in progress",
+            var s when s == InitialRiskAnalysis => "Analyzing risk factors and potential consequences", 
+            var s when s == InitialHazardScoring => "Stakeholders scoring initial risk levels",
+            var s when s == ResidualRiskAssessment => "Assessing residual risk after mitigation planning",
+            var s when s == ResidualRiskMitigation => "Implementing and managing risk mitigation strategies",
+            var s when s == ResidualHazardScoring => "Final scoring of residual risk levels",
+            _ => Description
+        };
+    }
+
+    /// <summary>
+    /// Gets the percentage completion for this status in the overall workflow
+    /// </summary>
+    public int GetProgressPercentage()
+    {
+        return this switch
+        {
+            var s when s == InitialRiskAssessment => 20,  // Steps 1-2 complete
+            var s when s == InitialRiskAnalysis => 40,    // Step 3 complete
+            var s when s == InitialHazardScoring => 60,   // Step 4 complete
+            var s when s == ResidualRiskAssessment => 75, // Step 5 started
+            var s when s == ResidualRiskMitigation => 90, // Step 5 mitigation phase
+            var s when s == ResidualHazardScoring => 100, // Step 5 final phase
+            _ => 0
+        };
+    }
+
+    /// <summary>
+    /// Gets the step range description for display
+    /// </summary>
+    public string GetStepRangeDescription()
+    {
+        return this switch
+        {
+            var s when s == InitialRiskAssessment => "Steps 1-2",
+            var s when s == InitialRiskAnalysis => "Step 3",
+            var s when s == InitialHazardScoring => "Step 4", 
+            var s when s == ResidualRiskAssessment => "Step 5a",
+            var s when s == ResidualRiskMitigation => "Step 5b",
+            var s when s == ResidualHazardScoring => "Step 5c",
+            _ => $"Step {StepNumber}"
         };
     }
 }

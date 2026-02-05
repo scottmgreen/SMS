@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 
 using SMS_Infrastructure.Interfaces;
+using SMS_Infrastructure.Services;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 
@@ -58,7 +59,11 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
             else
             {
                 hazard = hazardResult.Value;
-                
+
+               
+
+
+
                 // Create scoring panel and location as before
                 var scoringPanel = new ScoringPanel(new ScoringPanelID("SP-0000"))
                 {

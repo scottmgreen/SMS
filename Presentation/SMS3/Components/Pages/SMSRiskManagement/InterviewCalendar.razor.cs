@@ -10,6 +10,8 @@ public partial class InterviewCalendar : ComponentBase
     [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
     #endregion
 
     #region Component State
@@ -676,13 +678,13 @@ public partial class InterviewCalendar : ComponentBase
     #region UI Helpers
     private BadgeStyle GetStatusBadgeStyle(InterviewStatus status)
     {
-        if (status.Equals(InterviewStatus.Scheduled))
+        if (status.Equals(InterviewStatus.InterviewScheduled))
             return BadgeStyle.Info;
-        if (status.Equals(InterviewStatus.InProgress))
+        if (status.Equals(InterviewStatus.InterviewInProgress))
             return BadgeStyle.Warning;
-        if (status.Equals(InterviewStatus.Completed))
+        if (status.Equals(InterviewStatus.InterviewComplete))
             return BadgeStyle.Success;
-        if (status.Equals(InterviewStatus.Cancelled))
+        if (status.Equals(InterviewStatus.InterviewCanceled))
             return BadgeStyle.Danger;
 
         return BadgeStyle.Light;

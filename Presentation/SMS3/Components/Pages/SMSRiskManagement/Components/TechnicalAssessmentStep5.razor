@@ -1,14 +1,15 @@
-﻿@using SMS_Domain.Entities
-@using SMS_Domain.Enums
+﻿@using Radzen
+@using Radzen.Blazor
 @using SMS3.Components.Pages.SMSRiskManagement
-@using SMS3.Components.Shared
 @using SMS3.Components.Pages.SMSRiskManagement.Components
+@using SMS3.Components.Pages.SMSRiskManagement.Models
+@using SMS3.Components.Shared
+@using SMS_Application.Interfaces
 @using SMS_Application.Messaging.Commands
 @using SMS_Application.Messaging.Queries
-@using SMS_Application.Interfaces
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
 @using global::System.Text.Json
-@using Radzen
-@using Radzen.Blazor
 
 @inject IMediator Mediator
 @inject ILogger<TechnicalAssessmentStep5> Logger
@@ -48,7 +49,7 @@
     <RadzenColumn Size="12" SizeLG="8">
         <RadzenStack Gap="1.5rem">
             <!-- Header with Implementation Planning -->
-            <RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid #212e61;">
+            @* <RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid #212e61;">
                 <RadzenStack Gap="1rem">
                     <RadzenRow AlignItems="AlignItems.Center">
                         <RadzenColumn Size="10">
@@ -57,9 +58,6 @@
                                 Step 5: Risk Mitigation & Residual Assessment
                             </RadzenText>
                         </RadzenColumn>
-                        @* <RadzenColumn Size="2">
-                            <RadzenBadge Text="@($"{GetHazardsNeedingMitigation()} Need Mitigation")" BadgeStyle="BadgeStyle.Warning" />
-                        </RadzenColumn> *@
                     </RadzenRow>
 
                     <RadzenText TextStyle="TextStyle.Body2">
@@ -68,7 +66,7 @@
 
                    
                 </RadzenStack>
-            </RadzenCard>
+            </RadzenCard> *@
 
             <!-- ? ENHANCED: Per-Hazard Comprehensive Assessment -->
             @if (Step5Hazards?.Any() == true)
@@ -168,16 +166,7 @@
                                                     Mitigation Strategies
                                                 </RadzenText>
                                             </RadzenColumn>
-                                            @* <RadzenColumn Size="2">
-                                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
-                                                    <RadzenButton Icon="@GetCollapseIcon(hazard.Code, "mitigation")" 
-                                                                  ButtonStyle="ButtonStyle.Light" 
-                                                                  Size="ButtonSize.Small"
-                                                                  class="collapse-button"
-                                                                  Title="@GetCollapseTooltip(hazard.Code, "mitigation")"
-                                                                  Click="@((args) => ToggleSectionCollapse(hazard.Code, "mitigation"))" />
-                                                </RadzenStack>
-                                            </RadzenColumn> *@
+                                            
                                         </RadzenRow>
                                         
                                         <!-- ✅ Collapsible Content -->
@@ -406,12 +395,11 @@
         "Continuous", "Daily", "Weekly", "Monthly", "Quarterly", "Annually"
     };
 
-    private List<string> Departments = new()
-    {
-        "Airport Operations", "Safety Management", "Maintenance & Engineering", 
-        "Aircraft Rescue & Firefighting", "Airport Security", "Air Traffic Control", 
-        "Ground Handling Services", "Cargo Operations", "External Contractor"
-    };
+    // ✅ UPDATED: Replace hardcoded department list with SMSDepartment enum
+    private List<string> Departments => SMSDepartment.GetAllDepartments()
+        .Select(d => d.Name)
+        .OrderBy(name => name)
+        .ToList();
     private string GetHazardCategoryDisplay(string? categoryValue)
     {
         if (string.IsNullOrEmpty(categoryValue)) return "";
@@ -922,4 +910,4 @@
     }
 
     #endregion
-}
+}}

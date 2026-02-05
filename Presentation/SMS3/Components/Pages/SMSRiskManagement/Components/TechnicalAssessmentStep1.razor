@@ -1,10 +1,11 @@
-﻿@using SMS_Domain.Entities
-@using SMS_Domain.Enums
-@using SMS3.Components.Pages.SMSRiskManagement
-@using SMS3.Components.Shared
-@using global::System.Text.Json
-@using Radzen
+﻿@using Radzen
 @using Radzen.Blazor
+@using SMS3.Components.Pages.SMSRiskManagement
+@using SMS3.Components.Pages.SMSRiskManagement.Models
+@using SMS3.Components.Shared
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using global::System.Text.Json
 
 <RadzenStack Gap="1.5rem">
     <RadzenRow Gap="1rem">
@@ -23,8 +24,8 @@
                                         {
                                             <RadzenDropDown @bind-Value="@Step1.LeadAssessor" 
                                                             Data="@AvailableAssessors"
-                                                            TextProperty="DisplayName" 
-                                                            ValueProperty="Code"
+                                                            TextProperty="DisplayName"
+                                                            ValueProperty="UserName.Value"
                                                             Placeholder="Lead Assessor..." 
                                                             Style="width: 100%;"
                                                             AllowClear="false"
@@ -374,7 +375,7 @@
             return "Please select a lead assessor";
         }
 
-        var selectedAssessor = AvailableAssessors?.FirstOrDefault(a => a.Code == Step1.LeadAssessor);
+        var selectedAssessor = AvailableAssessors?.FirstOrDefault(a => a.UserName.Value == Step1.LeadAssessor);
         if (selectedAssessor != null)
         {
             return $"Selected: {selectedAssessor.DisplayName} ✓";

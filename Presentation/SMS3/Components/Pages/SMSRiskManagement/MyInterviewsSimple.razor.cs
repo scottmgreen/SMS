@@ -10,6 +10,8 @@ public partial class MyInterviewsSimple : ComponentBase
     [Inject] private ILogger<MyInterviewsSimple> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
 
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+
     private bool IsLoading { get; set; } = true;
     private List<Interview> FilteredInterviews { get; set; } = new();
 
@@ -113,13 +115,13 @@ public partial class MyInterviewsSimple : ComponentBase
 
     private BadgeStyle GetInterviewStatusBadge(Interview interview)
     {
-        if (interview.Status.Equals(InterviewStatus.Scheduled))
+        if (interview.Status.Equals(InterviewStatus.InterviewScheduled))
             return BadgeStyle.Info;
-        if (interview.Status.Equals(InterviewStatus.InProgress))
+        if (interview.Status.Equals(InterviewStatus.InterviewInProgress))
             return BadgeStyle.Warning;
-        if (interview.Status.Equals(InterviewStatus.Completed))
+        if (interview.Status.Equals(InterviewStatus.InterviewComplete))
             return BadgeStyle.Success;
-        if (interview.Status.Equals(InterviewStatus.Cancelled))
+        if (interview.Status.Equals(InterviewStatus.UnableToConduct))
             return BadgeStyle.Danger;
 
         return BadgeStyle.Light;

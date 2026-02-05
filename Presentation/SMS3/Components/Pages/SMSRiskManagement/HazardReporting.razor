@@ -51,7 +51,7 @@ else if (ShowFinalSuccessConfirmation)
                                 </div>
                                 <div class="col-sm-6">
                                     <strong>Submitted:</strong> @SubmissionDateTime?.ToString("MM/dd/yyyy HH:mm")<br>
-                                    <strong>Confidential:</strong> @(HazardReport.IsConfidential ? "Yes" : "No")
+                                    <strong>Anonymous:</strong> @(HazardReport.IsAnonymous ? "Yes" : "No")
                                 </div>
                             </div>
                         </div>
@@ -87,6 +87,63 @@ else
                         </RadzenAlert>
                     }
                     <RadzenTemplateForm Data="@HazardReport" Submit="@HandleFormSubmit" TItem="HazardReportForm">
+                        <!-- Row 0: Anonymous, -->
+                        <RadzenRow Gap="1rem" Class="rz-mb-3">
+                            <RadzenColumn Size="3">
+                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="0.5rem">
+                                    <RadzenCheckBox @bind-Value="@HazardReport.IsAnonymous"
+                                                    Name="IsAnonymous"
+                                                    TriState="false" />
+                                    <RadzenLabel Style="font-weight:600" Text="Submit as Anonymous Report" Component="IsAnonymous" />
+                                </RadzenStack>
+                            </RadzenColumn>
+
+                            @* @if (!HazardReport.IsAnonymous)
+                            {
+                                
+                                <RadzenColumn Size="3">
+                                    <RadzenFormField Text="Contact Name" Variant="Variant.Outlined" Style="width: 100%;">
+                                        <RadzenTextBox @bind-Value="@HazardReport.ReportedBy"
+                                                       Placeholder="Name and position (e.g., 'John Smith - Ground Operations Supervisor')"
+                                                       Name="ReportedBy"
+                                                       MaxLength="60"
+                                                       Style="width: 100%;min-width: 100%;" />
+                                    </RadzenFormField>
+                                    
+                                </RadzenColumn>
+                                <RadzenColumn Size="3">
+                                    <RadzenFormField Text="Contact Email" Variant="Variant.Outlined" Style="width: 100%;">
+                                        <RadzenTextBox @bind-Value="@HazardReport.ReportingDepartment"
+                                                       Placeholder="Enter email ..."
+                                                       Name="ReportingDepartment"
+                                                       MaxLength="200"
+                                                       Style="width: 100%; min-width: 100%;" />
+                                    </RadzenFormField>
+                                    
+                                    
+                                </RadzenColumn>
+                                <RadzenColumn Size="3">
+                                    <RadzenFormField Text="Contact Comment *" Variant="Variant.Outlined" Style="width: 100%;">
+                                        <RadzenTextBox @bind-Value="@HazardReport.ReportingDepartment"
+                                                       Placeholder="Enter email ..."
+                                                       Name="ReportingDepartment"
+                                                       MaxLength="200"
+                                                       Style="width: 100%; min-width: 100%;" />
+                                    </RadzenFormField>
+
+
+                                </RadzenColumn>
+                            } *@
+
+                        
+                        
+                        
+                        
+                        
+                        </RadzenRow>
+
+
+
                         <!-- Row 1: Reported On and Reported By and Reporting Department, -->
                         <RadzenRow Gap="1rem" Class="rz-mb-3">
                             <RadzenColumn Size="2">
@@ -97,8 +154,8 @@ else
                                                     Style="width: 100%;" />
                                 </RadzenFormField>
                             </RadzenColumn>
-                            <RadzenColumn Size="4">
-                                <RadzenFormField Text="Reported By *" Variant="Variant.Outlined" Style="width: 100%;">
+                            <RadzenColumn Size="3">
+                                <RadzenFormField Text="Submitted By *" Variant="Variant.Outlined" Style="width: 100%;">
                                     <RadzenTextBox @bind-Value="@HazardReport.ReportedBy" 
                                                  Placeholder="Name and position (e.g., 'John Smith - Ground Operations Supervisor')"
                                                  Name="ReportedBy"
@@ -107,8 +164,8 @@ else
                                 </RadzenFormField>
                                 <RadzenRequiredValidator Component="ReportedBy" Text="Reported by is required" />
                             </RadzenColumn>
-                            <RadzenColumn Size="6">
-                                <RadzenFormField Text="Reporting Department *" Variant="Variant.Outlined" Style="width: 100%;">
+                            <RadzenColumn Size="3">
+                                <RadzenFormField Text="Department Note" Variant="Variant.Outlined" Style="width: 100%;">
                                         <RadzenTextBox @bind-Value="@HazardReport.ReportingDepartment"
                                                 Placeholder="Enter reporting department or organization..."
                                                 Name="ReportingDepartment"
@@ -116,17 +173,21 @@ else
                                                 Style="width: 100%; min-width: 100%;" />
                                 </RadzenFormField>
                                 <RadzenRequiredValidator Component="ReportingDepartment" Text="Reporting Department by is required" />
-                                @* <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Class="rz-mt-1">
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="rz-color-info rz-mt-1">
-                                        <RadzenIcon Icon="info" Style="font-size: 0.8rem;" />
-                                        Enter the department, organization, or unit submitting this report
-                                    </RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Caption"
-                                                Class="@(ReportingDepartmentCharacterCount > 180 ? "rz-color-warning" : ReportingDepartmentCharacterCount > 200 ? "rz-color-danger" : "rz-color-info rz-mt-1")">
-                                        @ReportingDepartmentCharacterCount/200 characters
-                                    </RadzenText>
-                                </RadzenStack> *@
                             </RadzenColumn>
+                            <RadzenColumn Size="4">
+                                <RadzenFormField Text="Reporting Department *" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenTextBox @bind-Value="@HazardReport.ReportingDepartment"
+                                                   Placeholder="Enter reporting department or organization..."
+                                                   Name="ReportingDepartment"
+                                                   MaxLength="200"
+                                                   Style="width: 100%; min-width: 100%;" />
+                                </RadzenFormField>
+                                <RadzenRequiredValidator Component="ReportingDepartment" Text="Reporting Department by is required" />
+                            </RadzenColumn>
+
+
+
+
                         </RadzenRow>
 
                         <!-- Row 2: Hazard Category and Hazard Type -->
@@ -219,20 +280,7 @@ else
                                             </RadzenStack>
                                         </RadzenCard>
                                     }
-                                    else
-                                    {
-                                        @* <RadzenCard Variant="Variant.Text" Class="sms-guidance-mini">
-                                            <RadzenStack Gap="0.5rem" Class="rz-p-2">
-                                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                                    <RadzenIcon Icon="help_outline" Style="color: var(--rz-secondary); font-size: 1rem;" />
-                                                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; color: var(--rz-secondary);">Get Started</RadzenText>
-                                                </RadzenStack>
-                                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-size: 0.85rem;">
-                                                    Select a hazard category to see relevant hazard types and guidance information.
-                                                </RadzenText>
-                                            </RadzenStack>
-                                        </RadzenCard> *@
-                                    }
+                                    
                                 </RadzenColumn>
                             </RadzenRow>
                             
@@ -365,14 +413,7 @@ else
                         <!-- Form Actions -->
                         <!-- Row 6: Confidential Flag at Bottom -->
                         <RadzenRow Gap="1rem" Class="rz-border-top-1 rz-pt-3">
-                            <RadzenColumn>
-                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="0.5rem">
-                                    <RadzenCheckBox @bind-Value="@HazardReport.IsConfidential"
-                                                    Name="IsConfidential"
-                                                    TriState="false" />
-                                    <RadzenLabel Style="font-weight:600"  Text="Submit as Confidential Report" Component="IsConfidential" />
-                                </RadzenStack>
-                            </RadzenColumn>
+                            
                             
                             
                             
@@ -621,16 +662,16 @@ else
                             <p class="mb-1"><strong>Location:</strong> @LocationDisplayText</p>
                             <p class="mb-1"><strong>Reported By:</strong> @HazardReport.ReportedBy</p>
                             <p class="mb-1"><strong>Reported On:</strong> @HazardReport.ReportedOn.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt")</p>
-                            <p class="mb-0"><strong>Confidential:</strong> @(HazardReport.IsConfidential ? "Yes" : "No")</p>
+                            <p class="mb-0"><strong>Confidential:</strong> @(HazardReport.IsAnonymous ? "Yes" : "No")</p>
                         </div>
                     </div>
                     
                     <div class="d-flex justify-content-center gap-3">
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                            <RadzenCheckBox @bind-Value="@HazardReport.IsConfidential"
-                                            Name="IsConfidential"
+                            <RadzenCheckBox @bind-Value="@HazardReport.IsAnonymous"
+                                            Name="IsAnonymous"
                                             TriState="false" />
-                            <RadzenLabel Text="Submit as Confidential Report" Component="IsConfidential" />
+                            <RadzenLabel Text="Submit as Confidential Report" Component="IsAnonymous" />
                             <RadzenButton ButtonStyle="ButtonStyle.Base"
                                           Variant="Variant.Text"
                                           Icon="info"

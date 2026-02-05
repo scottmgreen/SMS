@@ -277,9 +277,9 @@ public partial class MitigationListing : ComponentBase
                 try
                 {
                     // Update mitigation status to Approved
-                    mitigation.Status = "Approved";
+                    mitigation.Status = MitigationStatus.Approved;
                     mitigation.UpdatedDate = DateTime.UtcNow;
-                    mitigation.UpdatedBy = "SYSTEM"; // You might want to get the current user
+                    mitigation.UpdatedBy = AuthService.CurrentUser.Code; // You might want to get the current user
 
                     var updateCommand = new UpdateMitigationCommand(mitigation);
                     var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);

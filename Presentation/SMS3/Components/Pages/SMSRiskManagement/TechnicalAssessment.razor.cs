@@ -1,4 +1,8 @@
-﻿namespace SMS3.Components.Pages.SMSRiskManagement;
+﻿using System.Runtime.Intrinsics.X86;
+
+using SMS3.Components.Pages.SMSRiskManagement.Models;
+
+namespace SMS3.Components.Pages.SMSRiskManagement;
 
 /// <summary>
 /// Technical Assessment - Comprehensive 5-step SMS risk assessment methodology
@@ -19,6 +23,7 @@ public partial class TechnicalAssessment : ComponentBase
     [Inject] private ILogger<TechnicalAssessment> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
+
 
     #endregion
 
@@ -58,8 +63,8 @@ public partial class TechnicalAssessment : ComponentBase
     #region UI Helper Properties
 
     public string AssessmentName => GetCurrentAssessmentName();
-    public string LeadAssessorName => AvailableAssessors.FirstOrDefault(a => a.Id.Value == Step1.LeadAssessor)?.DisplayName ?? Step1.LeadAssessor;
-
+    public string LeadAssessorName => AvailableAssessors.FirstOrDefault(a => a.UserName.Value == Step1.LeadAssessor)?.DisplayName ?? Step1.LeadAssessor;
+   
     // CRITICAL: Make this a property that can trigger change detection
     public List<Hazard> ReportedHazards { get; private set; } = new();
 
@@ -75,11 +80,11 @@ public partial class TechnicalAssessment : ComponentBase
         // For Step 5, emphasize it's the Residual stage
         if (CurrentStep == 5)
         {
-            return $"Hazard Report:{ReportId} Risk Assessment:{TechRiskAssessment?.Code} - Residual Stage";
+            return $"Hazard Report: {ReportId} Risk Assessment: {TechRiskAssessment?.Code} - Residual Stage";
         }
 
         // For Steps 1-4, show Initial stage
-        return $"Hazard Report:{ReportId} Risk Assessment:{TechRiskAssessment?.Code} - Initial Stage";
+        return $"Hazard Report: {ReportId} Risk Assessment: {TechRiskAssessment?.Code} - Initial Stage";
     }
     public string GetStepName(int stepNumber)
     {
@@ -143,32 +148,33 @@ public partial class TechnicalAssessment : ComponentBase
         var currentStep = CurrentStep;
         if (currentStep < 1 || currentStep > 5)
         {
-            // Invalid step, redirect to step 1
             Logger.LogWarning("Invalid step {CurrentStep}, redirecting to step 1", currentStep);
             await NavigateToStep(1);
             return;
         }
-
-        // Log the step change
-        if (StepNumber != null)
-        {
-            Logger.LogInformation("Parameter change detected - Step: {StepNumber}", StepNumber);
-        }
-
         // ✅ CRITICAL FIX: Reload Step3 data when navigating to Step 3
         if (currentStep == 3)
         {
             Logger.LogInformation("Navigating to Step 3 - reloading Step3 data to ensure HazardRiskAnalyses is complete");
-            
+            // ✅ FIRST: Refresh ReportHazards to include any newly added hazards from Step 2
+            await LoadReportHazardsAsync();
+
             if (TechRiskAssessment != null && ReportHazards?.Any() == true)
             {
-                await Step3.LoadFromAssessmentAsync(Mediator,TechRiskAssessment, ReportHazards);
+                await Step3.LoadFromAssessmentAsync(Mediator, TechRiskAssessment, ReportHazards);
             }
             else
             {
                 Logger.LogWarning("Cannot reload Step3 data - missing TechRiskAssessment or ReportHazards");
             }
         }
+        // Log the step change
+        if (StepNumber != null)
+        {
+            Logger.LogInformation("Parameter change detected - Step: {StepNumber}", StepNumber);
+        }
+
+        
 
         // If StepNumber parameter changed, we need to refresh the UI
         await InvokeAsync(StateHasChanged);
@@ -335,7 +341,7 @@ public partial class TechnicalAssessment : ComponentBase
                 Description = $"Created from Report {ReportId}",
                 Stage = "Created",
                 Code = assessmentId,
-                Status = RiskAssessmentStatus.Created,
+                Status = RiskAssessmentStatus.AssessmentCreate,
                 CurrentStep = 1,
                 UpdatedDate = DateTime.UtcNow,
                 UpdatedBy = AuthService.CurrentUserDisplayName
@@ -654,8 +660,25 @@ public partial class TechnicalAssessment : ComponentBase
                 ShowErrorNotification($"Please save Step {CurrentStep} before proceeding to Step {targetStep}");
                 return;
             }
-        }
+            
 
+
+        }
+        if (targetStep == 3)
+        {
+            Logger.LogInformation("Navigating to Step 3 - reloading Step3 data to ensure HazardRiskAnalyses is complete");
+            // ✅ FIRST: Refresh ReportHazards to include any newly added hazards from Step 2
+            await LoadReportHazardsAsync();
+
+            if (TechRiskAssessment != null && ReportHazards?.Any() == true)
+            {
+                await Step3.LoadFromAssessmentAsync(Mediator, TechRiskAssessment, ReportHazards);
+            }
+            else
+            {
+                Logger.LogWarning("Cannot reload Step3 data - missing TechRiskAssessment or ReportHazards");
+            }
+        }
         // Include the step number in the URL
         var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{HazardId}/{targetStep}";
 
@@ -793,10 +816,10 @@ public partial class TechnicalAssessment : ComponentBase
             if (initalresult.IsSuccess)
             {
                 TechRiskAssessment = initalresult.Value; // Update with latest data
-                
+
                 await UpdateHazardStatusForProgress();
 
-                Logger.LogInformation("Step {CurrentStep} saved successfully for assessment {AssessmentCode}",CurrentStep, TechRiskAssessment.Code);
+                Logger.LogInformation("Step {CurrentStep} saved successfully for assessment {AssessmentCode}", CurrentStep, TechRiskAssessment.Code);
 
                 return (true, $"Step {CurrentStep} saved successfully");
             }
@@ -821,7 +844,7 @@ public partial class TechnicalAssessment : ComponentBase
         if (TechRiskAssessment == null) return;
 
         // Update assessment status (enum) based on current step
-        TechRiskAssessment.Status = CurrentStep > 0 ? RiskAssessmentStatus.InProgress : RiskAssessmentStatus.Created;
+        TechRiskAssessment.Status = CurrentStep > 0 ? RiskAssessmentStatus.AssessmentUnderway : RiskAssessmentStatus.AssessmentCreate;
         
         // Update last modified info
         TechRiskAssessment.UpdatedDate = DateTime.UtcNow;
@@ -881,12 +904,12 @@ public partial class TechnicalAssessment : ComponentBase
     {
         return step switch
         {
-            1 => HazardStatus.UnderReview, // System description
-            2 => HazardStatus.UnderReview, // Hazard identification
-            3 => HazardStatus.UnderReview, // Risk analysis
-            4 => HazardStatus.UnderReview, // Risk assessment
-            5 => HazardStatus.UnderReview, // Risk mitigation
-            _ => HazardStatus.Active
+            1 => HazardStatus.InitialRiskAssessment, // System description
+            2 => HazardStatus.InitialRiskAssessment, // Hazard identification
+            3 => HazardStatus.InitialRiskAnalysis, // Risk analysis
+            4 => HazardStatus.InitialHazardScoring, // Risk assessment
+            5 => HazardStatus.ResidualRiskAnalysis, // Risk mitigation
+            _ => HazardStatus.InitialRiskAssessment
         };
     }
 

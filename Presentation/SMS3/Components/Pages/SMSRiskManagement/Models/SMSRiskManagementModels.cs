@@ -25,7 +25,7 @@ public class HazardReportForm
     public DateTime ReportedOn { get; set; } = DateTime.Now;
     public string? ReportingDepartment { get; set; }
     public string? NextAction { get; set; }
-    public bool IsConfidential { get; set; }
+    public bool IsAnonymous { get; set; } = false;
 }
 
 /// <summary>

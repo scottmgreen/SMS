@@ -167,7 +167,7 @@
                             <!-- Conducting Interview Tab -->
                             <RadzenTabsItem Text="@GetConductingTabText()" Icon="record_voice_over">
                                 <RadzenStack Gap="0.75rem" Style="padding: 1rem;">
-                                    @if (Model.Status.Equals(InterviewStatus.InProgress) || Model.Status.Equals(InterviewStatus.Completed))
+                                    @if (Model.Status.Equals(InterviewStatus.InterviewInProgress) || Model.Status.Equals(InterviewStatus.InterviewComplete))
                                     {
                                         <!-- Interview Notes Side by Side -->
                                         <RadzenRow Gap="0.75rem">
@@ -241,7 +241,7 @@
             <div class="sms-modal-footer">
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="d-flex gap-2">
-                        @if (Model.Status.Equals(InterviewStatus.Scheduled))
+                        @if (Model.Status.Equals(InterviewStatus.InterviewScheduled))
                         {
                             <RadzenButton ButtonStyle="ButtonStyle.Danger" 
                                         Text="Cancel Interview" 

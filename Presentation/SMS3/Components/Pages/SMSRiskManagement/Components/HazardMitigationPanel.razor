@@ -1,14 +1,15 @@
-﻿@using SMS_Domain.Entities
-@using SMS_Domain.Enums
-@using SMS_Domain.ValueObjects
+﻿@using Radzen
+@using Radzen.Blazor
 @using SMS3.Components.Pages.SMSRiskManagement
+@using SMS3.Components.Pages.SMSRiskManagement.Models
+@using SMS_Application.Interfaces
 @using SMS_Application.Messaging.Commands
 @using SMS_Application.Messaging.Queries
-@using SMS_Application.Interfaces
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using SMS_Domain.ValueObjects
 @using SMS_Shared.Common
 @using global::System.Text.Json
-@using Radzen
-@using Radzen.Blazor
 
 @inject IMediator Mediator
 @inject ILogger<HazardMitigationPanel> Logger
@@ -36,28 +37,7 @@
         <!-- Hazard Header -->
         <RadzenRow AlignItems="AlignItems.Center">
             <RadzenColumn Size="8">
-                @* <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color:#212e61;">
-                    
-                    &nbsp;
-                </RadzenText> *@
-                @* <RadzenStack AlignItems="AlignItems.Start" Gap="0.25rem">
-                    @if (NeedsMitigation)
-                    {
-                        @if (HasMitigations())
-                        {
-                            <RadzenText TextStyle="TextStyle.Subtitle1" Text="@($"Strategy Count {GetMitigationCount()} ")" Style="margin:0.5rem; color: #212e61;" />
-                           
-                        }
-                        else
-                        {
-                            <RadzenText TextStyle="TextStyle.Subtitle1" Text="Mitigation Required" Style="margin:0.5rem; color: var(--rz-warning);" />
-                        }
-                    }
-                    else
-                    {
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Text="Monitor Only" Style="margin:0.5rem; color: var(--rz-success);" />
-                    }
-                </RadzenStack> *@
+               
             </RadzenColumn>
             <RadzenColumn Size="4">
                 <RadzenStack AlignItems="AlignItems.End" Gap="0.25rem">
@@ -391,7 +371,7 @@
     [Parameter] public EventCallback<string> OnMitigationUpdated { get; set; }
     [Parameter] public EventCallback<string> OnResidualHazardScored { get; set; } // ✅ NEW: For residual scoring callbacks
 
-      
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
 
     // State properties
     private bool IsLoading { get; set; } = true;
@@ -428,12 +408,11 @@
         "Proposed", "Approved", "InProgress", "Completed", "Cancelled", "OnHold"
     };
 
-    private List<string> Departments = new()
-    {
-        "Airport Operations", "Safety Management", "Maintenance & Engineering", 
-        "Aircraft Rescue & Firefighting", "Airport Security", "Air Traffic Control", 
-        "Ground Handling Services", "Cargo Operations", "External Contractor"
-    };
+    // ✅ UPDATED: Replace hardcoded department list with SMSDepartment enum
+    private List<string> Departments => SMSDepartment.GetAllDepartments()
+        .Select(d => d.Name)
+        .OrderBy(name => name)
+        .ToList();
 
     private List<string> MonitoringFrequencies = new()
     {
@@ -494,7 +473,7 @@
         {
             // Create new mitigation entity with proper HazardCode and RiskAssessmentCode
             var newMitigationResult = Mitigation.Create(
-                code: $"MIT-{DateTime.Now:yyyyMMdd}-{Random.Shared.Next(1000, 9999)}",
+                code: $"MI-0000",
                 hazardCode: Hazard.Code,
                 name: "New Mitigation Strategy",
                 description: "Enter mitigation description..."
@@ -508,7 +487,7 @@
                 CurrentMitigation.RiskAssessmentCode = CurrentRiskAssessment?.Code ?? string.Empty;
                 
                 // Set defaults
-                CurrentMitigation.Status = "Proposed";
+                CurrentMitigation.Status = MitigationStatus.PendingApproval.Value;
                 CurrentMitigation.Priority = "Medium";
                 CurrentMitigation.Type = "Administrative Control";
                 CurrentMitigation.Progress = 0;
@@ -606,6 +585,9 @@
 
             if (result.IsSuccess)
             {
+                // ✅ NEW: Update Hazard status to ResidualRiskMitigation using CQRS pattern
+                await UpdateHazardStatusToResidualMitigation();
+                
                 CloseMitigationDialog();
                 await OnMitigationUpdated.InvokeAsync(Hazard.Code);
                 StateHasChanged();
@@ -872,6 +854,65 @@
     }
 
     /// <summary>
+    /// Update Hazard status to ResidualRiskMitigation using CQRS pattern
+    /// Called after successfully saving a mitigation to indicate hazard is now in mitigation phase
+    /// </summary>
+    private async Task UpdateHazardStatusToResidualMitigation()
+    {
+        try
+        {
+            Logger.LogInformation("Updating hazard {HazardCode} status to ResidualRiskMitigation", Hazard.Code);
+
+            // Get current hazard
+            var hazardQuery = new GetHazardByCodeQuery(new HazardID(Hazard.Code));
+            var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
+
+            if (hazardResult.IsSuccess && hazardResult.Value != null)
+            {
+                var currentHazard = hazardResult.Value;
+                var originalStatus = currentHazard.Status?.ToString();
+
+                // Update hazard status to ResidualRiskMitigation
+                currentHazard.Status = HazardStatus.ResidualRiskMitigation;
+                
+                // Update audit fields
+                currentHazard.UpdatedDate = DateTime.UtcNow;
+                currentHazard.UpdatedBy = AuthService.CurrentUser.Code;  // You might want to get the current user
+
+                // Save hazard using CQRS UpdateHazardCommand
+                var updateHazardCommand = new UpdateHazardCommand(currentHazard);
+                var updateResult = await Mediator.SendAsync(updateHazardCommand, CancellationToken.None);
+
+                if (updateResult.IsSuccess)
+                {
+                    // Update local hazard parameter with the updated hazard
+                    Hazard = updateResult.Value;
+                    
+                    Logger.LogInformation("Successfully updated hazard {HazardCode} status from {OldStatus} to {NewStatus}",
+                        Hazard.Code, originalStatus, HazardStatus.ResidualRiskMitigation.Name);
+                }
+                else
+                {
+                    Logger.LogWarning("Failed to update hazard {HazardCode} status: {Error}", 
+                        Hazard.Code, updateResult.Error?.Message);
+                    
+                    // Don't show error to user as mitigation was saved successfully
+                    // This is just a status update failure
+                }
+            }
+            else
+            {
+                Logger.LogWarning("Could not load hazard {HazardCode} for status update", Hazard.Code);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error updating hazard {HazardCode} status to ResidualRiskMitigation", Hazard.Code);
+            // Don't throw - mitigation was saved successfully, status update is secondary
+        }
+    }
+
+    /// <summary>
     /// Show error notification to user
     /// </summary>
     private void ShowErrorNotification(string message)
@@ -910,4 +951,4 @@
         public string Role { get; set; } = string.Empty;
         public bool IsSelected { get; set; }
     }
-}
+}}

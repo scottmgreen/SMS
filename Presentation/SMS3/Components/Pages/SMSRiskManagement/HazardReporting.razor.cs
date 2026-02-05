@@ -324,7 +324,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                     ReportedBy = primaryHazard.ReportedBy,
                     ReportedOn = primaryHazard.ReportedOn,
                     ReportingDepartment = primaryHazard.ReportingDepartment,
-                    IsConfidential = primaryHazard.IsConfidential,
+                    IsAnonymous = primaryHazard.IsAnonymous,
                     Location = primaryHazard.LocationArea
                 };
 
@@ -1179,7 +1179,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         EditingHazard.ReportedBy = HazardReport.ReportedBy;
         EditingHazard.ReportedOn = HazardReport.ReportedOn;
         EditingHazard.ReportingDepartment = HazardReport.ReportingDepartment;
-        EditingHazard.IsConfidential = HazardReport.IsConfidential;
+        EditingHazard.IsAnonymous = HazardReport.IsAnonymous;
         EditingHazard.UpdatedDate = DateTime.UtcNow;
         EditingHazard.UpdatedBy = AuthService.CurrentUserDisplayName;
 
@@ -1270,8 +1270,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             ReportedBy = HazardReport.ReportedBy,
             ReportedOn = HazardReport.ReportedOn,
             ReportingDepartment = HazardReport.ReportingDepartment,
-            IsConfidential = HazardReport.IsConfidential,
-            IsAnonymous = false,
+            IsAnonymous = HazardReport.IsAnonymous,
             ReportCode = actualReportCode,
             IsInitialHazard = true ,
             CreatedBy = AuthService.CurrentUserDisplayName,
@@ -1459,7 +1458,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                             UploadedBy = HazardReport.ReportedBy ?? AuthService.CurrentUserDisplayName,
                             UploadedDate = DateTime.UtcNow,
                             IsActive = true,
-                            IsConfidential = HazardReport.IsConfidential
+                            IsConfidential = HazardReport.IsAnonymous
                         };
 
                         var createHazardFileCommand = new CreateHazardFileCommand(hazardFile);

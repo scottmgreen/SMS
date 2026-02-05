@@ -23,7 +23,7 @@ public abstract class AuthenticatedPageBase : ComponentBase
     /// </summary>
     protected string GetCurrentUserId()
     {
-        return AuthService?.CurrentUserId ?? "SYSTEM";
+        return AuthService?.CurrentUser.Code?? "SYSTEM";
     }
 
     /// <summary>

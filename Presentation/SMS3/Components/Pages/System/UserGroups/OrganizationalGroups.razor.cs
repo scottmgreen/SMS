@@ -12,6 +12,8 @@ public partial class OrganizationalGroups : ComponentBase
     [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
 
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+
     #endregion
 
     #region Parameters

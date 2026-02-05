@@ -12,6 +12,8 @@ public partial class AirportSharedDataset : ComponentBase
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private ILogger<AirportSharedDataset> Logger { get; set; } = default!;
+
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
     #endregion
 
     #region Parameters

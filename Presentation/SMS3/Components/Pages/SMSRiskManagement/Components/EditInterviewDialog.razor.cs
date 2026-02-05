@@ -21,10 +21,10 @@ public partial class EditInterviewDialog : ComponentBase
     #endregion
 
     #region Workflow Properties
-    private bool CanStartInterview => Model.Status.Equals(InterviewStatus.Scheduled) && Model.InterviewDate.HasValue;
-    private bool CanCompleteInterview => Model.Status.Equals(InterviewStatus.InProgress) && !string.IsNullOrWhiteSpace(Model.KeyFindings);
-    private bool IsInterviewInProgress => Model.Status.Equals(InterviewStatus.InProgress);
-    private bool IsInterviewCompleted => Model.Status.Equals(InterviewStatus.Completed);
+    private bool CanStartInterview => Model.Status.Equals(InterviewStatus.InterviewScheduled) && Model.InterviewDate.HasValue;
+    private bool CanCompleteInterview => Model.Status.Equals(InterviewStatus.InterviewInProgress) && !string.IsNullOrWhiteSpace(Model.KeyFindings);
+    private bool IsInterviewInProgress => Model.Status.Equals(InterviewStatus.InterviewInProgress);
+    private bool IsInterviewCompleted => Model.Status.Equals(InterviewStatus.InterviewComplete);
     #endregion
 
     #region Dropdown Options
@@ -38,10 +38,10 @@ public partial class EditInterviewDialog : ComponentBase
 
     private readonly List<DropdownOption> InterviewStatusOptions = new()
     {
-        new() { Value = InterviewStatus.Scheduled, Text = "Scheduled" },
-        new() { Value = InterviewStatus.InProgress, Text = "In Progress" },
-        new() { Value = InterviewStatus.Completed, Text = "Completed" },
-        new() { Value = InterviewStatus.Cancelled, Text = "Cancelled" }
+        new() { Value = InterviewStatus.InterviewScheduled, Text = "Scheduled" },
+        new() { Value = InterviewStatus.InterviewInProgress, Text = "In Progress" },
+        new() { Value = InterviewStatus.InterviewComplete, Text = "Completed" },
+        new() { Value = InterviewStatus.InterviewCanceled, Text = "Cancelled" }
     };
     #endregion
 
@@ -78,13 +78,13 @@ public partial class EditInterviewDialog : ComponentBase
     {
         //if (Model.Status.Equals(InterviewStatus.Planned))
         //    return $"Plan Interview: {Model.PersonInterviewed}";
-        if (Model.Status.Equals(InterviewStatus.Scheduled))
+        if (Model.Status.Equals(InterviewStatus.InterviewScheduled))
             return $"Scheduled Interview: {Model.PersonInterviewed}";
-        if (Model.Status.Equals(InterviewStatus.InProgress))
+        if (Model.Status.Equals(InterviewStatus.InterviewInProgress))
             return $"Conducting Interview: {Model.PersonInterviewed}";
-        if (Model.Status.Equals(InterviewStatus.Completed))
+        if (Model.Status.Equals(InterviewStatus.InterviewComplete))
             return $"Interview Complete: {Model.PersonInterviewed}";
-        if (Model.Status.Equals(InterviewStatus.Cancelled))
+        if (Model.Status.Equals(InterviewStatus.InterviewCanceled))
             return $"Cancelled Interview: {Model.PersonInterviewed}";
 
         return $"Edit Interview: {Model.PersonInterviewed}";
@@ -92,13 +92,13 @@ public partial class EditInterviewDialog : ComponentBase
 
     private string GetInterviewIcon()
     {
-        if (Model.Status.Equals(InterviewStatus.Scheduled))
+        if (Model.Status.Equals(InterviewStatus.InterviewScheduled))
             return "schedule";
-        if (Model.Status.Equals(InterviewStatus.InProgress))
+        if (Model.Status.Equals(InterviewStatus.InterviewInProgress))
             return "record_voice_over";
-        if (Model.Status.Equals(InterviewStatus.Completed))
+        if (Model.Status.Equals(InterviewStatus.InterviewComplete))
             return "check_circle";
-        if (Model.Status.Equals(InterviewStatus.Cancelled))
+        if (Model.Status.Equals(InterviewStatus.InterviewCanceled))
             return "cancel";
 
         return "edit";
@@ -106,13 +106,13 @@ public partial class EditInterviewDialog : ComponentBase
 
     private BadgeStyle GetStatusBadgeStyle()
     {
-        if (Model.Status.Equals(InterviewStatus.Scheduled))
+        if (Model.Status.Equals(InterviewStatus.InterviewScheduled))
             return BadgeStyle.Primary;
-        if (Model.Status.Equals(InterviewStatus.InProgress))
+        if (Model.Status.Equals(InterviewStatus.InterviewInProgress))
             return BadgeStyle.Warning;
-        if (Model.Status.Equals(InterviewStatus.Completed))
+        if (Model.Status.Equals(InterviewStatus.InterviewComplete))
             return BadgeStyle.Success;
-        if (Model.Status.Equals(InterviewStatus.Cancelled))
+        if (Model.Status.Equals(InterviewStatus.InterviewCanceled))
             return BadgeStyle.Danger;
 
         return BadgeStyle.Light;
@@ -120,9 +120,9 @@ public partial class EditInterviewDialog : ComponentBase
 
     private string GetConductingTabText()
     {
-        if (Model.Status.Equals(InterviewStatus.InProgress))
+        if (Model.Status.Equals(InterviewStatus.InterviewInProgress))
             return "Conducting Interview";
-        if (Model.Status.Equals(InterviewStatus.Completed))
+        if (Model.Status.Equals(InterviewStatus.InterviewComplete))
             return "Interview Results";
 
         return "Conduct Interview";
@@ -137,7 +137,7 @@ public partial class EditInterviewDialog : ComponentBase
             var result = Interview.StartInterview();
             if (result.IsSuccess)
             {
-                Model.Status = InterviewStatus.InProgress;
+                Model.Status = InterviewStatus.InterviewInProgress;
                 selectedTabIndex = 2; // Switch to conducting tab
                 await UpdateInterview();
                 ShowSuccessNotification("Interview started successfully. You can now begin recording notes and findings.");
@@ -174,7 +174,7 @@ public partial class EditInterviewDialog : ComponentBase
 
             if (result.IsSuccess)
             {
-                Model.Status = InterviewStatus.Completed;
+                Model.Status = InterviewStatus.InterviewComplete;
                 Model.CompletedDate = DateTime.UtcNow;
                 await UpdateInterview();
                 ShowSuccessNotification("Interview completed successfully!");
@@ -211,7 +211,7 @@ public partial class EditInterviewDialog : ComponentBase
                 var result = Interview.CancelInterview(reason);
                 if (result.IsSuccess)
                 {
-                    Model.Status = InterviewStatus.Cancelled;
+                    Model.Status = InterviewStatus.InterviewCanceled;
                     await UpdateInterview();
                     ShowSuccessNotification("Interview cancelled successfully");
                     StateHasChanged();
@@ -247,7 +247,7 @@ public partial class EditInterviewDialog : ComponentBase
             }
 
             // Validate interview completion requirements
-            if (model.Status == InterviewStatus.Completed && string.IsNullOrWhiteSpace(model.KeyFindings))
+            if (model.Status == InterviewStatus.InterviewComplete && string.IsNullOrWhiteSpace(model.KeyFindings))
             {
                 ShowErrorNotification("Key findings are required for completed interviews");
                 return;
@@ -374,7 +374,7 @@ public partial class EditInterviewDialog : ComponentBase
         public string? PersonInterviewedNotes { get; set; }
         public string? InvestigatorNotes { get; set; }
         public InterviewType Type { get; set; } = InterviewType.Witness;
-        public InterviewStatus Status { get; set; } = InterviewStatus.Scheduled;
+        public InterviewStatus Status { get; set; } = InterviewStatus.InterviewScheduled;
         public DateTime? InterviewDate { get; set; }
         public int? DurationMinutes { get; set; }
         public string? InterviewLocation { get; set; }

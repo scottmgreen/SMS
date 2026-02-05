@@ -28,7 +28,7 @@ public class CreateMitigationCommandHandler : BaseCommandBundle, IRequestHandler
             }
 
             _logger.LogInformation("Processing CreateMitigationCommand for Code: {Code}", request.Mitigation.Code);
-            request.Mitigation.Status = "PENDING";
+            request.Mitigation.Status = MitigationStatus.PendingApproval.Value;
 
             var result = await _dataService.CreateMitigationAsync(request.Mitigation, ct).ConfigureAwait(false);
 

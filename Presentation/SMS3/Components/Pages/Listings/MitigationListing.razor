@@ -272,13 +272,15 @@
 
 <!-- Add quick approve method to code-behind -->
 @code {
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+
     private async Task QuickApproveMitigation(Mitigation mitigation)
     {
         try
         {
-            mitigation.Status = "Approved";
+            mitigation.Status = MitigationStatus.Approved;
             mitigation.UpdatedDate = DateTime.UtcNow;
-            mitigation.UpdatedBy = "SYSTEM";
+            mitigation.UpdatedBy = AuthService.CurrentUser.Code;
 
             var updateCommand = new UpdateMitigationCommand(mitigation);
             var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);

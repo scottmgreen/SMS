@@ -1,10 +1,11 @@
-@using SMS_Domain.Entities
-@using SMS_Domain.Enums
-@using SMS3.Components.Pages.SMSRiskManagement
-@using SMS3.Components.Shared
-@using global::System.Text.Json
 @using Radzen
 @using Radzen.Blazor
+@using SMS3.Components.Pages.SMSRiskManagement
+@using SMS3.Components.Pages.SMSRiskManagement.Models
+@using SMS3.Components.Shared
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using global::System.Text.Json
 
 <RadzenRow Gap="1rem">
     <!-- Main Content Column -->
@@ -136,6 +137,7 @@
                 OnHazardAdded="@OnHazardAdded"
                 OnHazardUpdated="@OnHazardUpdated"
                 ReportId="@ReportId"
+                RiskAssessmentId="@RiskAssessmentId"
                 EditingHazard="@EditingHazard"
                 IsEditMode="@IsEditMode" />
 
@@ -149,7 +151,7 @@
     [Parameter] public EventCallback<Hazard> OnHazardDeleted { get; set; }
     [Parameter] public string? ReportId { get; set; }
     [Parameter] public string? InitialHazardId { get; set; }
-
+    [Parameter] public string? RiskAssessmentId { get; set; }
     [Inject] private ILogger<TechnicalAssessmentStep2>? Logger { get; set; }
 
     private bool ShowAddHazardDialog { get; set; } = false;

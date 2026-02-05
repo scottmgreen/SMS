@@ -78,11 +78,11 @@ else if (ReportDetails != null)
                 <div class="info-item">
                     <label class="info-label">Report Description</label>
                     <div class="info-value">
-                        @if (ReportDetails.IsConfidential)
+                        @if (ReportDetails.IsAnonymous)
                         {
                             <span class="text-muted">
                                 <i class="fas fa-lock me-2"></i>
-                                Confidential report - details available to authorized safety personnel only
+                                Anonymous report - details available to authorized safety personnel only
                             </span>
                         }
                         else

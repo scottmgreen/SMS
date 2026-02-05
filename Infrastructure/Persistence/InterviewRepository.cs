@@ -507,7 +507,7 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewDate, interviewDate));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewLocation, location));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewDurationMinutes, durationMinutes ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewStatus, InterviewStatus.Scheduled.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewStatus, InterviewStatus.InterviewScheduled.ToString()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM")); // This will need to be fixed - should accept updatedBy parameter
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
@@ -546,7 +546,7 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewPersonInterviewedNotes, personNotes ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewInvestigatorNotes, investigatorNotes ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewKeyFindings, keyFindings ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewStatus, InterviewStatus.Completed.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewStatus, InterviewStatus.InterviewComplete.ToString()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewCompletedDate, DateTime.UtcNow));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM")); // This will need to be fixed - should accept updatedBy parameter
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));

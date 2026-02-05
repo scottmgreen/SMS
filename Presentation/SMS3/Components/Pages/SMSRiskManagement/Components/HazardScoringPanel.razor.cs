@@ -5,10 +5,10 @@ using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
 using SMS_Application.Interfaces;
 using SMS3.Components.Shared;
-using SMS3.Components.Pages.SMSRiskManagement; // Add this for Step4Model and Step5Model
 using Radzen;
 using Radzen.Blazor;
 using Microsoft.AspNetCore.Components;
+using SMS3.Components.Pages.SMSRiskManagement.Models;
 
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
@@ -27,6 +27,8 @@ public partial class HazardScoringPanel : ComponentBase
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<HazardScoringPanel> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
+
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
 
     private RadzenDataGrid<ScoringPanel>? ScoringGrid;
     private List<ScoringPanel> HazardScoringPanels = new();
@@ -429,8 +431,7 @@ public partial class HazardScoringPanel : ComponentBase
                 // Delete panels for unselected stakeholders
                 foreach (var panel in panelsToRemove)
                 {
-                    Logger.LogInformation("Deleting panel {PanelCode} for stakeholder {StakeholderCode}",
-                        panel.Code, panel.SMSUserCode);
+                    Logger.LogInformation("Deleting panel {PanelCode} for stakeholder {StakeholderCode}", panel.Code, panel.SMSUserCode);
 
                     var deleteCommand = new DeleteScoringPanelCommand(new ScoringPanelID(panel.Id.Value));
                     await Mediator.SendAsync(deleteCommand, CancellationToken.None);
@@ -718,13 +719,44 @@ public partial class HazardScoringPanel : ComponentBase
 
             if (CurrentStep == 4)
             {
+                Hazard.Status = HazardStatus.InitialHazardScoring;
                 Hazard.InitialAverageScore = (decimal?)CalculatedAverageScore;
                 Hazard.InitialRiskMatrixCode = CalculatedMatrixCode;  // Aviation matrix code (like "2B", "3D")
+
+                // ✅ FIX: Always update Step4 dictionary, even when CalculatedAverageScore is null
+                if (CalculatedAverageScore.HasValue)
+                {
+                    Step4.HazardAverageScores[Hazard.Code] = CalculatedAverageScore.Value;
+                    Step4.HazardRiskLevels[Hazard.Code] = CalculatedRiskLevel;
+                    Step4.HazardMatrixCodes[Hazard.Code] = CalculatedMatrixCode;
+                }
+                else
+                {
+                    // ✅ FIX: Remove entries when no score is available
+                    Step4.HazardAverageScores.Remove(Hazard.Code);
+                    Step4.HazardRiskLevels.Remove(Hazard.Code);
+                    Step4.HazardMatrixCodes.Remove(Hazard.Code);
+                }
             }
             else
             {
+                Hazard.Status = HazardStatus.ResidualHazardScoring;
                 Hazard.ResidualAverageScore = (decimal?)CalculatedAverageScore;
                 Hazard.ResidualRiskMatrixCode = CalculatedMatrixCode;  // Aviation matrix code (like "2B", "3D")
+
+                // ✅ FIX: Similarly for Step 5 if needed
+                //if (CalculatedAverageScore.HasValue)
+                //{
+                //    Step5.HazardAverageScores[Hazard.Code] = CalculatedAverageScore.Value;
+                //    Step5.HazardRiskLevels[Hazard.Code] = CalculatedRiskLevel;
+                //    Step5.HazardMatrixCodes[Hazard.Code] = CalculatedMatrixCode;
+                //}
+                //else
+                //{
+                //    Step5.HazardAverageScores.Remove(Hazard.Code);
+                //    Step5.HazardRiskLevels.Remove(Hazard.Code);
+                //    Step5.HazardMatrixCodes.Remove(Hazard.Code);
+                //}
             }
 
 
@@ -732,7 +764,7 @@ public partial class HazardScoringPanel : ComponentBase
 
             Hazard.RiskLevel = CalculatedRiskLevel;
             Hazard.UpdatedDate = DateTime.UtcNow;
-            Hazard.UpdatedBy = "SYSTEM"; // Set updated by system for scoring updates
+            Hazard.UpdatedBy = AuthService.CurrentUser.Code; // Set updated by system for scoring updates
 
             // Save via CQRS
             var updateHazardCommand = new UpdateHazardCommand(Hazard);

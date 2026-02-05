@@ -13,6 +13,8 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     [Parameter] public Hazard? EditingHazard { get; set; }
     [Parameter] public bool IsEditMode { get; set; } = false;
 
+    [Parameter] public string RiskAssessmentId { get; set; } 
+
     [Inject] AuthenticationService AuthService { get; set; }
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
     [Inject] private IMediator Mediator { get; set; } = default!;
@@ -402,8 +404,8 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     /// </summary>
     private async Task CreateNewHazard()
     {
-        Logger?.LogInformation("Starting hazard creation with description: {Description}, Category: {Category}, Type: {Type}", 
-            NewHazardDescription?.Trim(), NewHazardCategory, NewHazardType);
+        
+        Logger?.LogInformation("Starting hazard creation with description: {Description}, Category: {Category}, Type: {Type}", NewHazardDescription?.Trim(), NewHazardCategory, NewHazardType);
 
         // Create hazard
         HazardID hazardID = new HazardID("HZ-0000");
@@ -419,9 +421,8 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         hazard.ReportCode = ReportId ?? "";
         hazard.ReportedBy = AuthService.CurrentUserDisplayName;
         hazard.ReportingDepartment = "Technical Assessment";
-        hazard.IsConfidential = false;
         hazard.IsAnonymous = false;
-        hazard.Status = HazardStatus.Active;
+        hazard.Status = HazardStatus.InitialRiskAssessment;
         hazard.Priority = HazardPriority.Medium;
         hazard.ReportedOn = DateTime.UtcNow;
         hazard.CreatedBy = AuthService.CurrentUserDisplayName;
@@ -441,6 +442,21 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
 
         var createdHazard = hazardResult.Value;
         Logger?.LogInformation("Successfully created hazard: {HazardCode} with Category: {Category}, Type: {Type}",  createdHazard?.Code, NewHazardCategory, NewHazardType);
+
+        //Create RiskAnalysis 
+        
+        
+        RiskAnalysis riskAnalysis = new RiskAnalysis(new RiskAnalysisID("RA-0000"));
+        riskAnalysis.HazardCode = createdHazard.Code;
+        riskAnalysis.RiskAssessmentCode = RiskAssessmentId;
+        var createRiskAnalysis = new CreateRiskAnalysisCommand(riskAnalysis);
+        var riskAnalysisResult = await Mediator.SendAsync(createRiskAnalysis, CancellationToken.None);
+        if (!riskAnalysisResult.IsSuccess)
+        {
+            Logger?.LogError("Failed to get RiskAssessment for Hazard: {Error}", hazardResult.Error?.Message);
+            return;
+        }
+
 
         // Create the HazardLocation after hazard is created
         if (HasGeoLocation)

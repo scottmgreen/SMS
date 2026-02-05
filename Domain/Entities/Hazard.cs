@@ -32,7 +32,7 @@ public sealed class Hazard : BaseAuditableEntity
     public string Description { get; set; } = string.Empty;
 
     
-    public HazardStatus Status { get; set; } = HazardStatus.Active;
+    public HazardStatus Status { get; set; } = HazardStatus.InitialRiskAssessment;
     public HazardPriority Priority { get; set; } = HazardPriority.Medium;
 
     public bool IsInitialHazard { get; set; }
@@ -54,7 +54,7 @@ public sealed class Hazard : BaseAuditableEntity
 
     #region Privacy and Confidentiality Properties
 
-    public bool IsConfidential { get; set; } = false;               // Confidential hazard - restricted access
+                
     public bool IsAnonymous { get; set; } = false;                  // Anonymous reporting - protect reporter identity
 
     #endregion

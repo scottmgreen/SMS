@@ -59,7 +59,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
     /// <summary>
     /// Risk Assessment Status - BUSINESS RULE: Only "Created", "InProgress", "Completed"
     /// </summary>
-    public RiskAssessmentStatus Status { get; set; } = RiskAssessmentStatus.Created;
+    public RiskAssessmentStatus Status { get; set; } = RiskAssessmentStatus.AssessmentCreate;
 
     /// <summary>
     /// Assessment Type - BUSINESS RULE: Only "Initial" or "Residual"
@@ -176,13 +176,13 @@ public sealed class RiskAssessment : BaseAuditableEntity
             // Update status based on progress - BUSINESS RULE: Only Created/InProgress/Completed
             if (stepNumber == 5)
             {
-                Status = RiskAssessmentStatus.Completed;
+                Status = RiskAssessmentStatus.AssessmentComplete;
                 Stage = "Complete";
             }
            
             else
             {
-                Status = RiskAssessmentStatus.InProgress;
+                Status = RiskAssessmentStatus.AssessmentUnderway;
                 Stage = $"Step {stepNumber} Complete";
             }
         }

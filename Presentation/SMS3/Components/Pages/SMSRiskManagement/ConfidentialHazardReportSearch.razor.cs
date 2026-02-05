@@ -14,6 +14,8 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
+
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
     #endregion
 
     #region Search Properties
@@ -695,7 +697,7 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
 
                         // Only show non-sensitive information for anonymous users
                         searchResult.ReportedOn = hazard.ReportedOn != DateTime.MinValue ? hazard.ReportedOn : DateTime.MinValue;
-                        searchResult.IsConfidential = hazard.IsConfidential;
+                        searchResult.IsAnonymous = hazard.IsAnonymous;
 
                         // Show generic hazard type rather than specific details
                         if (!string.IsNullOrEmpty(hazard.HazardType))
@@ -783,7 +785,7 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
         public DateTime? ValidationDate { get; set; }
         public string ValidatedBy { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public bool IsConfidential { get; set; }
+        public bool IsAnonymous { get; set; }
         public DateTime CreatedDate { get; set; }
     }
 

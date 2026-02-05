@@ -14,8 +14,8 @@
 <PageTitle>Technical Assessment - SMS3</PageTitle>
 
 <!-- SMS Page Header using reusable component -->
-<PageHeader Title="Technical Assessment"
-           Subtitle="Perform detailed technical analysis and risk assessment of safety incidents"
+<PageHeader Title="Technical Assessment" 
+           Subtitle="@($"{AssessmentName}")"
            Icon="fas fa-cogs" />
 
 <RadzenRow Gap="1rem">
@@ -30,9 +30,9 @@
                                 <RadzenIcon Icon="@GetStepIcon(CurrentStep)" Style="margin-right: 0.5rem;" />
                                 Step @CurrentStep: @GetStepName(CurrentStep)
                             </RadzenText>
-                            <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-text-secondary-color); margin: 0;">
+                            @* <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-text-secondary-color); margin: 0;">
                                 @AssessmentName
-                            </RadzenText>
+                            </RadzenText> *@
                         </RadzenStack>
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="4">
@@ -111,6 +111,7 @@
                                                      Step2Changed="@UpdateStep2"
                                                      Step2Hazards="@ReportedHazards"
                                                      ReportId="@ReportId"
+                                                     RiskAssessmentId="@TechRiskAssessment.Code"
                                                      InitialHazardId="@HazardId"
                                                      OnHazardAdded="@AddHazard"
                                                      OnHazardUpdated="@UpdateHazard"

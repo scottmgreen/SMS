@@ -30,3 +30,19 @@ Mitigation Status
 	Reassess Hazard
 -	Mitigation Complete
 -	Monitoring Hazard
+
+
+
+
+
+
+
+Hazard Status REVISED
+-	Initial Risk Assessment
+-	Initial Risk Analysis
+-	Initial Hazard Scoring
+-	Residual Risk Assessment
+-	Residual Risk Mitigation
+-	Residual Hazard Scoring
+-	Residual Hazard Scoring
+

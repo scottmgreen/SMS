@@ -13,6 +13,8 @@ public partial class HazardReportSearch : ComponentBase
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
+
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
     #endregion
 
     #region Search Properties
@@ -873,7 +875,7 @@ public partial class HazardReportSearch : ComponentBase
                         searchResult.ReportedOn = hazard.ReportedOn != DateTime.MinValue ? hazard.ReportedOn : DateTime.MinValue;
                         searchResult.Description = hazard.Description;
                         searchResult.CurrentStatus = hazard.Status ?? "Unknown";
-                        searchResult.IsConfidential = hazard.IsConfidential;
+                        searchResult.IsConfidential = hazard.IsAnonymous;
                     }
                 }
                 catch (Exception ex)

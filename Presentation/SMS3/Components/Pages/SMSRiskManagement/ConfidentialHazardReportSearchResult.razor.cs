@@ -171,7 +171,7 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
 
                         // Only show non-sensitive information
                         reportDetails.ReportedOn = hazard.ReportedOn;
-                        reportDetails.IsConfidential = hazard.IsConfidential;
+                        reportDetails.IsAnonymous = hazard.IsAnonymous;
 
                         // Add location information for fallback display
                         reportDetails.LocationArea = hazard.LocationArea ?? "";
@@ -405,7 +405,7 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
         public DateTime? ValidationDate { get; set; }
         public string ValidatedBy { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public bool IsConfidential { get; set; }
+        public bool IsAnonymous { get; set; }
         public DateTime CreatedDate { get; set; }
         
         // Location fallback properties for text-based location info
