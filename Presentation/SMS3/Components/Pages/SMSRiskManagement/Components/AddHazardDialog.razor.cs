@@ -1,4 +1,7 @@
 using Microsoft.JSInterop;
+
+using SMS_Domain.Entities;
+
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
@@ -374,9 +377,9 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         EditingHazard.HazardType = NewHazardType;
         EditingHazard.IsInitialHazard = false;
         EditingHazard.UpdatedDate = DateTime.UtcNow;
-
-        // Handle location updates - EXACTLY like HazardReporting
+        EditingHazard.UpdatedBy = AuthService.CurrentUserDisplayName;
         await UpdateHazardLocationForHazard(EditingHazard);
+
 
         // Update the hazard
         var updateHazardCommand = new UpdateHazardCommand(EditingHazard);
@@ -389,6 +392,13 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         }
 
         var updatedHazard = hazardResult.Value;
+
+        // Handle location updates - EXACTLY like HazardReporting
+
+        await UpdateHazardLocation(updatedHazard);
+
+
+
         Logger?.LogInformation("Successfully updated hazard: {HazardCode} with Category: {Category}, Type: {Type}", 
             updatedHazard?.Code, NewHazardCategory, NewHazardType);
 
@@ -501,7 +511,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
 
         try
         {
-            var hazardLocationCode = $"HL-{hazard.Code}-{DateTime.UtcNow:yyyyMMdd}";
+            var hazardLocationCode = $"HL-0000";
             var newHazardLocation = new SMS_Domain.Entities.HazardLocation(new HazardLocationID(hazardLocationCode))
             {
                 Code = hazardLocationCode,
@@ -509,7 +519,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                 Latitude = SelectedGeoLocation.Latitude,
                 Longitude = SelectedGeoLocation.Longitude,
                 Description = SelectedGeoLocation.Description ?? "Map selected location",
-                CreatedBy = "Technical Assessment User",
+                CreatedBy = AuthService.CurrentUserDisplayName,
                 CreatedDate = DateTime.UtcNow,
                 IsValid = true
             };
@@ -560,8 +570,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         try
         {
             // Check if HazardLocation already exists for this hazard
-            var hazardLocationResult = await Mediator.SendAsync(
-                new GetHazardLocationsByHazardCodeQuery(hazard.Code), CancellationToken.None);
+            var hazardLocationResult = await Mediator.SendAsync(new GetHazardLocationsByHazardCodeQuery(hazard.Code), CancellationToken.None);
 
             SMS_Domain.Entities.HazardLocation? hazardLocation = null;
 
@@ -576,6 +585,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                     hazardLocation.Longitude = SelectedGeoLocation.Longitude;
                     hazardLocation.Description = SelectedGeoLocation.Description ?? "Map selected location";
                     hazardLocation.UpdatedDate = DateTime.UtcNow;
+                    hazardLocation.UpdatedBy = AuthService.CurrentUserDisplayName;
                     hazard.HazardLocation = hazardLocation;
 
                     var locationUpdateResult = await Mediator.SendAsync(

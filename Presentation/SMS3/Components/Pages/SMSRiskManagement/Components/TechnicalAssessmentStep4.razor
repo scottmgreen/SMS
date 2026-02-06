@@ -447,57 +447,6 @@
         return AviationRiskMatrixCalculator.GetAviationRiskLevel(severity, likelihood);
     }
 
-    // private async Task LoadHazardAverages()
-    // {
-    //     if (Step4Hazards?.Any() != true) return;
-        
-    //     try
-    //     {
-    //         Step4.HazardAverageScores.Clear();
-    //         Step4.HazardRiskLevels.Clear();
-    //         Step4.HazardMatrixCodes.Clear();
-
-    //         foreach (var hazard in Step4Hazards)
-    //         {
-    //             var query = new GetScoringPanelsByHazardCodeQuery(hazard.Code);
-    //             var result = await Mediator.SendAsync(query, CancellationToken.None);
-
-    //             if (result.IsSuccess && result.Value?.Any() == true)
-    //             {
-    //                 var completedPanels = result.Value
-    //                     .Where(p => p.Severity.HasValue && p.Likelihood.HasValue && p.Score.HasValue)
-    //                     .ToList();
-
-    //                 if (completedPanels.Any())
-    //                 {
-    //                     // Use centralized calculator for consistency
-    //                     var matrixCode = AviationRiskMatrixCalculator.CalculateHazardMatrixCodeWithDebug(
-    //                         hazard.Code, 
-    //                         completedPanels, 
-    //                         msg => Logger.LogInformation(msg));
-                        
-    //                     // Calculate other values using centralized methods
-    //                     var avgSeverity = completedPanels.Average(p => p.Severity!.Value);
-    //                     var avgLikelihood = completedPanels.Average(p => p.Likelihood!.Value);
-    //                     var avgScore = completedPanels.Average(p => (double)p.Score!.Value);
-                        
-    //                     var roundedSeverity = (int)Math.Round(avgSeverity);
-    //                     var roundedLikelihood = (int)Math.Round(avgLikelihood);
-                        
-    //                     Step4.HazardAverageScores[hazard.Code] = avgScore;
-    //                     Step4.HazardRiskLevels[hazard.Code] = AviationRiskMatrixCalculator.GetAviationRiskLevel(roundedSeverity, roundedLikelihood);
-    //                     Step4.HazardMatrixCodes[hazard.Code] = matrixCode;
-    //                 }
-    //             }
-    //         }
-            
-    //         Logger.LogInformation("Loaded averages for {Count} hazards", Step4.HazardAverageScores.Count);
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         Logger.LogError(ex, "Error loading hazard averages");
-    //     }
-    // }
     private async Task LoadHazardAverages()
     {
         if (Step4Hazards?.Any() != true) return;

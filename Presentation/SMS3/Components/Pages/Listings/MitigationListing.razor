@@ -48,7 +48,7 @@
 }
 
 <!-- Actions Row -->
-@if (ShowBulkApprove && mitigations.Any())
+@if (ShowBulkApprove && mitigationViewModels.Any())
 {
     <RadzenRow Class="mb-3" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
         <RadzenColumn Size="8">
@@ -81,7 +81,7 @@
 
 <!-- Mitigations Data Grid -->
 <RadzenDataGrid @ref="mitigationsGrid"
-                Data="@mitigations"
+                Data="@mitigationViewModels"
                 Count="@totalCount"
                 LoadData="@LoadData"
                 AllowPaging="true"
@@ -95,53 +95,94 @@
                 Style="height: calc(100vh - 300px)">
 
     <Columns>
-        <RadzenDataGridColumn TItem="Mitigation" Property="Code" Title="Code" Width="150px" />
-        <RadzenDataGridColumn TItem="Mitigation" Property="Name" Title="Name" Width="250px" />
-        <RadzenDataGridColumn TItem="Mitigation" Property="Description" Title="Description" Width="300px">
-            <Template Context="mitigation">
-                <RadzenText TextStyle="TextStyle.Body2" Text="@(mitigation.Description?.Length > 100 ? mitigation.Description.Substring(0, 100) + "..." : mitigation.Description)" />
+        <!-- Report ID Column -->
+        <RadzenDataGridColumn TItem="MitigationViewModel" Property="ReportId" Title="Report ID" Width="140px">
+            <Template Context="mitigationViewModel">
+                <RadzenLink Path="@($"/SMSRiskManagement/TechnicalAssessment/{mitigationViewModel.ReportId}/{mitigationViewModel.HazardCode}/1")" 
+                           Text="@mitigationViewModel.ReportId" 
+                           Style="font-weight: bold;" />
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Mitigation" Property="Type" Title="Type" Width="120px" />
-        <RadzenDataGridColumn TItem="Mitigation" Property="Status" Title="Status" Width="120px">
-            <Template Context="mitigation">
-                <RadzenBadge Text="@mitigation.Status" BadgeStyle="@GetStatusBadgeStyle(mitigation.Status)" />
-            </Template>
-        </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Mitigation" Property="Priority" Title="Priority" Width="100px">
-            <Template Context="mitigation">
-                <RadzenBadge Text="@(mitigation.Priority ?? "Medium")" BadgeStyle="@GetPriorityBadgeStyle(mitigation.Priority ?? "Medium")" />
-            </Template>
-        </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Mitigation" Property="Progress" Title="Progress" Width="100px">
-            <Template Context="mitigation">
-                <RadzenProgressBar Value="@mitigation.Progress" Max="100" Style="width: 100%;" />
-                <RadzenText TextStyle="TextStyle.Caption" Text="@($"{mitigation.Progress}%")" />
-            </Template>
-        </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Mitigation" Property="DueDate" Title="Due Date" Width="120px" FormatString="{0:MM/dd/yyyy}" />
 
-        <RadzenDataGridColumn TItem="Mitigation" Title="Actions" Width="200px" Sortable="false" Filterable="false">
-            <Template Context="mitigation">
+        <!-- Hazard ID Column -->
+        <RadzenDataGridColumn TItem="MitigationViewModel" Property="HazardCode" Title="Hazard ID" Width="140px">
+            <Template Context="mitigationViewModel">
+                <RadzenText Text="@mitigationViewModel.HazardCode" Style="font-family: monospace; font-weight: bold;" />
+            </Template>
+        </RadzenDataGridColumn>
+
+        <!-- Mitigation ID Column -->
+        <RadzenDataGridColumn TItem="MitigationViewModel" Property="Code" Title="Mitigation ID" Width="150px">
+            <Template Context="mitigationViewModel">
+                <RadzenText Text="@mitigationViewModel.Code" Style="font-family: monospace; font-weight: bold;" />
+            </Template>
+        </RadzenDataGridColumn>
+
+        <!-- Mitigation Description -->
+        <RadzenDataGridColumn TItem="MitigationViewModel" Property="Description" Title="Description" Width="300px">
+            <Template Context="mitigationViewModel">
+                <RadzenText TextStyle="TextStyle.Body2" Text="@(mitigationViewModel.Description?.Length > 100 ? mitigationViewModel.Description.Substring(0, 100) + "..." : mitigationViewModel.Description)" />
+            </Template>
+        </RadzenDataGridColumn>
+
+        <!-- Status Column -->
+        <RadzenDataGridColumn TItem="MitigationViewModel" Property="Status" Title="Status" Width="120px">
+            <Template Context="mitigationViewModel">
+                <RadzenBadge Text="@mitigationViewModel.Status" BadgeStyle="@GetStatusBadgeStyle(mitigationViewModel.Status)" />
+            </Template>
+        </RadzenDataGridColumn>
+
+        <!-- Priority Column -->
+        <RadzenDataGridColumn TItem="MitigationViewModel" Property="Priority" Title="Priority" Width="100px">
+            <Template Context="mitigationViewModel">
+                <RadzenBadge Text="@(mitigationViewModel.Priority ?? "Medium")" BadgeStyle="@GetPriorityBadgeStyle(mitigationViewModel.Priority ?? "Medium")" />
+            </Template>
+        </RadzenDataGridColumn>
+
+        <!-- Progress Column -->
+        <RadzenDataGridColumn TItem="MitigationViewModel" Property="Progress" Title="Progress" Width="100px">
+            <Template Context="mitigationViewModel">
+                <RadzenProgressBar Value="@mitigationViewModel.Progress" Max="100" Style="width: 100%;" />
+                <RadzenText TextStyle="TextStyle.Caption" Text="@($"{mitigationViewModel.Progress}%")" />
+            </Template>
+        </RadzenDataGridColumn>
+
+        <!-- Target Date Column -->
+        <RadzenDataGridColumn TItem="MitigationViewModel" Property="TargetDate" Title="Target Date" Width="120px" FormatString="{0:MM/dd/yyyy}">
+            <Template Context="mitigationViewModel">
+                @if (mitigationViewModel.TargetDate.HasValue)
+                {
+                    <RadzenText Text="@mitigationViewModel.TargetDate.Value.ToString("MM/dd/yyyy")" />
+                }
+                else
+                {
+                    <RadzenText Text="Not set" Style="color: var(--rz-text-tertiary-color);" />
+                }
+            </Template>
+        </RadzenDataGridColumn>
+
+        <!-- Actions Column -->
+        <RadzenDataGridColumn TItem="MitigationViewModel" Title="Actions" Width="200px" Sortable="false" Filterable="false">
+            <Template Context="mitigationViewModel">
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
-                    <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small"
+                    <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small"
                                   Tooltip="View Mitigation Details"
-                                  Click="@(() => ViewMitigation(mitigation))" />
+                                  Click="@(() => ViewMitigation(mitigationViewModel.Mitigation))" />
 
                     <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
                                   Tooltip="Edit Mitigation"
-                                  Click="@(() => EditMitigation(mitigation))" />
+                                  Click="@(() => EditMitigation(mitigationViewModel.Mitigation))" />
 
-                    @if (mitigation.Status != "Approved")
+                    @if (mitigationViewModel.Status != "Approved")
                     {
                         <RadzenButton Icon="verified" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
                                       Tooltip="Quick Approve"
-                                      Click="@(async () => await QuickApproveMitigation(mitigation))" />
+                                      Click="@(async () => await QuickApproveMitigation(mitigationViewModel.Mitigation))" />
                     }
 
                     <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
                                   Tooltip="Delete Mitigation"
-                                  Click="@(() => DeleteMitigation(mitigation))" />
+                                  Click="@(() => DeleteMitigation(mitigationViewModel.Mitigation))" />
                 </RadzenStack>
             </Template>
         </RadzenDataGridColumn>

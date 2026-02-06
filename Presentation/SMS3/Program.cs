@@ -170,12 +170,15 @@ public class Program
                     HazardCategory = request.HazardCategory ?? "EXTERNAL",
                     HazardType = request.HazardType,
                     ReportedBy = "EXTERNAL_SYSTEM",
-                    ReportedOn = DateTime.UtcNow,
+                    //SubmittedOn = DateTime.UtcNow,
+                    //IncidentDateTime //=>>>> from Widget
                     ReportingDepartment = request.SourceSystem ?? "External System",
                     IsAnonymous = true,
                     ReportCode = actualReportCode,
                     IsInitialHazard = true,
-                    LocationArea = request.Location
+                    LocationArea = request.Location,
+                    //CreatedOn = DateTime.UtcNow,
+                    CreatedBy = "EXTERNAL_SYSTEM"
                 };
 
                 // Handle geographic coordinates if provided

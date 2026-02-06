@@ -24,7 +24,13 @@ public class HazardReportForm
     public string? ReportedBy { get; set; }
     public DateTime ReportedOn { get; set; } = DateTime.Now;
     public string? ReportingDepartment { get; set; }
-    public string? NextAction { get; set; }
+    public string? ReportingDepartmentNote { get; set; }
+    public string? ContactName { get; set; }
+
+    public string? ContactCell { get; set; }
+
+    public string? ContactEmail { get; set; }
+
     public bool IsAnonymous { get; set; } = false;
 }
 

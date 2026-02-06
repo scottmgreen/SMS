@@ -23,40 +23,42 @@
                         
                         
                         <!-- Category and Hazard Type -->
-                        <RadzenRow Gap="1rem">
-                            <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenFormField Text="Hazard Category *" Variant="Variant.Outlined">
-                                    <RadzenDropDown @bind-Value="@NewHazardCategory"
-                                                  Data="@HazardCategoryOptions" 
-                                                  TextProperty="Text" 
-                                                  ValueProperty="Value"
-                                                  Placeholder="Select hazard category..."
-                                                  Change="@(async (object value) => await OnHazardCategoryChanged(value?.ToString()))"
-                                                  AllowClear="true"
-                                                  Style="width: 100%;" />
-                                </RadzenFormField>
-                            </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenFormField Text="Hazard Type *" Variant="Variant.Outlined">
-                                    <RadzenDropDown @bind-Value="@NewHazardType" 
-                                                  Data="@HazardTypeOptions" 
-                                                  TextProperty="Text" 
-                                                  ValueProperty="Value"
-                                                  Placeholder="Select hazard type..."
-                                                  Change="@(async (object value) => await OnHazardTypeChanged(value?.ToString()))"
-                                                  Disabled="@(HazardTypeOptions.Count == 0)"
-                                                  AllowClear="true"
-                                                  Style="width: 100%;" />
-                                </RadzenFormField>
-                                @if (HazardTypeOptions.Count == 0 && string.IsNullOrEmpty(NewHazardCategory))
-                                {
-                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-info);">
-                                        <RadzenIcon Icon="info" Style="font-size: 0.9rem;" />
-                                        Select a category first to see hazard types
-                                    </RadzenText>
-                                }
-                            </RadzenColumn>
-                        </RadzenRow>
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenFormField Text="Hazard Category *" Variant="Variant.Outlined">
+                                        <RadzenDropDown @bind-Value="@NewHazardCategory"
+                                                        Data="@HazardCategoryOptions"
+                                                        TextProperty="Text"
+                                                        ValueProperty="Value"
+                                                        Placeholder="Select hazard category..."
+                                                        Change="@(async (object value) => await OnHazardCategoryChanged(value?.ToString()))"
+                                                        AllowClear="true"
+                                                        Style="width: 100%;" />
+                                    </RadzenFormField>
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenFormField Text="Hazard Type *" Variant="Variant.Outlined">
+                                        <RadzenDropDown @bind-Value="@NewHazardType"
+                                                        Data="@HazardTypeOptions"
+                                                        TextProperty="Text"
+                                                        ValueProperty="Value"
+                                                        Placeholder="Select hazard type..."
+                                                        Change="@(async (object value) => await OnHazardTypeChanged(value?.ToString()))"
+                                                        Disabled="@(HazardTypeOptions.Count == 0)"
+                                                        AllowClear="true"
+                                                        Style="width: 100%;" />
+                                    </RadzenFormField>
+                                    @if (HazardTypeOptions.Count == 0 && string.IsNullOrEmpty(NewHazardCategory))
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-info);">
+                                            <RadzenIcon Icon="info" Style="font-size: 0.9rem;" />
+                                            Select a category first to see hazard types
+                                        </RadzenText>
+                                    }
+                                </RadzenColumn>
+                            </RadzenRow>
+                        
+                        
                         
 
                         <!-- Guidance Panel for Selected Hazard Type -->
@@ -259,7 +261,7 @@
                         <!-- Current Selection Display -->
                         @if (HasGeoLocation)
                         {
-                            <RadzenAlert AlertStyle="AlertStyle.Success" Size="AlertSize.Small" Variant="Variant.Flat" Class="mb-3">
+                            @* <RadzenAlert AlertStyle="AlertStyle.Success" Size="AlertSize.Small" Variant="Variant.Flat" Class="mb-3">
                                 <h6 class="alert-heading"><i class="fas fa-map-pin"></i> Current Selection</h6>
                                 <p class="mb-1">
                                     <strong>Coordinates:</strong> @GeoLocationDisplay
@@ -270,11 +272,11 @@
                                         <strong>Description:</strong> @SelectedGeoLocation.Description
                                     </p>
                                 }
-                            </RadzenAlert>
+                            </RadzenAlert> *@
                         }
                         else if (HasValidCoordinates)
                         {
-                            <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small" Variant="Variant.Flat" Class="mb-3">
+                           @*  <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small" Variant="Variant.Flat" Class="mb-3">
                                 <h6 class="alert-heading"><i class="fas fa-map-pin"></i> Coordinates Selected</h6>
                                 <p class="mb-1">
                                     <strong>Coordinates:</strong> @SelectedLatitude.ToString("F6"), @SelectedLongitude.ToString("F6")
@@ -288,7 +290,7 @@
                                 <p class="mb-1">
                                     <em>Click "Use Selected Location" to confirm</em>
                                 </p>
-                            </RadzenAlert>
+                            </RadzenAlert> *@
                         }
                         
                         <div class="d-flex justify-content-end gap-2">

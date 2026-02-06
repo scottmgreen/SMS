@@ -1,0 +1,608 @@
+﻿using SMS_Domain.Entities;
+using SMS_Domain.Enums;
+using SMS_Application.Messaging.Queries;
+using SMS_Application.Interfaces;
+using Radzen;
+using SMS3.Components.Shared;
+
+namespace SMS3.Components.Pages.SMSAssurance;
+
+/// <summary>
+/// Risk Registry - Comprehensive overview of all identified risks, their assessments, and mitigation status
+/// Part of SMS Assurance module for tracking and monitoring organizational risk exposure
+/// </summary>
+public partial class RiskRegistry : ComponentBase
+{
+    #region Services and Parameters
+
+    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private ILogger<RiskRegistry> Logger { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private NotificationService NotificationService { get; set; } = default!;
+
+    #endregion
+
+    #region State Properties
+
+    private bool IsLoading { get; set; } = true;
+    private RadzenDataGrid<RiskRegistryEntry>? RiskRegistryGrid;
+
+    #endregion
+
+    #region Data Properties
+
+    public List<RiskRegistryEntry> RiskRegistryEntries { get; set; } = new();
+    public List<RiskRegistryEntry> FilteredRiskRegistryEntries { get; set; } = new();
+
+    #endregion
+
+    #region Filter Properties
+
+    private string? SelectedStatusFilter { get; set; }
+    private string? SelectedRiskLevelFilter { get; set; }
+    private string SearchText { get; set; } = string.Empty;
+
+    private List<FilterOption> StatusFilterOptions { get; set; } = new()
+    {
+        new("PENDING_APPROVAL", "Pending Approval"),
+        new("APPROVED", "Approved"),
+        new("IN_PROGRESS_DUE_DATE", "In Progress"),
+        new("COMPLETE", "Complete"),
+        new("MONITORING_HAZARD", "Monitoring"),
+        new("REJECTED", "Rejected")
+    };
+
+    private List<FilterOption> RiskLevelFilterOptions { get; set; } = new()
+    {
+        new("High", "High Risk"),
+        new("Medium", "Medium Risk"),
+        new("Low", "Low Risk"),
+        new("Acceptable", "Acceptable Risk")
+    };
+
+    #endregion
+
+    #region Lifecycle Methods
+
+    protected override async Task OnInitializedAsync()
+    {
+        Logger.LogInformation("🚀 Risk Registry: Initializing page...");
+        try
+        {
+            await LoadRiskRegistryData();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "💥 Risk Registry: Exception during initialization");
+        }
+        Logger.LogInformation("🏁 Risk Registry: Initialization complete");
+    }
+
+    #endregion
+
+    #region Data Loading Methods
+
+    /// <summary>
+    /// Load all risk registry data by combining hazards, risk assessments, and mitigations
+    /// </summary>
+    private async Task LoadRiskRegistryData()
+    {
+        try
+        {
+            IsLoading = true;
+            StateHasChanged();
+
+            Logger.LogInformation("🔍 Risk Registry: Starting data load...");
+
+            // Load all required data in parallel
+            var hazardsTask = LoadAllHazardsAsync();
+            var assessmentsTask = LoadAllRiskAssessmentsAsync();
+            var mitigationsTask = LoadAllMitigationsAsync();
+
+            await Task.WhenAll(hazardsTask, assessmentsTask, mitigationsTask);
+
+            var hazards = await hazardsTask;
+            var assessments = await assessmentsTask;
+            var mitigations = await mitigationsTask;
+
+            Logger.LogInformation("📊 Risk Registry: Data loaded - Hazards: {HazardCount}, Assessments: {AssessmentCount}, Mitigations: {MitigationCount}",
+                hazards.Count, assessments.Count, mitigations.Count);
+
+            // Log some sample data for debugging
+            if (hazards.Any())
+            {
+                var sampleHazard = hazards.First();
+                Logger.LogInformation("📝 Sample Hazard: Code={Code}, Description={Description}, ReportCode={ReportCode}, RiskLevel={RiskLevel}, InitialRiskMatrixCode={MatrixCode}",
+                    sampleHazard.Code, sampleHazard.Description, sampleHazard.ReportCode, sampleHazard.RiskLevel, sampleHazard.InitialRiskMatrixCode);
+            }
+
+            // Build risk registry entries
+            RiskRegistryEntries = BuildRiskRegistryEntries(hazards, assessments, mitigations);
+
+            Logger.LogInformation("🎯 Risk Registry: Built {EntryCount} registry entries", RiskRegistryEntries.Count);
+
+            // Apply current filters
+            ApplyFilters();
+
+            Logger.LogInformation("✅ Risk Registry: After filtering - {FilteredCount} entries visible", FilteredRiskRegistryEntries.Count);
+
+            // Force UI refresh
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Error loading Risk Registry data");
+            ShowNotification(NotificationSeverity.Error, "Error loading Risk Registry data");
+        }
+        finally
+        {
+            IsLoading = false;
+            // Force UI refresh twice to ensure Blazor picks up the changes
+            StateHasChanged();
+            await Task.Delay(50); // Small delay to ensure state propagation
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Load all hazards from the system
+    /// </summary>
+    private async Task<List<Hazard>> LoadAllHazardsAsync()
+    {
+        try
+        {
+            Logger.LogInformation("🔍 Loading all hazards...");
+            var query = new GetAllHazardsQuery();
+            var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+            if (result.IsSuccess && result.Value != null)
+            {
+                var hazards = result.Value.ToList();
+                Logger.LogInformation("✅ Loaded {Count} hazards successfully", hazards.Count);
+                return hazards;
+            }
+            else
+            {
+                Logger.LogWarning("⚠️ GetAllHazardsQuery failed or returned null. IsSuccess: {IsSuccess}, Error: {Error}",
+                    result.IsSuccess, result.Error?.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Exception loading hazards");
+        }
+
+        return new List<Hazard>();
+    }
+
+    /// <summary>
+    /// Load all risk assessments from the system
+    /// </summary>
+    private async Task<List<RiskAssessment>> LoadAllRiskAssessmentsAsync()
+    {
+        try
+        {
+            Logger.LogInformation("🔍 Loading all risk assessments...");
+            var query = new GetAllRiskAssessmentsQuery();
+            var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+            if (result.IsSuccess && result.Value != null)
+            {
+                var assessments = result.Value.ToList();
+                Logger.LogInformation("✅ Loaded {Count} risk assessments successfully", assessments.Count);
+                return assessments;
+            }
+            else
+            {
+                Logger.LogWarning("⚠️ GetAllRiskAssessmentsQuery failed or returned null. IsSuccess: {IsSuccess}, Error: {Error}",
+                    result.IsSuccess, result.Error?.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Exception loading risk assessments");
+        }
+
+        return new List<RiskAssessment>();
+    }
+
+    /// <summary>
+    /// Load all mitigations from the system
+    /// </summary>
+    private async Task<List<Mitigation>> LoadAllMitigationsAsync()
+    {
+        try
+        {
+            Logger.LogInformation("🔍 Loading all mitigations...");
+            var query = new GetAllMitigationsQuery();
+            var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+            if (result.IsSuccess && result.Value != null)
+            {
+                var mitigations = result.Value.ToList();
+                Logger.LogInformation("✅ Loaded {Count} mitigations successfully", mitigations.Count);
+                return mitigations;
+            }
+            else
+            {
+                Logger.LogWarning("⚠️ GetAllMitigationsQuery failed or returned null. IsSuccess: {IsSuccess}, Error: {Error}",
+                    result.IsSuccess, result.Error?.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Exception loading mitigations");
+        }
+
+        return new List<Mitigation>();
+    }
+
+    #endregion
+
+    #region Data Processing Methods
+
+    /// <summary>
+    /// Build risk registry entries by correlating hazards, assessments, and mitigations
+    /// </summary>
+    private List<RiskRegistryEntry> BuildRiskRegistryEntries(
+        List<Hazard> hazards,
+        List<RiskAssessment> assessments,
+        List<Mitigation> mitigations)
+    {
+        Logger.LogInformation("🏗️ Building risk registry entries from {HazardCount} hazards, {AssessmentCount} assessments, {MitigationCount} mitigations",
+            hazards.Count, assessments.Count, mitigations.Count);
+
+        var entries = new List<RiskRegistryEntry>();
+
+        foreach (var hazard in hazards)
+        {
+            try
+            {
+                Logger.LogDebug("🔍 Processing hazard: {HazardCode} - {Description}", hazard.Code, hazard.Description);
+
+                // Find associated risk assessment
+                var assessment = assessments.FirstOrDefault(a =>
+                    a.HazardCode == hazard.Code ||
+                    a.IdentifiedHazardIds?.Contains(hazard.Code) == true);
+
+                if (assessment != null)
+                {
+                    Logger.LogDebug("✅ Found assessment {AssessmentCode} for hazard {HazardCode}", assessment.Code, hazard.Code);
+                }
+                else
+                {
+                    Logger.LogDebug("⚠️ No assessment found for hazard {HazardCode}", hazard.Code);
+                }
+
+                // Find associated mitigations for this hazard
+                var hazardMitigations = mitigations.Where(m => m.HazardCode.Trim() == hazard.Code.Trim()).ToList();
+
+                Logger.LogDebug("🛡️ Found {MitigationCount} mitigations for hazard {HazardCode}", hazardMitigations.Count, hazard.Code);
+
+                if (hazardMitigations.Any())
+                {
+                    // Create one entry per mitigation
+                    foreach (var mitigation in hazardMitigations)
+                    {
+                        var entry = CreateRiskRegistryEntry(hazard, assessment, mitigation);
+                        entries.Add(entry);
+                        Logger.LogDebug("➕ Added entry for hazard {HazardCode} with mitigation {MitigationCode}", hazard.Code, mitigation.Code);
+                    }
+                }
+                else
+                {
+                    // Create entry without mitigation
+                    var entry = CreateRiskRegistryEntry(hazard, assessment, null);
+                    entries.Add(entry);
+                    Logger.LogDebug("➕ Added entry for hazard {HazardCode} without mitigation", hazard.Code);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "❌ Error processing hazard {HazardCode} for risk registry", hazard.Code);
+            }
+        }
+
+        Logger.LogInformation("🏁 Built {TotalEntries} total registry entries", entries.Count);
+        return entries.OrderByDescending(e => e.LastUpdated).ToList();
+    }
+
+    /// <summary>
+    /// Create a single risk registry entry from hazard, assessment, and mitigation data
+    /// </summary>
+    private RiskRegistryEntry CreateRiskRegistryEntry(Hazard hazard, RiskAssessment? assessment, Mitigation? mitigation)
+    {
+        // Get risk matrix code and level from hazard
+        var riskMatrixCode = GetHazardRiskMatrixCode(hazard);
+        var riskLevel = GetHazardRiskLevel(hazard);
+
+        // Debug logging
+        Logger.LogDebug("🔧 Creating entry for {HazardCode}: Mitigation={HasMitigation}, Status={Status}",
+            hazard.Code, mitigation != null, mitigation?.Status ?? "NULL");
+
+        var entry = new RiskRegistryEntry
+        {
+            ReportId = hazard.ReportCode ?? "N/A",
+            HazardId = hazard.Code,
+            HazardDescription = hazard.Description ?? "No description available",
+            RiskMatrixCode = riskMatrixCode,
+            RiskLevel = riskLevel,
+            MitigationDescription = mitigation?.Name ?? mitigation?.Description ?? "No mitigation assigned",
+            MitigationStatusName = mitigation?.Status ?? "Not Started", // ✅ FIX: Default to "Not Started" instead of empty
+            TargetDate = mitigation?.TargetDate,
+            AssignedTo = mitigation?.AssignedTo ?? assessment?.LeadAssessorId ?? "Unassigned",
+            LastUpdated = assessment?.UpdatedDate ?? hazard.UpdatedDate ?? hazard.CreatedDate ?? DateTime.UtcNow,
+
+            // Additional context for navigation and details
+            HazardCategory = hazard.HazardCategory,
+            HazardType = hazard.HazardType,
+            AssessmentId = assessment?.Code,
+            MitigationId = mitigation?.Code
+        };
+
+        Logger.LogDebug("✅ Created entry: {HazardId} -> MitigationStatus: '{Status}'", hazard.Code, entry.MitigationStatusName);
+        return entry;
+    }
+
+    /// <summary>
+    /// Extract risk matrix code from hazard data
+    /// </summary>
+    private string GetHazardRiskMatrixCode(Hazard hazard)
+    {
+        // Try to get from initial risk assessment first
+        if (!string.IsNullOrEmpty(hazard.InitialRiskMatrixCode) && hazard.InitialRiskMatrixCode != "-")
+        {
+            return hazard.InitialRiskMatrixCode;
+        }
+
+        // Fall back to residual risk assessment
+        if (!string.IsNullOrEmpty(hazard.ResidualRiskMatrixCode) && hazard.ResidualRiskMatrixCode != "-")
+        {
+            return hazard.ResidualRiskMatrixCode;
+        }
+
+        // Return default if no assessment available
+        return "-";
+    }
+
+    /// <summary>
+    /// Extract risk level from hazard data
+    /// </summary>
+    private string GetHazardRiskLevel(Hazard hazard)
+    {
+        if (!string.IsNullOrEmpty(hazard.RiskLevel) && hazard.RiskLevel != "Unknown")
+        {
+            return hazard.RiskLevel;
+        }
+
+        return "TBD";
+    }
+
+    #endregion
+
+    #region Filter and Search Methods
+
+    /// <summary>
+    /// Handle filter dropdown changes
+    /// </summary>
+    private async Task OnFilterChanged()
+    {
+        ApplyFilters();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>
+    /// Handle search text input changes
+    /// </summary>
+    private async Task OnSearchChanged(ChangeEventArgs args)
+    {
+        SearchText = args.Value?.ToString() ?? string.Empty;
+        ApplyFilters();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>
+    /// Apply all current filters to the data
+    /// </summary>
+    private void ApplyFilters()
+    {
+        Logger.LogInformation("🔍 Applying filters - SelectedStatusFilter: {StatusFilter}, SelectedRiskLevelFilter: {RiskFilter}, SearchText: {SearchText}",
+            SelectedStatusFilter, SelectedRiskLevelFilter, SearchText);
+
+        var filtered = RiskRegistryEntries.AsEnumerable();
+
+        Logger.LogInformation("📊 Starting with {Count} total entries", RiskRegistryEntries.Count);
+
+        // Apply status filter
+        if (!string.IsNullOrEmpty(SelectedStatusFilter))
+        {
+            filtered = filtered.Where(e => e.MitigationStatusName == SelectedStatusFilter);
+            Logger.LogInformation("🔽 After status filter: {Count} entries", filtered.Count());
+        }
+
+        // Apply risk level filter
+        if (!string.IsNullOrEmpty(SelectedRiskLevelFilter))
+        {
+            filtered = filtered.Where(e => e.RiskLevel == SelectedRiskLevelFilter);
+            Logger.LogInformation("🔽 After risk level filter: {Count} entries", filtered.Count());
+        }
+
+        // Apply search filter
+        if (!string.IsNullOrEmpty(SearchText))
+        {
+            var searchLower = SearchText.ToLowerInvariant();
+            filtered = filtered.Where(e =>
+                e.ReportId.ToLowerInvariant().Contains(searchLower) ||
+                e.HazardId.ToLowerInvariant().Contains(searchLower) ||
+                (e.HazardDescription?.ToLowerInvariant().Contains(searchLower) ?? false) ||
+                (e.MitigationDescription?.ToLowerInvariant().Contains(searchLower) ?? false) ||
+                (e.AssignedTo?.ToLowerInvariant().Contains(searchLower) ?? false));
+            Logger.LogInformation("🔽 After search filter: {Count} entries", filtered.Count());
+        }
+
+        FilteredRiskRegistryEntries = filtered.ToList();
+        Logger.LogInformation("✅ Final filtered entries: {Count}", FilteredRiskRegistryEntries.Count);
+
+        // Log some sample entries for debugging
+        foreach (var entry in FilteredRiskRegistryEntries.Take(3))
+        {
+            Logger.LogInformation("📝 Sample entry: HazardId={HazardId}, ReportId={ReportId}, RiskLevel={RiskLevel}, MitigationStatus={Status}",
+                entry.HazardId, entry.ReportId, entry.RiskLevel, entry.MitigationStatusName);
+        }
+    }
+
+    #endregion
+
+    #region UI Helper Methods
+
+    /// <summary>
+    /// Get style for target date based on proximity to due date
+    /// </summary>
+    private string GetTargetDateStyle(DateTime targetDate)
+    {
+        var daysUntilDue = (targetDate - DateTime.UtcNow).Days;
+
+        return daysUntilDue switch
+        {
+            < 0 => "color: #dc3545; font-weight: bold;", // Overdue - red
+            <= 7 => "color: #fd7e14; font-weight: bold;", // Due soon - orange
+            <= 30 => "color: #ffc107;", // Due this month - yellow
+            _ => "color: inherit;" // Normal - default
+        };
+    }
+
+    /// <summary>
+    /// Get aviation matrix cell style with background color (SAME AS STEP 4)
+    /// </summary>
+    private string GetAviationMatrixCellStyle(string matrixCode)
+    {
+        if (string.IsNullOrEmpty(matrixCode) || matrixCode == "-")
+        {
+            return "background: #f8f9fa; color: #6c757d;";
+        }
+
+        // Parse matrix code (e.g., "3B", "5A") to get severity and likelihood
+        if (matrixCode.Length >= 2)
+        {
+            var severityPart = matrixCode.Substring(0, matrixCode.Length - 1);
+            var likelihoodLetter = matrixCode.Substring(matrixCode.Length - 1);
+
+            if (int.TryParse(severityPart.Trim(), out int severity))
+            {
+                var likelihood = likelihoodLetter.ToUpper() switch
+                {
+                    "A" => 1, "B" => 2, "C" => 3, "D" => 4, "E" => 5, _ => 1
+                };
+
+                // Use the EXACT same colors as TechnicalAssessmentStep4
+                var backgroundColor = AviationRiskMatrixCalculator.GetAviationMatrixColor(severity, likelihood);
+                var textColor = AviationRiskMatrixCalculator.IsLightColor(backgroundColor) ? "#000" : "#fff";
+
+                return $"background: {backgroundColor}; color: {textColor};";
+            }
+        }
+
+        return "background: #f8f9fa; color: #6c757d;";
+    }
+
+    #endregion
+
+    #region Statistics Methods
+
+    /// <summary>
+    /// Get count of entries by risk level
+    /// </summary>
+    private int GetCountByRiskLevel(string riskLevel)
+    {
+        return RiskRegistryEntries.Count(e => e.RiskLevel == riskLevel);
+    }
+
+    /// <summary>
+    /// Get count of entries with active mitigation status
+    /// </summary>
+    private int GetCountByMitigationStatus()
+    {
+        var activeStatuses = new[] { "PENDING_APPROVAL", "APPROVED", "IN_PROGRESS_DUE_DATE" };
+        return RiskRegistryEntries.Count(e => activeStatuses.Contains(e.MitigationStatusName));
+    }
+
+    #endregion
+
+    #region Notification Helper
+
+    private void ShowNotification(NotificationSeverity severity, string message)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = severity,
+            Summary = severity.ToString(),
+            Detail = message,
+            Duration = 4000
+        });
+    }
+
+    #endregion
+
+    #region Data Models
+
+    /// <summary>
+    /// Risk Registry Entry model for grid display
+    /// </summary>
+    public class RiskRegistryEntry
+    {
+        public string ReportId { get; set; } = string.Empty;
+        public string HazardId { get; set; } = string.Empty;
+        public string HazardDescription { get; set; } = string.Empty;
+        public string RiskMatrixCode { get; set; } = string.Empty;
+        public string RiskLevel { get; set; } = string.Empty;
+        public string? MitigationDescription { get; set; }
+        public string MitigationStatusName { get; set; } = string.Empty;
+        public DateTime? TargetDate { get; set; }
+        public string? AssignedTo { get; set; }
+        public DateTime LastUpdated { get; set; }
+
+        // Additional properties for context
+        public string? HazardCategory { get; set; }
+        public string? HazardType { get; set; }
+        public string? AssessmentId { get; set; }
+        public string? MitigationId { get; set; }
+    }
+
+    /// <summary>
+    /// Filter option for dropdowns
+    /// </summary>
+    public class FilterOption
+    {
+        public string Value { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+
+        public FilterOption(string value, string text)
+        {
+            Value = value;
+            Text = text;
+        }
+    }
+
+    #endregion
+
+    #region Bootstrap Helper Methods
+
+    /// <summary>
+    /// Get Bootstrap color class for mitigation status
+    /// </summary>
+    private string GetBootstrapMitigationStatusColor(string? statusName)
+    {
+        return statusName switch
+        {
+            "PENDING_APPROVAL" => "warning",
+            "APPROVED" => "success", 
+            "IN_PROGRESS_DUE_DATE" => "primary",
+            "COMPLETE" => "success",
+            "MONITORING_HAZARD" => "success",
+            "REJECTED" => "danger",
+            _ => "secondary"
+        };
+    }
+
+    #endregion
+}

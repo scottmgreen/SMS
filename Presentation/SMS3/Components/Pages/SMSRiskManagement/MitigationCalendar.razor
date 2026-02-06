@@ -1,0 +1,475 @@
+@page "/SMSRiskManagement/MitigationCalendar"
+@using SMS3.Components.Shared
+@using SMS3.Components.Pages.SMSAssurance.Components
+@using SMS_Application.Messaging.Queries
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Mitigation Calendar - SMS3</PageTitle>
+
+<!-- SMS Page Header -->
+<PageHeader Title="Mitigation Calendar"
+           Subtitle="Track and manage risk mitigation schedules using an interactive calendar scheduler"
+           Icon="fas fa-calendar-shield">
+</PageHeader>
+
+<!-- Calendar Controls -->
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" class="rz-p-4 rz-mb-6 rz-border-radius-1" Style="border: var(--rz-grid-cell-border);height:4rem;">
+    <RadzenLabel Text="Show Header:" />
+    <RadzenSwitch @bind-Value="@showHeader" />
+    
+    <RadzenButton Icon="today" Text="Today" Click="@GoToToday" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" />
+    <RadzenButton Icon="refresh" Text="Refresh" Click="@RefreshData" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@IsLoading" />
+    <RadzenButton Icon="add" Text="Schedule Mitigation" Click="@(() => ShowCreateMitigationDialog())" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" />
+    
+    <!-- Legend - Status-based styling -->
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Style="margin-left: 2rem;">
+        <RadzenText TextStyle="TextStyle.Caption">Legend:</RadzenText>
+        <RadzenBadge Text="Pending Approval" BadgeStyle="BadgeStyle.Warning" />
+        <RadzenBadge Text="Approved" BadgeStyle="BadgeStyle.Info" />
+        <RadzenBadge Text="In Progress" BadgeStyle="BadgeStyle.Primary" />
+        <RadzenBadge Text="Complete" BadgeStyle="BadgeStyle.Success" />
+        <RadzenBadge Text="Monitoring" BadgeStyle="BadgeStyle.Light" />
+        <RadzenBadge Text="Rejected" BadgeStyle="BadgeStyle.Danger" />
+    </RadzenStack>
+</RadzenStack>
+
+<!-- Calendar Scheduler -->
+<RadzenRow Gap="1rem">
+    <RadzenColumn Size="12">
+        <RadzenCard>
+            @if (IsLoading)
+            {
+                <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
+                    <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+                </div>
+            }
+            else
+            {
+                <!-- Enhanced Scheduler Component -->
+                <RadzenScheduler @ref="scheduler"  
+                                TItem="MitigationSchedulerItem" 
+                                Data="@SchedulerData"
+                                StartProperty="@nameof(MitigationSchedulerItem.Start)"
+                                EndProperty="@nameof(MitigationSchedulerItem.End)"
+                                TextProperty="@nameof(MitigationSchedulerItem.Text)"
+                                SelectedIndex="2"
+                                ShowHeader="@showHeader"
+                                SlotSelect="@OnSlotSelect"
+                                AppointmentSelect="@OnAppointmentSelect"
+                                AppointmentRender="@OnAppointmentRender"
+                                SlotRender="@OnSlotRender"
+                                AppointmentMove="@OnAppointmentMove"
+                                Style="width: 100%;height:800px"
+                                class="mitigation-scheduler">
+                    
+                    <!-- Custom Views -->
+                    <RadzenDayView />
+                    <RadzenWeekView />
+                    <RadzenMonthView />
+                    <RadzenYearView />
+                    
+                </RadzenScheduler>
+            }
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>
+
+<!-- Mitigation Statistics Card -->
+<RadzenRow Gap="1rem" Style="margin-top: 1rem;">
+    <RadzenColumn Size="12" SizeMD="3">
+        <RadzenCard Style="text-align: center; padding: 1.5rem;">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="security" Style="font-size: 2rem; color: var(--rz-primary);" />
+                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: bold;">@Mitigations.Count</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-text-secondary-color);">Total Mitigations</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+    
+    <RadzenColumn Size="12" SizeMD="3">
+        <RadzenCard Style="text-align: center; padding: 1.5rem;">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="event" Style="font-size: 2rem; color: var(--rz-success);" />
+                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: bold;">@GetMitigationsThisMonth()</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-text.secondary-color);">This Month</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+    
+    <RadzenColumn Size="12" SizeMD="3">
+        <RadzenCard Style="text-align: center; padding: 1.5rem;">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="calendar_today" Style="font-size: 2rem; color: var(--rz-warning);" />
+                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: bold;">@GetMitigationsThisWeek()</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-text.secondary-color);">This Week</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+    
+    <RadzenColumn Size="12" SizeMD="3">
+        <RadzenCard Style="text-align: center; padding: 1.5rem;">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="warning" Style="font-size: 2rem; color: var(--rz-danger);" />
+                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: bold;">@GetOverdueMitigations()</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-text.secondary-color);">Overdue</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>
+
+<!-- Mitigation Details Modal -->
+@if (ShowDetailsModal && SelectedMitigation != null)
+{
+    <div class="modal-overlay" @onclick="@PreventBackgroundClick" @onclick:stopPropagation="true">
+        <div class="sms-modal-dialog sms-modal-xxl" @onclick:stopPropagation="true">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-primary">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <h5 class="sms-modal-title mb-0">
+                            <i class="fas fa-shield-alt"></i> Mitigation Details - @SelectedMitigation.Code
+                        </h5>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                    Variant="Variant.Text"
+                                    Icon="close"
+                                    Size="ButtonSize.Small"
+                                    Click="CloseDetailsModal" />
+                    </div>
+                </div>
+                <div class="sms-modal-body p-0">
+                    <!-- Mitigation Information Section -->
+                    <div class="p-4 border-bottom">
+                        <RadzenRow Gap="2rem">
+                            <RadzenColumn Size="8">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-info-circle"></i> Mitigation Information
+                                </h6>
+                                <RadzenRow Gap="1rem">
+                                    <RadzenColumn Size="6">
+                                        <RadzenCard Variant="Variant.Outlined">
+                                            <div class="p-3">
+                                                <strong>Code:</strong> @SelectedMitigation.Code<br>
+                                                <strong>Name:</strong> @SelectedMitigation.Name<br>
+                                                <strong>Status:</strong> 
+                                                <RadzenBadge Text="@SelectedMitigation.Status" BadgeStyle="@GetStatusBadgeStyle(SelectedMitigation.Status)" /><br>
+                                                <strong>Type:</strong>
+                                                <RadzenBadge Text="@(SelectedMitigation.Type ?? "Not specified")" BadgeStyle="BadgeStyle.Info" />
+                                            </div>
+                                        </RadzenCard>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="6">
+                                        <RadzenCard Variant="Variant.Outlined">
+                                            <div class="p-3">
+                                                <strong>Hazard:</strong> @SelectedMitigation.HazardCode<br>
+                                                <strong>Assigned To:</strong> @(SelectedMitigation.AssignedTo ?? "Unassigned")<br>
+                                                <strong>Target Date:</strong> @(SelectedMitigation.TargetDate?.ToString("MM/dd/yyyy") ?? "Not set")<br>
+                                                <strong>Completion:</strong> @(SelectedMitigation.CompletionDate?.ToString("MM/dd/yyyy") ?? "Not completed")
+                                            </div>
+                                        </RadzenCard>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                                
+                                @if (!string.IsNullOrEmpty(SelectedMitigation.Description))
+                                {
+                                    <div class="mt-3">
+                                        <strong>Description:</strong>
+                                        <RadzenCard Variant="Variant.Text" Class="mt-2">
+                                            <div class="p-2" style="background-color: #f8f9fa;">
+                                                @SelectedMitigation.Description
+                                            </div>
+                                        </RadzenCard>
+                                    </div>
+                                }
+                                
+                                @if (!string.IsNullOrEmpty(SelectedMitigation.ProgressNotes))
+                                {
+                                    <div class="mt-3">
+                                        <strong>Progress Notes:</strong>
+                                        <RadzenCard Variant="Variant.Text" Class="mt-2">
+                                            <div class="p-2" style="background-color: #e8f5e8;">
+                                                @SelectedMitigation.ProgressNotes
+                                            </div>
+                                        </RadzenCard>
+                                    </div>
+                                }
+                            </RadzenColumn>
+                            <RadzenColumn Size="4">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-chart-line"></i> Progress Details
+                                </h6>
+                                <RadzenCard Variant="Variant.Outlined">
+                                    <div class="p-3">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Progress:</span>
+                                            <RadzenBadge Text="@(SelectedMitigation.Progress.ToString() + "%")" BadgeStyle="@GetProgressBadgeStyle(SelectedMitigation.Progress)" />
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Priority:</span>
+                                            <RadzenBadge Text="@(SelectedMitigation.Priority ?? "Not set")" BadgeStyle="BadgeStyle.Secondary" />
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Dependencies:</span>
+                                            <RadzenBadge Text="@(SelectedMitigation.HasDependencies ? "Yes" : "No")" 
+                                                       BadgeStyle="@(SelectedMitigation.HasDependencies ? BadgeStyle.Warning : BadgeStyle.Success)" />
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Est. Cost:</span>
+                                            <RadzenBadge Text="@(SelectedMitigation.EstimatedCost?.ToString("C") ?? "Not set")" BadgeStyle="BadgeStyle.Info" />
+                                        </div>
+                                    </div>
+                                </RadzenCard>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </div>
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end gap-2">
+                        <RadzenButton ButtonStyle="ButtonStyle.Warning" 
+                                    Text="Edit Mitigation" 
+                                    Icon="edit"
+                                    Click="@(() => EditFromDetailsModal(SelectedMitigation))"
+                                    Size="ButtonSize.Medium" 
+                                    Disabled="@IsLoading" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
+                                    Text="Close" 
+                                    Icon="close"
+                                    Click="@CloseDetailsModal"
+                                    Size="ButtonSize.Medium" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .mitigation-scheduler .rz-scheduler-appointment {
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        outline: none !important;
+        transition: all 0.3s ease;
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        pointer-events: auto;
+        position: relative;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .mitigation-scheduler .rz-scheduler-appointment:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .mitigation-scheduler .rz-scheduler-appointment:focus,
+    .mitigation-scheduler .rz-scheduler-appointment:focus-visible,
+    .mitigation-scheduler .rz-scheduler-appointment:active {
+        outline: none !important;
+        box-shadow: 0 0 0 3px rgba(33, 46, 97, 0.3) !important;
+    }
+    
+    /* Prevent focus errors on child elements */
+    .mitigation-scheduler .rz-scheduler-appointment * {
+        outline: none !important;
+        user-select: none;
+        pointer-events: none;
+    }
+    
+    /* Status-based styling */
+    .mitigation-scheduler .rz-scheduler-appointment.mitigation-pending {
+        background: linear-gradient(135deg, #ffc107, #e0a800);
+        border-color: #ffc107;
+        color: #212529;
+        font-weight: 600;
+    }
+    
+    .mitigation-scheduler .rz-scheduler-appointment.mitigation-approved {
+        background: linear-gradient(135deg, #17a2b8, #138496);
+        border-color: #17a2b8;
+        color: white;
+    }
+    
+    .mitigation-scheduler .rz-scheduler-appointment.mitigation-inprogress {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        border-color: #007bff;
+        color: white;
+    }
+    
+    .mitigation-scheduler .rz-scheduler-appointment.mitigation-complete {
+        background: linear-gradient(135deg, #28a745, #1e7e34);
+        border-color: #28a745;
+        color: white;
+    }
+    
+    .mitigation-scheduler .rz-scheduler-appointment.mitigation-monitoring {
+        background: linear-gradient(135deg, #6c757d, #5a6268);
+        border-color: #6c757d;
+        color: white;
+    }
+    
+    .mitigation-scheduler .rz-scheduler-appointment.mitigation-rejected {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        border-color: #dc3545;
+        color: white;
+        text-decoration: line-through;
+        opacity: 0.8;
+    }
+
+    /* High priority mitigations get a special indicator */
+    .mitigation-scheduler .rz-scheduler-appointment.high-priority::before {
+        content: '?';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        font-size: 0.75rem;
+        z-index: 1;
+    }
+
+    /* Overdue mitigations get a special indicator */
+    .mitigation-scheduler .rz-scheduler-appointment.overdue::before {
+        content: '??';
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        font-size: 0.75rem;
+        z-index: 1;
+    }
+
+    /* Status-specific enhancements */
+    .mitigation-scheduler .rz-scheduler-appointment.mitigation-inprogress::after {
+        content: '??';
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        font-size: 0.75rem;
+    }
+
+    .mitigation-scheduler .rz-scheduler-appointment.mitigation-complete::after {
+        content: '?';
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        font-size: 0.75rem;
+    }
+
+    .mitigation-scheduler .rz-scheduler-appointment.mitigation-rejected::after {
+        content: '?';
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        font-size: 0.75rem;
+    }
+    
+    /* Enhanced slot highlighting */
+    .mitigation-scheduler .rz-scheduler-slot.business-hours {
+        background: var(--rz-scheduler-highlight-background-color, rgba(255,220,40,.1)) !important;
+    }
+
+    .mitigation-scheduler .rz-scheduler-slot.today {
+        background: var(--rz-scheduler-today-background-color, rgba(33,46,97,.1)) !important;
+    }
+
+    /* Modal Styles */
+    .sms-modal-xxl {
+        max-width: 1400px;
+        width: 95%;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1050;
+        padding: 1rem;
+    }
+
+    .sms-modal-dialog {
+        position: relative;
+        margin: 0 auto;
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+    }
+
+    .sms-modal-content {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+    }
+
+    .sms-modal-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .sms-header-primary {
+        background-color: #212e61; /* SMS Blue Dark Bold */
+        color: white;
+    }
+
+    .sms-modal-title {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .sms-modal-body {
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+
+    .sms-modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e9ecef;
+        border-radius: 0 0 0.5rem 0.5rem;
+    }
+</style>
+
+<script>
+    window.mitigationCalendarHelpers = {
+        preventFocusErrors: function() {
+            // Prevent focus errors on scheduler appointments
+            document.addEventListener('click', function(event) {
+                const appointment = event.target.closest('.rz-scheduler-appointment');
+                if (appointment) {
+                    // Prevent default focus behavior that can cause issues
+                    event.preventDefault();
+                    event.stopPropagation();
+                    
+                    // Remove focus from any active elements to prevent conflicts
+                    if (document.activeElement && document.activeElement.blur) {
+                        document.activeElement.blur();
+                    }
+                }
+            }, true);
+            
+            // Handle focus errors globally
+            window.addEventListener('error', function(event) {
+                if (event.error && event.error.message && 
+                    event.error.message.includes('Unable to focus an invalid element')) {
+                    console.warn('Focus error prevented:', event.error.message);
+                    event.preventDefault();
+                    return false;
+                }
+            });
+        }
+    };
+    
+    // Initialize when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.mitigationCalendarHelpers) {
+            window.mitigationCalendarHelpers.preventFocusErrors();
+        }
+    });
+</script>

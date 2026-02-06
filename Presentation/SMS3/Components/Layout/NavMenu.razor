@@ -47,6 +47,12 @@
                                     <RadzenMenuItem Text="Investigate" Icon="search">
                                         <RadzenMenuItem Text="Active Investigations" Path="/Listings/Investigations" Icon="assignment"></RadzenMenuItem>
                                         <RadzenMenuItem Text="Interview Calendar" Path="/SMSRiskManagement/InterviewCalendar" Icon="diversity_3"></RadzenMenuItem>
+                                        <RadzenMenuItem Text="Mitigation Calendar" Path="/SMSRiskManagement/MitigationCalendar" Icon="event_available"></RadzenMenuItem>
+                                    </RadzenMenuItem>
+                                    <!-- Mitigation -->
+                                    <RadzenMenuItem Text="Mitigation" Icon="search">
+                                        <RadzenMenuItem Text="Active Mitigations" Path="/Listings/Mitigations" Icon="assignment"></RadzenMenuItem>
+                                        <RadzenMenuItem Text="Mitigations Calendar" Path="/SMSRiskManagement/MitigationCalendar" Icon="diversity_3"></RadzenMenuItem>
                                     </RadzenMenuItem>
                                 </RadzenMenuItem>
                             </RadzenMenu>
@@ -79,6 +85,7 @@
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
                                 <RadzenMenuItem Text="SMS Assurance" Icon="verified_user" class="sms-menu-item">
+                                    <RadzenMenuItem Text="Risk Registry" Path="/SMSAssurance/RiskRegistry" Icon="assignment"></RadzenMenuItem>
                                     <RadzenMenuItem Text="SPI Dashboard" Path="/SMSAssurance/SPIDashboard" Icon="dashboard"></RadzenMenuItem>
                                     <RadzenMenuItem Text="SPI Configuration" Path="/SMSAssurance/SPIConfiguration" Icon="settings"></RadzenMenuItem>
                                     <RadzenMenuItem Text="Audit Management" Path="/SMSAssurance/AuditManagement" Icon="assignment"></RadzenMenuItem>

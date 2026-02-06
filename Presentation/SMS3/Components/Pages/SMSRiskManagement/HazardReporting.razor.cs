@@ -110,6 +110,14 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// </summary>
     public List<DropdownOption> HazardTypeOptions { get; set; } = new();
 
+
+    public List<DropdownOption> DepartmentOptions { get; set; } = new();    
+
+    ///<summary>
+    /// Department List
+    /// </summary>
+    public string? SelectedDepartment { get; set; } 
+
     /// <summary>
     /// Currently selected hazard category
     /// </summary>
@@ -164,9 +172,9 @@ public partial class HazardReporting : ComponentBase, IDisposable
     public string PageTitle => IsEditMode ? $"Edit Report - {EditReportCode}" : "Submit Hazard Report";
     public string PageSubtitle => IsEditMode ? "Modify existing hazard report information" : "Report safety hazards and incidents for SMS processing and risk assessment";
 
-    // Airport coordinates
-    private double AirportCenterLatitude => 45.5898;
-    private double AirportCenterLongitude => -122.5951;
+    // Airport coordinates //GOLDKEY
+    private double AirportCenterLatitude => 45.58808;
+    private double AirportCenterLongitude => -122.592430;
     private int DefaultZoomLevel => 20;
 
     private IJSObjectReference? _mapModule;
@@ -386,6 +394,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 // Clear category-related fields
                 SelectedHazardCategory = null;
                 HazardTypeOptions.Clear();
+                DepartmentOptions.Clear();
+                SelectedDepartment =null;
             }
 
             NotificationService.Notify(new NotificationMessage
@@ -1514,7 +1524,17 @@ public partial class HazardReporting : ComponentBase, IDisposable
         // Initially show all hazard types (will be filtered when category is selected)
         HazardTypeOptions = new List<DropdownOption>();
 
-        // Note: DepartmentOptions removed - now using free text input for Reporting Department
+        DepartmentOptions = SMSDepartment.GetAllValues()
+            .Select(hc => new DropdownOption(hc.Value, hc.Name))
+            .ToList();
+    }
+
+    public async Task OnDepartmentChanged(string? departmentValue)
+    {
+        Logger.LogInformation("Submitting Department changed to: {Department}", departmentValue);
+
+        SelectedDepartment = departmentValue;
+
     }
 
     /// <summary>
