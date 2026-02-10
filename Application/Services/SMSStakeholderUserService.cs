@@ -128,40 +128,7 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
         }
     }
 
-    /// <summary>
-    /// Gets airline stakeholders with business rules
-    /// </summary>
-    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetAirlineStakeholdersAsync(CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving airline stakeholders");
-
-            var result = await _dataService.GetAirlineStakeholdersAsync(ct).ConfigureAwait(false);
-
-            if (result.IsSuccess)
-            {
-                var airlines = result.Value;
-                _logger.LogInformation("Found {Count} airline stakeholders", airlines.Count());
-
-                // Business analysis - group by organization for insights
-                var airlineGroups = airlines.GroupBy(a => a.Organization).ToList();
-                foreach (var group in airlineGroups)
-                {
-                    _logger.LogInformation("Airline {Organization} has {Count} stakeholder users",
-                        group.Key, group.Count());
-                }
-            }
-
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error retrieving airline stakeholders");
-            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
-        }
-    }
-
+    
     /// <summary>
     /// Gets users requiring AOA access with security validation
     /// </summary>

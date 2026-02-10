@@ -16,14 +16,14 @@
     <RadzenStack Gap="1rem">
         <!-- Hazard Header -->
         <RadzenRow AlignItems="AlignItems.Center">
-                <RadzenColumn Size="2">
+                <RadzenColumn Size="3">
                     <RadzenStack Gap="0.25rem">
                         <RadzenText TextStyle="TextStyle.Subtitle1">
                               <strong>Hazard: </strong>  @Hazard.Code
                             </RadzenText>
                     </RadzenStack>
                 </RadzenColumn>
-                <RadzenColumn Size="6">
+                <RadzenColumn Size="5">
                     <RadzenStack Gap="0.25rem">
                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
                             <RadzenText TextStyle="TextStyle.Subtitle1"
@@ -36,7 +36,7 @@
            
             
             
-                <RadzenColumn Size="2">
+                <RadzenColumn Size="1">
                     <RadzenStack Gap="0.25rem">
                         @{
                             var average = GetAverageScore();
@@ -59,8 +59,8 @@
                         }
                     </RadzenStack>
                 </RadzenColumn>
-                <RadzenColumn Size="2">
-                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenColumn Size="3" >
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" >
                         <RadzenButton Text="Manage Panel" Icon="people" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Medium"
                                       Click="@OpenPanelDialog" />
 

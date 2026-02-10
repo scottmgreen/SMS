@@ -355,6 +355,7 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserRole, user.UserRole.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserIsActive, user.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserLastLoginDate, user.LastLoginDate));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserIsPOPEmployee, user.IsPOPEmployee));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, user.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
@@ -405,7 +406,8 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserRole, user.UserRole.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserIsActive, user.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserLastLoginDate, user.LastLoginDate));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserIsPOPEmployee, user.IsPOPEmployee));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, user.UpdatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
             await sql.OpenAsync().ConfigureAwait(false);
@@ -770,45 +772,8 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
         }
     }
 
-    //public async Task<Result<bool>> UpdateStakeholderInfoAsync(string userId, string stakeholderType, string organization, string accessLevel)
-    //{
-    //    try
-    //    {
-    //        var userResult = await GetByCodeAsync(userId);
-    //        if (userResult.IsFailure)
-    //        {
-    //            return Result<bool>.Failure<bool>(userResult.Error);
-    //        }
-
-    //        var user = userResult.Value;
-    //        user.UpdateStakeholderInfo(stakeholderType, organization, accessLevel);
-
-    //        return await UpdateAsync(user);
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        _logger.LogInfrastructurePutItemError($"{_logHeader} {ex.Message}", null);
-    //        return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.UpdateFailed);
-    //    }
-    //}
-
-    //Legit --PARAM IS MESSED UP NEEDS TO BE A CODE 
-    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetAirlineStakeholdersAsync()
-    {
-        return await GetByStakeholderTypeAsync("Airline");
-    }
-
-    //Legit --PARAM IS MESSED UP NEEDS TO BE A CODE 
-    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetGroundHandlerStakeholdersAsync()
-    {
-        return await GetByStakeholderTypeAsync("Ground Handler");
-    }
-
-    //Legit --PARAM IS MESSED UP NEEDS TO BE A CODE 
-    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetContractorStakeholdersAsync()
-    {
-        return await GetByStakeholderTypeAsync("Contractor");
-    }
+  
+    
 
 
     //Legit

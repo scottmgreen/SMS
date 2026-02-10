@@ -168,56 +168,11 @@ public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakehold
         }
     }
 
-    /// <summary>
-    /// Gets airline stakeholders
-    /// </summary>
-    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetAirlineStakeholdersAsync(CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving airline stakeholders");
-            return await _repository.GetAirlineStakeholdersAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error retrieving airline stakeholders");
-            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
-        }
-    }
+    
 
-    /// <summary>
-    /// Gets ground handler stakeholders
-    /// </summary>
-    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetGroundHandlerStakeholdersAsync(CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving ground handler stakeholders");
-            return await _repository.GetGroundHandlerStakeholdersAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error retrieving ground handler stakeholders");
-            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
-        }
-    }
+    
 
-    /// <summary>
-    /// Gets contractor stakeholders
-    /// </summary>
-    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetContractorStakeholdersAsync(CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving contractor stakeholders");
-            return await _repository.GetContractorStakeholdersAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error retrieving contractor stakeholders");
-            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
-        }
-    }
+    
 
     /// <summary>
     /// Gets users requiring AOA access

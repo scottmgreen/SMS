@@ -191,6 +191,7 @@ public static partial class Mappers
             var smsUserRole = reader.GetString(FieldNames.fSMSUserRoleCode);
             stakeholderuser.IsActive = reader.GetBoolean(FieldNames.fSMSStakeholderUserIsActive);
             stakeholderuser.LastLoginDate = reader.IsDBNull(FieldNames.fSMSStakeholderUserLastLoginDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSStakeholderUserLastLoginDate);
+            stakeholderuser.IsPOPEmployee = reader.GetBoolean(FieldNames.fSMSStakeholderIsPOPEmployee);
             stakeholderuser.CreatedBy = reader.GetString(FieldNames.fCreatedBy);
             stakeholderuser.CreatedDate = reader.GetDateTime(FieldNames.fCreatedDate);
 
@@ -624,70 +625,23 @@ public static partial class Mappers
 
         // Date Properties
         mitigation.TargetDate = reader.IsDBNull(FieldNames.fMitigationTargetDate) ? null : reader.GetValue<DateTime?>(FieldNames.fMitigationTargetDate);
-        mitigation.CompletionDate = reader.IsDBNull(FieldNames.fMitigationCompletionDate) ? null : reader.GetValue<DateTime?>(FieldNames.fMitigationCompletionDate);
-
+        
         // Assignment Properties
         mitigation.AssignedDepartment = reader.GetValue<string>(FieldNames.fMitigationAssignedDepartment);
         mitigation.AssignedTo = reader.GetValue<string>(FieldNames.fMitigationAssignedTo);
-        mitigation.ApprovedBy = reader.GetValue<string>(FieldNames.fMitigationApprovedBy);
-        mitigation.ApprovedDate = reader.IsDBNull(FieldNames.fMitigationApprovedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fMitigationApprovedDate);
+        
 
         // Progress Properties - ✅ FIXED: Progress is int (not nullable)
         mitigation.Progress = reader.IsDBNull(FieldNames.fMitigationProgress) ? 0 : reader.GetValue<int>(FieldNames.fMitigationProgress);
-        mitigation.ProgressNotes = reader.GetValue<string>(FieldNames.fMitigationProgressNotes);
-        mitigation.LastProgressUpdate = reader.IsDBNull(FieldNames.fMitigationLastProgressUpdate) ? null : reader.GetValue<DateTime?>(FieldNames.fMitigationLastProgressUpdate);
-        mitigation.ProgressUpdatedBy = reader.GetValue<string>(FieldNames.fMitigationProgressUpdatedBy);
+        
 
         // Cost and Resource Properties
         mitigation.EstimatedCost = reader.IsDBNull(FieldNames.fMitigationEstimatedCost) ? null : reader.GetValue<decimal?>(FieldNames.fMitigationEstimatedCost);
-        mitigation.ActualCost = reader.IsDBNull(FieldNames.fMitigationActualCost) ? null : reader.GetValue<decimal?>(FieldNames.fMitigationActualCost);
+        
         mitigation.ResourceRequirements = reader.GetValue<string>(FieldNames.fMitigationResourceRequirements);
         mitigation.EstimatedHours = reader.IsDBNull(FieldNames.fMitigationEstimatedHours) ? null : reader.GetValue<int?>(FieldNames.fMitigationEstimatedHours);
-        mitigation.ActualHours = reader.IsDBNull(FieldNames.fMitigationActualHours) ? null : reader.GetValue<int?>(FieldNames.fMitigationActualHours);
-
-        // Effectiveness Properties
-        mitigation.EffectivenessRating = reader.GetValue<string>(FieldNames.fMitigationEffectivenessRating);
-        mitigation.EffectivenessNotes = reader.GetValue<string>(FieldNames.fMitigationEffectivenessNotes);
-        mitigation.EffectivenessReviewDate = reader.IsDBNull(FieldNames.fMitigationEffectivenessReviewDate) ? null : reader.GetValue<DateTime?>(FieldNames.fMitigationEffectivenessReviewDate);
-        mitigation.EffectivenessReviewedBy = reader.GetValue<string>(FieldNames.fMitigationEffectivenessReviewedBy);
-
-        // Monitoring Properties
-        mitigation.MonitoringRequirements = reader.GetValue<string>(FieldNames.fMitigationMonitoringRequirements);
-        mitigation.MonitoringFrequency = reader.GetValue<string>(FieldNames.fMitigationMonitoringFrequency);
-
-        // Risk Reduction Properties
-        mitigation.ExpectedSeverityReduction = reader.IsDBNull(FieldNames.fMitigationExpectedSeverityReduction) ? null : reader.GetValue<int?>(FieldNames.fMitigationExpectedSeverityReduction);
-        mitigation.ExpectedLikelihoodReduction = reader.IsDBNull(FieldNames.fMitigationExpectedLikelihoodReduction) ? null : reader.GetValue<int?>(FieldNames.fMitigationExpectedLikelihoodReduction);
-        mitigation.ActualSeverityReduction = reader.IsDBNull(FieldNames.fMitigationActualSeverityReduction) ? null : reader.GetValue<int?>(FieldNames.fMitigationActualSeverityReduction);
-        mitigation.ActualLikelihoodReduction = reader.IsDBNull(FieldNames.fMitigationActualLikelihoodReduction) ? null : reader.GetValue<int?>(FieldNames.fMitigationActualLikelihoodReduction);
-        mitigation.ResidualRiskLevel = reader.GetValue<string>(FieldNames.fMitigationResidualRiskLevel);
-
-        // Dependency Properties - ✅ FIXED: bool properties are not nullable in entity
-        mitigation.Prerequisites = reader.GetValue<string>(FieldNames.fMitigationPrerequisites);
-        mitigation.Dependencies = reader.GetValue<string>(FieldNames.fMitigationDependencies);
-        mitigation.HasDependencies = reader.IsDBNull(FieldNames.fMitigationHasDependencies) ? false : reader.GetValue<bool>(FieldNames.fMitigationHasDependencies);
-        mitigation.IsPrerequisite = reader.IsDBNull(FieldNames.fMitigationIsPrerequisite) ? false : reader.GetValue<bool>(FieldNames.fMitigationIsPrerequisite);
-
-        // Plan Properties
-        mitigation.ImplementationPlan = reader.GetValue<string>(FieldNames.fMitigationImplementationPlan);
-        mitigation.CommunicationPlan = reader.GetValue<string>(FieldNames.fMitigationCommunicationPlan);
-        mitigation.TrainingRequirements = reader.GetValue<string>(FieldNames.fMitigationTrainingRequirements);
-        mitigation.DocumentationUpdates = reader.GetValue<string>(FieldNames.fMitigationDocumentationUpdates);
-
-        // Testing Properties
-        mitigation.TestingProcedure = reader.GetValue<string>(FieldNames.fMitigationTestingProcedure);
-        mitigation.TestingCompletedDate = reader.IsDBNull(FieldNames.fMitigationTestingCompletedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fMitigationTestingCompletedDate);
-        mitigation.TestingResults = reader.GetValue<string>(FieldNames.fMitigationTestingResults);
-
-        // Validation Properties - ✅ FIXED: ValidationRequired is bool (not nullable)
-        mitigation.ValidationRequired = reader.IsDBNull(FieldNames.fMitigationValidationRequired) ? false : reader.GetValue<bool>(FieldNames.fMitigationValidationRequired);
-        mitigation.ValidationDate = reader.IsDBNull(FieldNames.fMitigationValidationDate) ? null : reader.GetValue<DateTime?>(FieldNames.fMitigationValidationDate);
-        mitigation.ValidatedBy = reader.GetValue<string>(FieldNames.fMitigationValidatedBy);
-
-        // Documentation Properties
-        mitigation.Notes = reader.GetValue<string>(FieldNames.fMitigationNotes);
-        mitigation.LessonsLearned = reader.GetValue<string>(FieldNames.fMitigationLessonsLearned);
-        mitigation.RecommendationsForFuture = reader.GetValue<string>(FieldNames.fMitigationRecommendationsForFuture);
+        
+       
 
         // Audit Properties (inherited from BaseAuditableEntity)
         mitigation.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";

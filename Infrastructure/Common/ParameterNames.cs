@@ -211,6 +211,9 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmSMSStakeholderUserLoginDate = new Lazy<string>(() => "@pLoginDate");
     public static string pmSMSStakeholderUserLoginDate => _pmSMSStakeholderUserLoginDate.Value;
 
+    private static readonly Lazy<string> _pmSMSStakeholderUserIsPOPEmployee = new Lazy<string>(() => "@pIsPOPEmployee");
+    public static string pmSMSStakeholderUserIsPOPEmployee => _pmSMSStakeholderUserIsPOPEmployee.Value;
+
     /// <summary>
     /// Airport Shared Dataset parameters
     /// </summary>

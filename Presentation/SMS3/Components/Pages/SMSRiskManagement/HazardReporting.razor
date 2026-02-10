@@ -1,4 +1,4 @@
-@page "/SMSRiskManagement/HazardReporting"
+﻿@page "/SMSRiskManagement/HazardReporting"
 @using SMS3.Components.Shared
 @using SMS3.Components.Pages.SMSRiskManagement.Models
 @using SMS_Application.Messaging.Commands
@@ -26,56 +26,14 @@
 }
 else if (ShowFinalSuccessConfirmation)
 {
-    @* <!-- Final Success Modal -->
-    <div class="modal-overlay">
-        <div class="sms-modal-dialog sms-modal-lg">
-            <div class="sms-modal-content">
-                <div class="sms-modal-header sms-header-success">
-                    <h5 class="sms-modal-title">
-                        <i class="fas fa-check-circle"></i> Hazard Report Successfully Submitted!
-                    </h5>
-                </div>
-                <div class="sms-modal-body">
-                    
-                    <!-- Report Details -->
-                    <RadzenCard Variant="Variant.Outlined" Class="mb-3">
-                        <div class="p-3">
-                            <h6 class="text-primary mb-2">
-                                <i class="fas fa-info-circle"></i> Report Summary
-                            </h6>
-                            <div class="row">
-                                <div class="col-sm-6">
-                                    <strong>Hazard ID:</strong> @GeneratedHazardId<br>
-                                    <strong>Report ID:</strong> @GeneratedReportId<br>
-                                    <strong>Status:</strong> <RadzenBadge Text="Submitted" BadgeStyle="BadgeStyle.Success" />
-                                </div>
-                                <div class="col-sm-6">
-                                    <strong>Submitted:</strong> @SubmissionDateTime?.ToString("MM/dd/yyyy HH:mm")<br>
-                                    <strong>Anonymous:</strong> @(HazardReport.IsAnonymous ? "Yes" : "No")
-                                </div>
-                            </div>
-                        </div>
-                    </RadzenCard>
-
-                    <div class="text-center">
-                        <RadzenButton ButtonStyle="ButtonStyle.Primary" 
-                                    Click="CloseFinalConfirmation" 
-                                    Text="Continue & Clear Form" 
-                                    Icon="check"
-                                    Size="ButtonSize.Medium" />
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> *@
-
+   
     <!-- Final Success Modal -->
     <div class="modal-overlay">
         <div class="sms-modal-dialog sms-modal-lg">
             <div class="sms-modal-content">
                 <div class="sms-modal-header sms-header-success">
                     <h5 class="sms-modal-title">
-                        <i class="fas fa-check-circle"></i> Confidential Report Successfully Submitted!
+                        <i class="fas fa-check-circle"></i> SMS Hazard Report Successfully Submitted!
                     </h5>
                 </div>
                 <div class="sms-modal-body">
@@ -89,13 +47,14 @@ else if (ShowFinalSuccessConfirmation)
                             <div class="row">
                                 <div class="col-sm-4">
                                     <strong>Tracking ID:</strong> @GeneratedTrackingId<br>
+                                    <strong>Report ID:</strong> @GeneratedReportId<br>
                                     <strong>Hazard ID:</strong> @GeneratedHazardId<br>
-                                    <strong>Status:</strong> <RadzenBadge Text="Submitted" BadgeStyle="BadgeStyle.Success" />
+                                    
                                 </div>
                                 <div class="col-sm-4">
                                     <div class="text-center">
                                         <RadzenFieldset Text="Track Report URL">
-                                            <RadzenQRCode Value="@GetTrackingUrl()" Size="120" />
+                                            <RadzenQRCode Value="@GetTrackingUrl()" Size="120"/>
                                             <div class="small text-muted mt-2">
                                                 Scan to track your report
                                             </div>
@@ -104,7 +63,6 @@ else if (ShowFinalSuccessConfirmation)
                                 </div>
                                 <div class="col-sm-4">
                                     <strong>Submitted:</strong> @SubmissionDateTime?.ToString("MM/dd/yyyy HH:mm")<br>
-                                    <strong>Confidential:</strong> Yes<br>
                                     <strong>Tracking URL:</strong><br>
                                     <small class="text-break">@GetTrackingUrl()</small>
                                 </div>
@@ -112,26 +70,20 @@ else if (ShowFinalSuccessConfirmation)
                         </div>
                     </RadzenCard>
 
-                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mb-3">
+                    @* <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mb-3">
                         <h6 class="mb-1">
                             <i class="fas fa-shield-alt"></i> Your Identity is Protected
                         </h6>
-                        <p class="mb-0">Your confidential report has been submitted anonymously and will be reviewed by authorized SMS personnel only. Save your tracking ID for future reference.</p>
-                    </RadzenAlert>
+                        <p class="mb-0">Your anonymous report has been submitted and will be reviewed by authorized SMS personnel only. Save your tracking ID for future reference.</p>
+                    </RadzenAlert> *@
 
                     <!-- Action Buttons -->
                     <div class="text-center">
                         <div class="d-flex justify-content-center gap-3 flex-wrap">
-                            <RadzenButton ButtonStyle="ButtonStyle.Secondary"
+                            <RadzenButton ButtonStyle="ButtonStyle.Warning"
                                           Click="PrintConfirmation"
                                           Text="Print Details"
                                           Icon="print"
-                                          Size="ButtonSize.Medium" />
-
-                            <RadzenButton ButtonStyle="ButtonStyle.Info"
-                                          Click="CopyTrackingInfo"
-                                          Text="Copy Tracking ID"
-                                          Icon="copy"
                                           Size="ButtonSize.Medium" />
 
                             <RadzenButton ButtonStyle="ButtonStyle.Primary"
@@ -161,7 +113,6 @@ else
                     @if (ShowConfidentialInfo)
                     {
                         <RadzenAlert Size="AlertSize.Small" Variant="Variant.Flat">
-                            @* <RadzenIcon Icon="security" /> *@
                             <strong>Confidential Protection:</strong> Your identity will be protected and access to this report will be restricted to authorized SMS personnel only.
                             <br><strong>Benefits:</strong> Enhanced protection from retaliation, restricted access, anonymous follow-up options.
                             <br><strong>Note:</strong> Confidential reports may take longer to process due to additional security measures.
@@ -169,7 +120,7 @@ else
                     }
                     <RadzenTemplateForm Data="@HazardReport" Submit="@HandleFormSubmit" TItem="HazardReportForm">
                         <RadzenRow>
-                            <RadzenColumn Size="2">
+                            <RadzenColumn Size="3">
                                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="0.5rem">
                                     <RadzenCheckBox @bind-Value="@HazardReport.IsAnonymous"
                                                     Name="IsAnonymous"
@@ -177,50 +128,56 @@ else
                                     <RadzenLabel Style="font-weight:600" Text="Submit as Anonymous" Component="IsAnonymous" />
                                 </RadzenStack>
                             </RadzenColumn>
+
+                            
                         </RadzenRow>
-                        <!-- Row 0: Anonymous, -->
+                        <!-- Row 0: Anonymous, Submitted By, Department and Job Function-->
                         <RadzenRow Gap="1rem" Class="rz-mb-3">
                             
 
                             @if (!HazardReport.IsAnonymous)
                             {
                                 <RadzenCard>
-
-                                
-                                <RadzenColumn Size="3">
-                                    <RadzenFormField AllowFloatingLabel="false" Text="Contact Name *" Variant="Variant.Outlined" Style="width: 100%;">
-                                        <RadzenTextBox @bind-Value="@HazardReport.ReportContactName"
-                                                       Placeholder="Name and position (e.g., 'John Smith - Ground Operations Supervisor')"
-                                                       Name="ContactName"
-                                                       MaxLength="60"
-                                                       Style="width: 100%;min-width: 100%;" />
-                                    </RadzenFormField>
+                                    <RadzenColumn Size="3">
+                                        <RadzenFormField AllowFloatingLabel="false" Text="Contact Name *" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenTextBox @bind-Value="@HazardReport.ReportContactName"
+                                                           Placeholder="Name and position (e.g., 'John Smith - Ground Operations Supervisor')"
+                                                           Name="ContactName"
+                                                           MaxLength="60"
+                                                           Style="width: 100%;min-width: 100%;" />
+                                        </RadzenFormField>
                                     
-                                </RadzenColumn>
-                                <RadzenColumn Size="3">
-                                    <RadzenFormField AllowFloatingLabel="false" Text="Contact Mobile" Variant="Variant.Outlined" Style="width: 100%;">
-                                        <RadzenMask Mask="(***) ***-****" CharacterPattern="[0-9]"
-                                                        Placeholder="(000) 000-0000" Name="ContactCell" @bind-Value=@HazardReport.ReportContactCell )
-                                                    Style="width: 100%;" aria-label="ContactCell" />
-                                        <RadzenRegexValidator Component="ContactCell" Text="Must be in (***)***-**** format" 
-                                            Pattern="^(\(\d{3}\)|\d{3})[-.\s]?\d{3}[-.\s]?\d{4}$" />
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="3">
+                                        <RadzenFormField AllowFloatingLabel="false" Text="Contact Mobile" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenMask Mask="(***) ***-****" CharacterPattern="[0-9]"
+                                                            Placeholder="(000) 000-0000" Name="ContactCell" @bind-Value=@HazardReport.ReportContactCell )
+                                                        Style="width: 100%;" aria-label="ContactCell" />
+                                            <RadzenRegexValidator Component="ContactCell" Text="Must be in (***)***-**** format" 
+                                                Pattern="^(\(\d{3}\)|\d{3})[-.\s]?\d{3}[-.\s]?\d{4}$" />
                                         
-                                    </RadzenFormField>
+                                        </RadzenFormField>
                                     
                                     
-                                </RadzenColumn>
-                                <RadzenColumn Size="3">
-                                    <RadzenFormField AllowFloatingLabel="false" Text="Contact Email" Variant="Variant.Outlined" Style="width: 100%;">
-                                            <RadzenTextBox @bind-Value="@HazardReport.ReportContactEmail"
-                                                       Placeholder="Enter email ..."
-                                                       Name="ContactEmail"
-                                                       MaxLength="254"
-                                                       Style="display: block; width: 100%;" />
-                                    </RadzenFormField>
-                                    <RadzenEmailValidator Component="ContactEmail" Text="Invalid email address" />
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="3">
+                                        <RadzenFormField AllowFloatingLabel="false" Text="Contact Email" Variant="Variant.Outlined" Style="width: 100%;">
+                                                <RadzenTextBox @bind-Value="@HazardReport.ReportContactEmail"
+                                                           Placeholder="Enter email ..."
+                                                           Name="ContactEmail"
+                                                           MaxLength="254"
+                                                           Style="display: block; width: 100%;" />
+                                        </RadzenFormField>
+                                        <RadzenEmailValidator Component="ContactEmail" Text="Invalid email address" />
 
-                                </RadzenColumn>
+                                    </RadzenColumn>
                                 </RadzenCard>
+                            }
+                            else
+                            {
+                                HazardReport.ReportContactName = string.Empty;
+                                HazardReport.ReportContactCell =string.Empty;
+                                HazardReport.ReportContactEmail = string.Empty;
                             }
 
                         <RadzenCard>
@@ -230,6 +187,7 @@ else
                                                           ShowTime="true"
                                                           DateFormat="MM/dd/yyyy HH:mm"
                                                           Style="width: 100%;" />
+                                        
                                     </RadzenFormField>
                                 </RadzenColumn>
                                 <RadzenColumn Size="3">
@@ -278,61 +236,18 @@ else
 
 
 
-                        <!-- Row 1: Reported On and Reported By and Reporting Department, -->
-                        @* <RadzenRow Gap="1rem" Class="rz-mb-3">
-                            <RadzenColumn Size="2">
-                                <RadzenFormField Text="Reported On *" Variant="Variant.Outlined">
-                                    <RadzenDatePicker @bind-Value="@HazardReport.SubmittedDate" 
-                                                    ShowTime="true"
-                                                    DateFormat="MM/dd/yyyy HH:mm"
-                                                    Style="width: 100%;" />
-                                </RadzenFormField>
-                            </RadzenColumn>
-                            <RadzenColumn Size="3">
-                                <RadzenFormField Text="Submitted By *" Variant="Variant.Outlined" Style="width: 100%;">
-                                    <RadzenTextBox @bind-Value="@HazardReport.SubmittedBy" 
-                                                 Placeholder="Name and position (e.g., 'John Smith - Ground Operations Supervisor')"
-                                                 Name="SubmittedBy"
-                                                 MaxLength="60"
-                                                 Style="width: 100%;min-width: 100%;" />
-                                </RadzenFormField>
-                                <RadzenRequiredValidator Component="SubmittedBy" Text="Reported by is required" />
-                            </RadzenColumn>
-                            
-                            <RadzenColumn Size="3">
-                                <RadzenFormField Text="Reporting Department *" Variant="Variant.Outlined" Style="width: 100%;">
-                                    
-                                    <RadzenDropDown @bind-Value="@HazardReport.ReportingDepartment"
-                                                    Data="@DepartmentOptions"
-                                                    TextProperty="Text"
-                                                    ValueProperty="Value"
-                                                    Placeholder="Select submitting department..."
-                                                    Name="ReportingDepartment"
-                                                    Change="@(async (object value) => await OnDepartmentChanged(value?.ToString()))"
-                                                    AllowClear="true"
-                                                    Style="width: 100%; min-width: 100%;" />
-                                </RadzenFormField>
-                                <RadzenRequiredValidator Component="ReportingDepartment" Text="Reporting Department by is required" />
-                            </RadzenColumn>
-                            <RadzenColumn Size="5">
-                                <RadzenFormField Text="Department Note" Variant="Variant.Outlined" Style="width: 100%;">
-                                    <RadzenTextArea @bind-Value="@HazardReport.ReportingDepartmentNote"
-                                                   Placeholder="Enter reporting department or organization..."
-                                                    Name="ReportingDepartmentNote"
-                                                   MaxLength="200"
-                                                   Style="width: 100%; min-width: 100%;"
-                                                   Rows="2" Cols="100" />
-                                </RadzenFormField>
-                                <RadzenRequiredValidator Component="ReportingDepartment" Text="Reporting Department by is required" />
-                            </RadzenColumn>
-
-
-
-                        </RadzenRow> *@
-
+                  
                         <!-- Row 2: Hazard Category and Hazard Type -->
                         <RadzenRow Gap="1rem" Class="rz-mb-3">
-                            
+                            <RadzenColumn Size="2">
+                                <RadzenFormField Text="Incident Date/Time" Variant="Variant.Outlined">
+                                    <RadzenDatePicker @bind-Value="@HazardReport.IncidentDateTime"
+                                                          ShowTime="true"
+                                                          DateFormat="MM/dd/yyyy HH:mm"
+                                                          Style="width: 100%;" />
+
+                                </RadzenFormField>
+                            </RadzenColumn>
                             <RadzenColumn Size="3">
                                 <RadzenFormField Text="Hazard Category *" Variant="Variant.Outlined" Style="width: 100%;">
                                     <RadzenDropDown @bind-Value="@HazardReport.HazardCategory"
@@ -572,7 +487,7 @@ else
                                                     Text="@(IsEditMode ? "Update Report" : "Submit Report")"
                                                     Size="ButtonSize.Medium"
                                                     Click="ShowSubmissionConfirmationDialog"
-                                                    Disabled="@(!IsFormValidForSubmission)" />
+                                                    Disabled="@(!IsFormValidForSubmission())" />
                                     </RadzenStack>
                                 }
                                 else
@@ -795,282 +710,49 @@ else
                     <!-- Report Summary -->
                     <div class="mb-3">
                         <h6 class="text-primary mb-2">Report Summary:</h6>
-                        <div class="small">
+                        <div class="row">
+                            <div class="small col-sm-4">
                             <p class="mb-1"><strong>Submitted By:</strong> @HazardReport.SubmittedBy</p>
                             <p class="mb-1"><strong>Submitted On:</strong> @HazardReport.SubmittedDate.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt")</p>
-                            <p class="mb-1"><strong>Submitting Department:</strong> @HazardReport.SubmittingDepartment</p>
+                            <p class="mb-1"><strong>Submitting Department:</strong> @HazardReport.IncidentDateTime.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt")</p>
+                            <p class="mb-1"><strong>Incident Date/Time:</strong> @GetHazardCategoryDisplay(HazardReport.HazardCategory)</p>
                             <p class="mb-1"><strong>Category:</strong> @GetHazardCategoryDisplay(HazardReport.HazardCategory)</p>
                             <p class="mb-1"><strong>Type:</strong> @GetHazardTypeDisplay(HazardReport.HazardType)</p>
                             <p class="mb-1"><strong>Location:</strong> @LocationDisplayText</p>
-                            
                             <p class="mb-0"><strong>Anonymous:</strong> @(HazardReport.IsAnonymous ? "Yes" : "No")</p>
                         </div>
                     </div>
+                        @if (!HazardReport.IsAnonymous)
+                        {
+                            <div class="small col-sm-4">
+                                <strong>Contact Name:</strong> @HazardReport.ReportContactName<br>
+                                <strong>Contact Cell:</strong> @HazardReport.ReportContactCell<br>
+                                <strong>Contact Email:</strong>@HazardReport.ReportContactEmail<br>
+                            </div>
+                        }
                     
-                    <div class="d-flex justify-content-center gap-3">
-                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                            <RadzenCheckBox @bind-Value="@HazardReport.IsAnonymous"
-                                            Name="IsAnonymous"
-                                            TriState="false" />
-                            <RadzenLabel Text="Submit as Confidential Report" Component="IsAnonymous" />
-                            <RadzenButton ButtonStyle="ButtonStyle.Base"
-                                          Variant="Variant.Text"
-                                          Icon="info"
-                                          Size="ButtonSize.ExtraSmall"
-                                          Click="ToggleConfidentialInfo" />
-                        </RadzenStack>
-                        <RadzenButton ButtonStyle="ButtonStyle.Warning"
-                                      Text="No, Continue Editing"
-                                      Icon="edit"
-                                      Click="CancelSubmission"
-                                      Size="ButtonSize.Medium"
-                                       />
-
-                        <RadzenButton ButtonStyle="ButtonStyle.Success" 
-                                    Text="@(IsEditMode ? "Yes, Update Report" : "Yes, Submit Report")" 
-                                    Icon="check"
-                                    Click="SubmitReportConfirmed"
-                                    Size="ButtonSize.Medium" />
-                        
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
-<!-- Preview Modal -->
-@if (ShowPreview)
-{
-    <div class="modal-overlay">
-        <div class="sms-modal-dialog sms-modal-xl">
-            <div class="sms-modal-content">
-                <div class="sms-modal-header sms-header-primary">
-                    <div class="d-flex justify-content-between align-items-center w-100">
-                        <h5 class="sms-modal-title mb-0">
-                            <i class="fas fa-eye"></i> Hazard Report Preview
-                        </h5>
-                        <RadzenButton ButtonStyle="ButtonStyle.Light" 
-                                    Variant="Variant.Text"
-                                    Icon="close"
-                                    Size="ButtonSize.Small"
-                                    Click="HidePreview" />
-                    </div>
-                </div>
-                <div class="sms-modal-body">
-                    <!-- Preview Content -->
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="25%" class="text-primary">Field</th>
-                                    <th class="text-primary">Details</th>
-                                    <th width="10%" class="text-center text-primary">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <th class="bg-light">
-                                        <i class="fas fa-exclamation-triangle text-danger"></i> Hazard Type
-                                    </th>
-                                    <td>
-                                        @if (!string.IsNullOrEmpty(HazardReport.HazardType))
-                                        {
-                                            <span class="fw-bold">@GetHazardTypeDisplay(HazardReport.HazardType)</span>
-                                        }
-                                        else
-                                        {
-                                            <em class="text-muted">Not selected - Please select a hazard type</em>
-                                        }
-                                    </td>
-                                    <td class="text-center">
-                                        @if (!string.IsNullOrEmpty(HazardReport.HazardType))
-                                        {
-                                            <i class="fas fa-check-circle text-success"></i>
-                                        }
-                                        else
-                                        {
-                                            <i class="fas fa-times-circle text-danger"></i>
-                                        }
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th class="bg-light">
-                                        <i class="fas fa-map-marker-alt text-primary"></i> Location
-                                    </th>
-                                    <td>
-                                        @if (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location))
-                                        {
-                                            <span class="fw-bold">@LocationDisplayText</span>
-                                        }
-                                        else
-                                        {
-                                            <em class="text-muted">Not specified - Please select or enter a location</em>
-                                        }
-                                    </td>
-                                    <td class="text-center">
-                                        @if (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location))
-                                        {
-                                            <i class="fas fa-check-circle text-success"></i>
-                                        }
-                                        else
-                                        {
-                                            <i class="fas fa-times-circle text-danger"></i>
-                                        }
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th class="bg-light">
-                                        <i class="fas fa-user text-info"></i> Submitted By
-                                    </th>
-                                    <td>
-                                        @if (!string.IsNullOrEmpty(HazardReport.SubmittedBy))
-                                        {
-                                            <span class="fw-bold">@HazardReport.SubmittedBy</span>
-                                        }
-                                        else
-                                        {
-                                            <em class="text-muted">Not specified - Please enter who is reporting this hazard</em>
-                                        }
-                                    </td>
-                                    <td class="text-center">
-                                        @if (!string.IsNullOrEmpty(HazardReport.SubmittedBy))
-                                        {
-                                            <i class="fas fa-check-circle text-success"></i>
-                                        }
-                                        else
-                                        {
-                                            <i class="fas fa-times-circle text-danger"></i>
-                                        }
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th class="bg-light">
-                                        <i class="fas fa-file-alt text-success"></i> Description
-                                    </th>
-                                    <td>
-                                        @if (!string.IsNullOrEmpty(HazardReport.Description))
-                                        {
-                                            <div class="description-preview">
-                                                <div style="white-space: pre-wrap; max-height: 150px; overflow-y: auto; border: 1px solid #dee2e6; padding: 0.5rem; border-radius: 0.25rem; background-color: #f8f9fa;">@HazardReport.Description</div>
-                                                <small class="text-muted mt-1 d-block">
-                                                    <i class="fas fa-chart-bar"></i> 
-                                                    Character count: @DescriptionCharacterCount/2000
-                                                </small>
-                                            </div>
-                                        }
-                                        else
-                                        {
-                                            <em class="text-muted">No description provided - Please describe the hazard</em>
-                                        }
-                                    </td>
-                                    <td class="text-center">
-                                        @if (!string.IsNullOrEmpty(HazardReport.Description))
-                                        {
-                                            <i class="fas fa-check-circle text-success"></i>
-                                        }
-                                        else
-                                        {
-                                            <i class="fas fa-times-circle text-danger"></i>
-                                        }
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th class="bg-light">
-                                        <i class="fas fa-paperclip text-secondary"></i> Attachments
-                                    </th>
-                                    <td>
-                                        @if (AttachedFiles.Any())
-                                        {
-                                            <div class="attachment-preview">
-                                                <span class="fw-bold text-success">@AttachedFiles.Count file(s) attached:</span>
-                                                <ul class="mb-0 mt-1">
-                                                    @foreach (var file in AttachedFiles)
-                                                    {
-                                                        <li>
-                                                            <i class="fas fa-file"></i> 
-                                                            <strong>@file.FileName</strong> 
-                                                            <small class="text-muted">(@file.SizeDisplay)</small>
-                                                        </li>
-                                                    }
-                                                </ul>
-                                            </div>
-                                        }
-                                        else
-                                        {
-                                            <em class="text-muted">No files attached (Optional)</em>
-                                        }
-                                    </td>
-                                    <td class="text-center">
-                                        <i class="fas fa-info-circle text-info" title="Optional field"></i>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
                     </div>
 
-                    <!-- Validation Summary -->
-                    @if (!IsFormValidForSubmission)
-                    {
-                        <div class="mt-3">
-                            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat">
-                                <h6><i class="fas fa-exclamation-triangle"></i> Required Fields Missing</h6>
-                                <p class="mb-2">The following required fields need to be completed before submission:</p>
-                                <ul class="mb-0">
-                                    @if (string.IsNullOrEmpty(HazardReport.HazardType))
-                                    {
-                                        <li><strong>Hazard Type</strong> - Please select the type of hazard being reported</li>
-                                    }
-                                    @if (!HasGeoLocation && string.IsNullOrEmpty(HazardReport.Location))
-                                    {
-                                        <li><strong>Location</strong> - Please specify where the hazard occurred using the map</li>
-                                    }
-                                    @if (string.IsNullOrEmpty(HazardReport.Description))
-                                    {
-                                        <li><strong>Description</strong> - Please provide details about the hazard</li>
-                                    }
-                                    @if (string.IsNullOrEmpty(HazardReport.SubmittedBy))
-                                    {
-                                        <li><strong>Reported By</strong> - Please specify who is reporting this hazard</li>
-                                    }
-                                </ul>
-                            </RadzenAlert>
+                    <div class="row">
+                        <div class="d-flex justify-content-center gap-3">
+
+                            <RadzenButton ButtonStyle="ButtonStyle.Warning"
+                                          Text="No, Continue Editing"
+                                          Icon="edit"
+                                          Click="CancelSubmission"
+                                          Size="ButtonSize.Medium" />
+
+                            <RadzenButton ButtonStyle="ButtonStyle.Success"
+                                          Text="@(IsEditMode ? "Yes, Update Report" : "Yes, Submit Report")"
+                                          Icon="check"
+                                          Click="SubmitReportConfirmed"
+                                          Size="ButtonSize.Medium" />
+
                         </div>
-                    }
-                    else
-                    {
-                        <div class="mt-3">
-                            <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat">
-                                <h6><i class="fas fa-check-circle"></i> Report Ready for Submission</h6>
-                                <p class="mb-0">All required fields have been completed. Your hazard report is ready to be submitted to the SMS system.</p>
-                            </RadzenAlert>
-                        </div>
-                    }
-                </div>
-                <div class="sms-modal-footer">
-                    <div class="d-flex justify-content-end gap-2">
-                        <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
-                                    Text="Continue Editing" 
-                                    Icon="edit"
-                                    Click="HidePreview"
-                                    Size="ButtonSize.Medium" />
-                        @if (IsFormValidForSubmission)
-                        {
-                            <RadzenButton ButtonStyle="ButtonStyle.Success" 
-                                        Text="Submit Report" 
-                                        Icon="send"
-                                        Click="ShowSubmissionConfirmationDialog"
-                                        Size="ButtonSize.Medium" />
-                        }
-                        else
-                        {
-                            <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
-                                        Text="Complete Required Fields" 
-                                        Icon="exclamation-triangle"
-                                        Disabled="true"
-                                        Size="ButtonSize.Medium" />
-                        }
+
+
                     </div>
+                    
                 </div>
             </div>
         </div>
@@ -1286,3 +968,7 @@ else
 <!-- Leaflet.js JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<!-- Print functionality -->
+
+<script src="/js/print-confirmation.js"></script>

@@ -105,11 +105,18 @@
                                         }
                                     </Template>
                                 </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="IsActive" Title="Status" Width="80px">
+                                <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="IsActive" Title="Active" Width="120px">
                                     <Template Context="user">
                                         <RadzenBadge Variant="Variant.Filled" 
                                                    BadgeStyle="@(user.IsActive ? BadgeStyle.Success : BadgeStyle.Danger)"
-                                                   Text="@(user.IsActive ? "Active" : "Inactive")" />
+                                                   Text="@(user.IsActive ? "X" : " ")" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="IsPOPEmployee" Title="POP Employee" Width="120px">
+                                    <Template Context="user">
+                                        <RadzenBadge Variant="Variant.Filled" 
+                                                   BadgeStyle="@(user.IsPOPEmployee ? BadgeStyle.Success : BadgeStyle.Danger)"
+                                                   Text="@(user.IsPOPEmployee ? "X" : " ")" />
                                     </Template>
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="LastLoginDate" Title="Last Login" Width="120px">
@@ -128,7 +135,7 @@
                                         }
                                     </Template>
                                 </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="CreatedDate" Title="Created" Width="120px">
+                                @* <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="CreatedDate" Title="Created" Width="120px">
                                     <Template Context="user">
                                         <RadzenStack Orientation="Orientation.Vertical" Gap="0">
                                             <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
@@ -139,7 +146,7 @@
                                             </RadzenText>
                                         </RadzenStack>
                                     </Template>
-                                </RadzenDataGridColumn>
+                                </RadzenDataGridColumn> *@
                                 <RadzenDataGridColumn TItem="SMSStakeholderUser" Title="Actions" Width="300px" Sortable="false" Filterable="false">
                                     <Template Context="user">
                                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
@@ -206,7 +213,7 @@
                     <RadzenTemplateForm Data="@NewUser" Submit="@((CreateStakeholderUserModel model) => CreateUser())">
                         <RadzenRow Gap="1rem">
                             <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenFormField Text="First Name *" Variant="Variant.Outlined">
+                                <RadzenFormField Text="First Name *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width:100%;min-width:100%">
                                     <RadzenTextBox @bind-Value="@NewUser.FirstName" Name="FirstName" 
                                                    Placeholder="Enter first name" 
                                                    Style="width: 100%;" />
@@ -214,7 +221,7 @@
                                 <RadzenRequiredValidator Component="FirstName" Text="First name is required" />
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenFormField Text="Last Name *" Variant="Variant.Outlined">
+                                <RadzenFormField Text="Last Name *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width:100%;min-width:100%">
                                     <RadzenTextBox @bind-Value="@NewUser.LastName" Name="LastName" 
                                                    Placeholder="Enter last name" 
                                                    Style="width: 100%;" />
@@ -233,7 +240,7 @@
                                 <RadzenRequiredValidator Component="UserName" Text="Username is required" />
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenFormField Text="Password *" Variant="Variant.Outlined">
+                                <RadzenFormField Text="Password *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width:100%;min-width:100%">
                                     <RadzenPassword @bind-Value="@NewUser.Password" Name="Password" 
                                                     Placeholder="Enter password" 
                                                     Style="width: 100%;" />
@@ -244,7 +251,7 @@
 
                         <RadzenRow Gap="1rem">
                             <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenFormField Text="Stakeholder Type *" Variant="Variant.Outlined">
+                                <RadzenFormField Text="Stakeholder Type *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width:100%;min-width:100%">
                                     <RadzenDropDown @bind-Value="@NewUser.StakeholderType" Data="@StakeholderTypesForDropdown" Name="StakeholderType"
                                                     ValueProperty="Value" TextProperty="Text" Placeholder="-- Select Type --" 
                                                     Style="width: 100%;" />
@@ -252,7 +259,7 @@
                                 <RadzenRequiredValidator Component="StakeholderType" Text="Stakeholder type is required" />
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenFormField Text="Organization *" Variant="Variant.Outlined">
+                                <RadzenFormField Text="Organization *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width:100%;min-width:100%">
                                     <RadzenTextBox @bind-Value="@NewUser.Organization" Name="Organization" 
                                                    Placeholder="Enter organization" 
                                                    Style="width: 100%;" />
@@ -263,7 +270,7 @@
 
                         <RadzenRow Gap="1rem">
                             <RadzenColumn Size="12">
-                                <RadzenFormField Text="User Role (Optional)" Variant="Variant.Outlined">
+                                <RadzenFormField Text="User Role (Optional)" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width:100%;min-width:100%">
                                     <RadzenDropDown @bind-Value="@NewUser.UserRoleCode" Data="@UserRoles" 
                                                   ValueProperty="Code" TextProperty="Name" 
                                                   Placeholder="-- No Role Assigned --" AllowClear="true" 
@@ -271,15 +278,21 @@
                                 </RadzenFormField>
                                 <RadzenText TextStyle="TextStyle.Caption">Assign an SMS user role to define permissions and access levels</RadzenText>
                             </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Status" Variant="Variant.Outlined" AllowFloatingLabel="false" >
+                                    <RadzenCheckBox @bind-Value="@NewUser.IsPOPEmployee" Name="IsPOPEmployee" Text="Port of Portland Employee" />
+                                </RadzenFormField>
+                                <RadzenText TextStyle="TextStyle.Caption">Uncheck if this is NOT a Port of Portland Employee</RadzenText>
+                            </RadzenColumn>
                         </RadzenRow>
                     </RadzenTemplateForm>
                 </div>
                 <div class="sms-modal-footer">
                     <div class="d-flex justify-content-between align-items-center w-100">
-                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Style="margin: 0;">
+                        @* <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Style="margin: 0;">
                             <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
                             Stakeholder users are external partners with role-based access to SMS collaborative functions.
-                        </RadzenAlert>
+                        </RadzenAlert> *@
                         <div class="d-flex gap-2">
                             <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseCreateModal" />
                             <RadzenButton Text="Create User" Icon="save" ButtonStyle="ButtonStyle.Primary" 
@@ -308,7 +321,7 @@
                     <RadzenTemplateForm Data="@editUser" Submit="@((EditStakeholderUserModel model) => UpdateUser())">
                         <RadzenRow Gap="1rem">
                             <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenFormField Text="First Name *" Variant="Variant.Outlined">
+                                <RadzenFormField Text="First Name *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width:100%;min-width:100%">
                                     <RadzenTextBox @bind-Value="@editUser.FirstName" Name="FirstName" 
                                                    Placeholder="Enter first name" 
                                                    Style="width: 100%;" />
@@ -316,7 +329,7 @@
                                 <RadzenRequiredValidator Component="FirstName" Text="First name is required" />
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenFormField Text="Last Name *" Variant="Variant.Outlined">
+                                <RadzenFormField Text="Last Name *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width:100%;min-width:100%">
                                     <RadzenTextBox @bind-Value="@editUser.LastName" Name="LastName" 
                                                    Placeholder="Enter last name" 
                                                    Style="width: 100%;" />
@@ -327,7 +340,7 @@
 
                         <RadzenRow Gap="1rem">
                             <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenFormField Text="Stakeholder Type *" Variant="Variant.Outlined">
+                                <RadzenFormField Text="Stakeholder Type *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width:100%;min-width:100%">
                                     <RadzenDropDown @bind-Value="@editUser.StakeholderType" Data="@StakeholderTypesForDropdown" Name="StakeholderType"
                                                     ValueProperty="Value" TextProperty="Text" Placeholder="-- Select Type --" 
                                                     Style="width: 100%;" />
@@ -335,7 +348,7 @@
                                 <RadzenRequiredValidator Component="StakeholderType" Text="Stakeholder type is required" />
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenFormField Text="Organization *" Variant="Variant.Outlined">
+                                <RadzenFormField Text="Organization *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width:100%;min-width:100%">
                                     <RadzenTextBox @bind-Value="@editUser.Organization" Name="Organization" 
                                                    Placeholder="Enter organization" 
                                                    Style="width: 100%;" />
@@ -346,7 +359,7 @@
 
                         <RadzenRow Gap="1rem">
                             <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenFormField Text="User Role (Optional)" Variant="Variant.Outlined">
+                                <RadzenFormField Text="User Role (Optional)" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width:100%;min-width:100%">
                                     <RadzenDropDown @bind-Value="@editUser.UserRoleCode" Data="@UserRoles" 
                                                   ValueProperty="Code" TextProperty="Name" 
                                                   Placeholder="-- No Role Assigned --" AllowClear="true" 
@@ -355,20 +368,25 @@
                                 <RadzenText TextStyle="TextStyle.Caption">Assign an SMS user role to define permissions and access levels</RadzenText>
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenFormField Text="Status" Variant="Variant.Outlined">
+                                <RadzenFormField Text="Active" Variant="Variant.Outlined" AllowFloatingLabel="false">
                                     <RadzenCheckBox @bind-Value="@editUser.IsActive" Name="IsActive" Text="Active User" />
                                 </RadzenFormField>
                                 <RadzenText TextStyle="TextStyle.Caption">Uncheck to deactivate this user account</RadzenText>
+                            </RadzenColumn>
+                            
+                        </RadzenRow>
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="12">
+                                <RadzenFormField Text="Is POP Employee" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                    <RadzenCheckBox @bind-Value="@editUser.IsPOPEmployee" Name="IsPOPEmployee" Text="Port of Portland Employee" />
+                                </RadzenFormField>
+                                @* <RadzenText TextStyle="TextStyle.Caption">Uncheck if this is NOT a Port of Portland Employee</RadzenText> *@
                             </RadzenColumn>
                         </RadzenRow>
                     </RadzenTemplateForm>
                 </div>
                 <div class="sms-modal-footer">
                     <div class="d-flex justify-content-between align-items-center w-100">
-                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Style="margin: 0;">
-                            <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
-                            Update stakeholder user information and role assignments.
-                        </RadzenAlert>
                         <div class="d-flex gap-2">
                             <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseEditModal" />
                             <RadzenButton Text="Update User" Icon="save" ButtonStyle="ButtonStyle.Warning" 

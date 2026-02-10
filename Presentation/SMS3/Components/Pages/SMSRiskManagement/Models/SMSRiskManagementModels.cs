@@ -19,10 +19,10 @@ public class HazardReportForm
     public string? HazardType { get; set; }
     public string? ReportType { get; set; }
     public string? Location { get; set; }
-    
-    public DateTime IncidentDateTime { get; set; }
+
+    public DateTime IncidentDateTime { get; set; } = DateTime.UtcNow;
     public string? SubmittedBy { get; set; }
-    public DateTime SubmittedDate { get; set; }
+    public DateTime SubmittedDate { get; set; } = DateTime.UtcNow;
     public string? SubmittingDepartment { get; set; }
     public string? SubmittingDepartmentJobFunction { get; set; }
     public string? ReportContactName { get; set; }
@@ -81,17 +81,7 @@ public class DropdownOption
 /// <summary>
 /// Form data for confidential report creation
 /// </summary>
-public class ConfidentialReportForm
-{
-    public string? ReportType { get; set; }
-    public string? Location { get; set; }
-    public string? Description { get; set; }
-    public string Priority { get; set; } = "Medium";
-    public bool IsRetaliation { get; set; }
-    public bool IsPersonnelIssue { get; set; }
-    public bool IsComplianceViolation { get; set; }
-    public string? AdditionalProtection { get; set; }
-}
+
 
 /// <summary>
 /// Dropdown option for confidential reporting form controls
@@ -112,14 +102,14 @@ public class ConfidentialDropdownOption
 /// <summary>
 /// File attachment information for confidential reports
 /// </summary>
-public class ConfidentialAttachedFile
-{
-    public string FileName { get; set; } = string.Empty;
-    public long FileSizeBytes { get; set; }
-    public string SizeDisplay { get; set; } = string.Empty;
-    public string ContentType { get; set; } = string.Empty;
-    public byte[] Data { get; set; } = Array.Empty<byte>();
-    public long Size { get; set; }
-}
+//public class ConfidentialAttachedFile
+//{
+//    public string FileName { get; set; } = string.Empty;
+//    public long FileSizeBytes { get; set; }
+//    public string SizeDisplay { get; set; } = string.Empty;
+//    public string ContentType { get; set; } = string.Empty;
+//    public byte[] Data { get; set; } = Array.Empty<byte>();
+//    public long Size { get; set; }
+//}
 
 #endregion

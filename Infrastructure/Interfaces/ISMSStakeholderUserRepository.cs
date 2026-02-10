@@ -7,15 +7,14 @@ public interface ISMSStakeholderUserRepository
     Task<Result<bool>> DeleteAsync(SMSStakeholderUserID userId);
     Task<Result<bool>> DeleteAsync(string userId);
     Task<Result<IEnumerable<SMSStakeholderUser>>> GetActiveUsersAsync();
-    Task<Result<IEnumerable<SMSStakeholderUser>>> GetAirlineStakeholdersAsync();
+    
     Task<Result<IEnumerable<SMSStakeholderUser>>> GetAllAsync();
     //Task<Result<IEnumerable<SMSStakeholderUser>>> GetByAccessLevelAsync(string accessLevel);
     Task<Result<SMSStakeholderUser>> GetByIdAsync(BaseUserID id);
     Task<Result<IEnumerable<SMSStakeholderUser>>> GetByOrganizationAsync(string organization);
     Task<Result<IEnumerable<SMSStakeholderUser>>> GetByStakeholderTypeAsync(string stakeholderType);
     Task<Result<SMSStakeholderUser>> GetByUserNameAsync(string userName);
-    Task<Result<IEnumerable<SMSStakeholderUser>>> GetContractorStakeholdersAsync();
-    Task<Result<IEnumerable<SMSStakeholderUser>>> GetGroundHandlerStakeholdersAsync();
+   
     Task<Result<Dictionary<string, int>>> GetOrganizationStatisticsAsync();
     Task<Result<Dictionary<string, int>>> GetStakeholderTypeStatisticsAsync();
     Task<Result<IEnumerable<SMSStakeholderUser>>> GetUsersByGroupCodeAsync(string groupCode);

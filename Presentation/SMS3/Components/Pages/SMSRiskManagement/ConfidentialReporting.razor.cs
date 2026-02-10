@@ -88,6 +88,12 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     /// </summary>
     public string? GeneratedHazardId { get; set; }
 
+
+    /// <summary>
+    /// Generated Hazard ID after successful submission
+    /// </summary>
+    public string? GeneratedReportId { get; set; }
+
     /// <summary>
     /// Submission timestamp
     /// </summary>
@@ -146,17 +152,31 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     /// Check if form has minimum required fields for preview
     /// </summary>
     public bool IsFormValidForPreview =>
-        !string.IsNullOrEmpty(HazardReport.HazardType) &&
-        !string.IsNullOrEmpty(HazardReport.SubmittedBy) &&
-        !string.IsNullOrEmpty(HazardReport.Description);
+        !string.IsNullOrEmpty(HazardReport.HazardType) && !string.IsNullOrEmpty(HazardReport.HazardCategory) &&
+        !string.IsNullOrEmpty(HazardReport.SubmittedBy) && !string.IsNullOrEmpty(HazardReport.Description) && 
+        !string.IsNullOrEmpty(HazardReport.IncidentDateTime.ToString());
 
     /// <summary>
     /// Check if form is valid for submission
     /// </summary>
-    public bool IsFormValidForSubmission =>
-        IsFormValidForPreview &&
-        (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) &&
-        DescriptionCharacterCount <= 2000;
+    public bool IsFormValidForSubmission()
+    {
+        if (!HazardReport.IsAnonymous)
+        {
+            return IsFormValidForPreview && !string.IsNullOrEmpty(HazardReport.ReportContactName) && !string.IsNullOrEmpty(HazardReport.ReportContactCell) &&
+            !string.IsNullOrEmpty(HazardReport.ReportContactEmail) &&
+                    (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) &&
+                    DescriptionCharacterCount <= 2000;
+        }
+
+        else
+        {
+            return IsFormValidForPreview &&
+                (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) &&
+                DescriptionCharacterCount <= 2000;
+        }
+
+    }
 
     /// <summary>
     /// Page title
@@ -169,8 +189,8 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     public string PageSubtitle => "Enhanced protection for sensitive safety reports with reporter anonymity";
 
     // Airport coordinates
-    private double AirportCenterLatitude => 45.5898;
-    private double AirportCenterLongitude => -122.5951;
+    private double AirportCenterLatitude => 45.58808;
+    private double AirportCenterLongitude => -122.592430;
     private int DefaultZoomLevel => 20;
 
     private IJSObjectReference? _mapModule;
@@ -229,7 +249,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
             Logger.LogInformation("Confidential form submit triggered with data: HazardType={HazardType}, SubmittedBy={SubmittedBy}",
                 formData.HazardType, formData.SubmittedBy);
 
-            if (!IsFormValidForSubmission)
+            if (!IsFormValidForSubmission())
             {
                 NotificationService.Notify(new NotificationMessage
                 {
@@ -664,7 +684,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     /// </summary>
     public async Task ShowSubmissionConfirmationDialog()
     {
-        if (!IsFormValidForSubmission)
+        if (!IsFormValidForSubmission())
         {
             NotificationService.Notify(new NotificationMessage
             {
@@ -717,7 +737,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         try
         {
             // Validation
-            if (!IsFormValidForSubmission)
+            if (!IsFormValidForSubmission())
             {
                 ShowSubmissionConfirmation = true;
                 StateHasChanged();
@@ -749,8 +769,13 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                 SubmittedDate = HazardReport.SubmittedDate,
                 SubmittingDepartment = "CONFIDENTIAL",
                 Description = HazardReport.Description,
+                IncidentDateTime = HazardReport.IncidentDateTime,
+                ReportContactName = HazardReport.ReportContactName, 
+                ReportContactCell = HazardReport.ReportContactCell, 
+                ReportContactEmail  = HazardReport.ReportContactEmail,
                 Stage = "Initial",
                 Status = "Initial"
+                
             };
 
             var reportResult = await Mediator.SendAsync(new CreateReportCommand(report), CancellationToken.None);
@@ -761,6 +786,8 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
             }
 
             var actualReportCode = reportResult.Value.Code;
+            GeneratedReportId = actualReportCode;
+
             Logger.LogInformation("? Confidential report created with Code: {ReportCode}", actualReportCode);
 
             // ===============================
@@ -1327,419 +1354,50 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     /// <summary>
     /// Print the confirmation details with QR code
     /// </summary>
-    private async Task PrintConfirmation()
+    public async Task PrintConfirmation()
     {
         try
         {
-            // First, generate the QR code as a data URL using JavaScript
+            if (string.IsNullOrEmpty(GeneratedTrackingId) || string.IsNullOrEmpty(GeneratedReportId))
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "Print Error",
+                    Detail = "No report information available to print.",
+                    Duration = 3000
+                });
+                return;
+            }
+
             var trackingUrl = GetTrackingUrl();
-            var qrCodeDataUrl = await GenerateQRCodeDataUrl(trackingUrl);
+            var submissionDate = SubmissionDateTime?.ToString("MMMM dd, yyyy 'at' h:mm tt") ?? DateTime.Now.ToString("MMMM dd, yyyy 'at' h:mm tt");
 
-            // Create printable content with embedded QR code
-            var printContent = GeneratePrintableContentWithQRData(qrCodeDataUrl);
+            // Call the NEW JavaScript function that captures the actual RadzenQRCode
+            await JSRuntime.InvokeVoidAsync("printReportConfirmation",
+                GeneratedReportId,
+                GeneratedHazardId,
+                GeneratedTrackingId,
+                submissionDate,
+                trackingUrl);
 
-            // Use standard print function since QR is now embedded
-            await JSRuntime.InvokeVoidAsync("printContent", printContent);
-
-            Logger.LogInformation("Print confirmation with embedded QR code requested for tracking ID: {TrackingId}", GeneratedTrackingId);
+            Logger?.LogInformation("Print confirmation initiated for Tracking ID: {TrackingId}", GeneratedTrackingId);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error printing confirmation for tracking ID: {TrackingId}", GeneratedTrackingId);
-
-            // Fallback: print without QR code
-            var printContentFallback = GeneratePrintableContentFallback();
-            await JSRuntime.InvokeVoidAsync("printContent", printContentFallback);
+            Logger?.LogError(ex, "Error printing confirmation");
 
             NotificationService.Notify(new NotificationMessage
             {
-                Severity = NotificationSeverity.Warning,
-                Summary = "Print Warning",
-                Detail = "Printed confirmation without QR code. Full tracking URL is included.",
+                Severity = NotificationSeverity.Error,
+                Summary = "Print Error",
+                Detail = "Failed to print confirmation. Please try again or save the page.",
                 Duration = 5000
             });
         }
     }
 
-    /// <summary>
-    /// Copy tracking information to clipboard
-    /// </summary>
-    private async Task CopyTrackingInfo()
-    {
-        try
-        {
-            var trackingInfo = $"Tracking ID: {GeneratedTrackingId}\nTracking URL: {GetTrackingUrl()}\nSubmitted: {SubmissionDateTime?.ToString("MM/dd/yyyy HH:mm")}";
-
-            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", trackingInfo);
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Success,
-                Summary = "Success",
-                Detail = "Tracking information copied to clipboard!",
-                Duration = 4000
-            });
-
-            Logger.LogInformation("Tracking information copied to clipboard for: {TrackingId}", GeneratedTrackingId);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error copying tracking info for: {TrackingId}", GeneratedTrackingId);
-
-            // Fallback: Show alert with the information
-            await ShowTrackingInfoAlert();
-        }
-    }
-
-    /// <summary>
-    /// Generate printable HTML content for the confirmation with QR code
-    /// </summary>
-    /// <returns>HTML content for printing</returns>
-    private string GeneratePrintableContentWithQRData(string qrCodeDataUrl)
-    {
-        var trackingUrl = GetTrackingUrl();
-        var submissionDate = SubmissionDateTime?.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt") ?? "Unknown";
-        var hasQRCode = !string.IsNullOrEmpty(qrCodeDataUrl);
-
-        return $@"
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>SMS Confidential Report Confirmation</title>
-                <style>
-                    body {{
-                        font-family: Arial, sans-serif;
-                        margin: 20px;
-                        line-height: 1.4;
-                    }}
-                    .header {{
-                        text-align: center;
-                        border-bottom: 2px solid #212e61;
-                        padding-bottom: 20px;
-                        margin-bottom: 30px;
-                    }}
-                    .logo {{
-                        font-size: 24px;
-                        font-weight: bold;
-                        color: #212e61;
-                    }}
-                    .subtitle {{
-                        color: #666;
-                        margin-top: 5px;
-                    }}
-                    .confirmation {{
-                        background-color: #d4edda;
-                        border: 1px solid #c3e6cb;
-                        border-radius: 5px;
-                        padding: 15px;
-                        margin-bottom: 20px;
-                    }}
-                    .content-row {{
-                        display: table;
-                        width: 100%;
-                        margin-bottom: 20px;
-                    }}
-                    .details-column {{
-                        display: table-cell;
-                        vertical-align: top;
-                        width: 70%;
-                        padding-right: 20px;
-                    }}
-                    .qr-column {{
-                        display: table-cell;
-                        vertical-align: top;
-                        width: 30%;
-                        text-align: center;
-                        border: 1px solid #ddd;
-                        padding: 15px;
-                        border-radius: 5px;
-                        background-color: #f9f9f9;
-                    }}
-                    .details-table {{
-                        width: 100%;
-                        border-collapse: collapse;
-                        margin-bottom: 20px;
-                    }}
-                    .details-table th,
-                    .details-table td {{
-                        border: 1px solid #ddd;
-                        padding: 10px;
-                        text-align: left;
-                    }}
-                    .details-table th {{
-                        background-color: #f8f9fa;
-                        font-weight: bold;
-                        color: #212e61;
-                    }}
-                    .tracking-id {{
-                        font-family: monospace;
-                        font-size: 16px;
-                        font-weight: bold;
-                        background-color: #fff3cd;
-                        padding: 5px;
-                        border-radius: 3px;
-                    }}
-                    .qr-code-img {{
-                        max-width: 150px;
-                        max-height: 150px;
-                        margin: 10px 0;
-                    }}
-                    .qr-label {{
-                        font-weight: bold;
-                        color: #212e61;
-                        margin-bottom: 10px;
-                    }}
-                    .qr-instruction {{
-                        font-size: 12px;
-                        color: #666;
-                        margin-top: 10px;
-                    }}
-                    .important {{
-                        background-color: #fff3cd;
-                        border: 1px solid #ffeaa7;
-                        border-radius: 5px;
-                        padding: 15px;
-                        margin-bottom: 20px;
-                    }}
-                    .footer {{
-                        border-top: 1px solid #ddd;
-                        padding-top: 20px;
-                        margin-top: 30px;
-                        text-align: center;
-                        color: #666;
-                        font-size: 12px;
-                    }}
-                    @media print {{
-                        body {{ margin: 0; }}
-                        .no-print {{ display: none; }}
-                        .content-row {{ 
-                            display: table;
-                            width: 100%;
-                        }}
-                        .details-column {{
-                            display: table-cell;
-                            width: 70%;
-                        }}
-                        .qr-column {{ 
-                            display: table-cell;
-                            width: 30%;
-                        }}
-                    }}
-                </style>
-            </head>
-            <body>
-                <div class='header'>
-                    <div class='logo'>🛩️ PDX SMS</div>
-                    <div class='subtitle'>Safety Management System - Confidential Reporting</div>
-                </div>
-
-                <div class='confirmation'>
-                    <h2 style='margin: 0; color: #0d8944;'>✅ Report Successfully Submitted</h2>
-                    <p style='margin: 5px 0 0 0;'>Your confidential safety report has been received and will be reviewed by authorized personnel.</p>
-                </div>
-
-                <div class='content-row'>
-                    <div class='details-column'>
-                        <table class='details-table'>
-                            <tr>
-                                <th>Tracking ID</th>
-                                <td class='tracking-id'>{GeneratedTrackingId}</td>
-                            </tr>
-                            <tr>
-                                <th>Hazard ID</th>
-                                <td>{GeneratedHazardId}</td>
-                            </tr>
-                            <tr>
-                                <th>Submission Date</th>
-                                <td>{submissionDate}</td>
-                            </tr>
-                            <tr>
-                                <th>Report Type</th>
-                                <td>Confidential Safety Report</td>
-                            </tr>
-                            <tr>
-                                <th>Status</th>
-                                <td><strong>Submitted</strong> - Under Review</td>
-                            </tr>
-                            <tr>
-                                <th>Tracking URL</th>
-                                <td style='word-break: break-all; font-size: 11px;'>{trackingUrl}</td>
-                            </tr>
-                        </table>
-                    </div>
-                    
-                    <div class='qr-column'>
-                        <div class='qr-label'>📱 Quick Track</div>
-                        {(hasQRCode ?
-                            $"<img src='{qrCodeDataUrl}' alt='QR Code for {trackingUrl}' class='qr-code-img' />" :
-                            "<div style='font-size: 12px; color: #999; padding: 20px;'>QR Code<br>Not Available</div>"
-                        )}
-                        <div class='qr-instruction'>
-                            {(hasQRCode ? "Scan with mobile device<br>to track your report" : "Use the tracking URL above")}
-                        </div>
-                    </div>
-                </div>
-
-                <div class='important'>
-                    <h3 style='margin: 0 0 10px 0; color: #212e61;'>🔒 Important Information</h3>
-                    <ul style='margin: 0; padding-left: 20px;'>
-                        <li><strong>Save this information:</strong> Your tracking ID is the only way to check your report status</li>
-                        <li><strong>Anonymous protection:</strong> Your identity is protected and will not be disclosed</li>
-                        <li><strong>Follow-up:</strong> Use the tracking URL to check your report status at any time</li>
-                        {(hasQRCode ? "<li><strong>QR Code:</strong> Scan the QR code above with your mobile device for quick access</li>" : "")}
-                        <li><strong>Questions:</strong> Call our confidential hotline at (503) 555-0199</li>
-                    </ul>
-                </div>
-
-                <div class='footer'>
-                    <p>Port of Portland - Safety Management System</p>
-                    <p>This document was generated on {DateTime.Now:dddd, MMMM dd, yyyy 'at' h:mm tt}</p>
-                    <p>Keep this confirmation for your records</p>
-                </div>
-            </body>
-            </html>
-        ";
-    }
-
-    /// <summary>
-    /// Generate printable content without QR code (fallback)
-    /// </summary>
-    private string GeneratePrintableContentFallback()
-    {
-        var trackingUrl = GetTrackingUrl();
-        var submissionDate = SubmissionDateTime?.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt") ?? "Unknown";
-
-        return $@"
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>SMS Confidential Report Confirmation</title>
-                <style>
-                    body {{
-                        font-family: Arial, sans-serif;
-                        margin: 20px;
-                        line-height: 1.4;
-                    }}
-                    .header {{
-                        text-align: center;
-                        border-bottom: 2px solid #212e61;
-                        padding-bottom: 20px;
-                        margin-bottom: 30px;
-                    }}
-                    .logo {{
-                        font-size: 24px;
-                        font-weight: bold;
-                        color: #212e61;
-                    }}
-                    .subtitle {{
-                        color: #666;
-                        margin-top: 5px;
-                    }}
-                    .confirmation {{
-                        background-color: #d4edda;
-                        border: 1px solid #c3e6cb;
-                        border-radius: 5px;
-                        padding: 15px;
-                        margin-bottom: 20px;
-                    }}
-                    .details-table {{
-                        width: 100%;
-                        border-collapse: collapse;
-                        margin-bottom: 20px;
-                    }}
-                    .details-table th,
-                    .details-table td {{
-                        border: 1px solid #ddd;
-                        padding: 10px;
-                        text-align: left;
-                    }}
-                    .details-table th {{
-                        background-color: #f8f9fa;
-                        font-weight: bold;
-                        color: #212e61;
-                    }}
-                    .tracking-id {{
-                        font-family: monospace;
-                        font-size: 16px;
-                        font-weight: bold;
-                        background-color: #fff3cd;
-                        padding: 5px;
-                        border-radius: 3px;
-                    }}
-                    .important {{
-                        background-color: #fff3cd;
-                        border: 1px solid #ffeaa7;
-                        border-radius: 5px;
-                        padding: 15px;
-                        margin-bottom: 20px;
-                    }}
-                    .footer {{
-                        border-top: 1px solid #ddd;
-                        padding-top: 20px;
-                        margin-top: 30px;
-                        text-align: center;
-                        color: #666;
-                        font-size: 12px;
-                    }}
-                </style>
-            </head>
-            <body>
-                <div class='header'>
-                    <div class='logo'>??? PDX SMS</div>
-                    <div class='subtitle'>Safety Management System - Confidential Reporting</div>
-                </div>
-
-                <div class='confirmation'>
-                    <h2 style='margin: 0; color: #0d8944;'>? Report Successfully Submitted</h2>
-                    <p style='margin: 5px 0 0 0;'>Your confidential safety report has been received and will be reviewed by authorized personnel.</p>
-                </div>
-
-                <table class='details-table'>
-                    <tr>
-                        <th>Tracking ID</th>
-                        <td class='tracking-id'>{GeneratedTrackingId}</td>
-                    </tr>
-                    <tr>
-                        <th>Hazard ID</th>
-                        <td>{GeneratedHazardId}</td>
-                    </tr>
-                    <tr>
-                        <th>Submission Date</th>
-                        <td>{submissionDate}</td>
-                    </tr>
-                    <tr>
-                        <th>Report Type</th>
-                        <td>Confidential Safety Report</td>
-                    </tr>
-                    <tr>
-                        <th>Status</th>
-                        <td><strong>Submitted</strong> - Under Review</td>
-                    </tr>
-                    <tr>
-                        <th>Tracking URL</th>
-                        <td style='word-break: break-all;'>{trackingUrl}</td>
-                    </tr>
-                </table>
-
-                <div class='important'>
-                    <h3 style='margin: 0 0 10px 0; color: #212e61;'>?? Important Information</h3>
-                    <ul style='margin: 0; padding-left: 20px;'>
-                        <li><strong>Save this information:</strong> Your tracking ID is the only way to check your report status</li>
-                        <li><strong>Anonymous protection:</strong> Your identity is protected and will not be disclosed</li>
-                        <li><strong>Follow-up:</strong> Use the tracking URL to check your report status at any time</li>
-                        <li><strong>Questions:</strong> Call our confidential hotline at (503) 555-0199</li>
-                    </ul>
-                </div>
-
-                <div class='footer'>
-                    <p>Port of Portland - Safety Management System</p>
-                    <p>This document was generated on {DateTime.Now:dddd, MMMM dd, yyyy 'at' h:mm tt}</p>
-                    <p>Keep this confirmation for your records</p>
-                </div>
-            </body>
-            </html>
-        ";
-    }
-
+        
     /// <summary>
     /// Show tracking info alert as fallback if clipboard access fails
     /// </summary>
@@ -1751,22 +1409,5 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         await JSRuntime.InvokeVoidAsync("alert", $"Please copy and save this tracking information:\\n\\n{trackingInfo}");
     }
 
-    /// <summary>
-    /// Generate QR code as data URL using JavaScript
-    /// </summary>
-    private async Task<string> GenerateQRCodeDataUrl(string url)
-    {
-        try
-        {
-            // Use JavaScript to generate QR code and return as data URL
-            var qrDataUrl = await JSRuntime.InvokeAsync<string>("generateQRCodeDataUrl", url);
-            return qrDataUrl ?? string.Empty;
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, "Failed to generate QR code data URL");
-            return string.Empty;
-        }
-    }
     #endregion
 }

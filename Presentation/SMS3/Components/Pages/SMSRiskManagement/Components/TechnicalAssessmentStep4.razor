@@ -40,13 +40,13 @@
 
                 @foreach (var hazard in Step4Hazards)
                 {
+                    AvailableStakeholders = AvailableStakeholders.Where(predicate => predicate.IsPOPEmployee == true).ToList();
                     <HazardScoringPanel @key="@($"panel-{hazard.Code}")" 
                                         Hazard="@hazard" 
                                         AvailableStakeholders="@AvailableStakeholders"
                                         AvailableAssessors="@AvailableAssessors"
                                         CurrentRiskAssessment="@CurrentRiskAssessment"
                                         CurrentStep="4"
-                                        RiskAssessmentId="@RiskAssessmentId"
                                         OnHazardScored="@(() => HandleHazardScored(hazard.Code))" />
                 }
 

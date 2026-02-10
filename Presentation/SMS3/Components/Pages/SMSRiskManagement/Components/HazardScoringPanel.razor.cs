@@ -22,8 +22,7 @@ public partial class HazardScoringPanel : ComponentBase
     [Parameter] public RiskAssessment? CurrentRiskAssessment { get; set; }   // ✅ SINGLE risk assessment parameter
     [Parameter] public int CurrentStep { get; set; }   // Current step (4 or 5)
     [Parameter] public EventCallback OnHazardScored { get; set; }
-    [Parameter] public RiskAssessmentID? RiskAssessmentId { get; set; } // For backward compatibility
-
+    
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<HazardScoringPanel> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
@@ -797,12 +796,7 @@ public partial class HazardScoringPanel : ComponentBase
             return CurrentRiskAssessment.Code.Trim();
         }
 
-        // Fall back to RiskAssessmentId for backward compatibility
-        if (!string.IsNullOrEmpty(RiskAssessmentId?.Value))
-        {
-            return RiskAssessmentId.Value.Trim();
-        }
-
+        
         Logger.LogWarning("No valid risk assessment code found for hazard {HazardCode} scoring panel", Hazard.Code);
         return string.Empty;
     }

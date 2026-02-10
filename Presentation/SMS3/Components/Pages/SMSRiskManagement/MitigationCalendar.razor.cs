@@ -103,11 +103,11 @@ public partial class MitigationCalendar : ComponentBase
     private MitigationSchedulerItem MapMitigationToSchedulerItem(Mitigation mitigation)
     {
         var targetDate = mitigation.TargetDate ?? mitigation.CreatedDate ?? DateTime.Now;
-        var completionDate = mitigation.CompletionDate;
-        
+        //var completionDate = mitigation.CompletionDate;
+
         // Use completion date if available and in the past, otherwise use target date
-        var startDate = completionDate ?? targetDate;
-        var endDate = completionDate?.AddHours(1) ?? targetDate.AddDays(1); // Show completed items as 1 hour blocks, targets as all-day
+        var startDate = targetDate; // completionDate ?? targetDate;
+        var endDate = targetDate.AddHours(1) ; // Show completed items as 1 hour blocks, targets as all-day THIS IS A HACKED UP BIT
 
         return new MitigationSchedulerItem
         {

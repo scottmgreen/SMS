@@ -17,27 +17,8 @@ public sealed class SMSStakeholderUser : BaseUser
     public string StakeholderType { get; set; } = string.Empty;
     public string Organization { get; set; } = string.Empty;
 
-
-    /// <summary>
-    /// Checks if the user is of a specific stakeholder type
-    /// </summary>
-    public bool IsStakeholderType(string type)
-    {
-        return string.Equals(StakeholderType, type, StringComparison.OrdinalIgnoreCase);
-    }
-
-    /// <summary>
-    /// Checks if the user belongs to a specific organization
-    /// </summary>
-    public bool IsFromOrganization(string organization)
-    {
-        return string.Equals(Organization, organization, StringComparison.OrdinalIgnoreCase);
-    }
-
-    /// <summary>
-    /// Gets the stakeholder's external organization display
-    /// </summary>
-
+    public bool IsPOPEmployee { get; set; }
+    
 
 
 }

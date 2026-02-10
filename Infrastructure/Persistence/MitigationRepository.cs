@@ -48,73 +48,48 @@ public sealed class MitigationRepository : BaseRepository<MitigationRepository, 
             // Timeline Properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationTargetDate, mitigation.TargetDate ?? (object)DBNull.Value));
          
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationCompletionDate, mitigation.CompletionDate ?? (object)DBNull.Value));
-
+            
             // Assignment Properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignedDepartment, mitigation.AssignedDepartment ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignedTo, mitigation.AssignedTo ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationApprovedBy, mitigation.ApprovedBy ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationApprovedDate, mitigation.ApprovedDate ?? (object)DBNull.Value));
+            
 
             // Progress Properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationProgress, mitigation.Progress));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationProgressNotes, mitigation.ProgressNotes ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationLastProgressUpdate, mitigation.LastProgressUpdate ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationProgressUpdatedBy, mitigation.ProgressUpdatedBy ?? (object)DBNull.Value));
+            
 
             // Cost Properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationEstimatedCost, mitigation.EstimatedCost ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationActualCost, mitigation.ActualCost ?? (object)DBNull.Value));
+            
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationResourceRequirements, mitigation.ResourceRequirements ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationEstimatedHours, mitigation.EstimatedHours ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationActualHours, mitigation.ActualHours ?? (object)DBNull.Value));
+            
 
             // Effectiveness Properties
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationEffectivenessRating, mitigation.EffectivenessRating ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationEffectivenessNotes, mitigation.EffectivenessNotes ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationEffectivenessReviewDate, mitigation.EffectivenessReviewDate ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationEffectivenessReviewedBy, mitigation.EffectivenessReviewedBy ?? (object)DBNull.Value));
+            
 
             // Monitoring Properties
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationMonitoringRequirements, mitigation.MonitoringRequirements ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationMonitoringFrequency, mitigation.MonitoringFrequency ?? (object)DBNull.Value));
+            
 
             // Risk Reduction Properties
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationExpectedSeverityReduction, mitigation.ExpectedSeverityReduction ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationExpectedLikelihoodReduction, mitigation.ExpectedLikelihoodReduction ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationActualSeverityReduction, mitigation.ActualSeverityReduction ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationActualLikelihoodReduction, mitigation.ActualLikelihoodReduction ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationResidualRiskLevel, mitigation.ResidualRiskLevel ?? (object)DBNull.Value));
+            
 
             // Dependency Properties
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationPrerequisites, mitigation.Prerequisites ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationDependencies, mitigation.Dependencies ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationHasDependencies, mitigation.HasDependencies));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationIsPrerequisite, mitigation.IsPrerequisite));
+            
 
             // Planning Properties
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationImplementationPlan, mitigation.ImplementationPlan ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationCommunicationPlan, mitigation.CommunicationPlan ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationTrainingRequirements, mitigation.TrainingRequirements ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationDocumentationUpdates, mitigation.DocumentationUpdates ?? (object)DBNull.Value));
+            
 
             // Testing Properties
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationTestingProcedure, mitigation.TestingProcedure ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationTestingCompletedDate, mitigation.TestingCompletedDate ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationTestingResults, mitigation.TestingResults ?? (object)DBNull.Value));
+            
 
             // Validation Properties
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationValidationRequired, mitigation.ValidationRequired));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationValidationDate, mitigation.ValidationDate ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationValidatedBy, mitigation.ValidatedBy ?? (object)DBNull.Value));
+            
 
             // Additional Properties
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationNotes, mitigation.Notes ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationLessonsLearned, mitigation.LessonsLearned ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationRecommendationsForFuture, mitigation.RecommendationsForFuture ?? (object)DBNull.Value));
-
+           
             // Audit Fields
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, mitigation.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
             var newID = new SqlParameter(ParameterNames.pmNewID, SqlDbType.Int) { Direction = ParameterDirection.Output };
@@ -252,70 +227,46 @@ public sealed class MitigationRepository : BaseRepository<MitigationRepository, 
             // Timeline Properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationTargetDate, mitigation.TargetDate ?? (object)DBNull.Value));
             
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationCompletionDate, mitigation.CompletionDate ?? (object)DBNull.Value));
-
+            
             // Assignment Properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignedDepartment, mitigation.AssignedDepartment ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignedTo, mitigation.AssignedTo ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationApprovedBy, mitigation.ApprovedBy ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationApprovedDate, mitigation.ApprovedDate ?? (object)DBNull.Value));
+            
 
             // Progress Properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationProgress, mitigation.Progress));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationProgressNotes, mitigation.ProgressNotes ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationLastProgressUpdate, mitigation.LastProgressUpdate ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationProgressUpdatedBy, mitigation.ProgressUpdatedBy ?? (object)DBNull.Value));
+            
 
             // Cost Properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationEstimatedCost, mitigation.EstimatedCost ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationActualCost, mitigation.ActualCost ?? (object)DBNull.Value));
+            
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationResourceRequirements, mitigation.ResourceRequirements ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationEstimatedHours, mitigation.EstimatedHours ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationActualHours, mitigation.ActualHours ?? (object)DBNull.Value));
+            
 
             // Effectiveness Properties
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationEffectivenessRating, mitigation.EffectivenessRating ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationEffectivenessNotes, mitigation.EffectivenessNotes ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationEffectivenessReviewDate, mitigation.EffectivenessReviewDate ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationEffectivenessReviewedBy, mitigation.EffectivenessReviewedBy ?? (object)DBNull.Value));
+            
 
             // Monitoring Properties
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationMonitoringRequirements, mitigation.MonitoringRequirements ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationMonitoringFrequency, mitigation.MonitoringFrequency ?? (object)DBNull.Value));
+            
 
             // Risk Reduction Properties
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationExpectedSeverityReduction, mitigation.ExpectedSeverityReduction ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationExpectedLikelihoodReduction, mitigation.ExpectedLikelihoodReduction ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationActualSeverityReduction, mitigation.ActualSeverityReduction ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationActualLikelihoodReduction, mitigation.ActualLikelihoodReduction ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationResidualRiskLevel, mitigation.ResidualRiskLevel ?? (object)DBNull.Value));
+            
 
             // Dependency Properties
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationPrerequisites, mitigation.Prerequisites ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationDependencies, mitigation.Dependencies ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationHasDependencies, mitigation.HasDependencies));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationIsPrerequisite, mitigation.IsPrerequisite));
+            
 
             // Planning Properties
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationImplementationPlan, mitigation.ImplementationPlan ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationCommunicationPlan, mitigation.CommunicationPlan ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationTrainingRequirements, mitigation.TrainingRequirements ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationDocumentationUpdates, mitigation.DocumentationUpdates ?? (object)DBNull.Value));
+           
 
             // Testing Properties
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationTestingProcedure, mitigation.TestingProcedure ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationTestingCompletedDate, mitigation.TestingCompletedDate ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationTestingResults, mitigation.TestingResults ?? (object)DBNull.Value));
+            
 
             // Validation Properties
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationValidationRequired, mitigation.ValidationRequired));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationValidationDate, mitigation.ValidationDate ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationValidatedBy, mitigation.ValidatedBy ?? (object)DBNull.Value));
+           
 
             // Additional Properties
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationNotes, mitigation.Notes ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationLessonsLearned, mitigation.LessonsLearned ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationRecommendationsForFuture, mitigation.RecommendationsForFuture ?? (object)DBNull.Value));
+            
 
             // Audit Fields
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));

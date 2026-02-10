@@ -129,6 +129,7 @@ public partial class StakeholderUsers : ComponentBase
                 StakeholderType = NewUser.StakeholderType,
                 Organization = NewUser.Organization,
                 IsActive = true,
+                IsPOPEmployee = NewUser.IsPOPEmployee,
                 SMSUserType = "StakeHolder"
             };
 
@@ -202,7 +203,8 @@ public partial class StakeholderUsers : ComponentBase
             StakeholderType = user.StakeholderType,
             Organization = user.Organization,
             UserRoleCode = user.UserRole?.Code ?? "",
-            IsActive = user.IsActive
+            IsActive = user.IsActive,
+            IsPOPEmployee = user.IsPOPEmployee
         };
         ShowEditModal = true;
         StateHasChanged();
@@ -232,6 +234,8 @@ public partial class StakeholderUsers : ComponentBase
             CurrentEditUser.StakeholderType = editUser.StakeholderType;
             CurrentEditUser.Organization = editUser.Organization;
             CurrentEditUser.IsActive = editUser.IsActive;
+            CurrentEditUser.IsPOPEmployee = editUser.IsPOPEmployee;
+            CurrentEditUser.UpdatedBy = AuthService.CurrentUser.Code;
 
             // Update user role if specified
             if (!string.IsNullOrWhiteSpace(editUser.UserRoleCode))
@@ -738,6 +742,7 @@ public partial class StakeholderUsers : ComponentBase
         public string StakeholderType { get; set; } = "";
         public string Organization { get; set; } = "";
         public string UserRoleCode { get; set; } = "";
+        public bool IsPOPEmployee { get; set; } = false;
     }
 
     public class EditStakeholderUserModel
@@ -749,6 +754,8 @@ public partial class StakeholderUsers : ComponentBase
         public string Organization { get; set; } = "";
         public string UserRoleCode { get; set; } = "";
         public bool IsActive { get; set; } = true;
+
+        public bool IsPOPEmployee { get; set; } = false;
     }
 
     #endregion

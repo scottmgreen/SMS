@@ -165,6 +165,13 @@ public static class FieldNames
     private static readonly Lazy<string> _fSMSStakeholderUserLastLoginDate = new Lazy<string>(() => "fldd_LastLoginDate");
     public static string fSMSStakeholderUserLastLoginDate => _fSMSStakeholderUserLastLoginDate.Value;
 
+    private static readonly Lazy<string> _fSMSStakeholderIsPOPEmployee = new Lazy<string>(() => "fldb_IsPOPEmployee");
+    public static string fSMSStakeholderIsPOPEmployee => _fSMSStakeholderIsPOPEmployee.Value;
+
+    //fldb_IsPOPEmployee
+
+
+
     /// <summary>
     /// SMS Stakeholder Groups table (tbld_SMSStakeholderGroups)
     /// </summary>
