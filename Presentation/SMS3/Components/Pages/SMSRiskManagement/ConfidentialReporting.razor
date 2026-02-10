@@ -126,7 +126,7 @@ else
                         <RadzenRow Gap="1rem" Class="rz-mb-3">
                             <RadzenColumn Size="2">
                                 <RadzenFormField Text="Reported On *" Variant="Variant.Outlined">
-                                    <RadzenDatePicker @bind-Value="@HazardReport.ReportedOn" 
+                                    <RadzenDatePicker @bind-Value="@HazardReport.SubmittedDate" 
                                                     ShowTime="true"
                                                     DateFormat="MM/dd/yyyy HH:mm"
                                                     Style="width: 100%;" />
@@ -134,15 +134,15 @@ else
                             </RadzenColumn>
                             <RadzenColumn Size="4">
                                 <RadzenFormField Text="Reported By *" Variant="Variant.Outlined" Style="width: 100%;">
-                                    <RadzenTextBox @bind-Value="@HazardReport.ReportedBy" 
+                                    <RadzenTextBox @bind-Value="@HazardReport.SubmittedBy" 
                                                  Placeholder="Name and position (e.g., 'John Smith - Ground Operations Supervisor')"
-                                                 Name="ReportedBy"
+                                                 Name="SubmittedBy"
                                                  MaxLength="60"
                                                  Style="width: 100%;min-width: 100%;" 
                                                  ReadOnly ="true"
                                                  />
                                 </RadzenFormField>
-                                <RadzenRequiredValidator Component="ReportedBy" Text="Reported by is required" />
+                                <RadzenRequiredValidator Component="SubmittedBy" Text="Reported by is required" />
                             </RadzenColumn>
                             @* <RadzenColumn Size="6">
                                 <RadzenFormField Text="Reporting Department *" Variant="Variant.Outlined" Style="width: 100%;">
@@ -606,13 +606,13 @@ else
                     <div class="mb-3">
                         <h6 class="text-primary mb-2">Report Summary:</h6>
                         <div class="small">
-                            <p class="mb-1"><strong>Department:</strong> @HazardReport.ReportingDepartment</p>
+                            <p class="mb-1"><strong>Submitting Department:</strong> @HazardReport.SubmittingDepartment</p>
                             <p class="mb-1"><strong>Category:</strong> @GetHazardCategoryDisplay(HazardReport.HazardCategory)</p>
                             <p class="mb-1"><strong>Type:</strong> @GetHazardTypeDisplay(HazardReport.HazardType)</p>
                             <p class="mb-1"><strong>Location:</strong> @LocationDisplayText</p>
-                            <p class="mb-1"><strong>Reported By:</strong> @HazardReport.ReportedBy</p>
-                            <p class="mb-1"><strong>Reported On:</strong> @HazardReport.ReportedOn.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt")</p>
-                            <p class="mb-0"><strong>Confidential:</strong> Yes</p>
+                            <p class="mb-1"><strong>Submitted By:</strong> @HazardReport.SubmittedBy</p>
+                            <p class="mb-1"><strong>Submitted On:</strong> @HazardReport.SubmittedDate.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt")</p>
+                            <p class="mb-0"><strong>Anonymous:</strong> Yes</p>
                         </div>
                     </div>
                     
@@ -728,9 +728,9 @@ else
                                         <i class="fas fa-user text-info"></i> Reported By
                                     </th>
                                     <td>
-                                        @if (!string.IsNullOrEmpty(HazardReport.ReportedBy))
+                                        @if (!string.IsNullOrEmpty(HazardReport.SubmittedBy))
                                         {
-                                            <span class="fw-bold">@HazardReport.ReportedBy</span>
+                                            <span class="fw-bold">@HazardReport.SubmittedBy</span>
                                         }
                                         else
                                         {
@@ -738,7 +738,7 @@ else
                                         }
                                     </td>
                                     <td class="text-center">
-                                        @if (!string.IsNullOrEmpty(HazardReport.ReportedBy))
+                                        @if (!string.IsNullOrEmpty(HazardReport.SubmittedBy))
                                         {
                                             <i class="fas fa-check-circle text-success"></i>
                                         }
@@ -833,7 +833,7 @@ else
                                     {
                                         <li><strong>Description</strong> - Please provide details about the hazard</li>
                                     }
-                                    @if (string.IsNullOrEmpty(HazardReport.ReportedBy))
+                                    @if (string.IsNullOrEmpty(HazardReport.SubmittedBy))
                                     {
                                         <li><strong>Reported By</strong> - Please specify who is reporting this hazard</li>
                                     }

@@ -134,18 +134,17 @@ public class Step1Model
 
         assessment.LeadAssessorId = LeadAssessor.Trim();
 
-        if (!string.IsNullOrEmpty(StakeholderGroups.Trim()))
+        // Apply selected stakeholders to assessment (comma-delimited persistence)
+        if (SelectedStakeholderGroupIds?.Any() == true)
         {
-            var groups = StakeholderGroups.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(g => g.Trim())
-                .Where(g => !string.IsNullOrEmpty(g));
-
-            foreach (var group in groups)
-            {
-                assessment.AddStakeholder(group);
-            }
+            assessment.SelectedStakeholderGroups = string.Join(",", SelectedStakeholderGroupIds);
         }
 
+        if (SelectedIndividualStakeholderIds?.Any() == true)
+        {
+            assessment.SelectedIndividualStakeholders = string.Join(",", SelectedIndividualStakeholderIds);
+        }
+        
         assessment.CompleteStep(1);
     }
 
@@ -165,6 +164,7 @@ public class Step1Model
         if (string.IsNullOrEmpty(FiveMPhysicalEnvironment)) FiveMPhysicalEnvironment = assessment.FiveMPhysicalEnvironment ?? string.Empty;
         if (string.IsNullOrEmpty(FiveMOperationalEnvironment)) FiveMOperationalEnvironment = assessment.FiveMOperationalEnvironment ?? string.Empty;
 
+        // Initialize collections if null
         if (SelectedStakeholderGroupIds == null)
         {
             SelectedStakeholderGroupIds = new List<string>();
@@ -175,20 +175,27 @@ public class Step1Model
             SelectedIndividualStakeholderIds = new List<string>();
         }
 
-        if (assessment.StakeholderIds?.Any() == true)
+        // Load selected stakeholders from assessment (comma-delimited persistence)
+        if (!string.IsNullOrEmpty(assessment.SelectedStakeholderGroups))
         {
-            foreach (var stakeholderId in assessment.StakeholderIds)
-            {
-                if (!SelectedStakeholderGroupIds.Contains(stakeholderId))
-                {
-                    SelectedStakeholderGroupIds.Add(stakeholderId);
-                }
-            }
-
-            StakeholderGroups = string.Join(", ", SelectedStakeholderGroupIds);
+            SelectedStakeholderGroupIds = assessment.SelectedStakeholderGroups
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim())
+                .ToList();
         }
-    }
 
+        if (!string.IsNullOrEmpty(assessment.SelectedIndividualStakeholders))
+        {
+            SelectedIndividualStakeholderIds = assessment.SelectedIndividualStakeholders
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim())
+                .ToList();
+        }
+
+        // Note: Display strings (StakeholderGroups, SelectedIndividualStakeholders) will be 
+        // updated by the UI component after LoadFromAssessment is called
+    }
+   
     #endregion
 
     #region Helper Classes

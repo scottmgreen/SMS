@@ -80,8 +80,7 @@ public partial class HazardMitigation : ComponentBase
                 var mitigationId = new MitigationID(Guid.NewGuid().ToString());
                 CurrentMitigation = new SMS_Domain.Entities.Mitigation(mitigationId)
                 {
-                    Status = "Proposed",
-                    Priority = "Medium",
+                    Status = MitigationStatus.PendingApproval.Value,
                     Type = "Administrative Control",
                     Progress = 0,
                     TargetDate = DateTime.Now.AddMonths(3)

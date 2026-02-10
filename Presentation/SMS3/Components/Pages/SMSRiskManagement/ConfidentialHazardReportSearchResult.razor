@@ -61,7 +61,7 @@ else if (ReportDetails != null)
                 <div class="info-item">
                     <label class="info-label">Submitted</label>
                     <div class="info-value">
-                        @ReportDetails.ReportedOn.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt")
+                        @ReportDetails.SubmittedDate.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt")
                     </div>
                 </div>
             </div>
@@ -166,7 +166,7 @@ else if (ReportDetails != null)
                 <div class="timeline-content">
                     <h6 class="mb-1">Report Submitted</h6>
                     <p class="mb-0 text-muted">
-                        @ReportDetails.ReportedOn.ToString("MMMM dd, yyyy 'at' h:mm tt")
+                        @ReportDetails.SubmittedDate.ToString("MMMM dd, yyyy 'at' h:mm tt")
                     </p>
                     <small class="text-success">? Complete</small>
                 </div>

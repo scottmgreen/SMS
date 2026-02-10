@@ -81,19 +81,16 @@
                                 
                                 <!-- Hazard Meta Information -->
                                 <div class="row text-black small">
-                                    <div class="col-md-6">
-                                        <div><strong>Reported By:</strong> @(hazard.ReportedBy ?? "Unknown")</div>
-                                        <div><strong>Reported On:</strong> @hazard.ReportedOn.ToString("MM/dd/yyyy HH:mm")</div>
+                                    @* <div class="col-md-6">
+                                        <div><strong>Reported By:</strong> @(hazard.SubmittedBy ?? "Unknown")</div>
+                                        <div><strong>Reported On:</strong> @hazard.SubmittedDate.ToString("MM/dd/yyyy HH:mm")</div>
                                         @if (!string.IsNullOrEmpty(hazard.HazardCategory))
                                         {
                                             <div><strong>Category:</strong> @hazard.HazardCategory</div>
                                         }
-                                    </div>
-                                    <div class="col-md-6">
-                                        @if (hazard.Priority != null)
-                                        {
-                                            <div><strong>Priority:</strong> @hazard.Priority.Name</div>
-                                        }
+                                    </div> *@
+                                    @* <div class="col-md-6">
+                                        
                                         @if (!string.IsNullOrEmpty(hazard.RiskLevel))
                                         {
                                             <div><strong>Risk Level:</strong> @hazard.RiskLevel</div>
@@ -102,7 +99,7 @@
                                         {
                                             <div><strong>Department:</strong> @hazard.ReportingDepartment</div>
                                         }
-                                    </div>
+                                    </div> *@
                                 </div>
 
                                 <!-- Hazard Location Display -->

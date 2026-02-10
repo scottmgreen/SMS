@@ -79,13 +79,13 @@ else if (ReportDetails != null)
             <div class="col-lg-6">
                 <div class="info-item">
                     <label class="info-label">Reported By</label>
-                    <div class="info-value">@(ReportDetails.ReportedBy ?? "Unknown")</div>
+                    <div class="info-value">@(ReportDetails.SubmittedBy ?? "Unknown")</div>
                 </div>
             </div>
             <div class="col-lg-6">
                 <div class="info-item">
                     <label class="info-label">Reported On</label>
-                    <div class="info-value">@(ReportDetails.ReportedOn?.ToString("MMMM dd, yyyy 'at' HH:mm tt") ?? "Not Specified")</div>
+                    <div class="info-value">@(ReportDetails.SubmittedDate?.ToString("MMMM dd, yyyy 'at' HH:mm tt") ?? "Not Specified")</div>
                 </div>
             </div>
             <div class="col-lg-6">
@@ -189,7 +189,7 @@ else if (ReportDetails != null)
                 </div>
                 <div class="timeline-content">
                     <h6>Report Submitted</h6>
-                    <p class="text-muted">@(ReportDetails.ReportedOn?.ToString("MMMM dd, yyyy 'at' HH:mm tt") ?? "Not Available")</p>
+                    <p class="text-muted">@(ReportDetails.SubmittedDate?.ToString("MMMM dd, yyyy 'at' HH:mm tt") ?? "Not Available")</p>
                 </div>
             </div>
 

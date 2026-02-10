@@ -151,7 +151,7 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
                 ReportCode = tracking.ReportCode,
                 CreatedDate = tracking.CreatedDate,
                 // Anonymous-specific defaults
-                ReportedBy = "Anonymous Reporter",
+                SubmittedBy = "Anonymous Reporter",
                 CurrentStatus = "Under Review",
                 HazardType = "Confidential Safety Report",
                 Description = "Report details are confidential and available to authorized safety personnel only."
@@ -170,8 +170,7 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
                         var hazard = hazardResult.Value;
 
                         // Only show non-sensitive information
-                        reportDetails.ReportedOn = hazard.ReportedOn;
-                        reportDetails.IsAnonymous = hazard.IsAnonymous;
+                        
 
                         // Add location information for fallback display
                         reportDetails.LocationArea = hazard.LocationArea ?? "";
@@ -398,8 +397,8 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
         public string HazardCode { get; set; } = string.Empty;
         public string ReportCode { get; set; } = string.Empty;
         public string HazardType { get; set; } = string.Empty;
-        public string ReportedBy { get; set; } = string.Empty;
-        public DateTime ReportedOn { get; set; }
+        public string SubmittedBy { get; set; } = string.Empty;
+        public DateTime SubmittedDate { get; set; }
         public string CurrentStatus { get; set; } = string.Empty;
         public string ValidationDecision { get; set; } = string.Empty;
         public DateTime? ValidationDate { get; set; }

@@ -429,12 +429,9 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         hazard.HazardType = NewHazardType;
         hazard.IsInitialHazard = false;
         hazard.ReportCode = ReportId ?? "";
-        hazard.ReportedBy = AuthService.CurrentUserDisplayName;
-        hazard.ReportingDepartment = "Technical Assessment";
-        hazard.IsAnonymous = false;
+        
         hazard.Status = HazardStatus.InitialRiskAssessment;
-        hazard.Priority = HazardPriority.Medium;
-        hazard.ReportedOn = DateTime.UtcNow;
+        
         hazard.CreatedBy = AuthService.CurrentUserDisplayName;
         hazard.CreatedDate = DateTime.UtcNow;
         // Handle location for new hazard - EXACTLY like HazardReporting

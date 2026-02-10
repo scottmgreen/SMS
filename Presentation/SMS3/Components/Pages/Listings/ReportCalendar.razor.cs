@@ -97,7 +97,7 @@ public partial class ReportCalendar : ComponentBase
             ReportType = DetermineReportType(report),
             Priority = DeterminePriority(report),
             Status = report.Status ?? "Unknown",
-            Reporter = report.ReportedBy ?? "Unknown",
+            Reporter = report.SubmittedBy ?? "Unknown",
             Description = report.Description ?? "No description available"
         };
     }

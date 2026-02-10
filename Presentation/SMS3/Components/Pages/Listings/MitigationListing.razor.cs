@@ -215,7 +215,6 @@ public partial class MitigationListing : ComponentBase
                     ReportId = reportId,
                     Description = mitigation.Description,
                     Status = mitigation.Status ?? "Unknown",
-                    Priority = mitigation.Priority,
                     Progress = mitigation.Progress,
                     TargetDate = mitigation.TargetDate
                 });

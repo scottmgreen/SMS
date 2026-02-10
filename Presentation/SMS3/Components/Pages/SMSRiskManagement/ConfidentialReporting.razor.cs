@@ -147,7 +147,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     /// </summary>
     public bool IsFormValidForPreview =>
         !string.IsNullOrEmpty(HazardReport.HazardType) &&
-        !string.IsNullOrEmpty(HazardReport.ReportedBy) &&
+        !string.IsNullOrEmpty(HazardReport.SubmittedBy) &&
         !string.IsNullOrEmpty(HazardReport.Description);
 
     /// <summary>
@@ -226,8 +226,8 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     {
         try
         {
-            Logger.LogInformation("Confidential form submit triggered with data: HazardType={HazardType}, ReportedBy={ReportedBy}",
-                formData.HazardType, formData.ReportedBy);
+            Logger.LogInformation("Confidential form submit triggered with data: HazardType={HazardType}, SubmittedBy={SubmittedBy}",
+                formData.HazardType, formData.SubmittedBy);
 
             if (!IsFormValidForSubmission)
             {
@@ -745,9 +745,9 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
             {
                 Code = "RP-0000",
                 Name = $"{HazardReport.HazardCategory} - {HazardReport.HazardType}",
-                ReportedBy = "CONFIDENTIAL_USER",
-                ReportedOn = HazardReport.ReportedOn,
-                Department = "CONFIDENTIAL",
+                SubmittedBy = "CONFIDENTIAL_USER",
+                SubmittedDate = HazardReport.SubmittedDate,
+                SubmittingDepartment = "CONFIDENTIAL",
                 Description = HazardReport.Description,
                 Stage = "Initial",
                 Status = "Initial"
@@ -773,10 +773,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                 Description = HazardReport.Description,
                 HazardCategory = HazardReport.HazardCategory,
                 HazardType = HazardReport.HazardType,
-                ReportedBy = "CONFIDENTIAL_USER",
-                ReportedOn = HazardReport.ReportedOn,
-                ReportingDepartment = "CONFIDENTIAL",
-                IsAnonymous = true,
+                
                 ReportCode = actualReportCode,
                 IsInitialHazard = true // Mark as the initial hazard for this report
             };
@@ -1080,8 +1077,8 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         var tenMinutesAgo = DateTime.Now.AddMinutes(-10);
         HazardReport = new HazardReportForm
         {
-            ReportedBy = "Anonymous Reporter",
-            ReportedOn = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day,
+            SubmittedBy = "Anonymous Reporter",
+            SubmittedDate = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day,
                 tenMinutesAgo.Hour, tenMinutesAgo.Minute, 0),
             IsAnonymous = true // Always true for confidential reporting
         };

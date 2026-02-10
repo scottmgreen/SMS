@@ -36,7 +36,7 @@ public class ReportProcessingSummary
     public string HazardDescription { get; set; } = string.Empty;
     public string Location { get; set; } = string.Empty;
     public string Priority { get; set; } = string.Empty;
-    public string ReportedBy { get; set; } = string.Empty;
+    public string SubmittedBy { get; set; } = string.Empty;
     public DateTime ReportedDate { get; set; }
     public bool IsAnonymous { get; set; }
 
@@ -443,7 +443,7 @@ public partial class ReportProcessing : ComponentBase
                                             Status = m.Status ?? "Unknown",
                                             ResponsibleParty = m.AssignedTo ?? "Not Assigned",
                                             TargetDate = m.TargetDate,
-                                            Priority = m.Priority?.ToString() ?? "Medium"
+                                            
                                         }).ToList();
 
                                     // ✅ Track mitigation codes to prevent duplicates
@@ -476,10 +476,9 @@ public partial class ReportProcessing : ComponentBase
                             HazardType = primaryHazard.HazardType ?? "Unknown",
                             HazardDescription = primaryHazard.Description ?? "No description",
                             Location = primaryHazard.HazardLocation?.Description ?? primaryHazard.LocationArea ?? "Not specified",
-                            Priority = GetPriorityString(primaryHazard.Priority),
-                            ReportedBy = primaryHazard.ReportedBy ?? report.CreatedBy ?? report.UpdatedBy ?? "Unknown",
-                            ReportedDate = primaryHazard.ReportedOn,
-                            IsAnonymous = primaryHazard.IsAnonymous,
+                            //SubmittedBy = primaryHazard.SubmittedBy ?? report.CreatedBy ?? report.UpdatedBy ?? "Unknown",
+                            //ReportedDate = primaryHazard.SubmittedDate,
+                            //IsAnonymous = primaryHazard.IsAnonymous,
 
                             // Risk Assessment Information
                             RiskAssessmentId = riskAssessment.Code,
@@ -538,10 +537,9 @@ public partial class ReportProcessing : ComponentBase
                         HazardType = primaryHazard.HazardType ?? "Unknown",
                         HazardDescription = primaryHazard.Description ?? "No description",
                         Location = primaryHazard.HazardLocation?.Description ?? primaryHazard.LocationArea ?? "Not specified",
-                        Priority = GetPriorityString(primaryHazard.Priority),
-                        ReportedBy = primaryHazard.ReportedBy ?? report.CreatedBy ?? report.UpdatedBy ?? "Unknown",
-                        ReportedDate = primaryHazard.ReportedOn,
-                        IsAnonymous = primaryHazard.IsAnonymous,
+                        //SubmittedBy = primaryHazard.SubmittedBy ?? report.CreatedBy ?? report.UpdatedBy ?? "Unknown",
+                        //ReportedDate = primaryHazard.SubmittedDate,
+                        //IsAnonymous = primaryHazard.IsAnonymous,
 
                         // No risk assessment information
                         RiskAssessmentId = null,
@@ -734,7 +732,7 @@ public partial class ReportProcessing : ComponentBase
         };
     }
 
-    private string GetPriorityString(HazardPriority? priority) => priority?.ToString() ?? "Medium";
+    
 
     private int CalculateDaysInStage(Report report, Hazard? hazard, RiskAssessment? riskAssessment, SMS_Domain.Entities.ReportValidation? reportValidation)
     {
@@ -1444,7 +1442,7 @@ public partial class ReportProcessing : ComponentBase
 
         // Reported By Column (FIXED: Ensure proper data binding)
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(60);
-        builder.AddAttribute(61, "Property", "ReportedBy");
+        builder.AddAttribute(61, "Property", "SubmittedBy");
         builder.AddAttribute(62, "Title", "Reported By");
         builder.AddAttribute(63, "Width", "150px");
         builder.AddAttribute(64, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
@@ -1452,7 +1450,7 @@ public partial class ReportProcessing : ComponentBase
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
                 templateBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
-                templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.ReportedBy) ? report.ReportedBy : "Not Specified");
+                templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.SubmittedBy) ? report.SubmittedBy : "Not Specified");
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();

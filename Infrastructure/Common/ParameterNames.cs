@@ -356,21 +356,7 @@ public static class ParameterNames
     // Additional Hazard parameters for comprehensive SMS support
 
 
-    private static readonly Lazy<string> _pmHazardReportedBy = new Lazy<string>(() => "@pHazardReportedBy");
-    public static string pmHazardReportedBy => _pmHazardReportedBy.Value;
-
-    private static readonly Lazy<string> _pmHazardReportedOn = new Lazy<string>(() => "@pHazardReportedOn");
-    public static string pmHazardReportedOn => _pmHazardReportedOn.Value;
-
-    private static readonly Lazy<string> _pmHazardReportingDepartment = new Lazy<string>(() => "@pHazardReportingDepartment");
-    public static string pmHazardReportingDepartment => _pmHazardReportingDepartment.Value;
-
-    private static readonly Lazy<string> _pmHazardIsConfidential = new Lazy<string>(() => "@pHazardIsConfidential");
-    public static string pmHazardIsConfidential => _pmHazardIsConfidential.Value;
-
-    private static readonly Lazy<string> _pmHazardIsAnonymous = new Lazy<string>(() => "@pHazardIsAnonymous");
-    public static string pmHazardIsAnonymous => _pmHazardIsAnonymous.Value;
-
+ 
     private static readonly Lazy<string> _pmHazardType = new Lazy<string>(() => "@pHazardType");
     public static string pmHazardType => _pmHazardType.Value;
 
@@ -382,8 +368,6 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmHazardCategory = new Lazy<string>(() => "@pHazardCategory");
     public static string pmHazardCategory => _pmHazardCategory.Value;
 
-    private static readonly Lazy<string> _pmHazardFiveMComponent = new Lazy<string>(() => "@pFiveMComponent");
-    public static string pmHazardFiveMComponent => _pmHazardFiveMComponent.Value;
 
     private static readonly Lazy<string> _pmHazardStatus = new Lazy<string>(() => "@pStatus");
     public static string pmHazardStatus => _pmHazardStatus.Value;
@@ -670,6 +654,12 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmEnvironmentFactors = new Lazy<string>(() => "@pEnvironmentFactors");
     public static string pmEnvironmentFactors => _pmEnvironmentFactors.Value;
 
+    private static readonly Lazy<string> _pmSelectedStakeholderGroups = new Lazy<string>(() => "@pSelectedStakeholderGroups");
+    public static string pmSelectedStakeholderGroups => _pmSelectedStakeholderGroups.Value;
+
+    private static readonly Lazy<string> _pmSelectedIndividualStakeholders = new Lazy<string>(() => "@pSelectedIndividualStakeholders");
+    public static string pmSelectedIndividualStakeholders => _pmSelectedIndividualStakeholders.Value;
+
     /// <summary>
     /// Risk Assessment - Step 3 Parameters
     /// </summary>
@@ -725,17 +715,30 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmReportName = new Lazy<string>(() => "@pReportName");
     public static string pmReportName => _pmReportName.Value;
 
-    private static readonly Lazy<string> _pmReportedBy = new Lazy<string>(() => "@pReportedBy");
-    public static string pmReportedBy => _pmReportedBy.Value;
+    private static readonly Lazy<string> _pmIncidentDateTime = new Lazy<string>(() => "@pIncidentDateTime");
+    public static string pmIncidentDateTime => _pmIncidentDateTime.Value;
 
-    private static readonly Lazy<string> _pmReportedOn = new Lazy<string>(() => "@pReportedOn");
-    public static string pmReportedOn => _pmReportedOn.Value;
+    private static readonly Lazy<string> _pmSubmittedBy = new Lazy<string>(() => "@pSubmittedBy");
+    public static string pmSubmittedBy => _pmSubmittedBy.Value;
+
+    private static readonly Lazy<string> _pmSubmittedDate = new Lazy<string>(() => "@pSubmittedDate");
+    public static string pmSubmittedDate => _pmSubmittedDate.Value;
+
+    private static readonly Lazy<string> _pmSubmittingDepartment = new Lazy<string>(() => "@pSubmittingDepartment");
+    public static string pmSubmittingDepartment => _pmSubmittingDepartment.Value;
+
+    private static readonly Lazy<string> _pmSubmittingDepartmentJobFunction = new Lazy<string>(() => "@pSubmittingDepartmentJobFunction");
+    public static string pmSubmittingDepartmentJobFunction => _pmSubmittingDepartmentJobFunction.Value;
 
 
-    private static readonly Lazy<string> _pmReportedByDepartment = new Lazy<string>(() => "@pReportedByDepartment");
-    public static string pmReportedByDepartment => _pmReportedByDepartment.Value;
+    private static readonly Lazy<string> _pmReportContactName = new Lazy<string>(() => "@pReportContactName");
+    public static string pmReportContactName => _pmReportContactName.Value;
 
+    private static readonly Lazy<string> _pmReportContactCell = new Lazy<string>(() => "@pReportContactCell");
+    public static string pmReportContactCell => _pmReportContactCell.Value;
 
+    private static readonly Lazy<string> _pmReportContactEmail = new Lazy<string>(() => "@pReportContactEmail");
+    public static string pmReportContactEmail => _pmReportContactEmail.Value;
 
 
     private static readonly Lazy<string> _pmReportDescription = new Lazy<string>(() => "@pReportDescription");

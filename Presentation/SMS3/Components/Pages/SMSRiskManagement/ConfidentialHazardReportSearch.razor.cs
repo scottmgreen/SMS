@@ -678,7 +678,7 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
                 ReportCode = tracking.ReportCode,
                 CreatedDate = tracking.CreatedDate,
                 // Anonymous-specific defaults
-                ReportedBy = "Anonymous", // Never show actual reporter name
+                SubmittedBy = "Anonymous", // Never show actual reporter name
                 CurrentStatus = "Under Review", // Generic status for anonymous
                 HazardType = "Confidential Report" // Generic type
             };
@@ -696,8 +696,8 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
                         var hazard = hazardResult.Value;
 
                         // Only show non-sensitive information for anonymous users
-                        searchResult.ReportedOn = hazard.ReportedOn != DateTime.MinValue ? hazard.ReportedOn : DateTime.MinValue;
-                        searchResult.IsAnonymous = hazard.IsAnonymous;
+                        //searchResult.SubmittedDate = hazard.SubmittedDate != DateTime.MinValue ? hazard.SubmittedDate : DateTime.MinValue;
+                        //searchResult.IsAnonymous = hazard.IsAnonymous;
 
                         // Show generic hazard type rather than specific details
                         if (!string.IsNullOrEmpty(hazard.HazardType))
@@ -778,8 +778,8 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
         public string HazardCode { get; set; } = string.Empty;
         public string ReportCode { get; set; } = string.Empty;
         public string HazardType { get; set; } = string.Empty;
-        public string ReportedBy { get; set; } = string.Empty;
-        public DateTime ReportedOn { get; set; }
+        public string SubmittedBy { get; set; } = string.Empty;
+        public DateTime SubmittedDate { get; set; }
         public string CurrentStatus { get; set; } = string.Empty;
         public string ValidationDecision { get; set; } = string.Empty;
         public DateTime? ValidationDate { get; set; }

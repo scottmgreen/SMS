@@ -153,11 +153,11 @@ public partial class HazardReportSearchResult : ComponentBase
 
                 ReportDetails.HazardType = hazard.HazardType ?? "Unknown";
                 ReportDetails.Description = hazard.Description ?? "";
-                ReportDetails.ReportedBy = hazard.ReportedBy ?? "Unknown";
-                ReportDetails.ReportedOn = hazard.ReportedOn;
-                ReportDetails.Department = hazard.ReportingDepartment ?? "";
+                //ReportDetails.SubmittedBy = hazard.SubmittedBy ?? "Unknown";
+                //ReportDetails.SubmittedDate = hazard.SubmittedDate;
+                //ReportDetails.Department = hazard.ReportingDepartment ?? "";
                 ReportDetails.CurrentStatus = hazard.Status ?? "Unknown";
-                ReportDetails.IsAnonymous = hazard.IsAnonymous;
+                //ReportDetails.IsAnonymous = hazard.IsAnonymous;
                 
                 // Add location information for fallback display
                 ReportDetails.LocationArea = hazard.LocationArea ?? "";
@@ -193,17 +193,17 @@ public partial class HazardReportSearchResult : ComponentBase
                 var report = reportResult.Value;
 
                 // Fill in any missing information from report if not already set by hazard
-                if (string.IsNullOrEmpty(ReportDetails.ReportedBy))
+                if (string.IsNullOrEmpty(ReportDetails.SubmittedBy))
                 {
-                    ReportDetails.ReportedBy = report.ReportedBy ?? "Unknown";
+                    ReportDetails.SubmittedBy = report.SubmittedBy ?? "Unknown";
                 }
-                if (!ReportDetails.ReportedOn.HasValue)
+                if (!ReportDetails.SubmittedDate.HasValue)
                 {
-                    ReportDetails.ReportedOn = report.ReportedOn;
+                    ReportDetails.SubmittedDate = report.SubmittedDate;
                 }
                 if (string.IsNullOrEmpty(ReportDetails.Department))
                 {
-                    ReportDetails.Department = report.Department ?? "";
+                    ReportDetails.Department = report.SubmittingDepartment ?? "";
                 }
                 if (string.IsNullOrEmpty(ReportDetails.CurrentStatus))
                 {
@@ -546,8 +546,8 @@ public partial class HazardReportSearchResult : ComponentBase
         public string HazardCode { get; set; } = string.Empty;
         public string ReportCode { get; set; } = string.Empty;
         public string HazardType { get; set; } = string.Empty;
-        public string ReportedBy { get; set; } = string.Empty;
-        public DateTime? ReportedOn { get; set; }
+        public string SubmittedBy { get; set; } = string.Empty;
+        public DateTime? SubmittedDate { get; set; }
         public string Department { get; set; } = string.Empty;
         public string CurrentStatus { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;

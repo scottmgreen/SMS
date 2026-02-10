@@ -28,7 +28,7 @@
 </style>
 
 @{
-    var cardColorClass = NeedsMitigation ? (HasMitigations() ? "var(--rz-info)" : "var(--rz-warning)") : "var(--rz-success)";
+    var cardColorClass = NeedsMitigation ? (HasMitigations() ? "var(--rz-base)" : "var(--rz-warning)") : "var(--rz-success)";
     var initialRiskLevel = GetInitialRiskLevel();
 }
 
@@ -63,7 +63,7 @@
                     else if (LoadedMitigations.Any())
                     {
                         <br />
-                        @foreach (var mitigation in LoadedMitigations.OrderBy(m => m.Priority).ThenBy(m => m.TargetDate))
+                        @foreach (var mitigation in LoadedMitigations.OrderBy(m => m.TargetDate))
                         {
                             <RadzenRow>
                                 <RadzenColumn Size="3">
@@ -90,8 +90,6 @@
                                             <RadzenStack Gap="0.25rem">
                                                 <RadzenText TextStyle="TextStyle.Subtitle2" Text="@($"{mitigation.Name}")" Style="margin: 0; color: #212e61;" />
                                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                                                    @* <RadzenBadge Text="@mitigation.Status" BadgeStyle="@GetStatusBadgeStyle(mitigation.Status)" />
-                                                    <RadzenBadge Text="@(mitigation.Priority ?? "Medium")" BadgeStyle="@GetPriorityBadgeStyle(mitigation.Priority ?? "Medium")" /> *@
                                                     @if (mitigation.Progress > 0)
                                                     {
                                                         <RadzenBadge Text="@($"{mitigation.Progress}% Complete")" BadgeStyle="BadgeStyle.Info" />
@@ -227,15 +225,10 @@
                     </RadzenStack>
                 </RadzenFieldset>
 
-                <RadzenFieldset Text="Priority & Timeline">
+                <RadzenFieldset Text="Timeline">
                     <RadzenStack Gap="1rem">
                         <RadzenRow Gap="1rem">
-                            <RadzenColumn Size="12" SizeMD="4">
-                                <RadzenFormField Text="Priority" Variant="Variant.Outlined">
-                                    <RadzenDropDown @bind-Value="@CurrentMitigation.Priority" Data="@PriorityLevels"
-                                                    Placeholder="Select priority..." Style="width: 100%;" />
-                                </RadzenFormField>
-                            </RadzenColumn>
+                            
                             <RadzenColumn Size="12" SizeMD="4">
                                 <RadzenFormField Text="Status" Variant="Variant.Outlined">
                                     <RadzenDropDown @bind-Value="@CurrentMitigation.Status" Data="@StatusLevels"
@@ -480,7 +473,6 @@
                 
                 // Set defaults
                 CurrentMitigation.Status = MitigationStatus.PendingApproval.Value;
-                CurrentMitigation.Priority = "Medium";
                 CurrentMitigation.Type = "Administrative Control";
                 CurrentMitigation.Progress = 0;
                 CurrentMitigation.TargetDate = DateTime.Now.AddMonths(3);

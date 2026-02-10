@@ -154,17 +154,16 @@ public partial class Hazards : ComponentBase
             // Show detailed hazard information dialog
             var hazardDetails = $@"Hazard Details:
 
-Code: {hazard.Code}
-Name: {hazard.Name ?? "Not specified"}
-Type: {hazard.HazardType ?? "Not specified"}
-Category: {hazard.HazardCategory ?? "Not specified"}
-Description: {hazard.Description ?? "Not specified"}
-Status: {hazard.Status?.Name ?? "Not specified"}
-Priority: {hazard.Priority?.Name ?? "Not specified"}
-Risk Level: {hazard.RiskLevel ?? "Not assessed"}
-Reported By: {hazard.ReportedBy ?? "Unknown"}
-Reported On: {hazard.ReportedOn:MM/dd/yyyy}
-Created: {hazard.CreatedDate?.ToString("MM/dd/yyyy") ?? "N/A"}";
+                Code: {hazard.Code}
+                Name: {hazard.Name ?? "Not specified"}
+                Type: {hazard.HazardType ?? "Not specified"}
+                Category: {hazard.HazardCategory ?? "Not specified"}
+                Description: {hazard.Description ?? "Not specified"}
+                Status: {hazard.Status?.Name ?? "Not specified"}
+
+                Risk Level: {hazard.RiskLevel ?? "Not assessed"}
+
+                Created: {hazard.CreatedDate?.ToString("MM/dd/yyyy") ?? "N/A"}";
 
             await DialogService.Alert(hazardDetails, $"Hazard Information - {hazard.Code}");
         }

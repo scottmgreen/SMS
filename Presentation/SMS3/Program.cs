@@ -145,8 +145,8 @@ public class Program
                     Description = request.Description,
                     Stage = "Initial",
                     Status = "Initial",
-                    ReportedBy = "EXTERNAL_SYSTEM",
-                    Department = request.SourceSystem ?? "EXTERNAL"
+                    SubmittedBy = "EXTERNAL_SYSTEM",
+                    SubmittingDepartment = request.SourceSystem ?? "EXTERNAL"
                 };
 
                 var reportResult = await mediator.SendAsync(new CreateReportCommand(report), CancellationToken.None);
@@ -169,11 +169,11 @@ public class Program
                     Description = request.Description,
                     HazardCategory = request.HazardCategory ?? "EXTERNAL",
                     HazardType = request.HazardType,
-                    ReportedBy = "EXTERNAL_SYSTEM",
-                    //SubmittedOn = DateTime.UtcNow,
-                    //IncidentDateTime //=>>>> from Widget
-                    ReportingDepartment = request.SourceSystem ?? "External System",
-                    IsAnonymous = true,
+                    //SubmittedBy = "EXTERNAL_SYSTEM",
+                    ////SubmittedOn = DateTime.UtcNow,
+                    ////IncidentDateTime //=>>>> from Widget
+                    //ReportingDepartment = request.SourceSystem ?? "External System",
+                    //IsAnonymous = true,
                     ReportCode = actualReportCode,
                     IsInitialHazard = true,
                     LocationArea = request.Location,

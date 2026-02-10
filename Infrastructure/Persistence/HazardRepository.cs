@@ -99,9 +99,6 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardCode, hazard.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardName, hazard.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardIsInitialHazard, hazard.IsInitialHazard));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardReportedBy, hazard.ReportedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardReportedOn, hazard.ReportedOn));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardReportingDepartment, hazard.ReportingDepartment));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardDescription, hazard.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardType, hazard.HazardType));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardCategory, hazard.HazardCategory));

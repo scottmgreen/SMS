@@ -289,39 +289,14 @@ public static partial class Mappers
                 hazard.HazardType = hazardType;
             }
 
-            // Reporting Information
-            var reportedBy = reader.GetValue<string>(FieldNames.fHazardReportedBy);
-            if (!string.IsNullOrEmpty(reportedBy))
-            {
-                hazard.ReportedBy = reportedBy;
-            }
-
-            var reportedOn = reader.IsDBNull(FieldNames.fHazardReportedOn) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fHazardReportedOn);
-            hazard.ReportedOn = reportedOn;
-
-            var reportingDepartment = reader.GetValue<string>(FieldNames.fHazardReportingDepartment);
-            if (!string.IsNullOrEmpty(reportingDepartment))
-            {
-                hazard.ReportingDepartment = reportingDepartment;
-            }
-
-            // Privacy and Confidentiality
-            
-            var isAnonymous = reader.IsDBNull(FieldNames.fHazardIsAnonymous) ? false : reader.GetBoolean(FieldNames.fHazardIsAnonymous);
-            hazard.IsAnonymous = isAnonymous;
-
-            // Status and Priority (with enum parsing)
+            // Status 
             var statusValue = reader.GetValue<string>(FieldNames.fHazardStatus)?.Trim(); // ✅ FIXED: Trim whitespace
             if (!string.IsNullOrEmpty(statusValue))
             {
                 hazard.Status = HazardStatus.FromValue(statusValue) ?? HazardStatus.StatusUnknown;
             }
 
-            var priorityValue = reader.GetValue<string>(FieldNames.fHazardPriority)?.Trim(); // ✅ FIXED: Trim whitespace
-            if (!string.IsNullOrEmpty(priorityValue))
-            {
-                hazard.Priority = HazardPriority.FromValue(priorityValue) ?? HazardPriority.Medium;
-            }
+            
 
             // Risk Level
             var riskLevel = reader.GetValue<string>(FieldNames.fHazardRiskLevel);
@@ -412,10 +387,18 @@ public static partial class Mappers
 
         report.Code = reader.GetValue<string>(FieldNames.fReportCode) ?? string.Empty;
         report.Name = reader.GetValue<string>(FieldNames.fReportName);
+
+        report.IncidentDateTime = reader.GetValue<DateTime>(FieldNames.fReportIncidentDateTime);
+        report.SubmittedBy = reader.GetValue<string>(FieldNames.fSubmittedBy);
+        report.SubmittedDate = reader.GetValue<DateTime>(FieldNames.fSubmittedDate);
+        report.SubmittingDepartment = reader.GetValue<string>(FieldNames.fSubmittingDepartment);
+        report.SubmittingDepartmentJobFunction = reader.GetValue<string>(FieldNames.fSubmittingDepartmentJobFunction);
+        report.ReportContactName = reader.GetValue<string>(FieldNames.fReportContactName);
+        report.ReportContactCell = reader.GetValue<string>(FieldNames.fReportContactCell);
+        report.ReportContactEmail = reader.GetValue<string>(FieldNames.fReportContactEmail);
         report.Description = reader.GetValue<string>(FieldNames.fReportDescription);
         report.Status = reader.GetValue<string>(FieldNames.fReportStatus)?.Trim(); 
-        report.ReportedBy = reader.GetValue<string>(FieldNames.fReportedBy)?.Trim();
-        report.ReportedOn= reader.GetValue<DateTime>(FieldNames.fReportedOn);
+        
         return report;
     }
 
@@ -604,9 +587,13 @@ public static partial class Mappers
         riskAssessment.FiveMProcedures = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMProcedures) ?? string.Empty;
         riskAssessment.FiveMResources = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMResources) ?? string.Empty;
         riskAssessment.FiveMPhysicalEnvironment = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMPhysicalEnvironment) ?? string.Empty;
-        
+
+        riskAssessment.SelectedIndividualStakeholders = reader.GetValue<string>(FieldNames.fRiskAssessmentSelectedIndividualStakeholders) ?? string.Empty;
+        riskAssessment.SelectedStakeholderGroups = reader.GetValue<string>(FieldNames.fRiskAssessmentSelectedStakeholderGroups) ?? string.Empty;
+
+
         // ✅ Step 3 - Risk Analysis Fields
-        
+
 
         // ✅ Step 4 - Risk Assessment Fields
         riskAssessment.FinalSeverityScore = reader.IsDBNull(FieldNames.fRiskAssessmentFinalSeverityScore) ? null : reader.GetValue<int?>(FieldNames.fRiskAssessmentFinalSeverityScore);
@@ -633,7 +620,6 @@ public static partial class Mappers
         mitigation.Description = reader.GetValue<string>(FieldNames.fMitigationDescription);
         mitigation.Type = reader.GetValue<string>(FieldNames.fMitigationType);
         mitigation.Status = reader.GetValue<string>(FieldNames.fMitigationStatus);
-        mitigation.Priority = reader.GetValue<string>(FieldNames.fMitigationPriority);
         mitigation.RiskAssessmentCode = reader.GetValue<string>(FieldNames.fMitigationRiskAssessmentCode);
 
         // Date Properties

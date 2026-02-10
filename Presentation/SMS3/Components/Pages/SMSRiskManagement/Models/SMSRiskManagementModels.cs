@@ -18,19 +18,18 @@ public class HazardReportForm
     public string? HazardCategory { get; set; }
     public string? HazardType { get; set; }
     public string? ReportType { get; set; }
-    public string? UrgencyLevel { get; set; }
     public string? Location { get; set; }
+    
+    public DateTime IncidentDateTime { get; set; }
+    public string? SubmittedBy { get; set; }
+    public DateTime SubmittedDate { get; set; }
+    public string? SubmittingDepartment { get; set; }
+    public string? SubmittingDepartmentJobFunction { get; set; }
+    public string? ReportContactName { get; set; }
+    public string? ReportContactCell { get; set; }
+    public string? ReportContactEmail { get; set; }
+
     public string? Description { get; set; }
-    public string? ReportedBy { get; set; }
-    public DateTime ReportedOn { get; set; } = DateTime.Now;
-    public string? ReportingDepartment { get; set; }
-    public string? ReportingDepartmentNote { get; set; }
-    public string? ContactName { get; set; }
-
-    public string? ContactCell { get; set; }
-
-    public string? ContactEmail { get; set; }
-
     public bool IsAnonymous { get; set; } = false;
 }
 

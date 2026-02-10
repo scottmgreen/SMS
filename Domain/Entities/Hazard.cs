@@ -33,8 +33,7 @@ public sealed class Hazard : BaseAuditableEntity
 
     
     public HazardStatus Status { get; set; } = HazardStatus.InitialRiskAssessment;
-    public HazardPriority Priority { get; set; } = HazardPriority.Medium;
-
+    
     public bool IsInitialHazard { get; set; }
     #endregion
 
@@ -44,21 +43,7 @@ public sealed class Hazard : BaseAuditableEntity
 
     #endregion
 
-    #region Reporting Information Properties
-
-    public string ReportedBy { get; set; } = string.Empty;           // Who reported the hazard
-    public DateTime ReportedOn { get; set; } = DateTime.UtcNow;     // When hazard was reported
-    public string? ReportingDepartment { get; set; }                // Department that reported the hazard
-
-    #endregion
-
-    #region Privacy and Confidentiality Properties
-
-                
-    public bool IsAnonymous { get; set; } = false;                  // Anonymous reporting - protect reporter identity
-
-    #endregion
-
+   
     #region Location and Context Properties
 
     public HazardLocation Location { get; set; }
@@ -108,88 +93,9 @@ public sealed class Hazard : BaseAuditableEntity
 
     #endregion
 
-    #region Factory Methods
 
 
-    /// <summary>
-    /// Create hazard from Risk Assessment Step 2 data
-    /// </summary>
-    //public static Result<Hazard> CreateFromStep2(string hazardId, string description, string category, string? fiveMComponent)
-    //{
-    //    // Parse the fiveMComponent string to Smart Enum if provided
-    //    FiveMComponent? component = null;
-    //    if (!string.IsNullOrWhiteSpace(fiveMComponent))
-    //    {
-    //        component = Enums.FiveMComponent.FromValue(fiveMComponent.ToUpperInvariant()) 
-    //                 ?? Enums.FiveMComponent.FromName(fiveMComponent);
-    //    }
-
-    //    return CreateComprehensive(hazardId, description, category, "SYSTEM", null, null, component);
-    //}
-
-    
-    
-
-    
-    
-
-    #endregion
-
-    #region Domain Behavior Methods
-
-
-
-
-    /// <summary>
-    /// Set hazard location
-    /// </summary>
-    //public Result<bool> SetLocation(HazardLocation hazardLocation)
-    //{
-    //    if (hazardLocation == null)
-    //    {
-    //        return Result<bool>.Failure<bool>(DomainErrors.HazardLocationError.NullOrEmpty);
-    //    }
-
-    //    // Validate that the location belongs to this hazard
-    //    if (hazardLocation.HazardCode != Code)
-    //    {
-    //        return Result<bool>.Failure<bool>(DomainErrors.HazardLocationError.InvalidCode);
-    //    }
-
-    //    HazardLocation = hazardLocation;
-
-    //    // Update the legacy location fields for backward compatibility
-    //    Location = hazardLocation.GetDisplayName();
-    //    LocationArea = hazardLocation.LocationArea;
-    //    LocationSubArea = hazardLocation.LocationSubArea;
-
-    //    UpdatedDate = DateTime.UtcNow;
-    //    return Result<bool>.Success(true);
-    //}
-
-    /// <summary>
-    /// Create and set a new hazard location
-    /// </summary>
-    //public Result<bool> CreateLocation(decimal? latitude = null, decimal? longitude = null, 
-    //    string? locationArea = null, string? locationSubArea = null, string? description = null)
-    //{
-    //    var locationCode = $"HL-{Code}-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}";
-
-    //    var locationResult = HazardLocation.Create(locationCode, Code, latitude, longitude);
-    //    if (locationResult.IsFailure)
-    //    {
-    //        return Result<bool>.Failure<bool>(locationResult.Error);
-    //    }
-
-    //    var location = locationResult.Value;
-    //    location.UpdateLocationInfo(locationArea, locationSubArea, null, description);
-
-    //    return SetLocation(location);
-    //}
-
-    /// <summary>
-    /// Remove hazard location
-    /// </summary>
+     
 
     #region Related Entity Management
 
@@ -218,7 +124,7 @@ public sealed class Hazard : BaseAuditableEntity
 
 
 
-    #endregion
+
 
 
 }

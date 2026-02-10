@@ -111,9 +111,9 @@
 
                     <!-- Reported By -->
                     <div class="col-lg-3 col-md-6">
-                        <RadzenLabel Text="Reported By" Component="ReportedBySearch" class="fw-semibold" />
-                        <RadzenTextBox @bind-Value="@ReportedBySearch" 
-                                       Name="ReportedBySearch"
+                        <RadzenLabel Text="Reported By" Component="SubmittedBySearch" class="fw-semibold" />
+                        <RadzenTextBox @bind-Value="@SubmittedBySearch" 
+                                       Name="SubmittedBySearch"
                                        Placeholder="Reporter name" 
                                        class="w-100" />
                     </div>
@@ -254,17 +254,17 @@
                     </RadzenDataGridColumn>
 
                     <RadzenDataGridColumn TItem="HazardReportSearchResult" 
-                                          Property="ReportedBy" 
+                                          Property="SubmittedBy" 
                                           Title="Reported By"
                                           Sortable="true"
                                           Width="130px">
                         <Template Context="result">
-                            @result.ReportedBy
+                            @result.SubmittedBy
                         </Template>
                     </RadzenDataGridColumn>
 
                     <RadzenDataGridColumn TItem="HazardReportSearchResult" 
-                                          Property="ReportedOn" 
+                                          Property="SubmittedDate" 
                                           Title="Date"
                                           Sortable="true"
                                           Width="110px"

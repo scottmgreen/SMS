@@ -59,8 +59,8 @@
                                     <RadzenStack Gap="0.25rem" AlignItems="AlignItems.Start">
                                         <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@(ReportId ?? "N/A")</RadzenText>
                                         <RadzenBadge BadgeStyle="@GetStatusBadgeStyle()" Text="@CurrentStatus" />
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@(ReportDetails?.ReportedOn.ToString("MM/dd/yyyy HH:mm") ?? "N/A")</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@(ReportDetails?.ReportedBy ?? "N/A")</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@(ReportDetails?.SubmittedDate.ToString("MM/dd/yyyy HH:mm") ?? "N/A")</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@(ReportDetails?.SubmittedBy ?? "N/A")</RadzenText>
                                         @if (IsUpdate)
                                         {
                                             <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@ValidationCode</RadzenText>

@@ -38,9 +38,19 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportCode, report.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportName, report.Name));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportedBy, report.ReportedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportedOn, report.ReportedOn));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportedByDepartment, report.Department));
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmIncidentDateTime, report.IncidentDateTime));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSubmittedBy, report.SubmittedBy));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSubmittedDate, report.SubmittedDate));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSubmittingDepartment, report.SubmittingDepartment));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSubmittingDepartmentJobFunction, report.SubmittingDepartmentJobFunction));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactName, report.ReportContactName));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactCell, report.ReportContactCell));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactEmail, report.ReportContactEmail));
+
+
+
+
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportDescription, report.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportStatus, report.Status));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, report.CreatedBy ?? "SYSTEM"));
@@ -168,9 +178,18 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, report.Id.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportName, report.Name));
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmIncidentDateTime, report.IncidentDateTime));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSubmittedBy, report.SubmittedBy));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSubmittedDate, report.SubmittedDate));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSubmittingDepartment, report.SubmittingDepartment));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSubmittingDepartmentJobFunction, report.SubmittingDepartmentJobFunction));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactName, report.ReportContactName));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactCell, report.ReportContactCell));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactEmail, report.ReportContactEmail));
+
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportDescription, report.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportStatus, report.Status));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportedByDepartment, report.Department));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, report.UpdatedBy ?? "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 

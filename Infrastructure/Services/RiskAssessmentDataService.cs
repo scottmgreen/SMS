@@ -158,6 +158,8 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
                 fiveMResources,
                 fiveMPhysicalEnvironment,
                 fiveMOperationalEnvironment,
+                string.Empty, // selectedStakeholderGroups - placeholder
+                string.Empty, // selectedIndividualStakeholders - placeholder  
                 updatedBy,
                 ct).ConfigureAwait(false);
 

@@ -264,10 +264,7 @@
                                                     <RadzenBadge Text="@mitigation.Status"
                                                                  BadgeStyle="@GetStatusBadgeStyle(mitigation.Status)" />
                                                 </td>
-                                                <td>
-                                                    <RadzenBadge Text="@(mitigation.Priority ?? "Medium")"
-                                                                 BadgeStyle="@GetPriorityBadgeStyle(mitigation.Priority ?? "Medium")" />
-                                                </td>
+                                                
                                                 <td>@mitigation.Progress%</td>
                                             </tr>
                                         }

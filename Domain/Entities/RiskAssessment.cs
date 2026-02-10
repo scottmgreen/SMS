@@ -35,7 +35,6 @@ public sealed class RiskAssessment : BaseAuditableEntity
 {
     // Simplified collections - remove complexity
     private readonly List<string> _identifiedHazardIds = new();
-    private readonly List<string> _stakeholderIds = new();
     private readonly List<int> _completedSteps = new();
 
 
@@ -101,18 +100,23 @@ public sealed class RiskAssessment : BaseAuditableEntity
     public string FiveMPhysicalEnvironment { get; set; } = string.Empty;
     public string FiveMOperationalEnvironment { get; set; } = string.Empty;
 
-    // Step 3 - Risk Analysis Properties
-    //public string RiskAnalysisMethod { get; set; } = "SMS Risk Matrix";
-    //public string RiskCriteria { get; set; } = string.Empty;
-
     // Step 4 - Risk Assessment Properties
    
     // Step 5 - Implementation Properties
    
+    // ✅ Stakeholder Persistence Properties - Comma-delimited codes
+    /// <summary>
+    /// Selected Stakeholder Groups (comma-delimited codes: SG-0001,SG-0002,SG-0003)
+    /// </summary>
+    public string? SelectedStakeholderGroups { get; set; }
+
+    /// <summary>
+    /// Selected Individual Stakeholders (comma-delimited codes: SU-0001,SU-0002,SU-0003,SU-0004,SU-0005)
+    /// </summary>
+    public string? SelectedIndividualStakeholders { get; set; }
 
     // Read-only collections
     public IReadOnlyList<string> IdentifiedHazardIds => _identifiedHazardIds.AsReadOnly();
-    public IReadOnlyList<string> StakeholderIds => _stakeholderIds.AsReadOnly();
     public IReadOnlyList<int> CompletedSteps => _completedSteps.AsReadOnly();
 
     
@@ -122,15 +126,14 @@ public sealed class RiskAssessment : BaseAuditableEntity
     // ✅ METHODS WITH BUSINESS RULE ENFORCEMENT
 
     /// <summary>
-    /// Add Stakeholder - SIMPLIFIED
+    /// Add Stakeholder - SIMPLIFIED (for backward compatibility)
+    /// Note: New stakeholder persistence uses SelectedStakeholderGroups and SelectedIndividualStakeholders properties
     /// </summary>
     public void AddStakeholder(string stakeholderId)
     {
-        if (!string.IsNullOrWhiteSpace(stakeholderId) && !_stakeholderIds.Contains(stakeholderId))
-        {
-            _stakeholderIds.Add(stakeholderId);
-            UpdatedDate = DateTime.UtcNow;
-        }
+        // This method is kept for backward compatibility but no longer maintains a separate collection
+        // Stakeholder selection is now handled through the Step1Model persistence
+        UpdatedDate = DateTime.UtcNow;
     }
 
     /// <summary>

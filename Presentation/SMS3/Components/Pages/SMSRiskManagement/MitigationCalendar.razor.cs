@@ -119,7 +119,6 @@ public partial class MitigationCalendar : ComponentBase
             Status = mitigation.Status ?? "PENDING_APPROVAL",
             HazardCode = mitigation.HazardCode ?? "Unknown",
             AssignedTo = mitigation.AssignedTo ?? "Unassigned",
-            Priority = mitigation.Priority ?? "Medium",
             Progress = mitigation.Progress,
             IsOverdue = mitigation.TargetDate.HasValue && mitigation.TargetDate < DateTime.Today && mitigation.Status != "COMPLETE",
             Description = GetMitigationDescription(mitigation)
@@ -135,9 +134,6 @@ public partial class MitigationCalendar : ComponentBase
 
         if (!string.IsNullOrEmpty(mitigation.AssignedTo))
             parts.Add($"Assigned to: {mitigation.AssignedTo}");
-
-        if (!string.IsNullOrEmpty(mitigation.Priority))
-            parts.Add($"Priority: {mitigation.Priority}");
 
         if (mitigation.Progress > 0)
             parts.Add($"Progress: {mitigation.Progress}%");

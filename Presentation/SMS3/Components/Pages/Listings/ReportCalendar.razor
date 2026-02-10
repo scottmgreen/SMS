@@ -222,13 +222,13 @@
                                                     </div>
                                                 }
                                                 <div class="mt-2">
-                                                    <small>
-                                                        <strong>Reported:</strong> @hazard.ReportedOn.ToString("MM/dd/yyyy") by @(hazard.ReportedBy ?? "Unknown")
+                                                    @* <small>
+                                                        <strong>Reported:</strong> @hazard.SubmittedDate.ToString("MM/dd/yyyy") by @(hazard.SubmittedBy ?? "Unknown")
                                                         @if (!string.IsNullOrEmpty(hazard.HazardCategory))
                                                         {
                                                             <RadzenBadge Text="@hazard.HazardCategory" BadgeStyle="BadgeStyle.Light" Class="ms-2" />
                                                         }
-                                                    </small>
+                                                    </small> *@
                                                 </div>
                                             </RadzenColumn>
                                             <RadzenColumn Size="4">

@@ -383,27 +383,8 @@ public static class FieldNames
     private static readonly Lazy<string> _fIsInitialHazard = new Lazy<string>(() => "fldb_IsInitialHazard");
     public static string fIsInitialHazard => _fIsInitialHazard.Value;
 
-
-    private static readonly Lazy<string> _fHazardReportedBy = new Lazy<string>(() => "fldv_ReportedBy");
-    public static string fHazardReportedBy => _fHazardReportedBy.Value;
-
-    private static readonly Lazy<string> _fHazardReportedOn = new Lazy<string>(() => "fldd_ReportedOn");
-    public static string fHazardReportedOn => _fHazardReportedOn.Value;
-
-    private static readonly Lazy<string> _fHazardReportingDepartment = new Lazy<string>(() => "fldv_ReportingDepartment");
-    public static string fHazardReportingDepartment => _fHazardReportingDepartment.Value;
-
-    private static readonly Lazy<string> _fHazardIsAnonymous = new Lazy<string>(() => "fldb_IsAnonymous");
-    public static string fHazardIsAnonymous => _fHazardIsAnonymous.Value;
-
-    private static readonly Lazy<string> _fHazardFiveMComponent = new Lazy<string>(() => "fldv_FiveMComponent");
-    public static string fHazardFiveMComponent => _fHazardFiveMComponent.Value;
-
     private static readonly Lazy<string> _fHazardStatus = new Lazy<string>(() => "fldv_Status");
     public static string fHazardStatus => _fHazardStatus.Value;
-
-    private static readonly Lazy<string> _fHazardPriority = new Lazy<string>(() => "fldv_Priority");
-    public static string fHazardPriority => _fHazardPriority.Value;
 
     private static readonly Lazy<string> _fHazardRiskLevel = new Lazy<string>(() => "fldv_RiskLevel");
     public static string fHazardRiskLevel => _fHazardRiskLevel.Value;
@@ -712,14 +693,37 @@ public static class FieldNames
     private static readonly Lazy<string> _fReportStage = new Lazy<string>(() => "fldv_Stage");
     public static string fReportStage => _fReportStage.Value;
 
-    private static readonly Lazy<string> _fReportedBy = new Lazy<string>(() => "fldv_ReportedBy");
-    public static string fReportedBy => _fReportedBy.Value;
+    private static readonly Lazy<string> _fSubmittedBy = new Lazy<string>(() => "fldv_SubmittedBy");
+    public static string fSubmittedBy => _fSubmittedBy.Value;
 
-    private static readonly Lazy<string> _fReportedOn = new Lazy<string>(() => "fldd_ReportedDate");
-    public static string fReportedOn => _fReportedOn.Value;
+    private static readonly Lazy<string> _fSubmittedDate = new Lazy<string>(() => "fldd_SubmittedDate");
+    public static string fSubmittedDate => _fSubmittedDate.Value;
 
-    private static readonly Lazy<string> _fReportedByDepartment = new Lazy<string>(() => "fldv_ReportedByDepartment");
-    public static string fReportedByDepartment => _fReportedByDepartment.Value;
+    private static readonly Lazy<string> _fSubmittingDepartment = new Lazy<string>(() => "fldv_SubmittingDepartment");
+    public static string fSubmittingDepartment => _fSubmittingDepartment.Value;
+
+    private static readonly Lazy<string> _fSubmittingDepartmentJobFunction = new Lazy<string>(() => "fldv_SubmittingDepartmentJobFunction");
+    public static string fSubmittingDepartmentJobFunction => _fSubmittingDepartmentJobFunction.Value;
+
+
+    private static readonly Lazy<string> _fReportContactName = new Lazy<string>(() => "fldv_ReportContactName");
+    public static string fReportContactName => _fReportContactName.Value;
+
+    private static readonly Lazy<string> _fReportContactCell = new Lazy<string>(() => "fldv_ReportContactCell");
+    public static string fReportContactCell => _fReportContactCell.Value;
+
+    private static readonly Lazy<string> _fReportContactEmail = new Lazy<string>(() => "fldv_ReportContactEmail");
+    public static string fReportContactEmail => _fReportContactEmail.Value;
+
+    private static readonly Lazy<string> _fReportIncidentDateTime = new Lazy<string>(() => "fldd_IncidentDateTime");
+    public static string fReportIncidentDateTime => _fReportIncidentDateTime.Value;
+
+    
+
+
+
+
+
 
     #endregion
 
@@ -961,8 +965,14 @@ public static class FieldNames
     private static readonly Lazy<string> _fRiskAssessmentFiveMOperationalEnvironment = new Lazy<string>(() => "fldv_FiveMOperationalEnvironment");
     public static string fRiskAssessmentFiveMOperationalEnvironment => _fRiskAssessmentFiveMOperationalEnvironment.Value;
 
+    private static readonly Lazy<string> _fRiskAssessmentSelectedIndividualStakeholders = new Lazy<string>(() => "fldv_SelectedIndividualStakeholders");
+    public static string fRiskAssessmentSelectedIndividualStakeholders => _fRiskAssessmentSelectedIndividualStakeholders.Value;
+
+    private static readonly Lazy<string> _fRiskAssessmentSelectedStakeholderGroups = new Lazy<string>(() => "fldv_SelectedStakeholderGroups");
+    public static string fRiskAssessmentSelectedStakeholderGroups => _fRiskAssessmentSelectedStakeholderGroups.Value;
+
     // Step 3 fields
-    
+
     // Step 4 fields
 
     private static readonly Lazy<string> _fRiskAssessmentFinalSeverityScore = new Lazy<string>(() => "fldi_FinalSeverityScore");

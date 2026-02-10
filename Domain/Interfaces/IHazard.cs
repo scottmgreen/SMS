@@ -18,12 +18,12 @@ public interface IHazard
     string? HazardType { get; set; }           // Type/category of hazard
     string Category { get; set; }              // Aircraft Operations, Ground Operations, etc.
     SMS_Domain.Enums.HazardStatus Status { get; set; }          // Active, UnderInvestigation, etc.
-    SMS_Domain.Enums.HazardPriority Priority { get; set; }     // Low, Medium, High, Critical
+    
     #endregion
 
     #region Reporting Information
-    string ReportedBy { get; set; }           // Who reported the hazard
-    DateTime ReportedOn { get; set; }         // When hazard was reported (renamed from ReportedDate)
+    string SubmittedBy { get; set; }           // Who reported the hazard
+    DateTime SubmittedDate { get; set; }         // When hazard was reported (renamed from ReportedDate)
     string? ReportingDepartment { get; set; } // Department that reported the hazard
     #endregion
 

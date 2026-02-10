@@ -206,10 +206,6 @@
                                             <RadzenBadge Text="@(SelectedMitigation.Progress.ToString() + "%")" BadgeStyle="@GetProgressBadgeStyle(SelectedMitigation.Progress)" />
                                         </div>
                                         <div class="d-flex justify-content-between mb-2">
-                                            <span>Priority:</span>
-                                            <RadzenBadge Text="@(SelectedMitigation.Priority ?? "Not set")" BadgeStyle="BadgeStyle.Secondary" />
-                                        </div>
-                                        <div class="d-flex justify-content-between mb-2">
                                             <span>Dependencies:</span>
                                             <RadzenBadge Text="@(SelectedMitigation.HasDependencies ? "Yes" : "No")" 
                                                        BadgeStyle="@(SelectedMitigation.HasDependencies ? BadgeStyle.Warning : BadgeStyle.Success)" />

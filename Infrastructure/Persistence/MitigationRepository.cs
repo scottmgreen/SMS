@@ -42,8 +42,7 @@ public sealed class MitigationRepository : BaseRepository<MitigationRepository, 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationName, mitigation.Name ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationDescription, mitigation.Description ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationType, mitigation.Type ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationStatus, mitigation.Status ?? "Proposed"));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationPriority, mitigation.Priority ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationStatus, mitigation.Status ?? MitigationStatus.PendingApproval.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationRiskAssessmentCode, mitigation.RiskAssessmentCode ?? (object)DBNull.Value));
 
             // Timeline Properties
@@ -247,8 +246,7 @@ public sealed class MitigationRepository : BaseRepository<MitigationRepository, 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationName, mitigation.Name ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationDescription, mitigation.Description ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationType, mitigation.Type ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationStatus, mitigation.Status ?? "Proposed"));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationPriority, mitigation.Priority ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationStatus, mitigation.Status ?? MitigationStatus.PendingApproval));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationRiskAssessmentCode, mitigation.RiskAssessmentCode ?? (object)DBNull.Value));
 
             // Timeline Properties

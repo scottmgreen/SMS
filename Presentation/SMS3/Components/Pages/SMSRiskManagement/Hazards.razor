@@ -167,22 +167,14 @@ else
                                             }
                                         </div>
 
-                                        <!-- Priority -->
-                                        <div class="col-auto">
-                                            @if (hazard.Priority != null)
-                                            {
-                                                <RadzenBadge Text="@hazard.Priority.Name" 
-                                                           BadgeStyle="@GetPriorityBadgeStyle(hazard.Priority.Name)" 
-                                                           Variant="Variant.Flat" />
-                                            }
-                                        </div>
+                                        
 
                                         <!-- Reported Date -->
                                         <div class="col-auto">
-                                            <small class="text-muted">
+                                            @* <small class="text-muted">
                                                 <i class="fas fa-calendar-alt me-1"></i>
-                                                @hazard.ReportedOn.ToString("MM/dd/yyyy")
-                                            </small>
+                                                @hazard.SubmittedDate.ToString("MM/dd/yyyy")
+                                            </small> *@
                                         </div>
 
                                         <!-- Actions -->
@@ -209,15 +201,15 @@ else
 
                                     <!-- Additional Details Row -->
                                     <div class="row mt-2">
-                                        <div class="col">
+                                        @* <div class="col">
                                             <small class="text-muted">
-                                                <strong>Reported by:</strong> @(hazard.ReportedBy ?? "Unknown") 
+                                                <strong>Reported by:</strong> @(hazard.SubmittedBy ?? "Unknown") 
                                                 @if (!string.IsNullOrEmpty(hazard.ReportingDepartment))
                                                 {
                                                     <span>(@hazard.ReportingDepartment)</span>
                                                 }
                                             </small>
-                                        </div>
+                                        </div> *@
                                     </div>
 
                                     <!-- Expandable Hazard Details -->

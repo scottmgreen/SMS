@@ -247,7 +247,8 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmProcedureFactors, riskAssessment.FiveMProcedures ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmResourceFactors, riskAssessment.FiveMResources ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEnvironmentFactors, riskAssessment.FiveMPhysicalEnvironment ?? (object)DBNull.Value));
-
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSelectedStakeholderGroups, riskAssessment.SelectedStakeholderGroups));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSelectedIndividualStakeholders, riskAssessment.SelectedIndividualStakeholders));
             // Step 3 - Risk Analysis Fields
             //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisMethod, riskAssessment.RiskAnalysisMethod ?? (object)DBNull.Value));
             //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskCriteria, riskAssessment.RiskCriteria ?? (object)DBNull.Value));
@@ -300,6 +301,8 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
         string fiveMResources,
         string fiveMPhysicalEnvironment,
         string fiveMOperationalEnvironment,
+        string selectedStakeholderGroups,
+        string selectedIndividualStakeholders,
         string updatedBy ,
         CancellationToken ct = default)
     {
@@ -323,6 +326,8 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmProcedureFactors, fiveMProcedures));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmResourceFactors, fiveMResources));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEnvironmentFactors, fiveMPhysicalEnvironment ?? fiveMOperationalEnvironment));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSelectedStakeholderGroups, selectedStakeholderGroups));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSelectedIndividualStakeholders, selectedIndividualStakeholders));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, updatedBy));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);

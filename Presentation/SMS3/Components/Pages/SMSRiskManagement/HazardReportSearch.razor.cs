@@ -36,7 +36,7 @@ public partial class HazardReportSearch : ComponentBase
     /// <summary>
     /// Advanced search: Reported By
     /// </summary>
-    public string ReportedBySearch { get; set; } = string.Empty;
+    public string SubmittedBySearch { get; set; } = string.Empty;
 
     /// <summary>
     /// Advanced search: Date from
@@ -59,7 +59,7 @@ public partial class HazardReportSearch : ComponentBase
     public bool HasAdvancedSearchCriteria =>
         !string.IsNullOrWhiteSpace(ReportCodeSearch) ||
         !string.IsNullOrWhiteSpace(HazardCodeSearch) ||
-        !string.IsNullOrWhiteSpace(ReportedBySearch) ||
+        !string.IsNullOrWhiteSpace(SubmittedBySearch) ||
         DateFromSearch.HasValue ||
         DateToSearch.HasValue;
     #endregion
@@ -549,8 +549,8 @@ public partial class HazardReportSearch : ComponentBase
             LastSearchQuery = "Advanced search criteria";
             StateHasChanged();
 
-            Logger.LogInformation("Performing advanced search with criteria: ReportCode={ReportCode}, HazardCode={HazardCode}, ReportedBy={ReportedBy}",
-                ReportCodeSearch, HazardCodeSearch, ReportedBySearch);
+            Logger.LogInformation("Performing advanced search with criteria: ReportCode={ReportCode}, HazardCode={HazardCode}, SubmittedBy={SubmittedBy}",
+                ReportCodeSearch, HazardCodeSearch, SubmittedBySearch);
 
             // Step 1: Search by report code if provided
             if (!string.IsNullOrWhiteSpace(ReportCodeSearch))
@@ -822,7 +822,7 @@ public partial class HazardReportSearch : ComponentBase
     {
         ReportCodeSearch = string.Empty;
         HazardCodeSearch = string.Empty;
-        ReportedBySearch = string.Empty;
+        SubmittedBySearch = string.Empty;
         DateFromSearch = null;
         DateToSearch = null;
         StateHasChanged();
@@ -871,11 +871,11 @@ public partial class HazardReportSearch : ComponentBase
                     {
                         var hazard = hazardResult.Value;
                         searchResult.HazardType = hazard.HazardType ?? "Unknown";
-                        searchResult.ReportedBy = hazard.ReportedBy ?? "Unknown";
-                        searchResult.ReportedOn = hazard.ReportedOn != DateTime.MinValue ? hazard.ReportedOn : DateTime.MinValue;
+                        //searchResult.SubmittedBy = hazard.SubmittedBy ?? "Unknown";
+                        //searchResult.SubmittedDate = hazard.SubmittedDate != DateTime.MinValue ? hazard.SubmittedDate : DateTime.MinValue;
                         searchResult.Description = hazard.Description;
                         searchResult.CurrentStatus = hazard.Status ?? "Unknown";
-                        searchResult.IsConfidential = hazard.IsAnonymous;
+                        //searchResult.IsConfidential = hazard.IsAnonymous;
                     }
                 }
                 catch (Exception ex)
@@ -897,13 +897,13 @@ public partial class HazardReportSearch : ComponentBase
                         var report = reportResult.Value;
 
                         // Use report details if hazard details not available
-                        if (string.IsNullOrEmpty(searchResult.ReportedBy))
+                        if (string.IsNullOrEmpty(searchResult.SubmittedBy))
                         {
-                            searchResult.ReportedBy = report.ReportedBy ?? "Unknown";
+                            searchResult.SubmittedBy = report.SubmittedBy ?? "Unknown";
                         }
-                        if (searchResult.ReportedOn == DateTime.MinValue)
+                        if (searchResult.SubmittedDate == DateTime.MinValue)
                         {
-                            searchResult.ReportedOn = report.ReportedOn != DateTime.MinValue ? report.ReportedOn : DateTime.MinValue;
+                            searchResult.SubmittedDate = report.SubmittedDate != DateTime.MinValue ? report.SubmittedDate : DateTime.MinValue;
                         }
                         if (string.IsNullOrEmpty(searchResult.CurrentStatus))
                         {
@@ -953,19 +953,19 @@ public partial class HazardReportSearch : ComponentBase
     private bool MatchesAdvancedFilters(HazardReportSearchResult result)
     {
         // Filter by reported by
-        if (!string.IsNullOrWhiteSpace(ReportedBySearch) &&
-            !result.ReportedBy.Contains(ReportedBySearch, StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrWhiteSpace(SubmittedBySearch) &&
+            !result.SubmittedBy.Contains(SubmittedBySearch, StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
 
         // Filter by date range
-        if (DateFromSearch.HasValue && result.ReportedOn < DateFromSearch.Value.Date)
+        if (DateFromSearch.HasValue && result.SubmittedDate < DateFromSearch.Value.Date)
         {
             return false;
         }
 
-        if (DateToSearch.HasValue && result.ReportedOn > DateToSearch.Value.Date.AddDays(1))
+        if (DateToSearch.HasValue && result.SubmittedDate > DateToSearch.Value.Date.AddDays(1))
         {
             return false;
         }
@@ -1005,8 +1005,8 @@ public partial class HazardReportSearch : ComponentBase
         public string HazardCode { get; set; } = string.Empty;
         public string ReportCode { get; set; } = string.Empty;
         public string HazardType { get; set; } = string.Empty;
-        public string ReportedBy { get; set; } = string.Empty;
-        public DateTime ReportedOn { get; set; }
+        public string SubmittedBy { get; set; } = string.Empty;
+        public DateTime SubmittedDate { get; set; }
         public string CurrentStatus { get; set; } = string.Empty;
         public string ValidationDecision { get; set; } = string.Empty;
         public DateTime? ValidationDate { get; set; }

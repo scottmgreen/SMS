@@ -393,7 +393,7 @@ public static class DomainErrors
         public static Error NullOrEmpty => new Error("Hazard.NullOrEmpty", "The Hazard is required.");
         public static Error CodeRequired => new Error("Hazard.CodeRequired", "The Hazard Code is required.");
         public static Error InvalidCode => new Error("Hazard.InvalidCode", "The Hazard Code is invalid or description too short.");
-        public static Error ReportedByRequired => new Error("Hazard.ReportedByRequired", "The ReportedBy field is required.");
+        public static Error SubmittedByRequired => new Error("Hazard.SubmittedByRequired", "The SubmittedBy field is required.");
         public static Error NotFound => new Error("Hazard.NotFound", "The Hazard was not found.");
         public static Error CreateFailed => new Error("Hazard.CreateFailed", "Failed to create the Hazard.");
         public static Error UpdateFailed => new Error("Hazard.UpdateFailed", "Failed to update the Hazard.");
