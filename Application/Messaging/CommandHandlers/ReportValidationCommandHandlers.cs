@@ -122,12 +122,7 @@ public class CreateReportValidationCommandHandler : BaseCommandBundle, IRequestH
         initialRiskAnalysis.RiskAssessmentCode = initialAssessmentCode;
         await _riskAnalysisDataService.CreateRiskAnalysisAsync(initialRiskAnalysis, ct);
 
-        // Create Residual RiskAnalysis (used in Step 5)
-        //RiskAnalysis residualRiskAnalysis = new RiskAnalysis(new RiskAnalysisID("RA-0000"));
-        //residualRiskAnalysis.AssessmentType = RiskAnalysisType.Residual;
-        //residualRiskAnalysis.HazardCode = hazardCode;
-        //residualRiskAnalysis.RiskAssessmentCode = residualAssessmentCode;
-        //await _riskAnalysisDataService.CreateRiskAnalysisAsync(residualRiskAnalysis, ct);
+   
 
     }
 
@@ -179,21 +174,7 @@ public class CreateReportValidationCommandHandler : BaseCommandBundle, IRequestH
                     if (reportAssessments.Any())
                     {
                         var initialAssessment = reportAssessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Initial);
-                        //var residualAssessment = reportAssessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Residual);
-
-                        //if (initialAssessment != null && residualAssessment != null)
-                        //{
-                        //    _logger.LogInformation("? Found BOTH existing RiskAssessments for Report {ReportCode}: Initial={InitialCode}, Residual={ResidualCode}", reportCode, initialAssessment.Code, residualAssessment.Code);
-                        //    return (initialAssessment, residualAssessment);
-                        //}
-                        //else if (initialAssessment != null || residualAssessment != null)
-                        //{
-                        //    _logger.LogWarning("?? Found PARTIAL RiskAssessments for Report {ReportCode}: Initial={InitialCode}, Residual={ResidualCode}", reportCode, initialAssessment?.Code ?? "NULL", residualAssessment?.Code ?? "NULL");
-                        //}
-                        //else
-                        //{
-                        //    _logger.LogWarning("?? Found {Count} assessments linked to report hazards but none are Initial or Residual type", reportAssessments.Count);
-                        //}
+                        
                     }
                 }
                 else
@@ -226,6 +207,7 @@ public class CreateReportValidationCommandHandler : BaseCommandBundle, IRequestH
         initialRiskAssessment.HazardCode = hazard.Code;
         initialRiskAssessment.AssessmentType = RiskAssessmentType.Initial;
         initialRiskAssessment.CurrentStep = 1;
+        initialRiskAssessment.Stage = "READY";
         initialRiskAssessment.PrimaryHazardId = hazard.Code;
         initialRiskAssessment.RiskAssessmentCategory = RiskAssessmentCategory.Technical;
         initialRiskAssessment.Description = $"Initial Risk Assessment for Report {hazard.ReportCode}";

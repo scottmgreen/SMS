@@ -374,7 +374,7 @@ public partial class HazardScoringPanel : ComponentBase
         Logger.LogInformation("Opening panel dialog for hazard {HazardCode} with {Count} existing panel members: {Members}",
         Hazard.Code, selectedCodes.Count, string.Join(", ", selectedCodes));
 
-        var result = await DialogService.OpenAsync<PanelManagementDialog>($"Manage  Panel for {Hazard.Code}",
+        var result = await DialogService.OpenAsync<PanelManagementDialog>($" <br/> Manage  Panel for {Hazard.Code}",
         new Dictionary<string, object>
         {
                 { "HazardCode", Hazard.Code },
@@ -382,12 +382,11 @@ public partial class HazardScoringPanel : ComponentBase
                 { "AvailableStakeholders", AvailableStakeholders },
                 { "SelectedStakeholderCodes", selectedCodes }
         },
-        new DialogOptions { Width = "700px", Height = "600px" });
+        new DialogOptions { Width = "600px", Height = "620px" });
 
         if (result is List<string> newSelectedCodes)
         {
-            Logger.LogInformation("Panel dialog returned {Count} selected codes: {Members}",
-                newSelectedCodes.Count, string.Join(", ", newSelectedCodes));
+            Logger.LogInformation("Panel dialog returned {Count} selected codes: {Members}",newSelectedCodes.Count, string.Join(", ", newSelectedCodes));
             await SavePanelChanges(newSelectedCodes);
         }
         else

@@ -92,7 +92,8 @@ public class ReportValidation : BaseAuditableEntity, IReportValidation
             ValidatedBy = validatedBy,
             Status = "InProgress",
             Stage = "Initial",
-            ValidationType = "Standard"
+            ValidationType = "Standard",
+            CreatedBy = validatedBy
         };
 
         return validation;

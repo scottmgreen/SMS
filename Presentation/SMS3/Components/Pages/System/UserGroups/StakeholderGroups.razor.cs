@@ -332,7 +332,22 @@ public partial class StakeholderGroups : ComponentBase
     #endregion
 
     #region Modal Operations
+    
 
+    #region Filtering Methods
+
+    private bool FilterPOPEmployeesOnly { get; set; } = false;
+
+    private List<SMSStakeholderUser> GetFilteredAvailableUsers()
+    {
+        return FilterPOPEmployeesOnly ?
+            AvailableUsers.Where(u => u.IsPOPEmployee).ToList() :
+            AvailableUsers;
+    }
+
+
+
+    #endregion
     private void OpenCreateModal()
     {
         NewGroupName = string.Empty;

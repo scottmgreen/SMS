@@ -61,7 +61,7 @@ public partial class RiskAssessmentListing : ComponentBase
             {
                 query = args.OrderBy.Contains("desc")
                     ? query.OrderByDescending(GetPropertyExpression(args.OrderBy.Replace(" desc", "")))
-                    : query.OrderBy(GetPropertyExpression(args.OrderBy));
+                    : query.OrderBy(GetPropertyExpression(args.OrderBy.Replace(" asc", "")));
             }
 
             if (args.Skip.HasValue)
@@ -144,7 +144,7 @@ public partial class RiskAssessmentListing : ComponentBase
                 return;
             }
 
-            var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{reportCode}/{assessment.HazardCode}/1";
+            var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{reportCode}/{assessment.HazardCode}/{assessment.CurrentStep}";
 
             Logger.LogInformation("Navigating to Technical Assessment: {Url}", navigationUrl);
             Navigation.NavigateTo(navigationUrl);

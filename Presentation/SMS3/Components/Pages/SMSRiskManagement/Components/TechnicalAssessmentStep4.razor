@@ -14,20 +14,7 @@
     <RadzenColumn Size="12" SizeLG="8">
         <RadzenStack Gap="1.5rem">
             
-            <!-- Step 4 Introduction -->
-            @* <RadzenCard Variant="Variant.Outlined" Style="border-left: 4px solid var(--rz-primary);">
-                <RadzenStack Gap="1rem">
-                    <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
-                        <RadzenIcon Icon="balance" Style="margin-right: 0.5rem;" />
-                        Step 4: Initial Risk Assessment Hazard Scoring Panel
-                    </RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2" Style="margin-right: 0.5rem;">
-                        &nbsp; Assemble stakeholder panels to score each identified hazard using severity and likelihood ratings. 
-                        Panel consensus will determine the overall risk level for each hazard.
-                    </RadzenText>
-                </RadzenStack>
-            </RadzenCard> *@
-
+           
            
 
             <!-- Hazard Scoring Panels -->
@@ -50,30 +37,7 @@
                                         OnHazardScored="@(() => HandleHazardScored(hazard.Code))" />
                 }
 
-                <!-- Overall Progress Summary -->
-                @* @if (GetCompletedHazardCount() > 0)
-                {
-                    <RadzenCard Style="border-left: 4px solid var(--rz-success);">
-                        <RadzenStack Gap="1rem">
-                            <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-success); margin: 0;">
-                                <RadzenIcon Icon="analytics" Style="margin-right: 0.5rem;" />
-                                Assessment Progress: @GetCompletedHazardCount() / @AvailableHazards.Count Hazards Completed
-                            </RadzenText>
-                            
-                            <RadzenProgressBar Value="@((double)GetCompletedHazardCount() / AvailableHazards.Count * 100)" 
-                                             ShowValue="true" 
-                                             Text="@($"{GetCompletedHazardCount()}/{AvailableHazards.Count} Hazards")" />
-                            
-                            @if (GetCompletedHazardCount() == AvailableHazards.Count)
-                            {
-                                <RadzenAlert AlertStyle="AlertStyle.Success" Icon="check_circle">
-                                    <RadzenText TextStyle="TextStyle.Subtitle2" 
-                                                Text="🎉 All hazards have been assessed! Risk assessment is complete and ready for Step 5." />
-                                </RadzenAlert>
-                            }
-                        </RadzenStack>
-                    </RadzenCard>
-                } *@
+               
             }
             else
             {

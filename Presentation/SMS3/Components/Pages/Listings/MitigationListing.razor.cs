@@ -1,4 +1,6 @@
-﻿namespace SMS3.Components.Pages.Listings;
+﻿using SMS_Domain.Entities;
+
+namespace SMS3.Components.Pages.Listings;
 
 public partial class MitigationListing : ComponentBase
 {
@@ -543,15 +545,18 @@ public partial class MitigationListing : ComponentBase
 
     private BadgeStyle GetStatusBadgeStyle(string status)
     {
-        return status switch
+        var statusStyle = status switch
         {
-            "Completed" => BadgeStyle.Success,
-            "InProgress" => BadgeStyle.Info,
-            "Approved" => BadgeStyle.Primary,
-            "OnHold" => BadgeStyle.Warning,
-            "Cancelled" => BadgeStyle.Danger,
-            _ => BadgeStyle.Secondary
+            // ✅ Use the actual enum Values, not hardcoded strings
+            var s when s == MitigationStatus.Approved.Value => BadgeStyle.Success,
+            var s when s == MitigationStatus.InProgressDueDate.Value => BadgeStyle.Info,
+            var s when s == MitigationStatus.Complete.Value => BadgeStyle.Primary,
+            var s when s == MitigationStatus.PendingApproval.Value => BadgeStyle.Warning,
+            var s when s == MitigationStatus.Rejected.Value => BadgeStyle.Danger,
+            var s when s == MitigationStatus.MonitoringHazard.Value => BadgeStyle.Secondary,
+            _ => BadgeStyle.Light
         };
+        return statusStyle;
     }
 
     private BadgeStyle GetPriorityBadgeStyle(string priority)
@@ -578,7 +583,6 @@ public class MitigationViewModel
     public string ReportId { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string Status { get; set; } = string.Empty;
-    public string? Priority { get; set; }
     public int Progress { get; set; }
     public DateTime? TargetDate { get; set; }
 }

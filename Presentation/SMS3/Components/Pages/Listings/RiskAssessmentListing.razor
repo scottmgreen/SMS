@@ -31,12 +31,32 @@
                 Style="height: calc(100vh - 200px)">
     
     <Columns>
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="Code" Title="Code" Width="150px" />
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="HazardCode" Title="Hazard Code" Width="150px">
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="Code" Title="Risk Assessment ID" Width="150px" />
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="HazardCode" Title="Initial Hazard ID" Width="150px"/>
+           
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="Status" Title="Status" Width="150px" />
+        <!-- Progress Column -->
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="CurrentStep" Title="Progress" Width="100px">
             <Template Context="assessment">
-                @if (!string.IsNullOrEmpty(assessment.HazardCode))
+                @if (assessment.CurrentStep == 1 && assessment.Stage == "READY")
                 {
-                    <RadzenLink Path="@($"/SMSRiskManagement/HazardDetails/{assessment.HazardCode}")" Text="@assessment.HazardCode" />
+                    <RadzenProgressBar Value="@(0)" Max="100" Style="width: 100%;" />
+                }
+                else
+                {
+                    <RadzenProgressBar Value="@(assessment.CurrentStep * 20)" Max="100" Style="width: 100%;" />
+                }
+                
+               
+                
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="Stage" Title="Stage" Width="250px">
+            <Template Context="assessment">
+                @if (assessment.Stage != null)
+                {
+                    <RadzenBadge Text="@assessment.Stage.ToString()"
+                                 BadgeStyle="@(assessment.Stage.ToString().Contains("READY") ? BadgeStyle.Success : BadgeStyle.Primary)" />
                 }
                 else
                 {
@@ -44,21 +64,7 @@
                 }
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="Name" Title="Name" Width="300px" />
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="AssessmentType" Title="Type" Width="120px">
-            <Template Context="assessment">
-                @if (assessment.AssessmentType != null)
-                {
-                    <RadzenBadge Text="@assessment.AssessmentType.ToString()"
-                                 BadgeStyle="@(assessment.AssessmentType.ToString().Contains("Initial") ? BadgeStyle.Success : BadgeStyle.Primary)" />
-                }
-                else
-                {
-                    <span class="text-muted">-</span>
-                }
-            </Template>
-        </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="RiskAssessmentCategory" Title="Category" Width="150px">
+        @* <RadzenDataGridColumn TItem="RiskAssessment" Property="RiskAssessmentCategory" Title="Category" Width="150px">
             <Template Context="assessment">
                 @if (assessment.RiskAssessmentCategory != null)
                 {
@@ -69,7 +75,7 @@
                     <span class="text-muted">-</span>
                 }
             </Template>
-        </RadzenDataGridColumn>
+        </RadzenDataGridColumn> *@
        @*  <RadzenDataGridColumn TItem="RiskAssessment" Property="Status" Title="Status" Width="120px">
             <Template Context="assessment">
                 @if (assessment.Status != null)
@@ -84,9 +90,9 @@
         </RadzenDataGridColumn> *@
         
         @* <RadzenDataGridColumn TItem="RiskAssessment" Property="LeadAssessorId" Title="Lead Assessor" Width="150px" /> *@
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="CreatedBy" Title="Created By" Width="150px" />
+        @* <RadzenDataGridColumn TItem="RiskAssessment" Property="CreatedBy" Title="Created By" Width="150px" />
         <RadzenDataGridColumn TItem="RiskAssessment" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy HH:mm}" />
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="CompletedDate" Title="Completed Date" Width="150px" FormatString="{0:MM/dd/yyyy HH:mm}" />
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="CompletedDate" Title="Completed Date" Width="150px" FormatString="{0:MM/dd/yyyy HH:mm}" /> *@
         
         <RadzenDataGridColumn TItem="RiskAssessment" Title="Actions" Width="250px" Sortable="false" Filterable="false">
             <Template Context="assessment">
@@ -99,14 +105,7 @@
                                 Tooltip="Edit Assessment"
                                 Click="@(() => EditAssessment(assessment))" />
                     
-                    @* <RadzenButton Icon="content_copy" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" 
-                                Tooltip="Duplicate Assessment"
-                                Click="@(() => DuplicateAssessment(assessment))" />
-                                
-                    <RadzenButton Icon="history" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small" 
-                                Tooltip="View History"
-                                Click="@(() => ViewHistory(assessment))" /> *@
-                    
+                                       
                     <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
                                 Tooltip="Delete Assessment"
                                 Click="@(() => DeleteAssessment(assessment))" />

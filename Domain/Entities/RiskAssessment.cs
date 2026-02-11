@@ -173,14 +173,15 @@ public sealed class RiskAssessment : BaseAuditableEntity
         {
             _completedSteps.Add(stepNumber);
             _completedSteps.Sort();
-            CurrentStep = Math.Max(CurrentStep, stepNumber); // BUSINESS RULE: CurrentStep = last step finished
-            UpdatedDate = DateTime.UtcNow;
+            CurrentStep = Math.Max(CurrentStep, stepNumber); // 
+            
 
             // Update status based on progress - BUSINESS RULE: Only Created/InProgress/Completed
             if (stepNumber == 5)
             {
                 Status = RiskAssessmentStatus.AssessmentComplete;
-                Stage = "Complete";
+                CompletedDate = DateTime.UtcNow;
+                Stage = $"Step {stepNumber} Complete";
             }
            
             else

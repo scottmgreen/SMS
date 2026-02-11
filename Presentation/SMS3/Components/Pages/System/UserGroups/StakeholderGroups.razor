@@ -195,7 +195,7 @@
                     </RadzenColumn>
 
                     <!-- Available Users -->
-                    <RadzenColumn Size="12" SizeMD="6">
+@*                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenCard Style="height: 100%;">
                             <RadzenCard Style="background-color: #e3f2fd; margin: -0.5rem -0.5rem 1rem -0.5rem; padding: 0.5rem;">
                                 <div class="d-flex justify-content-between align-items-center">
@@ -206,7 +206,9 @@
                                     <RadzenButton Text="Assign Selected" Icon="person_add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
                                                   Click="@AssignMultipleUsers" Disabled="@(!SelectedUsers.Any(s => s.Value))" />
                                 </div>
-                            </RadzenCard>
+                                
+                                
+                                </RadzenCard>
                             <div style="height: 400px; overflow-y: auto;">
                                 @if (AvailableUsers.Any())
                                 {
@@ -240,10 +242,83 @@
                                 }
                             </div>
                         </RadzenCard>
+                    </RadzenColumn> *@
+                    <!-- Available Users -->
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenCard Style="height: 100%;">
+                            <RadzenCard Style="background-color: #e3f2fd; margin: -0.5rem -0.5rem 1rem -0.5rem; padding: 0.5rem;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: #007bff;">
+                                        <RadzenIcon Icon="person_add" Style="margin-right: 0.5rem;" />
+                                        Available Users (@GetFilteredAvailableUsers().Count)
+                                    </RadzenText>
+                                    <RadzenButton Text="Assign Selected" Icon="person_add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                                                  Click="@AssignMultipleUsers" Disabled="@(!SelectedUsers.Any(s => s.Value))" />
+                                </div>
+
+                                <!-- Filter Controls -->
+                                <div class="d-flex align-items-center gap-2 mt-2 pt-2" style="border-top: 1px solid #dee2e6;">
+                                    <RadzenCheckBox @bind-Value="@FilterPOPEmployeesOnly"
+                                                    Name="FilterPOPEmployees" />
+                                    <RadzenLabel Text="Filter POP Employees Only"
+                                                 Component="FilterPOPEmployees"
+                                                 Style="margin: 0; font-size: 0.875rem; color: #007bff;" />
+                                    <RadzenIcon Icon="filter_list" Style="font-size: 1rem; color: #007bff;" />
+                                </div>
+                            </RadzenCard>
+                            <div style="height: 400px; overflow-y: auto;">
+                                @{
+                                    var filteredUsers = GetFilteredAvailableUsers();
+                                }
+                                @if (filteredUsers.Any())
+                                {
+                                    @foreach (var user in filteredUsers.OrderBy(u => u.LastName.Value).ThenBy(u => u.FirstName.Value))
+                                    {
+                                        <RadzenCard class="mb-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="d-flex align-items-center">
+                                                    <RadzenCheckBox @bind-Value="SelectedUsers[user.Code]" class="me-2" />
+                                                    <div>
+                                                        <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0;">
+                                                            @user.FirstName.Value @user.LastName.Value
+                                                            @if (user.IsPOPEmployee)
+                                                            {
+                                                                <RadzenBadge Text="POP" BadgeStyle="BadgeStyle.Info"
+                                                                             Style="margin-left: 0.5rem; font-size: 0.75rem;" />
+                                                            }
+                                                        </RadzenText>
+                                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                                            @user.UserName.Value (@user.Code)
+                                                        </RadzenText>
+                                                    </div>
+                                                </div>
+                                                <RadzenButton Icon="person_add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                                                              Click="@(() => AssignSingleUser(user.Code))" title="Add to group" />
+                                            </div>
+                                        </RadzenCard>
+                                    }
+                                }
+                                else
+                                {
+                                    <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat">
+                                        <RadzenIcon Icon="warning" Style="margin-right: 0.5rem;" />
+                                        @if (FilterPOPEmployeesOnly)
+                                        {
+                                            <text>No POP employees available for assignment to this group.</text>
+                                        }
+                                        else
+                                        {
+                                            <text>All available users are already assigned to this group.</text>
+                                        }
+                                    </RadzenAlert>
+                                }
+                            </div>
+                        </RadzenCard>
                     </RadzenColumn>
                 </RadzenRow>
                 
                 <!-- Modal Footer -->
+                <br />
                 <div class="d-flex justify-content-end gap-2 mt-3">
                     <RadzenButton Text="Close" ButtonStyle="ButtonStyle.Light" Click="@CloseMembersModal" />
                 </div>

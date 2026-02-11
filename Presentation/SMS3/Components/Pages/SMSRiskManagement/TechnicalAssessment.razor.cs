@@ -741,7 +741,7 @@ public partial class TechnicalAssessment : ComponentBase
         }
     }
 
-    private async Task CompleteAssessment()
+    private async Task SubmitAssessment()
     {
         try
         {
@@ -872,6 +872,8 @@ public partial class TechnicalAssessment : ComponentBase
                 // Update hazard status based on assessment progress
                 var originalStatus = hazard.Status?.ToString();
                 hazard.Status = DetermineHazardStatusFromStep(CurrentStep);
+                hazard.UpdatedBy = AuthService.CurrentUserDisplayName;  
+                hazard.UpdatedDate = DateTime.UtcNow;   
 
                 // Only update if status changed
                 if (hazard.Status?.ToString() != originalStatus)
@@ -1009,6 +1011,10 @@ public partial class TechnicalAssessment : ComponentBase
    
     private async Task ApplyCurrentStepToAssessmentAsync()
     {
+        TechRiskAssessment.UpdatedDate = DateTime.UtcNow;
+        TechRiskAssessment.UpdatedBy = AuthService.CurrentUserDisplayName;
+
+
         switch (CurrentStep)
         {
             case 1:
@@ -1018,10 +1024,10 @@ public partial class TechnicalAssessment : ComponentBase
                 Step2.ApplyToAssessment(TechRiskAssessment!);
                 break;
             case 3:
-                await Step3.ApplyToAssessmentAsync(Mediator, TechRiskAssessment!, ReportedHazards, CurrentStep);
+                await Step3.ApplyToAssessmentAsync(AuthService, Mediator, TechRiskAssessment!, ReportedHazards, CurrentStep);
                 break;
             case 4:
-                await Step4.ApplyToAssessmentAsync(TechRiskAssessment!, Mediator, ReportedHazards);
+                await Step4.ApplyToAssessmentAsync(AuthService,TechRiskAssessment!, Mediator, ReportedHazards);
                 break;
             case 5:
                 await Step5.ApplyToAssessmentAsync(TechRiskAssessment!, Mediator, ReportedHazards);

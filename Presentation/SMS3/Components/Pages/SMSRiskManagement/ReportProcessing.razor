@@ -92,7 +92,7 @@
                                 </div>
                                 <div class="col-sm-6">
                                     <strong>Total Mitigations:</strong> @SelectedReportForApproval.MitigationCount<br>
-                                    <strong>Status:</strong> <RadzenBadge Text="@SelectedReportForApproval.ReportStatus" BadgeStyle="BadgeStyle.Info" />
+                                    @* <strong>Status:</strong> <RadzenBadge Text="@SelectedReportForApproval.ReportStatus" BadgeStyle="BadgeStyle.Info" /> *@
                                 </div>
                             </div>
                             <div class="bg-light p-2 rounded mb-3">
@@ -113,22 +113,30 @@
                                     <table class="table table-sm table-striped">
                                         <thead>
                                             <tr>
-                                                <th>Code</th>
+                                                <th>Mitigation ID</th>
                                                 <th>Name</th>
                                                 <th>Current Status</th>
-                                                <th>Hazard</th>
+                                                <th>Hazard ID</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @foreach (var mitigation in SelectedReportForApproval.AllMitigations)
                                             {
+                                                var statusStyle = mitigation.Status switch
+                                                {
+                                                    // ✅ Use the actual enum Values, not hardcoded strings
+                                                    var status when status == MitigationStatus.Approved.Value => BadgeStyle.Success,
+                                                    var status when status == MitigationStatus.InProgressDueDate.Value => BadgeStyle.Base,
+                                                    var status when status == MitigationStatus.Complete.Value => BadgeStyle.Primary,
+                                                    var status when status == MitigationStatus.PendingApproval.Value => BadgeStyle.Warning,
+                                                    var status when status == MitigationStatus.Rejected.Value => BadgeStyle.Danger,
+                                                    var status when status == MitigationStatus.MonitoringHazard.Value => BadgeStyle.Base,
+                                                    _ => BadgeStyle.Secondary
+                                                };
                                                 <tr>
-                                                    <td><code>@mitigation.MitigationCode</code></td>
+                                                    <td>@mitigation.MitigationCode</td>
                                                     <td>@mitigation.MitigationName</td>
-                                                    <td>
-                                                        <RadzenBadge Text="@mitigation.Status" 
-                                                                   BadgeStyle="@(mitigation.Status == "Approved" ? BadgeStyle.Success : BadgeStyle.Secondary)" />
-                                                    </td>
+                                                    <td><RadzenBadge Text="@mitigation.Status"  BadgeStyle="@statusStyle" /></td>
                                                     <td>@mitigation.HazardCode</td>
                                                 </tr>
                                             }
@@ -144,7 +152,7 @@
                     </RadzenCard>
 
                     <!-- Warning Message -->
-                    <RadzenAlert AlertStyle="AlertStyle.Warning" Icon="warning" ShowIcon="true" Class="mb-3">
+                    <RadzenAlert AlertStyle="AlertStyle.Light" Icon="warning" ShowIcon="true" Class="mb-3">
                         <strong>Important:</strong> This action will set the status of ALL listed mitigations to "Approved".
                         This action cannot be undone. Please review the mitigations carefully before proceeding.
                     </RadzenAlert>

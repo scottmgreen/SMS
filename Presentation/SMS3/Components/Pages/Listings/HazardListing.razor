@@ -30,25 +30,22 @@
                 Style="height: calc(100vh - 200px)">
     
     <Columns>
-        <RadzenDataGridColumn TItem="Hazard" Property="Code" Title="Code" Width="120px" />
-        <RadzenDataGridColumn TItem="Hazard" Property="Name" Title="Name" Width="200px" />
-        @* <RadzenDataGridColumn TItem="Hazard" Property="HazardType" Title="Type" Width="150px" /> *@
-        <RadzenDataGridColumn TItem="Hazard" Property="Description" Title="Description" Width="400px" />
-        <RadzenDataGridColumn TItem="Hazard" Property="Status" Title="Status" Width="120px">
+        <RadzenDataGridColumn TItem="Hazard" Property="Code" Title="Hazard ID" Width="120px" />
+        <RadzenDataGridColumn TItem="Hazard" Property="ReportCode" Title="Report Code" Width="150px" />
+        <RadzenDataGridColumn TItem="Hazard" Property="Name" Title="Name" Width="350px" />
+        <RadzenDataGridColumn TItem="Hazard" Property="Description" Title="Description" Width="350px" />
+        <RadzenDataGridColumn TItem="Hazard" Property="IsInitialHazard" Title="Initial Hazard" Width="120px" TextAlign="TextAlign.Center">
             <Template Context="hazard">
-                @if (!string.IsNullOrEmpty(hazard.Status))
+                @if (hazard.IsInitialHazard)
                 {
-                    <RadzenBadge Text="@hazard.Status"
-                                 BadgeStyle="@GetStatusBadgeStyle(hazard.Status)"
+                    <RadzenBadge Text="X"
+                                 BadgeStyle=BadgeStyle.Success
                                  Variant="Variant.Flat" />
                 }
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Hazard" Property="Priority" Title="Priority" Width="100px" />
-        <RadzenDataGridColumn TItem="Hazard" Property="SubmittedBy" Title="Reported By" Width="150px" />
-        <RadzenDataGridColumn TItem="Hazard" Property="SubmittedDate" Title="Reported On" Width="150px" FormatString="{0:MM/dd/yyyy}" />
-        @* <RadzenDataGridColumn TItem="Hazard" Property="LocationArea" Title="Location" Width="150px" /> *@
-        <RadzenDataGridColumn TItem="Hazard" Property="ReportCode" Title="Report Code" Width="150px" />
+        
+                
 
         <!-- Enhanced Actions Column -->
         <RadzenDataGridColumn TItem="Hazard" Title="Actions" Width="150px" Sortable="false" Filterable="false">

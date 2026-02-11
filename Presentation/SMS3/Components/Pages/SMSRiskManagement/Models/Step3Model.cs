@@ -5,8 +5,7 @@
 /// </summary>
 public class Step3Model
 {
-    
-  
+      
     public Dictionary<string, RiskAnalysis> Step3RiskAnalyses { get; set; } = new();
 
     public (bool isValid, string message) Validate(List<Hazard> availableHazards = null)
@@ -76,57 +75,7 @@ public class Step3Model
     }
 
 
-    //public async Task LoadExistingRiskAnalysesAsync(IMediator mediator,List<Hazard> availableHazards)
-    //{
-    //    if (mediator == null || availableHazards == null) return;
-
-    //    var hazardCodes = availableHazards.Select(h => h.Code).ToList();
-
-    //    var allAnalysisQuery = new GetAllRiskAnalysisQuery();
-    //    var allAnalysisResult = await mediator.SendAsync(allAnalysisQuery, CancellationToken.None);
-
-    //    if (!allAnalysisResult.IsSuccess || allAnalysisResult.Value == null)
-    //    {
-    //        return;
-    //    }
-
-    //    var allAssessmentsQuery = new GetAllRiskAssessmentsQuery();
-    //    var assessmentsResult = await mediator.SendAsync(allAssessmentsQuery, CancellationToken.None);
-
-    //    if (!assessmentsResult.IsSuccess || assessmentsResult.Value == null)
-    //    {
-    //        return;
-    //    }
-
-
-    //    var initialAssessmentCodes = assessmentsResult.Value
-    //        .Select(a => a.Code)
-    //        .ToHashSet();
-
-    //    var initialAnalyses = allAnalysisResult.Value
-    //        .Where(ra => hazardCodes.Contains(ra.HazardCode) && initialAssessmentCodes.Contains(ra.RiskAssessmentCode)  ) 
-    //        .ToList();
-
-    //    foreach (var analysis in initialAnalyses)
-    //    {
-
-    //        // Ensure the RiskAssessmentCode is set correctly for Initial assessments
-    //        if (string.IsNullOrEmpty(analysis.RiskAssessmentCode) || analysis.RiskAssessmentCode == "RA-0000")
-    //        {
-    //            // Find the correct Initial assessment code for this analysis
-    //            var initialAssessment = assessmentsResult.Value
-    //                .FirstOrDefault(a => hazardCodes.Contains(a.HazardCode ?? string.Empty));
-
-    //            if (initialAssessment != null)
-    //            {
-    //                analysis.RiskAssessmentCode = initialAssessment.Code;
-    //            }
-    //        }
-
-    //        Step3RiskAnalyses[analysis.HazardCode] = analysis;
-    //    }
-    //}
-
+    
     public async Task LoadExistingRiskAnalysesAsync(IMediator mediator, List<Hazard> availableHazards)
     {
         if (mediator == null || availableHazards == null) return;
@@ -315,7 +264,7 @@ public class Step3Model
 
 
 
-    public async Task ApplyToAssessmentAsync(IMediator mediator, RiskAssessment assessment, List<Hazard> availableHazards, int currentStep)
+    public async Task ApplyToAssessmentAsync(AuthenticationService AuthService, IMediator mediator, RiskAssessment assessment, List<Hazard> availableHazards, int currentStep)
     {
         if (mediator == null || assessment == null || availableHazards == null) return;
 
@@ -323,7 +272,7 @@ public class Step3Model
         {
             assessment.CompleteStep(currentStep == 5 ? 5 : 3);
 
-            await SaveRiskAnalysesAsync(mediator, assessment);
+            await SaveRiskAnalysesAsync(AuthService, mediator, assessment);
         }
         catch (Exception ex)
         {
@@ -331,12 +280,12 @@ public class Step3Model
         }
     }
 
-    private async Task SaveRiskAnalysesAsync(IMediator mediator, RiskAssessment assessment)
+    private async Task SaveRiskAnalysesAsync(AuthenticationService AuthService, IMediator mediator, RiskAssessment assessment)
     {
-        await SaveRiskAnalysesAsync(mediator, assessment, 3);
+        await SaveRiskAnalysesAsync(AuthService,mediator, assessment, 3);
     }
     
-    private async Task SaveRiskAnalysesAsync(IMediator mediator, RiskAssessment assessment, int currentStep)
+    private async Task SaveRiskAnalysesAsync(AuthenticationService AuthService ,IMediator mediator, RiskAssessment assessment, int currentStep)
     {
         foreach (var analysisKvp in Step3RiskAnalyses)
         {
@@ -345,13 +294,15 @@ public class Step3Model
                 var analysis = analysisKvp.Value;
                 var hazardCode = analysisKvp.Key;
                 
-                // Determine AssessmentType based on CurrentStep
+               
                 
 
                 // Ensure RiskAssessmentCode is properly set
                 if (string.IsNullOrEmpty(analysis.RiskAssessmentCode) && assessment != null)
                 {
                     analysis.RiskAssessmentCode = assessment.Code;
+                    analysis.UpdatedBy = AuthService.CurrentUserDisplayName;
+                    analysis.UpdatedDate = DateTime.UtcNow;
                 }
 
                                

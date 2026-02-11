@@ -122,7 +122,7 @@ public partial class HazardListing : ComponentBase
             _ => BadgeStyle.Info
         };
     }
-
+    
 
     #region CRUD Action Methods
 

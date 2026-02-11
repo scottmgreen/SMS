@@ -1,6 +1,13 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using SMS_Application.Messaging.Queries;
+using SMS_Application.Interfaces;
+using Microsoft.Extensions.Logging;
+using Radzen;
+using Radzen.Blazor;
+using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
+using SMS_Domain.Enums;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -55,6 +62,11 @@ public partial class HazardReportSearchResult : ComponentBase
     /// Attached files list
     /// </summary>
     public List<HazardFile> AttachedFiles { get; set; } = new();
+
+    /// <summary>
+    /// Current risk assessment information
+    /// </summary>
+    public RiskAssessment? CurrentRiskAssessment { get; set; }
     #endregion
 
     #region Lifecycle Methods
@@ -113,10 +125,16 @@ public partial class HazardReportSearchResult : ComponentBase
             // Step 4: Load validation information
             await LoadValidationInformation(tracking.ReportCode);
 
-            // Step 5: Load location information
+            // Step 5: Load risk assessment information if SMS_RISK validation
+            if (ReportValidation?.ValidationDecision == "SMS_RISK")
+            {
+                await LoadRiskAssessmentInformation(tracking.HazardCode);
+            }
+
+            // Step 6: Load location information
             await LoadLocationInformation(tracking.HazardCode);
 
-            // Step 6: Load attached files
+            // Step 7: Load attached files
             await LoadAttachedFiles(tracking.HazardCode);
 
             HasSearched = true;
@@ -152,6 +170,7 @@ public partial class HazardReportSearchResult : ComponentBase
                 var hazard = hazardResult.Value;
 
                 ReportDetails.HazardType = hazard.HazardType ?? "Unknown";
+                ReportDetails.HazardCategory = hazard.HazardCategory ?? "Unknown";
                 ReportDetails.Description = hazard.Description ?? "";
                 //ReportDetails.SubmittedBy = hazard.SubmittedBy ?? "Unknown";
                 //ReportDetails.SubmittedDate = hazard.SubmittedDate;
@@ -192,6 +211,7 @@ public partial class HazardReportSearchResult : ComponentBase
             {
                 var report = reportResult.Value;
 
+                ReportDetails.IsAnonymous = report.IsAnonymous;
                 // Fill in any missing information from report if not already set by hazard
                 if (string.IsNullOrEmpty(ReportDetails.SubmittedBy))
                 {
@@ -201,9 +221,13 @@ public partial class HazardReportSearchResult : ComponentBase
                 {
                     ReportDetails.SubmittedDate = report.SubmittedDate;
                 }
-                if (string.IsNullOrEmpty(ReportDetails.Department))
+                if (string.IsNullOrEmpty(ReportDetails.SubmittingDepartment))
                 {
-                    ReportDetails.Department = report.SubmittingDepartment ?? "";
+                    ReportDetails.SubmittingDepartment = report.SubmittingDepartment ?? "";
+                }
+                if (string.IsNullOrEmpty(ReportDetails.JobFunction))
+                {
+                    ReportDetails.JobFunction = report.SubmittingDepartmentJobFunction ?? "";
                 }
                 if (string.IsNullOrEmpty(ReportDetails.CurrentStatus))
                 {
@@ -213,6 +237,19 @@ public partial class HazardReportSearchResult : ComponentBase
                 {
                     ReportDetails.Description = report.Description ?? "";
                 }
+                if (string.IsNullOrEmpty(ReportDetails.ContactName))
+                {
+                    ReportDetails.ContactName = report.ReportContactName ?? "";
+                }
+                if (string.IsNullOrEmpty(ReportDetails.ContactCell))
+                {
+                    ReportDetails.ContactCell = report.ReportContactCell ?? "";
+                }
+                if (string.IsNullOrEmpty(ReportDetails.ContactEmail))
+                {
+                    ReportDetails.ContactEmail = report.ReportContactEmail ?? "";
+                }
+
 
                 Logger.LogInformation("Loaded report information for code: {ReportCode}", reportCode);
             }
@@ -252,6 +289,40 @@ public partial class HazardReportSearchResult : ComponentBase
         catch (Exception ex)
         {
             Logger.LogWarning(ex, "Error loading validation information for report: {ReportCode}", reportCode);
+        }
+    }
+
+    /// <summary>
+    /// Load risk assessment information based on hazard code
+    /// </summary>
+    private async Task LoadRiskAssessmentInformation(string hazardCode)
+    {
+        if (string.IsNullOrEmpty(hazardCode)) return;
+
+        try
+        {
+            var riskAssessmentQuery = new GetRiskAssessmentsByHazardCodeQuery(new HazardID(hazardCode));
+            var riskAssessmentResult = await Mediator.SendAsync(riskAssessmentQuery, CancellationToken.None);
+
+            if (riskAssessmentResult.IsSuccess && riskAssessmentResult.Value?.Any() == true)
+            {
+                var assessments = riskAssessmentResult.Value.ToList();
+                
+                // Find the Technical assessment first, fallback to any assessment
+                CurrentRiskAssessment = assessments.FirstOrDefault(ra => ra.RiskAssessmentCategory == RiskAssessmentCategory.Technical) 
+                                     ?? assessments.FirstOrDefault();
+
+                Logger.LogInformation("Loaded risk assessment information for hazard: {HazardCode}, Found {Count} assessments", 
+                    hazardCode, assessments.Count);
+            }
+            else
+            {
+                Logger.LogInformation("No risk assessment information found for hazard: {HazardCode}", hazardCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error loading risk assessment information for hazard: {HazardCode}", hazardCode);
         }
     }
 
@@ -351,8 +422,8 @@ public partial class HazardReportSearchResult : ComponentBase
         return status?.ToLower() switch
         {
             "completed" or "closed" => BadgeStyle.Success,
-            "in_progress" or "processing" => BadgeStyle.Info,
-            "initial" or "draft" => BadgeStyle.Warning,
+            "in_progress" or "processing" => BadgeStyle.Success,
+            "initial" or "draft" => BadgeStyle.Success,
             "cancelled" => BadgeStyle.Danger,
             _ => BadgeStyle.Secondary
         };
@@ -437,21 +508,10 @@ public partial class HazardReportSearchResult : ComponentBase
     /// <summary>
     /// Get processing status description for timeline
     /// </summary>
-    public string GetProcessingStatusDescription()
-    {
-        if (ReportValidation?.ValidationDecision == null) return "Processing status will be updated as the report progresses";
-
-        return ReportValidation.ValidationDecision.ToUpper() switch
-        {
-            "SMS_RISK" => "Report identified as SMS Risk - undergoing risk assessment process",
-            "NEEDS_INVESTIGATION" => "Report requires investigation - SMS investigators are reviewing",
-            "NOT_SMS_RISK" => "Report determined not to be SMS Risk - closed",
-            _ => "Processing status will be updated as the report progresses"
-        };
-    }
+    
 
     /// <summary>
-    /// Get processing status text class for styling
+    /// Get processing status text CSS class
     /// </summary>
     public string GetProcessingStatusTextClass()
     {
@@ -461,6 +521,23 @@ public partial class HazardReportSearchResult : ComponentBase
             "in-progress" => "text-info",
             "pending" => "text-muted",
             _ => "text-muted"
+        };
+    }
+
+    /// <summary>
+    /// Get simple processing status description based on validation decision
+    /// </summary>
+    public string GetSimpleProcessingDescription()
+    {
+        if (ReportValidation?.ValidationDecision == null) 
+            return "Processing status will be updated as the report progresses";
+
+        return ReportValidation.ValidationDecision.ToUpper() switch
+        {
+            "SMS_RISK" => "Report identified as SMS Risk - proceeding to risk assessment",
+            "NEEDS_INVESTIGATION" => "Report requires investigation - SMS investigators are reviewing", 
+            "NOT_SMS_RISK" => "Report determined not to be SMS Risk - closed",
+            _ => "Processing status will be updated as the report progresses"
         };
     }
 
@@ -546,9 +623,21 @@ public partial class HazardReportSearchResult : ComponentBase
         public string HazardCode { get; set; } = string.Empty;
         public string ReportCode { get; set; } = string.Empty;
         public string HazardType { get; set; } = string.Empty;
+        public string HazardCategory { get; set; } = string.Empty;
         public string SubmittedBy { get; set; } = string.Empty;
         public DateTime? SubmittedDate { get; set; }
-        public string Department { get; set; } = string.Empty;
+        public string SubmittingDepartment { get; set; } = string.Empty;
+
+        public string JobFunction { get; set; } = string.Empty;
+
+        public string ContactName { get; set; } = string.Empty;
+
+        public string ContactCell { get; set; } = string.Empty;
+
+        public string ContactEmail { get; set; } = string.Empty;
+
+
+
         public string CurrentStatus { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public bool IsAnonymous { get; set; }

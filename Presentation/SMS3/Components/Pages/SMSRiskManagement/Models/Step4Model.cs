@@ -61,9 +61,9 @@ public class Step4Model
         return (true, "Step 4 validation passed");
     }
 
-    public async Task ApplyToAssessmentAsync(RiskAssessment assessment, IMediator mediator, List<Hazard> availableHazards)
+    public async Task ApplyToAssessmentAsync(AuthenticationService AuthService,RiskAssessment assessment, IMediator mediator, List<Hazard> availableHazards)
     {
-        await SaveStep4RiskAssessmentAsync(assessment, mediator, availableHazards);
+        await SaveStep4RiskAssessmentAsync(AuthService,assessment, mediator, availableHazards);
         assessment.CompleteStep(4);
     }
 
@@ -72,7 +72,7 @@ public class Step4Model
         assessment.CompleteStep(4);
     }
 
-    private async Task SaveStep4RiskAssessmentAsync(RiskAssessment assessment, IMediator mediator, List<Hazard> availableHazards)
+    private async Task SaveStep4RiskAssessmentAsync(AuthenticationService AuthService,RiskAssessment assessment, IMediator mediator, List<Hazard> availableHazards)
     {
         if (mediator == null || assessment == null || availableHazards == null) return;
 

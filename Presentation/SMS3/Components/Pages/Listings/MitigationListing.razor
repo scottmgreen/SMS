@@ -9,8 +9,7 @@
 @using SMS_Shared.Common
 @using Radzen
 @using Radzen.Blazor
-
-<PageTitle>@GetContextTitle()</PageTitle>
+@using SMS3.Components.Shared
 
 <!-- Context Header -->
 @if (ContextHazard != null || ContextReport != null)
@@ -46,38 +45,10 @@
         </RadzenStack>
     </RadzenCard>
 }
-
-<!-- Actions Row -->
-@if (ShowBulkApprove && mitigationViewModels.Any())
-{
-    <RadzenRow Class="mb-3" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
-        <RadzenColumn Size="8">
-            <RadzenText TextStyle="TextStyle.H5" Style="color: #212e61; margin: 0;">
-                @GetContextTitle()
-                <RadzenBadge Text="@totalCount.ToString()" BadgeStyle="BadgeStyle.Light" Style="margin-left: 0.5rem;" />
-            </RadzenText>
-        </RadzenColumn>
-        <RadzenColumn Size="4" Style="text-align: right;">
-            @if (GetApprovableMitigationCount() > 0)
-            {
-                <RadzenButton Text="@($"Bulk Approve ({GetApprovableMitigationCount()})")"
-                              Icon="verified"
-                              ButtonStyle="ButtonStyle.Success"
-                              Size="ButtonSize.Medium"
-                              Click="@OpenBulkApprovalDialog"
-                              Disabled="@isLoading" />
-            }
-            else
-            {
-                <RadzenButton Text="All Approved"
-                              Icon="check"
-                              ButtonStyle="ButtonStyle.Success"
-                              Size="ButtonSize.Medium"
-                              Disabled="true" />
-            }
-        </RadzenColumn>
-    </RadzenRow>
-}
+<!-- SMS Page Header using reusable component -->
+<PageHeader Title="Mitigation Listing"
+            Subtitle="Complete listing and management interface for all SMS mitigations"
+            Icon="fas fa-list" />
 
 <!-- Mitigations Data Grid -->
 <RadzenDataGrid @ref="mitigationsGrid"
@@ -96,30 +67,25 @@
 
     <Columns>
         <!-- Report ID Column -->
-        <RadzenDataGridColumn TItem="MitigationViewModel" Property="ReportId" Title="Report ID" Width="140px">
-            <Template Context="mitigationViewModel">
-                <RadzenLink Path="@($"/SMSRiskManagement/TechnicalAssessment/{mitigationViewModel.ReportId}/{mitigationViewModel.HazardCode}/1")" 
-                           Text="@mitigationViewModel.ReportId" 
-                           Style="font-weight: bold;" />
-            </Template>
+        <RadzenDataGridColumn TItem="MitigationViewModel" Property="ReportId" Title="Report ID" Width="120px">
+            @* <Template Context="mitigationViewModel"> *@
+                @* <RadzenLink Path="@($"/SMSRiskManagement/TechnicalAssessment/{mitigationViewModel.ReportId}/{mitigationViewModel.HazardCode}/1")" *@ 
+                     @* <RadzenText Text="@mitigationViewModel.ReportId"  />
+            </Template> *@
         </RadzenDataGridColumn>
 
         <!-- Hazard ID Column -->
-        <RadzenDataGridColumn TItem="MitigationViewModel" Property="HazardCode" Title="Hazard ID" Width="140px">
-            <Template Context="mitigationViewModel">
-                <RadzenText Text="@mitigationViewModel.HazardCode" Style="font-family: monospace; font-weight: bold;" />
-            </Template>
+        <RadzenDataGridColumn TItem="MitigationViewModel" Property="HazardCode" Title="Hazard ID" Width="120px">
+            
         </RadzenDataGridColumn>
 
         <!-- Mitigation ID Column -->
-        <RadzenDataGridColumn TItem="MitigationViewModel" Property="Code" Title="Mitigation ID" Width="150px">
-            <Template Context="mitigationViewModel">
-                <RadzenText Text="@mitigationViewModel.Code" Style="font-family: monospace; font-weight: bold;" />
-            </Template>
+        <RadzenDataGridColumn TItem="MitigationViewModel" Property="Code" Title="Mitigation ID" Width="120px">
+            
         </RadzenDataGridColumn>
 
         <!-- Mitigation Description -->
-        <RadzenDataGridColumn TItem="MitigationViewModel" Property="Description" Title="Description" Width="300px">
+        <RadzenDataGridColumn TItem="MitigationViewModel" Property="Description" Title="Description" Width="320px">
             <Template Context="mitigationViewModel">
                 <RadzenText TextStyle="TextStyle.Body2" Text="@(mitigationViewModel.Description?.Length > 100 ? mitigationViewModel.Description.Substring(0, 100) + "..." : mitigationViewModel.Description)" />
             </Template>
@@ -132,18 +98,13 @@
             </Template>
         </RadzenDataGridColumn>
 
-        <!-- Priority Column -->
-        <RadzenDataGridColumn TItem="MitigationViewModel" Property="Priority" Title="Priority" Width="100px">
-            <Template Context="mitigationViewModel">
-                <RadzenBadge Text="@(mitigationViewModel.Priority ?? "Medium")" BadgeStyle="@GetPriorityBadgeStyle(mitigationViewModel.Priority ?? "Medium")" />
-            </Template>
-        </RadzenDataGridColumn>
-
+       
+        
         <!-- Progress Column -->
         <RadzenDataGridColumn TItem="MitigationViewModel" Property="Progress" Title="Progress" Width="100px">
             <Template Context="mitigationViewModel">
                 <RadzenProgressBar Value="@mitigationViewModel.Progress" Max="100" Style="width: 100%;" />
-                <RadzenText TextStyle="TextStyle.Caption" Text="@($"{mitigationViewModel.Progress}%")" />
+                @* <RadzenText TextStyle="TextStyle.Caption" Text="@($"{mitigationViewModel.Progress}%")" /> *@
             </Template>
         </RadzenDataGridColumn>
 
@@ -177,7 +138,7 @@
                     {
                         <RadzenButton Icon="verified" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
                                       Tooltip="Quick Approve"
-                                      Click="@(async () => await QuickApproveMitigation(mitigationViewModel.Mitigation))" />
+                                  Click="@(async () => await QuickApproveMitigation(mitigationViewModel.Mitigation))" />
                     }
 
                     <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"

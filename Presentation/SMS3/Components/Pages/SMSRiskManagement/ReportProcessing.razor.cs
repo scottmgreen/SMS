@@ -171,9 +171,11 @@ public class MitigationSummary
     public string HazardCode { get; set; } = string.Empty;
     public string HazardDescription { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
-    public string ResponsibleParty { get; set; } = string.Empty;
+    public string AssignedTo { get; set; } = string.Empty;
+
+    public string AssignedDepartment { get; set; } = string.Empty;
     public DateTime? TargetDate { get; set; }
-    public string Priority { get; set; } = string.Empty;
+    
     public bool IsOverdue => TargetDate.HasValue && TargetDate.Value < DateTime.UtcNow && Status != "Completed";
 }
 
@@ -441,7 +443,8 @@ public partial class ReportProcessing : ComponentBase
                                             HazardCode = hazard.Code,
                                             HazardDescription = hazard.Description ?? "No description",
                                             Status = m.Status ?? "Unknown",
-                                            ResponsibleParty = m.AssignedTo ?? "Not Assigned",
+                                            AssignedTo = m.AssignedTo ?? "Not Assigned",
+                                            AssignedDepartment = m.AssignedDepartment ?? "Not Assigned",
                                             TargetDate = m.TargetDate,
                                             
                                         }).ToList();
@@ -987,20 +990,10 @@ public partial class ReportProcessing : ComponentBase
                             {
                                 badgeBuilder.OpenComponent<RadzenBadge>(0);
                                 badgeBuilder.AddAttribute(1, "Text", $"{report.MitigationCount} Mitigations");
-                                badgeBuilder.AddAttribute(2, "BadgeStyle", BadgeStyle.Info);
+                                badgeBuilder.AddAttribute(2, "BadgeStyle", BadgeStyle.Base);
                                 badgeBuilder.CloseComponent(); // ✅ Close RadzenBadge
 
-                                var priorityStyle = report.Priority switch
-                                {
-                                    "High" => BadgeStyle.Danger,
-                                    "Medium" => BadgeStyle.Warning,
-                                    _ => BadgeStyle.Success
-                                };
-
-                                badgeBuilder.OpenComponent<RadzenBadge>(5);
-                                badgeBuilder.AddAttribute(6, "Text", report.Priority);
-                                badgeBuilder.AddAttribute(7, "BadgeStyle", priorityStyle);
-                                badgeBuilder.CloseComponent(); // ✅ Close RadzenBadge
+                                
                             }));
                             infoBuilder.CloseComponent(); // ✅ Close RadzenStack
                         }));
@@ -1047,7 +1040,7 @@ public partial class ReportProcessing : ComponentBase
                 else
                 {
                     stackBuilder.OpenComponent<RadzenAlert>(30);
-                    stackBuilder.AddAttribute(31, "AlertStyle", AlertStyle.Info);
+                    stackBuilder.AddAttribute(31, "AlertStyle", AlertStyle.Base);
                     stackBuilder.AddAttribute(32, "Icon", "info");
                     stackBuilder.AddAttribute(33, "ShowIcon", true);
                     stackBuilder.AddAttribute(34, "Text", "No mitigations found for this report-hazard combination.");
@@ -1064,17 +1057,22 @@ public partial class ReportProcessing : ComponentBase
         // Mitigation Code Column
         builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(0);
         builder.AddAttribute(1, "Property", "MitigationCode");
-        builder.AddAttribute(2, "Title", "Code");
-        builder.AddAttribute(3, "Width", "120px");
-        builder.AddAttribute(4, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
-            (templateBuilder =>
-            {
-                templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "Text", mitigation.MitigationCode);
-                templateBuilder.AddAttribute(2, "BadgeStyle", BadgeStyle.Base);
-                templateBuilder.CloseComponent(); // ✅ Close RadzenBadge
-            })));
+        builder.AddAttribute(2, "Title", "Mitigation ID");
+        builder.AddAttribute(3, "Width", "110px");
         builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
+        //builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(0);
+        //builder.AddAttribute(1, "Property", "MitigationCode");
+        //builder.AddAttribute(2, "Title", "Mitigation ID");
+        //builder.AddAttribute(3, "Width", "120px");
+        //builder.AddAttribute(4, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
+        //    (templateBuilder =>
+        //    {
+        //        templateBuilder.OpenComponent<RadzenBadge>(0);
+        //        templateBuilder.AddAttribute(1, "Text", mitigation.MitigationCode);
+        //        templateBuilder.AddAttribute(2, "BadgeStyle", BadgeStyle.Base);
+        //        templateBuilder.CloseComponent(); // ✅ Close RadzenBadge
+        //    })));
+        //builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
 
         // Mitigation Name Column
         builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(10);
@@ -1111,28 +1109,28 @@ public partial class ReportProcessing : ComponentBase
         builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
 
         // Priority Column
-        builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(30);
-        builder.AddAttribute(31, "Property", "Priority");
-        builder.AddAttribute(32, "Title", "Priority");
-        builder.AddAttribute(33, "Width", "100px");
-        builder.AddAttribute(34, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
-            (templateBuilder =>
-            {
-                var priorityStyle = mitigation.Priority switch
-                {
-                    "Critical" => BadgeStyle.Danger,
-                    "High" => BadgeStyle.Warning,
-                    "Medium" => BadgeStyle.Base,
-                    "Low" => BadgeStyle.Success,
-                    _ => BadgeStyle.Secondary
-                };
+        //builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(30);
+        //builder.AddAttribute(31, "Property", "Priority");
+        //builder.AddAttribute(32, "Title", "Priority");
+        //builder.AddAttribute(33, "Width", "100px");
+        //builder.AddAttribute(34, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
+        //    (templateBuilder =>
+        //    {
+        //        var priorityStyle = mitigation.Priority switch
+        //        {
+        //            "Critical" => BadgeStyle.Danger,
+        //            "High" => BadgeStyle.Warning,
+        //            "Medium" => BadgeStyle.Base,
+        //            "Low" => BadgeStyle.Success,
+        //            _ => BadgeStyle.Secondary
+        //        };
 
-                templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "Text", mitigation.Priority);
-                templateBuilder.AddAttribute(2, "BadgeStyle", priorityStyle);
-                templateBuilder.CloseComponent(); // ✅ Close RadzenBadge
-            })));
-        builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
+        //        templateBuilder.OpenComponent<RadzenBadge>(0);
+        //        templateBuilder.AddAttribute(1, "Text", mitigation.Priority);
+        //        templateBuilder.AddAttribute(2, "BadgeStyle", priorityStyle);
+        //        templateBuilder.CloseComponent(); // ✅ Close RadzenBadge
+        //    })));
+        //builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
 
         // Target Date Column
         builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(40);
@@ -1174,27 +1172,48 @@ public partial class ReportProcessing : ComponentBase
             })));
         builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
 
-        // Responsible Party Column
         builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(50);
-        builder.AddAttribute(51, "Property", "ResponsibleParty");
-        builder.AddAttribute(52, "Title", "Responsible");
-        builder.AddAttribute(53, "Width", "150px");
+        builder.AddAttribute(51, "Property", "AssignedDepartment");
+        builder.AddAttribute(52, "Title", "Assigned Department");
+        builder.AddAttribute(53, "Width", "250px");
         builder.AddAttribute(54, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
                 templateBuilder.AddAttribute(1, "TextStyle", TextStyle.Body2);
-                templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(mitigation.ResponsibleParty) ? mitigation.ResponsibleParty : "Not assigned");
+                templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(mitigation.AssignedDepartment) ? mitigation.AssignedDepartment : "Not assigned");
+                templateBuilder.CloseComponent(); // ✅ Close RadzenText
+            })));
+        builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
+
+
+
+
+
+
+
+
+        // Responsible Party Column
+        builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(60);
+        builder.AddAttribute(61, "Property", "AssignedTo");
+        builder.AddAttribute(62, "Title", "Assigned To");
+        builder.AddAttribute(63, "Width", "150px");
+        builder.AddAttribute(64, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenText>(0);
+                templateBuilder.AddAttribute(1, "TextStyle", TextStyle.Body2);
+                templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(mitigation.AssignedTo) ? mitigation.AssignedTo : "Not assigned");
                 templateBuilder.CloseComponent(); // ✅ Close RadzenText
             })));
         builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
 
         // Actions Column - Individual Edit buttons
-        builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(60);
-        builder.AddAttribute(61, "Title", "Actions");
-        builder.AddAttribute(62, "Width", "200px");
-        builder.AddAttribute(63, "Sortable", false);
-        builder.AddAttribute(64, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
+        builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(70);
+        builder.AddAttribute(71, "Title", "Actions");
+        builder.AddAttribute(72, "Width", "200px");
+        builder.AddAttribute(73, "Sortable", false);
+        builder.AddAttribute(74, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenStack>(0);

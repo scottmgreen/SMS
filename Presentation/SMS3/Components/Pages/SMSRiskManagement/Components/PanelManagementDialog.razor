@@ -11,7 +11,7 @@
                 <div class="panel-management-header-content">
                     <div class="panel-management-title">
                         <RadzenIcon Icon="group" Style="margin-right: 0.5rem; color: var(--rz-primary);" />
-                        Panel Management
+                        Panel Management @($"Managing scoring panel for: {HazardCode}")"
                     </div>
                     <div class="panel-management-actions">
                         <RadzenButton Icon="close" 
@@ -22,7 +22,8 @@
                     </div>
                 </div>
                 <div class="panel-management-subtitle">
-                    <RadzenText Text="@($"Managing scoring panel for: {HazardCode}")" TextStyle="TextStyle.Body2" Style="color:white"/>
+                    <br/>
+                    <RadzenText Text="@($"Managing scoring panel for: {HazardCode}")" TextStyle="TextStyle.H6" Style="color:white"/>
                 </div>
             </div>
 

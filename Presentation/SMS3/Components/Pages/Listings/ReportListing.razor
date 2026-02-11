@@ -32,40 +32,19 @@
                 IsLoading="@isLoading">
     
     <Columns>
-        <RadzenDataGridColumn TItem="Report" Property="Code" Title="Code" Width="120px" />
-        <RadzenDataGridColumn TItem="Report" Property="Name" Title="Name" Width="200px" />
-        <RadzenDataGridColumn TItem="Report" Property="Description" Title="Description" Width="300px">
+        <RadzenDataGridColumn TItem="Report" Property="Code" Title="Report ID" Width="120px" />
+        <RadzenDataGridColumn TItem="Report" Property="Name" Title="Name" Width="350px" />
+        <RadzenDataGridColumn TItem="Report" Property="Description" Title="Description" Width="350px">
             <Template Context="report">
                 <div title="@report.Description">
                     @(report.Description?.Length > 50 ? report.Description[..47] + "..." : report.Description)
                 </div>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Report" Property="Status" Title="Status" Width="120px">
-            <Template Context="report">
-                @if (!string.IsNullOrEmpty(report.Status))
-                {
-                    <RadzenBadge Text="@report.Status" 
-                               BadgeStyle="@GetStatusBadgeStyle(report.Status)" 
-                               Variant="Variant.Flat" />
-                }
-            </Template>
-        </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Report" Property="Stage" Title="Stage" Width="120px">
-            <Template Context="report">
-                @if (!string.IsNullOrEmpty(report.Stage))
-                {
-                    <RadzenBadge Text="@report.Stage" 
-                               BadgeStyle="@GetStageBadgeStyle(report.Stage)" 
-                               Variant="Variant.Flat" />
-                }
-            </Template>
-        </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Report" Property="CreatedBy" Title="Created By" Width="150px" />
-        <RadzenDataGridColumn TItem="Report" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
-        <RadzenDataGridColumn TItem="Report" Property="UpdatedBy" Title="Updated By" Width="150px" />
-        <RadzenDataGridColumn TItem="Report" Property="UpdatedDate" Title="Updated Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
-        
+        <RadzenDataGridColumn TItem="Report" Property="SubmittedBy" Title="Submitted By" Width="150px" />
+        <RadzenDataGridColumn TItem="Report" Property="SubmittedDate" Title="Submitted Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
+        <RadzenDataGridColumn TItem="Report" Property="SubmittingDepartment" Title="Submitting Department" Width="250px" />
+       
         <!-- Enhanced Actions Column -->
         <RadzenDataGridColumn TItem="Report" Title="Actions" Width="150px" Sortable="false" Filterable="false">
             <Template Context="report">
