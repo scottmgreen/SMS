@@ -67,6 +67,11 @@ public partial class HazardReportSearchResult : ComponentBase
     /// Current risk assessment information
     /// </summary>
     public RiskAssessment? CurrentRiskAssessment { get; set; }
+
+    /// <summary>
+    /// Current mitigation information
+    /// </summary>
+    public Mitigation? CurrentMitigation { get; set; }
     #endregion
 
     #region Lifecycle Methods
@@ -130,6 +135,7 @@ public partial class HazardReportSearchResult : ComponentBase
             {
                 await LoadRiskAssessmentInformation(tracking.HazardCode);
             }
+            await LoadMitigationInformation(tracking.HazardCode);
 
             // Step 6: Load location information
             await LoadLocationInformation(tracking.HazardCode);
@@ -326,6 +332,38 @@ public partial class HazardReportSearchResult : ComponentBase
         }
     }
 
+
+    /// <summary>
+    /// Load mitigation information based on hazard code
+    /// </summary>
+    private async Task LoadMitigationInformation(string hazardCode)
+    {
+        if (string.IsNullOrEmpty(hazardCode)) return;
+
+        try
+        {
+            var mitigationQuery = new GetMitigationsByHazardCodeQuery(hazardCode);
+            var mitigationResult = await Mediator.SendAsync(mitigationQuery, CancellationToken.None);
+
+            if (mitigationResult.IsSuccess && mitigationResult.Value?.Any() == true)
+            {
+                var mitigations = mitigationResult.Value.ToList();
+
+                // Find the Technical assessment first, fallback to any assessment
+                CurrentMitigation = mitigations.FirstOrDefault() ?? mitigations.FirstOrDefault();
+
+                Logger.LogInformation("Loaded mitigation information for hazard: {HazardCode}, Found {Count} mitigations",hazardCode, mitigations.Count);
+            }
+            else
+            {
+                Logger.LogInformation("No mitigation information information found for hazard: {HazardCode}", hazardCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error loading mitigation information information for hazard: {HazardCode}", hazardCode);
+        }
+    }
     /// <summary>
     /// Load location information
     /// </summary>

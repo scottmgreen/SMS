@@ -90,7 +90,7 @@
                                                 @ValidationDecision.SmsRisk.Name
                                             </RadzenText>
                                             <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                                @ValidationDecision.SmsRisk.ActionRequired
+                                                @ValidationDecision.SmsRisk.Name
                                             </RadzenText>
                                         </RadzenStack>
                                     </RadzenCard>
@@ -106,7 +106,7 @@
                                                 @ValidationDecision.NotSmsRisk.Name
                                             </RadzenText>
                                             <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                                @ValidationDecision.NotSmsRisk.ActionRequired
+                                                @ValidationDecision.NotSmsRisk.Name
                                             </RadzenText>
                                         </RadzenStack>
                                     </RadzenCard>
@@ -122,7 +122,7 @@
                                                 @ValidationDecision.NeedsInvestigation.Name
                                             </RadzenText>
                                             <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                                @ValidationDecision.NeedsInvestigation.ActionRequired
+                                                @ValidationDecision.NeedsInvestigation.Name
                                             </RadzenText>
                                         </RadzenStack>
                                     </RadzenCard>
@@ -156,15 +156,15 @@
                         </RadzenFieldset>
 
                         <!-- SMS Risk Fields (Conditional) -->
-                        @if (SelectedValidationDecision?.ShouldProceedToAssessment == true)
+                        @if (SelectedValidationDecision == ValidationDecision.SmsRisk)
                         {
                             <RadzenFieldset Text="Assessment Assignment" Style="margin-top: 1rem;">
                                 <RadzenRow Gap="1rem">
                                     <RadzenColumn Size="12" SizeMD="6">
                                         <RadzenFormField Text="Assigned Assessor" Variant="Variant.Outlined">
-                                            <RadzenDropDown @bind-Value="@ValidatedBy" 
-                                                          Data="@ValidatedByOptions" 
-                                                          TextProperty="Text" 
+                                            <RadzenDropDown @bind-Value="@LeadAssessor"
+                                                            Data="@LeadAssessorOptions"
+                                                            TextProperty="Text" 
                                                           ValueProperty="Value"
                                                           Placeholder="" 
                                                           AllowClear="true"
@@ -174,14 +174,31 @@
                                 </RadzenRow>
                             </RadzenFieldset>
                         }
-
+                        @if (SelectedValidationDecision == ValidationDecision.NeedsInvestigation)
+                        {
+                            <RadzenFieldset Text="Investigator Assignment" Style="margin-top: 1rem;">
+                                <RadzenRow Gap="1rem">
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Assigned Investigator" Variant="Variant.Outlined">
+                                            <RadzenDropDown @bind-Value="@LeadInvestigator"
+                                                            Data="@LeadInvestigatorOptions"
+                                                            TextProperty="Text"
+                                                            ValueProperty="Value"
+                                                            Placeholder=""
+                                                            AllowClear="true"
+                                                            Style="width: 100%; min-width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            </RadzenFieldset>
+                        }
                         <!-- Action Buttons -->
                         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" class="rz-mt-4">
                             <RadzenButton Text="Back to Processing Queue" Icon="arrow_back" ButtonStyle="ButtonStyle.Light" 
                                         Click="@(() => Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing"))" />
                             
                             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                                @if (SelectedValidationDecision?.ShouldProceedToAssessment == true)
+                                @if (SelectedValidationDecision == ValidationDecision.SmsRisk)
                                 {
                                     <RadzenButton Text="Proceed to Risk Assessment" Icon="arrow_forward" ButtonStyle="ButtonStyle.Success" 
                                                 Click="@HandleSubmit" Disabled="@IsProcessing" />

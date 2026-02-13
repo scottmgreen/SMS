@@ -64,7 +64,9 @@ public partial class TechnicalAssessment : ComponentBase
 
     public string AssessmentName => GetCurrentAssessmentName();
     public string LeadAssessorName => AvailableAssessors.FirstOrDefault(a => a.UserName.Value == Step1.LeadAssessor)?.DisplayName ?? Step1.LeadAssessor;
-   
+
+    public string LeadInvestigatorName => AvailableAssessors.FirstOrDefault(a => a.UserName.Value == Step1.LeadAssessor)?.DisplayName ?? Step1.LeadAssessor;
+
     // CRITICAL: Make this a property that can trigger change detection
     public List<Hazard> ReportedHazards { get; private set; } = new();
 
@@ -117,6 +119,8 @@ public partial class TechnicalAssessment : ComponentBase
     #region Reference Data
 
     public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
+
+    public List<SMSApplicationUser> AvailableInvestigators { get; set; } = new();
     public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
     public List<SMSApplicationUser> AvailableSMSUsers { get; set; } = new();
     public List<SMSStakeholderGroup> StakeholderGroups { get; set; } = new();

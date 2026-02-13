@@ -1,3 +1,4 @@
+using SMS_Domain.Entities;
 using SMS_Domain.Errors;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
@@ -19,6 +20,10 @@ public partial class ReportValidation : ComponentBase
     private RiskAssessmentCategory ValidationType { get; set; } = RiskAssessmentCategory.Technical;
     private string ValidatedBy { get; set; } = "";
 
+    private string LeadAssessor { get; set; } = "";
+
+    private string LeadInvestigator { get; set; } = "";
+
     // Helper property for string-based UI binding - renamed to avoid conflicts
     private string ValidationDecisionValue
     {
@@ -32,20 +37,19 @@ public partial class ReportValidation : ComponentBase
     private SMS_Domain.Entities.ReportValidation? ExistingValidation { get; set; }
     private List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
 
+    private List<SMSApplicationUser> AvailableInvestigators { get; set; } = new();
+
     // State Properties
     private bool IsUpdate => ExistingValidation != null;
     private string ValidationCode => ExistingValidation?.Code ?? "New";
     private string CurrentStatus => ExistingValidation?.Status ?? "New";
     private bool IsProcessing { get; set; } = false;
 
-    // Dropdown Options
-    private List<DropdownOption> ValidationTypeOptions { get; set; } = new()
-    {
-        //new DropdownOption { Value = "Preliminary", Text = "Preliminary Assessment" },
-        new DropdownOption { Value = "Technical", Text = "Technical Assessment" }
-    };
+    
 
-    private List<DropdownOption> ValidatedByOptions { get; set; } = new();
+    private List<DropdownOption> LeadAssessorOptions { get; set; } = new();
+
+    private List<DropdownOption> LeadInvestigatorOptions { get; set; } = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -119,6 +123,7 @@ public partial class ReportValidation : ComponentBase
 
             // Load available assessors
             await LoadAvailableAssessorsAsync();
+            await LoadAvailableInvestigatorsAsync();
 
             StateHasChanged();
         }
@@ -141,14 +146,14 @@ public partial class ReportValidation : ComponentBase
                 AvailableAssessors = usersResult.Value?.ToList() ?? new List<SMSApplicationUser>();
 
                 // Build dropdown options
-                ValidatedByOptions = new List<DropdownOption>
+                LeadAssessorOptions = new List<DropdownOption>
                 {
                     new DropdownOption { Value = "", Text = "" }
                 };
 
                 foreach (var assessor in AvailableAssessors)
                 {
-                    ValidatedByOptions.Add(new DropdownOption
+                    LeadAssessorOptions.Add(new DropdownOption
                     {
                         Value = assessor.UserName.Value,
                         Text = $"{assessor.DisplayName}" // ({assessor.UserName.Value}) - {assessor.UserRole}" 
@@ -159,12 +164,49 @@ public partial class ReportValidation : ComponentBase
         catch (Exception ex)
         {
             Logger.LogWarning(ex, "Could not load available assessors");
-            ValidatedByOptions = new List<DropdownOption>
+            LeadAssessorOptions = new List<DropdownOption>
             {
                 new DropdownOption { Value = "", Text = "" }
             };
         }
     }
+
+    private async Task LoadAvailableInvestigatorsAsync()
+    {
+        try
+        {
+            var usersQuery = new GetUsersByApplicationGroupCodeQuery("AG-0006");
+            var usersResult = await Mediator.SendAsync(usersQuery, CancellationToken.None);
+            if (usersResult.IsSuccess)
+            {
+                AvailableInvestigators = usersResult.Value?.ToList() ?? new List<SMSApplicationUser>();
+
+                // Build dropdown options
+                LeadInvestigatorOptions = new List<DropdownOption>
+                {
+                    new DropdownOption { Value = "", Text = "" }
+                };
+
+                foreach (var assessor in AvailableInvestigators)
+                {
+                    LeadInvestigatorOptions.Add(new DropdownOption
+                    {
+                        Value = assessor.UserName.Value,
+                        Text = $"{assessor.DisplayName}" // ({assessor.UserName.Value}) - {assessor.UserRole}" 
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Could not load available assessors");
+            LeadInvestigatorOptions = new List<DropdownOption>
+            {
+                new DropdownOption { Value = "", Text = "" }
+            };
+        }
+    }
+
 
     #endregion
 
@@ -264,8 +306,8 @@ public partial class ReportValidation : ComponentBase
                 ExistingValidation.ValidationComments = ValidationComments;
                 ExistingValidation.ValidationType = RiskAssessmentCategory.Technical;
                 ExistingValidation.ValidatedBy = ValidatedBy; 
-                ExistingValidation.Status = "Completed";
-                ExistingValidation.Stage = "Complete";
+                ExistingValidation.Status = "REVISED";
+                ExistingValidation.Stage = "COMPLETE";
                 ExistingValidation.ValidatedDate = DateTime.UtcNow;
 
                 ExistingValidation.UpdatedBy = AuthService.CurrentUserDisplayName; 
@@ -296,9 +338,9 @@ public partial class ReportValidation : ComponentBase
                     ValidatedBy = ValidatedBy,
                     ValidationDecision = ValidationDecisionValue,
                     ValidationComments = ValidationComments,
-                    ValidationType = ValidationType ?? "Technical",
-                    Status = "Completed",
-                    Stage = "Complete",
+                    ValidationType = ValidationType ?? "STANDARD",
+                    Status = "SUBMITTED",
+                    Stage = "COMPLETE",
                     ValidatedDate = DateTime.UtcNow,
                     CreatedBy = AuthService.CurrentUserDisplayName,
                     CreatedDate = DateTime.UtcNow
@@ -357,24 +399,90 @@ public partial class ReportValidation : ComponentBase
             // User skipped dataset creation - proceed directly to assessment
             Logger.LogInformation("User skipped Airport Shared Dataset creation for Report: {ReportId}", ReportId);
 
-            var assessmentType = ValidationType.Value.ToLower() switch
+            //Check for existing RiskAssessment
+            // Check for existing investigation first
+            var existingRiskAssessmentsQuery = new GetAllRiskAssessmentsQuery();
+            var existingResult = await Mediator.SendAsync(existingRiskAssessmentsQuery, CancellationToken.None);
+
+
+            RiskAssessment? existingRiskAssessment = null;
+            if (existingResult.IsSuccess && existingResult.Value != null)
             {
-                "technical" => "TechnicalAssessment",
-                 _ => "TechnicalAssessment"
-            };
+                existingRiskAssessment = existingResult.Value.FirstOrDefault(inv =>
+                    !string.IsNullOrWhiteSpace(inv.HazardCode) && inv.HazardCode.Equals(ReportHazard.Code, StringComparison.OrdinalIgnoreCase) );
+                    
+            }
 
             string navigationUrl;
-            if (ReportHazard != null)
+            if (existingRiskAssessment != null)
             {
-                navigationUrl = $"/SMSRiskManagement/{assessmentType}/{ReportId}/{ReportHazard.Code}/1";
+                // Navigate to existing investigation
+                ShowSuccessNotification($"Loading existing RiskAssessment {existingRiskAssessment.Code}");
+                navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{ReportHazard.Code}/1";
+                Logger.LogInformation("Navigating to existing Risk Assessment: {Url}", navigationUrl);
+                await Task.Delay(1500);
+                Navigation.NavigateTo(navigationUrl);
             }
             else
             {
-                navigationUrl = $"/SMSRiskManagement/{assessmentType}/{ReportId}/1";
+                // Generate Placeholder ID - WILL BE GENERATED IN THE DATABASE 
+                var assessmentId = $"RS-0000";
+
+                // Create Technical assessment using the public constructor
+                var riskAssessment = new RiskAssessment(new RiskAssessmentID(assessmentId))
+                {
+                    Name = $"Technical Risk Assessment for Report {ReportId}",
+                    LeadAssessorId = LeadAssessor,
+                    AssessmentType = RiskAssessmentType.Initial, // Start with Initial, Step 5 will use Residual stage
+                    RiskAssessmentCategory = RiskAssessmentCategory.Technical,
+                    HazardCode = ReportHazard.Code,
+                    PrimaryHazardId = ReportHazard.Code,
+                    Description = $"Created from Report {ReportId}",
+                    Stage = "CREATED",
+                    Code = assessmentId,
+                    Status = RiskAssessmentStatus.AssessmentCreate,
+                    CurrentStep = 1,
+                    UpdatedDate = DateTime.UtcNow,
+                    UpdatedBy = AuthService.CurrentUserDisplayName
+                };
+
+                CreateRiskAssessmentCommand command = new CreateRiskAssessmentCommand(riskAssessment);
+                var createResult = await Mediator.SendAsync(command, CancellationToken.None);
+
+                if (createResult.IsSuccess)
+                {
+                    var newRiskAssessment = createResult.Value;
+                    ShowSuccessNotification($"Investigation {newRiskAssessment.Code} created successfully");
+                    navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{ReportHazard.Code}/1";
+                    Logger.LogInformation("Navigating to new risk assessment: {Url}", navigationUrl);
+                    await Task.Delay(1500);
+                    Navigation.NavigateTo(navigationUrl);
+                }
+                else
+                {
+                    throw new Exception($"Failed to create investigation: {createResult.Error?.Message ?? DomainErrors.InvestigationError.CreateFailed.Message}");
+                }
             }
 
-            Logger.LogInformation("Navigating to {AssessmentType}: {Url}", assessmentType, navigationUrl);
 
+
+
+
+
+
+
+
+
+            if (ReportHazard != null)
+            {
+                navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{ReportHazard.Code}/1";
+            }
+            else
+            {
+                navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/1";
+            }
+
+            
             await Task.Delay(1500);
             Navigation.NavigateTo(navigationUrl);
         }
@@ -481,7 +589,7 @@ public partial class ReportValidation : ComponentBase
         {
             ShowSuccessNotification("Validation completed. Report remains open for further review.");
             await Task.Delay(1500);
-            Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
+           // Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
         }
     }
 

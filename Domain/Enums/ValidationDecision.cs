@@ -5,16 +5,12 @@ namespace SMS_Domain.Enums;
 /// </summary>
 public abstract class ValidationDecision : BaseEnum<ValidationDecision>
 {
-    protected ValidationDecision(string value, string name, string description, string actionRequired, bool requiresAssessment) : base(value, name)
+    protected ValidationDecision(string value, string name) : base(value, name)
     {
-        Description = description;
-        ActionRequired = actionRequired;
-        RequiresAssessment = requiresAssessment;
+       
     }
 
-    public string Description { get; }
-    public string ActionRequired { get; }
-    public bool RequiresAssessment { get; }
+    
 
     #region Validation Decision Types
 
@@ -33,27 +29,21 @@ public abstract class ValidationDecision : BaseEnum<ValidationDecision>
 
     private sealed class SmsRiskDecision : ValidationDecision
     {
-        public SmsRiskDecision() : base("SMS_RISK", "SMS Risk",
-            "Report constitutes an SMS risk requiring formal risk assessment and mitigation planning",
-            "Proceed with formal risk assessment workflow", true)
+        public SmsRiskDecision() : base("SMS_RISK", "SMS RISK")
         {
         }
     }
 
     private sealed class NotSmsRiskDecision : ValidationDecision
     {
-        public NotSmsRiskDecision() : base("NOT_SMS_RISK", "Not SMS Risk",
-            "Report does not constitute an SMS risk under 14 CFR Part 139 Subpart E requirements",
-            "Refer to appropriate department or close with documentation", false)
+        public NotSmsRiskDecision() : base("NOT_SMS_RISK", "NOT SMS RISK")
         {
         }
     }
 
     private sealed class NeedsInvestigationDecision : ValidationDecision
     {
-        public NeedsInvestigationDecision() : base("NEEDS_INVESTIGATION", "Needs Investigation",
-            "Additional information required to determine SMS risk classification",
-            "Gather more information before making final determination", false)
+        public NeedsInvestigationDecision() : base("NEEDS_INVESTIGATION", "NEEDS INVESTIGATION")
         {
         }
     }
@@ -72,36 +62,10 @@ public abstract class ValidationDecision : BaseEnum<ValidationDecision>
             .Where(vd => vd != null);
     }
 
-    /// <summary>
-    /// Gets validation decisions that require formal risk assessment
-    /// </summary>
-    public static IEnumerable<ValidationDecision> GetAssessmentRequiredDecisions()
-    {
-        return GetAllValues().Where(vd => vd.RequiresAssessment);
-    }
+    
 
-    /// <summary>
-    /// Gets validation decisions that complete the validation process
-    /// </summary>
-    public static IEnumerable<ValidationDecision> GetFinalDecisions()
-    {
-        return GetAllValues().Where(vd => vd != NeedsInvestigation);
-    }
-
-    /// <summary>
-    /// Checks if this decision requires proceeding to risk assessment
-    /// </summary>
-    public bool ShouldProceedToAssessment => this == SmsRisk;
-
-    /// <summary>
-    /// Checks if this decision closes the validation process
-    /// </summary>
-    public bool ClosesValidation => this == NotSmsRisk;
-
-    /// <summary>
-    /// Checks if this decision requires additional investigation
-    /// </summary>
-    public bool RequiresMoreInformation => this == NeedsInvestigation;
+    
+    
 
     /// <summary>
     /// Parse a string value to ValidationDecision

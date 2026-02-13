@@ -38,15 +38,9 @@ public partial class HazardMitigation : ComponentBase
         "Eliminate", "Engineering Control", "Administrative Control", "Personal Protective Equipment"
     };
 
-    private readonly List<string> PriorityLevels = new()
-    {
-        "Critical", "High", "Medium", "Low"
-    };
+    
 
-    private readonly List<string> StatusLevels = new()
-    {
-        "Proposed", "Approved", "InProgress", "Completed", "Cancelled", "OnHold"
-    };
+    
 
     // ✅ UPDATED: Replace hardcoded department list with SMSDepartment enum
     private List<string> Departments => SMSDepartment.GetAllDepartments()
