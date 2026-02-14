@@ -379,9 +379,7 @@ public partial class ReportProcessing : ComponentBase
     {
         var summaries = new List<ReportProcessingSummary>();
 
-        Logger.LogInformation("Creating report summaries - Reports: {ReportCount}, Hazards: {HazardCount}, RiskAssessments: {AssessmentCount}, ReportValidations: {ValidationCount}, Investigations: {InvestigationCount}, Interviews: {InterviewCount}",
-            reports.Count, hazards.Count, riskAssessments.Count, reportValidations.Count, investigations.Count, interviews.Count);
-
+        
         foreach (var report in reports)
         {
             try
@@ -435,7 +433,7 @@ public partial class ReportProcessing : ComponentBase
                                 if (mitigationResult.IsSuccess && mitigationResult.Value?.Any() == true)
                                 {
                                     var hazardMitigations = mitigationResult.Value
-                                        .Where(m => !string.IsNullOrEmpty(m.Code) && !processedMitigationCodes.Contains(m.Code)) // ✅ Skip duplicates
+                                        .Where(m => !string.IsNullOrEmpty(m.Code) && !processedMitigationCodes.Contains(m.Code)  ) 
                                         .Select(m => new MitigationSummary
                                         {
                                             MitigationCode = m.Code ?? "Unknown",
@@ -593,6 +591,7 @@ public partial class ReportProcessing : ComponentBase
         PendingRiskAssessment = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.RiskAssessment).ToList();
         PendingInvestigation = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Investigation).ToList();
         InMitigation = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Mitigation).ToList();
+
         ClosedReferred = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Closed).ToList();
 
         // ✅ ADD DEBUG LOGGING to see what's being categorized
@@ -641,23 +640,18 @@ public partial class ReportProcessing : ComponentBase
                                       status == "ASSIGNED";
 
             // NEW: Check if investigation completed with ReturnToValidation - SKIP active investigation logic
-            if (status == "COMPLETED" &&
-                string.Equals(investigation.DecisionType, "ReturnToValidation", StringComparison.OrdinalIgnoreCase))
+            if (status == "COMPLETED" && string.Equals(investigation.DecisionType, "ReturnToValidation", StringComparison.OrdinalIgnoreCase))
             {
-                Logger.LogWarning("? Report {ReportId} -> Investigation {InvestigationId} completed with ReturnToValidation decision, continuing with validation logic ?",
-                    report.Code, investigation.Code);
+                
                 // Continue with validation logic below - do NOT return Investigation
             }
             else if (isActiveInvestigation)
             {
-                Logger.LogWarning("? Report {ReportId} -> INVESTIGATION (active investigation {InvestigationId} with status '{Status}') - HIGHEST PRIORITY",
-                    report.Code, investigation.Code, investigation.Status);
                 return ProcessingStatusCategory.Investigation;
             }
             else if (status == "COMPLETED")
             {
-                Logger.LogWarning("? Report {ReportId} -> Investigation {InvestigationId} completed with decision {Decision}, continuing with normal flow",
-                    report.Code, investigation.Code, investigation.DecisionType ?? "NULL");
+                
                 // Continue with normal flow below
             }
         }

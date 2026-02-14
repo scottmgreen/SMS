@@ -212,7 +212,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserPassword, user.Password.HashedValue));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserDepartment, user.Department));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserPosition, user.Position));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserOrganizationLevel, user.OrganizationLevel));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserOrganizationLevel, user.OrganizationLevel.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserIsActive, user.IsActive));
             //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserLastLoginDate, user.LastLoginDate));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, user.CreatedBy));
@@ -261,7 +261,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserUserName, user.UserName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserDepartment, user.Department));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserPosition, user.Position));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserOrganizationLevel, user.OrganizationLevel));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserOrganizationLevel, user.OrganizationLevel.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserIsActive, user.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, user.UpdatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
@@ -523,7 +523,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
                 return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(allUsersResult.Error);
             }
 
-            var filteredUsers = allUsersResult.Value.Where(u => u.OrganizationLevel.Equals(organizationLevel, StringComparison.OrdinalIgnoreCase));
+            var filteredUsers = allUsersResult.Value.Where(u => u.OrganizationLevel.Value.Equals(organizationLevel, StringComparison.OrdinalIgnoreCase));
             return Result<IEnumerable<SMSOrganizationalUser>>.Success(filteredUsers);
         }
         catch (Exception ex)
@@ -583,29 +583,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
     //    }
     //}
 
-    public async Task<Result<IEnumerable<SMSOrganizationalUser>>> GetDepartmentSupervisorsAsync(string department)
-    {
-        try
-        {
-            var departmentUsersResult = await GetByDepartmentAsync(department);
-            if (departmentUsersResult.IsFailure)
-            {
-                return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(departmentUsersResult.Error);
-            }
-
-            var supervisors = departmentUsersResult.Value.Where(u =>
-                u.OrganizationLevel.Contains("Supervisor", StringComparison.OrdinalIgnoreCase) ||
-                u.OrganizationLevel.Contains("Manager", StringComparison.OrdinalIgnoreCase) ||
-                u.OrganizationLevel.Contains("Director", StringComparison.OrdinalIgnoreCase));
-
-            return Result<IEnumerable<SMSOrganizationalUser>>.Success(supervisors);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureGetItemsError($"{_logHeader} {ex.Message}", null);
-            return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
-        }
-    }
+    
 
     public async Task<Result<Dictionary<string, int>>> GetDepartmentStatisticsAsync()
     {
@@ -618,7 +596,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             }
 
             var stats = allUsersResult.Value
-                .GroupBy(u => u.Department)
+                .GroupBy(u => u.Department.Value)
                 .ToDictionary(g => g.Key, g => g.Count());
 
             return Result<Dictionary<string, int>>.Success(stats);

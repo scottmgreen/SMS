@@ -467,7 +467,7 @@
                         var roundedLikelihood = (int)Math.Round(avgLikelihood);
 
                         Step4.HazardAverageScores[hazard.Code] = avgScore;
-                        Step4.HazardRiskLevels[hazard.Code] = AviationRiskMatrixCalculator.GetAviationRiskLevel(roundedSeverity, roundedLikelihood);
+                        Step4.HazardRiskLevels[hazard.Code] = AviationRiskMatrixCalculator.GetAviationRiskLevel(roundedSeverity, roundedLikelihood).Value;
                         Step4.HazardMatrixCodes[hazard.Code] = matrixCode;
 
                         Logger.LogInformation("✅ Added hazard {HazardCode} to Step4.HazardAverageScores: Score={AvgScore:F2}, MatrixCode={MatrixCode}, RiskLevel={RiskLevel}",

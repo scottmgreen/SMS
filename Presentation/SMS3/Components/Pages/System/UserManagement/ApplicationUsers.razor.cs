@@ -36,6 +36,11 @@ public partial class ApplicationUsers : ComponentBase
     private string? SelectedRoleCode { get; set; }
     private List<SMSUserRole> AvailableRoles { get; set; } = new();
 
+    private static readonly string[] SMSModules =
+    {
+        "SMS_Assurance", "SMS_Policy", "SMS_Promotion", "SMS_RiskManagement", "SMS_System"
+    };
+
     // Group Management Properties
     private bool ShowGroupsModal { get; set; } = false;
     private string GroupManagementUserCode { get; set; } = string.Empty;
@@ -48,6 +53,7 @@ public partial class ApplicationUsers : ComponentBase
     // Form Models
     private EditUserModel editUser = new();
     private CreateUserModel NewUser = new();
+    private string? EditUserRoleCode { get; set; }
 
     // Create Modal Properties
     private bool ShowCreateModal { get; set; }
@@ -121,7 +127,7 @@ public partial class ApplicationUsers : ComponentBase
     {
         try
         {
-            var getUserQuery = new GetSMSApplicationUserByIdQuery(id);
+            var getUserQuery = new GetSMSApplicationUserByCodeQuery(id);
             var userResult = await Mediator.SendAsync(getUserQuery, CancellationToken.None);
 
             if (userResult.IsFailure)
@@ -141,6 +147,9 @@ public partial class ApplicationUsers : ComponentBase
                 LastName = CurrentUser.LastName?.Value ?? ""
             };
 
+            // Set the role code for dropdown binding
+            EditUserRoleCode = CurrentUser.UserRole?.Code;
+
             StateHasChanged();
         }
         catch (Exception ex)
@@ -153,7 +162,20 @@ public partial class ApplicationUsers : ComponentBase
     #endregion
 
     #region ?? NEW: Role Assignment Methods
+    private bool IsPermissionGranted(SMSUserRole role, string module, string action)
+    {
+        if (role?.Permissions == null) return false;
 
+        var permission = role.Permissions.FirstOrDefault(p => p.SMSModule == module);
+        return action switch
+        {
+            "Create" => permission?.Create == true,
+            "Read" => permission?.Read == true,
+            "Update" => permission?.Update == true,
+            "Delete" => permission?.Delete == true,
+            _ => false
+        };
+    }
     private void OpenRoleAssignmentModal(string userCode, string userDisplayName, string? currentRoleCode = null)
     {
         RoleAssignmentUserCode = userCode;
@@ -206,7 +228,7 @@ public partial class ApplicationUsers : ComponentBase
                 ShowErrorNotification("Selected role not found.");
                 return;
             }
-
+            user.SMSUserType = SMSUserType.Application;
             // Update user role
             user.UserRole = selectedRole;
             user.UpdatedBy = AuthService.CurrentUserDisplayName;
@@ -332,7 +354,7 @@ public partial class ApplicationUsers : ComponentBase
             }
 
             // Create user entity
-            var userId = new SMSApplicationUserID($"AU-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}");
+            var userId = new SMSApplicationUserID($"AU-0000");
             var user = new SMSApplicationUser(userId)
             {
                 Code = userId.Value,
@@ -342,7 +364,7 @@ public partial class ApplicationUsers : ComponentBase
                 Password = Password.Create(NewUser.Password).Value,
                 UserRole = selectedRole, // ?? NEW: Assign role during creation
                 IsActive = true,
-                SMSUserType = "Application",
+                SMSUserType = SMSUserType.Application,
                 CreatedBy = AuthService.CurrentUserDisplayName,
                 CreatedDate = DateTime.UtcNow
             };
@@ -405,7 +427,17 @@ public partial class ApplicationUsers : ComponentBase
             // Update user properties using the model parameter
             CurrentUser.FirstName = FirstName.Create(model.FirstName).Value;
             CurrentUser.LastName = LastName.Create(model.LastName).Value;
-
+            CurrentUser.SMSUserType = SMSUserType.Application;
+            // Update role if changed
+            if (!string.IsNullOrEmpty(EditUserRoleCode))
+            {
+                var selectedRole = AvailableRoles.FirstOrDefault(r => r.Code == EditUserRoleCode);
+                CurrentUser.UserRole = selectedRole;
+            }
+            else
+            {
+                CurrentUser.UserRole = null;
+            }
             // Set the UpdatedBy field to the currently logged-in user's ID
             CurrentUser.UpdatedBy = AuthService.CurrentUserDisplayName;
             CurrentUser.UpdatedDate = DateTime.UtcNow;
@@ -415,6 +447,7 @@ public partial class ApplicationUsers : ComponentBase
 
             if (result.IsSuccess)
             {
+                await LoadDataAsync();
                 ShowSuccessNotification($"Application user '{model.FirstName} {model.LastName}' updated successfully.");
                 Navigation.NavigateTo("/System/UserManagement/ApplicationUsers");
             }
@@ -512,6 +545,7 @@ public partial class ApplicationUsers : ComponentBase
     {
         IsEditMode = false;
         CurrentUser = null;
+        EditUserRoleCode = null;
         editUser = new EditUserModel();
         Navigation.NavigateTo("/System/UserManagement/ApplicationUsers");
     }

@@ -45,42 +45,6 @@ public class GetAllSMSApplicationUsersQueryHandler : BaseQueryBundle, IRequestHa
     }
 }
 
-public class GetSMSApplicationUserByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSApplicationUserByIdQuery, Result<SMSApplicationUser>>
-{
-    private readonly SMSApplicationUserDataService _dataService;
-    private readonly ILogger<GetSMSApplicationUserByIdQueryHandler> _logger;
-
-    public GetSMSApplicationUserByIdQueryHandler(SMSApplicationUserDataService dataService, ILogger<GetSMSApplicationUserByIdQueryHandler> logger)
-    {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<SMSApplicationUser>> HandleAsync(GetSMSApplicationUserByIdQuery request, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Processing GetSMSApplicationUserByIdQuery for ID: {UserId}", request.UserId);
-            var result = await _dataService.GetSMSApplicationUserByIdAsync(request.UserId, ct);
-
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Successfully retrieved SMS Application User with ID: {UserId}", request.UserId);
-            }
-            else
-            {
-                _logger.LogWarning("SMS Application User not found with ID: {UserId}", request.UserId);
-            }
-
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError("Error processing GetSMSApplicationUserByIdQuery for ID: {UserId}", ApplicationEventIds.Error, ex);
-            return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NotFound);
-        }
-    }
-}
 
 public class GetSMSApplicationUserByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSApplicationUserByCodeQuery, Result<SMSApplicationUser>>
 {

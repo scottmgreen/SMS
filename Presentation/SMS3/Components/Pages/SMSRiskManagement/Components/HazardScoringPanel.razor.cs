@@ -672,7 +672,7 @@ public partial class HazardScoringPanel : ComponentBase
             var matrixCode = AviationRiskMatrixCalculator.GetAverageMatrixCode(averageSeverity, averageLikelihood);
             var roundedSeverity = (int)Math.Round(averageSeverity);
             var roundedLikelihood = (int)Math.Round(averageLikelihood);
-            var riskLevel = AviationRiskMatrixCalculator.GetAviationRiskLevel(roundedSeverity, roundedLikelihood);
+            var riskLevel = AviationRiskMatrixCalculator.GetAviationRiskLevel(roundedSeverity, roundedLikelihood).Value;
 
             // Store calculated values locally
             CalculatedAverageScore = averageScore;  // Keep score average for reporting

@@ -255,7 +255,7 @@ public class GetSMSOrganizationalUsersByOrganizationLevelQueryHandler : BaseQuer
                 return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(allUsersResult.Error);
             }
 
-            var filteredUsers = allUsersResult.Value?.Where(u => u.OrganizationLevel.Equals(request.OrganizationLevel, StringComparison.OrdinalIgnoreCase)) ?? Enumerable.Empty<SMSOrganizationalUser>();
+            var filteredUsers = allUsersResult.Value?.Where(u => u.OrganizationLevel.Value.Equals(request.OrganizationLevel, StringComparison.OrdinalIgnoreCase)) ?? Enumerable.Empty<SMSOrganizationalUser>();
 
             _logger.LogInformation("Successfully retrieved {Count} SMS Organizational Users for OrganizationLevel: {OrganizationLevel}", filteredUsers.Count(), request.OrganizationLevel);
             return Result<IEnumerable<SMSOrganizationalUser>>.Success(filteredUsers);

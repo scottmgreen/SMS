@@ -10,15 +10,15 @@ public sealed class SMSOrganizationalUser : BaseUser
         OrganizationalUserId = id;
     }
     public SMSOrganizationalUserID OrganizationalUserId { get; private set; }
-    public string Department { get; set; } = string.Empty;
+    public SMSDepartment Department { get; set; } 
     public string Position { get; set; } = string.Empty;
     /// <summary>
     /// OrganizationLevel (AE, RE, RM, SMS Manager, SMS Coordinator, SMS Team)
     /// </summary>
-    public string OrganizationLevel { get; set; } = string.Empty;
+    public SMSOrganizationalLevel OrganizationLevel { get; set; } 
 
 
-    public string? SMSRole { get; set; }
+    public SMSUserRole? SMSUserRole { get; set; }
 
     /// <summary>
     /// Authority level for risk approval (Strategic, Executive, Operational, Process, Support)

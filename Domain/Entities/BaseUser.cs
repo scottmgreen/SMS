@@ -17,7 +17,7 @@ public abstract class BaseUser : BaseAuditableEntity
     public Password Password { get; set; }
     public bool IsActive { get; set; }
     public DateTime? LastLoginDate { get; set; }
-    public string SMSUserType { get; set; }
+    public SMSUserType SMSUserType { get; set; }
 
     public SMSUserRole UserRole { get; set; }
 

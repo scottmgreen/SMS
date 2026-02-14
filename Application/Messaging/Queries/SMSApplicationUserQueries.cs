@@ -16,26 +16,26 @@ public class GetAllSMSApplicationUsersQuery : BaseQueryBundle, IRequest<Result<I
 /// <summary>
 /// Query to get an SMS application user by ID
 /// </summary>
-public class GetSMSApplicationUserByIdQuery : BaseQueryBundle, IRequest<Result<SMSApplicationUser>>
-{
-    /// <summary>
-    /// The ID of the application user to retrieve
-    /// </summary>
-    public string UserId { get; set; }
+//public class GetSMSApplicationUserByCodeQuery : BaseQueryBundle, IRequest<Result<SMSApplicationUser>>
+//{
+//    /// <summary>
+//    /// The ID of the application user to retrieve
+//    /// </summary>
+//    public string UserId { get; set; }
 
-    /// <summary>
-    /// Initializes a new instance of the GetSMSApplicationUserByIdQuery class.
-    /// </summary>
-    /// <param name="userId">The ID of the application user to retrieve</param>
-    /// <exception cref="ArgumentException">Thrown when userId is null or empty</exception>
-    public GetSMSApplicationUserByIdQuery(string userId)
-    {
-        if (string.IsNullOrWhiteSpace(userId))
-            throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+//    /// <summary>
+//    /// Initializes a new instance of the GetSMSApplicationUserByCodeQuery class.
+//    /// </summary>
+//    /// <param name="userId">The ID of the application user to retrieve</param>
+//    /// <exception cref="ArgumentException">Thrown when userId is null or empty</exception>
+//    public GetSMSApplicationUserByCodeQuery(string userId)
+//    {
+//        if (string.IsNullOrWhiteSpace(userId))
+//            throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
 
-        UserId = userId;
-    }
-}
+//        UserId = userId;
+//    }
+//}
 
 /// <summary>
 /// Query to get an SMS application user by code

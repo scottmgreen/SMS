@@ -49,40 +49,66 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
                 users.Add(user);
             }
 
-            // Dataset 2: SMSUserRole data for each user
+            
+            // Dataset 2: SMSUserRole data for users that have roles
+            var rolesDictionary = new Dictionary<string, SMSUserRole>();
             if (await reader.NextResultAsync().ConfigureAwait(false))
             {
                 while (await reader.ReadAsync().ConfigureAwait(false))
                 {
-                    var userRoleCode = reader.GetString(FieldNames.fSMSRoleCode).Trim();
-                    var user = users.FirstOrDefault(u => u.UserRole.Code.Trim() == userRoleCode);
-                    if (user != null)
+                    var role = Mappers.MapToSMSUserRole(reader);
+                    if (!rolesDictionary.ContainsKey(role.Code))
                     {
-                        user.UserRole = Mappers.MapToSMSUserRole(reader);
+                        rolesDictionary[role.Code] = role;
                     }
                 }
             }
-
-            // Dataset 3: SMSUserRolePermissions data for each user role
+            
+            // Dataset 3: SMSUserRolePermissions data
+            var permissionsDictionary = new Dictionary<string, List<SMSUserRolePermission>>();
             if (await reader.NextResultAsync().ConfigureAwait(false))
             {
                 while (await reader.ReadAsync().ConfigureAwait(false))
                 {
-                    var userRoleCode = reader.GetString(FieldNames.fSMSUserRoleCode);
-                    var user = users.FirstOrDefault(u => u.UserRole.Code == userRoleCode.Trim());
-                    if (user?.UserRole != null)
-                    {
-                        if (user.UserRole.Permissions == null)
-                            user.UserRole.Permissions = new List<SMSUserRolePermission>();
+                    var permission = Mappers.MapToSMSUserRolePermission(reader);
+                    var roleCode = permission.SMSUserRoleCode?.Trim();
 
-                        var permission = Mappers.MapToSMSUserRolePermission(reader);
-                        user.UserRole.Permissions.Add(permission);
+                    if (!string.IsNullOrEmpty(roleCode))
+                    {
+                        if (!permissionsDictionary.ContainsKey(roleCode))
+                        {
+                            permissionsDictionary[roleCode] = new List<SMSUserRolePermission>();
+                        }
+                        permissionsDictionary[roleCode].Add(permission);
                     }
                 }
             }
-
             await sql.CloseAsync().ConfigureAwait(false);
+            // Now assign roles and permissions to users
+            foreach (var user in users)
+            {
+                if (user.UserRole != null && !string.IsNullOrEmpty(user.UserRole.Code?.Trim()))
+                {
+                    var userRoleCode = user.UserRole.Code.Trim();
 
+                    // Get the complete role information
+                    if (rolesDictionary.TryGetValue(userRoleCode, out var completeRole))
+                    {
+                        user.UserRole = completeRole;
+
+                        // Assign permissions to the role
+                        if (permissionsDictionary.TryGetValue(userRoleCode, out var permissions))
+                        {
+                            user.UserRole.Permissions = permissions;
+                        }
+                        else
+                        {
+                            user.UserRole.Permissions = new List<SMSUserRolePermission>();
+                        }
+                    }
+                }
+                
+            }
             return Result<IEnumerable<SMSApplicationUser>>.Success(users.AsEnumerable());
         }
         catch (Exception ex)
@@ -183,30 +209,72 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
             // Dataset 1: SMSApplicationUser data
-            if (await reader.ReadAsync().ConfigureAwait(false))
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 user = Mappers.MapToSMSApplicationUser(reader);
+                
             }
 
-            // Dataset 2: SMSUserRole data
-            if (user != null && await reader.NextResultAsync().ConfigureAwait(false) && await reader.ReadAsync().ConfigureAwait(false))
+
+            // Dataset 2: SMSUserRole data for users that have roles
+            var rolesDictionary = new Dictionary<string, SMSUserRole>();
+            if (await reader.NextResultAsync().ConfigureAwait(false))
             {
-                user.UserRole = Mappers.MapToSMSUserRole(reader);
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var role = Mappers.MapToSMSUserRole(reader);
+                    if (!rolesDictionary.ContainsKey(role.Code))
+                    {
+                        rolesDictionary[role.Code] = role;
+                    }
+                }
             }
 
-            // Dataset 3: SMSUserRolePermissions data (multiple rows)
-            if (user?.UserRole != null && await reader.NextResultAsync().ConfigureAwait(false))
+            // Dataset 3: SMSUserRolePermissions data
+            var permissionsDictionary = new Dictionary<string, List<SMSUserRolePermission>>();
+            if (await reader.NextResultAsync().ConfigureAwait(false))
             {
-                var permissions = new List<SMSUserRolePermission>();
                 while (await reader.ReadAsync().ConfigureAwait(false))
                 {
                     var permission = Mappers.MapToSMSUserRolePermission(reader);
-                    permissions.Add(permission);
-                }
-                user.UserRole.Permissions = permissions;
-            }
+                    var roleCode = permission.SMSUserRoleCode?.Trim();
 
+                    if (!string.IsNullOrEmpty(roleCode))
+                    {
+                        if (!permissionsDictionary.ContainsKey(roleCode))
+                        {
+                            permissionsDictionary[roleCode] = new List<SMSUserRolePermission>();
+                        }
+                        permissionsDictionary[roleCode].Add(permission);
+                    }
+                }
+            }
             await sql.CloseAsync().ConfigureAwait(false);
+            // Now assign roles and permissions to users
+            //foreach (var user in users)
+            //{
+                if (user.UserRole != null && !string.IsNullOrEmpty(user.UserRole.Code?.Trim()))
+                {
+                    var userRoleCode = user.UserRole.Code.Trim();
+
+                    // Get the complete role information
+                    if (rolesDictionary.TryGetValue(userRoleCode, out var completeRole))
+                    {
+                        user.UserRole = completeRole;
+
+                        // Assign permissions to the role
+                        if (permissionsDictionary.TryGetValue(userRoleCode, out var permissions))
+                        {
+                            user.UserRole.Permissions = permissions;
+                        }
+                        else
+                        {
+                            user.UserRole.Permissions = new List<SMSUserRolePermission>();
+                        }
+                    }
+                }
+
+            //}
 
             if (user is not null)
             {
@@ -398,8 +466,8 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserLastName, user.LastName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserUserName, user.UserName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserPassword, user.Password.HashedValue));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserType, user.SMSUserType));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserRole, user.UserRole));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserType, user.SMSUserType.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserRole, user.UserRole.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserIsActive, user.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserLastLoginDate, user.LastLoginDate));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, user.CreatedBy));
@@ -448,7 +516,7 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserFirstName, user.FirstName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserLastName, user.LastName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserUserName, user.UserName.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserType, user.SMSUserType));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserType, user.SMSUserType.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserRole, user.UserRole.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserIsActive, user.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserLastLoginDate, user.LastLoginDate));
@@ -638,40 +706,66 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
                 users.Add(user);
             }
 
-            // Dataset 2: SMSUserRole data for each user
+
+            // Dataset 2: SMSUserRole data for users that have roles
+            var rolesDictionary = new Dictionary<string, SMSUserRole>();
             if (await reader.NextResultAsync().ConfigureAwait(false))
             {
                 while (await reader.ReadAsync().ConfigureAwait(false))
                 {
-                    var userRoleCode = reader.GetString(FieldNames.fSMSRoleCode).Trim();
-                    var user = users.FirstOrDefault(u => u.UserRole.Code.Trim() == userRoleCode);
-                    if (user != null)
+                    var role = Mappers.MapToSMSUserRole(reader);
+                    if (!rolesDictionary.ContainsKey(role.Code))
                     {
-                        user.UserRole = Mappers.MapToSMSUserRole(reader);
+                        rolesDictionary[role.Code] = role;
                     }
                 }
             }
 
-            // Dataset 3: SMSUserRolePermissions data for each user role
+            // Dataset 3: SMSUserRolePermissions data
+            var permissionsDictionary = new Dictionary<string, List<SMSUserRolePermission>>();
             if (await reader.NextResultAsync().ConfigureAwait(false))
             {
                 while (await reader.ReadAsync().ConfigureAwait(false))
                 {
-                    var userRoleCode = reader.GetString(FieldNames.fSMSUserRoleCode);
-                    var user = users.FirstOrDefault(u => u.UserRole.Code == userRoleCode);
-                    if (user?.UserRole != null)
-                    {
-                        if (user.UserRole.Permissions == null)
-                            user.UserRole.Permissions = new List<SMSUserRolePermission>();
+                    var permission = Mappers.MapToSMSUserRolePermission(reader);
+                    var roleCode = permission.SMSUserRoleCode?.Trim();
 
-                        var permission = Mappers.MapToSMSUserRolePermission(reader);
-                        user.UserRole.Permissions.Add(permission);
+                    if (!string.IsNullOrEmpty(roleCode))
+                    {
+                        if (!permissionsDictionary.ContainsKey(roleCode))
+                        {
+                            permissionsDictionary[roleCode] = new List<SMSUserRolePermission>();
+                        }
+                        permissionsDictionary[roleCode].Add(permission);
                     }
                 }
             }
-
             await sql.CloseAsync().ConfigureAwait(false);
+            // Now assign roles and permissions to users
+            foreach (var user in users)
+            {
+                if (user.UserRole != null && !string.IsNullOrEmpty(user.UserRole.Code?.Trim()))
+                {
+                    var userRoleCode = user.UserRole.Code.Trim();
 
+                    // Get the complete role information
+                    if (rolesDictionary.TryGetValue(userRoleCode, out var completeRole))
+                    {
+                        user.UserRole = completeRole;
+
+                        // Assign permissions to the role
+                        if (permissionsDictionary.TryGetValue(userRoleCode, out var permissions))
+                        {
+                            user.UserRole.Permissions = permissions;
+                        }
+                        else
+                        {
+                            user.UserRole.Permissions = new List<SMSUserRolePermission>();
+                        }
+                    }
+                }
+
+            }
             return Result<IEnumerable<SMSApplicationUser>>.Success(users.AsEnumerable());
         }
         catch (Exception ex)

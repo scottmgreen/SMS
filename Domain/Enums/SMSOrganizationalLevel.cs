@@ -13,6 +13,9 @@ public abstract class SMSOrganizationalLevel : BaseEnum<SMSOrganizationalLevel>
     public string Description { get; }
     public int AuthorityLevel { get; }
 
+    public static readonly SMSOrganizationalLevel UnassignedLevel = new SMSUnassignedLevel();
+
+
     #region Executive Roles
     public static readonly SMSOrganizationalLevel AccountableExecutive = new AccountableExecutiveLevel();
     public static readonly SMSOrganizationalLevel ResponsibleExecutive = new ResponsibleExecutiveLevel();
@@ -98,6 +101,17 @@ public abstract class SMSOrganizationalLevel : BaseEnum<SMSOrganizationalLevel>
         {
         }
     }
+
+    private sealed class SMSUnassignedLevel : SMSOrganizationalLevel
+    {
+        public SMSUnassignedLevel() : base("SMS_UNASSIGNED_LEVEL", "SMS_UNASSIGNED_LEVEL", "SMS_UNASSIGNED_LEVEL", "SMS_UNASSIGNED_LEVEL", 0)
+        {
+        }
+    }
+
+
+
+
 
     //private sealed class SubjectMatterExpertRole : SMSOrganizationalUserRole
     //{

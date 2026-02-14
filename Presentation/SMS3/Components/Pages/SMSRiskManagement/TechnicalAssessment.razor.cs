@@ -1,5 +1,8 @@
 ﻿using System.Runtime.Intrinsics.X86;
 
+using SMS_Application.Interfaces;
+using SMS_Application.Services;
+
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
@@ -65,7 +68,7 @@ public partial class TechnicalAssessment : ComponentBase
     public string AssessmentName => GetCurrentAssessmentName();
     public string LeadAssessorName => AvailableAssessors.FirstOrDefault(a => a.UserName.Value == Step1.LeadAssessor)?.DisplayName ?? Step1.LeadAssessor;
 
-    public string LeadInvestigatorName => AvailableAssessors.FirstOrDefault(a => a.UserName.Value == Step1.LeadAssessor)?.DisplayName ?? Step1.LeadAssessor;
+    public string LeadInvestigatorName => AvailableInvestigators.FirstOrDefault()?.DisplayName;
 
     // CRITICAL: Make this a property that can trigger change detection
     public List<Hazard> ReportedHazards { get; private set; } = new();
@@ -513,7 +516,26 @@ public partial class TechnicalAssessment : ComponentBase
             Logger.LogError(ex, "Error loading step models from assessment");
         }
     }
+    private async Task LoadAvailableAssessorsAsync()
+    {
+        try
+        {
+            var usersQuery = new GetUsersByApplicationGroupCodeQuery("AG-0007");
+            var usersResult = await Mediator.SendAsync(usersQuery, CancellationToken.None);
+            if (usersResult.IsSuccess)
+            {
+                AvailableAssessors = usersResult.Value?.ToList() ?? new List<SMSApplicationUser>();
 
+               
+                
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Could not load available assessors");
+           
+        }
+    }
     private async Task LoadReferenceDataAsync()
     {
         try
@@ -525,13 +547,23 @@ public partial class TechnicalAssessment : ComponentBase
             {
                 AvailableSMSUsers = smsUsersResult.Value?.Where(u => u.IsActive).ToList() ?? new List<SMSApplicationUser>();
 
-                // ENHANCED: Filter for Safety Team members only
-                AvailableAssessors = AvailableSMSUsers
-                    .Where(u => u.IsActive && IsSafetyTeamMember(u))
-                    .ToList();
+               
+            }
+            // Load Investigators Users
+            var investigatorsQuery = new GetUsersByApplicationGroupCodeQuery("AG-0006");
+            var investigatorsResult = await Mediator.SendAsync(investigatorsQuery, CancellationToken.None);
 
-                Logger.LogInformation("Filtered to {SafetyTeamCount} Safety Team assessors from {TotalCount} total SMS users",
-                    AvailableAssessors.Count, AvailableSMSUsers.Count);
+            if (investigatorsResult.IsSuccess && investigatorsResult.Value != null)
+            {
+                AvailableInvestigators = investigatorsResult.Value.ToList();                
+            }
+
+            // Load Assessors Users
+            var usersQuery = new GetUsersByApplicationGroupCodeQuery("AG-0007");
+            var usersResult = await Mediator.SendAsync(usersQuery, CancellationToken.None);
+            if (usersResult.IsSuccess)
+            {
+                AvailableAssessors = usersResult.Value?.ToList() ?? new List<SMSApplicationUser>();
             }
 
             // Load Stakeholder Users
@@ -550,8 +582,6 @@ public partial class TechnicalAssessment : ComponentBase
                 StakeholderGroups = groupsResult.Value?.ToList() ?? new List<SMSStakeholderGroup>();
             }
 
-            Logger.LogInformation("Reference data loaded - SMS Users: {SMS}, Safety Team Assessors: {Assessors}, Stakeholders: {Stakeholders}, Groups: {Groups}",
-                AvailableSMSUsers.Count, AvailableAssessors.Count, AvailableStakeholders.Count, StakeholderGroups.Count);
         }
         catch (Exception ex)
         {
@@ -563,74 +593,8 @@ public partial class TechnicalAssessment : ComponentBase
     /// Determine if a SMS Application User is a member of the Safety Team
     /// This method checks various criteria to identify Safety Team members
     /// </summary>
-    private bool IsSafetyTeamMember(SMSApplicationUser user)
-    {
-        if (user == null || !user.IsActive) return false;
 
-        // Check if user has Safety Team role
-        if (user.UserRole?.Name != null)
-        {
-            var roleName = user.UserRole.Name.ToLowerInvariant();
-            if (roleName.Contains("safety") ||
-                roleName.Contains("assessor") ||
-                roleName.Contains("risk") ||
-                roleName.Contains("sms") ||
-                roleName.Equals("safety team", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-        }
-
-        // Check SMSUserType property
-        if (!string.IsNullOrEmpty(user.SMSUserType))
-        {
-            var userType = user.SMSUserType.ToLowerInvariant();
-            if (userType.Contains("safety") ||
-                userType.Contains("assessor") ||
-                userType.Contains("risk") ||
-                userType.Contains("sms"))
-            {
-                return true;
-            }
-        }
-
-        // Check user code patterns
-        if (!string.IsNullOrEmpty(user.Code))
-        {
-            var userCode = user.Code.ToLowerInvariant();
-            if (userCode.Contains("safety") ||
-                userCode.Contains("sms") ||
-                userCode.StartsWith("st-") // Safety Team prefix
-                || userCode.StartsWith("ra-"))   // Risk Assessor prefix
-            {
-                return true;
-            }
-        }
-
-        // Check username patterns
-        if (user.UserName?.Value != null)
-        {
-            var username = user.UserName.Value.ToLowerInvariant();
-            if (username.Contains("safety") ||
-                username.Contains("sms") ||
-                username.Contains("risk") ||
-                username.Contains("assessor"))
-            {
-                return true;
-            }
-        }
-
-        // Fallback: For development/demo purposes, if no specific roles are configured,
-        // allow any active user to be considered a potential assessor
-        // TODO: Remove this fallback once proper role configuration is in place
-        if (user.UserRole?.Name == null || string.IsNullOrEmpty(user.UserRole.Name))
-        {
-            Logger.LogWarning("User {UserCode} has no role assigned - including in assessors for development purposes", user.Code);
-            return true; // Temporarily allow users without roles
-        }
-
-        return false;
-    }
+    
 
     #endregion
 

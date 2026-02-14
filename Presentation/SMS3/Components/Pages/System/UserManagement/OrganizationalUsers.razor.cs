@@ -42,17 +42,24 @@ public partial class OrganizationalUsers : ComponentBase
     private string NewLastName { get; set; } = string.Empty;
     private string NewUserName { get; set; } = string.Empty;
     private string NewPassword { get; set; } = string.Empty;
-    private string NewDepartment { get; set; } = string.Empty;
+    private string NewDepartmentId { get; set; } = string.Empty;
     private string NewPosition { get; set; } = string.Empty;
-    private string NewOrganizationLevel { get; set; } = string.Empty;
-    private string NewSMSRole { get; set; } = string.Empty;
+    private string NewOrganizationLevelId { get; set; } =  string.Empty;
+    private SMSUserRole? NewSMSUserRole { get; set; }
+
+    // Update form fields to use role ID instead of role name
+    
+    private string NewSMSUserRoleId { get; set; } = string.Empty;
+    private string EditSMSUserRoleId { get; set; } = string.Empty;
+
 
     // Edit form fields
+    
     private string EditFirstName { get; set; } = string.Empty;
     private string EditLastName { get; set; } = string.Empty;
-    private string EditDepartment { get; set; } = string.Empty;
+    private string EditDepartmentId { get; set; } = string.Empty;
     private string EditPosition { get; set; } = string.Empty;
-    private string EditOrganizationLevel { get; set; } = string.Empty;
+    private string EditOrganizationLevelId { get; set; }  = string.Empty;
     private bool EditIsActive { get; set; } = true;
 
     // Password change fields
@@ -86,29 +93,20 @@ public partial class OrganizationalUsers : ComponentBase
         new() { Text = "Inactive", Value = false }
     };
 
-    private readonly List<DropdownOption> DepartmentOptions = new()
+    private List<DropdownOption> DepartmentOptions
     {
-        new() { Text = "Operations", Value = "Operations" },
-        new() { Text = "Safety", Value = "Safety" },
-        new() { Text = "Security", Value = "Security" },
-        new() { Text = "Maintenance", Value = "Maintenance" },
-        new() { Text = "Administration", Value = "Administration" },
-        new() { Text = "Finance", Value = "Finance" },
-        new() { Text = "IT", Value = "IT" },
-        new() { Text = "Human Resources", Value = "Human Resources" },
-        new() { Text = "Facilities", Value = "Facilities" },
-        new() { Text = "Emergency Response", Value = "Emergency Response" },
-        new() { Text = "Quality Assurance", Value = "Quality Assurance" },
-        new() { Text = "Training", Value = "Training" },
-        new() { Text = "Communications", Value = "Communications" },
-        new() { Text = "Environmental", Value = "Environmental" },
-        new() { Text = "Legal", Value = "Legal" },
-        new() { Text = "Planning", Value = "Planning" },
-        new() { Text = "Engineering", Value = "Engineering" },
-        new() { Text = "Customer Service", Value = "Customer Service" },
-        new() { Text = "Ground Services", Value = "Ground Services" },
-        new() { Text = "Management", Value = "Management" }
-    };
+        get
+        {
+            return SMSDepartment.GetAllDepartments()
+                .OrderBy(dept => dept.Name)
+                .Select(dept => new DropdownOption
+                {
+                    Text = dept.Name,
+                    Value = dept.Value
+                })
+                .ToList();
+        }
+    }
 
     // Updated to use SMSOrganizationalLevel enum with category grouping
     private List<DropdownOption> OrganizationLevelOptions
@@ -151,18 +149,31 @@ public partial class OrganizationalUsers : ComponentBase
         }
     }
 
-    private readonly List<DropdownOption> SMSRoleOptions = new()
+    // Update validation to check if role exists
+    private bool IsValidSMSRole(string roleId)
     {
-        new() { Text = "SMS Manager", Value = "SMS Manager" },
-        new() { Text = "Safety Manager", Value = "Safety Manager" },
-        new() { Text = "Quality Assurance Manager", Value = "Quality Assurance Manager" },
-        new() { Text = "Operations Manager", Value = "Operations Manager" },
-        new() { Text = "SMS Coordinator", Value = "SMS Coordinator" },
-        new() { Text = "Safety Officer", Value = "Safety Officer" },
-        new() { Text = "Investigator", Value = "Investigator" },
-        new() { Text = "Analyst", Value = "Analyst" }
-    };
+        if (string.IsNullOrWhiteSpace(roleId)) return true; // Optional field
 
+        return SMSRoleOptions.Any(role => role.Value.Equals(roleId, StringComparison.OrdinalIgnoreCase));
+    }
+    
+
+    // Helper method to get enum by value
+    private SMSOrganizationalLevel GetOrganizationLevelByValue(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return SMSOrganizationalLevel.UnassignedLevel;
+
+        return SMSOrganizationalLevel.GetAllValues()
+            .FirstOrDefault(l => l.Value.Equals(value, StringComparison.OrdinalIgnoreCase))
+            ?? SMSOrganizationalLevel.UnassignedLevel;
+    }
+
+    // Update form validation
+    private bool IsValidOrganizationLevel(SMSOrganizationalLevel organizationLevel)
+    {
+        return organizationLevel != null && organizationLevel != SMSOrganizationalLevel.UnassignedLevel;
+    }
     #endregion
 
     #region Form Validation Properties
@@ -172,14 +183,14 @@ public partial class OrganizationalUsers : ComponentBase
         !string.IsNullOrWhiteSpace(NewLastName) &&
         !string.IsNullOrWhiteSpace(NewUserName) &&
         !string.IsNullOrWhiteSpace(NewPassword) &&
-        !string.IsNullOrWhiteSpace(NewDepartment) &&
-        IsValidOrganizationLevel(NewOrganizationLevel);
+        IsValidDepartment(NewDepartmentId) &&
+        IsValidOrganizationLevel(NewOrganizationLevelId);
 
     private bool IsEditFormValid =>
         !string.IsNullOrWhiteSpace(EditFirstName) &&
         !string.IsNullOrWhiteSpace(EditLastName) &&
-        !string.IsNullOrWhiteSpace(EditDepartment) &&
-        IsValidOrganizationLevel(EditOrganizationLevel);
+        IsValidDepartment(EditDepartmentId) &&
+        IsValidOrganizationLevel(EditOrganizationLevelId);
 
     private bool IsPasswordFormValid =>
         !string.IsNullOrWhiteSpace(NewPassword) &&
@@ -195,7 +206,13 @@ public partial class OrganizationalUsers : ComponentBase
         return SMSOrganizationalLevel.GetAllValues()
             .Any(level => level.Name.Equals(organizationLevel, StringComparison.OrdinalIgnoreCase));
     }
+    private bool IsValidDepartment(string department)
+    {
+        if (string.IsNullOrWhiteSpace(department)) return true; // Optional field
 
+        return SMSDepartment.GetAllValues()
+            .Any(level => level.Name.Equals(department, StringComparison.OrdinalIgnoreCase));
+    }
     #endregion
 
     #region Lifecycle Methods
@@ -208,7 +225,41 @@ public partial class OrganizationalUsers : ComponentBase
     #endregion
 
     #region Data Loading
+    // Load SMS User Roles dynamically
+    private List<DropdownOption> SMSRoleOptions { get; set; } = new();
 
+    private async Task LoadSMSRoleOptions()
+    {
+        try
+        {
+            var query = new GetAllSMSUserRolesQuery();
+            var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+            if (result.IsSuccess && result.Value != null)
+            {
+                SMSRoleOptions = result.Value
+                    .Where(role => !string.IsNullOrEmpty(role.Name)) // Only include roles with names
+                    .OrderBy(role => role.Name)
+                    .Select(role => new DropdownOption
+                    {
+                        Text = role.Name ?? role.Code ?? "Unknown Role",
+                        Value = role.Code ?? string.Empty
+                    })
+                    .ToList();
+            }
+            else
+            {
+                // Fallback to empty list or show error
+                SMSRoleOptions = new List<DropdownOption>();
+                Logger.LogWarning("Failed to load SMS User Roles: {Error}", result.Error?.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading SMS User Roles");
+            SMSRoleOptions = new List<DropdownOption>();
+        }
+    }
     private async Task LoadDataAsync()
     {
         try
@@ -226,6 +277,10 @@ public partial class OrganizationalUsers : ComponentBase
             AllOrganizationalGroups = groupsResult.IsSuccess ?
                 groupsResult.Value?.ToList() ?? new List<SMSOrganizationalGroup>() :
                 new List<SMSOrganizationalGroup>();
+
+
+            // Load SMS User Roles for dropdown
+            await LoadSMSRoleOptions();
 
             Logger.LogInformation("Loaded {UserCount} organizational users and {GroupCount} organizational groups",
                 OrganizationalUsersList.Count, AllOrganizationalGroups.Count);
@@ -249,10 +304,10 @@ public partial class OrganizationalUsers : ComponentBase
         NewLastName = string.Empty;
         NewUserName = string.Empty;
         NewPassword = string.Empty;
-        NewDepartment = string.Empty;
+        NewDepartmentId = string.Empty;
         NewPosition = string.Empty;
-        NewOrganizationLevel = string.Empty;
-        NewSMSRole = string.Empty;
+        NewOrganizationLevelId = string.Empty;
+        NewSMSUserRole = null;
         ShowCreateModal = true;
     }
 
@@ -263,10 +318,10 @@ public partial class OrganizationalUsers : ComponentBase
         NewLastName = string.Empty;
         NewUserName = string.Empty;
         NewPassword = string.Empty;
-        NewDepartment = string.Empty;
+        NewDepartmentId = string.Empty;
         NewPosition = string.Empty;
-        NewOrganizationLevel = string.Empty;
-        NewSMSRole = string.Empty;
+        NewOrganizationLevelId = string.Empty;
+        NewSMSUserRole = null;
     }
 
     private async Task CreateUser()
@@ -282,6 +337,27 @@ public partial class OrganizationalUsers : ComponentBase
             IsSaving = true;
             StateHasChanged();
 
+            // Find the actual SMS User Role if one was selected
+            SMSUserRole? selectedRole = null;
+            if (!string.IsNullOrEmpty(NewSMSUserRoleId))
+            {
+                // You'll need to fetch the actual role from the database or loaded options
+                var roleOption = SMSRoleOptions.FirstOrDefault(r => r.Value == NewSMSUserRoleId);
+                if (roleOption != null)
+                {
+                    // Either fetch from database or create a minimal role object
+                    selectedRole = new SMSUserRole(new SMSUserRoleID(roleOption.Value))
+                    {
+                        Code = roleOption.Value,
+                        Name = roleOption.Text
+                    };
+                }
+            }
+
+
+
+
+
             // Create user entity
             var userCode = $"OU-0000";
             var userId = new SMSOrganizationalUserID(userCode);
@@ -292,10 +368,10 @@ public partial class OrganizationalUsers : ComponentBase
                 LastName = LastName.Create(NewLastName).Value,
                 UserName = UserName.Create(NewUserName).Value,
                 Password = Password.Create(NewPassword).Value,
-                Department = NewDepartment,
+                Department =  SMSDepartment.FromName(NewDepartmentId),
                 Position = NewPosition,
-                OrganizationLevel = NewOrganizationLevel,
-                SMSRole = NewSMSRole,
+                OrganizationLevel = SMSOrganizationalLevel.FromName(NewOrganizationLevelId) ?? SMSOrganizationalLevel.UnassignedLevel,
+                SMSUserRole = NewSMSUserRole,
                 IsActive = true
             };
 
@@ -354,11 +430,11 @@ public partial class OrganizationalUsers : ComponentBase
             // Set edit form values
             EditFirstName = CurrentUser.FirstName?.Value ?? string.Empty;
             EditLastName = CurrentUser.LastName?.Value ?? string.Empty;
-            EditDepartment = CurrentUser.Department ?? string.Empty;
+            EditDepartmentId = CurrentUser.Department.Value ?? string.Empty;
             EditPosition = CurrentUser.Position ?? string.Empty;
-            EditOrganizationLevel = CurrentUser.OrganizationLevel ?? string.Empty;
+            EditOrganizationLevelId = CurrentUser.OrganizationLevel.Name ?? SMSOrganizationalLevel.UnassignedLevel;
             EditIsActive = CurrentUser.IsActive;
-
+            EditSMSUserRoleId = CurrentUser.SMSUserRole?.Code ?? string.Empty;
             // Open edit modal
             ShowEditModal = true;
         }
@@ -375,9 +451,11 @@ public partial class OrganizationalUsers : ComponentBase
         CurrentUser = null;
         EditFirstName = string.Empty;
         EditLastName = string.Empty;
-        EditDepartment = string.Empty;
+        EditDepartmentId = string.Empty;
         EditPosition = string.Empty;
-        EditOrganizationLevel = string.Empty;
+        // FIXED: Reset to empty string instead of enum object
+        EditOrganizationLevelId = string.Empty;
+        EditSMSUserRoleId = string.Empty; // ADDED: Reset SMS User Role
         EditIsActive = true;
     }
 
@@ -397,11 +475,30 @@ public partial class OrganizationalUsers : ComponentBase
             // Update user properties
             CurrentUser.FirstName = FirstName.Create(EditFirstName).Value;
             CurrentUser.LastName = LastName.Create(EditLastName).Value;
-            CurrentUser.Department = EditDepartment;
+            CurrentUser.Department = SMSDepartment.FromName(EditDepartmentId);
             CurrentUser.Position = EditPosition;
-            CurrentUser.OrganizationLevel = EditOrganizationLevel;
+            CurrentUser.OrganizationLevel = SMSOrganizationalLevel.FromName(EditOrganizationLevelId) ?? SMSOrganizationalLevel.UnassignedLevel;
             CurrentUser.IsActive = EditIsActive;
+            // ADDED: Handle SMS User Role update
+            if (!string.IsNullOrEmpty(EditSMSUserRoleId))
+            {
+                var roleOption = SMSRoleOptions.FirstOrDefault(r => r.Value == EditSMSUserRoleId);
+                if (roleOption != null)
+                {
+                    CurrentUser.SMSUserRole = new SMSUserRole(new SMSUserRoleID(roleOption.Value))
+                    {
+                        Code = roleOption.Value,
+                        Name = roleOption.Text
+                    };
+                }
+            }
+            else
+            {
+                CurrentUser.SMSUserRole = null;
+            }
 
+            CurrentUser.IsActive = EditIsActive;
+            CurrentUser.SMSUserType = SMSUserType.Organizational; // FIXED: Should be Organizational, not Stakeholder
             var updateCommand = new UpdateSMSOrganizationalUserCommand(CurrentUser);
             var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
 
@@ -725,42 +822,8 @@ public partial class OrganizationalUsers : ComponentBase
 
     #region Utility Methods
 
-    private async Task ExportUsers()
-    {
-        ShowInfoNotification("Export functionality will be implemented soon.");
-    }
-
-    private BadgeStyle GetDepartmentBadgeStyle(string department)
-    {
-        return department switch
-        {
-            "Safety" => BadgeStyle.Primary,
-            "Operations" => BadgeStyle.Success,
-            "Security" => BadgeStyle.Warning,
-            "Management" => BadgeStyle.Info,
-            "IT" => BadgeStyle.Light,
-            _ => BadgeStyle.Secondary
-        };
-    }
-
-    // Add method to get organization level badge style
-    private BadgeStyle GetOrganizationLevelBadgeStyle(string organizationLevel)
-    {
-        var level = SMSOrganizationalLevel.GetAllValues()
-            .FirstOrDefault(l => l.Name.Equals(organizationLevel, StringComparison.OrdinalIgnoreCase));
-
-        if (level == null) return BadgeStyle.Secondary;
-
-        return level.AuthorityLevel switch
-        {
-            >= 9 => BadgeStyle.Danger,    // Accountable/Responsible Executive
-            8 => BadgeStyle.Warning,      // Responsible Manager
-            7 => BadgeStyle.Primary,      // SMS Manager
-            6 => BadgeStyle.Info,         // SMS Coordinator
-            5 => BadgeStyle.Success,      // SMS Team Member
-            _ => BadgeStyle.Secondary
-        };
-    }
+    
+        
 
     // Add method to get organization level display text with hierarchy info
     private string GetOrganizationLevelDisplayText(string organizationLevel)

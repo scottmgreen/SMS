@@ -41,7 +41,10 @@ public partial class StakeholderUsers : ComponentBase
     private string RoleUserCode { get; set; } = string.Empty;
     private string RoleUserDisplayName { get; set; } = string.Empty;
     private string CurrentRoleCode { get; set; } = string.Empty;
-
+    private static readonly string[] SMSModules =
+    {
+        "SMS_Assurance", "SMS_Policy", "SMS_Promotion", "SMS_RiskManagement", "SMS_System"
+    };
     // Component References
     private RadzenDataGrid<SMSStakeholderUser>? usersGrid;
 
@@ -128,9 +131,9 @@ public partial class StakeholderUsers : ComponentBase
                 Password = Password.Create(NewUser.Password).Value,
                 StakeholderType = NewUser.StakeholderType,
                 Organization = NewUser.Organization,
-                IsActive = true,
+                IsActive = NewUser.IsActive,
                 IsPOPEmployee = NewUser.IsPOPEmployee,
-                SMSUserType = "StakeHolder"
+                SMSUserType = SMSUserType.Stakeholder
             };
 
             // Assign user role if specified
@@ -236,7 +239,7 @@ public partial class StakeholderUsers : ComponentBase
             CurrentEditUser.IsActive = editUser.IsActive;
             CurrentEditUser.IsPOPEmployee = editUser.IsPOPEmployee;
             CurrentEditUser.UpdatedBy = AuthService.CurrentUser.Code;
-
+            CurrentEditUser.SMSUserType = SMSUserType.Stakeholder;
             // Update user role if specified
             if (!string.IsNullOrWhiteSpace(editUser.UserRoleCode))
             {
@@ -301,6 +304,7 @@ public partial class StakeholderUsers : ComponentBase
                 OkButtonText = "Delete",
                 CancelButtonText = "Cancel",
                 AutoFocusFirstElement = true
+                
             });
 
         if (result == true)
@@ -308,7 +312,20 @@ public partial class StakeholderUsers : ComponentBase
             await DeleteUser(userId);
         }
     }
+    private bool IsPermissionGranted(SMSUserRole role, string module, string action)
+    {
+        if (role?.Permissions == null) return false;
 
+        var permission = role.Permissions.FirstOrDefault(p => p.SMSModule == module);
+        return action switch
+        {
+            "Create" => permission?.Create == true,
+            "Read" => permission?.Read == true,
+            "Update" => permission?.Update == true,
+            "Delete" => permission?.Delete == true,
+            _ => false
+        };
+    }
     private async Task DeleteUser(string userId)
     {
         try
@@ -451,7 +468,7 @@ public partial class StakeholderUsers : ComponentBase
                 user.UserRole = null;
                 ShowSuccessNotification($"Role removed from {displayName} successfully.");
             }
-
+            user.UpdatedBy = AuthService.CurrentUserDisplayName;
             var updateCommand = new UpdateSMSStakeholderUserCommand(user);
             var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
 
@@ -470,7 +487,22 @@ public partial class StakeholderUsers : ComponentBase
             ShowErrorNotification("Error assigning role. Please try again.");
         }
     }
+    private readonly List<StatusOption> IsActiveOptions = new()
+    {
+        new() { Text = "Active", Value = true },
+        new() { Text = "Inactive", Value = false }
+    };
 
+    private readonly List<StatusOption> IsPOPEmployeeOptions = new()
+    {
+        new() { Text = "Yes", Value = true },
+        new() { Text = "No", Value = false }
+    };
+    public class StatusOption
+    {
+        public string Text { get; set; } = string.Empty;
+        public bool Value { get; set; }
+    }
     #endregion
 
     #region Group Management
@@ -743,6 +775,8 @@ public partial class StakeholderUsers : ComponentBase
         public string Organization { get; set; } = "";
         public string UserRoleCode { get; set; } = "";
         public bool IsPOPEmployee { get; set; } = false;
+
+        public bool IsActive { get; set; } = false;
     }
 
     public class EditStakeholderUserModel

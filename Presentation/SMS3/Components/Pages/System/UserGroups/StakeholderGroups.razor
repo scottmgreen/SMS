@@ -9,7 +9,7 @@
 
 <!-- SMS Page Header -->
 <PageHeader Title="Stakeholder Group Management"
-           Subtitle="Manage SMS Stakeholder User Groups "
+            Subtitle="@($"Manage SMS Stakeholder User Groups ({SMSStakeholderGroups.Count})")"
            Icon="fas fa-users-cog">
 </PageHeader>
 
@@ -366,13 +366,8 @@
 <!-- Groups Display -->
 <RadzenCard>
     <RadzenCard>
-        <div class="d-flex justify-content-between align-items-center w-100">
-            <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">
-                <RadzenIcon Icon="list" Style="margin-right: 0.5rem;" />
-                Stakeholder Groups (@SMSStakeholderGroups.Count)
-            </RadzenText>
+        <div class="d-flex justify-content-end align-items-center w-100">
             <div class="d-flex gap-2">
-                <RadzenButton Text="Export" Icon="download" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" />
                 <RadzenButton Text="Add Group" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
                               Click="@OpenCreateModal" />
             </div>
@@ -387,7 +382,7 @@
                             ShowPagingSummary="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                 
                 <Columns>
-                    <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="Code" Title="Code" Width="200px" Sortable="true" Filterable="true">
+                    <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="Code" Title="Stakeholder Group ID" Width="240px" Sortable="true" Filterable="true">
                         <Template Context="group">
                             <div class="d-flex align-items-center">
                            
@@ -396,7 +391,7 @@
                             </div>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="Name" Title="Group Name" Width="200px" Sortable="true" Filterable="true">
+                    <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="Name" Title="Group Name" Width="240px" Sortable="true" Filterable="true">
                         <Template Context="group">
                             <div class="d-flex align-items-center">
                                 
@@ -421,21 +416,14 @@
 
                     
 
-                    <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="IsActive" Title="Status" Width="150px" Sortable="true" Filterable="true">
+                    <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="IsActive" Title="Active" Width="150px" Sortable="true" Filterable="true">
                         <Template Context="group">
-                            <RadzenBadge Text="@(group.IsActive ? "Active" : "Inactive")" 
-                                         BadgeStyle="@(group.IsActive ? BadgeStyle.Success : BadgeStyle.Secondary)" />
+                            <RadzenIcon Icon="@(group.IsActive ? "check_box" : "check_box_outline_blank")"
+                                        Style="@(group.IsActive ? "color: var(--rz-success);" : "color: var(--rz-danger);")" />
                         </Template>
                     </RadzenDataGridColumn>
 
-                    <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="CreatedDate" Title="Created" Width="140px" Sortable="true">
-                        <Template Context="group">
-                            <div style="font-size: 0.9em;">
-                                <div>@group.CreatedDate?.ToString("MM/dd/yyyy")</div>
-                                
-                            </div>
-                        </Template>
-                    </RadzenDataGridColumn>
+                   
 
                     <RadzenDataGridColumn TItem="SMSStakeholderGroup" Title="Actions" Width="180px" Sortable="false" Filterable="false">
                         <Template Context="group">

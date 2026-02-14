@@ -69,7 +69,7 @@ public static partial class Mappers
             applicationUser.LastName = LastName.Create(reader.GetString(FieldNames.fSMSApplicationUserLastName)).Value;
             applicationUser.UserName = UserName.Create(reader.GetString(FieldNames.fSMSApplicationUserUserName)).Value;
             applicationUser.Password = Password.FromHash(reader.GetString(FieldNames.fSMSApplicationUserPassword), reader.GetDateTime(FieldNames.fCreatedDate), false);
-            applicationUser.SMSUserType = reader.GetString(FieldNames.fSMSApplicationUserTypeCode);
+            applicationUser.SMSUserType = SMSUserType.FromValue(reader.GetString(FieldNames.fSMSApplicationUserTypeCode));
             applicationUser.UserRole = new SMSUserRole(new SMSUserRoleID(reader.GetString(FieldNames.fSMSUserRoleCode)));
             applicationUser.IsActive = reader.GetBoolean(FieldNames.fSMSApplicationUserIsActive);
             applicationUser.LastLoginDate = reader.IsDBNull(FieldNames.fSMSApplicationUserLastLoginDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSApplicationUserLastLoginDate);
@@ -102,15 +102,19 @@ public static partial class Mappers
             orgUser.UserName = UserName.Create(reader.GetString(FieldNames.fSMSOrganizationalUserUserName)).Value;
             orgUser.Password = Password.FromHash(reader.GetString(FieldNames.fSMSOrganizationalUserPassword), createdDate);
 
-            orgUser.Department = reader.GetString(FieldNames.fSMSOrganizationalUserDepartment);
+            orgUser.Department = SMSDepartment.FromValue(reader.GetString(FieldNames.fSMSOrganizationalUserDepartment));
             orgUser.Position = reader.GetString(FieldNames.fSMSOrganizationalUserPosition);
-            orgUser.OrganizationLevel = reader.GetString(FieldNames.fSMSOrganizationalUserOrganizationLevel);
+
+            orgUser.OrganizationLevel = SMSOrganizationalLevel.FromValue(reader.GetString(FieldNames.fSMSOrganizationalUserOrganizationLevel));
+
+
+            //orgUser.OrganizationLevel = reader.GetString(FieldNames.fSMSOrganizationalUserOrganizationLevel);
 
             // New SMS role fields - with null checking for backward compatibility
-            if (reader.HasColumn(FieldNames.fSMSOrganizationalUserSMSRole))
-            {
-                orgUser.SMSRole = reader.GetValue<string>(FieldNames.fSMSOrganizationalUserSMSRole);
-            }
+            //if (reader.HasColumn(FieldNames.fSMSOrganizationalUserSMSRole))
+            //{
+            //    orgUser.SMSUserRole = reader.GetValue<string>(FieldNames.fSMSOrganizationalUserSMSRole);
+            //}
 
             if (reader.HasColumn(FieldNames.fSMSOrganizationalUserAuthorityLevel))
             {

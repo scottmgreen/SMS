@@ -50,7 +50,7 @@ public partial class OrganizationalStructure : ComponentBase
 
             // Get unassigned active users (no organization level or empty)
             UnassignedUsers = OrganizationalUsers
-                .Where(u => string.IsNullOrEmpty(u.OrganizationLevel))
+                .Where(u => string.IsNullOrEmpty(u.OrganizationLevel.Name))
                 .OrderBy(u => u.DisplayName)
                 .ToList();
 
@@ -75,6 +75,7 @@ public partial class OrganizationalStructure : ComponentBase
     private List<SMSOrganizationalLevelInfo> GetSMSRoles()
     {
         return SMSOrganizationalLevel.GetAllValues()
+            .Where(l=> l.AuthorityLevel > 0)
             .OrderByDescending(level => level.AuthorityLevel)
             .Select(level => new SMSOrganizationalLevelInfo
             {
@@ -89,7 +90,7 @@ public partial class OrganizationalStructure : ComponentBase
     {
         return OrganizationalUsers
             .Where(user => !string.IsNullOrEmpty(user.OrganizationLevel) &&
-                          user.OrganizationLevel.Equals(level.Name, StringComparison.OrdinalIgnoreCase))
+                          user.OrganizationLevel.Value.Equals(level.Value, StringComparison.OrdinalIgnoreCase))
             .OrderBy(user => user.DisplayName)
             .ToList();
     }
@@ -156,7 +157,7 @@ public partial class OrganizationalStructure : ComponentBase
             }
 
             // Update the user's organization level
-            user.OrganizationLevel = SelectedLevelForAssignment.Name;
+            user.OrganizationLevel = SelectedLevelForAssignment;
 
             // Send update command
             var updateCommand = new UpdateSMSOrganizationalUserCommand(user);
@@ -201,7 +202,7 @@ public partial class OrganizationalStructure : ComponentBase
                 StateHasChanged();
 
                 // Clear the user's organization level
-                user.OrganizationLevel = string.Empty;
+                user.OrganizationLevel = SMSOrganizationalLevel.UnassignedLevel;
 
                 // Send update command
                 var updateCommand = new UpdateSMSOrganizationalUserCommand(user);

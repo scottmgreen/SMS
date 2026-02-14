@@ -59,26 +59,48 @@ namespace SMS3.Components.Shared
         /// <param name="severity">Severity value (1-5)</param>
         /// <param name="likelihood">Likelihood value (1-5)</param>
         /// <returns>Risk level (High, Medium, Low, Acceptable)</returns>
-        public static string GetAviationRiskLevel(int severity, int likelihood)
+        //public static string GetAviationRiskLevel(int severity, int likelihood)
+        //{
+        //    return (severity, likelihood) switch
+        //    {
+        //        // High Risk (Red)
+        //        (5, 3) or (5, 4) or (5, 5) or (4, 4) or (4, 5) or (3, 5) => "High",
+
+        //        // Medium Risk (Orange)  
+        //        (5, 2) or (4, 3) or (3, 4) or (2, 5) => "Medium",
+
+        //        // Low Risk (Yellow)
+        //        (5, 1) or (4, 2) or (3, 2) or (3, 3) or (2, 3) or (2, 4) or (1, 5) => "Low",
+
+        //        // Acceptable Risk (Green)
+        //        (4, 1) or (3, 1) or (2, 1) or (2, 2) or (1, 1) or (1, 2) or (1, 3) or (1, 4) => "Acceptable",
+
+        //        _ => "Unknown"
+        //    };
+        //}
+        /// <summary>
+        /// Get aviation risk level from severity and likelihood
+        /// </summary>
+        /// <param name="severity">Severity value (1-5)</param>
+        /// <param name="likelihood">Likelihood value (1-5)</param>
+        /// <returns>Risk level enum</returns>
+        public static RiskLevel GetAviationRiskLevel(int severity, int likelihood)
         {
             return (severity, likelihood) switch
             {
                 // High Risk (Red)
-                (5, 3) or (5, 4) or (5, 5) or (4, 4) or (4, 5) or (3, 5) => "High",
+                (5, 3) or (5, 4) or (5, 5) or (4, 4) or (4, 5) or (3, 5) => RiskLevel.High,
 
                 // Medium Risk (Orange)  
-                (5, 2) or (4, 3) or (3, 4) or (2, 5) => "Medium",
+                (5, 2) or (4, 3) or (3, 4) or (2, 5) => RiskLevel.Medium,
 
-                // Low Risk (Yellow)
-                (5, 1) or (4, 2) or (3, 2) or (3, 3) or (2, 3) or (2, 4) or (1, 5) => "Low",
+                // Low Risk (Yellow) - includes what was previously "Acceptable"
+                (5, 1) or (4, 2) or (3, 2) or (3, 3) or (2, 3) or (2, 4) or (1, 5) or
+                (4, 1) or (3, 1) or (2, 1) or (2, 2) or (1, 1) or (1, 2) or (1, 3) or (1, 4) => RiskLevel.Low,
 
-                // Acceptable Risk (Green)
-                (4, 1) or (3, 1) or (2, 1) or (2, 2) or (1, 1) or (1, 2) or (1, 3) or (1, 4) => "Acceptable",
-
-                _ => "Unknown"
+                _ => RiskLevel.Low // Default fallback instead of "Unknown"
             };
         }
-
         /// <summary>
         /// Get the exact hex color for a matrix cell
         /// </summary>

@@ -45,8 +45,6 @@
                             User Roles (@UserRolesList.Count())
                         </RadzenText>
                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                            <RadzenButton Text="Export" Icon="download" Variant="Variant.Outlined" Size="ButtonSize.Small" 
-                                        Click="@ExportRoles" />
                             <RadzenButton Text="Add Role" Icon="add" ButtonStyle="ButtonStyle.Success" 
                                         Click="@ShowCreateDialog" />
                         </RadzenStack>
@@ -72,7 +70,7 @@
                                         </RadzenStack>
                                     </Template>
                                 </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="SMSUserRole" Title="Permissions Summary" Width="350px" Sortable="false">
+                                <RadzenDataGridColumn TItem="SMSUserRole" Title="Permissions Summary" Width="500px" Sortable="false">
                                     <Template Context="role">
                                         @{
                                             var totalPermissions = GetTotalPermissions(role);
@@ -81,45 +79,16 @@
                                         }
                                         <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
                                             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                                <RadzenProgressBar Value="@percentage" ShowValue="false" Style="width: 120px;" />
+                                                <RadzenProgressBar Value="@percentage" ShowValue="false" Style="width: 425px;" />
                                                 <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
                                                     @totalPermissions / @maxPermissions permissions
                                                 </RadzenText>
                                             </RadzenStack>
-                                            @if (role.Permissions?.Any() == true)
-                                            {
-                                                <div>
-                                                    @{
-                                                        var moduleGroups = role.Permissions
-                                                            .Where(p => p.Create || p.Read || p.Update || p.Delete)
-                                                            .GroupBy(p => p.SMSModule)
-                                                            .Take(3);
-                                                    }
-                                                    @foreach (var group in moduleGroups)
-                                                    {
-                                                        <RadzenBadge Variant="Variant.Filled" BadgeStyle="BadgeStyle.Info" Text="@group.Key" Style="margin-right: 0.25rem;" />
-                                                    }
-                                                    @if (role.Permissions.GroupBy(p => p.SMSModule).Count() > 3)
-                                                    {
-                                                        <RadzenBadge Variant="Variant.Filled" BadgeStyle="BadgeStyle.Secondary" Text="@($"+{role.Permissions.GroupBy(p => p.SMSModule).Count() - 3} more")" />
-                                                    }
-                                                </div>
-                                            }
+                                           
                                         </RadzenStack>
                                     </Template>
                                 </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="SMSUserRole" Property="CreatedDate" Title="Created" Width="150px">
-                                    <Template Context="role">
-                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0">
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
-                                                @(role.CreatedDate?.ToString("MM/dd/yyyy") ?? "N/A")
-                                            </RadzenText>
-                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                                by @role.CreatedBy
-                                            </RadzenText>
-                                        </RadzenStack>
-                                    </Template>
-                                </RadzenDataGridColumn>
+                                
                                 <RadzenDataGridColumn TItem="SMSUserRole" Title="Actions" Width="200px" Sortable="false" Filterable="false">
                                     <Template Context="role">
                                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
@@ -181,7 +150,7 @@
                                 <RadzenRequiredValidator Component="RoleName" Text="Role name is required" />
                             </RadzenColumn>
                         </RadzenRow>
-
+                        <br />
                         <!-- Permission Matrix -->
                         <RadzenRow Gap="1rem">
                             <RadzenColumn Size="12">
@@ -250,11 +219,7 @@
                     </RadzenTemplateForm>
                 </div>
                 <div class="sms-modal-footer">
-                    <div class="d-flex justify-content-between align-items-center w-100">
-                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Style="margin: 0;">
-                            <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
-                            Define granular permissions for each SMS module to control user access and capabilities.
-                        </RadzenAlert>
+                    <div class="d-flex justify-content-end align-items-center w-100">
                         <div class="d-flex gap-2">
                             <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseCreateModal" />
                             <RadzenButton Text="Create Role" Icon="save" ButtonStyle="ButtonStyle.Primary" 
@@ -291,7 +256,7 @@
                                 <RadzenRequiredValidator Component="RoleName" Text="Role name is required" />
                             </RadzenColumn>
                         </RadzenRow>
-
+                        <br />
                         <!-- Permission Matrix -->
                         <RadzenRow Gap="1rem">
                             <RadzenColumn Size="12">
@@ -360,11 +325,7 @@
                     </RadzenTemplateForm>
                 </div>
                 <div class="sms-modal-footer">
-                    <div class="d-flex justify-content-between align-items-center w-100">
-                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Style="margin: 0;">
-                            <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
-                            Modify permissions for each SMS module. Changes will affect all users assigned to this role.
-                        </RadzenAlert>
+                    <div class="d-flex justify-content-end align-items-center w-100">
                         <div class="d-flex gap-2">
                             <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseEditModal" />
                             <RadzenButton Text="Update Role" Icon="save" ButtonStyle="ButtonStyle.Warning" 
@@ -491,7 +452,7 @@
                     }
                 </div>
                 <div class="sms-modal-footer">
-                    <div class="d-flex justify-content-center align-items-center w-100">
+                    <div class="d-flex justify-content-end align-items-center w-100">
                         <RadzenButton Text="Close" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@ClosePermissionsModal" />
                     </div>
                 </div>

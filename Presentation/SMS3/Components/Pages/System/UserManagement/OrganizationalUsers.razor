@@ -9,7 +9,7 @@
 
 <!-- SMS Page Header -->
 <PageHeader Title="Organizational User Management"
-           Subtitle="Manage SMS Organizational Users"
+            Subtitle="@($"Manage SMS Organizational Users ({@OrganizationalUsersList.Count()})")"
            Icon="fas fa-user-tie">
 </PageHeader>
 
@@ -33,14 +33,9 @@
 <!-- Users Display -->
 <RadzenCard>
     <RadzenCard>
-        <div class="d-flex justify-content-between align-items-center w-100">
-            <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">
-                <RadzenIcon Icon="corporate_fare" Style="margin-right: 0.5rem;" />
-                Organizational Users (@OrganizationalUsersList.Count)
-            </RadzenText>
+        <div class="d-flex justify-content-end align-items-center w-100">
             <div class="d-flex gap-2">
-                <RadzenButton Text="Export" Icon="download" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
-                              Click="@ExportUsers" />
+                
                 <RadzenButton Text="Add User" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
                               Click="@OpenCreateModal" />
             </div>
@@ -55,7 +50,7 @@
                             ShowPagingSummary="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                 
                 <Columns>
-                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="Code" Title="Code" Width="120px" Sortable="true" Filterable="true">
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="Code" Title="User ID" Width="75px" Sortable="true" Filterable="true">
                         <Template Context="user">
                             <div class="d-flex align-items-center">
                                 <strong>@user.Code</strong>
@@ -63,11 +58,9 @@
                         </Template>
                     </RadzenDataGridColumn>
                     
-                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="DisplayName" Title="User" Width="250px" Sortable="true" Filterable="true">
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="DisplayName" Title="User" Width="120px" Sortable="true" Filterable="true">
                         <Template Context="user">
                             <div class="d-flex align-items-center">
-                                <RadzenGravatar Email="@($"{user.FirstName?.Value?.ToLower()}.{user.LastName?.Value?.ToLower()}@organization.com")" 
-                                              Size="35" class="me-2" />
                                 <div>
                                     <div><strong>@user.DisplayName</strong></div>
                                     <small style="color: var(--rz-text-secondary-color);">@user.UserName?.Value</small>
@@ -78,12 +71,11 @@
 
                     <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="Department" Title="Department" Width="150px" Sortable="true" Filterable="true">
                         <Template Context="user">
-                            <RadzenBadge Text="@user.Department" 
-                                         BadgeStyle="@GetDepartmentBadgeStyle(user.Department)" />
+                            @user.Department.Name.ToUpper()
                         </Template>
                     </RadzenDataGridColumn>
 
-                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="Position" Title="Position" Width="150px" Sortable="true" Filterable="true">
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="Position" Title="Position" Width="125px" Sortable="true" Filterable="true">
                         <Template Context="user">
                             @if (!string.IsNullOrEmpty(user.Position))
                             {
@@ -96,13 +88,11 @@
                         </Template>
                     </RadzenDataGridColumn>
 
-                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="OrganizationLevel" Title="SMS Role" Width="140px" Sortable="true" Filterable="true">
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="OrganizationLevel" Title="SMS Organization Level" Width="250px" Sortable="true" Filterable="true">
                         <Template Context="user">
-                            @if (!string.IsNullOrEmpty(user.OrganizationLevel))
+                            @if (user.OrganizationLevel !=null)
                             {
-                                <RadzenBadge Text="@user.OrganizationLevel" 
-                                           BadgeStyle="@GetOrganizationLevelBadgeStyle(user.OrganizationLevel)"
-                                           title="@GetOrganizationLevelDisplayText(user.OrganizationLevel)" />
+                                @GetOrganizationLevelDisplayText(user.OrganizationLevel.Name).ToUpper() 
                             }
                             else
                             {
@@ -111,44 +101,20 @@
                         </Template>
                     </RadzenDataGridColumn>
 
-                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="IsActive" Title="Status" Width="100px" Sortable="true" Filterable="true">
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="IsActive" Title="Active" Width="75px" Sortable="true" Filterable="true">
                         <Template Context="user">
-                            <RadzenBadge Text="@(user.IsActive ? "Active" : "Inactive")" 
-                                         BadgeStyle="@(user.IsActive ? BadgeStyle.Success : BadgeStyle.Secondary)" />
+                            <RadzenIcon Icon="@(user.IsActive ? "check_box" : "check_box_outline_blank")"
+                                        Style="@(user.IsActive ? "color: var(--rz-success);" : "color: var(--rz-danger);")" />
                         </Template>
                     </RadzenDataGridColumn>
 
-                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="LastLoginDate" Title="Last Login" Width="140px" Sortable="true">
-                        <Template Context="user">
-                            @if (user.LastLoginDate.HasValue)
-                            {
-                                <div style="font-size: 0.9em;">
-                                    <div>@user.LastLoginDate.Value.ToString("MM/dd/yyyy")</div>
-                                    <small style="color: var(--rz-text-secondary-color);">@user.LastLoginDate.Value.ToString("HH:mm")</small>
-                                </div>
-                            }
-                            else
-                            {
-                                <em style="color: var(--rz-text-secondary-color);">Never</em>
-                            }
-                        </Template>
-                    </RadzenDataGridColumn>
-
-                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="CreatedDate" Title="Created" Width="120px" Sortable="true">
-                        <Template Context="user">
-                            <div style="font-size: 0.9em;">
-                                <div>@user.CreatedDate?.ToString("MM/dd/yyyy")</div>
-                                <small style="color: var(--rz-text-secondary-color);">by @user.CreatedBy</small>
-                            </div>
-                        </Template>
-                    </RadzenDataGridColumn>
-
+                    
                     <RadzenDataGridColumn TItem="SMSOrganizationalUser" Title="Actions" Width="200px" Sortable="false" Filterable="false">
                         <Template Context="user">
                             <div class="d-flex gap-1">
                                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall"
                                               Click="@(() => EditUser(user.Code))" title="Edit User" />
-                                <RadzenButton Icon="vpn_key" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.ExtraSmall"
+                                <RadzenButton Icon="vpn_key" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.ExtraSmall"
                                               Click="@(() => OpenPasswordModal(user.Code, user.DisplayName))" title="Change Password" />
                                 <RadzenButton Icon="group" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.ExtraSmall"
                                               Click="@(() => ManageGroups(user.Code, user.DisplayName))" title="Manage Groups" />
@@ -195,25 +161,25 @@
                 <RadzenRow Gap="1rem">
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenStack Gap="1rem">
-                            <RadzenFormField Text="First Name *" Variant="Variant.Outlined">
+                            <RadzenFormField Text="First Name *" Variant="Variant.Outlined" AllowFloatingLabel="false">
                                 <RadzenTextBox @bind-Value="@NewFirstName" 
                                                Placeholder="Enter first name" 
                                                Style="width: 100%;" />
                             </RadzenFormField>
-                            
-                            <RadzenFormField Text="Last Name *" Variant="Variant.Outlined">
+
+                            <RadzenFormField Text="Last Name *" Variant="Variant.Outlined" AllowFloatingLabel="false">
                                 <RadzenTextBox @bind-Value="@NewLastName" 
                                                Placeholder="Enter last name" 
                                                Style="width: 100%;" />
                             </RadzenFormField>
                             
-                            <RadzenFormField Text="Username *" Variant="Variant.Outlined">
+                            <RadzenFormField Text="Username *" Variant="Variant.Outlined"AllowFloatingLabel="false" >
                                 <RadzenTextBox @bind-Value="@NewUserName" 
                                                Placeholder="Enter username" 
                                                Style="width: 100%;" />
                             </RadzenFormField>
-                            
-                            <RadzenFormField Text="Password *" Variant="Variant.Outlined">
+
+                            <RadzenFormField Text="Password *" Variant="Variant.Outlined" AllowFloatingLabel="false">
                                 <RadzenPassword @bind-Value="@NewPassword" 
                                                Placeholder="Enter password" 
                                                Style="width: 100%;" />
@@ -222,27 +188,27 @@
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenStack Gap="1rem">
-                            <RadzenFormField Text="Department *" Variant="Variant.Outlined">
-                                <RadzenDropDown @bind-Value="@NewDepartment" Data="@DepartmentOptions" 
+                            <RadzenFormField Text="Department *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenDropDown @bind-Value="@NewDepartmentId" Data="@DepartmentOptions" 
                                                 TextProperty="Text" ValueProperty="Value" 
                                                 Style="width: 100%;" Placeholder="Select department"/>
                             </RadzenFormField>
-                            
-                            <RadzenFormField Text="Position" Variant="Variant.Outlined">
+
+                            <RadzenFormField Text="Position" Variant="Variant.Outlined" AllowFloatingLabel="false">
                                 <RadzenTextBox @bind-Value="@NewPosition" 
                                                Placeholder="Enter position/title" 
                                                Style="width: 100%;" />
                             </RadzenFormField>
-                            
-                            <RadzenFormField Text="Organization Level" Variant="Variant.Outlined">
-                                <RadzenDropDown @bind-Value="@NewOrganizationLevel" Data="@OrganizationLevelOptions" 
-                                                TextProperty="Text" ValueProperty="Value" 
+
+                            <RadzenFormField Text="SMS Organization Level" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenDropDown @bind-Value="@NewOrganizationLevelId" Data="@OrganizationLevelOptions"
+                                                TextProperty="Text" ValueProperty="Value"
                                                 Style="width: 100%;" Placeholder="Select SMS organizational role"
-                                                title="Select the SMS role that determines authority and approval permissions" />
+                                                title="Select the Organization Level that determines authority and approval permissions" />
                             </RadzenFormField>
-                            
-                            <RadzenFormField Text="SMS Role" Variant="Variant.Outlined">
-                                <RadzenDropDown @bind-Value="@NewSMSRole" Data="@SMSRoleOptions" 
+
+                            <RadzenFormField Text="SMS Role" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenDropDown @bind-Value="@NewSMSUserRoleId" Data="@SMSRoleOptions"
                                                 TextProperty="Text" ValueProperty="Value" 
                                                 Style="width: 100%;" Placeholder="Select SMS role (optional)"/>
                             </RadzenFormField>
@@ -286,24 +252,24 @@
                 <RadzenRow Gap="1rem">
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenStack Gap="1rem">
-                            <RadzenFormField Text="User Code" Variant="Variant.Outlined">
+                            <RadzenFormField Text="User Code" Variant="Variant.Outlined" AllowFloatingLabel="false">
                                 <RadzenTextBox Value="@CurrentUser.Code" ReadOnly="true" 
                                                Style="width: 100%; background-color: #f8f9fa;" />
                             </RadzenFormField>
-                            
-                            <RadzenFormField Text="First Name *" Variant="Variant.Outlined">
+
+                            <RadzenFormField Text="First Name *" Variant="Variant.Outlined" AllowFloatingLabel="false">
                                 <RadzenTextBox @bind-Value="@EditFirstName" 
                                                Placeholder="Enter first name" 
                                                Style="width: 100%;" />
                             </RadzenFormField>
-                            
-                            <RadzenFormField Text="Last Name *" Variant="Variant.Outlined">
+
+                            <RadzenFormField Text="Last Name *" Variant="Variant.Outlined" AllowFloatingLabel="false">
                                 <RadzenTextBox @bind-Value="@EditLastName" 
                                                Placeholder="Enter last name" 
                                                Style="width: 100%;" />
                             </RadzenFormField>
-                            
-                            <RadzenFormField Text="Username" Variant="Variant.Outlined">
+
+                            <RadzenFormField Text="Username" Variant="Variant.Outlined" AllowFloatingLabel="false">
                                 <RadzenTextBox Value="@CurrentUser.UserName?.Value" ReadOnly="true" 
                                                Style="width: 100%; background-color: #f8f9fa;" />
                             </RadzenFormField>
@@ -311,8 +277,8 @@
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenStack Gap="1rem">
-                            <RadzenFormField Text="Department *" Variant="Variant.Outlined">
-                                <RadzenDropDown @bind-Value="@EditDepartment" Data="@DepartmentOptions" 
+                            <RadzenFormField Text="Department *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenDropDown @bind-Value="@EditDepartmentId" Data="@DepartmentOptions" 
                                                 TextProperty="Text" ValueProperty="Value" 
                                                 Style="width: 100%;" />
                             </RadzenFormField>
@@ -322,15 +288,19 @@
                                                Placeholder="Enter position/title" 
                                                Style="width: 100%;" />
                             </RadzenFormField>
-                            
-                            <RadzenFormField Text="Organization Level" Variant="Variant.Outlined">
-                                <RadzenDropDown @bind-Value="@EditOrganizationLevel" Data="@OrganizationLevelOptions" 
-                                                TextProperty="Text" ValueProperty="Value" 
+
+                            <RadzenFormField Text="SMS Organization Level" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenDropDown @bind-Value="@EditOrganizationLevelId" Data="@OrganizationLevelOptions"
+                                                TextProperty="Text" ValueProperty="Value"
                                                 Style="width: 100%;"
                                                 title="Select the SMS role that determines authority and approval permissions" />
                             </RadzenFormField>
-                            
-                            <RadzenFormField Text="Status" Variant="Variant.Outlined">
+                            <RadzenFormField Text="SMS Role" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenDropDown @bind-Value="@EditSMSUserRoleId" Data="@SMSRoleOptions"
+                                                TextProperty="Text" ValueProperty="Value"
+                                                Style="width: 100%;" Placeholder="Select SMS role (optional)" />
+                            </RadzenFormField>
+                            <RadzenFormField Text="Status" Variant="Variant.Outlined" AllowFloatingLabel="false">
                                 <RadzenDropDown @bind-Value="@EditIsActive" Data="@StatusOptions" 
                                                 TextProperty="Text" ValueProperty="Value" 
                                                 Style="width: 100%;" />
@@ -415,7 +385,7 @@
 @if (ShowDeleteModal)
 {
     <div class="modal-backdrop">
-        <div class="modal-dialog" style="max-width: 400px;">
+        <div class="modal-dialog" style="max-width: 700px;">
             <RadzenCard class="modal-content">
                 <!-- Modal Header -->
                 <div class="modal-header" style="background-color: #dc3545; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
@@ -430,8 +400,7 @@
                     <RadzenText>
                         Are you sure you want to delete the user <strong>@DeleteUserDisplayName</strong>?
                     </RadzenText>
-                    <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
-                        <RadzenIcon Icon="warning" Style="margin-right: 0.5rem;" />
+                    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
                         This action cannot be undone and will remove all user permissions and group memberships.
                     </RadzenAlert>
                 </RadzenStack>
@@ -448,7 +417,7 @@
 }
 
 <!-- Shared Password Change Modal -->
-<PasswordChangeModal IsVisible="@ShowPasswordModal" 
+<PasswordChangeDialog IsVisible="@ShowPasswordModal" 
                     UserCode="@PasswordUserCode" 
                     UserDisplayName="@PasswordUserDisplayName" 
                     UserType="Organizational"
@@ -579,11 +548,7 @@
                 </RadzenRow>
                 
                 <!-- Modal Footer -->
-                <div class="d-flex justify-content-between align-items-center mt-3">
-                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Style="margin: 0; flex: 1; margin-right: 1rem;">
-                        <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
-                        Organizational groups define user access, authority levels, and workflow permissions within the SMS.
-                    </RadzenAlert>
+                <div class="d-flex justify-content-end align-items-center mt-3">
                     <div class="d-flex gap-2">
                         <RadzenButton Text="Close" ButtonStyle="ButtonStyle.Light" Click="@CloseGroupsModal" />
                     </div>

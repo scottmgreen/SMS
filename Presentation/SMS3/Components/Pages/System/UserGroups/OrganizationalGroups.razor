@@ -9,16 +9,8 @@
 
 <!-- SMS Page Header -->
 <PageHeader Title="Organizational Group Management"
-           Subtitle="Manage SMS Organizational User Groups "
+           Subtitle="@($"Manage SMS Organizational User Groups ({SMSOrganizationalGroups.Count})")"
            Icon="fas fa-users-cog">
-    @* <AdditionalContent>
-        <div class="d-flex gap-2">
-            <RadzenButton Text="Back to Dashboard" Icon="arrow_back" ButtonStyle="ButtonStyle.Light"
-                          Click="@(() => Navigation.NavigateTo("/System/UserManagement"))" />
-            <RadzenButton Text="Add Group" Icon="add" ButtonStyle="ButtonStyle.Success"
-                          Click="@OpenCreateModal" />
-        </div>
-    </AdditionalContent> *@
 </PageHeader>
 
 <!-- Success/Error Messages -->
@@ -41,13 +33,8 @@
 <!-- Groups Display -->
 <RadzenCard>
     <RadzenCard>
-        <div class="d-flex justify-content-between align-items-center w-100">
-            <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">
-                <RadzenIcon Icon="list" Style="margin-right: 0.5rem;" />
-                Organizational Groups (@SMSOrganizationalGroups.Count)
-            </RadzenText>
+        <div class="d-flex justify-content-end align-items-center w-100">
             <div class="d-flex gap-2">
-                <RadzenButton Text="Export" Icon="download" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" />
                 <RadzenButton Text="Add Group" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
                               Click="@OpenCreateModal" />
             </div>
@@ -62,7 +49,7 @@
                             ShowPagingSummary="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                 
                 <Columns>
-                    <RadzenDataGridColumn TItem="SMSOrganizationalGroup" Property="Code" Title="Code" Width="200px" Sortable="true" Filterable="true">
+                    <RadzenDataGridColumn TItem="SMSOrganizationalGroup" Property="Code" Title="Organizational Group ID" Width="240px" Sortable="true" Filterable="true">
                         <Template Context="group">
                             <div class="d-flex align-items-center">
                            
@@ -71,7 +58,7 @@
                             </div>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="SMSOrganizationalGroup" Property="Name" Title="Group Name" Width="200px" Sortable="true" Filterable="true">
+                    <RadzenDataGridColumn TItem="SMSOrganizationalGroup" Property="Name" Title="Group Name" Width="240px" Sortable="true" Filterable="true">
                         <Template Context="group">
                             <div class="d-flex align-items-center">
                                 
@@ -96,10 +83,10 @@
 
                     
 
-                    <RadzenDataGridColumn TItem="SMSOrganizationalGroup" Property="IsActive" Title="Status" Width="150px" Sortable="true" Filterable="true">
+                    <RadzenDataGridColumn TItem="SMSOrganizationalGroup" Property="IsActive" Title="Active" Width="150px" Sortable="true" Filterable="true">
                         <Template Context="group">
-                            <RadzenBadge Text="@(group.IsActive ? "Active" : "Inactive")" 
-                                         BadgeStyle="@(group.IsActive ? BadgeStyle.Success : BadgeStyle.Secondary)" />
+                            <RadzenIcon Icon="@(group.IsActive ? "check_box" : "check_box_outline_blank")"
+                                        Style="@(group.IsActive ? "color: var(--rz-success);" : "color: var(--rz-danger);")" />
                         </Template>
                     </RadzenDataGridColumn>
 
