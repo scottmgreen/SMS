@@ -468,7 +468,7 @@
             CurrentMitigation.RiskAssessmentCode = CurrentRiskAssessment?.Code ?? string.Empty;
                 
             // Set defaults
-            CurrentMitigation.Status = MitigationStatus.PendingApproval.Value;
+            CurrentMitigation.Status = MitigationStatus.PendingApproval;
             CurrentMitigation.Type = "Administrative Control";
             CurrentMitigation.Progress = 0;
             CurrentMitigation.TargetDate = DateTime.Now.AddMonths(3);

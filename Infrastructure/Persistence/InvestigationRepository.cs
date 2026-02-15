@@ -356,7 +356,7 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
 
             // Management properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationAssignedInvestigatorId, investigation.AssignedInvestigatorId));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationStatus, investigation.Status.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationStatus, investigation.Status.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationCompletedDate, investigation.CompletedDate ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationPlan, investigation.InvestigationPlan ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationObjectives, investigation.InvestigationObjectives ?? (object)DBNull.Value));

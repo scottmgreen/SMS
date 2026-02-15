@@ -9,11 +9,7 @@ public sealed class Investigation : BaseAuditableEntity
     // Public constructor for instantiation
     public Investigation(InvestigationID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
 
-    // Simple constructor pattern as requested
-    private Investigation(InvestigationID id, string code) : base(id, "SYSTEM", DateTime.UtcNow)
-    {
-        Code = code;
-    }
+      
 
     #region Properties
 
@@ -22,7 +18,7 @@ public sealed class Investigation : BaseAuditableEntity
     public string? InvestigationNotes { get; set; }
     public string HazardCode { get; set; } = "HAZ-UNKNOWN";
     public string AssignedInvestigatorId { get; set; } = "UNASSIGNED";
-    public string Status { get; set; } = "Assigned";
+    public InvestigationStatus Status { get; set; } = InvestigationStatus.InvestigatorAssigned;
     public DateTime? CompletedDate { get; set; }
     public string? InvestigationPlan { get; set; }
     public string? InvestigationObjectives { get; set; }
@@ -63,86 +59,23 @@ public sealed class Investigation : BaseAuditableEntity
 
     #region Domain Methods
 
-    public void UpdateDetails(string? notes, string? plan = null, string? objectives = null)
-    {
-        InvestigationNotes = notes;
-        InvestigationPlan = plan;
-        InvestigationObjectives = objectives;
-    }
 
-    public void AssignTo(string investigatorId)
-    {
-        AssignedInvestigatorId = investigatorId;
-    }
+    
+    
 
-    public void Start()
-    {
-        Status = "IN_PROGRESS";
-    }
-
-    public void PutOnHold()
-    {
-        Status = "ON_HOLD";
-    }
-
-    public void Cancel()
-    {
-        Status = "CANCELLED";
-    }
-
-    public void RecordDecision(string decisionType, string rationale, string decisionMaker, string? nextSteps = null, string? referralDetails = null)
-    {
-        DecisionType = decisionType;
-        DecisionRationale = rationale;
-        DecisionMaker = decisionMaker;
-        DecisionDate = DateTime.UtcNow;
-        NextSteps = nextSteps;
-        ReferralDetails = referralDetails;
-    }
-
-    public void Complete()
-    {
-        Status = "COMPLETED";  // ✅ Fixed to match Smart Enum
-        CompletedDate = DateTime.UtcNow;
-    }
-
-    // Alias for backward compatibility
-    public void CompleteInvestigation() => Complete();
+    
 
     #endregion
 
     #region Query Properties
 
     public bool HasDecision => !string.IsNullOrWhiteSpace(DecisionType);
-    public bool IsCompleted => Status == "COMPLETED";  // ✅ Fixed to match Smart Enum
-    public bool IsInProgress => Status == "IN_PROGRESS";  // ✅ Fixed to match Smart Enum
-    public bool IsAssigned => Status == "Assigned";  // Note: Assigned is not in Smart Enum
-    public bool IsOnHold => Status == "ON_HOLD";  // ✅ Fixed to match Smart Enum
-    public bool IsCancelled => Status == "CANCELLED";  // ✅ Fixed to match Smart Enum
+    
 
-    public string StatusDisplay => Status switch
-    {
-        "Assigned" => "Assigned",
-        "IN_PROGRESS" => "In Progress",  // ✅ Fixed to match Smart Enum
-        "ON_HOLD" => "On Hold",  // ✅ Fixed to match Smart Enum
-        "COMPLETED" => "Completed",  // ✅ Fixed to match Smart Enum
-        "CANCELLED" => "Cancelled",  // ✅ Fixed to match Smart Enum
-        _ => Status
-    };
+    
 
-    public string NextStepsMessage => DecisionType switch
-    {
-        "NoFurtherAction" => "Investigation closed - no further action required.",
-        "ContinueMonitoring" => "Hazard will continue to be monitored.",
-        "RequiresMitigation" => "Hazard requires mitigation measures.",
-        "EscalateToRiskAssessment" => "Hazard escalated to risk assessment.",
-        "ReturnToValidation" => "Investigation completed and returned to validation workflow.",
-        "ReferToExternalAgency" => "Hazard referred to external agency.",
-        _ => "Investigation decision pending."
-    };
-
-    // Alias for backward compatibility
-    public string GetNextStepMessage() => NextStepsMessage;
+    
+    
 
     #endregion
 }

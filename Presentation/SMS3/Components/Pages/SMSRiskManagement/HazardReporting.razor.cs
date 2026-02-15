@@ -1234,7 +1234,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
             Description = HazardReport.Description,
             Stage = "Initial",
-            Status = "Initial",
+            Status = ValidationStatus.ValidationNeeded.Value,
             CreatedBy = AuthService.CurrentUserDisplayName,
             CreatedDate = DateTime.UtcNow
         };

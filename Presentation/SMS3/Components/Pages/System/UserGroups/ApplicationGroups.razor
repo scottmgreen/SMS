@@ -11,7 +11,16 @@
 <PageHeader Title="Application Group Management"
             Subtitle="@($"Manage SMS Application User Groups ({SMSApplicationGroups.Count})")"
            Icon="fas fa-users-cog">
-</PageHeader>
+            <AdditionalContent>
+                <div class="d-flex justify-content-end align-items-center w-100">
+                    <div class="d-flex gap-2">
+                        <RadzenButton Text="Add Group" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                                      Click="@OpenCreateModal" />
+                    </div>
+                </div>
+            </AdditionalContent>
+        
+    </PageHeader>
 
 <!-- Success/Error Messages -->
 @if (!string.IsNullOrEmpty(SuccessMessage))
@@ -32,16 +41,7 @@
 
 <!-- Groups Display -->
 <RadzenCard>
-    <RadzenCard>
-        <div class="d-flex justify-content-end align-items-center w-100">
-            
-            <div class="d-flex gap-2">
-                <RadzenButton Text="Add Group" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
-                              Click="@OpenCreateModal" />
-            </div>
-        </div>
-    </RadzenCard>
-    <RadzenCard>
+   <RadzenCard>
         @if (SMSApplicationGroups.Any())
         {
             <RadzenDataGrid @ref="groupsGrid" Data="@SMSApplicationGroups" TItem="SMSApplicationGroup" 

@@ -1,4 +1,5 @@
 @page "/Listings/HazardFiles"
+@using SMS3.Components.Shared
 @using SMS_Domain.Entities
 @using SMS_Domain.ValueObjects
 @using SMS_Application.Messaging.Queries
@@ -9,6 +10,9 @@
 @using Radzen.Blazor
 
 <PageTitle>Hazard Files</PageTitle>
+<PageHeader Title="Investigation Listing"
+            Subtitle="Complete listing and management interface for all SMS Hazard Evidence Files"
+            Icon="fas fa-list" />
 
 <RadzenDataGrid @ref="filesGrid" 
                 Data="@files" 

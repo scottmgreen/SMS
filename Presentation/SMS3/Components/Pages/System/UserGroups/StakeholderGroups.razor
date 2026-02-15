@@ -11,6 +11,14 @@
 <PageHeader Title="Stakeholder Group Management"
             Subtitle="@($"Manage SMS Stakeholder User Groups ({SMSStakeholderGroups.Count})")"
            Icon="fas fa-users-cog">
+           <AdditionalContent>
+            <div class="d-flex justify-content-end align-items-center w-100">
+                <div class="d-flex gap-2">
+                    <RadzenButton Text="Add Group" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                                  Click="@OpenCreateModal" />
+                </div>
+            </div>
+           </AdditionalContent>
 </PageHeader>
 
 <!-- Success/Error Messages -->
@@ -365,14 +373,6 @@
 
 <!-- Groups Display -->
 <RadzenCard>
-    <RadzenCard>
-        <div class="d-flex justify-content-end align-items-center w-100">
-            <div class="d-flex gap-2">
-                <RadzenButton Text="Add Group" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
-                              Click="@OpenCreateModal" />
-            </div>
-        </div>
-    </RadzenCard>
     <RadzenCard>
         @if (SMSStakeholderGroups.Any())
         {

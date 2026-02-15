@@ -12,12 +12,11 @@
 <PageTitle>SMS Investigation - SMS3</PageTitle>
 
 <!-- SMS Page Header using reusable component -->
-<PageHeader Title="SMS Investigation"
-           Subtitle="Conduct comprehensive investigations into safety incidents and hazard reports"
-           Icon="fas fa-search" />
+
 
 @if (IsLoading)
 {
+
     <div class="loading-container">
         <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
         <RadzenText TextStyle="TextStyle.H6" Style="margin-top: 1rem;">Loading investigation data...</RadzenText>
@@ -25,6 +24,12 @@
 }
 else
 {
+    <PageHeader Title="@($"SMS Investigation {InvestigationEntity.Code} for Hazard: {InvestigationEntity.HazardCode}")"
+                Subtitle="Conduct comprehensive investigations into safety incidents and hazard reports"
+                Icon="fas fa-search" />
+
+
+
     <!-- Standard 8x4 Layout with Investigation Content and Guidance -->
     <RadzenRow Gap="1rem">
         <!-- Main Content Column (8/12) -->
@@ -43,42 +48,16 @@ else
                 <!-- Investigation Form Content -->
                 <RadzenCard>
                     <RadzenStack Gap="1.5rem">
-                        <!-- Investigation Header Info -->
-                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-                            <RadzenStack Gap="0.5rem">
-                                <RadzenText TextStyle="TextStyle.H5">Investigation: @InvestigationEntity.Code</RadzenText>
-                                <RadzenText TextStyle="TextStyle.Subtitle2" Style="color: var(--rz-text-secondary-color);">
-                                    Hazard Code: @(InvestigationEntity.HazardCode ?? "Not Set")
-                                </RadzenText>
-                            </RadzenStack>
-                           @*  <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                                <RadzenBadge Text="@GetStatusBadgeText()" BadgeStyle="@GetStatusBadgeStyle()" />
-                                <RadzenButton Text="Back to List" Icon="list" ButtonStyle="ButtonStyle.Light" 
-                                              Click="NavigateToListings" Size="ButtonSize.Small" />
-                            </RadzenStack> *@
-                        </RadzenStack>
-
+                                                
                         <!-- Main Form Tabs -->
                         <RadzenTabs @bind-SelectedIndex="selectedTabIndex" RenderMode="TabRenderMode.Client">
                             <Tabs>
                                 <!-- Investigation Details Tab -->
                                 <RadzenTabsItem Text="Investigation Details" Style="font-size:larger;font-weight:500;">
                                     <RadzenStack Gap="1rem" Style="padding: 1rem;">
-                                       @*  <RadzenRow Gap="1rem">
-                                            <RadzenColumn Size="6">
-                                                <RadzenFormField Text="Investigation Code" Variant="Variant.Outlined">
-                                                    <RadzenTextBox @bind-Value="InvestigationEntity.Code" ReadOnly="true" />
-                                                </RadzenFormField>
-                                            </RadzenColumn>
-                                            <RadzenColumn Size="6">
-                                                <RadzenFormField Text="Hazard Code" Variant="Variant.Outlined">
-                                                    <RadzenTextBox @bind-Value="InvestigationEntity.HazardCode" ReadOnly="true" />
-                                                </RadzenFormField>
-                                            </RadzenColumn>
-                                        </RadzenRow> *@
-
-                                        <RadzenRow Gap="1rem">
-                                            <RadzenColumn Size="6">
+                                      
+                                        <RadzenRow Gap="0.5rem">
+                                            <RadzenColumn Size="4" SizeMD="4">
                                                 <RadzenFormField Text="Assigned Investigator" Variant="Variant.Outlined">
                                                     <RadzenDropDown @bind-Value="InvestigationEntity.AssignedInvestigatorId" 
                                                                    Data="AvailableInvestigators"
@@ -87,14 +66,40 @@ else
                                                                    AllowClear="false" />
                                                 </RadzenFormField>
                                             </RadzenColumn>
-                                            <RadzenColumn Size="6">
-                                                <RadzenFormField Text="Status" Variant="Variant.Outlined">
-                                                    <RadzenDropDown @bind-Value="InvestigationEntity.Status" 
-                                                                   Data="StatusOptions" 
-                                                                   TextProperty="Text" 
-                                                                   ValueProperty="Value" />
+                                            <RadzenColumn Size="6" SizeMD="6">
+                                                <RadzenFormField Text="Investigation Status" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                                    <RadzenDropDown @bind-Value="InvestigationStatusId"
+                                                                    Data="StatusOptions" 
+                                                                   TextProperty="Text"
+                                                                    ValueProperty="Value" 
+                                                                    Style="width: 100%; min-width: 100%;" />
                                                 </RadzenFormField>
                                             </RadzenColumn>
+                                            @if (InvestigationStatusId == InvestigationStatus.InvestigationComplete.Value)
+                                            {
+                                                <RadzenColumn Size="6">
+                                                    <RadzenFormField Text="Investigation Decision" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                                        <RadzenDropDown @bind-Value="InvestigationEntity.DecisionType"
+                                                                        Data="DecisionTypeOptions"
+                                                                        TextProperty="Text"
+                                                                        ValueProperty="Value"
+                                                                        AllowClear="true"
+                                                                        Placeholder="Select a decision type..."
+                                                                        Style="width: 100%;" />
+                                                    </RadzenFormField>
+                                                </RadzenColumn>
+                                            }
+                                            @* <RadzenColumn Size="6">
+                                                <RadzenFormField Text="Investigation Decision" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                                <RadzenDropDown @bind-Value="InvestigationEntity.DecisionType"
+                                                                Data="DecisionTypeOptions"
+                                                                TextProperty="Text"
+                                                                ValueProperty="Value"
+                                                                AllowClear="true"
+                                                                Placeholder="Select a decision type..."
+                                                                Style="width: 100%;" />
+                                            </RadzenFormField>
+                                            </RadzenColumn> *@
                                         </RadzenRow>
 
                                         <RadzenFormField Text="Investigation Objectives" Variant="Variant.Outlined">
@@ -114,15 +119,14 @@ else
 
                                         <!-- Action Buttons -->
                                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
-                                            <RadzenButton Text="Update Details" Icon="save" ButtonStyle="ButtonStyle.Primary" 
-                                                         Click="UpdateInvestigationDetails" Disabled="@IsSaving" />
-                                            <RadzenButton Text="Save Changes" Icon="save" ButtonStyle="ButtonStyle.Success" 
-                                                         Click="SaveInvestigation" Disabled="@IsSaving" />
+                                           <!--NEEDS SMART LABEL-->
+                                            <RadzenButton Text="Save Changes" Icon="save" ButtonStyle="ButtonStyle.Success"
+                                                          Click="HandleSave" Disabled="@IsSaving" />
                                         </RadzenStack>
                                     </RadzenStack>
                                 </RadzenTabsItem>
 
-                                <!-- Decision Tab -->
+                                @* <!-- Decision Tab -->
                                 <RadzenTabsItem Text="Investigation Decision">
                                     <RadzenStack Gap="1rem" Style="padding: 1rem;">
                                         @if (InvestigationEntity.DecisionDate.HasValue)
@@ -151,15 +155,7 @@ else
                                         else
                                         {
                                             <!-- Decision Form - Always shown unless decision is recorded -->
-                                            <RadzenFormField Text="Decision Type" Variant="Variant.Outlined">
-                                                <RadzenDropDown @bind-Value="InvestigationEntity.DecisionType" 
-                                                               Data="DecisionTypeOptions" 
-                                                               TextProperty="Text" 
-                                                               ValueProperty="Value"
-                                                               AllowClear="true"
-                                                               Placeholder="Select a decision type..."
-                                                               Style="width: 100%;" />
-                                            </RadzenFormField>
+                                            
 
                                             <RadzenFormField Text="Decision Rationale" Variant="Variant.Outlined">
                                                 <RadzenTextArea @bind-Value="InvestigationEntity.DecisionRationale" 
@@ -191,7 +187,7 @@ else
                                             </RadzenStack>
                                         }
                                     </RadzenStack>
-                                </RadzenTabsItem>
+                                </RadzenTabsItem> *@
 
                                 <!-- Interviews Tab -->
                                 <RadzenTabsItem Text="@($"Interviews ({Interviews.Count})")">

@@ -1,5 +1,7 @@
 using Domain.Entities;
 
+using Microsoft.Extensions.Options;
+
 namespace SMS3.Components.Pages.System.UserManagement;
 
 public partial class OrganizationalUsers : ComponentBase
@@ -116,24 +118,15 @@ public partial class OrganizationalUsers : ComponentBase
             var options = new List<DropdownOption>();
 
             // Group by category and show them in order of authority
-            var categories = new[] { "Executive", "Management", "Operational", "Committee", "External" };
+            //var categories = new[] { "Executive", "Management", "Operational", "Committee", "External" };
 
-            foreach (var category in categories)
-            {
-                var categoryRoles = SMSOrganizationalLevel.GetLevelsByCategory(category)
+            //foreach (var category in categories)
+            //{
+                //var categoryRoles = SMSOrganizationalLevel.GetLevelsByCategory(category)
+                //    .OrderByDescending(level => level.AuthorityLevel);
+
+                var categoryRoles = SMSOrganizationalLevel.GetAllValues()
                     .OrderByDescending(level => level.AuthorityLevel);
-
-                if (categoryRoles.Any())
-                {
-                    // Add category header (disabled option)
-                    options.Add(new DropdownOption
-                    {
-                        Text = $"--- {category} Roles ---",
-                        Value = "",
-                        IsDisabled = true
-                    });
-
-                    // Add roles in category
                     foreach (var level in categoryRoles)
                     {
                         options.Add(new DropdownOption
@@ -142,8 +135,27 @@ public partial class OrganizationalUsers : ComponentBase
                             Value = level.Name
                         });
                     }
-                }
-            }
+                    //if (categoryRoles.Any())
+                    //    {
+                    //        // Add category header (disabled option)
+                    //        //options.Add(new DropdownOption
+                    //        //{
+                    //        //    Text = $"--- {category} Roles ---",
+                    //        //    Value = "",
+                    //        //    IsDisabled = true
+                    //        //});
+
+                    //        // Add roles in category
+                    //        foreach (var level in categoryRoles)
+                    //        {
+                    //            options.Add(new DropdownOption
+                    //            {
+                    //                Text = $"  {level.Name} (Authority {level.AuthorityLevel})",
+                    //                Value = level.Name
+                    //            });
+                    //        }
+                    //    }
+                    //}
 
             return options;
         }
@@ -211,7 +223,7 @@ public partial class OrganizationalUsers : ComponentBase
         if (string.IsNullOrWhiteSpace(department)) return true; // Optional field
 
         return SMSDepartment.GetAllValues()
-            .Any(level => level.Name.Equals(department, StringComparison.OrdinalIgnoreCase));
+            .Any(level => level.Value.Equals(department, StringComparison.OrdinalIgnoreCase));
     }
     #endregion
 
@@ -368,7 +380,7 @@ public partial class OrganizationalUsers : ComponentBase
                 LastName = LastName.Create(NewLastName).Value,
                 UserName = UserName.Create(NewUserName).Value,
                 Password = Password.Create(NewPassword).Value,
-                Department =  SMSDepartment.FromName(NewDepartmentId),
+                Department =  SMSDepartment.FromValue(NewDepartmentId),
                 Position = NewPosition,
                 OrganizationLevel = SMSOrganizationalLevel.FromName(NewOrganizationLevelId) ?? SMSOrganizationalLevel.UnassignedLevel,
                 SMSUserRole = NewSMSUserRole,
@@ -434,7 +446,7 @@ public partial class OrganizationalUsers : ComponentBase
             EditPosition = CurrentUser.Position ?? string.Empty;
             EditOrganizationLevelId = CurrentUser.OrganizationLevel.Name ?? SMSOrganizationalLevel.UnassignedLevel;
             EditIsActive = CurrentUser.IsActive;
-            EditSMSUserRoleId = CurrentUser.SMSUserRole?.Code ?? string.Empty;
+            //EditSMSUserRoleId = CurrentUser.SMSUserRole?.Code ?? string.Empty;
             // Open edit modal
             ShowEditModal = true;
         }
@@ -475,7 +487,7 @@ public partial class OrganizationalUsers : ComponentBase
             // Update user properties
             CurrentUser.FirstName = FirstName.Create(EditFirstName).Value;
             CurrentUser.LastName = LastName.Create(EditLastName).Value;
-            CurrentUser.Department = SMSDepartment.FromName(EditDepartmentId);
+            CurrentUser.Department = SMSDepartment.FromValue(EditDepartmentId);
             CurrentUser.Position = EditPosition;
             CurrentUser.OrganizationLevel = SMSOrganizationalLevel.FromName(EditOrganizationLevelId) ?? SMSOrganizationalLevel.UnassignedLevel;
             CurrentUser.IsActive = EditIsActive;

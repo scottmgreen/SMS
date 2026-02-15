@@ -6,6 +6,6 @@ public interface IReportValidation
     string? Code { get; set; }
     string? ReportCode { get; set; }
     string? ValidationDecision { get; set; }
-    string? Status { get; set; }
+    ValidationStatus? Status { get; set; }
     string? Stage { get; set; }
 }

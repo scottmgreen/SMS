@@ -430,10 +430,7 @@ public static partial class Mappers
         // Management properties
         investigation.AssignedInvestigatorId = reader.GetValue<string>(FieldNames.fInvestigationAssignedInvestigatorId) ?? string.Empty;
 
-        // ✅ ENHANCED: Handle both old and new status format during transition
-        var statusValue = reader.GetValue<string>(FieldNames.fInvestigationStatus);
-        var mappedStatus = InvestigationStatus.FromValue(statusValue);
-        investigation.Status = mappedStatus?.Value ?? InvestigationStatus.StatusUnknown.Value;
+        investigation.Status = InvestigationStatus.FromValue(reader.GetValue<string>(FieldNames.fInvestigationStatus));
 
         investigation.CompletedDate = reader.GetValue<DateTime?>(FieldNames.fInvestigationCompletedDate);
         investigation.InvestigationPlan = reader.GetValue<string>(FieldNames.fInvestigationPlan);
@@ -639,7 +636,7 @@ public static partial class Mappers
         mitigation.Name = reader.GetValue<string>(FieldNames.fMitigationName);
         mitigation.Description = reader.GetValue<string>(FieldNames.fMitigationDescription);
         mitigation.Type = reader.GetValue<string>(FieldNames.fMitigationType);
-        mitigation.Status = reader.GetValue<string>(FieldNames.fMitigationStatus);
+        mitigation.Status = MitigationStatus.FromValue(reader.GetValue<string>(FieldNames.fMitigationStatus));
         mitigation.RiskAssessmentCode = reader.GetValue<string>(FieldNames.fMitigationRiskAssessmentCode);
 
         // Date Properties
@@ -700,7 +697,7 @@ public static partial class Mappers
             reportValidation.Code = code;
             reportValidation.ReportCode = reader.GetValue<string>(FieldNames.fReportValidationReportCode);
             reportValidation.ValidationDecision = reader.GetValue<string>(FieldNames.fReportValidationDecision);
-            reportValidation.Status = reader.GetValue<string>(FieldNames.fReportValidationStatus);
+            reportValidation.Status = ValidationStatus.FromValue(reader.GetValue<string>(FieldNames.fReportValidationStatus));
             reportValidation.Stage = reader.GetValue<string>(FieldNames.fReportValidationStage);
             reportValidation.ValidationType = reader.GetValue<string>(FieldNames.fReportValidationType);
 

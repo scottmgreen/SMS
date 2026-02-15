@@ -1,4 +1,5 @@
 @page "/System/UserRoles/UserRoles"
+@using SMS3.Components.Shared
 @using SMS_Application.Messaging.Commands
 @using SMS_Application.Messaging.Queries
 @using SMS_Domain.Entities
@@ -7,6 +8,20 @@
 @using Radzen.Blazor
 
 <PageTitle>User Role Management - SMS3</PageTitle>
+<PageHeader Title="Application User Management"
+            Subtitle="@($"Manage User Roles/Permissions ({@UserRolesList.Count()})")"
+            Icon="fas fa-user-tie">
+            <AdditionalContent>
+                <div class="d-flex justify-content-end align-items-center w-100">
+                    <div class="d-flex gap-2">
+                        <RadzenButton Text="Add Role" Icon="add" ButtonStyle="ButtonStyle.Success"
+                              Click="@ShowCreateDialog" />
+                    </div>
+                </div>
+            </AdditionalContent>
+
+</PageHeader>
+
 
 <div class="container-fluid">
     <!-- Messages -->
@@ -38,18 +53,6 @@
     <RadzenRow Gap="1rem">
         <RadzenColumn Size="12">
             <RadzenCard Variant="Variant.Outlined">
-                <RadzenCard>
-                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
-                            <RadzenIcon Icon="admin_panel_settings" Style="margin-right: 0.5rem;" />
-                            User Roles (@UserRolesList.Count())
-                        </RadzenText>
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                            <RadzenButton Text="Add Role" Icon="add" ButtonStyle="ButtonStyle.Success" 
-                                        Click="@ShowCreateDialog" />
-                        </RadzenStack>
-                    </RadzenStack>
-                </RadzenCard>
                 <RadzenCard>
                     @if (UserRolesList.Any())
                     {

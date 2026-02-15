@@ -116,7 +116,7 @@ public partial class ReportValidation : ComponentBase
 
                 // Set defaults for new validation
                 SelectedValidationDecision = null;
-                ValidatedBy = "";
+                ValidatedBy = AuthService.CurrentUserDisplayName;
                 ValidationType = RiskAssessmentCategory.Technical;
                 ValidationComments = "";
             }
@@ -305,8 +305,8 @@ public partial class ReportValidation : ComponentBase
                 ExistingValidation.ValidationDecision = ValidationDecisionValue;
                 ExistingValidation.ValidationComments = ValidationComments;
                 ExistingValidation.ValidationType = RiskAssessmentCategory.Technical;
-                ExistingValidation.ValidatedBy = ValidatedBy; 
-                ExistingValidation.Status = "REVISED";
+                ExistingValidation.ValidatedBy = ValidatedBy;
+                ExistingValidation.Status = ValidationStatus.Revised;
                 ExistingValidation.Stage = "COMPLETE";
                 ExistingValidation.ValidatedDate = DateTime.UtcNow;
 
@@ -339,7 +339,7 @@ public partial class ReportValidation : ComponentBase
                     ValidationDecision = ValidationDecisionValue,
                     ValidationComments = ValidationComments,
                     ValidationType = ValidationType ?? "STANDARD",
-                    Status = "SUBMITTED",
+                    Status = ValidationStatus.ValidationNeeded,
                     Stage = "COMPLETE",
                     ValidatedDate = DateTime.UtcNow,
                     CreatedBy = AuthService.CurrentUserDisplayName,

@@ -40,7 +40,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationCode, reportValidation.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationReportCode, reportValidation.ReportCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationDecision, reportValidation.ValidationDecision));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationStatus, reportValidation.Status));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationStatus, reportValidation.Status.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationStage, reportValidation.Stage));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationType, reportValidation.ValidationType));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationComments, reportValidation.ValidationComments));
@@ -225,7 +225,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationCode, reportValidation.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationReportCode, reportValidation.ReportCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationDecision, reportValidation.ValidationDecision));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationStatus, reportValidation.Status));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationStatus, reportValidation.Status.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationStage, reportValidation.Stage));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationType, reportValidation.ValidationType));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationComments, reportValidation.ValidationComments));

@@ -1,4 +1,5 @@
 @page "/Listings/HazardLocations"
+@using SMS3.Components.Shared
 @using SMS_Domain.Entities
 @using SMS_Domain.ValueObjects
 @using SMS_Application.Messaging.Queries
@@ -8,6 +9,9 @@
 @using Radzen.Blazor
 
 <PageTitle>Hazard Locations</PageTitle>
+<PageHeader Title="Hazard Locations"
+            Subtitle="Complete listing and management interface for all SMS Hazard Locations"
+            Icon="fas fa-list" />
 
 <RadzenDataGrid @ref="locationsGrid" 
                 Data="@locations" 

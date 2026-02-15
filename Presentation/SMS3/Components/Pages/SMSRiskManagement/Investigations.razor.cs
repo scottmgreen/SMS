@@ -1,3 +1,5 @@
+using SMS_Domain.Enums;
+
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
 public partial class Investigations : ComponentBase
@@ -30,6 +32,8 @@ public partial class Investigations : ComponentBase
     private int selectedTabIndex { get; set; } = 0;
     private bool showDecisionForm { get; set; } = false;
 
+    private string InvestigationStatusId { get; set; } = string.Empty;
+
     public SMS_Domain.Entities.Investigation? InvestigationEntity { get; set; }
     public List<Interview> Interviews { get; set; } = new();
     public List<SMSApplicationUser> AvailableInvestigators { get; set; } = new();
@@ -42,23 +46,38 @@ public partial class Investigations : ComponentBase
     #endregion
 
     #region Dropdown Options
-    private readonly List<DropdownOption> StatusOptions = new()
+    //private readonly List<DropdownOption> StatusOptions = new()
+    //{
+    //    new() { Value = "Assigned", Text = "Assigned" },
+    //    new() { Value = "InProgress", Text = "In Progress" },
+    //    new() { Value = "OnHold", Text = "On Hold" },
+    //    new() { Value = "Completed", Text = "Completed" },
+    //    new() { Value = "Cancelled", Text = "Cancelled" }
+    //};
+    private List<DropdownOption> StatusOptions
     {
-        new() { Value = "Assigned", Text = "Assigned" },
-        new() { Value = "InProgress", Text = "In Progress" },
-        new() { Value = "OnHold", Text = "On Hold" },
-        new() { Value = "Completed", Text = "Completed" },
-        new() { Value = "Cancelled", Text = "Cancelled" }
-    };
-
+        get
+        {
+            return InvestigationStatus.GetAllValues()
+                .OrderBy(dept => dept.Name)
+                .Select(dept => new DropdownOption
+                {
+                    Text = dept.Name,
+                    Value = dept.Value
+                })
+                .ToList();
+        }
+    }
+    
+    
     private readonly List<DropdownOption> DecisionTypeOptions = new()
     {
         new() { Value = "NoFurtherAction", Text = "No Further Action" },
-        new() { Value = "ContinueMonitoring", Text = "Continue Monitoring" },
-        new() { Value = "RequiresMitigation", Text = "Requires Mitigation" },
-        new() { Value = "EscalateToRiskAssessment", Text = "Escalate to Risk Assessment" },
+        new() { Value = "ContinueLater", Text = "Continue Later" },
+        //new() { Value = "RequiresMitigation", Text = "Requires Mitigation" },
+        //new() { Value = "EscalateToRiskAssessment", Text = "Escalate to Risk Assessment" },
         new() { Value = "ReturnToValidation", Text = "Return to Validation" },
-        new() { Value = "ReferToExternal", Text = "Refer to External Authority" }
+        //new() { Value = "ReferToExternal", Text = "Refer to External Authority" }
     };
     #endregion
 
@@ -94,6 +113,10 @@ public partial class Investigations : ComponentBase
             if (investigationResult.IsSuccess && investigationResult.Value != null)
             {
                 InvestigationEntity = investigationResult.Value;
+                InvestigationStatusId = InvestigationEntity.Status.Value;
+                InvestigationEntity.DecisionType = "UNDER_REVIEW";
+
+
                 Logger.LogInformation("Successfully loaded investigation: {Code} with Status: {Status}",
                     InvestigationEntity.Code, InvestigationEntity.Status);
             }
@@ -248,6 +271,8 @@ public partial class Investigations : ComponentBase
             IsSaving = true;
             StateHasChanged();
 
+
+            
             var updateCommand = new UpdateInvestigationCommand(InvestigationEntity);
             var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
 
@@ -298,7 +323,7 @@ public partial class Investigations : ComponentBase
 
             if (confirmed == true)
             {
-                InvestigationEntity.Complete();
+                InvestigationEntity.Status = InvestigationStatus.InvestigationComplete;
                 await SaveInvestigation();
                 ShowSuccessNotification("Investigation completed successfully");
 
@@ -317,8 +342,7 @@ public partial class Investigations : ComponentBase
     {
         if (InvestigationEntity?.DecisionType == null) return;
 
-        // Show completion dialog with next steps
-        var nextStepMessage = InvestigationEntity.NextStepsMessage;
+        var nextStepMessage = "Next Step...";
 
         await DialogService.Alert(nextStepMessage, "Investigation Completed", new AlertOptions() { OkButtonText = "OK" });
 
@@ -335,54 +359,33 @@ public partial class Investigations : ComponentBase
         }
     }
 
-    private async Task UpdateInvestigationDetails()
-    {
-        if (InvestigationEntity == null) return;
-
-        try
-        {
-            InvestigationEntity.UpdateDetails(
-                InvestigationEntity.InvestigationNotes,
-                InvestigationEntity.InvestigationPlan,
-                InvestigationEntity.InvestigationObjectives);
-
-            await SaveInvestigation();
-            ShowSuccessNotification("Investigation details updated");
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error updating investigation details");
-            ShowErrorNotification($"Error updating details: {ex.Message}");
-        }
-    }
-
-    private async Task RecordDecision()
+    
+    private async Task HandleSave()
     {
         if (InvestigationEntity == null) return;
 
         try
         {
             InvestigationEntity.DecisionDate = DateTime.UtcNow;
-            if (string.IsNullOrWhiteSpace(InvestigationEntity.DecisionType) ||
-                string.IsNullOrWhiteSpace(InvestigationEntity.DecisionRationale) ||
-                string.IsNullOrWhiteSpace(InvestigationEntity.DecisionMaker))
+            if (string.IsNullOrWhiteSpace(InvestigationEntity.DecisionType) )
             {
                 ShowErrorNotification("Decision type, rationale, and decision maker are required");
                 return;
             }
+                        
+            InvestigationEntity.DecisionMaker = AuthService.CurrentUserDisplayName;
+            InvestigationEntity.Status = InvestigationStatus.FromValue(InvestigationStatusId);
 
-            // Record the decision first
-            InvestigationEntity.RecordDecision(
-                InvestigationEntity.DecisionType,
-                InvestigationEntity.DecisionRationale,
-                InvestigationEntity.DecisionMaker,
-                InvestigationEntity.NextSteps,
-                InvestigationEntity.ReferralDetails);
+            if (InvestigationEntity.Status !=InvestigationStatus.InvestigationComplete)
+            {
+                InvestigationEntity.DecisionType = "UNDER_REVIEW";
+            }
+
 
             // Handle special workflow for "Return to Validation" decision
             if (InvestigationEntity.DecisionType == "ReturnToValidation")
             {
-                await HandleReturnToValidationWorkflow();
+                await HandleReturnToValidation();
             }
             else
             {
@@ -399,17 +402,15 @@ public partial class Investigations : ComponentBase
         }
     }
 
-    private async Task HandleReturnToValidationWorkflow()
+    private async Task HandleReturnToValidation()
     {
         if (InvestigationEntity == null) return;
 
         try
         {
-            Logger.LogInformation("Processing 'Return to Validation' workflow for Investigation: {Code}, ReportCode: {ReportCode}",
-                InvestigationEntity.Code, InvestigationEntity.ReportCode);
-
+            
             // Step 1: Complete the investigation (set status to Completed)
-            InvestigationEntity.Complete();
+            InvestigationEntity.Status = InvestigationStatus.InvestigationComplete;
 
             // Step 2: Save the completed investigation
             await SaveInvestigation();
@@ -421,10 +422,7 @@ public partial class Investigations : ComponentBase
             }
             else if (!string.IsNullOrEmpty(InvestigationEntity.HazardCode))
             {
-                // If no ReportCode, try to find it from the Hazard
-                Logger.LogWarning("Investigation {Code} has no ReportCode, attempting to find from HazardCode: {HazardCode}",
-                    InvestigationEntity.Code, InvestigationEntity.HazardCode);
-
+                
                 var hazardQuery = new GetAllHazardsQuery();
                 var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
 
@@ -434,9 +432,7 @@ public partial class Investigations : ComponentBase
 
                     if (hazard != null && !string.IsNullOrEmpty(hazard.ReportCode))
                     {
-                        Logger.LogInformation("Found ReportCode {ReportCode} from Hazard {HazardCode}",
-                            hazard.ReportCode, InvestigationEntity.HazardCode);
-
+                        
                         await ResetReportValidation(hazard.ReportCode);
                     }
                     else
@@ -465,17 +461,17 @@ public partial class Investigations : ComponentBase
             ShowSuccessNotification("Investigation completed and returned to validation workflow");
 
             // Show completion dialog with next steps
-            var message = "Investigation has been completed and the report has been returned to the validation workflow.\n\n" +
-                         "Next Steps:\n" +
-                         "• Investigation is now marked as Completed\n" +
-                         "• Report validation has been reset to Initial stage\n" +
-                         "• Report will appear in the Validations listing\n" +
-                         "• Report will no longer appear in Investigations listing";
+            var message = "Investigation has been completed and the report has been returned to the validation workflow.\n\n";// +
+                         //"Next Steps:\n" +
+                         //"• Investigation is now marked as Completed\n" +
+                         //"• Report validation has been reset to Initial stage\n" +
+                         //"• Report will appear in the Validations listing\n" +
+                         //"• Report will no longer appear in Investigations listing";
 
             await DialogService.Alert(message, "Returned to Validation", new AlertOptions() { OkButtonText = "OK" });
 
             // Navigate to validations listing to show where the report went
-            Navigation.NavigateTo("/Listings/ReportValidations");
+            Navigation.NavigateTo("/SMSRiskManagement/ReportValidation");
         }
         catch (Exception ex)
         {
@@ -500,7 +496,7 @@ public partial class Investigations : ComponentBase
                 var validation = validationResult.Value;
 
                 // CRITICAL: Reset the validation to make it appear in Validation tab again
-                validation.Status = "InProgress";
+                validation.Status = ValidationStatus.ValidationNeeded;
                 validation.Stage = "Initial";
                 validation.UpdatedDate = DateTime.UtcNow;
 
@@ -522,13 +518,11 @@ public partial class Investigations : ComponentBase
 
                 if (updateResult.IsSuccess)
                 {
-                    Logger.LogInformation("Successfully reset ReportValidation {ValidationCode} for ReportCode: {ReportCode}",
-                        validation.Code, reportCode);
+                    Logger.LogInformation("Successfully reset ReportValidation {ValidationCode} for ReportCode: {ReportCode}", validation.Code, reportCode);
                 }
                 else
                 {
-                    Logger.LogError("Failed to update ReportValidation {ValidationCode}: {Error}",
-                        validation.Code, updateResult.Error?.Message);
+                    
                     throw new InvalidOperationException($"Failed to reset ReportValidation: {updateResult.Error?.Message}");
                 }
             }

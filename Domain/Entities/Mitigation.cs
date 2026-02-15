@@ -35,7 +35,7 @@ public sealed class Mitigation : BaseAuditableEntity
     public string? Type { get; set; }
 
     /// <summary>Current status (Proposed, Approved, InProgress, Completed, Cancelled, OnHold)</summary>
-    public string Status { get; set; } = MitigationStatus.PendingApproval.Value;
+    public MitigationStatus Status { get; set; } = MitigationStatus.PendingApproval;
 
     
     /// <summary>Associated risk assessment code</summary>

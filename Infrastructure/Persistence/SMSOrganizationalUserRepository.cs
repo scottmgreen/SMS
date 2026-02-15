@@ -210,7 +210,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserLastName, user.LastName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserUserName, user.UserName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserPassword, user.Password.HashedValue));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserDepartment, user.Department));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserDepartment, user.Department.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserPosition, user.Position));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserOrganizationLevel, user.OrganizationLevel.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserIsActive, user.IsActive));
@@ -259,7 +259,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserFirstName, user.FirstName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserLastName, user.LastName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserUserName, user.UserName.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserDepartment, user.Department));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserDepartment, user.Department.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserPosition, user.Position));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserOrganizationLevel, user.OrganizationLevel.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserIsActive, user.IsActive));

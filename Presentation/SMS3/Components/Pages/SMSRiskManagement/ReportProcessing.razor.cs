@@ -170,13 +170,13 @@ public class MitigationSummary
     public string MitigationName { get; set; } = string.Empty;
     public string HazardCode { get; set; } = string.Empty;
     public string HazardDescription { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
+    public MitigationStatus Status { get; set; } 
     public string AssignedTo { get; set; } = string.Empty;
 
     public string AssignedDepartment { get; set; } = string.Empty;
     public DateTime? TargetDate { get; set; }
     
-    public bool IsOverdue => TargetDate.HasValue && TargetDate.Value < DateTime.UtcNow && Status != "Completed";
+    public bool IsOverdue => TargetDate.HasValue && TargetDate.Value < DateTime.UtcNow && Status != MitigationStatus.Complete;
 }
 
 #endregion
@@ -198,7 +198,7 @@ public partial class ReportProcessing : ComponentBase
     private List<ReportProcessingSummary> PendingValidation { get; set; } = new();
     private List<ReportProcessingSummary> PendingRiskAssessment { get; set; } = new();
     private List<ReportProcessingSummary> PendingInvestigation { get; set; } = new();
-    private List<ReportProcessingSummary> InMitigation { get; set; } = new();
+    private List<ReportProcessingSummary> PendingMitigation { get; set; } = new();
     private List<ReportProcessingSummary> ClosedReferred { get; set; } = new();
 
     private int selectedTabIndex = 0;
@@ -222,12 +222,11 @@ public partial class ReportProcessing : ComponentBase
         {
             IsLoading = true;
 
-            Logger.LogWarning("?? DEBUG: Starting LoadDataAsync()...");
+            
 
             // Load core entities using CQRS - ENHANCED to include Investigations and Interviews
-            var (reports, hazards, riskAssessments, reportValidations, investigations, interviews) = await LoadCoreEntitiesAsync();
-
-            Logger.LogWarning("?? DEBUG: LoadCoreEntitiesAsync completed. Reports: {ReportCount}, Hazards: {HazardCount}, Validations: {ValidationCount}",reports.Count, hazards.Count, reportValidations.Count);
+            var (reports, hazards, riskAssessments, reportValidations, investigations, interviews) 
+                = await LoadCoreEntitiesAsync();
 
             if (!reports.Any())
             {
@@ -239,11 +238,8 @@ public partial class ReportProcessing : ComponentBase
             // Create report summaries and categorize - ENHANCED with investigations and interviews
             var reportSummaries = await CreateReportSummariesAsync(reports, hazards, riskAssessments, reportValidations, investigations, interviews);
 
-            Logger.LogWarning("?? DEBUG: Created {SummaryCount} report summaries", reportSummaries.Count);
-
             CategorizeReports(reportSummaries);
-
-            Logger.LogWarning("? Report processing data loaded - V:{V}, RA:{RA}, I:{I}, M:{M}, C:{C}",PendingValidation.Count, PendingRiskAssessment.Count, PendingInvestigation.Count,InMitigation.Count, ClosedReferred.Count);
+            
         }
         catch (Exception ex)
         {
@@ -268,8 +264,7 @@ public partial class ReportProcessing : ComponentBase
 
         try
         {
-            Logger.LogWarning("?? DEBUG: Starting LoadCoreEntitiesAsync - loading reports...");
-
+            
             // Get all reports
             var reportsQuery = new GetAllReportsQuery();
             var reportsResult = await Mediator.SendAsync(reportsQuery, CancellationToken.None);
@@ -285,8 +280,7 @@ public partial class ReportProcessing : ComponentBase
                 Logger.LogError("? Failed to retrieve reports: {Error}", reportsResult.Error?.Message);
             }
 
-            Logger.LogWarning("?? DEBUG: Loading hazards...");
-
+            
             // Get all hazards
             var hazardsQuery = new GetAllHazardsQuery();
             var hazardsResult = await Mediator.SendAsync(hazardsQuery, CancellationToken.None);
@@ -300,7 +294,7 @@ public partial class ReportProcessing : ComponentBase
                 Logger.LogError("? Failed to retrieve hazards: {Error}", hazardsResult.Error?.Message);
             }
 
-            Logger.LogWarning("?? DEBUG: Loading report validations...");
+            
 
             // CRITICAL: Get all report validations to determine which reports have been validated
             var reportValidationsQuery = new GetAllReportValidationsQuery();
@@ -365,8 +359,7 @@ public partial class ReportProcessing : ComponentBase
             Logger.LogError(ex, "? Exception in LoadCoreEntitiesAsync");
         }
 
-        Logger.LogWarning("?? DEBUG: LoadCoreEntitiesAsync returning - Reports: {RC}, Hazards: {HC}, Validations: {VC}",reports.Count, hazards.Count, reportValidations.Count);
-
+       
         return (reports, hazards, riskAssessments, reportValidations, investigations, interviews);
     }
 
@@ -433,14 +426,14 @@ public partial class ReportProcessing : ComponentBase
                                 if (mitigationResult.IsSuccess && mitigationResult.Value?.Any() == true)
                                 {
                                     var hazardMitigations = mitigationResult.Value
-                                        .Where(m => !string.IsNullOrEmpty(m.Code) && !processedMitigationCodes.Contains(m.Code)  ) 
+                                        .Where(m => m.Status != MitigationStatus.Approved && !string.IsNullOrEmpty(m.Code) && !processedMitigationCodes.Contains(m.Code) ) 
                                         .Select(m => new MitigationSummary
                                         {
                                             MitigationCode = m.Code ?? "Unknown",
                                             MitigationName = m.Name ?? "Unnamed Mitigation",
                                             HazardCode = hazard.Code,
                                             HazardDescription = hazard.Description ?? "No description",
-                                            Status = m.Status ?? "Unknown",
+                                            Status = m.Status ,
                                             AssignedTo = m.AssignedTo ?? "Not Assigned",
                                             AssignedDepartment = m.AssignedDepartment ?? "Not Assigned",
                                             TargetDate = m.TargetDate,
@@ -536,6 +529,7 @@ public partial class ReportProcessing : ComponentBase
 
                         HazardId = primaryHazard.Code,
                         HazardType = primaryHazard.HazardType ?? "Unknown",
+                        HazardCategory = primaryHazard.HazardCategory ?? "Unknown",
                         HazardDescription = primaryHazard.Description ?? "No description",
                         Location = primaryHazard.HazardLocation?.Description ?? primaryHazard.LocationArea ?? "Not specified",
                         //SubmittedBy = primaryHazard.SubmittedBy ?? report.CreatedBy ?? report.UpdatedBy ?? "Unknown",
@@ -590,7 +584,7 @@ public partial class ReportProcessing : ComponentBase
         PendingValidation = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Validation).ToList();
         PendingRiskAssessment = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.RiskAssessment).ToList();
         PendingInvestigation = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Investigation).ToList();
-        InMitigation = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Mitigation).ToList();
+        PendingMitigation = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Mitigation  && r.MitigationCount >0).ToList();
 
         ClosedReferred = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Closed).ToList();
 
@@ -599,7 +593,7 @@ public partial class ReportProcessing : ComponentBase
         Logger.LogWarning("   📋 Pending Validation: {Count}", PendingValidation.Count);
         Logger.LogWarning("   📊 Pending Risk Assessment: {Count}", PendingRiskAssessment.Count);
         Logger.LogWarning("   🔍 Pending Investigation: {Count}", PendingInvestigation.Count);
-        Logger.LogWarning("   🛠️ In Mitigation: {Count}", InMitigation.Count);
+        Logger.LogWarning("   🛠️ In Mitigation: {Count}", PendingMitigation.Count);
         Logger.LogWarning("   ✅ Closed/Referred: {Count}", ClosedReferred.Count);
 
         // ✅ LOG EACH REPORT'S CATEGORIZATION
@@ -632,15 +626,14 @@ public partial class ReportProcessing : ComponentBase
         if (investigation != null)
         {
             // FIXED: Use more robust status checking to handle different status formats
-            var status = investigation.Status?.ToUpperInvariant() ?? "";
-            var isActiveInvestigation = status == "INPROGRESS" ||
-                                      status == "IN_PROGRESS" ||
-                                      status == "ONHOLD" ||
-                                      status == "ON_HOLD" ||
-                                      status == "ASSIGNED";
+            var investigationStatus = InvestigationStatus.FromValue(investigation.Status);
+
+            var isActiveInvestigation = investigationStatus?.IsActiveStatus == true;
+
 
             // NEW: Check if investigation completed with ReturnToValidation - SKIP active investigation logic
-            if (status == "COMPLETED" && string.Equals(investigation.DecisionType, "ReturnToValidation", StringComparison.OrdinalIgnoreCase))
+            if (investigationStatus == InvestigationStatus.InvestigationComplete &&
+                string.Equals(investigation.DecisionType, "ReturnToValidation", StringComparison.OrdinalIgnoreCase))
             {
                 
                 // Continue with validation logic below - do NOT return Investigation
@@ -649,7 +642,7 @@ public partial class ReportProcessing : ComponentBase
             {
                 return ProcessingStatusCategory.Investigation;
             }
-            else if (status == "COMPLETED")
+            else if (investigationStatus == InvestigationStatus.InvestigationComplete)
             {
                 
                 // Continue with normal flow below
@@ -798,7 +791,7 @@ public partial class ReportProcessing : ComponentBase
         PendingValidation = new List<ReportProcessingSummary>();
         PendingRiskAssessment = new List<ReportProcessingSummary>();
         PendingInvestigation = new List<ReportProcessingSummary>();
-        InMitigation = new List<ReportProcessingSummary>();
+        PendingMitigation = new List<ReportProcessingSummary>();
         ClosedReferred = new List<ReportProcessingSummary>();
     }
 
@@ -911,7 +904,7 @@ public partial class ReportProcessing : ComponentBase
                 return;
             }
 
-            if (!InMitigation.Any())
+            if (!PendingMitigation.Any())
             {
                 RenderEmptyState(builder, "build", "No reports in mitigation phase", "Approved risk assessments will appear here");
                 return;
@@ -928,7 +921,7 @@ public partial class ReportProcessing : ComponentBase
         builder.AddAttribute(1, "Gap", "1.5rem");
         builder.AddAttribute(2, "ChildContent", (RenderFragment)(stackBuilder =>
         {
-            foreach (var report in InMitigation)
+            foreach (var report in PendingMitigation)
             {
                 // Render each report as a card with its mitigations
                 RenderReportMitigationCard(stackBuilder, report);
@@ -1226,7 +1219,7 @@ public partial class ReportProcessing : ComponentBase
                     actionBuilder.CloseComponent(); // ✅ Close RadzenButton
 
                     // Quick Approve Button (only if not already approved)
-                    if (mitigation.Status != MitigationStatus.Approved.Value)
+                    if (mitigation.Status != MitigationStatus.Approved)
                     {
                         actionBuilder.OpenComponent<RadzenButton>(5);
                         actionBuilder.AddAttribute(6, "Text", "Approve");
@@ -1285,7 +1278,7 @@ public partial class ReportProcessing : ComponentBase
             if (mitigationResult.IsSuccess && mitigationResult.Value != null)
             {
                 var fullMitigation = mitigationResult.Value;
-                fullMitigation.Status = MitigationStatus.Approved.Value;
+                fullMitigation.Status = MitigationStatus.Approved;
                 fullMitigation.UpdatedDate = DateTime.UtcNow;
                 fullMitigation.UpdatedBy = AuthService.CurrentUser.Code; // You might want to get the current user
 
@@ -1297,7 +1290,7 @@ public partial class ReportProcessing : ComponentBase
                     ShowSuccessNotification($"Mitigation {mitigation.MitigationCode} approved successfully");
 
                     // Update the local summary
-                    mitigation.Status = MitigationStatus.Approved.Value;
+                    mitigation.Status = MitigationStatus.Approved;
 
                     // Reload data to reflect changes
                     await LoadDataAsync();
@@ -1833,7 +1826,7 @@ public partial class ReportProcessing : ComponentBase
 
             Logger.LogInformation("Starting bulk approval for ALL mitigations in report: {ReportId}", reportId);
 
-            // ✅ FIXED: Load fresh hazard data instead of using cached InMitigation list
+            // ✅ FIXED: Load fresh hazard data instead of using cached PendingMitigation list
             var hazardsQuery = new GetAllHazardsQuery();
             var hazardsResult = await Mediator.SendAsync(hazardsQuery, CancellationToken.None);
             
@@ -1888,7 +1881,7 @@ public partial class ReportProcessing : ComponentBase
                                 processedMitigationCodes.Add(mitigation.Code);
 
                                 // Update mitigation status to Approved using enum value
-                                mitigation.Status = MitigationStatus.Approved.Value;
+                                mitigation.Status = MitigationStatus.Approved;
                                 mitigation.UpdatedDate = DateTime.UtcNow;
                                 mitigation.UpdatedBy = AuthService.CurrentUser.Code;  // You might want to get the current user
 
@@ -1966,7 +1959,7 @@ public partial class ReportProcessing : ComponentBase
     /// </summary>
     private int GetApprovableMitigationCountForReport(string reportId)
     {
-        return InMitigation
+        return PendingMitigation
             .Where(r => r.ReportId == reportId)
             .Sum(h => GetApprovableMitigationCount(h));
     }

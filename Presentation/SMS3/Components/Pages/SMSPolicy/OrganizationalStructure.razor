@@ -30,18 +30,7 @@
                 @if (GetVacantRoles() > 0)
                 {
                     <!-- Alert for vacant positions -->
-                   @*  <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
-                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                <RadzenIcon Icon="warning" />
-                                <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; font-weight: 600;">
-                                    Assignment Required: @GetVacantRoles() SMS role types have no assigned personnel to ensure complete organizational coverage.
-                                </RadzenText>
-                            </RadzenStack>
-                            <RadzenButton Text="Assign Personnel" Icon="person_add" ButtonStyle="ButtonStyle.Warning" 
-                                        Click="@(() => Navigation.NavigateTo("/System/UserManagement/OrganizationalUsers"))" />
-                        </RadzenStack>
-                    </RadzenAlert> *@
+                  
                 }
 
                 <!-- Category Summary (Collapsible) -->
@@ -247,7 +236,6 @@
                                                         @foreach (var user in roleInfo.AssignedUsers.Take(2))
                                                         {
                                                             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                                                <RadzenGravatar Email="@($"{user.FirstName?.Value?.ToLower()}.{user.LastName?.Value?.ToLower()}@organization.com")" Size="24" />
                                                                 <RadzenStack Orientation="Orientation.Vertical" Gap="0" Style="flex: 1;">
                                                                     <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-weight: 500;">@user.DisplayName</RadzenText>
                                                                     <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color);">@user.Department @(!string.IsNullOrEmpty(user.Position) ? $"- {user.Position}" : "")</RadzenText>
@@ -320,7 +308,6 @@
                                             @foreach (var user in UnassignedUsers)
                                             {
                                                 <RadzenCard Variant="Variant.Outlined" Style="padding: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                                                    <RadzenGravatar Email="@($"{user.FirstName?.Value?.ToLower()}.{user.LastName?.Value?.ToLower()}@organization.com")" Size="24" />
                                                     <RadzenStack Orientation="Orientation.Vertical" Gap="0">
                                                         <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-weight: 500;">@user.DisplayName</RadzenText>
                                                         <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color);">@user.Department</RadzenText>
@@ -360,7 +347,6 @@
                     <!-- Modal Body -->
                     <RadzenStack Gap="1rem">
                         <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
-                            <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
                             <strong>@SelectedLevelForAssignment.Category Level:</strong> @SelectedLevelForAssignment.Description
                             <br><small><strong>Authority Level:</strong> @SelectedLevelForAssignment.AuthorityLevel</small>
                         </RadzenAlert>
@@ -375,7 +361,6 @@
                                           AllowClear="true">
                                 <Template Context="user">
                                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                        <RadzenGravatar Email="@($"{user.FirstName?.Value?.ToLower()}.{user.LastName?.Value?.ToLower()}@organization.com")" Size="32" />
                                         <RadzenStack Orientation="Orientation.Vertical" Gap="0">
                                             <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; font-weight: 600;">@user.DisplayName</RadzenText>
                                             <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color);">
@@ -390,7 +375,6 @@
                         @if (!GetEligibleUsersForLevel(SelectedLevelForAssignment).Any())
                         {
                             <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
-                                <RadzenIcon Icon="warning" Style="margin-right: 0.5rem;" />
                                 No eligible users available for assignment. All active users may already be assigned to roles.
                             </RadzenAlert>
                         }

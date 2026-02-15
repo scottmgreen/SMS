@@ -50,7 +50,7 @@ public partial class OrganizationalStructure : ComponentBase
 
             // Get unassigned active users (no organization level or empty)
             UnassignedUsers = OrganizationalUsers
-                .Where(u => string.IsNullOrEmpty(u.OrganizationLevel.Name))
+                .Where(u => u.OrganizationLevel == SMSOrganizationalLevel.UnassignedLevel)
                 .OrderBy(u => u.DisplayName)
                 .ToList();
 
@@ -353,10 +353,10 @@ public partial class OrganizationalStructure : ComponentBase
                     builder.OpenElement(42, "div");
                     builder.AddAttribute(43, "style", "display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: var(--rz-success-lighter); border-radius: 4px; margin-bottom: 0.25rem;");
 
-                    builder.OpenComponent<RadzenGravatar>(44);
-                    builder.AddAttribute(45, "Email", $"{user.FirstName?.Value?.ToLower()}.{user.LastName?.Value?.ToLower()}@organization.com");
-                    builder.AddAttribute(46, "Size", 32);
-                    builder.CloseComponent();
+                    //builder.OpenComponent<RadzenGravatar>(44);
+                    //builder.AddAttribute(45, "Email", $"{user.FirstName?.Value?.ToLower()}.{user.LastName?.Value?.ToLower()}@organization.com");
+                    //builder.AddAttribute(46, "Size", 32);
+                    //builder.CloseComponent();
 
                     builder.OpenElement(47, "div");
                     builder.AddAttribute(48, "style", "flex: 1;");
@@ -425,17 +425,6 @@ public partial class OrganizationalStructure : ComponentBase
         };
     }
 
-    private BadgeStyle GetRiskLevelBadgeStyle(string riskLevel)
-    {
-        return riskLevel switch
-        {
-            "Critical" => BadgeStyle.Danger,
-            "High" => BadgeStyle.Warning,
-            "Medium" => BadgeStyle.Info,
-            "Low" => BadgeStyle.Success,
-            _ => BadgeStyle.Light
-        };
-    }
 
     private BadgeStyle GetAuthorityLevelBadgeStyle(int authorityLevel)
     {

@@ -59,7 +59,7 @@ public class SMSInvestigationWorkflowService : ISMSInvestigationWorkflowService
                 HazardCode = hazardCode, // This is the critical field that cannot be null
                 AssignedInvestigatorId = assignedInvestigatorId,
                 InvestigationNotes = investigationNotes ?? string.Empty,
-                Status = "Assigned"
+                Status = InvestigationStatus.InvestigatorAssigned
             };
 
             _logger.LogInformation("Creating investigation with HazardCode: {HazardCode}, AssignedTo: {Investigator}",

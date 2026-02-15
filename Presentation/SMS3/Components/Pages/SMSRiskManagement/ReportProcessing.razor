@@ -15,16 +15,15 @@
                Subtitle="Process reports and manage SMS risk validation workflow"
                Icon="fas fa-cogs">
         <AdditionalContent>
-            <div class="d-flex gap-2">
-                <RadzenButton ButtonStyle="ButtonStyle.Light" 
-                             Text="Refresh All" 
-                             Icon="refresh"
-                             Size="ButtonSize.Small"
-                             Click="@LoadDataAsync" />
-                <RadzenButton ButtonStyle="ButtonStyle.Info" 
-                             Text="Export" 
-                             Icon="download"
-                             Size="ButtonSize.Small" />
+            <div class="d-flex justify-content-end align-items-center w-100">
+                <div class="d-flex gap-2">
+                    <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                 Text="Refresh All" 
+                                 Icon="refresh"
+                                 Size="ButtonSize.Small"
+                                 Click="@LoadDataAsync" />
+                
+                </div>
             </div>
         </AdditionalContent>
     </PageHeader>
@@ -43,12 +42,10 @@
                     <RadzenTabsItem Text="@($"Investigation ({PendingInvestigation.Count})")" Icon="search">
                         @RenderInvestigationTab()
                     </RadzenTabsItem>
-                    <RadzenTabsItem Text="@($"Mitigation ({InMitigation.Count})")" Icon="build">
+                    <RadzenTabsItem Text="@($"Mitigation ({PendingMitigation.Count()})")" Icon="build">
                         @RenderMitigationTab()
                     </RadzenTabsItem>
-                    @* <RadzenTabsItem Text="@($"Closed ({ClosedReferred.Count})")" Icon="archive">
-                        @RenderClosedTab()
-                    </RadzenTabsItem> *@
+                    
                 </Tabs>
             </RadzenTabs>
         </RadzenColumn>

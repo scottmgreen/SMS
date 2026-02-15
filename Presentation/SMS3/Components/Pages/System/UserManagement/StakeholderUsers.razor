@@ -11,6 +11,14 @@
 <PageHeader Title="Application User Management"
             Subtitle="@($"Manage SMS Stakeholder Users ({@StakeholderUsersList.Count()})")"
             Icon="fas fa-user-tie">
+            <AdditionalContent>
+                <div class="d-flex justify-content-end align-items-center w-100">
+                    <div class="d-flex gap-2">
+                        <RadzenButton Text="Add User" Icon="add" ButtonStyle="ButtonStyle.Success"
+                                      Click="@ShowCreateDialog" />
+                    </div>
+                </div>
+            </AdditionalContent>
 </PageHeader>
 <div class="container-fluid">
     <!-- Messages -->
@@ -42,14 +50,6 @@
     <RadzenRow Gap="1rem">
         <RadzenColumn Size="12">
             <RadzenCard Variant="Variant.Outlined">
-                <RadzenCard>
-                    <div class="d-flex justify-content-end align-items-center w-100">
-                        <div class="d-flex gap-2">
-                            <RadzenButton Text="Add User" Icon="add" ButtonStyle="ButtonStyle.Success"
-                                          Click="@ShowCreateDialog" />
-                        </div>
-                    </div>
-                </RadzenCard>
                 <RadzenCard>
                     @if (StakeholderUsersList.Any())
                     {

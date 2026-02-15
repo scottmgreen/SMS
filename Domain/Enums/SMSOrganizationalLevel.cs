@@ -104,7 +104,7 @@ public abstract class SMSOrganizationalLevel : BaseEnum<SMSOrganizationalLevel>
 
     private sealed class SMSUnassignedLevel : SMSOrganizationalLevel
     {
-        public SMSUnassignedLevel() : base("SMS_UNASSIGNED_LEVEL", "SMS_UNASSIGNED_LEVEL", "SMS_UNASSIGNED_LEVEL", "SMS_UNASSIGNED_LEVEL", 0)
+        public SMSUnassignedLevel() : base("SMS_UNASSIGNED_LEVEL", "SMS Unassigned Level", "SMS_UNASSIGNED_LEVEL", "SMS_UNASSIGNED_LEVEL", 0)
         {
         }
     }
