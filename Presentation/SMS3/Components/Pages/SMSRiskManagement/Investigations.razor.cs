@@ -1,4 +1,6 @@
+using SMS_Domain.Entities;
 using SMS_Domain.Enums;
+using SMS_Domain.Errors;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -114,11 +116,10 @@ public partial class Investigations : ComponentBase
             {
                 InvestigationEntity = investigationResult.Value;
                 InvestigationStatusId = InvestigationEntity.Status.Value;
-                InvestigationEntity.DecisionType = "UNDER_REVIEW";
+                InvestigationEntity.DecisionType = "UNKNOWN";
 
 
-                Logger.LogInformation("Successfully loaded investigation: {Code} with Status: {Status}",
-                    InvestigationEntity.Code, InvestigationEntity.Status);
+                Logger.LogInformation("Successfully loaded investigation: {Code} with Status: {Status}",InvestigationEntity.Code, InvestigationEntity.Status);
             }
             else
             {
@@ -271,8 +272,13 @@ public partial class Investigations : ComponentBase
             IsSaving = true;
             StateHasChanged();
 
+            if(InvestigationEntity.Status == InvestigationStatus.InvestigationComplete)
+            {
+                InvestigationEntity.CompletedDate = DateTime.UtcNow;
+                InvestigationEntity.UpdatedBy = AuthService.CurrentUserDisplayName;
+                InvestigationEntity.UpdatedDate = DateTime.UtcNow;  
+            }
 
-            
             var updateCommand = new UpdateInvestigationCommand(InvestigationEntity);
             var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
 
@@ -471,7 +477,7 @@ public partial class Investigations : ComponentBase
             await DialogService.Alert(message, "Returned to Validation", new AlertOptions() { OkButtonText = "OK" });
 
             // Navigate to validations listing to show where the report went
-            Navigation.NavigateTo("/SMSRiskManagement/ReportValidation");
+            Navigation.NavigateTo($"/SMSRiskManagement/ReportValidation/{InvestigationEntity.ReportCode}");
         }
         catch (Exception ex)
         {
@@ -496,7 +502,7 @@ public partial class Investigations : ComponentBase
                 var validation = validationResult.Value;
 
                 // CRITICAL: Reset the validation to make it appear in Validation tab again
-                validation.Status = ValidationStatus.ValidationNeeded;
+                validation.Status = ReportValidationStatus.ValidationNeeded;
                 validation.Stage = "Initial";
                 validation.UpdatedDate = DateTime.UtcNow;
 
@@ -518,6 +524,12 @@ public partial class Investigations : ComponentBase
 
                 if (updateResult.IsSuccess)
                 {
+                    bool flowControl = await UpdateReportStatus(reportCode, ReportStatus.NeedsValidation);
+                    if (!flowControl)
+                    {
+                        throw new Exception($"Failed to Update Report Status during Create new Risk Assessment: {DomainErrors.ReportValidationError.CreateFailed.Message}");
+                    }
+
                     Logger.LogInformation("Successfully reset ReportValidation {ValidationCode} for ReportCode: {ReportCode}", validation.Code, reportCode);
                 }
                 else
@@ -564,6 +576,16 @@ public partial class Investigations : ComponentBase
 
                 if (createResult.IsSuccess)
                 {
+
+                    bool flowControl = await UpdateReportStatus(reportCode, ReportStatus.NeedsValidation);
+                    if (!flowControl)
+                    {
+                        throw new Exception($"Failed to Update Report Status during Create new Risk Assessment: {DomainErrors.ReportValidationError.CreateFailed.Message}");
+                    }
+
+
+
+
                     Logger.LogInformation("Successfully created new ReportValidation {ValidationCode} for ReportCode: {ReportCode}",
                         createResult.Value.Code, reportCode);
                 }
@@ -586,6 +608,38 @@ public partial class Investigations : ComponentBase
         }
     }
     #endregion
+
+    private async Task<bool> UpdateReportStatus(string reportId, ReportStatus status)
+    {
+        var getReportQuery = new GetReportByCodeQuery(new ReportID(reportId));
+        var getReportQueryResult = await Mediator.SendAsync(getReportQuery, CancellationToken.None);
+
+        if (getReportQueryResult.IsSuccess)
+        {
+            var report = getReportQueryResult.Value;
+            report.Status = status;
+            report.UpdatedBy = AuthService.CurrentUserDisplayName;
+            report.UpdatedDate = DateTime.UtcNow;
+
+            var cmdReportUpdate = new UpdateReportCommand(report);
+            var cmdReportResult = await Mediator.SendAsync(cmdReportUpdate, CancellationToken.None);
+
+            if (!cmdReportResult.IsSuccess)
+            {
+                ShowErrorNotification($"Report{reportId} Status Was not Updated");
+                return false;
+            }
+
+
+
+            // Show results
+
+        }
+
+        return true;
+    }
+
+
 
     #region Notification Methods
     private void ShowErrorNotification(string message)

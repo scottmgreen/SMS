@@ -48,11 +48,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// </summary>
     public bool IsLoading { get; set; }
 
-    /// <summary>
-    /// Show preview modal
-    /// </summary>
-    public bool ShowPreview { get; set; }
-
+    
     /// <summary>
     /// Show map modal
     /// </summary>
@@ -156,8 +152,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     public bool HasValidCoordinates => SelectedLatitude != 0 && SelectedLongitude != 0;
     public string GeoLocationDisplay => HasGeoLocation ? $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}" : "No coordinates selected";
     public int DescriptionCharacterCount => HazardReport?.Description?.Length ?? 0;
-    public int SubmittingDepartmentCharacterCount => HazardReport?.SubmittingDepartment?.Length ?? 0;
-    public bool IsSubmittingDepartmentValid => SubmittingDepartmentCharacterCount <= 200;
+        
     
     public bool IsFormValidForPreview =>
         !string.IsNullOrEmpty(HazardReport.HazardType) && !string.IsNullOrEmpty(HazardReport.HazardCategory) &&
@@ -912,7 +907,6 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
 
         ShowSubmissionConfirmation = true;
-        ShowPreview = false;
         StateHasChanged(); // Force UI update to hide buttons
     }
 
@@ -993,7 +987,6 @@ public partial class HazardReporting : ComponentBase, IDisposable
             EditHazardCode = null;
 
             // Reset all UI state flags
-            ShowPreview = false;
             ShowConfidentialInfo = false;
             ShowMapModal = false;
             ShowSubmissionConfirmation = false;
@@ -1144,9 +1137,10 @@ public partial class HazardReporting : ComponentBase, IDisposable
         EditingReport.ReportContactName = HazardReport.ReportContactName;
         EditingReport.ReportContactCell = HazardReport.ReportContactCell;
         EditingReport.ReportContactEmail = HazardReport.ReportContactEmail;
-
+        EditingReport.Status = ReportStatus.Updated;
         EditingReport.UpdatedDate = DateTime.UtcNow;
         EditingReport.UpdatedBy = AuthService.CurrentUserDisplayName;
+
 
         var updateReportCommand = new UpdateReportCommand(EditingReport);
         var reportUpdateResult = await Mediator.SendAsync(updateReportCommand, CancellationToken.None);
@@ -1233,8 +1227,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
             ReportContactEmail = HazardReport.ReportContactEmail,
 
             Description = HazardReport.Description,
-            Stage = "Initial",
-            Status = ValidationStatus.ValidationNeeded.Value,
+            Stage = "INITIAL",
+            Status = ReportStatus.Created,
             CreatedBy = AuthService.CurrentUserDisplayName,
             CreatedDate = DateTime.UtcNow
         };
@@ -1648,7 +1642,6 @@ public partial class HazardReporting : ComponentBase, IDisposable
         HazardTypeOptions.Clear();
 
         // Reset UI state
-        ShowPreview = false;
         ShowConfidentialInfo = false;
         ShowMapModal = false;
         ShowSubmissionConfirmation = false;
@@ -1786,7 +1779,6 @@ public partial class HazardReporting : ComponentBase, IDisposable
             HazardTypeOptions.Clear();
 
             // Reset UI state
-            ShowPreview = false;
             ShowConfidentialInfo = false;
             ShowMapModal = false;
             ShowSubmissionConfirmation = false;

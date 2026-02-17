@@ -460,8 +460,8 @@ public partial class ReportProcessing : ComponentBase
                         {
                             ReportId = report.Code ?? "Unknown",
                             ReportDescription = report.Description ?? "No description",
-                            ReportStatus = report.Status ?? "New",
-                            ReportStage = report.Stage ?? "New",
+                            ReportStatus = report.Status ?? ReportStatus.Created,
+                            ReportStage = report.Stage ?? "NEW",
                             CreatedBy = report.CreatedBy ?? "Unknown",
                             CreatedDate = report.CreatedDate ?? DateTime.UtcNow,
 
@@ -470,7 +470,7 @@ public partial class ReportProcessing : ComponentBase
                             HazardType = primaryHazard.HazardType ?? "Unknown",
                             HazardDescription = primaryHazard.Description ?? "No description",
                             Location = primaryHazard.HazardLocation?.Description ?? primaryHazard.LocationArea ?? "Not specified",
-                            //SubmittedBy = primaryHazard.SubmittedBy ?? report.CreatedBy ?? report.UpdatedBy ?? "Unknown",
+                            SubmittedBy = report.SubmittedBy ?? report.CreatedBy ?? report.UpdatedBy ?? "Unknown",
                             //ReportedDate = primaryHazard.SubmittedDate,
                             //IsAnonymous = primaryHazard.IsAnonymous,
 
@@ -522,7 +522,7 @@ public partial class ReportProcessing : ComponentBase
                     {
                         ReportId = report.Code ?? "Unknown",
                         ReportDescription = report.Description ?? "No description",
-                        ReportStatus = report.Status ?? "New",
+                        ReportStatus = report.Status ?? ReportStatus.Created,
                         ReportStage = report.Stage ?? "New",
                         CreatedBy = report.CreatedBy ?? "Unknown",
                         CreatedDate = report.CreatedDate ?? DateTime.UtcNow,
@@ -532,7 +532,7 @@ public partial class ReportProcessing : ComponentBase
                         HazardCategory = primaryHazard.HazardCategory ?? "Unknown",
                         HazardDescription = primaryHazard.Description ?? "No description",
                         Location = primaryHazard.HazardLocation?.Description ?? primaryHazard.LocationArea ?? "Not specified",
-                        //SubmittedBy = primaryHazard.SubmittedBy ?? report.CreatedBy ?? report.UpdatedBy ?? "Unknown",
+                        SubmittedBy = report.SubmittedBy ?? report.CreatedBy ?? report.UpdatedBy ?? "Unknown",
                         //ReportedDate = primaryHazard.SubmittedDate,
                         //IsAnonymous = primaryHazard.IsAnonymous,
 
@@ -1406,7 +1406,21 @@ public partial class ReportProcessing : ComponentBase
         RenderReportIdColumn(builder);
         RenderHazardIdColumn(builder);
         RenderHazardDescriptionColumn(builder);
-
+        //Status
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(30);
+        builder.AddAttribute(31, "Property", "ReportStatus");
+        builder.AddAttribute(32, "Title", "Status");
+        builder.AddAttribute(33, "Width", "175px");
+        builder.AddAttribute(34, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenBadge>(0);
+                templateBuilder.AddAttribute(1, "BadgeStyle", BadgeStyle.Base);
+                templateBuilder.AddAttribute(2, "Text", report.ReportStatus);
+                templateBuilder.AddAttribute(3, "Variant", Variant.Flat);
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
         // Stage Column
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(40);
         builder.AddAttribute(41, "Property", "ReportStage");
@@ -1426,30 +1440,30 @@ public partial class ReportProcessing : ComponentBase
 
 
         // Priority Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(50);
-        builder.AddAttribute(51, "Property", "Priority");
-        builder.AddAttribute(52, "Title", "Priority");
-        builder.AddAttribute(53, "Width", "100px");
-        builder.AddAttribute(54, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                var badgeStyle = report.Priority switch
-                {
-                    "High" => BadgeStyle.Danger,
-                    "Medium" => BadgeStyle.Warning,
-                    _ => BadgeStyle.Base
-                };
-                templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
-                templateBuilder.AddAttribute(2, "Text", report.Priority);
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
+        //builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(50);
+        //builder.AddAttribute(51, "Property", "Priority");
+        //builder.AddAttribute(52, "Title", "Priority");
+        //builder.AddAttribute(53, "Width", "100px");
+        //builder.AddAttribute(54, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+        //    (templateBuilder =>
+        //    {
+        //        var badgeStyle = report.Priority switch
+        //        {
+        //            "High" => BadgeStyle.Danger,
+        //            "Medium" => BadgeStyle.Warning,
+        //            _ => BadgeStyle.Base
+        //        };
+        //        templateBuilder.OpenComponent<RadzenBadge>(0);
+        //        templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
+        //        templateBuilder.AddAttribute(2, "Text", report.Priority);
+        //        templateBuilder.CloseComponent();
+        //    })));
+        //builder.CloseComponent();
 
         // Reported By Column (FIXED: Ensure proper data binding)
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(60);
         builder.AddAttribute(61, "Property", "SubmittedBy");
-        builder.AddAttribute(62, "Title", "Reported By");
+        builder.AddAttribute(62, "Title", "Submitted By");
         builder.AddAttribute(63, "Width", "150px");
         builder.AddAttribute(64, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
@@ -1462,20 +1476,20 @@ public partial class ReportProcessing : ComponentBase
         builder.CloseComponent();
 
         // Days in Stage Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(70);
-        builder.AddAttribute(71, "Property", "DaysInStage");
-        builder.AddAttribute(72, "Title", "Days in Stage");
-        builder.AddAttribute(73, "Width", "120px");
-        builder.AddAttribute(74, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                var badgeStyle = report.DaysInStage > 2 ? BadgeStyle.Warning : BadgeStyle.Secondary;
-                templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
-                templateBuilder.AddAttribute(2, "Text", $"{report.DaysInStage} days");
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
+        //builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(70);
+        //builder.AddAttribute(71, "Property", "DaysInStage");
+        //builder.AddAttribute(72, "Title", "Days in Stage");
+        //builder.AddAttribute(73, "Width", "120px");
+        //builder.AddAttribute(74, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+        //    (templateBuilder =>
+        //    {
+        //        var badgeStyle = report.DaysInStage > 2 ? BadgeStyle.Warning : BadgeStyle.Secondary;
+        //        templateBuilder.OpenComponent<RadzenBadge>(0);
+        //        templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
+        //        templateBuilder.AddAttribute(2, "Text", $"{report.DaysInStage} days");
+        //        templateBuilder.CloseComponent();
+        //    })));
+        //builder.CloseComponent();
         RenderValidationActionColumn(builder);
     }
 
@@ -1829,7 +1843,7 @@ public partial class ReportProcessing : ComponentBase
             // ✅ FIXED: Load fresh hazard data instead of using cached PendingMitigation list
             var hazardsQuery = new GetAllHazardsQuery();
             var hazardsResult = await Mediator.SendAsync(hazardsQuery, CancellationToken.None);
-            
+
             if (!hazardsResult.IsSuccess || hazardsResult.Value == null)
             {
                 ShowErrorNotification("Failed to load hazard data");
@@ -1837,7 +1851,7 @@ public partial class ReportProcessing : ComponentBase
             }
 
             var reportHazards = hazardsResult.Value.Where(h => h.ReportCode?.Trim() == reportId?.Trim()).ToList();
-            
+
             if (!reportHazards.Any())
             {
                 ShowErrorNotification($"No hazards found for report {reportId}");
@@ -1863,12 +1877,12 @@ public partial class ReportProcessing : ComponentBase
                     {
                         // ✅ FIXED: Filter for PENDING_APPROVAL using enum value and avoid duplicates
                         var pendingMitigations = mitigationResult.Value
-                            .Where(m => !string.IsNullOrEmpty(m.Code) && 
-                                       !processedMitigationCodes.Contains(m.Code) && 
+                            .Where(m => !string.IsNullOrEmpty(m.Code) &&
+                                       !processedMitigationCodes.Contains(m.Code) &&
                                        string.Equals(m.Status, MitigationStatus.PendingApproval.Value, StringComparison.OrdinalIgnoreCase))
                             .ToList();
-                        
-                        Logger.LogInformation("Found {Count} pending mitigations for hazard {HazardCode}: {MitigationCodes}", 
+
+                        Logger.LogInformation("Found {Count} pending mitigations for hazard {HazardCode}: {MitigationCodes}",
                             pendingMitigations.Count, hazard.Code,
                             string.Join(", ", pendingMitigations.Select(m => $"{m.Code}({m.Status})")));
 
@@ -1891,20 +1905,20 @@ public partial class ReportProcessing : ComponentBase
                                 if (updateResult.IsSuccess)
                                 {
                                     successCount++;
-                                    Logger.LogInformation("Approved mitigation: {Code} for hazard {HazardCode}", 
+                                    Logger.LogInformation("Approved mitigation: {Code} for hazard {HazardCode}",
                                         mitigation.Code, hazard.Code);
                                 }
                                 else
                                 {
                                     errorCount++;
-                                    Logger.LogError("Failed to approve mitigation {Code}: {Error}", 
+                                    Logger.LogError("Failed to approve mitigation {Code}: {Error}",
                                         mitigation.Code, updateResult.Error?.Message);
                                 }
                             }
                             catch (Exception ex)
                             {
                                 errorCount++;
-                                Logger.LogError(ex, "Error approving mitigation {Code} for hazard {HazardCode}", 
+                                Logger.LogError(ex, "Error approving mitigation {Code} for hazard {HazardCode}",
                                     mitigation.Code, hazard.Code);
                             }
                         }
@@ -1921,11 +1935,15 @@ public partial class ReportProcessing : ComponentBase
                 }
             }
 
-            // Show results
+            bool flowControl = await UpdateReportStatus(reportId, ReportStatus.InMitigation);
+            if (!flowControl)
+            {
+                return;
+            }
             if (successCount > 0)
             {
                 ShowSuccessNotification($"Successfully approved {successCount} mitigation(s) across {reportHazards.Count} hazard(s) for report {reportId}");
-                
+
                 // Reload data to reflect changes
                 await LoadDataAsync();
             }
@@ -1938,10 +1956,9 @@ public partial class ReportProcessing : ComponentBase
             {
                 ShowErrorNotification($"Failed to approve {errorCount} mitigation(s). Please check logs for details.");
             }
-
-            Logger.LogInformation("Bulk report approval completed for {ReportId}: {SuccessCount} approved, {ErrorCount} failed", 
-                reportId, successCount, errorCount);
         }
+
+
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error during bulk approval for report {ReportId}", reportId);
@@ -1952,6 +1969,36 @@ public partial class ReportProcessing : ComponentBase
             IsProcessingApproval = false;
             StateHasChanged();
         }
+    }
+
+    private async Task<bool> UpdateReportStatus(string reportId, ReportStatus status)
+    {
+        var getReportQuery = new GetReportByCodeQuery(new ReportID(reportId));
+        var getReportQueryResult = await Mediator.SendAsync(getReportQuery, CancellationToken.None);
+
+        if (getReportQueryResult.IsSuccess)
+        {
+            var report = getReportQueryResult.Value;
+            report.Status = status;
+            report.UpdatedBy = AuthService.CurrentUserDisplayName;
+            report.UpdatedDate = DateTime.UtcNow;
+
+            var cmdReportUpdate = new UpdateReportCommand(report);
+            var cmdReportResult = await Mediator.SendAsync(getReportQuery, CancellationToken.None);
+
+            if (!cmdReportResult.IsSuccess)
+            {
+                ShowErrorNotification($"Report{reportId} Status Was not Updated");
+                return false;
+            }
+
+
+
+            // Show results
+            
+        }
+
+        return true;
     }
 
     /// <summary>

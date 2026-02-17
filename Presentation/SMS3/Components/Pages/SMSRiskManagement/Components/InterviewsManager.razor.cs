@@ -1,4 +1,4 @@
-namespace SMS3.Components.Pages.SMSRiskManagement.Components;
+﻿namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
 public partial class InterviewsManager : ComponentBase
 {
@@ -135,9 +135,9 @@ public partial class InterviewsManager : ComponentBase
             Height = "100%",
             Resizable = false,
             Draggable = false,
-            CloseDialogOnOverlayClick = true,
-            CloseDialogOnEsc = true,
-            ShowTitle = false,
+            CloseDialogOnOverlayClick = true,    // ✅ FIXED: Allow overlay click to close
+            CloseDialogOnEsc = true,             // ✅ FIXED: Allow ESC to close
+            ShowTitle = false,                   // ✅ FIXED: No title (your custom modal has its own)
             ShowClose = false,
             CssClass = "custom-modal-dialog"
         };
@@ -309,7 +309,7 @@ public partial class InterviewsManager : ComponentBase
                 var cancelResult = interview.CancelInterview(reason);
                 if (cancelResult.IsSuccess)
                 {
-                    var updateCommand = new UpdateInterviewCommand(interview);
+                    var updateCommand = new DeleteInterviewCommand(new InterviewID(interview.Code));
                     var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
 
                     if (result.IsSuccess)

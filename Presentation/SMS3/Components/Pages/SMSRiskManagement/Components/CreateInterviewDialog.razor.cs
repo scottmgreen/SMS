@@ -24,6 +24,8 @@ public partial class CreateInterviewDialog : ComponentBase
     protected override void OnInitialized()
     {
         // Initialize model with preset date/time if provided
+        InitializeDropdownOptions();
+
         Model = new CreateInterviewModel
         {
             InvestigationCode = InvestigationCode == "UNKNOWN" ? "" : InvestigationCode
@@ -34,16 +36,49 @@ public partial class CreateInterviewDialog : ComponentBase
             Model.InterviewDate = PresetDateTime.Value;
         }
     }
+
+    private void InitializeDropdownOptions()
+    {
+        DepartmentOptions = SMSDepartment.GetAllValues()
+                    .Select(hc => new DropdownOption(hc.Value, hc.Name))
+                    .ToList();
+
+
+        InterviewTypeOptions = InterviewType.GetAllValues()
+            .Select(hc => new DropdownOption(hc.Value, hc.Name))
+            .ToList();
+    }
     #endregion
 
     #region Dropdown Options
-    private readonly List<DropdownOption> InterviewTypeOptions = new()
+    private List<DropdownOption> InterviewTypeOptions { get; set; } = new ();
+    public List<DropdownOption> DepartmentOptions { get; set; } = new();
+
+    public class DropdownOption
     {
-        new() { Value = InterviewType.Witness, Text = "Witness Interview" },
-        new() { Value = InterviewType.Expert, Text = "Subject Matter Expert" },
-        new() { Value = InterviewType.Stakeholder, Text = "Stakeholder Interview" },
-        new() { Value = InterviewType.FollowUp, Text = "Follow-up Interview" }
-    };
+        public string Value { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+
+        public DropdownOption() { }
+        public DropdownOption(string value, string text)
+        {
+            Value = value;
+            Text = text;
+        }
+    }
+
+
+    public async Task OnDepartmentChanged(string? departmentValue)
+    {
+        Model.PersonInterviewedDepartment = departmentValue;
+
+    }
+    public async Task OnWitnessInterviewTypeChanged(string? departmentValue)
+    {
+        Model.InterviewTypeId = departmentValue;
+        Model.Type = InterviewType.FromValue(Model.InterviewTypeId);
+
+    }
     #endregion
 
     #region Methods
@@ -170,6 +205,8 @@ public partial class CreateInterviewDialog : ComponentBase
         public string PersonInterviewed { get; set; } = "";
         public string? PersonInterviewedRole { get; set; }
         public string? PersonInterviewedDepartment { get; set; }
+
+        public string? InterviewTypeId { get; set; }
         public InterviewType Type { get; set; } = InterviewType.Witness;
         public DateTime? InterviewDate { get; set; }
         public string? InterviewLocation { get; set; }
@@ -179,10 +216,6 @@ public partial class CreateInterviewDialog : ComponentBase
         public bool IsConfidential { get; set; } = false;
     }
 
-    public class DropdownOption
-    {
-        public object Value { get; set; } = default!;
-        public string Text { get; set; } = "";
-    }
+    
     #endregion
 }

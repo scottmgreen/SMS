@@ -286,7 +286,35 @@ public partial class ReportValidation : ComponentBase
             StateHasChanged();
         }
     }
+    private async Task<bool> UpdateReportStatus(string reportId, ReportStatus status)
+    {
+        var getReportQuery = new GetReportByCodeQuery(new ReportID(reportId));
+        var getReportQueryResult = await Mediator.SendAsync(getReportQuery, CancellationToken.None);
 
+        if (getReportQueryResult.IsSuccess)
+        {
+            var report = getReportQueryResult.Value;
+            report.Status = status;
+            report.UpdatedBy = AuthService.CurrentUserDisplayName;
+            report.UpdatedDate = DateTime.UtcNow;
+
+            var cmdReportUpdate = new UpdateReportCommand(report);
+            var cmdReportResult = await Mediator.SendAsync(cmdReportUpdate, CancellationToken.None);
+
+            if (!cmdReportResult.IsSuccess)
+            {
+                ShowErrorNotification($"Report{reportId} Status Was not Updated");
+                return false;
+            }
+
+
+
+            // Show results
+
+        }
+
+        return true;
+    }
     /// <summary>
     /// Smart validation record creation - reuses existing validation if available, creates new if needed
     /// </summary>
@@ -306,7 +334,7 @@ public partial class ReportValidation : ComponentBase
                 ExistingValidation.ValidationComments = ValidationComments;
                 ExistingValidation.ValidationType = RiskAssessmentCategory.Technical;
                 ExistingValidation.ValidatedBy = ValidatedBy;
-                ExistingValidation.Status = ValidationStatus.Revised;
+                ExistingValidation.Status = ReportValidationStatus.Revised;
                 ExistingValidation.Stage = "COMPLETE";
                 ExistingValidation.ValidatedDate = DateTime.UtcNow;
 
@@ -320,6 +348,11 @@ public partial class ReportValidation : ComponentBase
                 {
                     throw new Exception($"Failed to update existing validation: {result.Error?.Message ?? DomainErrors.ReportValidationError.UpdateFailed.Message}");
                 }
+                bool flowControl = await UpdateReportStatus(ReportId, ReportStatus.ValidationRevised);
+                if (!flowControl)
+                {
+                    throw new Exception($"Failed to Update Report Status during Update Validation: {result.Error?.Message ?? DomainErrors.ReportValidationError.UpdateFailed.Message}");
+                }
 
                 Logger.LogInformation("Successfully updated existing ReportValidation: {ValidationCode}", ExistingValidation.Code);
                 ShowSuccessNotification($"Validation updated successfully. Decision: {SelectedValidationDecision?.Name}");
@@ -330,7 +363,6 @@ public partial class ReportValidation : ComponentBase
                 Logger.LogInformation("Creating new ReportValidation for ReportId: {ReportId}", ReportId);
 
                 var validationId = new ReportValidationID($"RV-0000");
-
                 var validation = new SMS_Domain.Entities.ReportValidation(validationId)
                 {
                     Code = validationId.Value,
@@ -339,8 +371,8 @@ public partial class ReportValidation : ComponentBase
                     ValidationDecision = ValidationDecisionValue,
                     ValidationComments = ValidationComments,
                     ValidationType = ValidationType ?? "STANDARD",
-                    Status = ValidationStatus.ValidationNeeded,
-                    Stage = "COMPLETE",
+                    Status = ReportValidationStatus.ValidationComplete,
+                    Stage = "NEW",
                     ValidatedDate = DateTime.UtcNow,
                     CreatedBy = AuthService.CurrentUserDisplayName,
                     CreatedDate = DateTime.UtcNow
@@ -353,10 +385,17 @@ public partial class ReportValidation : ComponentBase
                 {
                     throw new Exception($"Failed to create new validation: {result.Error?.Message ?? DomainErrors.ReportValidationError.CreateFailed.Message}");
                 }
-
+                bool flowControl = await UpdateReportStatus(ReportId, ReportStatus.ValidationCompleted);
+                if (!flowControl)
+                {
+                    throw new Exception($"Failed to Update Report Status during Create new validation: {result.Error?.Message ?? DomainErrors.ReportValidationError.CreateFailed.Message}");
+                }
                 Logger.LogInformation("Successfully created new ReportValidation: {ValidationCode}", result.Value.Code);
                 ShowSuccessNotification($"Validation recorded successfully. Decision: {SelectedValidationDecision?.Name}");
             }
+
+            
+
         }
         catch (Exception ex)
         {
@@ -420,6 +459,12 @@ public partial class ReportValidation : ComponentBase
                 ShowSuccessNotification($"Loading existing RiskAssessment {existingRiskAssessment.Code}");
                 navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{ReportHazard.Code}/1";
                 Logger.LogInformation("Navigating to existing Risk Assessment: {Url}", navigationUrl);
+                bool flowControl = await UpdateReportStatus(ReportId, ReportStatus.RiskAssessmentInProgress);
+                if (!flowControl)
+                {
+                    throw new Exception($"Failed to Update Report Status during Create new Risk Assessment: {DomainErrors.ReportValidationError.CreateFailed.Message}");
+                }
+
                 await Task.Delay(1500);
                 Navigation.NavigateTo(navigationUrl);
             }
@@ -455,6 +500,16 @@ public partial class ReportValidation : ComponentBase
                     ShowSuccessNotification($"Investigation {newRiskAssessment.Code} created successfully");
                     navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{ReportHazard.Code}/1";
                     Logger.LogInformation("Navigating to new risk assessment: {Url}", navigationUrl);
+
+                    bool flowControl = await UpdateReportStatus(ReportId, ReportStatus.RiskAssessmentInProgress);
+                    if (!flowControl)
+                    {
+                        throw new Exception($"Failed to Update Report Status during Create new Risk Assessment: {DomainErrors.ReportValidationError.CreateFailed.Message}");
+                    }
+
+
+
+
                     await Task.Delay(1500);
                     Navigation.NavigateTo(navigationUrl);
                 }
@@ -525,6 +580,11 @@ public partial class ReportValidation : ComponentBase
                 ShowSuccessNotification($"Loading existing investigation {existingInvestigation.Code}");
                 var navigationUrl = $"/SMSRiskManagement/Investigations/{existingInvestigation.Code}/{ReportHazard.Code}";
                 Logger.LogInformation("Navigating to existing investigation: {Url}", navigationUrl);
+                bool flowControl = await UpdateReportStatus(ReportId, ReportStatus.UnderInvestigation);
+                if (!flowControl)
+                {
+                    throw new Exception($"Failed to Update Report Status during exsiting investigation: {DomainErrors.ReportValidationError.CreateFailed.Message}");
+                }
                 await Task.Delay(1500);
                 Navigation.NavigateTo(navigationUrl);
             }
@@ -535,6 +595,7 @@ public partial class ReportValidation : ComponentBase
                 var investigationId = new InvestigationID(investigationCode);
                 Investigation investigation = new Investigation(investigationId);
                 investigation.HazardCode = ReportHazard.Code;
+                investigation.Status = InvestigationStatus.InvestigatorAssigned;
                 investigation.CreatedBy = AuthService.CurrentUserDisplayName;
                 investigation.ReportCode = ReportId;
                 investigation.AssignedInvestigatorId = AuthService.CurrentUserDisplayName;
@@ -550,6 +611,12 @@ public partial class ReportValidation : ComponentBase
                     ShowSuccessNotification($"Investigation {newInvestigation.Code} created successfully");
                     var navigationUrl = $"/SMSRiskManagement/Investigations/{newInvestigation.Code}/{ReportHazard.Code}";
                     Logger.LogInformation("Navigating to new investigation: {Url}", navigationUrl);
+
+                    bool flowControl = await UpdateReportStatus(ReportId, ReportStatus.UnderInvestigation);
+                    if (!flowControl)
+                    {
+                        throw new Exception($"Failed to Update Report Status during Create new Investigation: {DomainErrors.ReportValidationError.CreateFailed.Message}");
+                    }
                     await Task.Delay(1500);
                     Navigation.NavigateTo(navigationUrl);
                 }
@@ -606,24 +673,19 @@ public partial class ReportValidation : ComponentBase
             }
 
             // Update report status to Closed
-            ReportDetails.Status = "Closed";
-            ReportDetails.UpdatedBy = GetCurrentUserCode();
-            ReportDetails.UpdatedDate = DateTime.UtcNow;
-
-            var updateCommand = new UpdateReportCommand(ReportDetails);
-            var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
-
-            if (result.IsSuccess)
+            bool flowControl = await UpdateReportStatus(ReportDetails.Code, ReportStatus.Closed);
+            if (!flowControl)
+            {
+                throw new Exception($"Failed to Update Report Status during exsiting investigation: {DomainErrors.ReportValidationError.CreateFailed.Message}");
+            }
+            else
             {
                 ShowSuccessNotification("Report has been closed successfully");
                 Logger.LogInformation("Report {ReportId} closed due to NOT_SMS_RISK validation", ReportId);
                 await Task.Delay(1500);
                 Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
             }
-            else
-            {
-                throw new Exception($"Failed to close report: {result.Error?.Message}");
-            }
+
         }
         catch (Exception ex)
         {

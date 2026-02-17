@@ -1,8 +1,8 @@
 namespace SMS_Domain.Enums;
 
-public abstract class ValidationStatus : BaseEnum<ValidationStatus>
+public abstract class ReportValidationStatus : BaseEnum<ReportValidationStatus>
 {
-    protected ValidationStatus(string value, string name) : base(value, name)
+    protected ReportValidationStatus(string value, string name) : base(value, name)
     {
 
     }
@@ -12,32 +12,32 @@ public abstract class ValidationStatus : BaseEnum<ValidationStatus>
     #region Validation Decision Types
 
     /// <summary>Report constitutes an SMS risk and requires formal risk assessment</summary>
-    public static readonly ValidationStatus ValidationNeeded = new NeedsValidationStatus();
+    public static readonly ReportValidationStatus ValidationNeeded = new NeedsValidationStatus();
 
     /// <summary>Report does not constitute an SMS risk and should be referred or closed</summary>
-    public static readonly ValidationStatus ValidationComplete = new ValidationCompletedStatus();
+    public static readonly ReportValidationStatus ValidationComplete = new ValidationCompletedStatus();
 
     /// <summary>Report does not constitute an SMS risk and should be referred or closed</summary>
-    public static readonly ValidationStatus Revised = new ValidationRevisedStatus();
+    public static readonly ReportValidationStatus Revised = new ValidationRevisedStatus();
 
     #endregion
 
     #region Implementations
 
-    private sealed class NeedsValidationStatus : ValidationStatus
+    private sealed class NeedsValidationStatus : ReportValidationStatus
     {
         public NeedsValidationStatus() : base("NEEDS_VALIDATION", "NEEDS_VALIDATION")
         {
         }
     }
 
-    private sealed class ValidationCompletedStatus : ValidationStatus
+    private sealed class ValidationCompletedStatus : ReportValidationStatus
     {
         public ValidationCompletedStatus() : base("VALIDATION_COMPLETED", "VALIDATION_COMPLETED")
         {
         }
     }
-    private sealed class ValidationRevisedStatus : ValidationStatus
+    private sealed class ValidationRevisedStatus : ReportValidationStatus
     {
         public ValidationRevisedStatus() : base("VALIDATION_REVISED", "VALIDATION_REVISED")
         {
@@ -49,12 +49,12 @@ public abstract class ValidationStatus : BaseEnum<ValidationStatus>
     /// <summary>
     /// Gets all available validation decision values
     /// </summary>
-    public static IEnumerable<ValidationStatus> GetAllValues()
+    public static IEnumerable<ReportValidationStatus> GetAllValues()
     {
-        return typeof(ValidationStatus)
+        return typeof(ReportValidationStatus)
             .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
-            .Where(f => f.FieldType == typeof(ValidationStatus))
-            .Select(f => (ValidationStatus)f.GetValue(null)!)
+            .Where(f => f.FieldType == typeof(ReportValidationStatus))
+            .Select(f => (ReportValidationStatus)f.GetValue(null)!)
             .Where(vd => vd != null);
     }
 
@@ -66,7 +66,7 @@ public abstract class ValidationStatus : BaseEnum<ValidationStatus>
     /// <summary>
     /// Parse a string value to ValidationDecision
     /// </summary>
-    public static ValidationStatus FromValue(string value)
+    public static ReportValidationStatus FromValue(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException("Validation decision value cannot be null or empty", nameof(value));
@@ -78,7 +78,7 @@ public abstract class ValidationStatus : BaseEnum<ValidationStatus>
     /// <summary>
     /// Try to parse a string value to ValidationDecision
     /// </summary>
-    public static bool TryFromValue(string? value, out ValidationStatus? validationDecision)
+    public static bool TryFromValue(string? value, out ReportValidationStatus? validationDecision)
     {
         validationDecision = null;
         if (string.IsNullOrWhiteSpace(value))

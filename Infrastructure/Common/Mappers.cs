@@ -401,7 +401,7 @@ public static partial class Mappers
         report.ReportContactCell = reader.GetValue<string>(FieldNames.fReportContactCell);
         report.ReportContactEmail = reader.GetValue<string>(FieldNames.fReportContactEmail);
         report.Description = reader.GetValue<string>(FieldNames.fReportDescription);
-        report.Status = reader.GetValue<string>(FieldNames.fReportStatus)?.Trim();
+        report.Status = ReportStatus.FromValue(reader.GetValue<string>(FieldNames.fReportStatus)?.Trim());
         report.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
         report.CreatedDate = reader.GetValue<DateTime>(FieldNames.fCreatedDate);
         report.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
@@ -697,7 +697,7 @@ public static partial class Mappers
             reportValidation.Code = code;
             reportValidation.ReportCode = reader.GetValue<string>(FieldNames.fReportValidationReportCode);
             reportValidation.ValidationDecision = reader.GetValue<string>(FieldNames.fReportValidationDecision);
-            reportValidation.Status = ValidationStatus.FromValue(reader.GetValue<string>(FieldNames.fReportValidationStatus));
+            reportValidation.Status = ReportValidationStatus.FromValue(reader.GetValue<string>(FieldNames.fReportValidationStatus));
             reportValidation.Stage = reader.GetValue<string>(FieldNames.fReportValidationStage);
             reportValidation.ValidationType = reader.GetValue<string>(FieldNames.fReportValidationType);
 

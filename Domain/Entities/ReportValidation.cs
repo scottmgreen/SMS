@@ -14,7 +14,7 @@ public class ReportValidation : BaseAuditableEntity, IReportValidation
         Code = string.Empty;
         ReportCode = string.Empty;
         ValidationDecision = string.Empty;
-        Status = ValidationStatus.ValidationNeeded;
+        Status = ReportValidationStatus.ValidationNeeded;
         Stage = string.Empty;
     }
 
@@ -38,7 +38,7 @@ public class ReportValidation : BaseAuditableEntity, IReportValidation
     /// <summary>
     /// Current status of the validation (Draft, InProgress, Completed)
     /// </summary>
-    public ValidationStatus? Status { get; set; }
+    public ReportValidationStatus? Status { get; set; }
 
     /// <summary>
     /// Current stage of the validation process
@@ -90,7 +90,7 @@ public class ReportValidation : BaseAuditableEntity, IReportValidation
             Code = id.Value,
             ReportCode = reportCode,
             ValidatedBy = validatedBy,
-            Status = ValidationStatus.ValidationNeeded,
+            Status = ReportValidationStatus.ValidationNeeded,
             Stage = "Initial",
             ValidationType = "Standard",
             CreatedBy = validatedBy

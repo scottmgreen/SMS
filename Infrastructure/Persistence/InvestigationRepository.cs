@@ -47,7 +47,7 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
 
             // Management properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationAssignedInvestigatorId, investigation.AssignedInvestigatorId));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationStatus, investigation.Status.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationStatus, investigation.Status.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationPlan, investigation.InvestigationPlan ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationObjectives, investigation.InvestigationObjectives ?? (object)DBNull.Value));
 
@@ -436,7 +436,7 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationCode, investigationCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationStatus, status.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationStatus, status.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 

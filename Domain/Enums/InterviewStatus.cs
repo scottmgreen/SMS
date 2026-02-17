@@ -65,13 +65,7 @@ public sealed class InterviewStatus : BaseEnum<InterviewStatus>
         return this == IntervieweeIdentified || this == InterviewScheduled;
     }
 
-    /// <summary>
-    /// Check if this status indicates interviewee is identified
-    /// </summary>
-    public bool IsIdentified()
-    {
-        return this == IntervieweeIdentified;
-    }
+    
 
     /// <summary>
     /// Check if this status indicates interview is scheduled
@@ -97,13 +91,7 @@ public sealed class InterviewStatus : BaseEnum<InterviewStatus>
         return this == UnableToConduct;
     }
 
-    /// <summary>
-    /// Check if this status allows the interview to be scheduled
-    /// </summary>
-    public bool CanSchedule()
-    {
-        return this == IntervieweeIdentified;
-    }
+    
 
     /// <summary>
     /// Check if this status allows the interview to be conducted
@@ -136,31 +124,11 @@ public sealed class InterviewStatus : BaseEnum<InterviewStatus>
         };
     }
 
-    /// <summary>
-    /// Check if transition to target status is allowed
-    /// </summary>
-    public bool CanTransitionTo(InterviewStatus targetStatus)
-    {
-        var possibleStatuses = GetPossibleNextStatuses();
-        return possibleStatuses.Contains(targetStatus);
-    }
+    
 
-    /// <summary>
-    /// Get the workflow order for this status
-    /// </summary>
-    public int WorkflowOrder => Value switch
-    {
-        "INTERVIEWEE_IDENTIFIED" => 1,
-        "INTERVIEW_SCHEDULED" => 2,
-        "INTERVIEW_COMPLETE" => 3,
-        "UNABLE_TO_CONDUCT" => 99, // Can happen at multiple stages
-        _ => 0
-    };
+    
 
-    /// <summary>
-    /// Determines if this status is a final state
-    /// </summary>
-    public bool IsFinalStatus => this == InterviewComplete || this == UnableToConduct;
+    
 
     /// <summary>
     /// Determines if this status is an active processing state

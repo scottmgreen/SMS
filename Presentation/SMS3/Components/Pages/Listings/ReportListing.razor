@@ -32,16 +32,23 @@
                 IsLoading="@isLoading">
     
     <Columns>
-        <RadzenDataGridColumn TItem="Report" Property="Code" Title="Report ID" Width="120px" />
-        <RadzenDataGridColumn TItem="Report" Property="Name" Title="Name" Width="350px" />
-        <RadzenDataGridColumn TItem="Report" Property="Description" Title="Description" Width="350px">
+        <RadzenDataGridColumn TItem="Report" Property="Code" Title="Report ID" Width="150px" />
+        <RadzenDataGridColumn TItem="Report" Property="Name" Title="Name" Width="300px" />
+        <RadzenDataGridColumn TItem="Report" Property="Description" Title="Description" Width="275px">
             <Template Context="report">
                 <div title="@report.Description">
                     @(report.Description?.Length > 50 ? report.Description[..47] + "..." : report.Description)
                 </div>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Report" Property="Status" Title="Status" Width="150px" />
+        <RadzenDataGridColumn TItem="Report" Property="Status" Title="Status" Width="225px">
+            <Template Context="report">
+                <div title="@report.Status" style="font-size:smaller">
+                    @(report.Status)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>/>
+
         <RadzenDataGridColumn TItem="Report" Property="SubmittedBy" Title="Submitted By" Width="150px" />
         <RadzenDataGridColumn TItem="Report" Property="SubmittedDate" Title="Submitted Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
         <RadzenDataGridColumn TItem="Report" Property="SubmittingDepartment" Title="Submitting Department" Width="250px" />

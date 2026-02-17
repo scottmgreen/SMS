@@ -191,24 +191,7 @@ public sealed class Interview : BaseAuditableEntity
         return Result<bool>.Success(true);
     }
 
-    /// <summary>
-    /// Add preparation notes and questions
-    /// </summary>
-    public Result<bool> AddPreparation(string? preparationNotes, string? questionsToAsk, string? backgroundInfo = null)
-    {
-        if (!Status.AllowsModifications())
-        {
-            return Result<bool>.Failure<bool>(DomainErrors.InterviewError.CannotModifyCompleted);
-        }
-
-        PreparationNotes = preparationNotes;
-        QuestionsToAsk = questionsToAsk;
-        BackgroundInformation = backgroundInfo;
-        UpdatedDate = DateTime.UtcNow;
-
-        return Result<bool>.Success(true);
-    }
-
+    
     /// <summary>
     /// Start the interview
     /// </summary>

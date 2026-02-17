@@ -86,10 +86,7 @@ public abstract class InvestigationStatus : BaseEnum<InvestigationStatus>
             .OrderBy(ins => ins.WorkflowOrder);
     }
 
-    /// <summary>
-    /// Determines if this status is a final state
-    /// </summary>
-    public bool IsFinalStatus => this == InvestigationComplete;
+    
 
     /// <summary>
     /// Determines if this status is an active processing state

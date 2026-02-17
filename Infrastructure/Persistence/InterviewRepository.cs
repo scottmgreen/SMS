@@ -72,7 +72,7 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewInvestigatorNotes, interview.InvestigatorNotes ?? (object)DBNull.Value));
 
             // Status and scheduling
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewStatus, interview.Status.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewStatus, interview.Status.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewDate, interview.InterviewDate ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewDurationMinutes, interview.DurationMinutes ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewLocation, interview.InterviewLocation ?? (object)DBNull.Value));
@@ -388,7 +388,7 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewPersonDepartment, interview.PersonInterviewedDepartment ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewPersonInterviewedNotes, interview.PersonInterviewedNotes ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewInvestigatorNotes, interview.InvestigatorNotes ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewStatus, interview.Status.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewStatus, interview.Status.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewDate, interview.InterviewDate ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewDurationMinutes, interview.DurationMinutes ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewLocation, interview.InterviewLocation ?? (object)DBNull.Value));
@@ -468,7 +468,7 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewCode, interviewCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewStatus, status.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewStatus, status.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM")); // This will need to be fixed - should accept updatedBy parameter
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 

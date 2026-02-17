@@ -28,35 +28,62 @@ public partial class EditInterviewDialog : ComponentBase
     #endregion
 
     #region Dropdown Options
-    private readonly List<DropdownOption> InterviewTypeOptions = new()
+    private List<DropdownOption> InterviewTypeOptions { get; set; } = new();
+    public List<DropdownOption> DepartmentOptions { get; set; } = new();
+    private void InitializeDropdownOptions()
     {
-        new() { Value = InterviewType.Witness, Text = "Witness Interview" },
-        new() { Value = InterviewType.Expert, Text = "Subject Matter Expert" },
-        new() { Value = InterviewType.Stakeholder, Text = "Stakeholder Interview" },
-        new() { Value = InterviewType.FollowUp, Text = "Follow-up Interview" }
-    };
+        DepartmentOptions = SMSDepartment.GetAllValues()
+                    .Select(hc => new DropdownOption(hc.Value, hc.Name))
+                    .ToList();
 
-    private readonly List<DropdownOption> InterviewStatusOptions = new()
+
+        InterviewTypeOptions = InterviewType.GetAllValues()
+            .Select(hc => new DropdownOption(hc.Value, hc.Name))
+            .ToList();
+    }
+    public class DropdownOption
     {
-        new() { Value = InterviewStatus.InterviewScheduled, Text = "Scheduled" },
-        new() { Value = InterviewStatus.InterviewInProgress, Text = "In Progress" },
-        new() { Value = InterviewStatus.InterviewComplete, Text = "Completed" },
-        new() { Value = InterviewStatus.InterviewCanceled, Text = "Cancelled" }
-    };
+        public string Value { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+
+        public DropdownOption() { }
+        public DropdownOption(string value, string text)
+        {
+            Value = value;
+            Text = text;
+        }
+    }
+
+
+    public async Task OnDepartmentChanged(string? departmentValue)
+    {
+        Model.PersonInterviewedDepartment = departmentValue;
+
+    }
+    public async Task OnWitnessInterviewTypeChanged(string? departmentValue)
+    {
+        Model.InterviewTypeId = departmentValue;
+        Model.Type = InterviewType.FromValue(Model.InterviewTypeId);
+
+    }
     #endregion
 
     #region Lifecycle
     protected override void OnInitialized()
     {
+        InitializeDropdownOptions();
         // Initialize model from Interview entity
         Model = new EditInterviewModel
         {
+            InterviewCode = Interview.Code,
             PersonInterviewed = Interview.PersonInterviewed,
             PersonInterviewedRole = Interview.PersonInterviewedRole,
-            PersonInterviewedDepartment = Interview.PersonInterviewedDepartment,
+            PersonInterviewedDepartmentId = Interview.PersonInterviewedDepartment,
+            //PersonInterviewedDepartment = Interview.PersonInterviewedDepartment,
             PersonInterviewedNotes = Interview.PersonInterviewedNotes,
             InvestigatorNotes = Interview.InvestigatorNotes,
-            Type = Interview.Type,
+            InterviewTypeId = Interview.Type.Value,
+            //Type = Interview.Type,
             Status = Interview.Status,
             InterviewDate = Interview.InterviewDate,
             DurationMinutes = Interview.DurationMinutes,
@@ -79,13 +106,13 @@ public partial class EditInterviewDialog : ComponentBase
         //if (Model.Status.Equals(InterviewStatus.Planned))
         //    return $"Plan Interview: {Model.PersonInterviewed}";
         if (Model.Status.Equals(InterviewStatus.InterviewScheduled))
-            return $"Scheduled Interview: {Model.PersonInterviewed}";
+            return $"Scheduled Interview: {Model.InterviewCode} - {Model.PersonInterviewed}";
         if (Model.Status.Equals(InterviewStatus.InterviewInProgress))
-            return $"Conducting Interview: {Model.PersonInterviewed}";
+            return $"Conducting Interview: {Model.InterviewCode} - {Model.PersonInterviewed}";
         if (Model.Status.Equals(InterviewStatus.InterviewComplete))
-            return $"Interview Complete: {Model.PersonInterviewed}";
+            return $"Interview Complete: {Model.InterviewCode} - {Model.PersonInterviewed}";
         if (Model.Status.Equals(InterviewStatus.InterviewCanceled))
-            return $"Cancelled Interview: {Model.PersonInterviewed}";
+            return $"Cancelled Interview: {Model.InterviewCode} - {Model.PersonInterviewed}";
 
         return $"Edit Interview: {Model.PersonInterviewed}";
     }
@@ -368,11 +395,15 @@ public partial class EditInterviewDialog : ComponentBase
     #region Models
     public class EditInterviewModel
     {
+        public string InterviewCode { get; set; }
         public string PersonInterviewed { get; set; } = "";
         public string? PersonInterviewedRole { get; set; }
+        public string? PersonInterviewedDepartmentId { get; set; }
         public string? PersonInterviewedDepartment { get; set; }
         public string? PersonInterviewedNotes { get; set; }
         public string? InvestigatorNotes { get; set; }
+
+        public string? InterviewTypeId { get; set; }
         public InterviewType Type { get; set; } = InterviewType.Witness;
         public InterviewStatus Status { get; set; } = InterviewStatus.InterviewScheduled;
         public DateTime? InterviewDate { get; set; }
@@ -388,10 +419,6 @@ public partial class EditInterviewDialog : ComponentBase
         public DateTime? CompletedDate { get; set; }
     }
 
-    public class DropdownOption
-    {
-        public object Value { get; set; } = default!;
-        public string Text { get; set; } = "";
-    }
+    
     #endregion
 }

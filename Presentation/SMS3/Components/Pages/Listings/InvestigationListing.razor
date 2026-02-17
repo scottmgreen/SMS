@@ -13,6 +13,7 @@
 <PageHeader Title="Investigation Listing"
             Subtitle="Complete listing and management interface for all SMS investigations"
             Icon="fas fa-list" />
+
 <RadzenDataGrid @ref="investigationsGrid" 
                 Data="@investigations" 
                 Count="@totalCount" 
@@ -25,17 +26,20 @@
                 ShowPagingSummary="true"
                 FilterMode="FilterMode.Advanced"
                 SelectionMode="DataGridSelectionMode.Single"
-                Style="height: calc(100vh - 200px)">
+                Style="height: calc(100vh - 200px)" >
     
     <Columns>
-        <RadzenDataGridColumn TItem="Investigation" Property="Code" Title="Code" Width="150px" />
-        <RadzenDataGridColumn TItem="Investigation" Property="ReportCode" Title="Report Code" Width="200px" />
-        <RadzenDataGridColumn TItem="Investigation" Property="HazardCode" Title="Hazard Code" Width="200px" />
-        <RadzenDataGridColumn TItem="Investigation" Property="Status" Title="Status" Width="120px" />
-        @* <RadzenDataGridColumn TItem="Investigation" Property="Priority" Title="Priority" Width="100px" /> *@
+        <RadzenDataGridColumn TItem="Investigation" Property="ReportCode" Title="Report ID" Width="120px" />
+        <RadzenDataGridColumn TItem="Investigation" Property="HazardCode" Title="Hazard ID" Width="120px" />
+        <RadzenDataGridColumn TItem="Investigation" Property="Code" Title="Investigation ID" Width="150px" />
+        <RadzenDataGridColumn TItem="Investigation" Property="Status" Title="Status" Width="225px">
+            <Template Context="investigation">
+                <div title="@investigation.Status" style="font-size:smaller">
+                    @(investigation.Status)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>/>
         <RadzenDataGridColumn TItem="Investigation" Property="AssignedInvestigatorId" Title="Assigned To" Width="150px" />
-        @* <RadzenDataGridColumn TItem="Investigation" Property="StartDate" Title="Start Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
-        <RadzenDataGridColumn TItem="Investigation" Property="DueDate" Title="Due Date" Width="150px" FormatString="{0:MM/dd/yyyy}" /> *@
         <RadzenDataGridColumn TItem="Investigation" Property="CompletedDate" Title="Completed Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
         <RadzenDataGridColumn TItem="Investigation" Property="CreatedBy" Title="Created By" Width="150px" />
         <RadzenDataGridColumn TItem="Investigation" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
