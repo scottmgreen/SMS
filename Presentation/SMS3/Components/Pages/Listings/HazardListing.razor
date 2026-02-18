@@ -30,21 +30,40 @@
                 Style="height: calc(100vh - 200px)">
     
     <Columns>
-        <RadzenDataGridColumn TItem="Hazard" Property="Code" Title="Hazard ID" Width="120px" />
-        <RadzenDataGridColumn TItem="Hazard" Property="ReportCode" Title="Report Code" Width="150px" />
-        <RadzenDataGridColumn TItem="Hazard" Property="Name" Title="Name" Width="350px" />
-        <RadzenDataGridColumn TItem="Hazard" Property="Description" Title="Description" Width="350px" />
-        <RadzenDataGridColumn TItem="Hazard" Property="IsInitialHazard" Title="Initial Hazard" Width="120px" TextAlign="TextAlign.Center">
+        <RadzenDataGridColumn TItem="Hazard" Property="Code" Title="Hazard ID" Width="120px" >
             <Template Context="hazard">
-                @if (hazard.IsInitialHazard)
-                {
-                    <RadzenBadge Text="X"
-                                 BadgeStyle=BadgeStyle.Success
-                                 Variant="Variant.Flat" />
-                }
+                <div title="@hazard.Code" style="@BasicTextStyle">
+                    @(hazard.Code)
+                </div>
             </Template>
         </RadzenDataGridColumn>
-        
+        <RadzenDataGridColumn TItem="Hazard" Property="ReportCode" Title="Report ID" Width="150px" >
+            <Template Context="hazard">
+                <div title="@hazard.ReportCode" style="@BasicTextStyle">
+                    @(hazard.ReportCode)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Hazard" Property="Name" Title="Name" Width="350px" >
+            <Template Context="hazard">
+                <div title="@hazard.Name" style="@BasicTextStyle">
+                    @(hazard.Name)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Hazard" Property="Description" Title="Description" Width="350px" >
+            <Template Context="hazard">
+                <div title="@hazard.Description" style="@BasicTextStyle">
+                    @(hazard.Description?.Length > 50 ? hazard.Description[..47] + "..." : hazard.Description)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Hazard" Property="IsInitialHazard" Title="Initial Hazard" Width="125px">
+            <Template Context="hazard">
+                <RadzenIcon Icon="@(hazard.IsInitialHazard ? "check_box" : "check_box_outline_blank")"
+                            Style="@(hazard.IsInitialHazard ? "color: var(--rz-success);" : "color: var(--rz-danger);")" />
+            </Template>
+        </RadzenDataGridColumn>
                 
 
         <!-- Enhanced Actions Column -->

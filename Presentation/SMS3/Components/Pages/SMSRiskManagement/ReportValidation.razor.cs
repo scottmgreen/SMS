@@ -483,7 +483,7 @@ public partial class ReportValidation : ComponentBase
                     HazardCode = ReportHazard.Code,
                     PrimaryHazardId = ReportHazard.Code,
                     Description = $"Created from Report {ReportId}",
-                    Stage = "CREATED",
+                    Stage = RiskAssessmentStage.DescribingSystem,
                     Code = assessmentId,
                     Status = RiskAssessmentStatus.AssessmentCreate,
                     CurrentStep = 1,

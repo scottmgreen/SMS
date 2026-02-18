@@ -204,11 +204,12 @@ public partial class ReportProcessing : ComponentBase
     private int selectedTabIndex = 0;
     private bool IsLoading { get; set; } = true;
 
-    // ?? NEW: Bulk approval properties
     private bool ShowBulkApprovalDialog { get; set; } = false;
     private ReportProcessingSummary? SelectedReportForApproval { get; set; }
     private bool IsProcessingApproval { get; set; } = false;
 
+
+    private string BasicTextStyle = "font-size:smaller;font-weight: 600";
     protected override async Task OnInitializedAsync()
     {
         await LoadDataAsync();
@@ -550,7 +551,7 @@ public partial class ReportProcessing : ComponentBase
 
                         // Investigation Information
                         InvestigationId = investigation?.Code,
-                        InvestigationStatus = investigation?.Status?.ToString() ?? "",
+                        InvestigationStatus = investigation?.Status.Value ?? "",
                         AssignedInvestigator = investigation?.AssignedInvestigatorId,
                         InvestigationNotes = investigation?.InvestigationNotes,
                         InterviewCount = investigationInterviews.Count,
@@ -1046,79 +1047,52 @@ public partial class ReportProcessing : ComponentBase
         builder.AddAttribute(1, "Property", "MitigationCode");
         builder.AddAttribute(2, "Title", "Mitigation ID");
         builder.AddAttribute(3, "Width", "110px");
-        builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
-        //builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(0);
-        //builder.AddAttribute(1, "Property", "MitigationCode");
-        //builder.AddAttribute(2, "Title", "Mitigation ID");
-        //builder.AddAttribute(3, "Width", "120px");
-        //builder.AddAttribute(4, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
-        //    (templateBuilder =>
-        //    {
-        //        templateBuilder.OpenComponent<RadzenBadge>(0);
-        //        templateBuilder.AddAttribute(1, "Text", mitigation.MitigationCode);
-        //        templateBuilder.AddAttribute(2, "BadgeStyle", BadgeStyle.Base);
-        //        templateBuilder.CloseComponent(); // ✅ Close RadzenBadge
-        //    })));
-        //builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
+        builder.AddAttribute(4, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenText>(0);
+                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+                templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(mitigation.MitigationCode) ? mitigation.MitigationCode : "Not Specified");
+                templateBuilder.CloseComponent();
+            }
+            )));
+        builder.CloseComponent();
+        
+        
 
         // Mitigation Name Column
         builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(10);
         builder.AddAttribute(11, "Property", "MitigationName");
         builder.AddAttribute(12, "Title", "Name");
         builder.AddAttribute(13, "Width", "250px");
-        builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
+        builder.AddAttribute(14, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenText>(0);
+                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+                templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(mitigation.MitigationName) ? mitigation.MitigationName : "Not Specified");
+                templateBuilder.CloseComponent();
+            }
+            )));
+        builder.CloseComponent();
 
         // Status Column
         builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(20);
         builder.AddAttribute(21, "Property", "Status");
         builder.AddAttribute(22, "Title", "Status");
         builder.AddAttribute(23, "Width", "120px");
-        builder.AddAttribute(24, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
+        builder.AddAttribute(14, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
             (templateBuilder =>
             {
-                var statusStyle = mitigation.Status switch
-                {
-                    // ✅ Use the actual enum Values, not hardcoded strings
-                    var status when status == MitigationStatus.Approved.Value => BadgeStyle.Success,
-                    var status when status == MitigationStatus.InProgressDueDate.Value => BadgeStyle.Base,
-                    var status when status == MitigationStatus.Complete.Value => BadgeStyle.Primary,
-                    var status when status == MitigationStatus.PendingApproval.Value => BadgeStyle.Warning,
-                    var status when status == MitigationStatus.Rejected.Value => BadgeStyle.Danger,
-                    var status when status == MitigationStatus.MonitoringHazard.Value => BadgeStyle.Base,
-                    _ => BadgeStyle.Secondary
-                };
+                templateBuilder.OpenComponent<RadzenText>(0);
+                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+                templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(mitigation.Status) ? mitigation.Status : "Not Specified");
+                templateBuilder.CloseComponent();
+            }
+            )));
+        builder.CloseComponent();
 
-                templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "Text", mitigation.Status);
-                templateBuilder.AddAttribute(2, "BadgeStyle", statusStyle);
-                templateBuilder.CloseComponent(); // ✅ Close RadzenBadge
-            })));
-        builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
-
-        // Priority Column
-        //builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(30);
-        //builder.AddAttribute(31, "Property", "Priority");
-        //builder.AddAttribute(32, "Title", "Priority");
-        //builder.AddAttribute(33, "Width", "100px");
-        //builder.AddAttribute(34, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
-        //    (templateBuilder =>
-        //    {
-        //        var priorityStyle = mitigation.Priority switch
-        //        {
-        //            "Critical" => BadgeStyle.Danger,
-        //            "High" => BadgeStyle.Warning,
-        //            "Medium" => BadgeStyle.Base,
-        //            "Low" => BadgeStyle.Success,
-        //            _ => BadgeStyle.Secondary
-        //        };
-
-        //        templateBuilder.OpenComponent<RadzenBadge>(0);
-        //        templateBuilder.AddAttribute(1, "Text", mitigation.Priority);
-        //        templateBuilder.AddAttribute(2, "BadgeStyle", priorityStyle);
-        //        templateBuilder.CloseComponent(); // ✅ Close RadzenBadge
-        //    })));
-        //builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
-
+        
         // Target Date Column
         builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(40);
         builder.AddAttribute(41, "Property", "TargetDate");
@@ -1130,31 +1104,19 @@ public partial class ReportProcessing : ComponentBase
             {
                 if (mitigation.TargetDate.HasValue)
                 {
-                    var isOverdue = mitigation.IsOverdue;
-                    var dateStyle = isOverdue ? "color: var(--rz-danger); font-weight: bold;" : "";
-
                     templateBuilder.OpenComponent<RadzenText>(0);
-                    templateBuilder.AddAttribute(1, "TextStyle", TextStyle.Body2);
-                    templateBuilder.AddAttribute(2, "Style", dateStyle);
-                    templateBuilder.AddAttribute(3, "Text", mitigation.TargetDate.Value.ToString("MM/dd/yyyy"));
-                    templateBuilder.CloseComponent(); // ✅ Close RadzenText
+                    templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+                    templateBuilder.AddAttribute(2, "Text", mitigation.TargetDate.Value.ToString("MM/dd/yyyy"));
+                    templateBuilder.CloseComponent(); 
 
-                    if (isOverdue)
-                    {
-                        templateBuilder.OpenComponent<RadzenText>(5);
-                        templateBuilder.AddAttribute(6, "TextStyle", TextStyle.Caption);
-                        templateBuilder.AddAttribute(7, "Style", "color: var(--rz-danger);");
-                        templateBuilder.AddAttribute(8, "Text", "OVERDUE");
-                        templateBuilder.CloseComponent(); // ✅ Close RadzenText
-                    }
+        
                 }
                 else
                 {
                     templateBuilder.OpenComponent<RadzenText>(10);
-                    templateBuilder.AddAttribute(11, "TextStyle", TextStyle.Caption);
-                    templateBuilder.AddAttribute(12, "Style", "color: var(--rz-text-disabled-color);");
-                    templateBuilder.AddAttribute(13, "Text", "Not set");
-                    templateBuilder.CloseComponent(); // ✅ Close RadzenText
+                    templateBuilder.AddAttribute(11, "style", BasicTextStyle);
+                    templateBuilder.AddAttribute(12, "Text", "Not set");
+                    templateBuilder.CloseComponent(); 
                 }
             })));
         builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
@@ -1167,18 +1129,11 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "TextStyle", TextStyle.Body2);
+                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(mitigation.AssignedDepartment) ? mitigation.AssignedDepartment : "Not assigned");
                 templateBuilder.CloseComponent(); // ✅ Close RadzenText
             })));
         builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
-
-
-
-
-
-
-
 
         // Responsible Party Column
         builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(60);
@@ -1189,7 +1144,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "TextStyle", TextStyle.Body2);
+                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(mitigation.AssignedTo) ? mitigation.AssignedTo : "Not assigned");
                 templateBuilder.CloseComponent(); // ✅ Close RadzenText
             })));
@@ -1414,10 +1369,9 @@ public partial class ReportProcessing : ComponentBase
         builder.AddAttribute(34, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
-                templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "BadgeStyle", BadgeStyle.Base);
-                templateBuilder.AddAttribute(2, "Text", report.ReportStatus);
-                templateBuilder.AddAttribute(3, "Variant", Variant.Flat);
+                templateBuilder.OpenComponent<RadzenText>(0);
+                templateBuilder.AddAttribute(1, "style", "font-size:smaller");
+                templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.ReportStatus) ? report.ReportStatus : "Not Specified");
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
@@ -1429,36 +1383,12 @@ public partial class ReportProcessing : ComponentBase
         builder.AddAttribute(44, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
-                templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "BadgeStyle", BadgeStyle.Base);
-                templateBuilder.AddAttribute(2, "Text", report.ReportStage);
-                templateBuilder.AddAttribute(3, "Variant", Variant.Flat);
+                templateBuilder.OpenComponent<RadzenText>(0);
+                templateBuilder.AddAttribute(1, "style", "font-size:smaller");
+                templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.ReportStage.ToUpper()) ? report.ReportStage.ToUpper() : "Not Specified");
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
-
-
-
-        // Priority Column
-        //builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(50);
-        //builder.AddAttribute(51, "Property", "Priority");
-        //builder.AddAttribute(52, "Title", "Priority");
-        //builder.AddAttribute(53, "Width", "100px");
-        //builder.AddAttribute(54, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-        //    (templateBuilder =>
-        //    {
-        //        var badgeStyle = report.Priority switch
-        //        {
-        //            "High" => BadgeStyle.Danger,
-        //            "Medium" => BadgeStyle.Warning,
-        //            _ => BadgeStyle.Base
-        //        };
-        //        templateBuilder.OpenComponent<RadzenBadge>(0);
-        //        templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
-        //        templateBuilder.AddAttribute(2, "Text", report.Priority);
-        //        templateBuilder.CloseComponent();
-        //    })));
-        //builder.CloseComponent();
 
         // Reported By Column (FIXED: Ensure proper data binding)
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(60);
@@ -1469,28 +1399,13 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
+                templateBuilder.AddAttribute(1, "style", "font-size:smaller");
                 templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.SubmittedBy) ? report.SubmittedBy : "Not Specified");
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
 
-        // Days in Stage Column
-        //builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(70);
-        //builder.AddAttribute(71, "Property", "DaysInStage");
-        //builder.AddAttribute(72, "Title", "Days in Stage");
-        //builder.AddAttribute(73, "Width", "120px");
-        //builder.AddAttribute(74, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-        //    (templateBuilder =>
-        //    {
-        //        var badgeStyle = report.DaysInStage > 2 ? BadgeStyle.Warning : BadgeStyle.Secondary;
-        //        templateBuilder.OpenComponent<RadzenBadge>(0);
-        //        templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
-        //        templateBuilder.AddAttribute(2, "Text", $"{report.DaysInStage} days");
-        //        templateBuilder.CloseComponent();
-        //    })));
-        //builder.CloseComponent();
-        RenderValidationActionColumn(builder);
+           RenderValidationActionColumn(builder);
     }
 
     private void RenderValidationActionColumn(RenderTreeBuilder builder)
@@ -1514,7 +1429,7 @@ public partial class ReportProcessing : ComponentBase
         builder.CloseComponent();
     }
 
-    private static void RenderReportIdColumn(RenderTreeBuilder builder)
+    private void RenderReportIdColumn(RenderTreeBuilder builder)
     {
         // Report ID Column
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(0);
@@ -1523,26 +1438,34 @@ public partial class ReportProcessing : ComponentBase
         builder.AddAttribute(3, "Width", "150px");
         builder.AddAttribute(4, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
-            {
-                templateBuilder.OpenComponent<RadzenStack>(0);
-                templateBuilder.AddAttribute(1, "Orientation", Orientation.Vertical);
-                templateBuilder.AddAttribute(2, "Gap", "0.25rem");
-                templateBuilder.AddAttribute(3, "ChildContent", (RenderFragment)(stackBuilder =>
                 {
-                    stackBuilder.OpenComponent<RadzenText>(0);
-                    stackBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
-                    stackBuilder.AddAttribute(2, "Style", "font-weight: 600;");
-                    stackBuilder.AddAttribute(3, "Text", report.ReportId);
-                    stackBuilder.CloseComponent();
-
-                   
-                }));
-                templateBuilder.CloseComponent();
-            })));
+                    templateBuilder.OpenComponent<RadzenText>(0);
+                    templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+                    templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.ReportId) ? report.ReportId : "Not Specified");
+                    templateBuilder.CloseComponent();
+                }
+            )));
         builder.CloseComponent();
     }
-
-    private static void RenderHazardIdColumn(RenderTreeBuilder builder)
+    private void RenderInvestigationIdColumn(RenderTreeBuilder builder)
+    {
+        // Report ID Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(0);
+        builder.AddAttribute(1, "Property", "InvestigationId");
+        builder.AddAttribute(2, "Title", "Investigation ID");
+        builder.AddAttribute(3, "Width", "150px");
+        builder.AddAttribute(4, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenText>(0);
+                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+                templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.InvestigationId) ? report.InvestigationId : "Not Specified");
+                templateBuilder.CloseComponent();
+            }
+            )));
+        builder.CloseComponent();
+    }
+    private void RenderHazardIdColumn(RenderTreeBuilder builder)
     {
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(5);
         builder.AddAttribute(6, "Property", "HazardId");
@@ -1552,15 +1475,15 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
-                templateBuilder.AddAttribute(2, "Style", "font-weight: 600;");
-                templateBuilder.AddAttribute(3, "Text", !string.IsNullOrEmpty(report.HazardId) ? report.HazardId : "N/A");
+                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+                templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.HazardId) ? report.HazardId : "Not Specified");
                 templateBuilder.CloseComponent();
-            })));
+            }
+            )));
         builder.CloseComponent();
     }
 
-    private static void RenderRiskAssessmentIdColumn(RenderTreeBuilder builder)
+    private void RenderRiskAssessmentIdColumn(RenderTreeBuilder builder)
     {
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(10);
         builder.AddAttribute(11, "Property", "RiskAssessmentId");
@@ -1570,11 +1493,11 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
-                templateBuilder.AddAttribute(2, "Style", "font-weight: 600;");
-                templateBuilder.AddAttribute(3, "Text", !string.IsNullOrEmpty(report.RiskAssessmentId) ? report.RiskAssessmentId : "N/A");
+                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+                templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.RiskAssessmentId) ? report.RiskAssessmentId : "Not Specified");
                 templateBuilder.CloseComponent();
-            })));
+            }
+            )));
         builder.CloseComponent();
     }
 
@@ -1585,9 +1508,16 @@ public partial class ReportProcessing : ComponentBase
         builder.AddAttribute(11, "Property", "HazardDescription");
         builder.AddAttribute(12, "Title", "Description");
         builder.AddAttribute(13, "Width", "300px");
+        builder.AddAttribute(14, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenText>(0);
+                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+                templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.HazardDescription) ? report.HazardDescription : "Not Specified");
+                templateBuilder.CloseComponent();
+            }
+             )));
         builder.CloseComponent();
-
-       
     }
 
     private void RenderRiskAssessmentColumns(RenderTreeBuilder builder)
@@ -1595,7 +1525,7 @@ public partial class ReportProcessing : ComponentBase
         RenderReportIdColumn(builder);
         RenderHazardIdColumn(builder);
         RenderRiskAssessmentIdColumn(builder);
-        RenderHazardDescriptionColumn(builder, false); // No additional actions column in standard columns
+        RenderHazardDescriptionColumn(builder, false); 
 
         RenderRiskAssessmentActionColumn(builder);
     }
@@ -1626,40 +1556,41 @@ public partial class ReportProcessing : ComponentBase
     {
         RenderReportIdColumn(builder);
         RenderHazardIdColumn(builder);
+        RenderInvestigationIdColumn(builder);
         RenderHazardDescriptionColumn(builder);
-        
-
-        
 
         // Investigation Status Column
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(15);
         builder.AddAttribute(16, "Property", "InvestigationStatus");
-        builder.AddAttribute(17, "Title", "Investigation Status");
+        builder.AddAttribute(17, "Title", "Status");
         builder.AddAttribute(18, "Width", "150px");
         builder.AddAttribute(19, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
-                var badgeStyle = report.HasInvestigation ? BadgeStyle.Primary : BadgeStyle.Warning;
                 var statusText = report.HasInvestigation ? report.InvestigationStatus : "Not Started";
 
-                templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
-                templateBuilder.AddAttribute(2, "Text", statusText);
-                templateBuilder.AddAttribute(3, "Variant", Variant.Flat);
+                templateBuilder.OpenComponent<RadzenText>(0);
+                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+                templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.InvestigationStatus) ? report.InvestigationStatus : "Not Specified");
                 templateBuilder.CloseComponent();
-            })));
+            }
+            )));
         builder.CloseComponent();
+
+
+
+
 
         // Assigned Investigator Column
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(20);
         builder.AddAttribute(21, "Property", "AssignedInvestigator");
         builder.AddAttribute(22, "Title", "Assigned To");
-        builder.AddAttribute(23, "Width", "150px");
+        builder.AddAttribute(23, "Width", "125px");
         builder.AddAttribute(24, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "TextStyle", TextStyle.Body1);
+                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", report.AssignedInvestigator ?? "Not Assigned");
                 templateBuilder.CloseComponent();
             })));
@@ -1673,37 +1604,14 @@ public partial class ReportProcessing : ComponentBase
         builder.AddAttribute(29, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
-                var badgeStyle = report.InterviewCount > 0 ? BadgeStyle.Success : BadgeStyle.Light;
-
-                templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
-                templateBuilder.AddAttribute(2, "Text", report.InterviewCount.ToString());
+                templateBuilder.OpenComponent<RadzenText>(0);
+                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+                templateBuilder.AddAttribute(2, "Text", report.InterviewCount.ToString() ?? "Not Assigned");
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
 
-        // Priority Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(30);
-        builder.AddAttribute(31, "Property", "Priority");
-        builder.AddAttribute(32, "Title", "Priority");
-        builder.AddAttribute(33, "Width", "100px");
-        builder.AddAttribute(34, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                var badgeStyle = report.Priority switch
-                {
-                    "High" => BadgeStyle.Danger,
-                    "Medium" => BadgeStyle.Warning,
-                    _ => BadgeStyle.Info
-                };
-                templateBuilder.OpenComponent<RadzenBadge>(0);
-                templateBuilder.AddAttribute(1, "BadgeStyle", badgeStyle);
-                templateBuilder.AddAttribute(2, "Text", report.Priority);
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
 
-        
 
         // Actions Column
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(50);
@@ -1722,8 +1630,6 @@ public partial class ReportProcessing : ComponentBase
                 templateBuilder.AddAttribute(2, "Icon", buttonIcon);
                 templateBuilder.AddAttribute(3, "ButtonStyle", buttonStyle);
                 templateBuilder.AddAttribute(4, "Size", ButtonSize.Small);
-                //templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
-                //    (args) => NavigateToInvestigation(report)));
                 templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,(args) => Navigation.NavigateTo(report.SmartUrl)));
                 templateBuilder.CloseComponent();
             })));
@@ -1735,23 +1641,7 @@ public partial class ReportProcessing : ComponentBase
 
     #region Helper Methods for Rendering
 
-    //private void ShowBulkApprovalConfirmation(ReportProcessingSummary report)
-    //{
-    ////NEW: Show confirmation dialog for bulk approval
-
-    //       Confirmation?.Show(new ConfirmationDialogParameters
-    //       {
-    //           Title = "Confirm Bulk Approval",
-    //           Message = $"Are you sure you want to approve all mitigations for report '{report.ReportId}'?",
-    //           OnClose = async (confirmed) =>
-    //           {
-    //               if (confirmed)
-    //               {
-    //                   await BulkApproveAllMitigationsForReport(report);
-    //               }
-    //           }
-    //       });
-    //}
+    
     private void ShowBulkApprovalConfirmation(ReportProcessingSummary report)
     {
         try

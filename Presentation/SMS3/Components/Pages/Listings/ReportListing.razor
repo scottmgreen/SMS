@@ -32,26 +32,57 @@
                 IsLoading="@isLoading">
     
     <Columns>
-        <RadzenDataGridColumn TItem="Report" Property="Code" Title="Report ID" Width="150px" />
-        <RadzenDataGridColumn TItem="Report" Property="Name" Title="Name" Width="300px" />
-        <RadzenDataGridColumn TItem="Report" Property="Description" Title="Description" Width="275px">
+        <RadzenDataGridColumn TItem="Report" Property="Code" Title="Report ID" Width="150px" >
             <Template Context="report">
-                <div title="@report.Description">
+                <div title="@report.Code" style="@BasicTextStyle">
+                    @(report.Code)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Report" Property="Name" Title="Name" Width="300px">
+            <Template Context="report">
+                <div title="@report.Name" style="@BasicTextStyle">
+                    @(report.Name)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Report" Property="Description" Title="Description" Width="250px">
+            <Template Context="report">
+                <div title="@report.Description" style="@BasicTextStyle">
                     @(report.Description?.Length > 50 ? report.Description[..47] + "..." : report.Description)
                 </div>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Report" Property="Status" Title="Status" Width="225px">
+        <RadzenDataGridColumn TItem="Report" Property="Status" Title="Status" Width="250px">
             <Template Context="report">
-                <div title="@report.Status" style="font-size:smaller">
+                <div title="@report.Status" style="@BasicTextStyle">
                     @(report.Status)
                 </div>
             </Template>
         </RadzenDataGridColumn>/>
 
-        <RadzenDataGridColumn TItem="Report" Property="SubmittedBy" Title="Submitted By" Width="150px" />
-        <RadzenDataGridColumn TItem="Report" Property="SubmittedDate" Title="Submitted Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
-        <RadzenDataGridColumn TItem="Report" Property="SubmittingDepartment" Title="Submitting Department" Width="250px" />
+        <RadzenDataGridColumn TItem="Report" Property="SubmittedBy" Title="Submitted By" Width="150px">
+            <Template Context="report">
+                <div title="@report.SubmittedBy" style="@BasicTextStyle">
+                    @(report.SubmittedBy)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Report" Property="SubmittedDate" Title="Submitted Date" Width="150px" FormatString="{0:MM/dd/yyyy}">
+            <Template Context="report">
+                <div title="@report.SubmittedDate" style="@BasicTextStyle">
+                    @(report.SubmittedDate)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Report" Property="SubmittingDepartment" Title="Submitting Department" Width="250px">
+            <Template Context="report">
+                <div title="@report.SubmittingDepartment" style="@BasicTextStyle">
+                    @(report.SubmittingDepartment)
+                </div>
+            </Template>
+
+        </RadzenDataGridColumn>
        
         <!-- Enhanced Actions Column -->
         <RadzenDataGridColumn TItem="Report" Title="Actions" Width="150px" Sortable="false" Filterable="false">

@@ -59,7 +59,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
     /// Risk Assessment Status - BUSINESS RULE: Only "Created", "InProgress", "Completed"
     /// </summary>
     public RiskAssessmentStatus Status { get; set; } = RiskAssessmentStatus.AssessmentCreate;
-
+    public RiskAssessmentStage Stage { get; set; } = RiskAssessmentStage.DescribingSystem;
     /// <summary>
     /// Assessment Type - BUSINESS RULE: Only "Initial" or "Residual"
     /// </summary>
@@ -78,7 +78,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
     /// </summary>
     public int CurrentStep { get; set; } = 1;
 
-    public string? Stage { get; set; }
+    
     public DateTime? CompletedDate { get; set; }
     public string? CompletedBy { get; set; }
     
@@ -174,20 +174,18 @@ public sealed class RiskAssessment : BaseAuditableEntity
             _completedSteps.Add(stepNumber);
             _completedSteps.Sort();
             CurrentStep = Math.Max(CurrentStep, stepNumber); // 
-            
 
+            Stage = DetermineRiskAssessmentStageFromStep(stepNumber);
             // Update status based on progress - BUSINESS RULE: Only Created/InProgress/Completed
             if (stepNumber == 5)
             {
                 Status = RiskAssessmentStatus.AssessmentComplete;
                 CompletedDate = DateTime.UtcNow;
-                Stage = $"Step {stepNumber} Complete";
             }
            
             else
             {
                 Status = RiskAssessmentStatus.AssessmentUnderway;
-                Stage = $"Step {stepNumber} Complete";
             }
         }
     }
@@ -200,19 +198,16 @@ public sealed class RiskAssessment : BaseAuditableEntity
         return _completedSteps.Contains(stepNumber);
     }
 
-    /// <summary>
-    /// Get next recommended step - BUSINESS RULE ENFORCED
-    /// </summary>
-    public int GetNextRecommendedStep()
+    private RiskAssessmentStage DetermineRiskAssessmentStageFromStep(int step)
     {
-        // BUSINESS RULE: Use category-specific step validation
-        for (int i = 1; i <= RiskAssessmentCategory.MaxSteps; i++)
+        return step switch
         {
-            if (!_completedSteps.Contains(i))
-            {
-                return i;
-            }
-        }
-        return RiskAssessmentCategory.MaxSteps; // All completed
+            1 => RiskAssessmentStage.DescribingSystem,// System description
+            2 => RiskAssessmentStage.IdentifyingHazards, // Hazard identification
+            3 => RiskAssessmentStage.AnalyizingRisk, // Risk analysis
+            4 => RiskAssessmentStage.AssessingRisk, // Risk assessment
+            5 => RiskAssessmentStage.MitigatingRisk, // Risk mitigation
+            _ => RiskAssessmentStage.DescribingSystem
+        };
     }
 }

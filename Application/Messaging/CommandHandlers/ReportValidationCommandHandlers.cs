@@ -207,7 +207,7 @@ public class CreateReportValidationCommandHandler : BaseCommandBundle, IRequestH
         initialRiskAssessment.HazardCode = hazard.Code;
         initialRiskAssessment.AssessmentType = RiskAssessmentType.Initial;
         initialRiskAssessment.CurrentStep = 1;
-        initialRiskAssessment.Stage = "READY";
+        initialRiskAssessment.Stage = RiskAssessmentStage.DescribingSystem;
         initialRiskAssessment.PrimaryHazardId = hazard.Code;
         initialRiskAssessment.RiskAssessmentCategory = RiskAssessmentCategory.Technical;
         initialRiskAssessment.Description = $"Initial Risk Assessment for Report {hazard.ReportCode}";

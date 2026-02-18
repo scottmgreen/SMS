@@ -12,7 +12,7 @@ public partial class HazardListing : ComponentBase
     private IEnumerable<Hazard> hazards = new List<Hazard>();
     private int totalCount;
     private bool isLoading = false;
-
+    private string BasicTextStyle = "font-size:smaller;font-weight: 600";
     protected override async Task OnInitializedAsync()
     {
         await LoadInitialData();

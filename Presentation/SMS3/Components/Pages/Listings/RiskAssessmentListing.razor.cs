@@ -14,7 +14,7 @@ public partial class RiskAssessmentListing : ComponentBase
     private bool isLoading = false;
     private bool ShowViewDialog = false;
     private RiskAssessment? SelectedAssessment = null;
-
+    private string BasicTextStyle = "font-size:smaller;font-weight: 600";
     protected override async Task OnInitializedAsync()
     {
         await LoadInitialData();

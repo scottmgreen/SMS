@@ -10,6 +10,7 @@
     <Compile Remove="Components\Pages\SMSRiskManagement\Deprecated_Reports.razor.cs" />
     <Compile Remove="Components\Pages\SMSRiskManagement\HazardReporting.cshtml.cs" />
     <Compile Remove="Components\Pages\SMSRiskManagement\HybridRiskAssessment.razor.cs" />
+    <Compile Remove="Components\Pages\SMSRiskManagement\MitigationListing.razor.cs" />
     <Compile Remove="Components\Pages\SMSRiskManagement\PreliminaryRiskAssessment.razor.cs" />
     <Compile Remove="Components\Pages\System\UserRoles\UserRoleManagement.cshtml.cs" />
   </ItemGroup>

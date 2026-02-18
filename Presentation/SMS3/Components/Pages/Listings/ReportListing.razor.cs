@@ -6,6 +6,8 @@ namespace SMS3.Components.Pages.Listings;
 /// </summary>
 public partial class ReportListing : ComponentBase
 {
+    private string BasicTextStyle = "font-size:smaller;font-weight: 600";
+
     #region Dependencies
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<ReportListing> Logger { get; set; } = default!;

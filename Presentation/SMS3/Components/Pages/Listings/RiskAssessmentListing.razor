@@ -31,69 +31,54 @@
                 Style="height: calc(100vh - 200px)">
     
     <Columns>
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="Code" Title="Risk Assessment ID" Width="150px" />
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="HazardCode" Title="Initial Hazard ID" Width="150px"/>
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="Code" Title="Risk Assessment ID" Width="150px" >
+            <Template Context="assessment">
+                <div title="@assessment.Code" style="@BasicTextStyle">
+                    @(assessment.Code)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="HazardCode" Title="Initial Hazard ID" Width="150px">
+            <Template Context="assessment">
+                <div title="@assessment.HazardCode" style="@BasicTextStyle">
+                    @(assessment.HazardCode)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
            
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="Status" Title="Status" Width="150px" />
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="Status" Title="Status" Width="150px">
+            <Template Context="assessment">
+                <div title="@assessment.Status" style="@BasicTextStyle">
+                    @(assessment.Status)
+                </div>
+            </Template>
+            </RadzenDataGridColumn>
         <!-- Progress Column -->
         <RadzenDataGridColumn TItem="RiskAssessment" Property="CurrentStep" Title="Progress" Width="100px">
             <Template Context="assessment">
-                @if (assessment.CurrentStep == 1 && assessment.Stage == "READY")
+                @if (assessment.CurrentStep == 1 )
                 {
-                    <RadzenProgressBar Value="@(0)" Max="100" Style="width: 100%;" />
+                    <RadzenProgressBar Value="@(0)" Max="100" Style="width:100%;" />
                 }
                 else
                 {
-                    <RadzenProgressBar Value="@(assessment.CurrentStep * 20)" Max="100" Style="width: 100%;" />
+                    <RadzenProgressBar Value="@(assessment.CurrentStep * 20)" Max="100" Style="width:100%;" />
                 }
                 
                
                 
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="Stage" Title="Stage" Width="250px">
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="Stage" Title="Stage" Width="150px">
             <Template Context="assessment">
-                @if (assessment.Stage != null)
-                {
-                    <RadzenBadge Text="@assessment.Stage.ToString()"
-                                 BadgeStyle="@(assessment.Stage.ToString().Contains("READY") ? BadgeStyle.Success : BadgeStyle.Primary)" />
-                }
-                else
-                {
-                    <span class="text-muted">-</span>
-                }
+                <div title="@assessment.Stage" style="@BasicTextStyle">
+                    @(assessment.Stage)
+                </div>
             </Template>
         </RadzenDataGridColumn>
-        @* <RadzenDataGridColumn TItem="RiskAssessment" Property="RiskAssessmentCategory" Title="Category" Width="150px">
-            <Template Context="assessment">
-                @if (assessment.RiskAssessmentCategory != null)
-                {
-                    <RadzenBadge Text="@assessment.RiskAssessmentCategory.ToString()" BadgeStyle="BadgeStyle.Base" />
-                }
-                else
-                {
-                    <span class="text-muted">-</span>
-                }
-            </Template>
-        </RadzenDataGridColumn> *@
-       @*  <RadzenDataGridColumn TItem="RiskAssessment" Property="Status" Title="Status" Width="120px">
-            <Template Context="assessment">
-                @if (assessment.Status != null)
-                {
-                    <RadzenBadge Text="@assessment.Status.ToString()" BadgeStyle="@GetStatusBadgeStyle(assessment.Status.ToString())" />
-                }
-                else
-                {
-                    <span class="text-muted">-</span>
-                }
-            </Template>
-        </RadzenDataGridColumn> *@
-        
-        @* <RadzenDataGridColumn TItem="RiskAssessment" Property="LeadAssessorId" Title="Lead Assessor" Width="150px" /> *@
-        @* <RadzenDataGridColumn TItem="RiskAssessment" Property="CreatedBy" Title="Created By" Width="150px" />
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy HH:mm}" />
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="CompletedDate" Title="Completed Date" Width="150px" FormatString="{0:MM/dd/yyyy HH:mm}" /> *@
-        
+                      
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="LeadAssessorId" Title="Lead Assessor" Width="150px" />
+               
         <RadzenDataGridColumn TItem="RiskAssessment" Title="Actions" Width="250px" Sortable="false" Filterable="false">
             <Template Context="assessment">
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">

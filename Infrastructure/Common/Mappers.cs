@@ -570,7 +570,11 @@ public static partial class Mappers
         }
 
         // ✅ Direct assignment for simple properties
-        riskAssessment.Stage = reader.GetValue<string>(FieldNames.fRiskAssessmentStage);
+        var stageValue = reader.GetValue<string>(FieldNames.fRiskAssessmentStage)?.Trim();
+        if (!string.IsNullOrEmpty(stageValue))
+        {
+            riskAssessment.Stage = RiskAssessmentStage.FromValue(stageValue) ?? RiskAssessmentStage.DescribingSystem;
+        }
         riskAssessment.LeadAssessorId = reader.GetValue<string>(FieldNames.fRiskAssessmentLeadAssessorId);
         riskAssessment.PrimaryHazardId = reader.GetValue<string>(FieldNames.fRiskAssessmentPrimaryHazardId);
 

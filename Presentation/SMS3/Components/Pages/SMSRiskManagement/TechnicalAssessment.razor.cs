@@ -42,7 +42,6 @@ public partial class TechnicalAssessment : ComponentBase
 
     public RiskAssessment? TechRiskAssessment { get; set; }
     
-
     public RiskAnalysis? TechRiskAnalysis { get; set; }
     
 
@@ -346,7 +345,7 @@ public partial class TechnicalAssessment : ComponentBase
                 HazardCode = HazardId,
                 PrimaryHazardId = HazardId,
                 Description = $"Created from Report {ReportId}",
-                Stage = "Created",
+                Stage = DetermineRiskAssessmentStageFromStep(1),
                 Code = assessmentId,
                 Status = RiskAssessmentStatus.AssessmentCreate,
                 CurrentStep = 1,
@@ -772,14 +771,53 @@ public partial class TechnicalAssessment : ComponentBase
 
             // ENHANCEMENT: Update the current step in the assessment
             TechRiskAssessment.CurrentStep = CurrentStep;
-            
-            
-            UpdateAssessmentAndReportStatus();
+            // Update assessment status (enum) based on current step
+            TechRiskAssessment.Status = DetermineRiskAssessmentStatusFromStep(CurrentStep); /// CurrentStep > 0 ? RiskAssessmentStatus.AssessmentUnderway : RiskAssessmentStatus.AssessmentCreate;
+            TechRiskAssessment.Stage = DetermineRiskAssessmentStageFromStep(CurrentStep +1);
 
+            // Update last modified info
+            TechRiskAssessment.UpdatedDate = DateTime.UtcNow;
+            TechRiskAssessment.UpdatedBy = AuthService.CurrentUserDisplayName;
+
+            
             // Save to database
             var updateCommand = new UpdateRiskAssessmentCommand(TechRiskAssessment);
             var initalresult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
 
+
+
+            var reportQuery = new GetReportByCodeQuery(new ReportID(ReportId));
+            var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
+            if (reportResult.IsSuccess) 
+            {
+                
+                var rpt = reportResult.Value;
+                //This may change but atleaset it's a start//
+                ReportStatus result = CurrentStep switch
+                {
+                    1 => ReportStatus.RiskAssessmentInProgress,
+                    2 => ReportStatus.RiskAssessmentInProgress,
+                    3 => ReportStatus.RiskAssessmentInProgress,
+                    4 => ReportStatus.RiskAssessmentInProgress,
+                    5 => ReportStatus.RiskAssessmentSubmitted,
+                    _ => ReportStatus.RiskAssessmentInProgress
+                };
+                rpt.Status = result;
+
+                rpt.UpdatedBy = AuthService.CurrentUserDisplayName;
+                rpt.UpdatedDate = DateTime.UtcNow;
+                
+                var rptcmd = new UpdateReportCommand(rpt);
+                var rptResult = await Mediator.SendAsync(rptcmd, CancellationToken.None);
+
+                if (!rptResult.IsSuccess) 
+                
+                { 
+                
+                }
+
+
+            }
 
             if (initalresult.IsSuccess)
             {
@@ -803,23 +841,30 @@ public partial class TechnicalAssessment : ComponentBase
             return (false, ex.Message);
         }
     }
-
-    /// <summary>
-    /// Update the assessment status and related entities based on current progress
-    /// </summary>
-    private void UpdateAssessmentAndReportStatus()
+    private RiskAssessmentStage DetermineRiskAssessmentStageFromStep(int step)
     {
-        if (TechRiskAssessment == null) return;
-
-        // Update assessment status (enum) based on current step
-        TechRiskAssessment.Status = CurrentStep > 0 ? RiskAssessmentStatus.AssessmentUnderway : RiskAssessmentStatus.AssessmentCreate;
-        
-        // Update last modified info
-        TechRiskAssessment.UpdatedDate = DateTime.UtcNow;
-        TechRiskAssessment.UpdatedBy = AuthService.CurrentUserDisplayName; 
-        
+        return step switch
+        {
+            1 => RiskAssessmentStage.DescribingSystem,// System description
+            2 => RiskAssessmentStage.IdentifyingHazards, // Hazard identification
+            3 => RiskAssessmentStage.AnalyizingRisk, // Risk analysis
+            4 => RiskAssessmentStage.AssessingRisk, // Risk assessment
+            5 => RiskAssessmentStage.MitigatingRisk, // Risk mitigation
+            _ => RiskAssessmentStage.DescribingSystem
+        };
     }
-
+    private RiskAssessmentStatus DetermineRiskAssessmentStatusFromStep(int step)
+    {
+        return step switch
+        {
+            1 => RiskAssessmentStatus.AssignedToAssessor,// System description
+            2 => RiskAssessmentStatus.AssessmentUnderway, // Hazard identification
+            3 => RiskAssessmentStatus.AssessmentUnderway, // Risk analysis
+            4 => RiskAssessmentStatus.AssessmentUnderway, // Risk assessment
+            5 => RiskAssessmentStatus.AssessmentComplete, // Risk mitigation
+            _ => RiskAssessmentStatus.AssignedToAssessor
+        };
+    }
     /// <summary>
     /// Update the associated Hazard status to reflect assessment progress
     /// </summary>
@@ -971,9 +1016,30 @@ public partial class TechnicalAssessment : ComponentBase
         // Apply all steps to ensure everything is saved - ENHANCED: Use async method
         await ApplyCurrentStepToAssessmentAsync();
 
-        // Save final state
+        
         var updateCommand = new UpdateRiskAssessmentCommand(TechRiskAssessment);
         await Mediator.SendAsync(updateCommand, CancellationToken.None);
+
+        var reportQuery = new GetReportByCodeQuery(new ReportID(ReportId));
+        var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
+        if (reportResult.IsSuccess)
+        {
+
+            var rpt = reportResult.Value;
+            rpt.Status = ReportStatus.ValidationCompleted;
+
+            rpt.UpdatedBy = AuthService.CurrentUserDisplayName;
+            rpt.UpdatedDate = DateTime.UtcNow;
+
+            var rptcmd = new UpdateReportCommand(rpt);
+            var rptResult = await Mediator.SendAsync(rptcmd, CancellationToken.None);
+
+            
+        }
+
+
+
+
     }
 
    
