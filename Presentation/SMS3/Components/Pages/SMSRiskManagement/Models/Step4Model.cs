@@ -1,3 +1,5 @@
+using SMS3.Components.Shared;
+
 namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 
 /// <summary>
@@ -9,7 +11,7 @@ public class Step4Model
     public Dictionary<string, List<string>> HazardPanelMembers { get; set; } = new();
     public Dictionary<string, List<PanelMemberScoreData>> PanelScores { get; set; } = new();
     public Dictionary<string, double> HazardAverageScores { get; set; } = new();
-    public Dictionary<string, string> HazardRiskLevels { get; set; } = new();
+    public Dictionary<string, RiskLevel> HazardRiskLevels { get; set; } = new();
     public Dictionary<string, string> HazardMatrixCodes { get; set; } = new();
 
     public List<PanelMemberScoreData> CompletedScores
@@ -67,10 +69,7 @@ public class Step4Model
         assessment.CompleteStep(4);
     }
 
-    public void ApplyToAssessment(RiskAssessment assessment)
-    {
-        assessment.CompleteStep(4);
-    }
+    
 
     private async Task SaveStep4RiskAssessmentAsync(AuthenticationService AuthService,RiskAssessment assessment, IMediator mediator, List<Hazard> availableHazards)
     {
@@ -104,13 +103,13 @@ public class Step4Model
         }
     }
 
-    private (int? finalSeverity, int? finalLikelihood, string finalRiskLevel) CalculateOverallRiskAssessment(List<Hazard> availableHazards)
+    private (int? finalSeverity, int? finalLikelihood, RiskLevel finalRiskLevel) CalculateOverallRiskAssessment(List<Hazard> availableHazards)
     {
         var completedHazards = HazardAverageScores.Keys.ToList();
 
         if (!completedHazards.Any())
         {
-            return (null, null, "Unknown");
+            return (null, null, RiskLevel.Unkonwn);
         }
 
         var avgScores = HazardAverageScores.Values.ToList();
@@ -124,61 +123,39 @@ public class Step4Model
             ? HazardMatrixCodes[highestRiskHazardCode]
             : "Unknown";
 
-        var (severity, likelihood) = ParseMatrixCode(highestRiskMatrixCode);
+        var (severity, likelihood) = AviationRiskMatrixCalculator.ParseMatrixCode(highestRiskMatrixCode);
 
         var finalRiskLevel = severity.HasValue && likelihood.HasValue
-            ? GetAviationRiskLevel(severity.Value, likelihood.Value)
-            : "Unknown";
+            ? AviationRiskMatrixCalculator.GetAviationRiskLevel(severity.Value, likelihood.Value)
+            : RiskLevel.Unkonwn;
 
         var rationale = $"Risk assessment based on {completedHazards.Count} hazard(s). " +
-                       $"Highest risk: {highestRiskHazardCode} ({highestRiskMatrixCode}, Risk Level: {HazardRiskLevels.GetValueOrDefault(highestRiskHazardCode, "Unknown")}). " +
-                       $"Average risk score: {avgScore:F2}. " +
-                       $"Matrix codes assessed: {string.Join(", ", HazardMatrixCodes.Select(kvp => $"{kvp.Key}:{kvp.Value}"))}. " +
-                       $"Assessment completed on {DateTime.UtcNow:yyyy-MM-dd HH:mm}.";
+               $"Highest risk: {highestRiskHazardCode} ({highestRiskMatrixCode}, Risk Level: {GetRiskLevelDisplayText(highestRiskHazardCode)}). " +
+               $"Average risk score: {avgScore:F2}. " +
+               $"Matrix codes assessed: {string.Join(", ", HazardMatrixCodes.Select(kvp => $"{kvp.Key}:{kvp.Value}"))}. " +
+               $"Assessment completed on {DateTime.UtcNow:yyyy-MM-dd HH:mm}.";
+
 
         return (severity, likelihood, finalRiskLevel);
     }
 
-    private (int? severity, int? likelihood) ParseMatrixCode(string matrixCode)
+
+    // Helper method to get display text for UI
+    public string GetRiskLevelDisplayText(string hazardId)
     {
-        if (string.IsNullOrEmpty(matrixCode) || matrixCode.Length < 2)
-            return (null, null);
-
-        var severityPart = matrixCode.Substring(0, matrixCode.Length - 1);
-        var likelihoodLetter = matrixCode.Substring(matrixCode.Length - 1);
-
-        if (!int.TryParse(severityPart, out int severity))
-            return (null, null);
-
-        var likelihood = likelihoodLetter.ToUpper() switch
-        {
-            "A" => 1,
-            "B" => 2,
-            "C" => 3,
-            "D" => 4,
-            "E" => 5,
-            _ => (int?)null
-        };
-
-        return (severity, likelihood);
+        return HazardRiskLevels.ContainsKey(hazardId)
+            ? HazardRiskLevels[hazardId].Name
+            : RiskLevel.Unkonwn.Name;
     }
 
-    private string GetAviationRiskLevel(int severity, int likelihood)
+    // Helper method to get risk level value for database storage
+    public string GetRiskLevelValue(string hazardId)
     {
-        return (severity, likelihood) switch
-        {
-            (5, 3) or (5, 4) or (5, 5) or (4, 4) or (4, 5) or (3, 5) => "High",
-            (5, 2) or (4, 3) or (3, 4) or (2, 5) => "Medium",
-            (5, 1) or (4, 2) or (3, 2) or (3, 3) or (2, 3) or (2, 4) or (1, 5) => "Low",
-            (4, 1) or (3, 1) or (2, 1) or (2, 2) or (1, 1) or (1, 2) or (1, 3) or (1, 4) => "Acceptable",
-            _ => "Unknown"
-        };
+        return HazardRiskLevels.ContainsKey(hazardId)
+            ? HazardRiskLevels[hazardId].Value
+            : RiskLevel.Unkonwn.Value;
     }
 
-    public async Task SaveToAssessment(RiskAssessment assessment, IMediator mediator, List<Hazard> availableHazards)
-    {
-        assessment.CompleteStep(4);
-    }
 
     public void LoadFromAssessment(RiskAssessment assessment)
     {
@@ -272,13 +249,13 @@ public class Step4Model
         }
     }
 
-    private string DetermineRiskLevel(double score)
+    private RiskLevel DetermineRiskLevel(double score)
     {
         return score switch
         {
-            >= 15 => "High",
-            >= 8 => "Medium",
-            _ => "Low"
+            >= 15 => RiskLevel.High,
+            >= 8 => RiskLevel.Medium,
+            _ => RiskLevel.Low
         };
     }
 
@@ -291,7 +268,7 @@ public class Step4Model
         public int SeverityScore { get; set; }
         public int LikelihoodScore { get; set; }
         public double CalculatedScore => SeverityScore * LikelihoodScore;
-        public string RiskLevel { get; set; } = string.Empty;
+        public RiskLevel RiskLevel { get; set; } = RiskLevel.Unkonwn;
         public DateTime SubmittedDate { get; set; } = DateTime.UtcNow;
         public bool IsComplete => SeverityScore > 0 && LikelihoodScore > 0;
 

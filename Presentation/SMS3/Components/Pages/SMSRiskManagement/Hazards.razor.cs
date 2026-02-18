@@ -161,7 +161,7 @@ public partial class Hazards : ComponentBase
                 Description: {hazard.Description ?? "Not specified"}
                 Status: {hazard.Status?.Name ?? "Not specified"}
 
-                Risk Level: {hazard.RiskLevel ?? "Not assessed"}
+                Risk Level: {hazard.HazardRiskLevel ?? "Not assessed"}
 
                 Created: {hazard.CreatedDate?.ToString("MM/dd/yyyy") ?? "N/A"}";
 

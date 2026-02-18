@@ -31,6 +31,7 @@ public sealed class Hazard : BaseAuditableEntity
     public string? Name { get; set; }
     public string Description { get; set; } = string.Empty;
 
+    public RiskLevel HazardRiskLevel { get; set; } = RiskLevel.Unkonwn;
     
     public HazardStatus Status { get; set; } = HazardStatus.InitialRiskAssessment;
     
@@ -77,8 +78,6 @@ public sealed class Hazard : BaseAuditableEntity
     public decimal? ResidualAverageScore { get; set; }
 
 
-
-    public string? RiskLevel { get; set; } // Very Low, Low, Medium, High, Very High
     public string? InitialWorstCredibleOutcome { get; set; }
     public string? InitialRootCause { get; set; }
 

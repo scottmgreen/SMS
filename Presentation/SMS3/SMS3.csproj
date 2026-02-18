@@ -11,6 +11,7 @@
     <Compile Remove="Components\Pages\SMSRiskManagement\HazardReporting.cshtml.cs" />
     <Compile Remove="Components\Pages\SMSRiskManagement\HybridRiskAssessment.razor.cs" />
     <Compile Remove="Components\Pages\SMSRiskManagement\MitigationListing.razor.cs" />
+    <Compile Remove="Components\Pages\SMSRiskManagement\MyInterviewsSimple.razor.cs" />
     <Compile Remove="Components\Pages\SMSRiskManagement\PreliminaryRiskAssessment.razor.cs" />
     <Compile Remove="Components\Pages\System\UserRoles\UserRoleManagement.cshtml.cs" />
   </ItemGroup>
@@ -20,6 +21,7 @@
     <Content Remove="Components\Pages\SMSRiskManagement\Components\ReportEdit.razor" />
     <Content Remove="Components\Pages\SMSRiskManagement\Deprecated_Reports.razor" />
     <Content Remove="Components\Pages\SMSRiskManagement\HybridRiskAssessment.razor" />
+    <Content Remove="Components\Pages\SMSRiskManagement\MyInterviewsSimple.razor" />
     <Content Remove="Components\Pages\SMSRiskManagement\PreliminaryRiskAssessment.razor" />
     <Content Remove="Components\Pages\System\UserRoles\UserRoleManagement.cshtml" />
     <Content Remove="Components\Pages\Weather.razor" />

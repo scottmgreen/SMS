@@ -53,7 +53,7 @@
 </div>
 
 <!-- 🚀 NEW: Bulk Mitigation Approval Confirmation Dialog -->
-@if (ShowBulkApprovalDialog && SelectedReportForApproval != null)
+@* @if (ShowBulkApprovalDialog && SelectedReportForApproval != null)
 {
     <div class="modal-overlay">
         <div class="sms-modal-dialog sms-modal-lg">
@@ -89,7 +89,6 @@
                                 </div>
                                 <div class="col-sm-6">
                                     <strong>Total Mitigations:</strong> @SelectedReportForApproval.MitigationCount<br>
-                                    @* <strong>Status:</strong> <RadzenBadge Text="@SelectedReportForApproval.ReportStatus" BadgeStyle="BadgeStyle.Info" /> *@
                                 </div>
                             </div>
                             <div class="bg-light p-2 rounded mb-3">
@@ -114,27 +113,18 @@
                                                 <th>Name</th>
                                                 <th>Current Status</th>
                                                 <th>Hazard ID</th>
+                                                <th>Risk Level</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @foreach (var mitigation in SelectedReportForApproval.AllMitigations)
                                             {
-                                                var statusStyle = mitigation.Status switch
-                                                {
-                                                    // ✅ Use the actual enum Values, not hardcoded strings
-                                                    var status when status == MitigationStatus.Approved.Value => BadgeStyle.Success,
-                                                    var status when status == MitigationStatus.InProgressDueDate.Value => BadgeStyle.Base,
-                                                    var status when status == MitigationStatus.Complete.Value => BadgeStyle.Primary,
-                                                    var status when status == MitigationStatus.PendingApproval.Value => BadgeStyle.Warning,
-                                                    var status when status == MitigationStatus.Rejected.Value => BadgeStyle.Danger,
-                                                    var status when status == MitigationStatus.MonitoringHazard.Value => BadgeStyle.Base,
-                                                    _ => BadgeStyle.Secondary
-                                                };
                                                 <tr>
                                                     <td>@mitigation.MitigationCode</td>
                                                     <td>@mitigation.MitigationName</td>
-                                                    <td><RadzenBadge Text="@mitigation.Status"  BadgeStyle="@statusStyle" /></td>
+                                                    <td>@mitigation.Status</td>
                                                     <td>@mitigation.HazardCode</td>
+                                                    <td>@mitigation.HazardRiskLevel</td>
                                                 </tr>
                                             }
                                         </tbody>
@@ -175,7 +165,203 @@
         </div>
     </div>
 }
+ *@
 
+<!-- 🚀 ENHANCED: Bulk Mitigation Approval Confirmation Dialog with Risk-Based Approver Selection -->
+@if (ShowBulkApprovalDialog && SelectedReportForApproval != null)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-lg">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-warning">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <h5 class="sms-modal-title mb-0">
+                            <i class="fas fa-check-double"></i> Bulk Mitigation Approval
+                        </h5>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                      Variant="Variant.Text"
+                                      Icon="close"
+                                      Size="ButtonSize.Small"
+                                      Click="@CloseBulkApprovalConfirmation" />
+                    </div>
+                </div>
+                <div class="sms-modal-body">
+
+                    <!-- Confirmation Information -->
+                    <RadzenCard Variant="Variant.Outlined" Class="mb-3">
+                        <div class="p-3">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-exclamation-triangle text-warning"></i> Confirmation Required
+                            </h6>
+                            <p class="mb-3">
+                                You are about to <strong>approve ALL mitigations</strong> for the following report:
+                            </p>
+                            <div class="row mb-3">
+                                <div class="col-sm-6">
+                                    <strong>Report ID:</strong> @SelectedReportForApproval.ReportId<br>
+                                    <strong>Total Hazards:</strong> @GetUniqueHazardCount(SelectedReportForApproval)<br>
+                                </div>
+                                <div class="col-sm-6">
+                                    <strong>Total Mitigations:</strong> @SelectedReportForApproval.MitigationCount<br>
+                                    <strong>Highest Risk Level:</strong> <span class="fw-bold text-danger">@GetHighestRiskLevelAcrossAllHazards(SelectedReportForApproval)</span>
+                                </div>
+                            </div>
+                            <div class="bg-light p-2 rounded mb-3">
+                                <strong>Description:</strong> @SelectedReportForApproval.HazardDescription
+                            </div>
+                        </div>
+                    </RadzenCard>
+
+                    <!-- 🚀 NEW: Risk-Based Approver Selection -->
+                    <RadzenCard Variant="Variant.Outlined" Class="mb-3" Style="border-left: 4px solid #dc3545;">
+                        <div class="p-3">
+                            <h6 class="text-danger mb-3">
+                                <i class="fas fa-user-shield"></i> Required Authorization
+                            </h6>
+                            <p class="small text-muted mb-3">
+                                This approval includes hazards with <strong>@GetHighestRiskLevelAcrossAllHazards(SelectedReportForApproval)</strong> risk level.
+                                Only authorized personnel with sufficient authority can approve these mitigations.
+                            </p>
+
+                            <RadzenFormField Text="Select Authorized Approver *" Variant="Variant.Outlined" Style="width: 100%;">
+                                <RadzenDropDown Data="@GetApproversForHighestRiskLevel(SelectedReportForApproval)"
+                                                @bind-Value="@SelectedApprover"
+                                                TextProperty="DisplayName"
+                                                ValueProperty="Code"
+                                                Placeholder="Select an authorized approver..."
+                                                Style="width: 100%;"
+                                                AllowClear="true" />
+                            </RadzenFormField>
+
+                            @if (!string.IsNullOrEmpty(SelectedApprover))
+                            {
+                                var approver = GetApproverDetails(SelectedApprover);
+                                <div class="mt-2">
+                                    <RadzenAlert AlertStyle="AlertStyle.Success" ShowIcon="true" Style="margin-bottom: 0;">
+                                        <strong>Selected Approver:</strong> @approver.DisplayName<br>
+                                        <small>
+                                            <strong>Authority Level:</strong> @approver.AuthorityLevel |
+                                            <strong>Risk Approval Authority:</strong> @approver.RiskApprovalAuthority |
+                                            <strong>Department:</strong> @approver.Department
+                                        </small>
+                                    </RadzenAlert>
+                                </div>
+                            }
+                            else if (GetApproversForHighestRiskLevel(SelectedReportForApproval).Count == 0)
+                            {
+                                <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" Style="margin-top: 1rem;">
+                                    <strong>No Authorized Approvers Found!</strong><br>
+                                    No organizational users have sufficient authority to approve <strong>@GetHighestRiskLevelAcrossAllHazards(SelectedReportForApproval)</strong> risk level mitigations.
+                                    Please contact your SMS Administrator.
+                                </RadzenAlert>
+                            }
+                        </div>
+                    </RadzenCard>
+
+                    <!-- 🚀 ENHANCED: Risk Level Breakdown Table -->
+                    <RadzenCard Variant="Variant.Outlined" Class="mb-3">
+                        <div class="p-3">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-analytics"></i> Risk Level Breakdown
+                            </h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Risk Level</th>
+                                            <th>Hazard Count</th>
+                                            <th>Mitigation Count</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var riskBreakdown in GetRiskLevelBreakdown(SelectedReportForApproval))
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <RadzenBadge Text="@riskBreakdown.RiskLevel"
+                                                                 BadgeStyle="@GetRiskLevelBadgeStyle(riskBreakdown.RiskLevel)" />
+                                                </td>
+                                                <td>@riskBreakdown.HazardCount</td>
+                                                <td>@riskBreakdown.MitigationCount</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </RadzenCard>
+
+                    <!-- Mitigation List Preview -->
+                    <RadzenCard Variant="Variant.Outlined" Class="mb-3">
+                        <div class="p-3">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-list"></i> Mitigations to be Approved
+                            </h6>
+                            @if (SelectedReportForApproval.HasMitigations)
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Mitigation ID</th>
+                                                <th>Name</th>
+                                                <th>Current Status</th>
+                                                <th>Hazard ID</th>
+                                                <th>Risk Level</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var mitigation in SelectedReportForApproval.AllMitigations)
+                                            {
+                                                <tr>
+                                                    <td>@mitigation.MitigationCode</td>
+                                                    <td>@mitigation.MitigationName</td>
+                                                    <td>@mitigation.Status</td>
+                                                    <td>@mitigation.HazardCode</td>
+                                                    <td>
+                                                        <RadzenBadge Text="@(mitigation.HazardRiskLevel?.Name ?? "Unknown")"
+                                                                     BadgeStyle="@GetRiskLevelBadgeStyle(mitigation.HazardRiskLevel?.Name ?? "Unknown")" />
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted">No mitigations found for this report.</p>
+                            }
+                        </div>
+                    </RadzenCard>
+
+                    <!-- Warning Message -->
+                    <RadzenAlert AlertStyle="AlertStyle.Warning" Icon="warning" ShowIcon="true" Class="mb-3">
+                        <strong>Important:</strong> This action will set the status of ALL listed mitigations to "Approved".
+                        This action cannot be undone. Please review the mitigations carefully before proceeding.
+                    </RadzenAlert>
+
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end gap-2">
+                        <RadzenButton ButtonStyle="ButtonStyle.Secondary"
+                                      Text="Cancel"
+                                      Icon="close"
+                                      Click="@CloseBulkApprovalConfirmation"
+                                      Size="ButtonSize.Medium"
+                                      Disabled="@IsProcessingApproval" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Success"
+                                      Text="@(IsProcessingApproval ? "Processing..." : $"Approve All {SelectedReportForApproval.MitigationCount} Mitigations")"
+                                      Icon="@(IsProcessingApproval ? "hourglass_empty" : "verified")"
+                                      Click="@ProcessBulkApprovalConfirmation"
+                                      Size="ButtonSize.Medium"
+                                      Disabled="@(IsProcessingApproval || string.IsNullOrEmpty(SelectedApprover) || GetApproversForHighestRiskLevel(SelectedReportForApproval).Count == 0)" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 <style>
     /* Modal Overlay and Dialog */
     .modal-overlay {

@@ -1,6 +1,7 @@
 ﻿using Domain.Entities;
 
 using SMS_Domain.Entities;
+using SMS_Domain.Enums;
 using SMS_Domain.Interfaces;
 
 namespace SMS_Infrastructure.Common;
@@ -105,9 +106,11 @@ public static partial class Mappers
             orgUser.Department = SMSDepartment.FromValue(reader.GetString(FieldNames.fSMSOrganizationalUserDepartment));
             orgUser.Position = reader.GetString(FieldNames.fSMSOrganizationalUserPosition);
 
+            
+
             orgUser.OrganizationLevel = SMSOrganizationalLevel.FromValue(reader.GetString(FieldNames.fSMSOrganizationalUserOrganizationLevel));
-
-
+            orgUser.AuthorityLevel = orgUser.OrganizationLevel.AuthorityLevel;
+            orgUser.RiskApprovalAuthority = orgUser.OrganizationLevel.Value;
             //orgUser.OrganizationLevel = reader.GetString(FieldNames.fSMSOrganizationalUserOrganizationLevel);
 
             // New SMS role fields - with null checking for backward compatibility
@@ -116,10 +119,6 @@ public static partial class Mappers
             //    orgUser.SMSUserRole = reader.GetValue<string>(FieldNames.fSMSOrganizationalUserSMSRole);
             //}
 
-            if (reader.HasColumn(FieldNames.fSMSOrganizationalUserAuthorityLevel))
-            {
-                orgUser.AuthorityLevel = reader.GetValue<string>(FieldNames.fSMSOrganizationalUserAuthorityLevel);
-            }
 
             if (reader.HasColumn(FieldNames.fSMSOrganizationalUserRiskApprovalAuthority))
             {
@@ -271,6 +270,7 @@ public static partial class Mappers
         hazard.IsInitialHazard = reader.GetValue<bool>(FieldNames.fIsInitialHazard);
         hazard.Description = reader.GetValue<string>(FieldNames.fHazardDescription).Trim() ?? string.Empty;
         hazard.HazardCategory = reader.GetValue<string>(FieldNames.fHazardCategory).Trim();
+        hazard.HazardType = reader.GetValue<string>(FieldNames.fHazardType).Trim() ?? string.Empty;
         hazard.ReportCode = reader.GetValue<string>(FieldNames.fHazardReportCode) ?? string.Empty;
         
         hazard.InitialRiskMatrixCode = reader.GetValue<string>(FieldNames.fHazardInitialRiskMatrixCode);
@@ -285,71 +285,60 @@ public static partial class Mappers
         {
             // Enhanced Classification Fields
 
-            var hazardType = reader.GetValue<string>(FieldNames.fHazardType);
-            if (!string.IsNullOrEmpty(hazardType))
-            {
-                hazard.HazardType = hazardType;
-            }
-
-            // Status 
-            var statusValue = reader.GetValue<string>(FieldNames.fHazardStatus)?.Trim(); // ✅ FIXED: Trim whitespace
-            if (!string.IsNullOrEmpty(statusValue))
-            {
-                hazard.Status = HazardStatus.FromValue(statusValue) ?? HazardStatus.StatusUnknown;
-            }
-
             
             // Risk Level
-            var riskLevel = reader.GetValue<string>(FieldNames.fHazardRiskLevel);
-            if (!string.IsNullOrEmpty(riskLevel))
-            {
-                hazard.RiskLevel = riskLevel;
-            }
+            //hazard.HazardRiskLevel = RiskLevel.FromValue(reader.GetValue<string>(FieldNames.fHazardRiskLevel).Trim())?? RiskLevel.Unkonwn;
+            hazard.HazardRiskLevel = RiskLevel.FromValue(reader.GetValue<string>(FieldNames.fHazardRiskLevel)?.Trim()) ?? RiskLevel.Unkonwn;
+            //// Step 3 Risk Analysis Fields
+            //var worstCredibleOutcome = reader.GetValue<string>(FieldNames.fHazardInitialWorstCredibleOutcome);
+            //if (!string.IsNullOrEmpty(worstCredibleOutcome))
+            //{
+            //    hazard.InitialWorstCredibleOutcome = worstCredibleOutcome;
+            //}
 
-            // Step 3 Risk Analysis Fields
-            var worstCredibleOutcome = reader.GetValue<string>(FieldNames.fHazardInitialWorstCredibleOutcome);
-            if (!string.IsNullOrEmpty(worstCredibleOutcome))
-            {
-                hazard.InitialWorstCredibleOutcome = worstCredibleOutcome;
-            }
+            //var rootCause = reader.GetValue<string>(FieldNames.fHazardInitialRootCause);
+            //if (!string.IsNullOrEmpty(rootCause))
+            //{
+            //    hazard.InitialRootCause = rootCause;
+            //}
+            //// Step 5 Risk Analysis Fields
+            //worstCredibleOutcome = reader.GetValue<string>(FieldNames.fH);
+            //if (!string.IsNullOrEmpty(worstCredibleOutcome))
+            //{
+            //    hazard.InitialWorstCredibleOutcome = worstCredibleOutcome;
+            //}
 
-            var rootCause = reader.GetValue<string>(FieldNames.fHazardInitialRootCause);
-            if (!string.IsNullOrEmpty(rootCause))
-            {
-                hazard.InitialRootCause = rootCause;
-            }
-
+            //var rootCause = reader.GetValue<string>(FieldNames.fHazardInitialRootCause);
+            //if (!string.IsNullOrEmpty(rootCause))
+            //{
+            //    hazard.InitialRootCause = rootCause;
+            //}
             // Investigation Properties
-            var requiresInvestigation = reader.IsDBNull(FieldNames.fHazardRequiresInvestigation) ? false : reader.GetBoolean(FieldNames.fHazardRequiresInvestigation);
-            hazard.RequiresInvestigation = requiresInvestigation;
+            //var requiresInvestigation = reader.IsDBNull(FieldNames.fHazardRequiresInvestigation) ? false : reader.GetBoolean(FieldNames.fHazardRequiresInvestigation);
+            //hazard.RequiresInvestigation = requiresInvestigation;
 
-            var investigationNotes = reader.GetValue<string>(FieldNames.fHazardInvestigationNotes);
-            if (!string.IsNullOrEmpty(investigationNotes))
-            {
-                hazard.InvestigationNotes = investigationNotes;
-            }
+            //var investigationNotes = reader.GetValue<string>(FieldNames.fHazardInvestigationNotes);
+            //if (!string.IsNullOrEmpty(investigationNotes))
+            //{
+            //    hazard.InvestigationNotes = investigationNotes;
+            //}
 
             // Additional Properties
-            var additionalComments = reader.GetValue<string>(FieldNames.fHazardAdditionalComments);
-            if (!string.IsNullOrEmpty(additionalComments))
-            {
-                hazard.AdditionalComments = additionalComments;
-            }
 
-            var locationArea = reader.GetValue<string>(FieldNames.fHazardLocationArea);
-            if (!string.IsNullOrEmpty(locationArea))
-            {
-                hazard.LocationArea = locationArea;
-            }
+            //var locationArea = reader.GetValue<string>(FieldNames.fHazardLocationArea);
+            //if (!string.IsNullOrEmpty(locationArea))
+            //{
+            //    hazard.LocationArea = locationArea;
+            //}
 
-            var locationSubArea = reader.GetValue<string>(FieldNames.fHazardLocationSubArea);
-            if (!string.IsNullOrEmpty(locationSubArea))
-            {
-                hazard.LocationSubArea = locationSubArea;
-            }
+            //var locationSubArea = reader.GetValue<string>(FieldNames.fHazardLocationSubArea);
+            //if (!string.IsNullOrEmpty(locationSubArea))
+            //{
+            //    hazard.LocationSubArea = locationSubArea;
+            //}
 
             // 5M Component (Smart Enum)
-            
+
         }
         catch (Exception)
         {

@@ -110,19 +110,7 @@ public partial class HazardListing : ComponentBase
             Duration = 6000
         });
     }
-
-    public BadgeStyle GetStatusBadgeStyle(string? status)
-    {
-        return status?.ToLower() switch
-        {
-            "active" => BadgeStyle.Success,
-            "pending" => BadgeStyle.Warning,
-            "closed" => BadgeStyle.Secondary,
-            "cancelled" => BadgeStyle.Danger,
-            _ => BadgeStyle.Info
-        };
-    }
-    
+   
 
     #region CRUD Action Methods
 

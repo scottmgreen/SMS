@@ -23,7 +23,7 @@ public sealed class SMSOrganizationalUser : BaseUser
     /// <summary>
     /// Authority level for risk approval (Strategic, Executive, Operational, Process, Support)
     /// </summary>
-    public string? AuthorityLevel { get; set; }
+    public int? AuthorityLevel { get; set; }
 
     /// <summary>
     /// Risk levels this user can approve (Critical/High, High/Escalated, Medium/Low, etc.)

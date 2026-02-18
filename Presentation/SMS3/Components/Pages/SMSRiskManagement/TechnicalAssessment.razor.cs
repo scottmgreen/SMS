@@ -4,6 +4,7 @@ using SMS_Application.Interfaces;
 using SMS_Application.Services;
 
 using SMS3.Components.Pages.SMSRiskManagement.Models;
+using SMS3.Components.Shared;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -882,9 +883,17 @@ public partial class TechnicalAssessment : ComponentBase
             {
                 var hazard = hazardResult.Value;
 
+                // ✅ Use shared method to load scoring panels and get current risk level
+                var scoringPanels = await LoadScoringPanelsForHazard(HazardId, CurrentStep, TechRiskAssessment?.Code);
+                var (averageScore, matrixCode, riskLevel) = CalculateHazardScoringData(scoringPanels, HazardId);
+
                 // Update hazard status based on assessment progress
                 var originalStatus = hazard.Status?.ToString();
                 hazard.Status = DetermineHazardStatusFromStep(CurrentStep);
+                
+                // ✅ Use calculated risk level from scoring panels
+                hazard.HazardRiskLevel = riskLevel;
+
                 hazard.UpdatedBy = AuthService.CurrentUserDisplayName;  
                 hazard.UpdatedDate = DateTime.UtcNow;   
 
@@ -926,6 +935,257 @@ public partial class TechnicalAssessment : ComponentBase
             5 => HazardStatus.ResidualRiskAnalysis, // Risk mitigation
             _ => HazardStatus.InitialRiskAssessment
         };
+    }
+
+    /// <summary>
+    /// ✅ SHARED METHOD: Load scoring panels for any hazard with step-based score mapping
+    /// Uses initial scores for Step 4, residual scores for Step 5
+    /// This eliminates duplication between Step4 and Step5 components
+    /// </summary>
+    /// <param name="hazardCode">The hazard code to load panels for</param>
+    /// <param name="currentStep">Current assessment step (4 for initial, 5 for residual)</param>
+    /// <param name="riskAssessmentCode">Risk assessment code to filter panels</param>
+    /// <returns>List of scoring panels with appropriate score mapping</returns>
+    public async Task<List<ScoringPanel>> LoadScoringPanelsForHazard(string hazardCode, int currentStep, string? riskAssessmentCode = null)
+    {
+        if (string.IsNullOrEmpty(hazardCode) || hazardCode == "HZ-0000")
+        {
+            Logger.LogWarning("Invalid hazard code provided: {HazardCode}", hazardCode);
+            return new List<ScoringPanel>();
+        }
+
+        try
+        {
+            Logger.LogInformation("Loading scoring panels for hazard {HazardCode}, Step {CurrentStep}", hazardCode, currentStep);
+
+            // Use the provided risk assessment code or fall back to current assessment
+            var targetAssessmentCode = !string.IsNullOrEmpty(riskAssessmentCode) 
+                ? riskAssessmentCode.Trim() 
+                : TechRiskAssessment?.Code?.Trim();
+
+            if (string.IsNullOrEmpty(targetAssessmentCode))
+            {
+                Logger.LogWarning("No risk assessment code available for scoring panel filtering");
+                return new List<ScoringPanel>();
+            }
+
+            // Load all panels for the hazard
+            var query = new GetScoringPanelsByHazardCodeQuery(hazardCode);
+            var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+            if (!result.IsSuccess || result.Value == null)
+            {
+                Logger.LogWarning("No scoring panels found for hazard {HazardCode}", hazardCode);
+                return new List<ScoringPanel>();
+            }
+
+            // Copy Step 4 scores to Step 5 if needed (only when loading Step 5)
+            if (currentStep == 5)
+            {
+                await CopyStep4ScoresToStep5IfNeeded(result.Value, targetAssessmentCode);
+            }
+
+            // Filter panels by risk assessment code
+            var filteredPanels = result.Value
+                .Where(p => p.RiskAssessmentCode.Trim() == targetAssessmentCode)
+                .ToList();
+
+            // Map properties based on current step for all loaded panels
+            foreach (var panel in filteredPanels)
+            {
+                MapScoringPanelPropertiesBasedOnStep(panel, currentStep);
+            }
+
+            Logger.LogInformation("Loaded {Count} scoring panels for hazard {HazardCode}, Step {CurrentStep}", 
+                filteredPanels.Count, hazardCode, currentStep);
+
+            return filteredPanels;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading scoring panels for hazard {HazardCode}, Step {CurrentStep}", hazardCode, currentStep);
+            return new List<ScoringPanel>();
+        }
+    }
+
+    /// <summary>
+    /// Map scoring panel properties based on assessment step
+    /// Step 4 = Initial properties, Step 5 = Residual properties
+    /// </summary>
+    /// <param name="panel">The scoring panel to map properties for</param>
+    /// <param name="currentStep">Current assessment step (4 or 5)</param>
+    private void MapScoringPanelPropertiesBasedOnStep(ScoringPanel panel, int currentStep)
+    {
+        if (currentStep == 5)
+        {
+            // Step 5: Map from Residual properties
+            panel.Likelihood = panel.ResidualLikelihood;
+            panel.Severity = panel.ResidualSeverity;
+            panel.Score = panel.ResidualScore;
+            panel.Rationale = panel.ResidualRationale;
+        }
+        else
+        {
+            // Step 4 (default): Map from Initial properties
+            panel.Likelihood = panel.InitialLikelihood;
+            panel.Severity = panel.InitialSeverity;
+            panel.Score = panel.InitialScore;
+            panel.Rationale = panel.InitialRationale;
+        }
+    }
+
+    /// <summary>
+    /// Update actual entity properties from mapped properties before saving
+    /// Step 4 updates Initial properties, Step 5 updates Residual properties
+    /// </summary>
+    /// <param name="panel">The scoring panel to update</param>
+    /// <param name="currentStep">Current assessment step (4 or 5)</param>
+    public void UpdateScoringPanelEntityPropertiesFromMapped(ScoringPanel panel, int currentStep)
+    {
+        if (currentStep == 5)
+        {
+            // Step 5: Update Residual properties from mapped properties
+            panel.ResidualLikelihood = panel.Likelihood;
+            panel.ResidualSeverity = panel.Severity;
+            panel.ResidualScore = panel.Score;
+            panel.ResidualRationale = panel.Rationale;
+        }
+        else
+        {
+            // Step 4: Update Initial properties from mapped properties
+            panel.InitialLikelihood = panel.Likelihood;
+            panel.InitialSeverity = panel.Severity;
+            panel.InitialScore = panel.Score;
+            panel.InitialRationale = panel.Rationale;
+        }
+    }
+
+    /// <summary>
+    /// Copy Step 4 initial scores to Step 5 residual scores if residual scores are empty
+    /// </summary>
+    /// <param name="allPanels">All panels for the hazard</param>
+    /// <param name="targetAssessmentCode">Target risk assessment code</param>
+    private async Task CopyStep4ScoresToStep5IfNeeded(IEnumerable<ScoringPanel> allPanels, string targetAssessmentCode)
+    {
+        try
+        {
+            // Get existing panels for the current assessment
+            var existingPanels = allPanels
+                .Where(p => p.RiskAssessmentCode.Trim() == targetAssessmentCode)
+                .ToList();
+
+            if (!existingPanels.Any())
+            {
+                Logger.LogInformation("No panels found for assessment {AssessmentCode} to copy scores", targetAssessmentCode);
+                return;
+            }
+
+            // Find panels that have Initial scores but EMPTY Residual scores
+            var panelsNeedingCopy = existingPanels
+                .Where(p =>
+                    // Has Initial scores from Step 4
+                    p.InitialSeverity.HasValue && p.InitialLikelihood.HasValue && p.InitialScore.HasValue &&
+                    // AND Residual scores are empty (haven't been set in Step 5 yet)
+                    !p.ResidualSeverity.HasValue && !p.ResidualLikelihood.HasValue && !p.ResidualScore.HasValue)
+                .ToList();
+
+            if (!panelsNeedingCopy.Any())
+            {
+                Logger.LogInformation("No panels need score copying for assessment {AssessmentCode} - either no Initial scores or Residual scores already exist", targetAssessmentCode);
+                return;
+            }
+
+            Logger.LogInformation("Copying Initial scores to empty Residual scores for {Count} panels in assessment {AssessmentCode}", panelsNeedingCopy.Count, targetAssessmentCode);
+
+            bool anyUpdated = false;
+
+            foreach (var panel in panelsNeedingCopy)
+            {
+                // Copy Initial scores to Residual as starting point
+                panel.ResidualSeverity = panel.InitialSeverity;
+                panel.ResidualLikelihood = panel.InitialLikelihood;
+                panel.ResidualScore = panel.InitialScore;
+                panel.ResidualRationale = $"Initial assessment: {panel.InitialRationale ?? "No rationale provided"}";
+
+                Logger.LogInformation("Copying Initial scores to empty Residual for panel {PanelCode}: {Sev}x{Like}={Score}", 
+                    panel.Code, panel.InitialSeverity, panel.InitialLikelihood, panel.InitialScore);
+
+                // Save the updated panel
+                var updateCommand = new UpdateScoringPanelCommand(panel);
+                var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+
+                if (result.IsSuccess)
+                {
+                    Logger.LogInformation("✅ Successfully copied Initial scores to empty Residual for panel {PanelCode}", panel.Code);
+                    anyUpdated = true;
+                }
+                else
+                {
+                    Logger.LogError("❌ Failed to copy scores for panel {PanelCode}: {Error}", panel.Code, result.Error?.Message ?? "Unknown error");
+                }
+            }
+
+            if (anyUpdated)
+            {
+                Logger.LogInformation("✅ Completed copying Initial scores to empty Residual scores for assessment {AssessmentCode}", targetAssessmentCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error copying Step 4 scores to Step 5 for assessment {AssessmentCode}", targetAssessmentCode);
+        }
+    }
+
+    /// <summary>
+    /// Calculate hazard average scoring data from completed scoring panels
+    /// Returns average score, matrix code, and risk level based on step context
+    /// </summary>
+    /// <param name="scoringPanels">List of scoring panels (already mapped for current step)</param>
+    /// <param name="hazardCode">Hazard code for logging</param>
+    /// <returns>Tuple of calculated scoring data</returns>
+    public (double? AverageScore, string MatrixCode, RiskLevel RiskLevel) CalculateHazardScoringData(List<ScoringPanel> scoringPanels, string hazardCode)
+    {
+        var completedPanels = scoringPanels.Where(p => HasScoringPanelScore(p)).ToList();
+
+        if (!completedPanels.Any())
+        {
+            Logger.LogInformation("No completed scoring panels for hazard {HazardCode}", hazardCode);
+            return (null, string.Empty, RiskLevel.Unkonwn);
+        }
+
+        try
+        {
+            // Calculate averages separately for severity and likelihood (aviation standard)
+            var averageSeverity = completedPanels.Average(p => (double)p.Severity!.Value);
+            var averageLikelihood = completedPanels.Average(p => (double)p.Likelihood!.Value);
+            var averageScore = completedPanels.Average(p => (double)p.Score!.Value);
+
+            // Use aviation standard calculation for matrix code
+            var matrixCode = AviationRiskMatrixCalculator.GetAverageMatrixCode(averageSeverity, averageLikelihood);
+            var roundedSeverity = (int)Math.Round(averageSeverity);
+            var roundedLikelihood = (int)Math.Round(averageLikelihood);
+            var riskLevel = AviationRiskMatrixCalculator.GetAviationRiskLevel(roundedSeverity, roundedLikelihood);
+
+            Logger.LogInformation("Calculated hazard {HazardCode} scoring: AvgSev={Severity:F2}→{RoundedSev}, AvgLike={Likelihood:F2}→{RoundedLike}, Matrix={MatrixCode}, Risk={RiskLevel}", 
+                hazardCode, averageSeverity, roundedSeverity, averageLikelihood, roundedLikelihood, matrixCode, riskLevel?.Value ?? "Unknown");
+
+            return (averageScore, matrixCode, riskLevel);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error calculating scoring data for hazard {HazardCode}", hazardCode);
+            return (null, string.Empty, RiskLevel.Unkonwn);
+        }
+    }
+
+    /// <summary>
+    /// Check if a scoring panel has complete score data
+    /// </summary>
+    /// <param name="panel">The scoring panel to check</param>
+    /// <returns>True if panel has severity, likelihood, and calculated score</returns>
+    private bool HasScoringPanelScore(ScoringPanel panel)
+    {
+        return panel.Severity.HasValue && panel.Likelihood.HasValue && panel.Score.HasValue;
     }
 
     #endregion

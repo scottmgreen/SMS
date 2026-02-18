@@ -58,6 +58,13 @@
                 </div>
             </Template>
         </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Hazard" Property="HazardRiskLevel" Title="Risk Level" Width="350px">
+            <Template Context="hazard">
+                <div title="@hazard.HazardRiskLevel" style="@BasicTextStyle">
+                    @(hazard.HazardRiskLevel.Value ?? RiskLevel.Unkonwn)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Hazard" Property="IsInitialHazard" Title="Initial Hazard" Width="125px">
             <Template Context="hazard">
                 <RadzenIcon Icon="@(hazard.IsInitialHazard ? "check_box" : "check_box_outline_blank")"

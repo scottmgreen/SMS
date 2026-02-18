@@ -31,6 +31,8 @@ public abstract class RiskLevel : BaseEnum<RiskLevel>
     /// <summary>Low risk requiring SMS Manager or higher approval</summary>
     public static readonly RiskLevel Low = new LowLevel();
 
+    public static readonly RiskLevel Unkonwn = new UnknownLevel();
+
     #endregion
 
     #region Implementations
@@ -70,7 +72,14 @@ public abstract class RiskLevel : BaseEnum<RiskLevel>
         {
         }
     }
-
+    private sealed class UnknownLevel : RiskLevel
+    {
+        public UnknownLevel() : base("UNKNOWN", "Unknown Risk",
+            "Unknown risk is the initial", 0,
+            new[] { "ACCOUNTABLE_EXECUTIVE", "RESPONSIBLE_EXECUTIVE", "RESPONSIBLE_MANAGER", "SMS_MANAGER" })
+        {
+        }
+    }
     #endregion
 
     /// <summary>

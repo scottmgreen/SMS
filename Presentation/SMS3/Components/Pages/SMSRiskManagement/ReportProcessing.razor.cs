@@ -169,6 +169,7 @@ public class MitigationSummary
     public string MitigationCode { get; set; } = string.Empty;
     public string MitigationName { get; set; } = string.Empty;
     public string HazardCode { get; set; } = string.Empty;
+    public RiskLevel HazardRiskLevel { get; set; }
     public string HazardDescription { get; set; } = string.Empty;
     public MitigationStatus Status { get; set; } 
     public string AssignedTo { get; set; } = string.Empty;
@@ -203,6 +204,8 @@ public partial class ReportProcessing : ComponentBase
 
     private int selectedTabIndex = 0;
     private bool IsLoading { get; set; } = true;
+    private List<SMSOrganizationalUser> AvailableApprovers { get; set; } = new();
+    private string? SelectedApprover { get; set; }
 
     private bool ShowBulkApprovalDialog { get; set; } = false;
     private ReportProcessingSummary? SelectedReportForApproval { get; set; }
@@ -216,14 +219,46 @@ public partial class ReportProcessing : ComponentBase
     }
 
     #region Data Loading
+    /// <summary>
+    /// 🚀 Load organizational users who can approve mitigations
+    /// </summary>
+    private async Task LoadAvailableApprovers()
+    {
+        try
+        {
+            var usersQuery = new GetAllSMSOrganizationalUsersQuery(); // You may need to adjust this query name
+            var usersResult = await Mediator.SendAsync(usersQuery, CancellationToken.None);
 
+            if (usersResult.IsSuccess && usersResult.Value != null)
+            {
+                AvailableApprovers = usersResult.Value
+                .Where(u => u.IsActive &&
+                           (u.AuthorityLevel.HasValue || // Has integer authority level
+                            u.OrganizationLevel != null || // Has organization level enum
+                            !string.IsNullOrEmpty(u.RiskApprovalAuthority))) // Has risk approval authority string
+                .ToList();
+
+                Logger.LogInformation("Loaded {Count} available approvers", AvailableApprovers.Count);
+            }
+            else
+            {
+                Logger.LogWarning("Failed to load approvers: {Error}", usersResult.Error?.Message);
+                AvailableApprovers = new List<SMSOrganizationalUser>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading available approvers");
+            AvailableApprovers = new List<SMSOrganizationalUser>();
+        }
+    }
     private async Task LoadDataAsync()
     {
         try
         {
             IsLoading = true;
+            await LoadAvailableApprovers();
 
-            
 
             // Load core entities using CQRS - ENHANCED to include Investigations and Interviews
             var (reports, hazards, riskAssessments, reportValidations, investigations, interviews) 
@@ -427,18 +462,19 @@ public partial class ReportProcessing : ComponentBase
                                 if (mitigationResult.IsSuccess && mitigationResult.Value?.Any() == true)
                                 {
                                     var hazardMitigations = mitigationResult.Value
-                                        .Where(m => m.Status != MitigationStatus.Approved && !string.IsNullOrEmpty(m.Code) && !processedMitigationCodes.Contains(m.Code) ) 
+                                        .Where(m => m.Status != MitigationStatus.Approved && !string.IsNullOrEmpty(m.Code) && !processedMitigationCodes.Contains(m.Code))
                                         .Select(m => new MitigationSummary
                                         {
                                             MitigationCode = m.Code ?? "Unknown",
                                             MitigationName = m.Name ?? "Unnamed Mitigation",
                                             HazardCode = hazard.Code,
                                             HazardDescription = hazard.Description ?? "No description",
-                                            Status = m.Status ,
+                                            HazardRiskLevel = hazard.HazardRiskLevel,
+                                            Status = m.Status,
                                             AssignedTo = m.AssignedTo ?? "Not Assigned",
                                             AssignedDepartment = m.AssignedDepartment ?? "Not Assigned",
                                             TargetDate = m.TargetDate,
-                                            
+
                                         }).ToList();
 
                                     // ✅ Track mitigation codes to prevent duplicates
@@ -1291,7 +1327,50 @@ public partial class ReportProcessing : ComponentBase
     {
         return report.AllMitigations?.Count(m => m.Status == MitigationStatus.PendingApproval.Value) ?? 0;
     }
+    private List<ApproverOption> GetApproversForHighestRiskLevel(ReportProcessingSummary report)
+    {
+        var highestRiskLevel = GetHighestRiskLevelAcrossAllHazards(report);
 
+        var authorizedApprovers = AvailableApprovers
+            .Where(user => CanApproveRiskLevel(user, highestRiskLevel))
+            .Select(user => ApproverOption.FromUser(user))
+            .OrderBy(a => a.DisplayName)
+            .ToList();
+
+        Logger.LogInformation("Found {Count} approvers authorized for {RiskLevel} risk level approval",
+            authorizedApprovers.Count, highestRiskLevel);
+
+        return authorizedApprovers;
+    }
+    /// <summary>
+    /// 🚀 Get count of unique hazards in the report
+    /// </summary>
+    private int GetUniqueHazardCount(ReportProcessingSummary report)
+    {
+        return report.AllMitigations
+            .Select(m => m.HazardCode)
+            .Distinct()
+            .Count();
+    }
+    /// <summary>
+    /// 🚀 Get approver details for display with enhanced information
+    /// </summary>
+    private ApproverOption GetApproverDetails(string approverCode)
+    {
+        var approver = AvailableApprovers.FirstOrDefault(a => a.Code == approverCode);
+        if (approver == null)
+            return new ApproverOption { Code = approverCode, DisplayName = "Unknown" };
+
+        return new ApproverOption
+        {
+            Code = approver.Code,
+            DisplayName = $"{approver.FirstName?.Value} {approver.LastName?.Value} ({approver.Position})",
+            AuthorityLevel = approver.AuthorityLevel?.ToString() ?? "Not specified",
+            RiskApprovalAuthority = approver.RiskApprovalAuthority ?? "Not specified",
+            Department = approver.Department?.Name ?? "Not specified",
+            Position = approver.Position ?? "Not specified"
+        };
+    }
     // Notification helper methods
     private void ShowSuccessNotification(string message)
     {
@@ -1707,7 +1786,7 @@ public partial class ReportProcessing : ComponentBase
         }
         else if (report.StatusCategory == ProcessingStatusCategory.Closed)
         {
-            return ButtonStyle.Info;
+            return ButtonStyle.Base;
         }
 
         // Default style
@@ -1721,7 +1800,146 @@ public partial class ReportProcessing : ComponentBase
     /// <summary>
     /// Bulk approve ALL mitigations for an entire report (all hazards and their mitigations)
     /// </summary>
-    private async Task BulkApproveAllMitigationsForReport(string reportId)
+    //private async Task BulkApproveAllMitigationsForReport(string reportId)
+    //{
+    //    try
+    //    {
+    //        IsProcessingApproval = true;
+    //        StateHasChanged();
+
+    //        Logger.LogInformation("Starting bulk approval for ALL mitigations in report: {ReportId}", reportId);
+
+    //        // ✅ FIXED: Load fresh hazard data instead of using cached PendingMitigation list
+    //        var hazardsQuery = new GetAllHazardsQuery();
+    //        var hazardsResult = await Mediator.SendAsync(hazardsQuery, CancellationToken.None);
+
+    //        if (!hazardsResult.IsSuccess || hazardsResult.Value == null)
+    //        {
+    //            ShowErrorNotification("Failed to load hazard data");
+    //            return;
+    //        }
+
+    //        var reportHazards = hazardsResult.Value.Where(h => h.ReportCode?.Trim() == reportId?.Trim()).ToList();
+
+    //        if (!reportHazards.Any())
+    //        {
+    //            ShowErrorNotification($"No hazards found for report {reportId}");
+    //            return;
+    //        }
+
+    //        var successCount = 0;
+    //        var errorCount = 0;
+    //        var processedMitigationCodes = new HashSet<string>(); // Track processed mitigations to avoid duplicates
+
+    //        // ✅ FIXED: Process each hazard's mitigations with fresh data
+    //        foreach (var hazard in reportHazards)
+    //        {
+    //            try
+    //            {
+    //                Logger.LogInformation("Processing mitigations for hazard: {HazardCode}", hazard.Code);
+
+    //                // Get fresh mitigations for this specific hazard
+    //                var mitigationQuery = new GetMitigationsByHazardCodeQuery(hazard.Code);
+    //                var mitigationResult = await Mediator.SendAsync(mitigationQuery, CancellationToken.None);
+
+    //                if (mitigationResult.IsSuccess && mitigationResult.Value?.Any() == true)
+    //                {
+    //                    // ✅ FIXED: Filter for PENDING_APPROVAL using enum value and avoid duplicates
+    //                    var pendingMitigations = mitigationResult.Value
+    //                        .Where(m => !string.IsNullOrEmpty(m.Code) &&
+    //                                   !processedMitigationCodes.Contains(m.Code) &&
+    //                                   string.Equals(m.Status, MitigationStatus.PendingApproval.Value, StringComparison.OrdinalIgnoreCase))
+    //                        .ToList();
+
+    //                    Logger.LogInformation("Found {Count} pending mitigations for hazard {HazardCode}: {MitigationCodes}",
+    //                        pendingMitigations.Count, hazard.Code,
+    //                        string.Join(", ", pendingMitigations.Select(m => $"{m.Code}({m.Status})")));
+
+    //                    // Approve each pending mitigation
+    //                    foreach (var mitigation in pendingMitigations)
+    //                    {
+    //                        try
+    //                        {
+    //                            // Track this mitigation to avoid processing duplicates
+    //                            processedMitigationCodes.Add(mitigation.Code);
+
+    //                            // Update mitigation status to Approved using enum value
+    //                            mitigation.Status = MitigationStatus.Approved;
+    //                            mitigation.UpdatedDate = DateTime.UtcNow;
+    //                            mitigation.UpdatedBy = AuthService.CurrentUser.Code;  // You might want to get the current user
+
+    //                            var updateCommand = new UpdateMitigationCommand(mitigation);
+    //                            var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+
+    //                            if (updateResult.IsSuccess)
+    //                            {
+    //                                successCount++;
+    //                                Logger.LogInformation("Approved mitigation: {Code} for hazard {HazardCode}",mitigation.Code, hazard.Code);
+    //                            }
+    //                            else
+    //                            {
+    //                                errorCount++;
+    //                                Logger.LogError("Failed to approve mitigation {Code}: {Error}",mitigation.Code, updateResult.Error?.Message);
+    //                            }
+    //                        }
+    //                        catch (Exception ex)
+    //                        {
+    //                            errorCount++;
+    //                            Logger.LogError(ex, "Error approving mitigation {Code} for hazard {HazardCode}",mitigation.Code, hazard.Code);
+    //                        }
+    //                    }
+    //                }
+    //                else
+    //                {
+    //                    Logger.LogWarning("No mitigations found for hazard {HazardCode}", hazard.Code);
+    //                }
+    //            }
+    //            catch (Exception ex)
+    //            {
+    //                Logger.LogError(ex, "Error processing mitigations for hazard {HazardCode}", hazard.Code);
+    //                // Continue with other hazards even if one fails
+    //            }
+    //        }
+
+    //        bool flowControl = await UpdateReportStatus(reportId, ReportStatus.InMitigation);
+    //        if (!flowControl)
+    //        {
+    //            return;
+    //        }
+    //        if (successCount > 0)
+    //        {
+    //            ShowSuccessNotification($"Successfully approved {successCount} mitigation(s) across {reportHazards.Count} hazard(s) for report {reportId}");
+
+    //            // Reload data to reflect changes
+    //            await LoadDataAsync();
+    //        }
+    //        else if (errorCount == 0)
+    //        {
+    //            ShowInfoNotification($"No pending mitigations found for report {reportId}");
+    //        }
+
+    //        if (errorCount > 0)
+    //        {
+    //            ShowErrorNotification($"Failed to approve {errorCount} mitigation(s). Please check logs for details.");
+    //        }
+    //    }
+
+
+    //    catch (Exception ex)
+    //    {
+    //        Logger.LogError(ex, "Error during bulk approval for report {ReportId}", reportId);
+    //        ShowErrorNotification($"Error during bulk approval for report {reportId}: {ex.Message}");
+    //    }
+    //    finally
+    //    {
+    //        IsProcessingApproval = false;
+    //        StateHasChanged();
+    //    }
+    //}
+    /// <summary>
+    /// ✅ FIXED: Filter for PENDING_APPROVAL using enum value and avoid duplicates
+    /// </summary>
+    private async Task BulkApproveAllMitigationsForReport(string reportId, string approverCode)
     {
         try
         {
@@ -1730,7 +1948,6 @@ public partial class ReportProcessing : ComponentBase
 
             Logger.LogInformation("Starting bulk approval for ALL mitigations in report: {ReportId}", reportId);
 
-            // ✅ FIXED: Load fresh hazard data instead of using cached PendingMitigation list
             var hazardsQuery = new GetAllHazardsQuery();
             var hazardsResult = await Mediator.SendAsync(hazardsQuery, CancellationToken.None);
 
@@ -1750,44 +1967,40 @@ public partial class ReportProcessing : ComponentBase
 
             var successCount = 0;
             var errorCount = 0;
-            var processedMitigationCodes = new HashSet<string>(); // Track processed mitigations to avoid duplicates
+            var processedMitigationCodes = new HashSet<string>();
 
-            // ✅ FIXED: Process each hazard's mitigations with fresh data
             foreach (var hazard in reportHazards)
             {
                 try
                 {
                     Logger.LogInformation("Processing mitigations for hazard: {HazardCode}", hazard.Code);
 
-                    // Get fresh mitigations for this specific hazard
                     var mitigationQuery = new GetMitigationsByHazardCodeQuery(hazard.Code);
                     var mitigationResult = await Mediator.SendAsync(mitigationQuery, CancellationToken.None);
 
                     if (mitigationResult.IsSuccess && mitigationResult.Value?.Any() == true)
                     {
-                        // ✅ FIXED: Filter for PENDING_APPROVAL using enum value and avoid duplicates
+                        // ✅ FIXED: Filter for PENDING_APPROVAL using enum value
                         var pendingMitigations = mitigationResult.Value
                             .Where(m => !string.IsNullOrEmpty(m.Code) &&
                                        !processedMitigationCodes.Contains(m.Code) &&
-                                       string.Equals(m.Status, MitigationStatus.PendingApproval.Value, StringComparison.OrdinalIgnoreCase))
+                                       m.Status == MitigationStatus.PendingApproval) // ✅ Use enum instead of string comparison
                             .ToList();
 
                         Logger.LogInformation("Found {Count} pending mitigations for hazard {HazardCode}: {MitigationCodes}",
                             pendingMitigations.Count, hazard.Code,
                             string.Join(", ", pendingMitigations.Select(m => $"{m.Code}({m.Status})")));
 
-                        // Approve each pending mitigation
                         foreach (var mitigation in pendingMitigations)
                         {
                             try
                             {
-                                // Track this mitigation to avoid processing duplicates
                                 processedMitigationCodes.Add(mitigation.Code);
 
-                                // Update mitigation status to Approved using enum value
-                                mitigation.Status = MitigationStatus.Approved;
+                                // ✅ Update mitigation status using enum value
+                                mitigation.Status = MitigationStatus.Approved; // ✅ Use enum instead of hardcoded string
                                 mitigation.UpdatedDate = DateTime.UtcNow;
-                                mitigation.UpdatedBy = AuthService.CurrentUser.Code;  // You might want to get the current user
+                                mitigation.UpdatedBy = approverCode;
 
                                 var updateCommand = new UpdateMitigationCommand(mitigation);
                                 var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
@@ -1795,21 +2008,18 @@ public partial class ReportProcessing : ComponentBase
                                 if (updateResult.IsSuccess)
                                 {
                                     successCount++;
-                                    Logger.LogInformation("Approved mitigation: {Code} for hazard {HazardCode}",
-                                        mitigation.Code, hazard.Code);
+                                    Logger.LogInformation("Approved mitigation: {Code} for hazard {HazardCode}", mitigation.Code, hazard.Code);
                                 }
                                 else
                                 {
                                     errorCount++;
-                                    Logger.LogError("Failed to approve mitigation {Code}: {Error}",
-                                        mitigation.Code, updateResult.Error?.Message);
+                                    Logger.LogError("Failed to approve mitigation {Code}: {Error}", mitigation.Code, updateResult.Error?.Message);
                                 }
                             }
                             catch (Exception ex)
                             {
                                 errorCount++;
-                                Logger.LogError(ex, "Error approving mitigation {Code} for hazard {HazardCode}",
-                                    mitigation.Code, hazard.Code);
+                                Logger.LogError(ex, "Error approving mitigation {Code} for hazard {HazardCode}", mitigation.Code, hazard.Code);
                             }
                         }
                     }
@@ -1821,7 +2031,6 @@ public partial class ReportProcessing : ComponentBase
                 catch (Exception ex)
                 {
                     Logger.LogError(ex, "Error processing mitigations for hazard {HazardCode}", hazard.Code);
-                    // Continue with other hazards even if one fails
                 }
             }
 
@@ -1830,11 +2039,10 @@ public partial class ReportProcessing : ComponentBase
             {
                 return;
             }
+
             if (successCount > 0)
             {
                 ShowSuccessNotification($"Successfully approved {successCount} mitigation(s) across {reportHazards.Count} hazard(s) for report {reportId}");
-
-                // Reload data to reflect changes
                 await LoadDataAsync();
             }
             else if (errorCount == 0)
@@ -1847,8 +2055,6 @@ public partial class ReportProcessing : ComponentBase
                 ShowErrorNotification($"Failed to approve {errorCount} mitigation(s). Please check logs for details.");
             }
         }
-
-
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error during bulk approval for report {ReportId}", reportId);
@@ -1861,6 +2067,7 @@ public partial class ReportProcessing : ComponentBase
         }
     }
 
+        
     private async Task<bool> UpdateReportStatus(string reportId, ReportStatus status)
     {
         var getReportQuery = new GetReportByCodeQuery(new ReportID(reportId));
@@ -1892,22 +2099,159 @@ public partial class ReportProcessing : ComponentBase
     }
 
     /// <summary>
-    /// Get total approvable mitigation count for entire report
+    /// 🚀 KEY METHOD: Get the highest risk level across ALL hazards in the report
+    /// This considers Critical > High > Medium > Low priority
     /// </summary>
-    private int GetApprovableMitigationCountForReport(string reportId)
+    private string GetHighestRiskLevelAcrossAllHazards(ReportProcessingSummary report)
     {
-        return PendingMitigation
-            .Where(r => r.ReportId == reportId)
-            .Sum(h => GetApprovableMitigationCount(h));
+        if (!report.HasMitigations || !report.AllMitigations.Any())
+            return RiskLevel.Low.Name; // ✅ Use enum instead of "Low"
+
+        var riskLevels = report.AllMitigations
+            .Select(m => m.HazardRiskLevel?.Name ?? RiskLevel.Low.Name) // ✅ Use enum instead of "Low"
+            .Distinct()
+            .ToList();
+
+        // 🚀 CRITICAL BUSINESS LOGIC: Prioritize risk levels using enum values
+        if (riskLevels.Any(r => r.Equals(RiskLevel.Critical.Name, StringComparison.OrdinalIgnoreCase))) return RiskLevel.Critical.Name;
+        if (riskLevels.Any(r => r.Equals(RiskLevel.High.Name, StringComparison.OrdinalIgnoreCase))) return RiskLevel.High.Name;
+        if (riskLevels.Any(r => r.Equals(RiskLevel.Medium.Name, StringComparison.OrdinalIgnoreCase))) return RiskLevel.Medium.Name;
+
+        return RiskLevel.Low.Name; // ✅ Use enum instead of "Low"
     }
 
     /// <summary>
-    /// Check if report has any approvable mitigations
+    /// 🚀 BUSINESS RULES: Determine if a user can approve mitigations for a given risk level
+    /// Uses SMSOrganizationalLevel enum and integer AuthorityLevel with proper enum lookups
     /// </summary>
-    private bool HasApprovableMitigationsForReport(string reportId)
+    private bool CanApproveRiskLevel(SMSOrganizationalUser user, string riskLevel)
     {
-        return GetApprovableMitigationCountForReport(reportId) > 0;
+        // Get the risk level enum to check required authority level
+        var riskLevelEnum = RiskLevel.GetAllValues()
+            .FirstOrDefault(rl => rl.Name.Equals(riskLevel, StringComparison.OrdinalIgnoreCase));
+
+        if (riskLevelEnum == null)
+            return false;
+
+        // Primary check: User's integer AuthorityLevel
+        if (user.AuthorityLevel.HasValue && user.AuthorityLevel.Value >= riskLevelEnum.RequiredAuthorityLevel)
+        {
+            return true;
+        }
+
+        // Secondary check: User's OrganizationLevel enum authority
+        if (user.OrganizationLevel?.AuthorityLevel >= riskLevelEnum.RequiredAuthorityLevel)
+        {
+            return true;
+        }
+
+        // Tertiary check: Specific role-based approval using RiskLevel's ApproverRoles
+        if (user.OrganizationLevel != null && riskLevelEnum.ApproverRoles.Contains(user.OrganizationLevel.Value))
+        {
+            return true;
+        }
+
+        // Fallback check: String-based RiskApprovalAuthority (for legacy compatibility)
+        var userRiskAuthority = user.RiskApprovalAuthority?.ToUpper();
+        if (!string.IsNullOrEmpty(userRiskAuthority))
+        {
+            // Check if user's risk approval authority includes this risk level
+            return userRiskAuthority.Contains(riskLevelEnum.Value.ToUpper());
+        }
+
+        return false;
     }
+
+    /// <summary>
+    /// Get badge style for risk levels using enum values
+    /// </summary>
+    private BadgeStyle GetRiskLevelBadgeStyle(string riskLevel)
+    {
+        return riskLevel?.ToUpper() switch
+        {
+            _ when riskLevel.Equals(RiskLevel.Critical.Name, StringComparison.OrdinalIgnoreCase) => BadgeStyle.Danger,
+            _ when riskLevel.Equals(RiskLevel.High.Name, StringComparison.OrdinalIgnoreCase) => BadgeStyle.Danger,
+            _ when riskLevel.Equals(RiskLevel.Medium.Name, StringComparison.OrdinalIgnoreCase) => BadgeStyle.Warning,
+            _ when riskLevel.Equals(RiskLevel.Low.Name, StringComparison.OrdinalIgnoreCase) => BadgeStyle.Success,
+            _ => BadgeStyle.Secondary
+        };
+    }
+
+    /// <summary>
+    /// Helper method for risk level priority ordering using enum values
+    /// </summary>
+    private int GetRiskPriority(string riskLevel)
+    {
+        return riskLevel?.ToUpper() switch
+        {
+            _ when riskLevel.Equals(RiskLevel.Critical.Name, StringComparison.OrdinalIgnoreCase) => 4,
+            _ when riskLevel.Equals(RiskLevel.High.Name, StringComparison.OrdinalIgnoreCase) => 3,
+            _ when riskLevel.Equals(RiskLevel.Medium.Name, StringComparison.OrdinalIgnoreCase) => 2,
+            _ when riskLevel.Equals(RiskLevel.Low.Name, StringComparison.OrdinalIgnoreCase) => 1,
+            _ => 0
+        };
+    }
+
+    /// <summary>
+    /// 🚀 ENHANCED: Updated bulk approval logic with proper enum-based approver validation
+    /// </summary>
+    private async Task ProcessBulkApprovalConfirmation()
+    {
+        if (SelectedReportForApproval == null)
+        {
+            ShowErrorNotification("No report selected for approval.");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(SelectedApprover))
+        {
+            ShowErrorNotification("Please select an authorized approver before proceeding.");
+            return;
+        }
+
+        // 🚀 CRITICAL: Verify approver has authority for the highest risk level using enum
+        var highestRiskLevel = GetHighestRiskLevelAcrossAllHazards(SelectedReportForApproval);
+        var approver = AvailableApprovers.FirstOrDefault(a => a.Code == SelectedApprover);
+
+        if (approver == null || !CanApproveRiskLevel(approver, highestRiskLevel))
+        {
+            var riskLevelDisplay = highestRiskLevel switch
+            {
+                _ when highestRiskLevel == RiskLevel.Critical.Name => RiskLevel.Critical.Name,
+                _ when highestRiskLevel == RiskLevel.High.Name => RiskLevel.High.Name,
+                _ when highestRiskLevel == RiskLevel.Medium.Name => RiskLevel.Medium.Name,
+                _ when highestRiskLevel == RiskLevel.Low.Name => RiskLevel.Low.Name,
+                _ => "Unknown"
+            };
+
+            ShowErrorNotification($"Selected approver does not have sufficient authority to approve {riskLevelDisplay} risk level mitigations.");
+            return;
+        }
+
+        Logger.LogInformation("Bulk approval authorized: {ApproverName} ({ApproverCode}) approving {RiskLevel} risk mitigations for report {ReportId}",
+            $"{approver.FirstName?.Value} {approver.LastName?.Value}", SelectedApprover, highestRiskLevel, SelectedReportForApproval.ReportId);
+
+        await BulkApproveAllMitigationsForReport(SelectedReportForApproval.ReportId, SelectedApprover);
+        await CloseBulkApprovalConfirmation();
+    }
+
+    /// <summary>
+    /// 🚀 Get risk level breakdown for display using enum values
+    /// </summary>
+    private List<RiskLevelBreakdown> GetRiskLevelBreakdown(ReportProcessingSummary report)
+    {
+        return report.AllMitigations
+            .GroupBy(m => m.HazardRiskLevel?.Name ?? RiskLevel.Unkonwn.Name) // ✅ Use enum for unknown
+            .Select(g => new RiskLevelBreakdown
+            {
+                RiskLevel = g.Key,
+                HazardCount = g.Select(m => m.HazardCode).Distinct().Count(),
+                MitigationCount = g.Count()
+            })
+            .OrderByDescending(r => GetRiskPriority(r.RiskLevel))
+            .ToList();
+    }
+
 
     private async Task CloseBulkApprovalConfirmation()
     {
@@ -1915,15 +2259,48 @@ public partial class ReportProcessing : ComponentBase
         SelectedReportForApproval = null;
         StateHasChanged();
     }
+    //private async Task ProcessBulkApprovalConfirmation()
+    //{
+    //    if (SelectedReportForApproval != null)
+    //    {
+    //        await BulkApproveAllMitigationsForReport(SelectedReportForApproval.ReportId);
+    //        await CloseBulkApprovalConfirmation();
+    //    }
+    //}
+    /// <summary>
+    /// 🚀 ENHANCED: Updated bulk approval logic with approver validation
+    /// </summary>
+    
+    #endregion
 
-    private async Task ProcessBulkApprovalConfirmation()
+    public class ApproverOption
     {
-        if (SelectedReportForApproval != null)
+        public string Code { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+        public string AuthorityLevel { get; set; } = string.Empty;
+        public string RiskApprovalAuthority { get; set; } = string.Empty;
+        public string Department { get; set; } = string.Empty;
+        public string Position { get; set; } = string.Empty;
+
+        public static ApproverOption FromUser(SMSOrganizationalUser user)
         {
-            await BulkApproveAllMitigationsForReport(SelectedReportForApproval.ReportId);
-            await CloseBulkApprovalConfirmation();
+            return new ApproverOption
+            {
+                Code = user.Code,
+                DisplayName = $"{user.FirstName?.Value} {user.LastName?.Value} ({user.OrganizationLevel.Value})",
+                AuthorityLevel = user.AuthorityLevel?.ToString() ?? "Not specified",
+                RiskApprovalAuthority = user.RiskApprovalAuthority ?? "Not specified",
+                Department = user.Department?.Name ?? "Not specified",
+                Position = user.OrganizationLevel.Value ?? "Not specified",
+                //Position = user.Position ?? "Not specified"
+            };
         }
     }
 
-    #endregion
+    public class RiskLevelBreakdown
+    {
+        public string RiskLevel { get; set; } = string.Empty;
+        public int HazardCount { get; set; }
+        public int MitigationCount { get; set; }
+    }
 }

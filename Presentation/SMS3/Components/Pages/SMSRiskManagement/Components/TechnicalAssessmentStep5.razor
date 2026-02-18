@@ -15,7 +15,6 @@
 @inject ILogger<TechnicalAssessmentStep5> Logger
 
 <style>
-    /* ✅ Collapsible section styling */
     .collapsible-header {
         transition: background-color 0.2s ease;
     }
@@ -33,7 +32,6 @@
         transform: scale(1.1);
     }
     
-    /* Animation for content expand/collapse */
     .collapsible-content {
         animation: fadeIn 0.3s ease-in-out;
     }
@@ -289,7 +287,12 @@
                                                         </RadzenFormField>
                                                     </RadzenColumn>
                                                 </RadzenRow>
-                                                
+                                                <br />
+                                                <RadzenRow>
+                                                    <RadzenColumn Size="12" SizeMD="12">
+                                                        
+                                                    </RadzenColumn>
+                                                </RadzenRow>
                                             </div>
                                         }
                                     </RadzenStack>
@@ -308,12 +311,6 @@
                         <RadzenIcon Icon="warning" Style="font-size: 3rem; color: var(--rz-warning);" />
                         <RadzenText TextStyle="TextStyle.H5" Text="No hazards found" />
                         <RadzenText TextStyle="TextStyle.Body2" Text="Please complete the previous steps before proceeding with mitigation planning." />
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                            @* <RadzenButton Text="Step 2 - Identify Hazards" Icon="warning" ButtonStyle="ButtonStyle.Warning" 
-                                          Click="@(() => NavigateToStep(2))" />
-                            <RadzenButton Text="Step 3 - Analyze Risk" Icon="analytics" ButtonStyle="ButtonStyle.Info" 
-                                          Click="@(() => NavigateToStep(3))" /> *@
-                        </RadzenStack>
                     </RadzenStack>
                 </RadzenCard>
             }
@@ -727,13 +724,16 @@
     }
 
     /// <summary>
-    /// ✅ Handle when residual risk assessment is completed for a hazard
+    /// ✅ REFACTORED: Simplified to use HazardScoringPanel's existing logic and read from updated hazard entities
     /// </summary>
     private async Task HandleResidualHazardScored()
     {
         try
         {
             Logger.LogInformation("Residual risk assessment completed for current hazard scoring session");
+            
+            // ✅ Update Step5 model from all hazard entities (which HazardScoringPanel already updated)
+            await UpdateStep5FromAllHazardEntities();
             
             // Trigger Step5 model update
             await Step5Changed.InvokeAsync(Step5);
@@ -747,11 +747,67 @@
         }
     }
 
-    #region ✅ Collapsible Section Helper Methods
-
     /// <summary>
-    /// Check if a specific section is collapsed for a hazard
+    /// ✅ NEW: Update Step5 model from hazard entities that were already updated by HazardScoringPanel
+    /// This eliminates the need to duplicate complex residual scoring calculation logic
     /// </summary>
+    private async Task UpdateStep5FromAllHazardEntities()
+    {
+        if (Step5Hazards?.Any() != true) return;
+
+        try
+        {
+            Logger.LogInformation("Updating Step5 model from hazard entities for {Count} hazards", Step5Hazards.Count);
+
+            foreach (var hazard in Step5Hazards)
+            {
+                try
+                {
+                    // Reload hazard to get latest calculated values from HazardScoringPanel
+                    var hazardQuery = new GetHazardByCodeQuery(new HazardID(hazard.Code));
+                    var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
+
+                    if (hazardResult.IsSuccess && hazardResult.Value != null)
+                    {
+                        var updatedHazard = hazardResult.Value;
+
+                        // Update the local hazard reference with latest data
+                        var hazardIndex = Step5Hazards.FindIndex(h => h.Code == hazard.Code);
+                        if (hazardIndex >= 0)
+                        {
+                            Step5Hazards[hazardIndex] = updatedHazard;
+                        }
+
+                        // Log residual scoring updates
+                        if (updatedHazard.ResidualAverageScore.HasValue)
+                        {
+                            Logger.LogInformation("✅ Updated Step5 hazard {HazardCode} from entity: ResidualScore={Score:F2}, Matrix={Matrix}, Risk={Risk}",
+                                hazard.Code, updatedHazard.ResidualAverageScore.Value, 
+                                updatedHazard.ResidualRiskMatrixCode ?? "Unknown", 
+                                updatedHazard.HazardRiskLevel?.Value ?? "Unknown");
+                        }
+                        else
+                        {
+                            Logger.LogInformation("⚠️ No residual scoring data available for hazard {HazardCode}", hazard.Code);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Error updating hazard {HazardCode} from entity", hazard.Code);
+                }
+            }
+
+            Logger.LogInformation("✅ Completed Step5 model update from hazard entities");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error updating Step5 from hazard entities");
+        }
+    }
+
+    #region Collapsible Section Helper Methods
+
     private bool IsSectionCollapsed(string hazardCode, string sectionType)
     {
         return sectionType switch
@@ -763,9 +819,6 @@
         };
     }
 
-    /// <summary>
-    /// Toggle the collapsed state of a section for a specific hazard
-    /// </summary>
     private async Task ToggleSectionCollapse(string hazardCode, string sectionType)
     {
         try
@@ -793,25 +846,6 @@
         }
     }
 
-    /// <summary>
-    /// Get the appropriate icon for expand/collapse button
-    /// </summary>
-    private string GetCollapseIcon(string hazardCode, string sectionType)
-    {
-        return IsSectionCollapsed(hazardCode, sectionType) ? "expand_more" : "expand_less";
-    }
-
-    /// <summary>
-    /// Get the appropriate tooltip text for expand/collapse button
-    /// </summary>
-    private string GetCollapseTooltip(string hazardCode, string sectionType)
-    {
-        return IsSectionCollapsed(hazardCode, sectionType) ? "Expand section" : "Collapse section";
-    }
-
-    /// <summary>
-    /// ✅ Check if all sections are collapsed for a specific hazard
-    /// </summary>
     private bool AreAllSectionsCollapsed(string hazardCode)
     {
         var mitigationCollapsed = MitigationSectionsCollapsed.GetValueOrDefault(hazardCode, false);
@@ -821,17 +855,12 @@
         return mitigationCollapsed && scoringCollapsed && analysisCollapsed;
     }
 
-    /// <summary>
-    /// ✅ Toggle all sections for a specific hazard (collapse all or expand all)
-    /// </summary>
     private async Task ToggleAllSections(string hazardCode)
     {
         try
         {
-            // Determine if we should collapse all or expand all
             bool shouldCollapseAll = !AreAllSectionsCollapsed(hazardCode);
 
-            // Set all sections to the same state
             MitigationSectionsCollapsed[hazardCode] = shouldCollapseAll;
             ScoringPanelSectionsCollapsed[hazardCode] = shouldCollapseAll;
             AnalysisSectionsCollapsed[hazardCode] = shouldCollapseAll;
@@ -848,4 +877,4 @@
     }
 
     #endregion
-}}
+}

@@ -38,7 +38,7 @@ public partial class HazardScoringPanel : ComponentBase
     // Local properties to track calculated hazard scoring data (for future database update)
     private double? CalculatedAverageScore = null;
     private string CalculatedMatrixCode = string.Empty;
-    private string CalculatedRiskLevel = string.Empty;
+    private RiskLevel CalculatedRiskLevel = null;
 
     // Dropdown options - Updated to use A-E letter system
     private List<SeverityOption> SeverityOptions = new()
@@ -524,13 +524,24 @@ public partial class HazardScoringPanel : ComponentBase
         var averageSeverity = completedPanels.Average(p => (double)p.Severity!.Value);
         var averageLikelihood = completedPanels.Average(p => (double)p.Likelihood!.Value);
 
-        Logger.LogInformation("Hazard {HazardCode} calculation: AvgSev={AvgSev:F2}, AvgLike={AvgLike:F2}",
-            Hazard.Code, averageSeverity, averageLikelihood);
 
         // Use the authoritative calculator method
         return AviationRiskMatrixCalculator.GetAverageMatrixCode(averageSeverity, averageLikelihood);
     }
+    private string GetHazardRiskLevelFromPanels()
+    {
+        var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
+        if (!completedPanels.Any()) return "-";
 
+        // Aviation standard: Average severity and likelihood separately
+        var averageSeverity = completedPanels.Average(p => (double)p.Severity!.Value);
+        var averageLikelihood = completedPanels.Average(p => (double)p.Likelihood!.Value);
+        var averageSeverityInt = Convert.ToInt32(completedPanels.Average(p => p.Severity!.Value));
+        var averageLikelihoodInt = Convert.ToInt32(completedPanels.Average(p => p.Likelihood!.Value));
+
+        // Use the authoritative calculator method
+        return AviationRiskMatrixCalculator.GetAviationRiskLevel(averageSeverityInt, averageLikelihoodInt);
+    }
     private string GetPanelMatrixCode(ScoringPanel panel)
     {
         return AviationRiskMatrixCalculator.GetPanelMatrixCode(panel);
@@ -672,7 +683,7 @@ public partial class HazardScoringPanel : ComponentBase
             var matrixCode = AviationRiskMatrixCalculator.GetAverageMatrixCode(averageSeverity, averageLikelihood);
             var roundedSeverity = (int)Math.Round(averageSeverity);
             var roundedLikelihood = (int)Math.Round(averageLikelihood);
-            var riskLevel = AviationRiskMatrixCalculator.GetAviationRiskLevel(roundedSeverity, roundedLikelihood).Value;
+            var riskLevel = AviationRiskMatrixCalculator.GetAviationRiskLevel(roundedSeverity, roundedLikelihood);
 
             // Store calculated values locally
             CalculatedAverageScore = averageScore;  // Keep score average for reporting
@@ -690,7 +701,7 @@ public partial class HazardScoringPanel : ComponentBase
             // Clear calculated values if no scores available
             CalculatedAverageScore = null;
             CalculatedMatrixCode = string.Empty;
-            CalculatedRiskLevel = string.Empty;
+            CalculatedRiskLevel = RiskLevel.Unkonwn;
 
             Logger.LogInformation("Cleared hazard {HazardCode} scoring data - no completed panel scores available", Hazard.Code);
 
@@ -760,7 +771,7 @@ public partial class HazardScoringPanel : ComponentBase
 
 
 
-            Hazard.RiskLevel = CalculatedRiskLevel;
+            Hazard.HazardRiskLevel = CalculatedRiskLevel;
             Hazard.UpdatedDate = DateTime.UtcNow;
             Hazard.UpdatedBy = AuthService.CurrentUser.Code; // Set updated by system for scoring updates
 
@@ -771,7 +782,7 @@ public partial class HazardScoringPanel : ComponentBase
             if (result.IsSuccess)
             {
                 Logger.LogInformation("Successfully updated hazard {HazardCode} in database: AverageScore={AverageScore}, RiskMatrixCode={RiskMatrixCode}, RiskLevel={RiskLevel}",
-                    Hazard.Code, Hazard.InitialAverageScore?.ToString("F2") ?? "null", Hazard.InitialRiskMatrixCode ?? "null", Hazard.RiskLevel ?? "null");
+                    Hazard.Code, Hazard.InitialAverageScore?.ToString("F2") ?? "null", Hazard.InitialRiskMatrixCode ?? "null", Hazard.HazardRiskLevel ?? "null");
             }
             else
             {

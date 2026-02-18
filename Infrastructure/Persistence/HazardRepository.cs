@@ -100,6 +100,7 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardName, hazard.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardIsInitialHazard, hazard.IsInitialHazard));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardDescription, hazard.Description));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardRiskLevel, hazard.HazardRiskLevel.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardType, hazard.HazardType));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardCategory, hazard.HazardCategory));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardReportCode, hazard.ReportCode));
@@ -323,6 +324,7 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardName, hazard.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardIsInitialHazard, hazard.IsInitialHazard));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardDescription, hazard.Description));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardRiskLevel, hazard.HazardRiskLevel.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardType, hazard.HazardType));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardCategory, hazard.HazardCategory));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardReportCode, hazard.ReportCode));

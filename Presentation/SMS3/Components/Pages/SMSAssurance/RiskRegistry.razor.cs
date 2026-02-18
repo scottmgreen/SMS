@@ -113,7 +113,7 @@ public partial class RiskRegistry : ComponentBase
             {
                 var sampleHazard = hazards.First();
                 Logger.LogInformation("📝 Sample Hazard: Code={Code}, Description={Description}, ReportCode={ReportCode}, RiskLevel={RiskLevel}, InitialRiskMatrixCode={MatrixCode}",
-                    sampleHazard.Code, sampleHazard.Description, sampleHazard.ReportCode, sampleHazard.RiskLevel, sampleHazard.InitialRiskMatrixCode);
+                    sampleHazard.Code, sampleHazard.Description, sampleHazard.ReportCode, sampleHazard.HazardRiskLevel, sampleHazard.InitialRiskMatrixCode);
             }
 
             // Build risk registry entries
@@ -370,9 +370,9 @@ public partial class RiskRegistry : ComponentBase
     /// </summary>
     private string GetHazardRiskLevel(Hazard hazard)
     {
-        if (!string.IsNullOrEmpty(hazard.RiskLevel) && hazard.RiskLevel != "Unknown")
+        if (!string.IsNullOrEmpty(hazard.HazardRiskLevel) && hazard.HazardRiskLevel != "Unknown")
         {
-            return hazard.RiskLevel;
+            return hazard.HazardRiskLevel;
         }
 
         return "TBD";

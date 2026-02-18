@@ -272,7 +272,7 @@ public partial class UserRoles : ComponentBase
                 else
                 {
                     // Create new permission if it doesn't exist
-                    var permissionCode = $"PERM-{CurrentEditRole.Code}-{module.Replace(" ", "")}";
+                    var permissionCode = $"PRM-0000";
                     var permissionId = new SMSUserRolePermissionID(permissionCode);
                     var permission = new SMSUserRolePermission(permissionId)
                     {
@@ -284,6 +284,8 @@ public partial class UserRoles : ComponentBase
                         Update = editRole.UpdatePermissions.ContainsKey(module) && editRole.UpdatePermissions[module],
                         Delete = editRole.DeletePermissions.ContainsKey(module) && editRole.DeletePermissions[module]
                     };
+
+                    
                     CurrentEditRole.Permissions ??= new List<SMSUserRolePermission>();
                     CurrentEditRole.Permissions.Add(permission);
                 }
