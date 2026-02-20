@@ -42,23 +42,25 @@ public partial class RiskRegistry : ComponentBase
     private string? SelectedRiskLevelFilter { get; set; }
     private string SearchText { get; set; } = string.Empty;
 
-    private List<FilterOption> StatusFilterOptions { get; set; } = new()
-    {
-        new("PENDING_APPROVAL", "Pending Approval"),
-        new("APPROVED", "Approved"),
-        new("IN_PROGRESS_DUE_DATE", "In Progress"),
-        new("COMPLETE", "Complete"),
-        new("MONITORING_HAZARD", "Monitoring"),
-        new("REJECTED", "Rejected")
-    };
+    private List<FilterOption> StatusFilterOptions { get; set; } = new();
+    private List<FilterOption> RiskLevelFilterOptions { get; set; } = new();
 
-    private List<FilterOption> RiskLevelFilterOptions { get; set; } = new()
+    private string BasicTextStyle = "font-size:smaller;font-weight: 600";
+    private void GetStatusFilters()
     {
-        new("High", "High Risk"),
-        new("Medium", "Medium Risk"),
-        new("Low", "Low Risk"),
-        new("Acceptable", "Acceptable Risk")
-    };
+        StatusFilterOptions = MitigationStatus.GetAllValues()
+            .Select(hc => new FilterOption(hc.Value, hc.Name))
+            .ToList();
+    }
+    private void GetRiskLevelFilters()
+    {
+        RiskLevelFilterOptions = RiskLevel.GetAllValues()
+            .Select(hc => new FilterOption(hc.Value, hc.Name))
+            .ToList();
+    }
+
+    
+    
 
     #endregion
 
@@ -69,6 +71,8 @@ public partial class RiskRegistry : ComponentBase
         Logger.LogInformation("🚀 Risk Registry: Initializing page...");
         try
         {
+            GetRiskLevelFilters();
+            GetStatusFilters();
             await LoadRiskRegistryData();
         }
         catch (Exception ex)
@@ -314,7 +318,7 @@ public partial class RiskRegistry : ComponentBase
     {
         // Get risk matrix code and level from hazard
         var riskMatrixCode = GetHazardRiskMatrixCode(hazard);
-        var riskLevel = GetHazardRiskLevel(hazard);
+        var riskLevel = hazard.HazardRiskLevel; // GetHazardRiskLevel(hazard);
 
         // Debug logging
         Logger.LogDebug("🔧 Creating entry for {HazardCode}: Mitigation={HasMitigation}, Status={Status}",
@@ -322,13 +326,13 @@ public partial class RiskRegistry : ComponentBase
 
         var entry = new RiskRegistryEntry
         {
-            ReportId = hazard.ReportCode ?? "N/A",
-            HazardId = hazard.Code,
+            ReportCode = hazard.ReportCode ?? "N/A",
+            HazardCode = hazard.Code,
             HazardDescription = hazard.Description ?? "No description available",
             RiskMatrixCode = riskMatrixCode,
-            RiskLevel = riskLevel,
+            HazardRiskLevel = riskLevel, // ✅ Can be null now
             MitigationDescription = mitigation?.Name ?? mitigation?.Description ?? "No mitigation assigned",
-            MitigationStatusName = mitigation?.Status ?? "Not Started", // ✅ FIX: Default to "Not Started" instead of empty
+            MitigationStatus = mitigation?.Status, // ✅ Can be null now
             TargetDate = mitigation?.TargetDate,
             AssignedTo = mitigation?.AssignedTo ?? assessment?.LeadAssessorId ?? "Unassigned",
             LastUpdated = assessment?.UpdatedDate ?? hazard.UpdatedDate ?? hazard.CreatedDate ?? DateTime.UtcNow,
@@ -336,11 +340,11 @@ public partial class RiskRegistry : ComponentBase
             // Additional context for navigation and details
             HazardCategory = hazard.HazardCategory,
             HazardType = hazard.HazardType,
-            AssessmentId = assessment?.Code,
-            MitigationId = mitigation?.Code
+            RiskAssessmentCode = assessment?.Code,
+            MitigationCode = mitigation?.Code
         };
 
-        Logger.LogDebug("✅ Created entry: {HazardId} -> MitigationStatus: '{Status}'", hazard.Code, entry.MitigationStatusName);
+        Logger.LogDebug("✅ Created entry: {HazardId} -> MitigationStatus: '{Status}'", hazard.Code, entry.MitigationStatus);
         return entry;
     }
 
@@ -350,10 +354,10 @@ public partial class RiskRegistry : ComponentBase
     private string GetHazardRiskMatrixCode(Hazard hazard)
     {
         // Try to get from initial risk assessment first
-        if (!string.IsNullOrEmpty(hazard.InitialRiskMatrixCode) && hazard.InitialRiskMatrixCode != "-")
-        {
-            return hazard.InitialRiskMatrixCode;
-        }
+        //if (!string.IsNullOrEmpty(hazard.InitialRiskMatrixCode) && hazard.InitialRiskMatrixCode != "-")
+        //{
+        //    return hazard.InitialRiskMatrixCode;
+        //}
 
         // Fall back to residual risk assessment
         if (!string.IsNullOrEmpty(hazard.ResidualRiskMatrixCode) && hazard.ResidualRiskMatrixCode != "-")
@@ -370,7 +374,7 @@ public partial class RiskRegistry : ComponentBase
     /// </summary>
     private string GetHazardRiskLevel(Hazard hazard)
     {
-        if (!string.IsNullOrEmpty(hazard.HazardRiskLevel) && hazard.HazardRiskLevel != "Unknown")
+        if (!string.IsNullOrEmpty(hazard.HazardRiskLevel) && hazard.HazardRiskLevel != RiskLevel.Unkonwn)
         {
             return hazard.HazardRiskLevel;
         }
@@ -404,6 +408,9 @@ public partial class RiskRegistry : ComponentBase
     /// <summary>
     /// Apply all current filters to the data
     /// </summary>
+    /// <summary>
+    /// Apply all current filters to the data
+    /// </summary>
     private void ApplyFilters()
     {
         Logger.LogInformation("🔍 Applying filters - SelectedStatusFilter: {StatusFilter}, SelectedRiskLevelFilter: {RiskFilter}, SearchText: {SearchText}",
@@ -413,17 +420,17 @@ public partial class RiskRegistry : ComponentBase
 
         Logger.LogInformation("📊 Starting with {Count} total entries", RiskRegistryEntries.Count);
 
-        // Apply status filter
+        // Apply status filter - ✅ FIXED: Add null checking
         if (!string.IsNullOrEmpty(SelectedStatusFilter))
         {
-            filtered = filtered.Where(e => e.MitigationStatusName == SelectedStatusFilter);
+            filtered = filtered.Where(e => e.MitigationStatus?.Value == SelectedStatusFilter);
             Logger.LogInformation("🔽 After status filter: {Count} entries", filtered.Count());
         }
 
-        // Apply risk level filter
+        // Apply risk level filter - ✅ FIXED: Add null checking
         if (!string.IsNullOrEmpty(SelectedRiskLevelFilter))
         {
-            filtered = filtered.Where(e => e.RiskLevel == SelectedRiskLevelFilter);
+            filtered = filtered.Where(e => e.HazardRiskLevel?.Value == SelectedRiskLevelFilter);
             Logger.LogInformation("🔽 After risk level filter: {Count} entries", filtered.Count());
         }
 
@@ -432,8 +439,8 @@ public partial class RiskRegistry : ComponentBase
         {
             var searchLower = SearchText.ToLowerInvariant();
             filtered = filtered.Where(e =>
-                e.ReportId.ToLowerInvariant().Contains(searchLower) ||
-                e.HazardId.ToLowerInvariant().Contains(searchLower) ||
+                e.ReportCode.ToLowerInvariant().Contains(searchLower) ||
+                e.HazardCode.ToLowerInvariant().Contains(searchLower) ||
                 (e.HazardDescription?.ToLowerInvariant().Contains(searchLower) ?? false) ||
                 (e.MitigationDescription?.ToLowerInvariant().Contains(searchLower) ?? false) ||
                 (e.AssignedTo?.ToLowerInvariant().Contains(searchLower) ?? false));
@@ -443,12 +450,7 @@ public partial class RiskRegistry : ComponentBase
         FilteredRiskRegistryEntries = filtered.ToList();
         Logger.LogInformation("✅ Final filtered entries: {Count}", FilteredRiskRegistryEntries.Count);
 
-        // Log some sample entries for debugging
-        foreach (var entry in FilteredRiskRegistryEntries.Take(3))
-        {
-            Logger.LogInformation("📝 Sample entry: HazardId={HazardId}, ReportId={ReportId}, RiskLevel={RiskLevel}, MitigationStatus={Status}",
-                entry.HazardId, entry.ReportId, entry.RiskLevel, entry.MitigationStatusName);
-        }
+        
     }
 
     #endregion
@@ -481,25 +483,11 @@ public partial class RiskRegistry : ComponentBase
             return "background: #f8f9fa; color: #6c757d;";
         }
 
-        // Parse matrix code (e.g., "3B", "5A") to get severity and likelihood
-        if (matrixCode.Length >= 2)
+        var (severity, likelihood) = AviationRiskMatrixCalculator.ParseMatrixCode(matrixCode.Trim());
+
+        if (severity.HasValue && likelihood.HasValue)
         {
-            var severityPart = matrixCode.Substring(0, matrixCode.Length - 1);
-            var likelihoodLetter = matrixCode.Substring(matrixCode.Length - 1);
-
-            if (int.TryParse(severityPart.Trim(), out int severity))
-            {
-                var likelihood = likelihoodLetter.ToUpper() switch
-                {
-                    "A" => 1, "B" => 2, "C" => 3, "D" => 4, "E" => 5, _ => 1
-                };
-
-                // Use the EXACT same colors as TechnicalAssessmentStep4
-                var backgroundColor = AviationRiskMatrixCalculator.GetAviationMatrixColor(severity, likelihood);
-                var textColor = AviationRiskMatrixCalculator.IsLightColor(backgroundColor) ? "#000" : "#fff";
-
-                return $"background: {backgroundColor}; color: {textColor};";
-            }
+            return AviationRiskMatrixCalculator.GetMatrixCellStyle(severity.Value, likelihood.Value);
         }
 
         return "background: #f8f9fa; color: #6c757d;";
@@ -514,17 +502,10 @@ public partial class RiskRegistry : ComponentBase
     /// </summary>
     private int GetCountByRiskLevel(string riskLevel)
     {
-        return RiskRegistryEntries.Count(e => e.RiskLevel == riskLevel);
+        return RiskRegistryEntries.Count(e => e.HazardRiskLevel == riskLevel);
     }
 
-    /// <summary>
-    /// Get count of entries with active mitigation status
-    /// </summary>
-    private int GetCountByMitigationStatus()
-    {
-        var activeStatuses = new[] { "PENDING_APPROVAL", "APPROVED", "IN_PROGRESS_DUE_DATE" };
-        return RiskRegistryEntries.Count(e => activeStatuses.Contains(e.MitigationStatusName));
-    }
+    
 
     #endregion
 
@@ -550,22 +531,22 @@ public partial class RiskRegistry : ComponentBase
     /// </summary>
     public class RiskRegistryEntry
     {
-        public string ReportId { get; set; } = string.Empty;
-        public string HazardId { get; set; } = string.Empty;
+        public string ReportCode { get; set; } = string.Empty;
+        public string HazardCode { get; set; } = string.Empty;
         public string HazardDescription { get; set; } = string.Empty;
         public string RiskMatrixCode { get; set; } = string.Empty;
-        public string RiskLevel { get; set; } = string.Empty;
+        public RiskLevel? HazardRiskLevel { get; set; } 
         public string? MitigationDescription { get; set; }
-        public string MitigationStatusName { get; set; } = string.Empty;
+        public MitigationStatus? MitigationStatus { get; set; } 
         public DateTime? TargetDate { get; set; }
         public string? AssignedTo { get; set; }
-        public DateTime LastUpdated { get; set; }
+        public DateTime? LastUpdated { get; set; }
 
         // Additional properties for context
         public string? HazardCategory { get; set; }
         public string? HazardType { get; set; }
-        public string? AssessmentId { get; set; }
-        public string? MitigationId { get; set; }
+        public string? RiskAssessmentCode { get; set; }
+        public string? MitigationCode { get; set; }
     }
 
     /// <summary>
@@ -590,19 +571,36 @@ public partial class RiskRegistry : ComponentBase
     /// <summary>
     /// Get Bootstrap color class for mitigation status
     /// </summary>
-    private string GetBootstrapMitigationStatusColor(string? statusName)
+    //private string GetBootstrapMitigationStatusColor(MitigationStatus? status)
+    //{
+    //    if (status == null)
+    //        return "secondary";
+
+    //    return status switch
+    //    {
+    //        _ when status == MitigationStatus.PendingApproval => "warning",
+    //        _ when status == MitigationStatus.Approved => "success",
+    //        _ when status == MitigationStatus.InProgressDueDate => "primary",
+    //        _ when status == MitigationStatus.Complete => "success",
+    //        _ when status == MitigationStatus.MonitoringHazard => "success",
+    //        _ when status == MitigationStatus.Rejected => "danger",
+    //        _ => "secondary"
+    //    };
+    //}
+    /// <summary>
+    /// Get Bootstrap color class for risk level using RiskLevel enum
+    /// </summary>
+    private string GetBootstrapRiskLevelColor(RiskLevel? riskLevel)
     {
-        return statusName switch
-        {
-            "PENDING_APPROVAL" => "warning",
-            "APPROVED" => "success", 
-            "IN_PROGRESS_DUE_DATE" => "primary",
-            "COMPLETE" => "success",
-            "MONITORING_HAZARD" => "success",
-            "REJECTED" => "danger",
-            _ => "secondary"
-        };
+        return riskLevel?.BootstrapClass ?? "secondary";
     }
 
+    /// <summary>
+    /// Get CSS style for risk level using RiskLevel enum
+    /// </summary>
+    private string GetRiskLevelStyle(RiskLevel? riskLevel)
+    {
+        return riskLevel?.GetCssStyle() ?? "background: #6c757d; color: #ffffff;";
+    }
     #endregion
 }

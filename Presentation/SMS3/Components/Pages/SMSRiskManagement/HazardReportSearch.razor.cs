@@ -871,6 +871,7 @@ public partial class HazardReportSearch : ComponentBase
                     {
                         var hazard = hazardResult.Value;
                         searchResult.HazardType = hazard.HazardType ?? "Unknown";
+                        searchResult.HazardCategory = hazard.HazardCategory ?? "Unknown";
                         //searchResult.SubmittedBy = hazard.SubmittedBy ?? "Unknown";
                         //searchResult.SubmittedDate = hazard.SubmittedDate != DateTime.MinValue ? hazard.SubmittedDate : DateTime.MinValue;
                         searchResult.Description = hazard.Description;
@@ -1005,6 +1006,7 @@ public partial class HazardReportSearch : ComponentBase
         public string HazardCode { get; set; } = string.Empty;
         public string ReportCode { get; set; } = string.Empty;
         public string HazardType { get; set; } = string.Empty;
+        public string HazardCategory { get; set; } = string.Empty;
         public string SubmittedBy { get; set; } = string.Empty;
         public DateTime SubmittedDate { get; set; }
         public string CurrentStatus { get; set; } = string.Empty;

@@ -92,7 +92,7 @@
             <div class="advanced-search-section" @key="@("advanced-search")">
                 <div class="row g-3">
                     <!-- Report Code -->
-                    <div class="col-lg-3 col-md-6">
+                    <div class="col-lg-2 col-md-4">
                         <RadzenLabel Text="Report Code" Component="ReportCodeSearch" class="fw-semibold" />
                         <RadzenTextBox @bind-Value="@ReportCodeSearch" 
                                        Name="ReportCodeSearch"
@@ -101,7 +101,7 @@
                     </div>
 
                     <!-- Hazard Code -->
-                    <div class="col-lg-3 col-md-6">
+                    <div class="col-lg-2 col-md-4">
                         <RadzenLabel Text="Hazard Code" Component="HazardCodeSearch" class="fw-semibold" />
                         <RadzenTextBox @bind-Value="@HazardCodeSearch" 
                                        Name="HazardCodeSearch"
@@ -213,7 +213,7 @@
                                           Property="TrackingCode" 
                                           Title="Tracking ID"
                                           Sortable="true"
-                                          Width="180px">
+                                          Width="110px">
                         <Template Context="result">
                             <span class="fw-bold text-primary">@result.TrackingCode</span>
                             @if (HasSimilarResults && IsHighMatch(result.TrackingCode))
@@ -225,21 +225,21 @@
 
                     <RadzenDataGridColumn TItem="HazardReportSearchResult" 
                                           Property="ReportCode" 
-                                          Title="Report"
+                                          Title="Report ID"
                                           Sortable="true"
-                                          Width="120px">
+                                          Width="100px">
                         <Template Context="result">
-                            <span class="fw-semibold">@result.ReportCode</span>
+                            <span class="fw-bold text-primary">@result.ReportCode</span>
                         </Template>
                     </RadzenDataGridColumn>
 
                     <RadzenDataGridColumn TItem="HazardReportSearchResult" 
                                           Property="HazardCode" 
-                                          Title="Hazard"
+                                          Title="Hazard ID"
                                           Sortable="true"
-                                          Width="120px">
+                                          Width="100px">
                         <Template Context="result">
-                            <span class="fw-semibold">@result.HazardCode</span>
+                            <span class="fw-bold text-primary">@result.HazardCode</span>
                         </Template>
                     </RadzenDataGridColumn>
 
@@ -247,9 +247,11 @@
                                           Property="HazardType" 
                                           Title="Type"
                                           Sortable="true"
-                                          Width="150px">
+                                          Width="160px">
                         <Template Context="result">
-                            <span class="text-info">@result.HazardType</span>
+                            <span class="fw-bold text-primary">
+                                @($"{result.HazardCategory} - {result.HazardType}")
+                            </span>
                         </Template>
                     </RadzenDataGridColumn>
 
@@ -259,7 +261,10 @@
                                           Sortable="true"
                                           Width="130px">
                         <Template Context="result">
-                            @result.SubmittedBy
+                            <span class="fw-bold text-primary">
+                                @result.SubmittedBy
+                            </span>
+                            
                         </Template>
                     </RadzenDataGridColumn>
 
@@ -267,19 +272,26 @@
                                           Property="SubmittedDate" 
                                           Title="Date"
                                           Sortable="true"
-                                          Width="110px"
+                                          Width="75px"
                                           FormatString="{0:MM/dd/yyyy}">
+                        <Template Context="result">
+                            <span class="fw-bold text-primary">
+                                @result.SubmittedDate.ToString("MM/dd/yyyy")
+                            </span>
+
+                        </Template>
                     </RadzenDataGridColumn>
 
                     <RadzenDataGridColumn TItem="HazardReportSearchResult" 
                                           Property="CurrentStatus" 
                                           Title="Status"
                                           Sortable="true"
-                                          Width="120px">
+                                          Width="175px">
                         <Template Context="result">
-                            <RadzenBadge Text="@result.CurrentStatus" 
-                                         BadgeStyle="@GetStatusBadgeStyle(result.CurrentStatus)" 
-                                         class="status-badge" />
+                            <span class="fw-bold text-primary">
+                                @result.CurrentStatus
+                            </span>
+                                                           
                         </Template>
                     </RadzenDataGridColumn>
 
@@ -287,13 +299,14 @@
                                           Property="ValidationDecision" 
                                           Title="Validation"
                                           Sortable="true"
-                                          Width="140px">
+                                          Width="110px">
                         <Template Context="result">
                             @if (!string.IsNullOrEmpty(result.ValidationDecision))
                             {
-                                <RadzenBadge Text="@GetValidationDecisionDisplay(result.ValidationDecision)" 
-                                             BadgeStyle="@GetValidationBadgeStyle(result.ValidationDecision)" 
-                                             class="validation-badge" />
+                                <span class="fw-bold text-primary">
+                                    @result.ValidationDecision
+                                </span>
+                                
                             }
                             else
                             {

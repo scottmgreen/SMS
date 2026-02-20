@@ -567,6 +567,9 @@ public static partial class Mappers
         riskAssessment.LeadAssessorId = reader.GetValue<string>(FieldNames.fRiskAssessmentLeadAssessorId);
         riskAssessment.PrimaryHazardId = reader.GetValue<string>(FieldNames.fRiskAssessmentPrimaryHazardId);
 
+        riskAssessment.ReportCode = reader.GetValue<string>(FieldNames.fRiskAssessmentReportCode);
+
+
         // ✅ SmartEnum parsing for HazardCategory
         var categoryValue = reader.GetValue<string>(FieldNames.fRiskAssessmentCategory)?.Trim();
         if (!string.IsNullOrEmpty(categoryValue))

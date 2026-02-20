@@ -50,7 +50,7 @@
                         }
                         else if (totalCount > 0)
                         {
-                            <RadzenText Text="@($"{completedCount}/{totalCount} Scored")" TextStyle="TextStyle.Subtitle1" />
+                            <RadzenText Text="@($"{completedCount}/{totalCount} Scored")" TextStyle="TextStyle.Subtitle2" />
                         }
                         else
                         {
@@ -97,8 +97,7 @@
                                 @if (HasScore(panel))
                                 {
                                     <RadzenStack AlignItems="AlignItems.Start" Gap="0.25rem">
-                                        @* <RadzenBadge Text="@panel.Severity.ToString()" BadgeStyle="BadgeStyle.Primary" /> *@
-                                        <RadzenText Text="@GetSeverityLabel(panel.Severity.Value)" TextStyle="TextStyle.Subtitle1" />
+                                       <RadzenText Text="@GetSeverityLabel(panel.Severity.Value)" TextStyle="TextStyle.Subtitle1" />
                                     </RadzenStack>
                                     
                                 }
@@ -187,18 +186,7 @@
             </RadzenCard>
 
             <!-- Progress Alert -->
-            @if (AllScoresComplete())
-            {
-                @* <RadzenAlert AlertStyle="AlertStyle.Success" Icon="check_circle">
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"All panel members have scored this hazard. Average: {GetHazardMatrixCodeFromPanels()}")" />
-                </RadzenAlert> *@
-            }
-            else
-            {
-                @* <RadzenAlert AlertStyle="AlertStyle.Info" Icon="schedule">
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"Scoring Progress: {GetCompletedScoreCount()} of {HazardScoringPanels.Count} panel members completed.")" />
-                </RadzenAlert> *@
-            }
+           
         }
         else
         {

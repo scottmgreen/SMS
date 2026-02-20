@@ -173,7 +173,7 @@
     <div class="modal-overlay">
         <div class="sms-modal-dialog sms-modal-lg">
             <div class="sms-modal-content">
-                <div class="sms-modal-header sms-header-warning">
+                <div class="sms-modal-header sms-header-primary">
                     <div class="d-flex justify-content-between align-items-center w-100">
                         <h5 class="sms-modal-title mb-0">
                             <i class="fas fa-check-double"></i> Bulk Mitigation Approval
@@ -219,8 +219,9 @@
                                 <i class="fas fa-user-shield"></i> Required Authorization
                             </h6>
                             <p class="small text-muted mb-3">
-                                This approval includes hazards with <strong>@GetHighestRiskLevelAcrossAllHazards(SelectedReportForApproval)</strong> risk level.
-                                Only authorized personnel with sufficient authority can approve these mitigations.
+                                This approval includes hazards with <span class="fw-bold text-danger">@GetHighestRiskLevelAcrossAllHazards(SelectedReportForApproval)</span> risk level.
+                                <br />
+                                Only authorized personnel with sufficient authority should have approved these mitigations.
                             </p>
 
                             <RadzenFormField Text="Select Authorized Approver *" Variant="Variant.Outlined" Style="width: 100%;">
@@ -259,7 +260,7 @@
                     </RadzenCard>
 
                     <!-- 🚀 ENHANCED: Risk Level Breakdown Table -->
-                    <RadzenCard Variant="Variant.Outlined" Class="mb-3">
+                    @* <RadzenCard Variant="Variant.Outlined" Class="mb-3">
                         <div class="p-3">
                             <h6 class="text-primary mb-3">
                                 <i class="fas fa-analytics"></i> Risk Level Breakdown
@@ -289,7 +290,7 @@
                                 </table>
                             </div>
                         </div>
-                    </RadzenCard>
+                    </RadzenCard> *@
 
                     <!-- Mitigation List Preview -->
                     <RadzenCard Variant="Variant.Outlined" Class="mb-3">
@@ -336,10 +337,10 @@
                     </RadzenCard>
 
                     <!-- Warning Message -->
-                    <RadzenAlert AlertStyle="AlertStyle.Warning" Icon="warning" ShowIcon="true" Class="mb-3">
+                    @* <RadzenAlert AlertStyle="AlertStyle.Warning" Icon="warning" ShowIcon="true" Class="mb-3">
                         <strong>Important:</strong> This action will set the status of ALL listed mitigations to "Approved".
                         This action cannot be undone. Please review the mitigations carefully before proceeding.
-                    </RadzenAlert>
+                    </RadzenAlert> *@
 
                 </div>
                 <div class="sms-modal-footer">
@@ -402,8 +403,8 @@
         border-radius: 0.5rem 0.5rem 0 0;
     }
 
-    .sms-header-warning {
-        background-color: #ff9800; /* SMS Orange */
+    .sms-header-primary {
+        background-color: #212e61; /* SMS Orange */
         color: white;
     }
 

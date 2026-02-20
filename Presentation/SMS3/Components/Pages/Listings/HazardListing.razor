@@ -30,17 +30,17 @@
                 Style="height: calc(100vh - 200px)">
     
     <Columns>
+        <RadzenDataGridColumn TItem="Hazard" Property="ReportCode" Title="Report ID" Width="150px">
+            <Template Context="hazard">
+                <div title="@hazard.ReportCode" style="@BasicTextStyle">
+                    @(hazard.ReportCode)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Hazard" Property="Code" Title="Hazard ID" Width="120px" >
             <Template Context="hazard">
                 <div title="@hazard.Code" style="@BasicTextStyle">
                     @(hazard.Code)
-                </div>
-            </Template>
-        </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Hazard" Property="ReportCode" Title="Report ID" Width="150px" >
-            <Template Context="hazard">
-                <div title="@hazard.ReportCode" style="@BasicTextStyle">
-                    @(hazard.ReportCode)
                 </div>
             </Template>
         </RadzenDataGridColumn>

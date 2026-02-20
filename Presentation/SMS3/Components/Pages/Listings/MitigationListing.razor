@@ -52,7 +52,7 @@
 
 <!-- Mitigations Data Grid -->
 <RadzenDataGrid @ref="mitigationsGrid"
-                Data="@mitigationViewModels"
+                Data="@mitigationModels"
                 Count="@totalCount"
                 LoadData="@LoadData"
                 AllowPaging="true"
@@ -67,53 +67,71 @@
 
     <Columns>
         <!-- Report ID Column -->
-        <RadzenDataGridColumn TItem="MitigationViewModel" Property="ReportId" Title="Report ID" Width="120px">
-            @* <Template Context="mitigationViewModel"> *@
-                @* <RadzenLink Path="@($"/SMSRiskManagement/TechnicalAssessment/{mitigationViewModel.ReportId}/{mitigationViewModel.HazardCode}/1")" *@ 
-                     @* <RadzenText Text="@mitigationViewModel.ReportId"  />
-            </Template> *@
+        <RadzenDataGridColumn TItem="MitigationModel" Property="ReportCode" Title="Report ID" Width="120px">
+            <Template Context="mitigation">
+                <div title="@mitigation.ReportCode" style="@BasicTextStyle">
+                    @(mitigation.ReportCode)
+                </div>
+            </Template>
         </RadzenDataGridColumn>
 
         <!-- Hazard ID Column -->
-        <RadzenDataGridColumn TItem="MitigationViewModel" Property="HazardCode" Title="Hazard ID" Width="120px">
-            
+        <RadzenDataGridColumn TItem="MitigationModel" Property="HazardCode" Title="Hazard ID" Width="120px">
+            <Template Context="mitigation">
+                <div title="@mitigation.ReportCode" style="@BasicTextStyle">
+                    @(mitigation.ReportCode)
+                </div>
+            </Template>
         </RadzenDataGridColumn>
 
         <!-- Mitigation ID Column -->
-        <RadzenDataGridColumn TItem="MitigationViewModel" Property="Code" Title="Mitigation ID" Width="120px">
-            
+        <RadzenDataGridColumn TItem="MitigationModel" Property="Code" Title="Mitigation ID" Width="120px">
+            <Template Context="mitigation">
+                <div title="@mitigation.Code" style="@BasicTextStyle">
+                    @(mitigation.ReportCode)
+                </div>
+            </Template>
         </RadzenDataGridColumn>
 
         <!-- Mitigation Description -->
-        <RadzenDataGridColumn TItem="MitigationViewModel" Property="Description" Title="Description" Width="320px">
-            <Template Context="mitigationViewModel">
-                <RadzenText TextStyle="TextStyle.Body2" Text="@(mitigationViewModel.Description?.Length > 100 ? mitigationViewModel.Description.Substring(0, 100) + "..." : mitigationViewModel.Description)" />
+        <RadzenDataGridColumn TItem="MitigationModel" Property="Description" Title="Description" Width="320px">
+            <Template Context="mitigation">
+                @(mitigation.Description?.Length > 100 ? mitigation.Description.Substring(0, 100) + "..." : mitigation.Description)"
             </Template>
         </RadzenDataGridColumn>
 
         <!-- Status Column -->
-        <RadzenDataGridColumn TItem="MitigationViewModel" Property="Status" Title="Status" Width="120px">
-            <Template Context="mitigationViewModel">
-                <RadzenBadge Text="@mitigationViewModel.Status" BadgeStyle="@GetStatusBadgeStyle(mitigationViewModel.Status)" />
+        <RadzenDataGridColumn TItem="MitigationModel" Property="Status" Title="Status" Width="120px">
+            <Template Context="mitigation">
+                @mitigation.Status
             </Template>
         </RadzenDataGridColumn>
 
        
         
         <!-- Progress Column -->
-        <RadzenDataGridColumn TItem="MitigationViewModel" Property="Progress" Title="Progress" Width="100px">
-            <Template Context="mitigationViewModel">
-                <RadzenProgressBar Value="@mitigationViewModel.Progress" Max="100" Style="width: 100%;" />
+        <RadzenDataGridColumn TItem="MitigationModel" Property="Progress" Title="Progress" Width="100px">
+            <Template Context="mitigation">
+                <RadzenProgressBar Value="@mitigation.Progress" Max="100" Style="width: 100%;" />
                 @* <RadzenText TextStyle="TextStyle.Caption" Text="@($"{mitigationViewModel.Progress}%")" /> *@
             </Template>
         </RadzenDataGridColumn>
 
         <!-- Target Date Column -->
-        <RadzenDataGridColumn TItem="MitigationViewModel" Property="TargetDate" Title="Target Date" Width="120px" FormatString="{0:MM/dd/yyyy}">
-            <Template Context="mitigationViewModel">
-                @if (mitigationViewModel.TargetDate.HasValue)
+        <RadzenDataGridColumn TItem="MitigationModel" Property="TargetDate" Title="Target Date" Width="120px" FormatString="{0:MM/dd/yyyy}">
+            <Template Context="mitigation">
+                @if (mitigation.TargetDate.HasValue)
                 {
-                    <RadzenText Text="@mitigationViewModel.TargetDate.Value.ToString("MM/dd/yyyy")" />
+                    
+                        <div title="@mitigation.ReportCode" style="@BasicTextStyle">
+                        @mitigation.TargetDate.Value.ToString("MM/dd/yyyy")
+                        </div>
+            
+                    
+                    
+                    
+                    
+                   
                 }
                 else
                 {
@@ -123,27 +141,27 @@
         </RadzenDataGridColumn>
 
         <!-- Actions Column -->
-        <RadzenDataGridColumn TItem="MitigationViewModel" Title="Actions" Width="200px" Sortable="false" Filterable="false">
-            <Template Context="mitigationViewModel">
+        <RadzenDataGridColumn TItem="MitigationModel" Title="Actions" Width="200px" Sortable="false" Filterable="false">
+            <Template Context="mitigation">
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
                     <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small"
                                   Tooltip="View Mitigation Details"
-                                  Click="@(() => ViewMitigation(mitigationViewModel.Mitigation))" />
+                                  Click="@(() => ViewMitigation(mitigation.Mitigation))" />
 
                     <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
                                   Tooltip="Edit Mitigation"
-                                  Click="@(() => EditMitigation(mitigationViewModel.Mitigation))" />
+                                  Click="@(() => EditMitigation(mitigation.Mitigation))" />
 
-                    @if (mitigationViewModel.Status != "Approved")
+                    @if (mitigation.Status != "Approved")
                     {
                         <RadzenButton Icon="verified" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
                                       Tooltip="Quick Approve"
-                                  Click="@(async () => await QuickApproveMitigation(mitigationViewModel.Mitigation))" />
+                                      Click="@(async () => await QuickApproveMitigation(mitigation.Mitigation))" />
                     }
 
                     <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
                                   Tooltip="Delete Mitigation"
-                                  Click="@(() => DeleteMitigation(mitigationViewModel.Mitigation))" />
+                                  Click="@(() => DeleteMitigation(mitigation.Mitigation))" />
                 </RadzenStack>
             </Template>
         </RadzenDataGridColumn>
@@ -222,8 +240,8 @@
                                                 <td><code>@mitigation.Code</code></td>
                                                 <td>@mitigation.Name</td>
                                                 <td>
-                                                    <RadzenBadge Text="@mitigation.Status"
-                                                                 BadgeStyle="@GetStatusBadgeStyle(mitigation.Status)" />
+                                                    @mitigation.Status.Value
+                                                                 
                                                 </td>
                                                 
                                                 <td>@mitigation.Progress%</td>

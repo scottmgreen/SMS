@@ -121,8 +121,8 @@
                         </div>
                         
                         <!-- Aviation Risk Matrix Legend -->
-                        <RadzenStack Gap="0.5rem">
-                            <RadzenText TextStyle="TextStyle.Subtitle2" Text="Risk Assessment Categories:" Style="margin: 0;" />
+                        @* <RadzenStack Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.Subtitle2" Text="Risk Levels:" Style="margin: 0;" />
                             <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
                                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
                                     <div style="width: 20px; height: 16px; background: #dc3545; border: 1px solid #000;"></div>
@@ -140,6 +140,19 @@
                                     <div style="width: 20px; height: 16px; background: #28a745; border: 1px solid #000;"></div>
                                     <RadzenText TextStyle="TextStyle.Caption" Text="Low Risk" />
                                 </RadzenStack>
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenStack> *@
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.Subtitle2" Text="Risk Levels:" Style="margin: 0;" />
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
+                                @foreach (var riskLevel in RiskLevel.GetOrderedBySeverity())
+                                {
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                        <div style="@riskLevel.GetIndicatorStyle()"></div>
+                                        <RadzenText TextStyle="TextStyle.Caption" Text="@riskLevel.Name" />
+                                    </RadzenStack>
+                                }
                             </RadzenStack>
                         </RadzenStack>
                     </RadzenStack>
@@ -269,9 +282,7 @@
                     Step4.HazardAverageScores[hazardCode] = (double)hazard.InitialAverageScore.Value;
                     Step4.HazardRiskLevels[hazardCode] = hazard.HazardRiskLevel ?? RiskLevel.Unkonwn;
                     Step4.HazardMatrixCodes[hazardCode] = hazard.InitialRiskMatrixCode ?? "Unknown";
-                    
-                    Logger.LogInformation("✅ Updated Step4 model from hazard entity: {HazardCode} - Score: {Score}, Risk: {Risk}, Matrix: {Matrix}",
-                        hazardCode, hazard.InitialAverageScore.Value, hazard.HazardRiskLevel?.Value ?? "Unknown", hazard.InitialRiskMatrixCode);
+                   
                 }
                 else
                 {
@@ -280,7 +291,6 @@
                     Step4.HazardRiskLevels.Remove(hazardCode);
                     Step4.HazardMatrixCodes.Remove(hazardCode);
                     
-                    Logger.LogInformation("❌ Removed Step4 data for hazard {HazardCode} - no score available", hazardCode);
                 }
             }
         }

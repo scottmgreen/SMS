@@ -8,70 +8,62 @@
 @using SMS_Application.Messaging.Queries
 
 <PageTitle>Risk Registry - SMS Assurance</PageTitle>
+<PageHeader Title="Investigation Listing"
+            Subtitle="Comprehensive overview of all identified risks, their assessments, and mitigation status"
+            Icon="assignment" />
 
 <RadzenRow class="rz-mx-auto">
     <RadzenColumn Size="12">
         <RadzenStack>
-            <!-- Page Header -->
-            <RadzenCard class="rz-shadow-6" style="border-left: 4px solid var(--rz-primary);">
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                    <div>
-                        <RadzenIcon Icon="assignment" Style="font-size: 2.5rem; color: var(--rz-primary);" />
-                    </div>
-                    <RadzenStack Gap="0.25rem">
-                        <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H1" 
-                                    Style="margin: 0; color: var(--rz-primary);">
-                            Risk Registry
-                        </RadzenText>
-                        <RadzenText TextStyle="TextStyle.Subtitle1" 
-                                    Style="margin: 0; color: var(--rz-text-secondary-color);">
-                            Comprehensive overview of all identified risks, their assessments, and mitigation status
-                        </RadzenText>
-                    </RadzenStack>
-                </RadzenStack>
-            </RadzenCard>
-
+                     
             <!-- Filter and Search Controls -->
             <RadzenCard>
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                        <RadzenLabel Text="Status Filter:" Style="margin: 0;" />
-                        <RadzenDropDown @bind-Value="@SelectedStatusFilter" 
-                                       Data="@StatusFilterOptions" 
-                                       TextProperty="Text" 
-                                       ValueProperty="Value"
-                                       AllowClear="true" 
-                                       Placeholder="All Statuses"
-                                       Change="@OnFilterChanged"
-                                       Style="width: 200px;" />
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.NoWrap" JustifyContent="JustifyContent.SpaceBetween" Style="width: 100%;">
+                    <!-- Left side filters -->
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.NoWrap">
+                        <!-- Status Filter -->
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenLabel Text="Status Filter:" Style="margin: 0; white-space: nowrap;" />
+                            <RadzenDropDown @bind-Value="@SelectedStatusFilter"
+                                            Data="@StatusFilterOptions"
+                                            TextProperty="Text"
+                                            ValueProperty="Value"
+                                            AllowClear="true"
+                                            Placeholder="All Statuses"
+                                            Change="@OnFilterChanged"
+                                            Style="width: 300px;" />
+                        </RadzenStack>
+
+                        <!-- Risk Level Filter -->
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenLabel Text="Risk Level:" Style="margin: 0; white-space: nowrap;" />
+                            <RadzenDropDown @bind-Value="@SelectedRiskLevelFilter"
+                                            Data="@RiskLevelFilterOptions"
+                                            TextProperty="Text"
+                                            ValueProperty="Value"
+                                            AllowClear="true"
+                                            Placeholder="All Risk Levels"
+                                            Change="@OnFilterChanged"
+                                            Style="width: 225px;" />
+                        </RadzenStack>
+
+                        <!-- Search Filter -->
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenLabel Text="Search:" Style="margin: 0; white-space: nowrap;" />
+                            <RadzenTextBox @bind-Value="@SearchText"
+                                           Placeholder="Search hazards, reports..."
+                                           @oninput="@OnSearchChanged"
+                                           Style="width: 300px;" />
+                        </RadzenStack>
                     </RadzenStack>
 
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                        <RadzenLabel Text="Risk Level:" Style="margin: 0;" />
-                        <RadzenDropDown @bind-Value="@SelectedRiskLevelFilter" 
-                                       Data="@RiskLevelFilterOptions" 
-                                       TextProperty="Text" 
-                                       ValueProperty="Value"
-                                       AllowClear="true" 
-                                       Placeholder="All Risk Levels"
-                                       Change="@OnFilterChanged"
-                                       Style="width: 150px;" />
-                    </RadzenStack>
-
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                        <RadzenLabel Text="Search:" Style="margin: 0;" />
-                        <RadzenTextBox @bind-Value="@SearchText" 
-                                      Placeholder="Search hazards, reports..."
-                                      @oninput="@OnSearchChanged"
-                                      Style="width: 250px;" />
-                    </RadzenStack>
-
-                    <RadzenButton Text="Refresh" 
-                                 Icon="refresh" 
-                                 ButtonStyle="ButtonStyle.Secondary" 
-                                 Size="ButtonSize.Medium"
-                                 Click="@LoadRiskRegistryData" 
-                                 IsBusy="@IsLoading" />
+                    <!-- Right side refresh button -->
+                    <RadzenButton Text="Refresh"
+                                  Icon="refresh"
+                                  ButtonStyle="ButtonStyle.Secondary"
+                                  Size="ButtonSize.Medium"
+                                  Click="@LoadRiskRegistryData"
+                                  IsBusy="@IsLoading" />
                 </RadzenStack>
             </RadzenCard>
 
@@ -85,84 +77,108 @@
                     </RadzenStack>
                 </RadzenCard>
             }
-
-            <!-- Risk Registry Data Grid -->
-            <RadzenCard>
-                <RadzenStack Gap="1rem">
-                    <!-- Summary Statistics -->
-                    @* <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
-                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@($"Total Risks: {FilteredRiskRegistryEntries.Count}")" />
-                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="@($"High Risk: {GetCountByRiskLevel("High")}")" />
-                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@($"Medium Risk: {GetCountByRiskLevel("Medium")}")" />
-                        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="@($"Low Risk: {GetCountByRiskLevel("Low")}")" />
-                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"Active Mitigations: {GetCountByMitigationStatus()}")" />
-                    </RadzenStack> *@
-
-                    <!-- HTML Table - Direct Rendering -->
-                    <div class="table-responsive">
-                        <table class="table table-striped table-bordered">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Report ID</th>
-                                    <th>Hazard ID</th>
-                                    <th>Risk Score</th>
-                                    <th>Hazard Description</th>
-                                    <th>Mitigation Description</th>
-                                    <th>Mitigation Status</th>
-                                    <th>Target Date</th>
-                                    <th>Owner</th>
-                                    <th>Last Updated</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var entry in FilteredRiskRegistryEntries)
+            <RadzenDataGrid @ref="RiskRegistryGrid"
+                            Data="@FilteredRiskRegistryEntries"
+                            Count="@FilteredRiskRegistryEntries.Count"
+                            LoadData="@LoadRiskRegistryData"
+                            AllowPaging="true" 
+                            AllowSorting="true" 
+                            AllowFiltering="true"
+                            PageSize="25"
+                            PagerHorizontalAlign="HorizontalAlign.Left"
+                            ShowPagingSummary="true"
+                            FilterMode="FilterMode.Advanced"
+                            SelectionMode="DataGridSelectionMode.Single"
+                            Style="height: calc(100vh - 200px)" >
+    
+            <Columns>
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="ReportCode" Title="Report ID" Width="100px">
+                        <Template Context="registry">
+                            <div style="@BasicTextStyle">
+                                @registry.ReportCode
+                            </div>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="HazardCode" Title="Hazard ID" Width="100px" >
+                        <Template Context="registry">
+                            <div style="@BasicTextStyle">
+                                @registry.HazardCode
+                            </div>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="RiskMatrixCode" Title="Risk Score" Width="125px">
+                        <Template Context="registry">
+                            <div style="@GetAviationMatrixCellStyle(registry.RiskMatrixCode.Trim())" class="text-center fw-bold">
+                                @if (!string.IsNullOrEmpty(registry.RiskMatrixCode) && registry.RiskMatrixCode != "-")
                                 {
-                                    <tr>
-                                        <td class="fw-bold">
-                                            @* <a href="/SMSRiskManagement/TechnicalAssessment/@entry.ReportId.Trim()/@entry.HazardId.Trim()/1" class="fw-bold"> *@
-                                                @entry.ReportId
-                                            @* </a> *@
-                                        </td>
-                                        <td class="fw-bold">@entry.HazardId</td>
-                                        <td style="@GetAviationMatrixCellStyle(entry.RiskMatrixCode.Trim())" class="text-center fw-bold">
-                                            @if (!string.IsNullOrEmpty(entry.RiskMatrixCode) && entry.RiskMatrixCode != "-")
-                                            {
-                                                @entry.RiskMatrixCode
-                                            }
-                                            else
-                                            {
-                                                <span class="text-muted">TBD</span>
-                                            }
-                                        </td>
-                                        <td style="font-size: 0.9rem;">@entry.HazardDescription</td>
-                                        <td style="font-size: 0.9rem;">@(entry.MitigationDescription ?? "No mitigation assigned")</td>
-                                        <td>
-                                            <span class="badge bg-@GetBootstrapMitigationStatusColor(entry.MitigationStatusName)">
-                                                @entry.MitigationStatusName
-                                            </span>
-                                        </td>
-                                        <td>
-                                            @if (entry.TargetDate.HasValue)
-                                            {
-                                                <span style="@GetTargetDateStyle(entry.TargetDate.Value)">
-                                                    @entry.TargetDate.Value.ToString("MMM dd, yyyy")
-                                                </span>
-                                            }
-                                            else
-                                            {
-                                                <span class="text-muted">TBD</span>
-                                            }
-                                        </td>
-                                        <td style="font-size: 0.9rem;">@(entry.AssignedTo ?? "Unassigned")</td>
-                                        <td style="font-size: 0.9rem;">@entry.LastUpdated.ToString("MMM dd, yyyy")</td>
-                                    </tr>
+                                    <div style="@BasicTextStyle">
+                                        @($"{registry.RiskMatrixCode} - {registry.HazardRiskLevel?.Value}")
+                                    </div>
                                 }
-                            </tbody>
-                        </table>
-                    </div>
-                </RadzenStack>
-            </RadzenCard>
+                                else
+                                {
+                                    <span class="text-muted">TBD</span>
+                                }
+                            </div>
+                        </Template>
+                    
+                    </RadzenDataGridColumn>
+                   
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="HazardDescription" Title="Hazard Description" Width="120px">
+                        <Template Context="registry">
+                            <div style="@BasicTextStyle">
+                                @registry.HazardDescription
+                            </div>
+                        </Template>
+                        
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="MitigationStatus" Title="Mitigation Status" Width="150px">
+                        <Template Context="registry">
+                            @if (registry.MitigationStatus !=null)
+                            {
+                                <div style="@BasicTextStyle">
+                                    @registry.MitigationStatus.Value
+                                </div>
+                            }
 
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="TargetDate" Title="Target Date" Width="150px">
+                        <Template Context="registry">
+                            @if (registry.TargetDate.HasValue)
+                            {
+                                <div style="@BasicTextStyle">
+                                        @registry.TargetDate.Value.ToString("MMM dd, yyyy")
+                                </div>
+                            }
+                            
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="AssignedTo" Title="Owner" Width="225px">
+                        <Template Context="registry">
+                            <div style="@BasicTextStyle">
+                                @registry.AssignedTo
+                            </div>
+                        </Template>
+                        
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="LastUpdated" Title="Owner" Width="150px">
+                        <Template Context="registry">
+                            @if (registry.LastUpdated.HasValue)
+                            {
+                                <div style="@BasicTextStyle"> 
+                                        @registry.LastUpdated.Value.ToString("MMM dd, yyyy")
+                                </div>
+                            }
+                        </Template>
+
+                    </RadzenDataGridColumn>
+            
+            
+            </Columns>
+        </RadzenDataGrid>
+           
         </RadzenStack>
     </RadzenColumn>
 </RadzenRow>

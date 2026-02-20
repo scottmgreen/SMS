@@ -50,14 +50,10 @@ public sealed class RiskAssessment : BaseAuditableEntity
     public string? HazardCode { get; set; }
     public string LeadAssessorId { get; set; } = string.Empty;
 
-    /// <summary>
-    /// Primary Hazard ID - BUSINESS RULE: MUST be set for assessments
-    /// </summary>
     public string? PrimaryHazardId { get; set; }
 
-    /// <summary>
-    /// Risk Assessment Status - BUSINESS RULE: Only "Created", "InProgress", "Completed"
-    /// </summary>
+    public string ReportCode { get; set; } = string.Empty;
+
     public RiskAssessmentStatus Status { get; set; } = RiskAssessmentStatus.AssessmentCreate;
     public RiskAssessmentStage Stage { get; set; } = RiskAssessmentStage.DescribingSystem;
     /// <summary>

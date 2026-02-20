@@ -1209,19 +1209,20 @@ public partial class ReportProcessing : ComponentBase
                         (args) => NavigateToMitigationEdit(mitigation)));
                     actionBuilder.CloseComponent(); // ✅ Close RadzenButton
 
-                    // Quick Approve Button (only if not already approved)
-                    if (mitigation.Status != MitigationStatus.Approved)
-                    {
-                        actionBuilder.OpenComponent<RadzenButton>(5);
-                        actionBuilder.AddAttribute(6, "Text", "Approve");
-                        actionBuilder.AddAttribute(7, "Icon", "verified");
-                        actionBuilder.AddAttribute(8, "ButtonStyle", ButtonStyle.Success);
-                        actionBuilder.AddAttribute(9, "Size", ButtonSize.Small);
-                        actionBuilder.AddAttribute(10, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
-                            (args) => QuickApproveMitigation(mitigation)));
-                        actionBuilder.AddAttribute(11, "Disabled", IsProcessingApproval);
-                        actionBuilder.CloseComponent(); // ✅ Close RadzenButton
-                    }
+                    // Quick Approve Button (only if not already approved)c///THIS CAN NOW ONLY HAPPEN AT THE REPORT LEVEL..
+                    // BECAUSE WE WANT TO CAPTURE WHO APPROVED IT
+                    //if (mitigation.Status != MitigationStatus.Approved)
+                    //{
+                    //    actionBuilder.OpenComponent<RadzenButton>(5);
+                    //    actionBuilder.AddAttribute(6, "Text", "Approve");
+                    //    actionBuilder.AddAttribute(7, "Icon", "verified");
+                    //    actionBuilder.AddAttribute(8, "ButtonStyle", ButtonStyle.Success);
+                    //    actionBuilder.AddAttribute(9, "Size", ButtonSize.Small);
+                    //    actionBuilder.AddAttribute(10, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
+                    //        (args) => QuickApproveMitigation(mitigation)));
+                    //    actionBuilder.AddAttribute(11, "Disabled", IsProcessingApproval);
+                    //    actionBuilder.CloseComponent(); // ✅ Close RadzenButton
+                    //}
 
                     // View Button
                     actionBuilder.OpenComponent<RadzenButton>(10);
@@ -2116,6 +2117,7 @@ public partial class ReportProcessing : ComponentBase
         if (riskLevels.Any(r => r.Equals(RiskLevel.Critical.Name, StringComparison.OrdinalIgnoreCase))) return RiskLevel.Critical.Name;
         if (riskLevels.Any(r => r.Equals(RiskLevel.High.Name, StringComparison.OrdinalIgnoreCase))) return RiskLevel.High.Name;
         if (riskLevels.Any(r => r.Equals(RiskLevel.Medium.Name, StringComparison.OrdinalIgnoreCase))) return RiskLevel.Medium.Name;
+        //if (riskLevels.Any(r => r.Equals(RiskLevel.Low.Name, StringComparison.OrdinalIgnoreCase))) return RiskLevel.Low.Name;
 
         return RiskLevel.Low.Name; // ✅ Use enum instead of "Low"
     }
@@ -2161,20 +2163,37 @@ public partial class ReportProcessing : ComponentBase
 
         return false;
     }
-
     /// <summary>
-    /// Get badge style for risk levels using enum values
+    /// Get Radzen BadgeStyle for risk level (presentation layer extension)
     /// </summary>
-    private BadgeStyle GetRiskLevelBadgeStyle(string riskLevel)
+    private BadgeStyle GetRiskLevelBadgeStyle(RiskLevel? riskLevel)
     {
-        return riskLevel?.ToUpper() switch
+        if (riskLevel == null)
+            return BadgeStyle.Secondary;
+
+        return riskLevel.BootstrapClass switch
         {
-            _ when riskLevel.Equals(RiskLevel.Critical.Name, StringComparison.OrdinalIgnoreCase) => BadgeStyle.Danger,
-            _ when riskLevel.Equals(RiskLevel.High.Name, StringComparison.OrdinalIgnoreCase) => BadgeStyle.Danger,
-            _ when riskLevel.Equals(RiskLevel.Medium.Name, StringComparison.OrdinalIgnoreCase) => BadgeStyle.Warning,
-            _ when riskLevel.Equals(RiskLevel.Low.Name, StringComparison.OrdinalIgnoreCase) => BadgeStyle.Success,
+            "danger" => BadgeStyle.Danger,
+            "warning" => BadgeStyle.Warning,
+            "success" => BadgeStyle.Success,
+            "secondary" => BadgeStyle.Secondary,
             _ => BadgeStyle.Secondary
         };
+    }
+    
+
+    /// <summary>
+    /// Get Radzen BadgeStyle for risk level by name (presentation layer logic)
+    /// </summary>
+    private BadgeStyle GetRiskLevelBadgeStyle(string? riskLevelName)
+    {
+        if (string.IsNullOrEmpty(riskLevelName))
+            return BadgeStyle.Secondary;
+
+        var riskLevel = RiskLevel.GetAllValues()
+            .FirstOrDefault(rl => rl.Name.Equals(riskLevelName, StringComparison.OrdinalIgnoreCase));
+
+        return GetRiskLevelBadgeStyle(riskLevel);
     }
 
     /// <summary>

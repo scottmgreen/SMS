@@ -397,7 +397,7 @@
         // which is called from the parent component's LoadStepDataFromAssessment method
     }
 
-    
+
 
     /// <summary>
     /// ✅ NEW: Load existing mitigations for all hazards to populate Step5 model data
@@ -454,7 +454,7 @@
         }
     }
 
-   
+
     private bool DetermineIfNeedsMitigation(Hazard hazard)
     {
         // Check if this hazard has a high risk score that needs mitigation
@@ -505,17 +505,17 @@
         return "Unknown";
     }
 
-    private BadgeStyle GetRiskLevelBadgeStyle(string riskLevel)
-    {
-        return riskLevel switch
-        {
-            "High" => BadgeStyle.Danger,
-            "Medium" => BadgeStyle.Warning,
-            "Low" => BadgeStyle.Base,
-            "Acceptable" => BadgeStyle.Success,
-            _ => BadgeStyle.Secondary
-        };
-    }
+    // private BadgeStyle GetRiskLevelBadgeStyle(string riskLevel)
+    // {
+    //     return riskLevel switch
+    //     {
+    //         "High" => BadgeStyle.Danger,
+    //         "Medium" => BadgeStyle.Warning,
+    //         "Low" => BadgeStyle.Base,
+    //         "Acceptable" => BadgeStyle.Success,
+    //         _ => BadgeStyle.Secondary
+    //     };
+    // }
 
     #region ✅ Residual Risk Analysis Methods - REFACTORED to use @bind-Value pattern
 
@@ -559,7 +559,7 @@
         }
     }
 
-    
+
 
 
     /// <summary>
@@ -577,11 +577,11 @@
             if (string.IsNullOrEmpty(analysis.Code) || analysis.Code == "RA-0000")
             {
                 Logger.LogInformation("🆕 Creating new residual RiskAnalysis for hazard {HazardCode}", analysis.HazardCode);
-                
+
                 // Create new RiskAnalysis
                 var createCommand = new CreateRiskAnalysisCommand(analysis);
                 var createResult = await Mediator.SendAsync(createCommand, CancellationToken.None);
-                
+
                 if (createResult.IsSuccess && createResult.Value != null)
                 {
                     // Update the Step5 model with the saved entity (which has a proper ID/Code)
@@ -599,11 +599,11 @@
             {
                 Logger.LogInformation("🔄 Updating existing residual RiskAnalysis {Code} for hazard {HazardCode}", 
                     analysis.Code, analysis.HazardCode);
-                
+
                 // Update existing RiskAnalysis
                 var updateCommand = new UpdateRiskAnalysisCommand(analysis);
                 var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
-                
+
                 if (updateResult.IsSuccess && updateResult.Value != null)
                 {
                     // Update the Step5 model with the updated entity
@@ -664,7 +664,7 @@
         {
             // ✅ ENHANCED: Load mitigations from database and sync with Step5 model
             Logger.LogInformation("🔄 OnMitigationUpdated called for hazard {HazardCode}", hazardId);
-            
+
             // Load mitigations from database
             var query = new GetMitigationsByHazardCodeQuery(hazardId);
             var result = await Mediator.SendAsync(query, CancellationToken.None);
@@ -676,16 +676,16 @@
                 {
                     Step5.SavedMitigationStrategies = new Dictionary<string, List<string>>();
                 }
-                
+
                 var mitigations = result.Value.ToList();
-                
+
                 // Store mitigation names as simple strings for Step5 model compatibility
                 var mitigationNames = mitigations.Select(m => m.Name ?? "Unnamed Mitigation").ToList();
                 Step5.SavedMitigationStrategies[hazardId] = mitigationNames;
-                
+
                 Logger.LogInformation("✅ Synced {Count} mitigations to Step5.SavedMitigationStrategies[{HazardCode}]: {Names}", 
                     mitigationNames.Count, hazardId, string.Join(", ", mitigationNames));
-                
+
                 // ✅ CRITICAL: Update Step5.HazardMitigations with correct Mitigation entities
                 if (Step5.HazardMitigations == null)
                 {
@@ -693,8 +693,9 @@
                 }
                 Step5.HazardMitigations[hazardId] = mitigations;
                 
-                Logger.LogInformation("✅ Also synced {Count} full mitigation objects to Step5.HazardMitigations[{HazardCode}]", 
-                    mitigations.Count, hazardId);
+                // ✅ FIXED: DO NOT trigger hazard scoring recalculation when adding mitigations
+                // The risk level should only change when residual scoring panels are submitted, not when mitigations are added
+                Logger.LogInformation("✅ Mitigation added successfully - Risk level preserved (no scoring recalculation triggered)");
             }
             else
             {
@@ -778,18 +779,6 @@
                             Step5Hazards[hazardIndex] = updatedHazard;
                         }
 
-                        // Log residual scoring updates
-                        if (updatedHazard.ResidualAverageScore.HasValue)
-                        {
-                            Logger.LogInformation("✅ Updated Step5 hazard {HazardCode} from entity: ResidualScore={Score:F2}, Matrix={Matrix}, Risk={Risk}",
-                                hazard.Code, updatedHazard.ResidualAverageScore.Value, 
-                                updatedHazard.ResidualRiskMatrixCode ?? "Unknown", 
-                                updatedHazard.HazardRiskLevel?.Value ?? "Unknown");
-                        }
-                        else
-                        {
-                            Logger.LogInformation("⚠️ No residual scoring data available for hazard {HazardCode}", hazard.Code);
-                        }
                     }
                 }
                 catch (Exception ex)

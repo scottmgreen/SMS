@@ -31,6 +31,13 @@
                 Style="height: calc(100vh - 200px)">
     
     <Columns>
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="ReportCode" Title="Report ID" Width="150px">
+            <Template Context="assessment">
+                <div title="@assessment.ReportCode" style="@BasicTextStyle">
+                    @(assessment.ReportCode)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="RiskAssessment" Property="Code" Title="Risk Assessment ID" Width="150px" >
             <Template Context="assessment">
                 <div title="@assessment.Code" style="@BasicTextStyle">

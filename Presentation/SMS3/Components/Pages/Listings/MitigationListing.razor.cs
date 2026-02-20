@@ -15,9 +15,9 @@ public partial class MitigationListing : ComponentBase
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
-    private RadzenDataGrid<MitigationViewModel>? mitigationsGrid;
+    private RadzenDataGrid<MitigationModel>? mitigationsGrid;
     private IEnumerable<Mitigation> mitigations = new List<Mitigation>();
-    private IEnumerable<MitigationViewModel> mitigationViewModels = new List<MitigationViewModel>();
+    private IEnumerable<MitigationModel> mitigationModels = new List<MitigationModel>();
     private IEnumerable<Mitigation> selectedMitigations = new List<Mitigation>();
     private int totalCount;
     private bool isLoading = false;
@@ -29,7 +29,7 @@ public partial class MitigationListing : ComponentBase
     // For context display
     private Hazard? ContextHazard = null;
     private Report? ContextReport = null;
-
+    private string BasicTextStyle = "font-size:smaller;font-weight: 600";
     protected override async Task OnInitializedAsync()
     {
         await LoadContextData();
@@ -153,7 +153,7 @@ public partial class MitigationListing : ComponentBase
     {
         try
         {
-            var viewModels = new List<MitigationViewModel>();
+            var viewModels = new List<MitigationModel>();
 
             // Group mitigations by hazard code for efficient loading
             var hazardCodes = mitigations.Select(m => m.HazardCode).Distinct().ToList();
@@ -209,26 +209,26 @@ public partial class MitigationListing : ComponentBase
                     reportId = ReportId;
                 }
 
-                viewModels.Add(new MitigationViewModel
+                viewModels.Add(new MitigationModel
                 {
                     Mitigation = mitigation,
                     Code = mitigation.Code,
                     HazardCode = hazardCode,
-                    ReportId = reportId,
+                    ReportCode = reportId,
                     Description = mitigation.Description,
-                    Status = mitigation.Status ?? "Unknown",
+                    Status = mitigation.Status,
                     Progress = mitigation.Progress,
                     TargetDate = mitigation.TargetDate
                 });
             }
 
-            mitigationViewModels = viewModels;
+            mitigationModels = viewModels;
             Logger.LogInformation("Created {Count} mitigation view models", viewModels.Count);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error creating mitigation view models");
-            mitigationViewModels = new List<MitigationViewModel>();
+            mitigationModels = new List<MitigationModel>();
         }
     }
 
@@ -242,7 +242,7 @@ public partial class MitigationListing : ComponentBase
             // Reload the initial data which will create view models
             await LoadInitialData();
 
-            var query = mitigationViewModels.AsQueryable();
+            var query = mitigationModels.AsQueryable();
 
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
@@ -261,8 +261,8 @@ public partial class MitigationListing : ComponentBase
                 query = query.Take(args.Top.Value);
             }
 
-            mitigationViewModels = query.ToList();
-            totalCount = mitigationViewModels.Count();
+            mitigationModels = query.ToList();
+            totalCount = mitigationModels.Count();
         }
         catch (Exception ex)
         {
@@ -276,12 +276,12 @@ public partial class MitigationListing : ComponentBase
         }
     }
 
-    private static Expression<Func<MitigationViewModel, object>> GetViewModelPropertyExpression(string propertyName)
+    private static Expression<Func<MitigationModel, object>> GetViewModelPropertyExpression(string propertyName)
     {
-        var parameter = Expression.Parameter(typeof(MitigationViewModel), "x");
+        var parameter = Expression.Parameter(typeof(MitigationModel), "x");
         var property = Expression.Property(parameter, propertyName);
         var conversion = Expression.Convert(property, typeof(object));
-        return Expression.Lambda<Func<MitigationViewModel, object>>(conversion, parameter);
+        return Expression.Lambda<Func<MitigationModel, object>>(conversion, parameter);
     }
 
     private async Task ViewMitigation(Mitigation mitigation)
@@ -485,30 +485,9 @@ public partial class MitigationListing : ComponentBase
         }
     }
 
-    // Helper methods for context display
-    private string GetContextTitle()
-    {
-        if (ContextHazard != null && ContextReport != null)
-        {
-            return $"Mitigations for Report {ReportId} - Hazard {HazardCode}";
-        }
-        else if (ContextHazard != null)
-        {
-            return $"Mitigations for Hazard {HazardCode}";
-        }
-        else if (ContextReport != null)
-        {
-            return $"Mitigations for Report {ReportId}";
-        }
+    
 
-        return Title;
-    }
-
-    private int GetApprovableMitigationCount()
-    {
-        return mitigations.Count(m => m.Status != "Approved");
-    }
-
+    
     // Notification methods (unchanged)
     private void ShowSuccessNotification(string message)
     {
@@ -543,46 +522,22 @@ public partial class MitigationListing : ComponentBase
         });
     }
 
-    private BadgeStyle GetStatusBadgeStyle(string status)
-    {
-        var statusStyle = status switch
-        {
-            // ✅ Use the actual enum Values, not hardcoded strings
-            var s when s == MitigationStatus.Approved.Value => BadgeStyle.Success,
-            var s when s == MitigationStatus.InProgressDueDate.Value => BadgeStyle.Info,
-            var s when s == MitigationStatus.Complete.Value => BadgeStyle.Primary,
-            var s when s == MitigationStatus.PendingApproval.Value => BadgeStyle.Warning,
-            var s when s == MitigationStatus.Rejected.Value => BadgeStyle.Danger,
-            var s when s == MitigationStatus.MonitoringHazard.Value => BadgeStyle.Secondary,
-            _ => BadgeStyle.Light
-        };
-        return statusStyle;
-    }
+    
 
-    private BadgeStyle GetPriorityBadgeStyle(string priority)
-    {
-        return priority switch
-        {
-            "Critical" => BadgeStyle.Danger,
-            "High" => BadgeStyle.Warning,
-            "Medium" => BadgeStyle.Info,
-            "Low" => BadgeStyle.Success,
-            _ => BadgeStyle.Secondary
-        };
-    }
+    
 }
 
 /// <summary>
 /// View model for mitigation listing that includes Report ID and Hazard ID
 /// </summary>
-public class MitigationViewModel
+public class MitigationModel
 {
     public Mitigation Mitigation { get; set; } = default!;
     public string Code { get; set; } = string.Empty;
     public string HazardCode { get; set; } = string.Empty;
-    public string ReportId { get; set; } = string.Empty;
+    public string ReportCode { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public string Status { get; set; } = string.Empty;
+    public MitigationStatus Status { get; set; } 
     public int Progress { get; set; }
     public DateTime? TargetDate { get; set; }
 }
