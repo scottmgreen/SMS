@@ -27,45 +27,7 @@ else if (ReportDetails != null)
     <RadzenRow Gap="1rem">
         <!-- Main Content - 8 Columns -->
         <RadzenColumn Size="12" SizeLG="8">
-           @*  <!-- Tracking Information Card -->
-            <RadzenCard class="mb-4">
-                <div class="tracking-header">
-                    <h5 class="mb-3">
-                        <RadzenIcon Icon="track_changes" class="me-2" />
-                        Tracking Information
-                    </h5>
-                    
-                    <div class="row g-3">
-                        <div class="col-lg-3 col-md-6">
-                            <div class="info-item">
-                                <label class="info-label">Tracking ID</label>
-                                <div class="info-value tracking-id">@TrackingCode</div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6">
-                            <div class="info-item">
-                                <label class="info-label">Report Code</label>
-                                <div class="info-value">@(ReportDetails.ReportCode ?? "N/A")</div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6">
-                            <div class="info-item">
-                                <label class="info-label">Hazard Code</label>
-                                <div class="info-value">@(ReportDetails.HazardCode ?? "N/A")</div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6">
-                            <div class="info-item">
-                                <label class="info-label">Current Status</label>
-                                <RadzenBadge Text="@ReportDetails.CurrentStatus" 
-                                             BadgeStyle="@GetStatusBadgeStyle(ReportDetails.CurrentStatus)" 
-                                             class="status-badge" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </RadzenCard> *@
-
+           
             <!-- Report Information Card -->
             <RadzenCard class="report-details-card mb-4">
                 <RadzenStack Gap="1.5rem">
@@ -196,20 +158,53 @@ else if (ReportDetails != null)
                     }
 
                     <!-- Anonymous Alert (if applicable) -->
-                    @if (ReportDetails.IsAnonymous)
+                    @if (ReportDetails.IsAnonymous && AuthService.User.CanRead("SMS_Anonymous"))
                     {
                         <RadzenAlert AlertStyle="AlertStyle.Warning" ShowIcon="true" Variant="Variant.Flat">
                             <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0;">
                                 <strong>Anonymous Report:</strong> This report contains anonymous information and should be handled with appropriate confidentiality measures.
                             </RadzenText>
                         </RadzenAlert>
+                        <!-- Contact Info for Reporter (if not anonymous) -->
+                        @if (!ReportDetails.IsAnonymous && AuthService.User.CanRead("SMS_Anonymous") && (!string.IsNullOrEmpty(ReportDetails.ContactName) || !string.IsNullOrEmpty(ReportDetails.ContactCell) || !string.IsNullOrEmpty(ReportDetails.ContactEmail)))
+                        {
+                            <RadzenCard class="guidance-card mb-4">
+                                <h6 class="mb-3">
+                                    <RadzenIcon Icon="account_circle" class="me-2" />
+                                    Contact Information
+                                </h6>
+
+                                <RadzenStack Gap="0.5rem">
+                                    @if (!string.IsNullOrEmpty(ReportDetails.ContactName))
+                                    {
+                                        <div class="contact-info-item">
+                                            <RadzenIcon Icon="person" class="me-2" />
+                                            <small>@ReportDetails.ContactName</small>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(ReportDetails.ContactCell))
+                                    {
+                                        <div class="contact-info-item">
+                                            <RadzenIcon Icon="phone" class="me-2" />
+                                            <small>@ReportDetails.ContactCell</small>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(ReportDetails.ContactEmail))
+                                    {
+                                        <div class="contact-info-item">
+                                            <RadzenIcon Icon="email" class="me-2" />
+                                            <small>@ReportDetails.ContactEmail</small>
+                                        </div>
+                                    }
+                                </RadzenStack>
+                            </RadzenCard>
+                        }
+
                     }
                     else
                     {
                         <!-- Contact Info for Reporter (if not anonymous) -->
-                        @if (!ReportDetails.IsAnonymous && (!string.IsNullOrEmpty(ReportDetails.ContactName) ||
-                                        !string.IsNullOrEmpty(ReportDetails.ContactCell) ||
-                                        !string.IsNullOrEmpty(ReportDetails.ContactEmail)))
+                        @if (!ReportDetails.IsAnonymous && (!string.IsNullOrEmpty(ReportDetails.ContactName) ||!string.IsNullOrEmpty(ReportDetails.ContactCell) || !string.IsNullOrEmpty(ReportDetails.ContactEmail)))
                         {
                             <RadzenCard class="guidance-card mb-4">
                                 <h6 class="mb-3">

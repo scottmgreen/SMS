@@ -1,3 +1,5 @@
+using SMS3.Components.Shared.UIHelpers;
+
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
 public partial class CreateInterviewDialog : ComponentBase
@@ -54,18 +56,7 @@ public partial class CreateInterviewDialog : ComponentBase
     private List<DropdownOption> InterviewTypeOptions { get; set; } = new ();
     public List<DropdownOption> DepartmentOptions { get; set; } = new();
 
-    public class DropdownOption
-    {
-        public string Value { get; set; } = string.Empty;
-        public string Text { get; set; } = string.Empty;
-
-        public DropdownOption() { }
-        public DropdownOption(string value, string text)
-        {
-            Value = value;
-            Text = text;
-        }
-    }
+    
 
 
     public async Task OnDepartmentChanged(string? departmentValue)

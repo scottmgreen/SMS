@@ -1,4 +1,6 @@
 using System.Text;
+using SMS_Domain.Entities;
+using SMS3.Components.Shared.UIHelpers;
 
 using Microsoft.JSInterop;
 
@@ -357,23 +359,11 @@ public partial class HazardFileListing : ComponentBase
 
     private void ShowErrorNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
+        NotificationHelper.ShowError(NotificationService, message);
     }
 
     private void ShowSuccessNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
+        NotificationHelper.ShowSuccess(NotificationService, message);
     }
 }

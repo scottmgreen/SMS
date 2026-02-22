@@ -5,6 +5,7 @@ using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
 using SMS_Application.Interfaces;
 using SMS3.Components.Shared;
+using SMS3.Components.Shared.UIHelpers;
 using Radzen;
 using Radzen.Blazor;
 using Microsoft.AspNetCore.Components;
@@ -40,27 +41,9 @@ public partial class HazardScoringPanel : ComponentBase
     private string CalculatedMatrixCode = string.Empty;
     private RiskLevel CalculatedRiskLevel = null;
 
-    // Dropdown options - Updated to use A-E letter system
-    private List<SeverityOption> SeverityOptions = new()
-    {
-        new(1, "1 - Minor"),
-        new(2, "2 - Moderate"),
-        new(3, "3 - Serious"),
-        new(4, "4 - Major"),
-        new(5, "5 - Catastrophic")
-    };
-
-    private List<LikelihoodOption> LikelihoodOptions = new()
-    {
-        new(1, "A - Rare"),
-        new(2, "B - Unlikely"),
-        new(3, "C - Possible"),
-        new(4, "D - Likely"),
-        new(5, "E - Frequent")
-    };
-
-    public record SeverityOption(int Value, string Text);
-    public record LikelihoodOption(int Value, string Text);
+    // Dropdown options - Use centralized helpers
+    private List<SeverityOption> SeverityOptions => DropdownHelper.GetSeverityOptions();
+    private List<LikelihoodOption> LikelihoodOptions => DropdownHelper.GetLikelihoodOptions();
 
     protected override async Task OnInitializedAsync()
     {

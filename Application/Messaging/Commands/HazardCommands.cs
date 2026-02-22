@@ -49,7 +49,27 @@ public class UpdateHazardCommand : BaseCommandBundle, IRequest<Result<Hazard>>, 
         Hazard.UpdatedDate = timestamp;
     }
 }
+public class ResetHazardScoresCommand : BaseCommandBundle, IRequest<Result<Hazard>>, IUpdateCommand
+{
+    public Hazard Hazard { get; set; }
 
+    public ResetHazardScoresCommand(Hazard hazard)
+    {
+        Hazard = hazard ?? throw new ArgumentNullException(nameof(hazard));
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // For update commands, we typically don't modify CreatedBy
+        // But if needed for your domain logic, you can implement it
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        Hazard.UpdatedBy = userId;
+        Hazard.UpdatedDate = timestamp;
+    }
+}
 /// <summary>
 /// Command to delete a hazard (soft delete)
 /// </summary>

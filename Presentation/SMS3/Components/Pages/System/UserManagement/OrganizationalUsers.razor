@@ -296,7 +296,7 @@
                                                 Style="width: 100%;" Placeholder="Select SMS role (optional)" />
                             </RadzenFormField> *@
                             <RadzenFormField Text="Status" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                                <RadzenDropDown @bind-Value="@EditIsActive" Data="@StatusOptions" 
+                                <RadzenDropDown @bind-Value="@EditIsActive" Data="@ActiveInactiveStatusOptions" 
                                                 TextProperty="Text" ValueProperty="Value" 
                                                 Style="width: 100%;" />
                             </RadzenFormField>
@@ -513,7 +513,7 @@
                                                         </RadzenText>
                                                         @if (!string.IsNullOrEmpty(group.Description))
                                                         {
-                                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text.secondary-color);">
                                                                 @group.Description
                                                             </RadzenText>
                                                         }

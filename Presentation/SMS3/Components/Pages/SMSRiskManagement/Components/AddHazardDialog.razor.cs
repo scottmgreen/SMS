@@ -3,6 +3,7 @@ using Microsoft.JSInterop;
 using SMS_Domain.Entities;
 
 using SMS3.Components.Pages.SMSRiskManagement.Models;
+using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 

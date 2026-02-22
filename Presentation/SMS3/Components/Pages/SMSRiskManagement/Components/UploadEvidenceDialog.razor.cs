@@ -1,3 +1,5 @@
+using SMS3.Components.Shared.UIHelpers;
+
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
 public partial class UploadEvidenceDialog : ComponentBase
@@ -549,11 +551,7 @@ public partial class UploadEvidenceDialog : ComponentBase
         public bool IsConfidential { get; set; } = false;
     }
 
-    public class DropdownOption
-    {
-        public object Value { get; set; } = default!;
-        public string Text { get; set; } = "";
-    }
+  
 
     public class AttachedFile
     {

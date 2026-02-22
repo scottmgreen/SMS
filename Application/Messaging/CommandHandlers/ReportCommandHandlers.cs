@@ -1,10 +1,65 @@
 using Microsoft.Extensions.Logging;
 
+using SMS_Application.Messaging.Queries;
+
 namespace SMS_Application.Messaging.CommandHandlers;
 
 // =============================================
 // REPORT COMMAND HANDLERS
 // =============================================
+public class UpdateReportStatusCommandHandler : BaseCommandBundle, IRequestHandler<UpdateReportStatusCommand, Result<bool>>
+{
+    private readonly ReportDataService _dataService;
+    private readonly ILogger<UpdateReportStatusCommandHandler> _logger;
+
+    public UpdateReportStatusCommandHandler(ReportDataService dataService, ILogger<UpdateReportStatusCommandHandler> logger)
+    {
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<bool>> HandleAsync(UpdateReportStatusCommand request, CancellationToken ct = default)
+    {
+        try
+        {
+            if (request?.ReportCode is null)
+            {
+                _logger.LogApplicationError("UpdateReportStatusCommand received with null ReportCode", ApplicationEventIds.Error, null);
+                return Result<bool>.Failure<bool>(DomainErrors.ReportError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Processing CreateReportCommand for Code: {Code}", request.ReportCode);
+
+            var report = _dataService.GetReportByCodeAsync(new ReportID(request.ReportCode)).Result.Value;
+            
+            if (report !=null)
+            {
+                report.Status = request?.ReportStatus;
+                report.UpdatedBy = request?.UpdatedBy;
+                report.UpdatedDate = DateTime.UtcNow;
+
+                var result = _dataService.UpdateReportAsync(report);
+
+                if (!result.Result.IsSuccess)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error occurred while updating Report", ApplicationEventIds.Error, ex);
+            return Result<bool>.Failure<bool>(DomainErrors.ReportError.UpdateFailed);
+        }
+    }
+}
+
+
+
+
 
 public class CreateReportCommandHandler : BaseCommandBundle, IRequestHandler<CreateReportCommand, Result<Report>>
 {

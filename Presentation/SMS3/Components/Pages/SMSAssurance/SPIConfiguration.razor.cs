@@ -1,3 +1,5 @@
+using SMS3.Components.Shared.UIHelpers;
+
 namespace SMS3.Components.Pages.SMSAssurance;
 
 public partial class SPIConfiguration
@@ -69,30 +71,14 @@ public partial class SPIConfiguration
         // Load SPI types
         availableTypes = SPIType.GetAllValues().ToList();
 
-        // Load statuses
-        availableStatuses = new List<SPIStatus>
-        {
-            SPIStatus.Active,
-            SPIStatus.Inactive,
-            SPIStatus.UnderReview,
-            SPIStatus.Deprecated
-        };
+        // Load statuses using centralized helper
+        availableStatuses = DropdownHelper.GetSPIStatusOptions();
 
-        // Load frequencies
-        availableFrequencies = new List<SPIMeasurementFrequency>
-        {
-            SPIMeasurementFrequency.Daily,
-            SPIMeasurementFrequency.Weekly,
-            SPIMeasurementFrequency.Monthly,
-            SPIMeasurementFrequency.Quarterly,
-            SPIMeasurementFrequency.Annually
-        };
+        // Load frequencies using centralized helper  
+        availableFrequencies = DropdownHelper.GetSPIMeasurementFrequencyOptions();
 
-        // ? UPDATED: Load departments from SMSDepartment enum instead of hardcoded list
-        availableDepartments = SMSDepartment.GetAllDepartments()
-            .Select(d => d.Name)
-            .OrderBy(name => name)
-            .ToList();
+        // Load departments from SMSDepartment enum
+        availableDepartments = DropdownHelper.GetDepartmentNames();
     }
 
     private async Task LoadSPIs()
@@ -496,43 +482,20 @@ public partial class SPIConfiguration
     #region Notification Methods
     private void ShowSuccessNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
+        NotificationHelper.ShowSuccess(NotificationService, message);
     }
 
     private void ShowErrorNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
+        NotificationHelper.ShowError(NotificationService, message);
     }
 
     private void ShowInfoNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Info,
-            Summary = "Information",
-            Detail = message,
-            Duration = 4000
-        });
+        NotificationHelper.ShowInfo(NotificationService, message);
     }
     #endregion
 
     #region Supporting Types
-    public class FilterOption
-    {
-        public string Text { get; set; } = string.Empty;
-        public string Value { get; set; } = string.Empty;
-    }
     #endregion
 }

@@ -1,4 +1,5 @@
 using SMS3.Components.Pages.SMSAssurance.Components;
+using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSAssurance;
 
@@ -386,46 +387,22 @@ public partial class SPIDetail : ComponentBase
     #region Notification Methods
     private void ShowSuccessNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
+        NotificationHelper.ShowSuccess(NotificationService, message);
     }
 
     private void ShowErrorNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
+        NotificationHelper.ShowError(NotificationService, message);
     }
 
     private void ShowWarningNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Warning,
-            Summary = "Warning",
-            Detail = message,
-            Duration = 5000
-        });
+        NotificationHelper.ShowWarning(NotificationService, message);
     }
 
     private void ShowInfoNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Info,
-            Summary = "Info",
-            Detail = message,
-            Duration = 4000
-        });
+        NotificationHelper.ShowInfo(NotificationService, message);
     }
     #endregion
 }

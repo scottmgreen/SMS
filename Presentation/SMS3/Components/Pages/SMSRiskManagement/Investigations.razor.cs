@@ -2,16 +2,14 @@ using SMS_Domain.Entities;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 
+using SMS3.Components.Shared.UIHelpers;
+
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
 public partial class Investigations : ComponentBase
 {
     #region Helper Classes
-    public class DropdownOption
-    {
-        public string Value { get; set; } = string.Empty;
-        public string Text { get; set; } = string.Empty;
-    }
+   
     #endregion
 
     #region Injected Services
@@ -72,15 +70,7 @@ public partial class Investigations : ComponentBase
     }
     
     
-    private readonly List<DropdownOption> DecisionTypeOptions = new()
-    {
-        new() { Value = "NoFurtherAction", Text = "No Further Action" },
-        new() { Value = "ContinueLater", Text = "Continue Later" },
-        //new() { Value = "RequiresMitigation", Text = "Requires Mitigation" },
-        //new() { Value = "EscalateToRiskAssessment", Text = "Escalate to Risk Assessment" },
-        new() { Value = "ReturnToValidation", Text = "Return to Validation" },
-        //new() { Value = "ReferToExternal", Text = "Refer to External Authority" }
-    };
+    private readonly List<DropdownOption> DecisionTypeOptions = DropdownHelper.GetInvestigationDecisionOptions();
     #endregion
 
     #region Lifecycle Methods
@@ -185,7 +175,6 @@ public partial class Investigations : ComponentBase
     {
         try
         {
-            //var usersQuery = new GetAllSMSApplicationUsersQuery();
             var usersQuery = new GetUsersByApplicationGroupCodeQuery("AG-0006");
 
             var usersResult = await Mediator.SendAsync(usersQuery, CancellationToken.None);
@@ -491,38 +480,44 @@ public partial class Investigations : ComponentBase
         try
         {
             Logger.LogInformation("Resetting ReportValidation for ReportCode: {ReportCode}", reportCode);
-
-            // Find the existing ReportValidation for this report
             var reportId = new ReportID(reportCode);
+
+            
+            var queryHazard = new GetHazardsByReportCodeQuery(new ReportID(reportCode));
+            var hazardResult = await Mediator.SendAsync(queryHazard, CancellationToken.None);
+
+            if (hazardResult != null) 
+            {
+                var hazards = hazardResult.Value;
+                foreach (Hazard hazard in hazards) 
+                {
+                    hazard.HazardRiskLevel = RiskLevel.Unkonwn;
+                    hazard.InitialAverageScore = 0; 
+                    hazard.ResidualAverageScore = 0;
+                    hazard.ResidualRiskMatrixCode = "TBD";
+                    hazard.InitialRiskMatrixCode = "TBD";
+                    var cmdHazardReset = new ResetHazardScoresCommand(hazard);
+                    var hazardResetResult = await Mediator.SendAsync(queryHazard, CancellationToken.None);
+
+                   
+                }
+            }
+
+            
+
+
+
+
+
             var validationQuery = new GetReportValidationByReportIdQuery(reportId);
             var validationResult = await Mediator.SendAsync(validationQuery, CancellationToken.None);
-
             if (validationResult.IsSuccess && validationResult.Value != null)
             {
                 var validation = validationResult.Value;
+                var cmd = new ResetReportValidationCommand(new ReportValidationID(validation.Code));
+                var cmdResult = await Mediator.SendAsync(cmd, CancellationToken.None);
 
-                // CRITICAL: Reset the validation to make it appear in Validation tab again
-                validation.Status = ReportValidationStatus.ValidationNeeded;
-                validation.Stage = "Initial";
-                validation.UpdatedDate = DateTime.UtcNow;
-
-                // IMPORTANT: Clear these key fields so the validation appears as needing re-validation
-                validation.ValidationType = null;        // Clear validation type - this is key!
-                validation.ValidationDecision = null;    // Clear validation decision - this is key!
-                validation.ValidatedDate = null;         // Clear validated date
-                validation.ValidatedBy = null;          // Clear who validated it
-
-                // Add a comment about the reset
-                validation.ValidationComments = $"Reset from Investigation on {DateTime.UtcNow:yyyy-MM-dd HH:mm} - Returned for re-validation due to investigation findings";
-
-                Logger.LogInformation("Resetting ReportValidation {ValidationCode}: Status=InProgress, Stage=Initial, ValidationType=NULL, ValidationDecision=NULL",
-                    validation.Code);
-
-                // Update the ReportValidation
-                var updateCommand = new UpdateReportValidationCommand(validation);
-                var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
-
-                if (updateResult.IsSuccess)
+                if (cmdResult.IsSuccess)
                 {
                     bool flowControl = await UpdateReportStatus(reportCode, ReportStatus.NeedsValidation);
                     if (!flowControl)
@@ -534,23 +529,89 @@ public partial class Investigations : ComponentBase
                 }
                 else
                 {
-                    
-                    throw new InvalidOperationException($"Failed to reset ReportValidation: {updateResult.Error?.Message}");
+                    throw new InvalidOperationException($"Failed to reset ReportValidation: {cmdResult.Error?.Message}");
                 }
             }
             else
             {
                 Logger.LogWarning("No ReportValidation found for ReportCode: {ReportCode}. Creating new validation...", reportCode);
-
                 // If no existing validation found, create a new one
                 await CreateNewReportValidation(reportCode);
             }
+
         }
-        catch (Exception ex)
+        catch (Exception ex) 
         {
             Logger.LogError(ex, "Error resetting ReportValidation for ReportCode: {ReportCode}", reportCode);
             throw; // Re-throw to be handled by the calling method
         }
+
+
+        //try
+        //{
+        //    Logger.LogInformation("Resetting ReportValidation for ReportCode: {ReportCode}", reportCode);
+
+        //    // Find the existing ReportValidation for this report
+        //    var reportId = new ReportID(reportCode);
+        //    var validationQuery = new GetReportValidationByReportIdQuery(reportId);
+        //    var validationResult = await Mediator.SendAsync(validationQuery, CancellationToken.None);
+
+        //    if (validationResult.IsSuccess && validationResult.Value != null)
+        //    {
+        //        var validation = validationResult.Value;
+
+        //        // CRITICAL: Reset the validation to make it appear in Validation tab again
+        //        validation.Status = ReportValidationStatus.ValidationNeeded;
+        //        validation.Stage = "INITIAL";
+        //        validation.UpdatedDate = DateTime.UtcNow;
+
+        //        // IMPORTANT: Clear these key fields so the validation appears as needing re-validation
+        //        validation.ValidationType = null;        // Clear validation type - this is key!
+        //        validation.ValidationDecision = null;    // Clear validation decision - this is key!
+        //        validation.ValidatedDate = null;         // Clear validated date
+        //        validation.ValidatedBy = null;          // Clear who validated it
+
+        //        // Add a comment about the reset
+        //        validation.ValidationComments = $"Reset from Investigation on {DateTime.UtcNow:yyyy-MM-dd HH:mm} - Returned for re-validation due to investigation findings";
+
+        //        Logger.LogInformation("Resetting ReportValidation {ValidationCode}: Status=InProgress, Stage=Initial, ValidationType=NULL, ValidationDecision=NULL",
+        //            validation.Code);
+
+        //        // Update the ReportValidation
+        //        var updateCommand = new UpdateReportValidationCommand(validation);
+        //        var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+
+        //        if (updateResult.IsSuccess)
+        //        {
+        //            bool flowControl = await UpdateReportStatus(reportCode, ReportStatus.NeedsValidation);
+        //            if (!flowControl)
+        //            {
+        //                throw new Exception($"Failed to Update Report Status during Create new Risk Assessment: {DomainErrors.ReportValidationError.CreateFailed.Message}");
+        //            }
+
+        //            Logger.LogInformation("Successfully reset ReportValidation {ValidationCode} for ReportCode: {ReportCode}", validation.Code, reportCode);
+        //        }
+        //        else
+        //        {
+
+        //            throw new InvalidOperationException($"Failed to reset ReportValidation: {updateResult.Error?.Message}");
+        //        }
+        //    }
+        //    else
+        //    {
+        //        Logger.LogWarning("No ReportValidation found for ReportCode: {ReportCode}. Creating new validation...", reportCode);
+
+        //        // If no existing validation found, create a new one
+        //        await CreateNewReportValidation(reportCode);
+        //    }
+        //}
+        //catch (Exception ex)
+        //{
+        //    Logger.LogError(ex, "Error resetting ReportValidation for ReportCode: {ReportCode}", reportCode);
+        //    throw; // Re-throw to be handled by the calling method
+        //}
+
+
     }
 
     private async Task CreateNewReportValidation(string reportCode)
@@ -609,33 +670,15 @@ public partial class Investigations : ComponentBase
     }
     #endregion
 
-    private async Task<bool> UpdateReportStatus(string reportId, ReportStatus status)
+    private async Task<bool> UpdateReportStatus(string reportcode, ReportStatus status)
     {
-        var getReportQuery = new GetReportByCodeQuery(new ReportID(reportId));
-        var getReportQueryResult = await Mediator.SendAsync(getReportQuery, CancellationToken.None);
-
-        if (getReportQueryResult.IsSuccess)
+        var updatestatuscmd = new UpdateReportStatusCommand(reportcode, status, AuthService.CurrentUserDisplayName);
+        var getupdateResult = await Mediator.SendAsync(updatestatuscmd, CancellationToken.None);
+        if (!getupdateResult.IsSuccess)
         {
-            var report = getReportQueryResult.Value;
-            report.Status = status;
-            report.UpdatedBy = AuthService.CurrentUserDisplayName;
-            report.UpdatedDate = DateTime.UtcNow;
-
-            var cmdReportUpdate = new UpdateReportCommand(report);
-            var cmdReportResult = await Mediator.SendAsync(cmdReportUpdate, CancellationToken.None);
-
-            if (!cmdReportResult.IsSuccess)
-            {
-                ShowErrorNotification($"Report{reportId} Status Was not Updated");
-                return false;
-            }
-
-
-
-            // Show results
-
+            ShowErrorNotification($"Report{reportcode} Status Was not Updated");
+            return false;
         }
-
         return true;
     }
 

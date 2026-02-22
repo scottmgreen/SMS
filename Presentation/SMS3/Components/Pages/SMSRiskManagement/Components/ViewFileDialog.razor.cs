@@ -1,3 +1,10 @@
+using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
+using SMS_Application.Messaging.Commands;
+using SMS_Application.Messaging.Queries;
+using SMS3.Components.Shared.UIHelpers;
+using Radzen;
+
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
 public partial class ViewFileDialog : ComponentBase
@@ -59,24 +66,12 @@ public partial class ViewFileDialog : ComponentBase
     #region Notifications
     private void ShowInfoNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Info,
-            Summary = "Information",
-            Detail = message,
-            Duration = 4000
-        });
+        NotificationHelper.ShowInfo(NotificationService, message);
     }
 
     private void ShowErrorNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
+        NotificationHelper.ShowError(NotificationService, message);
     }
     #endregion
 }

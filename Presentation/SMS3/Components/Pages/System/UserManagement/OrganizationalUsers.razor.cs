@@ -2,6 +2,8 @@ using Domain.Entities;
 
 using Microsoft.Extensions.Options;
 
+using SMS3.Components.Shared.UIHelpers;
+
 namespace SMS3.Components.Pages.System.UserManagement;
 
 public partial class OrganizationalUsers : ComponentBase
@@ -89,11 +91,7 @@ public partial class OrganizationalUsers : ComponentBase
 
     #region Dropdown Options
 
-    private readonly List<StatusOption> StatusOptions = new()
-    {
-        new() { Text = "Active", Value = true },
-        new() { Text = "Inactive", Value = false }
-    };
+    private readonly List<StatusOption> ActiveInactiveStatusOptions = StatusOptions.ActiveInactiveOptions;
 
     private List<DropdownOption> DepartmentOptions
     {
@@ -110,56 +108,8 @@ public partial class OrganizationalUsers : ComponentBase
         }
     }
 
-    // Updated to use SMSOrganizationalLevel enum with category grouping
-    private List<DropdownOption> OrganizationLevelOptions
-    {
-        get
-        {
-            var options = new List<DropdownOption>();
-
-            // Group by category and show them in order of authority
-            //var categories = new[] { "Executive", "Management", "Operational", "Committee", "External" };
-
-            //foreach (var category in categories)
-            //{
-                //var categoryRoles = SMSOrganizationalLevel.GetLevelsByCategory(category)
-                //    .OrderByDescending(level => level.AuthorityLevel);
-
-                var categoryRoles = SMSOrganizationalLevel.GetAllValues()
-                    .OrderByDescending(level => level.AuthorityLevel);
-                    foreach (var level in categoryRoles)
-                    {
-                        options.Add(new DropdownOption
-                        {
-                            Text = $"  {level.Name} (Authority {level.AuthorityLevel})",
-                            Value = level.Name
-                        });
-                    }
-                    //if (categoryRoles.Any())
-                    //    {
-                    //        // Add category header (disabled option)
-                    //        //options.Add(new DropdownOption
-                    //        //{
-                    //        //    Text = $"--- {category} Roles ---",
-                    //        //    Value = "",
-                    //        //    IsDisabled = true
-                    //        //});
-
-                    //        // Add roles in category
-                    //        foreach (var level in categoryRoles)
-                    //        {
-                    //            options.Add(new DropdownOption
-                    //            {
-                    //                Text = $"  {level.Name} (Authority {level.AuthorityLevel})",
-                    //                Value = level.Name
-                    //            });
-                    //        }
-                    //    }
-                    //}
-
-            return options;
-        }
-    }
+    // Updated to use centralized helper for SMS Organization Level options
+    private List<DropdownOption> OrganizationLevelOptions => DropdownHelper.GetOrganizationLevelOptions();
 
     // Update validation to check if role exists
     private bool IsValidSMSRole(string roleId)
@@ -854,53 +804,26 @@ public partial class OrganizationalUsers : ComponentBase
 
     private void ShowErrorNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
+        NotificationHelper.ShowError(NotificationService, message);
     }
 
     private void ShowSuccessNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
+        NotificationHelper.ShowSuccess(NotificationService, message);
     }
 
     private void ShowInfoNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Info,
-            Summary = "Information",
-            Detail = message,
-            Duration = 4000
-        });
+        NotificationHelper.ShowInfo(NotificationService, message);
     }
 
     #endregion
 
     #region Helper Classes
 
-    public class StatusOption
-    {
-        public string Text { get; set; } = string.Empty;
-        public bool Value { get; set; }
-    }
+   
 
-    public class DropdownOption
-    {
-        public string Text { get; set; } = string.Empty;
-        public string Value { get; set; } = string.Empty;
-        public bool IsDisabled { get; set; } = false; // Add IsDisabled property
-    }
+  
 
     #endregion
 }

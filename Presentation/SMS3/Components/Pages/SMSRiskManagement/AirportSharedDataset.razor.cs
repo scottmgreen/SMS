@@ -1,3 +1,5 @@
+using SMS3.Components.Shared.UIHelpers;
+
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
 /// <summary>
@@ -35,7 +37,7 @@ public partial class AirportSharedDataset : ComponentBase
     #endregion
 
     #region Dropdown Options
-    private readonly List<DropdownOption> LocationOptions = new()
+    private List<DropdownOption> LocationOptions => new()
     {
         new() { Value = "Movement area", Text = "Movement area" },
         new() { Value = "Ramp", Text = "Ramp" },
@@ -44,7 +46,7 @@ public partial class AirportSharedDataset : ComponentBase
         new() { Value = "Other", Text = "Other" }
     };
 
-    private readonly List<DropdownOption> YesNoNAOptions = new()
+    private List<DropdownOption> YesNoNAOptions => new()
     {
         new() { Value = "N/A", Text = "N/A" },
         new() { Value = "Unknown", Text = "Unknown" },
@@ -407,24 +409,12 @@ public partial class AirportSharedDataset : ComponentBase
     #region Notifications
     private void ShowSuccessNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
+        NotificationHelper.ShowSuccess(NotificationService, message);
     }
 
     private void ShowErrorNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
+        NotificationHelper.ShowError(NotificationService, message);
     }
     #endregion
 
@@ -486,10 +476,6 @@ public partial class AirportSharedDataset : ComponentBase
         public string? OtherIssuesDescription { get; set; }
     }
 
-    public class DropdownOption
-    {
-        public string Value { get; set; } = "";
-        public string Text { get; set; } = "";
-    }
+   
     #endregion
 }

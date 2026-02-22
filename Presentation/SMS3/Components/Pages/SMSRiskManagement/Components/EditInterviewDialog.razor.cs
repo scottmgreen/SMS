@@ -1,3 +1,5 @@
+using SMS3.Components.Shared.UIHelpers;
+
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
 public partial class EditInterviewDialog : ComponentBase
@@ -41,18 +43,7 @@ public partial class EditInterviewDialog : ComponentBase
             .Select(hc => new DropdownOption(hc.Value, hc.Name))
             .ToList();
     }
-    public class DropdownOption
-    {
-        public string Value { get; set; } = string.Empty;
-        public string Text { get; set; } = string.Empty;
-
-        public DropdownOption() { }
-        public DropdownOption(string value, string text)
-        {
-            Value = value;
-            Text = text;
-        }
-    }
+   
 
 
     public async Task OnDepartmentChanged(string? departmentValue)

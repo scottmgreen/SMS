@@ -2,6 +2,7 @@
 using Microsoft.JSInterop;
 
 using SMS3.Components.Pages.SMSRiskManagement.Models;
+using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -1496,22 +1497,12 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
     #region Dropdown and Smart Enum Methods
 
-    /// <summary>
-    /// Initialize dropdown options using Smart Enums
-    /// </summary>
     private void InitializeDropdownOptions()
     {
-        // Hazard category options from Smart Enum
-        HazardCategoryOptions = HazardCategory.GetAllValues()
-            .Select(hc => new DropdownOption(hc.Value, hc.Name))
-            .ToList();
-
-        // Initially show all hazard types (will be filtered when category is selected)
-        HazardTypeOptions = new List<DropdownOption>();
-
-        DepartmentOptions = SMSDepartment.GetAllValues()
-            .Select(hc => new DropdownOption(hc.Value, hc.Name))
-            .ToList();
+        var (categories, types, departments) = DropdownHelper.InitializeHazardReportingDropdowns();
+        HazardCategoryOptions = categories;
+        HazardTypeOptions = types;
+        DepartmentOptions = departments;
     }
 
     public async Task OnDepartmentChanged(string? departmentValue)
@@ -1522,25 +1513,18 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
     }
 
-    /// <summary>
-    /// Handle hazard category selection change
-    /// </summary>
+    
     public async Task OnHazardCategoryChanged(string? categoryValue)
     {
-        Logger.LogInformation("Hazard category changed to: {Category}", categoryValue);
+        SelectedHazardCategory = categoryValue ?? string.Empty;
+        HazardReport.HazardType = string.Empty;
 
-        SelectedHazardCategory = categoryValue;
+        // ✅ Use centralized helper
+        HazardTypeOptions = DropdownHelper.HandleCategoryChange(categoryValue);
 
-        // Clear selected hazard type when category changes (normal user interaction)
-        HazardReport.HazardType = null;
-
-        // Load hazard types for the new category
-        await LoadHazardTypesForCategory(categoryValue ?? "", preserveSelectedType: false);
+        await InvokeAsync(StateHasChanged);
     }
-
-    /// <summary>
-    /// Handle hazard type selection change
-    /// </summary>
+   
     public async Task OnHazardTypeChanged(string? hazardTypeValue)
     {
         HazardReport.HazardType = hazardTypeValue;
@@ -1570,9 +1554,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         await InvokeAsync(StateHasChanged);
     }
 
-    /// <summary>
-    /// Get guidance text for selected hazard type
-    /// </summary>
+    
     public string GetHazardTypeGuidance(string? hazardTypeValue)
     {
         if (string.IsNullOrEmpty(hazardTypeValue))
@@ -1582,9 +1564,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         return hazardType?.GuidanceText ?? string.Empty;
     }
 
-    /// <summary>
-    /// Check if regulatory reporting is required for selected hazard type
-    /// </summary>
+    
     public bool RequiresRegulatoryReporting(string? hazardTypeValue)
     {
         if (string.IsNullOrEmpty(hazardTypeValue))
@@ -1594,9 +1574,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         return hazardType?.RequiresRegulatoryReporting ?? false;
     }
 
-    /// <summary>
-    /// Get hazard category description for display
-    /// </summary>
+    
     public string GetHazardCategoryDescription(string? categoryValue)
     {
         if (string.IsNullOrEmpty(categoryValue))

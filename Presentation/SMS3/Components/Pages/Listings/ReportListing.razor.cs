@@ -1,3 +1,10 @@
+﻿using SMS_Domain.Entities;
+using SMS_Domain.Enums;
+using SMS_Application.Messaging.Queries;
+using SMS3.Components.Shared.UIHelpers;
+using SMS3.Components.Shared;
+using SMS_Domain.Errors;
+
 namespace SMS3.Components.Pages.Listings;
 
 /// <summary>
@@ -14,6 +21,8 @@ public partial class ReportListing : ComponentBase
     [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
     #endregion
 
     #region Properties
@@ -50,7 +59,7 @@ public partial class ReportListing : ComponentBase
     public int TotalFilesCount => AssociatedHazards
         .Sum(h => h.HazardFileIds?.Count ?? 0);
     #endregion
-
+    
     #region Lifecycle Methods
     protected override async Task OnInitializedAsync()
     {
@@ -242,9 +251,9 @@ public partial class ReportListing : ComponentBase
 
             var confirmationMessage = $"Are you sure you want to delete report '{report.Code}'?\n\n" +
                                     $"Report Details:\n" +
-                                    $"� Name: {report.Name ?? "Unnamed Report"}\n" +
-                                    $"� Status: {report.Status ?? "Unknown"}\n" +
-                                    $"� Associated Hazards: {hazardCount}\n\n" +
+                                    $"• Name: {report.Name ?? "Unnamed Report"}\n" +
+                                    $"• Status: {report.Status ?? "Unknown"}\n" +
+                                    $"• Associated Hazards: {hazardCount}\n\n" +
                                     (hazardCount > 0 ? "??  WARNING: This report has associated hazards that may also be affected.\n\n" : "") +
                                     "?? This action cannot be undone!";
 
@@ -389,17 +398,7 @@ public partial class ReportListing : ComponentBase
         return Expression.Lambda<Func<Report, object>>(conversion, parameter);
     }
 
-    private void ShowErrorNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
-    }
-
+    
     /// <summary>
     /// Placeholder for future action implementation (kept for backward compatibility)
     /// </summary>
@@ -407,5 +406,278 @@ public partial class ReportListing : ComponentBase
     {
         Logger.LogInformation("Actions requested for report: {Code}", report.Code);
     }
-    #endregion
+
+    private async Task<Result<bool>> ResetReportValidation(string reportCode)
+    {
+        try
+        {
+            Logger.LogInformation("Resetting ReportValidation for ReportCode: {ReportCode}", reportCode);
+            var reportId = new ReportID(reportCode);
+
+            var queryHazard = new GetHazardsByReportCodeQuery(new ReportID(reportCode));
+            var hazardResult = await Mediator.SendAsync(queryHazard, CancellationToken.None);
+
+            if (hazardResult != null)
+            {
+                var hazards = hazardResult.Value;
+                foreach (Hazard hazard in hazards)
+                {
+                    hazard.HazardRiskLevel = RiskLevel.Unkonwn;
+                    hazard.InitialAverageScore = 0;
+                    hazard.ResidualAverageScore = 0;
+                    hazard.ResidualRiskMatrixCode = "TBD";
+                    hazard.InitialRiskMatrixCode = "TBD";
+                    var cmdHazardReset = new ResetHazardScoresCommand(hazard);
+                    var hazardResetResult = await Mediator.SendAsync(cmdHazardReset, CancellationToken.None);
+
+
+                }
+            }
+
+
+            var validationQuery = new GetReportValidationByReportIdQuery(reportId);
+            var validationResult = await Mediator.SendAsync(validationQuery, CancellationToken.None);
+            if (validationResult.IsSuccess && validationResult.Value != null)
+            {
+                var validation = validationResult.Value;
+                var cmd = new ResetReportValidationCommand(new ReportValidationID(validation.Code));
+                var cmdReset = await Mediator.SendAsync(cmd, CancellationToken.None);
+
+                if (cmdReset.IsSuccess)
+                {
+                    var flowControl = await UpdateReportStatus(reportCode, ReportStatus.NeedsValidation);
+                    if (!flowControl)
+                    {
+                        throw new Exception($"Failed to Update Report Status during Create new Risk Assessment: {DomainErrors.ReportValidationError.CreateFailed.Message}");
+                        
+                    }
+
+                    Logger.LogInformation("Successfully reset ReportValidation {ValidationCode} for ReportCode: {ReportCode}", validation.Code, reportCode);
+                    return true;    
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Failed to reset ReportValidation: {cmdReset.Error?.Message}");
+                    
+                }
+            }
+            else
+            {
+                Logger.LogWarning("No ReportValidation found for ReportCode: {ReportCode}. Creating new validation...", reportCode);
+                // If no existing validation found, create a new one
+                var createresult =await CreateNewReportValidation(reportCode);
+                return createresult;
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error resetting ReportValidation for ReportCode: {ReportCode}", reportCode);
+            throw; // Re-throw to be handled by the calling method
+        }
+
+
+        
+    }
+
+    private async Task <Result<bool>>CreateNewReportValidation(string reportCode)
+    {
+        try
+        {
+            Logger.LogInformation("Creating new ReportValidation for ReportCode: {ReportCode}", reportCode);
+
+            // Get the report details first
+            var reportQuery = new GetReportByCodeQuery(new ReportID(reportCode));
+            var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
+
+            if (reportResult.IsSuccess && reportResult.Value != null)
+            {
+                var report = reportResult.Value;
+
+                // Create new ReportValidation using the static factory method
+                var validation = SMS_Domain.Entities.ReportValidation.Create(reportCode, AuthService.CurrentUserDisplayName);
+                validation.ValidationComments = $"Created from Investigation return to validation workflow on {DateTime.UtcNow:yyyy-MM-dd HH:mm}";
+
+                var createCommand = new CreateReportValidationCommand(validation);
+                var createResult = await Mediator.SendAsync(createCommand, CancellationToken.None);
+
+                if (createResult.IsSuccess)
+                {
+
+                    bool flowControl = await UpdateReportStatus(reportCode, ReportStatus.NeedsValidation);
+                    if (!flowControl)
+                    {
+                        throw new Exception($"Failed to Update Report Status during Create new Risk Assessment: {DomainErrors.ReportValidationError.CreateFailed.Message}");
+                    }
+
+
+
+
+                    Logger.LogInformation("Successfully created new ReportValidation {ValidationCode} for ReportCode: {ReportCode}",
+                        createResult.Value.Code, reportCode);
+                }
+                else
+                {
+                    Logger.LogError("Failed to create new ReportValidation for ReportCode: {ReportCode}, Error: {Error}",
+                        reportCode, createResult.Error?.Message);
+                    throw new InvalidOperationException($"Failed to create new ReportValidation: {createResult.Error?.Message}");
+                }
+                return createResult.IsSuccess;
+            }
+            else
+            {
+                throw new InvalidOperationException($"Report {reportCode} not found, cannot create validation");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error creating new ReportValidation for ReportCode: {ReportCode}", reportCode);
+            throw;
+        }
+    }
+    
+    private async Task<bool> UpdateReportStatus(string reportcode, ReportStatus status)
+    {
+        var updatestatuscmd = new UpdateReportStatusCommand(reportcode, status, AuthService.CurrentUserDisplayName);
+        var getupdateResult = await Mediator.SendAsync(updatestatuscmd, CancellationToken.None);
+        if (!getupdateResult.IsSuccess)
+        {
+            ShowErrorNotification($"Report{reportcode} Status Was not Updated");
+            return false;
+        }
+        return true;
+    }
+
+
+
+
+#endregion
+
+    public async Task OnResetReportAsync(Report report)
+    {
+        if (report == null)
+        {
+            Logger.LogWarning("OnResetReportAsync called with null report");
+            ShowErrorNotification("Invalid report selected");
+            return;
+        }
+
+        Logger.LogInformation("Reset Report requested: {ReportCode}", report.Code);
+
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            // Load associated hazards to show impact
+            await LoadAssociatedHazardsAsync(report.Code);
+            var hazardCount = AssociatedHazards?.Count ?? 0;
+
+            // Build detailed confirmation message
+            var confirmationMessage = BuildResetConfirmationMessage(report, hazardCount);
+
+            // Show confirmation dialog
+            var confirmed = await DialogService.Confirm(
+                confirmationMessage,
+                "⚠️ Confirm Reset Report Validation",
+                new ConfirmOptions()
+                {
+                    OkButtonText = "✅ Yes, Reset Report",
+                    CancelButtonText = "❌ Cancel",
+                    AutoFocusFirstElement = false
+                });
+
+            if (confirmed == true)
+            {
+                Logger.LogInformation("User confirmed reset for report {ReportCode}", report.Code);
+
+                // Perform the reset operation
+                var result = await ResetReportValidation(report.Code);
+
+                if (result.IsSuccess && result.Value)
+                {
+                    Logger.LogInformation("Successfully reset report validation for {ReportCode}", report.Code);
+
+                    // Show success notification
+                    ShowSuccessNotification($"Report '{report.Code}' validation has been successfully reset");
+
+                    // Refresh the data grid to reflect changes
+                    await LoadInitialData();
+
+                    // Update UI state
+                    StateHasChanged();
+                }
+                else
+                {
+                    var errorMessage = result.Error?.Message ?? "Unknown error occurred during reset";
+                    Logger.LogError("Failed to reset report validation for {ReportCode}: {Error}", report.Code, errorMessage);
+
+                    ShowErrorNotification($"Failed to reset report validation: {errorMessage}");
+                }
+            }
+            else
+            {
+                Logger.LogInformation("User cancelled reset operation for report {ReportCode}", report.Code);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unexpected error during reset operation for report {ReportCode}", report.Code);
+            ShowErrorNotification($"An unexpected error occurred while resetting the report: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Builds a detailed confirmation message for report reset
+    /// </summary>
+    private string BuildResetConfirmationMessage(Report report, int hazardCount)
+    {
+        var message = $"Are you sure you want to reset the validation for report '{report.Code}'?\n\n" +
+                      $"📋 Report Details:\n" +
+                      $"• Code: {report.Code}\n" +
+                      $"• Name: {report.Name ?? "Unnamed Report"}\n" +
+                      $"• Status: {report.Status ?? "Unknown"}\n" +
+                      $"• Created: {report.CreatedDate:yyyy-MM-dd}\n" +
+                      $"• Associated Hazards: {hazardCount}\n\n";
+
+        if (hazardCount > 0)
+        {
+            message += "⚠️  WARNING: This report has associated hazards that may also be affected by this reset.\n\n";
+        }
+
+        message += "🚨 This action will:\n" +
+                   "• Reset the report validation status\n" +
+                   "• Clear any validation history\n" +
+                   "• Potentially affect associated hazards\n" +
+                   "• Require re-validation of the report\n\n" +
+                   "❗ This action cannot be undone!";
+
+        return message;
+    }
+
+    
+    /// <summary>
+    /// Shows error notification to user
+    /// </summary>
+    private void ShowErrorNotification(string message)
+    {
+        NotificationHelper.ShowError(NotificationService, message, 7000);
+    }
+
+    /// <summary>
+    /// Shows success notification to user
+    /// </summary>
+    private void ShowSuccessNotification(string message)
+    {
+        NotificationHelper.ShowSuccess(NotificationService, message, 5000);
+    }
+
+
+
+
 }

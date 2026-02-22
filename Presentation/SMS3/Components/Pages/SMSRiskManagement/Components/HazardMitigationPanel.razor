@@ -2,6 +2,7 @@
 @using Radzen.Blazor
 @using SMS3.Components.Pages.SMSRiskManagement
 @using SMS3.Components.Pages.SMSRiskManagement.Models
+@using SMS3.Components.Shared.UIHelpers
 @using SMS_Application.Interfaces
 @using SMS_Application.Messaging.Commands
 @using SMS_Application.Messaging.Queries
@@ -893,13 +894,7 @@
     /// </summary>
     private void ShowErrorNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 5000
-        });
+        NotificationHelper.ShowError(NotificationService, message, 5000);
     }
 
     /// <summary>
@@ -907,13 +902,7 @@
     /// </summary>
     private void ShowSuccessNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 3000
-        });
+        NotificationHelper.ShowSuccess(NotificationService, message, 3000);
     }
 
     /// <summary>
@@ -927,4 +916,4 @@
         public string Role { get; set; } = string.Empty;
         public bool IsSelected { get; set; }
     }
-}}
+}

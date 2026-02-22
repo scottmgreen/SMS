@@ -1,5 +1,6 @@
 using SMS_Domain.Entities;
 using SMS_Domain.Errors;
+using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -34,6 +35,8 @@ public partial class ReportValidation : ComponentBase
     // Display Properties
     private Report? ReportDetails { get; set; }
     private Hazard? ReportHazard { get; set; }
+
+    private bool RiskRegistryOnly { get; set; }
     private SMS_Domain.Entities.ReportValidation? ExistingValidation { get; set; }
     private List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
 
@@ -255,25 +258,23 @@ public partial class ReportValidation : ComponentBase
             // Create validation record first
             await CreateValidationRecord();
 
-            // Navigate based on decision
-            switch (SelectedValidationDecision.Value)
+            //if (this.RiskRegistryOnly)
+            //{
+            //    await NavigateToRiskRegistry();
+            //    return;
+            //}
+                                   
+            var navigationTask = SelectedValidationDecision switch
             {
-                case "SMS_RISK":
-                    await NavigateToRiskAssessment();
-                    break;
+                _ when SelectedValidationDecision == ValidationDecision.SmsRisk && this.RiskRegistryOnly => NavigateToRiskRegistry(),
+                _ when SelectedValidationDecision == ValidationDecision.SmsRisk => NavigateToRiskAssessment(),
+                _ when SelectedValidationDecision == ValidationDecision.NeedsInvestigation => NavigateToInvestigation(),
+                _ when SelectedValidationDecision == ValidationDecision.NotSmsRisk => HandleNotSmsRisk(),
+                _ => throw new InvalidOperationException($"Unhandled validation decision: {SelectedValidationDecision.Name}")
+            };
+            await navigationTask;
 
-                case "NEEDS_INVESTIGATION":
-                    await NavigateToInvestigation();
-                    break;
 
-                case "NOT_SMS_RISK":
-                    await HandleNotSmsRisk();
-                    break;
-
-                default:
-                    ShowErrorNotification("Invalid validation decision");
-                    break;
-            }
         }
         catch (Exception ex)
         {
@@ -404,6 +405,49 @@ public partial class ReportValidation : ComponentBase
         }
     }
 
+
+    /// <summary>
+    /// Navigate to Risk Assessment (Preliminary or Technical)
+    /// </summary>
+    private async Task NavigateToRiskRegistry()
+    {
+        // Show Airport Shared Dataset dialog before proceeding to assessment
+        var result = await DialogService.Confirm(
+            message: "Do you want to create an Airport Shared Dataset for this SMS Risk assessment?",
+            title: "Airport Shared Dataset",
+            options: new ConfirmOptions()
+            {
+                OkButtonText = "Yes, Create Dataset",
+                CancelButtonText = "No, Skip",
+                Width = "500px"
+            });
+
+        if (result == true)
+        {
+            // User wants to create dataset - navigate to dataset creation page
+            Logger.LogInformation("User chose to create Airport Shared Dataset for Report: {ReportId}", ReportId);
+            var datasetUrl = $"/SMSRiskManagement/AirportSharedDataset/{ReportId}";
+
+            if (!string.IsNullOrEmpty(ReportHazard?.Code))
+            {
+                datasetUrl += $"/{ReportHazard.Code}";
+            }
+
+            Navigation.NavigateTo(datasetUrl);
+        }
+        else
+        {
+            string navigationUrl;
+            navigationUrl = $"/SMSAssurance/RiskRegistry";
+            await Task.Delay(1500);
+            Navigation.NavigateTo(navigationUrl);
+        }
+    }
+
+
+
+
+
     /// <summary>
     /// Navigate to Risk Assessment (Preliminary or Technical)
     /// </summary>
@@ -506,9 +550,6 @@ public partial class ReportValidation : ComponentBase
                     {
                         throw new Exception($"Failed to Update Report Status during Create new Risk Assessment: {DomainErrors.ReportValidationError.CreateFailed.Message}");
                     }
-
-
-
 
                     await Task.Delay(1500);
                     Navigation.NavigateTo(navigationUrl);
@@ -694,14 +735,7 @@ public partial class ReportValidation : ComponentBase
         }
     }
 
-    /// <summary>
-    /// Get current user code from AuthService
-    /// </summary>
-    private string GetCurrentUserCode()
-    {
-        return AuthService.CurrentUserDisplayName; 
-    }
-
+    
     #endregion
 
     #region UI Helper Methods
@@ -709,7 +743,7 @@ public partial class ReportValidation : ComponentBase
     private string GetValidationCardStyle(string decisionValue)
     {
         //var baseStyle = "border: 2px solid var(--rz-border-color);";
-        var baseStyle = "border: 2px solid; color:black;";
+        var baseStyle = "border: 2px solid; color:black;height:200px;";
 
         if (SelectedValidationDecision?.Value == decisionValue)
         {
@@ -725,51 +759,26 @@ public partial class ReportValidation : ComponentBase
         return baseStyle;
     }
 
-    private BadgeStyle GetStatusBadgeStyle()
-    {
-        return CurrentStatus switch
-        {
-            "Completed" => BadgeStyle.Success,
-            "Draft" => BadgeStyle.Warning,
-            _ => BadgeStyle.Success
-        };
-    }
-
+    
     #endregion
 
     #region Notifications
 
     private void ShowSuccessNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
+        NotificationHelper.ShowSuccess(NotificationService, message);
     }
 
     private void ShowErrorNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
+        NotificationHelper.ShowError(NotificationService, message);
     }
 
     #endregion
 
     #region Models
 
-    public class DropdownOption
-    {
-        public string Value { get; set; } = "";
-        public string Text { get; set; } = "";
-    }
+    
 
     #endregion
 }

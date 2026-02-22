@@ -35,6 +35,10 @@ public class Program
         // SMS Session Management
         builder.Services.ConfigureSMSSession();
 
+        // Configure notification settings
+        builder.Services.Configure<NotificationSettings>(
+            builder.Configuration.GetSection(NotificationSettings.SectionName));
+
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>
         {
@@ -143,8 +147,8 @@ public class Program
                     Code = "RP-0000",
                     Name = $"External Confidential Report - {request.HazardType}",
                     Description = request.Description,
-                    Stage = "Initial",
-                    Status = "Initial",
+                    Stage = "NEW",
+                    Status = ReportStatus.Created,
                     SubmittedBy = "EXTERNAL_SYSTEM",
                     SubmittingDepartment = request.SourceSystem ?? "EXTERNAL"
                 };

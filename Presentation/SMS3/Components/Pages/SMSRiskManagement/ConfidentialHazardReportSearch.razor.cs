@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components.Web;
 
+using SMS3.Components.Shared.UIHelpers;
+
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
 /// <summary>
@@ -602,13 +604,7 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
     /// <param name="message">Message to display</param>
     private void ShowSuccessNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
+        NotificationHelper.ShowSuccess(NotificationService, message);
     }
 
     /// <summary>
@@ -617,13 +613,7 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
     /// <param name="message">Message to display</param>
     private void ShowErrorNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 5000
-        });
+        NotificationHelper.ShowError(NotificationService, message, 5000);
     }
 
     /// <summary>
@@ -632,13 +622,7 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
     /// <param name="message">Message to display</param>
     private void ShowWarningNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Warning,
-            Summary = "Warning",
-            Detail = message,
-            Duration = 5000
-        });
+        NotificationHelper.ShowWarning(NotificationService, message, 5000);
     }
 
     /// <summary>
@@ -647,13 +631,7 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
     /// <param name="message">Message to display</param>
     private void ShowInfoNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Info,
-            Summary = "Information",
-            Detail = message,
-            Duration = 4000
-        });
+        NotificationHelper.ShowInfo(NotificationService, message);
     }
 
     #endregion

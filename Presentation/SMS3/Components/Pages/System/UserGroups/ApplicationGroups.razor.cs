@@ -1,3 +1,5 @@
+using SMS3.Components.Shared.UIHelpers;
+
 namespace SMS3.Components.Pages.System.UserGroups;
 
 public partial class ApplicationGroups : ComponentBase
@@ -62,11 +64,7 @@ public partial class ApplicationGroups : ComponentBase
 
     #region Dropdown Options
 
-    private readonly List<StatusOption> StatusOptions = new()
-    {
-        new() { Text = "Active", Value = true },
-        new() { Text = "Inactive", Value = false }
-    };
+    private readonly List<StatusOption> ActiveInactiveStatusOptions = StatusOptions.ActiveInactiveOptions;
 
     #endregion
 
@@ -358,22 +356,12 @@ public partial class ApplicationGroups : ComponentBase
 
     private void ShowErrorNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message
-        });
+        NotificationHelper.ShowError(NotificationService, message);
     }
 
     private void ShowSuccessNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message
-        });
+        NotificationHelper.ShowSuccess(NotificationService, message);
     }
 
     #endregion
@@ -589,13 +577,5 @@ public partial class ApplicationGroups : ComponentBase
 
     #endregion
 
-    #region Helper Classes
-
-    public class StatusOption
-    {
-        public string Text { get; set; } = string.Empty;
-        public bool Value { get; set; }
-    }
-
-    #endregion
+    
 }

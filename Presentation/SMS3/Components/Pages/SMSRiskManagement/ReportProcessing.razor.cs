@@ -6,6 +6,7 @@ using SMS_Application.Messaging.Queries;
 
 using SMS_Domain.Entities;
 using SMS_Domain.Interfaces;
+using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -1375,38 +1376,19 @@ public partial class ReportProcessing : ComponentBase
     // Notification helper methods
     private void ShowSuccessNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
+        NotificationHelper.ShowSuccess(NotificationService, message);
     }
 
     private void ShowErrorNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
+        NotificationHelper.ShowError(NotificationService, message);
     }
 
     private void ShowInfoNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Info,
-            Summary = "Information",
-            Detail = message,
-            Duration = 5000
-        });
+        NotificationHelper.ShowInfo(NotificationService, message, 5000);
     }
 
-    
     private void RenderEmptyState(RenderTreeBuilder builder, string icon, string title, string description)
     {
         builder.OpenComponent<RadzenStack>(0);
@@ -1867,7 +1849,7 @@ public partial class ReportProcessing : ComponentBase
     //                            // Update mitigation status to Approved using enum value
     //                            mitigation.Status = MitigationStatus.Approved;
     //                            mitigation.UpdatedDate = DateTime.UtcNow;
-    //                            mitigation.UpdatedBy = AuthService.CurrentUser.Code;  // You might want to get the current user
+    //                            mitigation.UpdatedBy = AuthService.CurrentUser.Code; // You might want to get the current user
 
     //                            var updateCommand = new UpdateMitigationCommand(mitigation);
     //                            var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
@@ -1912,7 +1894,7 @@ public partial class ReportProcessing : ComponentBase
     //            ShowSuccessNotification($"Successfully approved {successCount} mitigation(s) across {reportHazards.Count} hazard(s) for report {reportId}");
 
     //            // Reload data to reflect changes
-    //            await LoadDataAsync();
+    //            await LoadUserRolesAsync();
     //        }
     //        else if (errorCount == 0)
     //        {
@@ -1936,7 +1918,6 @@ public partial class ReportProcessing : ComponentBase
     //        IsProcessingApproval = false;
     //        StateHasChanged();
     //    }
-    //}
     /// <summary>
     /// ✅ FIXED: Filter for PENDING_APPROVAL using enum value and avoid duplicates
     /// </summary>
@@ -1992,6 +1973,7 @@ public partial class ReportProcessing : ComponentBase
                             pendingMitigations.Count, hazard.Code,
                             string.Join(", ", pendingMitigations.Select(m => $"{m.Code}({m.Status})")));
 
+                        // Approve each pending mitigation
                         foreach (var mitigation in pendingMitigations)
                         {
                             try
@@ -2255,40 +2237,15 @@ public partial class ReportProcessing : ComponentBase
     }
 
     /// <summary>
-    /// 🚀 Get risk level breakdown for display using enum values
+    /// 🚀 ENHANCED: Updated bulk approval logic with approver validation
     /// </summary>
-    private List<RiskLevelBreakdown> GetRiskLevelBreakdown(ReportProcessingSummary report)
-    {
-        return report.AllMitigations
-            .GroupBy(m => m.HazardRiskLevel?.Name ?? RiskLevel.Unkonwn.Name) // ✅ Use enum for unknown
-            .Select(g => new RiskLevelBreakdown
-            {
-                RiskLevel = g.Key,
-                HazardCount = g.Select(m => m.HazardCode).Distinct().Count(),
-                MitigationCount = g.Count()
-            })
-            .OrderByDescending(r => GetRiskPriority(r.RiskLevel))
-            .ToList();
-    }
-
-
     private async Task CloseBulkApprovalConfirmation()
     {
         ShowBulkApprovalDialog = false;
         SelectedReportForApproval = null;
+        SelectedApprover = null;
         StateHasChanged();
     }
-    //private async Task ProcessBulkApprovalConfirmation()
-    //{
-    //    if (SelectedReportForApproval != null)
-    //    {
-    //        await BulkApproveAllMitigationsForReport(SelectedReportForApproval.ReportId);
-    //        await CloseBulkApprovalConfirmation();
-    //    }
-    //}
-    /// <summary>
-    /// 🚀 ENHANCED: Updated bulk approval logic with approver validation
-    /// </summary>
     
     #endregion
 
@@ -2310,8 +2267,7 @@ public partial class ReportProcessing : ComponentBase
                 AuthorityLevel = user.AuthorityLevel?.ToString() ?? "Not specified",
                 RiskApprovalAuthority = user.RiskApprovalAuthority ?? "Not specified",
                 Department = user.Department?.Name ?? "Not specified",
-                Position = user.OrganizationLevel.Value ?? "Not specified",
-                //Position = user.Position ?? "Not specified"
+                Position = user.Position ?? "Not specified"
             };
         }
     }

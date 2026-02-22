@@ -26,10 +26,11 @@
                 PageSize="25"
                 PagerHorizontalAlign="HorizontalAlign.Left"
                 ShowPagingSummary="true"
-                FilterMode="FilterMode.Advanced"
+                FilterMode="FilterMode.SimpleWithMenu"
                 SelectionMode="DataGridSelectionMode.Single"
                 Style="height: calc(100vh - 250px)"
-                IsLoading="@isLoading">
+                IsLoading="@isLoading"
+                >
     
     <Columns>
         <RadzenDataGridColumn TItem="Report" Property="Code" Title="Report ID" Width="150px" >
@@ -88,6 +89,11 @@
         <RadzenDataGridColumn TItem="Report" Title="Actions" Width="150px" Sortable="false" Filterable="false">
             <Template Context="report">
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                    <RadzenButton ButtonStyle="ButtonStyle.Success"
+                                  Size="ButtonSize.Small"
+                                  Click="@(() => OnResetReportAsync(report))"
+                                  title="Reset Report"
+                                  Icon="visibility" />
                     <RadzenButton ButtonStyle="ButtonStyle.Base" 
                                 Size="ButtonSize.Small"
                                 Click="@(() => OnViewReportAsync(report))"

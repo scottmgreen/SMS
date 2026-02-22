@@ -1,3 +1,5 @@
+using System.Security;
+
 namespace SMS3.Components.Pages.System.UserRoles;
 
 public partial class UserRoles : ComponentBase
@@ -14,10 +16,27 @@ public partial class UserRoles : ComponentBase
     private string? ErrorMessage { get; set; }
 
     // Predefined SMS Modules
-    private static readonly string[] SMSModules =
+    private static string[] SMSModules { get; set; } = Array.Empty<string>();
+
+    private void LoadModules()
     {
-        "SMS_Assurance", "SMS_Policy", "SMS_Promotion", "SMS_RiskManagement", "SMS_System"
-    };
+        if (!UserRolesList?.Any() == true)
+        {
+            SMSModules = Array.Empty<string>();
+            return;
+        }
+
+        // Alternative approach if permissions have a Module property
+        var allModules = UserRolesList
+            .SelectMany(role => role.Permissions ?? new List<SMSUserRolePermission>())
+            .Select(permission => permission.SMSModule) // Assuming Permission has a Module property
+            .Where(module => !string.IsNullOrWhiteSpace(module))
+            .Distinct()
+            .OrderBy(module => module)
+            .ToArray();
+
+        SMSModules = allModules;
+    }
 
     // Form Models
     private EditRoleModel editRole = new();
@@ -40,12 +59,14 @@ public partial class UserRoles : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadDataAsync();
+        await LoadUserRolesAsync();
+        LoadModules();
+
     }
 
     #region Data Loading
 
-    private async Task LoadDataAsync()
+    private async Task LoadUserRolesAsync()
     {
         try
         {
@@ -132,7 +153,7 @@ public partial class UserRoles : ComponentBase
             {
                 ShowSuccessNotification($"User role '{NewRole.RoleName}' created successfully.");
                 CloseCreateModal();
-                await LoadDataAsync();
+                await LoadUserRolesAsync();
             }
             else
             {
@@ -298,7 +319,7 @@ public partial class UserRoles : ComponentBase
             {
                 ShowSuccessNotification($"User role '{editRole.RoleName}' updated successfully.");
                 CloseEditModal();
-                await LoadDataAsync();
+                await LoadUserRolesAsync();
             }
             else
             {
@@ -376,7 +397,7 @@ public partial class UserRoles : ComponentBase
             if (result.IsSuccess)
             {
                 ShowSuccessNotification("User role deleted successfully.");
-                await LoadDataAsync();
+                await LoadUserRolesAsync();
             }
             else
             {

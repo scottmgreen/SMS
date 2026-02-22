@@ -1,3 +1,7 @@
+using SMS_Domain.Entities;
+using SMS_Domain.Enums;
+using SMS3.Components.Shared.UIHelpers;
+
 namespace SMS3.Components.Pages.SMSAssurance.Components;
 
 public partial class AuditPlanDialog : ComponentBase
@@ -474,24 +478,12 @@ public partial class AuditPlanDialog : ComponentBase
     #region Notification Methods
     private void ShowSuccessNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
+        NotificationHelper.ShowSuccess(NotificationService, message);
     }
 
     private void ShowErrorNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
+        NotificationHelper.ShowError(NotificationService, message);
     }
     #endregion
 }

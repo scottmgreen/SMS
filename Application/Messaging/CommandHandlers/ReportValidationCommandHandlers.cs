@@ -1,5 +1,9 @@
 using Microsoft.Extensions.Logging;
 
+using SMS_Application.Messaging.Queries;
+
+using SMS_Domain.Common;
+
 using SMS_Infrastructure.Interfaces;
 using SMS_Infrastructure.Services;
 
@@ -341,6 +345,99 @@ public class DeleteReportValidationCommandHandler : BaseCommandBundle, IRequestH
             _logger.LogWarning("DeleteReportValidationCommand operation was cancelled");
             throw;
         }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error occurred while deleting ReportValidation with ID: {Id}", ApplicationEventIds.Error, ex);
+            return Result<bool>.Failure<bool>(DomainErrors.ReportError.DeleteFailed);
+        }
+    }
+}
+
+
+
+public class ResetReportValidationCommandHandler : BaseCommandBundle, IRequestHandler<ResetReportValidationCommand, Result<bool>>
+{
+    private readonly ReportValidationDataService _dataService;
+    private readonly ReportDataService _dataReportService;
+    private readonly ILogger<ResetReportValidationCommandHandler> _logger;
+
+    public ResetReportValidationCommandHandler(ReportValidationDataService dataService, ReportDataService dataReportService,ILogger<ResetReportValidationCommandHandler> logger)
+    {
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _dataReportService = dataReportService ?? throw new ArgumentNullException(nameof(dataReportService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<bool>> HandleAsync(ResetReportValidationCommand request, CancellationToken ct = default)
+    {
+        try
+        {
+            if (request?.ReportValidationId is null)
+            {
+                _logger.LogApplicationError("ResetReportValidationCommand received with null ReportValidationId", ApplicationEventIds.Error, null);
+                return Result<bool>.Failure<bool>(DomainErrors.ReportError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Processing ResetReportValidationCommand for ID: {Id}", request.ReportValidationId);
+
+            
+
+            try
+            {
+                
+                // Find the existing ReportValidation for this report
+                var validationResult = await _dataService.GetReportValidationByIdAsync(request.ReportValidationId);
+
+                if (validationResult.IsSuccess && validationResult.Value != null)
+                {
+                    var validation = validationResult.Value;
+
+                    // CRITICAL: Reset the validation to make it appear in Validation tab again
+                    validation.Status = ReportValidationStatus.ValidationNeeded;
+                    validation.Stage = "INITIAL";
+                    validation.UpdatedDate = DateTime.UtcNow;
+
+                    // IMPORTANT: Clear these key fields so the validation appears as needing re-validation
+                    validation.ValidationType = null;        // Clear validation type - this is key!
+                    validation.ValidationDecision = null;    // Clear validation decision - this is key!
+                    validation.ValidatedDate = null;         // Clear validated date
+                    validation.ValidatedBy = null;          // Clear who validated it
+
+                    // Add a comment about the reset
+                    validation.ValidationComments = $"Reset on {DateTime.UtcNow:yyyy-MM-dd HH:mm} - Returned for re-validation";
+
+                    // Update the ReportValidation
+                    
+                    var result = _dataService.UpdateReportValidationAsync(validation);
+
+                    if (result.Result.IsSuccess)
+                    {
+                        _logger.LogInformation("Successfully deleted ReportValidation with ID: {Id}", request.ReportValidationId);
+                    }
+                    else
+                    {
+                        _logger.LogApplicationError("Failed to delete ReportValidation with ID: {Id}. Error: {Error}",
+                            ApplicationEventIds.Error, null);
+                    }
+
+                    return result.Result.IsSuccess;
+                }
+                else
+                {
+                    return validationResult.IsSuccess;
+                }
+            }
+
+
+
+            catch (OperationCanceledException)
+            {
+                _logger.LogWarning("ResetReportValidationCommand operation was cancelled");
+                throw;
+            }
+
+        }
+        
         catch (Exception ex)
         {
             _logger.LogApplicationError("Unexpected error occurred while deleting ReportValidation with ID: {Id}", ApplicationEventIds.Error, ex);

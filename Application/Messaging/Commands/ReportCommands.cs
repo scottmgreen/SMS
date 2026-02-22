@@ -1,5 +1,27 @@
 namespace SMS_Application.Messaging.Commands;
 
+/// <summary>
+/// Special Handling Commands 
+/// </summary>
+
+public class UpdateReportStatusCommand : BaseCommandBundle, IRequest<Result<bool>>
+{
+    public string ReportCode { get; set; }
+    public string ReportStatus { get; set; }
+
+    public string UpdatedBy { get; set; }   
+    public UpdateReportStatusCommand(string reportcode,string reportstatus ,string updatedby)
+    {
+        ReportCode = reportcode ?? throw new ArgumentNullException(nameof(reportcode));
+        ReportStatus = reportstatus ?? throw new ArgumentNullException(nameof(reportstatus));
+        UpdatedBy = updatedby ?? throw new ArgumentNullException(nameof(updatedby));    
+    }
+
+    
+}
+
+
+
 public class CreateReportCommand : BaseCommandBundle, IRequest<Result<Report>>, ICreateCommand
 {
     public Report Report { get; set; }

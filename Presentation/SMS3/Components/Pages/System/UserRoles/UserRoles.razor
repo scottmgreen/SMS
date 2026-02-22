@@ -275,8 +275,8 @@
                                                     Click="@(() => ToggleAllEditPermissions(false))" />
                                     </RadzenStack>
                                 </RadzenStack>
-                                
-                                <RadzenDataGrid Data="@SMSModules" TItem="string" AllowPaging="false" class="permission-grid">
+
+                                <RadzenDataGrid Data="@SMSModules" TItem="string" AllowPaging="false" class="permission-grid" Style="height: 700px; overflow-y:auto">
                                     <Columns>
                                         <RadzenDataGridColumn TItem="string" Title="Module" Width="25%">
                                             <Template Context="module">
@@ -360,7 +360,7 @@
 
                     @if (ViewRole.Permissions?.Any() == true)
                     {
-                        <RadzenDataGrid Data="@SMSModules" TItem="string" AllowPaging="false" class="permission-view-grid">
+                        <RadzenDataGrid Data="@SMSModules" TItem="string" AllowPaging="false" class="permission-view-grid" Style="height: 700px; overflow-y:auto">
                             <Columns>
                                 <RadzenDataGridColumn TItem="string" Title="Module" Width="30%">
                                     <Template Context="module">

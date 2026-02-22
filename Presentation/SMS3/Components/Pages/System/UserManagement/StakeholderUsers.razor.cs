@@ -1,3 +1,5 @@
+using SMS3.Components.Shared.UIHelpers;
+
 namespace SMS3.Components.Pages.System.UserManagement;
 
 /// <summary>
@@ -487,22 +489,10 @@ public partial class StakeholderUsers : ComponentBase
             ShowErrorNotification("Error assigning role. Please try again.");
         }
     }
-    private readonly List<StatusOption> IsActiveOptions = new()
-    {
-        new() { Text = "Active", Value = true },
-        new() { Text = "Inactive", Value = false }
-    };
+    private readonly List<StatusOption> IsActiveOptions = StatusOptions.ActiveInactiveOptions;
 
-    private readonly List<StatusOption> IsPOPEmployeeOptions = new()
-    {
-        new() { Text = "Yes", Value = true },
-        new() { Text = "No", Value = false }
-    };
-    public class StatusOption
-    {
-        public string Text { get; set; } = string.Empty;
-        public bool Value { get; set; }
-    }
+    private readonly List<StatusOption> IsPOPEmployeeOptions = StatusOptions.YesNoOptions;
+   
     #endregion
 
     #region Group Management
@@ -726,39 +716,21 @@ public partial class StakeholderUsers : ComponentBase
 
     #endregion
 
-    #region Notifications
-
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
-    }
+    #region Notification Methods
 
     private void ShowErrorNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
+        NotificationHelper.ShowError(NotificationService, message);
+    }
+
+    private void ShowSuccessNotification(string message)
+    {
+        NotificationHelper.ShowSuccess(NotificationService, message);
     }
 
     private void ShowInfoNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Info,
-            Summary = "Information",
-            Detail = message,
-            Duration = 4000
-        });
+        NotificationHelper.ShowInfo(NotificationService, message);
     }
 
     #endregion

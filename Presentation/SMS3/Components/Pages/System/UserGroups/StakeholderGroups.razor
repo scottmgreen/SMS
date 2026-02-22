@@ -1,7 +1,7 @@
 @page "/System/UserGroups/StakeholderGroups"
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
-@using SMS3.Components.Shared
+@using SMS3.Components.Shared.UIHelpers
 @using Radzen
 @using Radzen.Blazor
 
@@ -119,7 +119,7 @@
                     </RadzenFormField>
                     
                     <RadzenFormField Text="Status" Variant="Variant.Outlined">
-                        <RadzenDropDown @bind-Value="@EditIsActive" Data="@StatusOptions" 
+                        <RadzenDropDown @bind-Value="@EditIsActive" Data="@ActiveStatusOptions"
                                         TextProperty="Text" ValueProperty="Value" 
                                         Style="width: 100%;" />
                     </RadzenFormField>

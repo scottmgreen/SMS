@@ -51,3 +51,13 @@ public class DeleteReportValidationCommand : BaseCommandBundle, IRequest<Result<
         ReportValidationId = reportValidationId ?? throw new ArgumentNullException(nameof(reportValidationId));
     }
 }
+
+public class ResetReportValidationCommand : BaseCommandBundle, IRequest<Result<bool>>
+{
+    public ReportValidationID ReportValidationId { get; set; }
+
+    public ResetReportValidationCommand(ReportValidationID reportValidationId)
+    {
+        ReportValidationId = reportValidationId ?? throw new ArgumentNullException(nameof(reportValidationId));
+    }
+}

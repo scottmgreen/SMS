@@ -1,9 +1,11 @@
-﻿using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Interfaces;
+﻿using System.Data.Common;
 using Radzen;
+using SMS_Application.Interfaces;
+using SMS_Application.Messaging.Queries;
+using SMS_Domain.Entities;
+using SMS_Domain.Enums;
 using SMS3.Components.Shared;
+using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSAssurance;
 
@@ -99,12 +101,14 @@ public partial class RiskRegistry : ComponentBase
             Logger.LogInformation("🔍 Risk Registry: Starting data load...");
 
             // Load all required data in parallel
+            var reportsTask = LoadAllReportsAsync();
             var hazardsTask = LoadAllHazardsAsync();
             var assessmentsTask = LoadAllRiskAssessmentsAsync();
             var mitigationsTask = LoadAllMitigationsAsync();
 
             await Task.WhenAll(hazardsTask, assessmentsTask, mitigationsTask);
 
+            var reports = await reportsTask;
             var hazards = await hazardsTask;
             var assessments = await assessmentsTask;
             var mitigations = await mitigationsTask;
@@ -121,7 +125,7 @@ public partial class RiskRegistry : ComponentBase
             }
 
             // Build risk registry entries
-            RiskRegistryEntries = BuildRiskRegistryEntries(hazards, assessments, mitigations);
+            RiskRegistryEntries = BuildRiskRegistryEntries(reports,hazards, assessments, mitigations);
 
             Logger.LogInformation("🎯 Risk Registry: Built {EntryCount} registry entries", RiskRegistryEntries.Count);
 
@@ -146,6 +150,37 @@ public partial class RiskRegistry : ComponentBase
             await Task.Delay(50); // Small delay to ensure state propagation
             StateHasChanged();
         }
+    }
+
+    /// <summary>
+    /// Load all reports from the system
+    /// </summary>
+    private async Task<List<Report>> LoadAllReportsAsync()
+    {
+        try
+        {
+            Logger.LogInformation("🔍 Loading all hazards...");
+            var query = new GetAllReportsQuery();
+            var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+            if (result.IsSuccess && result.Value != null)
+            {
+                var reports = result.Value.ToList();
+                Logger.LogInformation("✅ Loaded {Count} reports successfully", reports.Count);
+                return reports;
+            }
+            else
+            {
+                Logger.LogWarning("⚠️ GetAllReportsQuery failed or returned null. IsSuccess: {IsSuccess}, Error: {Error}",
+                    result.IsSuccess, result.Error?.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Exception loading hazards");
+        }
+
+        return new List<Report>();
     }
 
     /// <summary>
@@ -248,14 +283,9 @@ public partial class RiskRegistry : ComponentBase
     /// <summary>
     /// Build risk registry entries by correlating hazards, assessments, and mitigations
     /// </summary>
-    private List<RiskRegistryEntry> BuildRiskRegistryEntries(
-        List<Hazard> hazards,
-        List<RiskAssessment> assessments,
-        List<Mitigation> mitigations)
+    private List<RiskRegistryEntry> BuildRiskRegistryEntries(List<Report> reports,List<Hazard> hazards,List<RiskAssessment> assessments,List<Mitigation> mitigations)
     {
-        Logger.LogInformation("🏗️ Building risk registry entries from {HazardCount} hazards, {AssessmentCount} assessments, {MitigationCount} mitigations",
-            hazards.Count, assessments.Count, mitigations.Count);
-
+        
         var entries = new List<RiskRegistryEntry>();
 
         foreach (var hazard in hazards)
@@ -265,6 +295,11 @@ public partial class RiskRegistry : ComponentBase
                 Logger.LogDebug("🔍 Processing hazard: {HazardCode} - {Description}", hazard.Code, hazard.Description);
 
                 // Find associated risk assessment
+
+                var report = reports.Where(r => r.Code.Trim() == hazard.ReportCode.Trim()).FirstOrDefault();
+                
+                
+                
                 var assessment = assessments.FirstOrDefault(a =>
                     a.HazardCode == hazard.Code ||
                     a.IdentifiedHazardIds?.Contains(hazard.Code) == true);
@@ -288,7 +323,7 @@ public partial class RiskRegistry : ComponentBase
                     // Create one entry per mitigation
                     foreach (var mitigation in hazardMitigations)
                     {
-                        var entry = CreateRiskRegistryEntry(hazard, assessment, mitigation);
+                        var entry = CreateRiskRegistryEntry(report,hazard, assessment, mitigation);
                         entries.Add(entry);
                         Logger.LogDebug("➕ Added entry for hazard {HazardCode} with mitigation {MitigationCode}", hazard.Code, mitigation.Code);
                     }
@@ -296,7 +331,7 @@ public partial class RiskRegistry : ComponentBase
                 else
                 {
                     // Create entry without mitigation
-                    var entry = CreateRiskRegistryEntry(hazard, assessment, null);
+                    var entry = CreateRiskRegistryEntry(report,hazard, assessment, null);
                     entries.Add(entry);
                     Logger.LogDebug("➕ Added entry for hazard {HazardCode} without mitigation", hazard.Code);
                 }
@@ -314,23 +349,63 @@ public partial class RiskRegistry : ComponentBase
     /// <summary>
     /// Create a single risk registry entry from hazard, assessment, and mitigation data
     /// </summary>
-    private RiskRegistryEntry CreateRiskRegistryEntry(Hazard hazard, RiskAssessment? assessment, Mitigation? mitigation)
+    private RiskRegistryEntry CreateRiskRegistryEntry(Report report, Hazard hazard, RiskAssessment? assessment, Mitigation? mitigation)
     {
-        // Get risk matrix code and level from hazard
-        var riskMatrixCode = GetHazardRiskMatrixCode(hazard);
-        var riskLevel = hazard.HazardRiskLevel; // GetHazardRiskLevel(hazard);
 
-        // Debug logging
-        Logger.LogDebug("🔧 Creating entry for {HazardCode}: Mitigation={HasMitigation}, Status={Status}",
-            hazard.Code, mitigation != null, mitigation?.Status ?? "NULL");
+        RiskLevel initialRiskLevel = null; // Default fallback
+        string initialMatrixCode = string.Empty; // Default fallback
+        RiskLevel residualRiskLevel = null;  // Default fallback
+        string residualMatrixCode = string.Empty; // Default fallback
 
+        // Parse matrix codes with null checks
+        if (string.IsNullOrEmpty(hazard.InitialRiskMatrixCode) || hazard.HazardRiskLevel == RiskLevel.Unkonwn)
+        {
+            initialRiskLevel = RiskLevel.Unkonwn;
+            initialMatrixCode = "TBD";
+        }
+        else
+        {
+            var (initialSeverity, initialLikelihood) = AviationRiskMatrixCalculator.ParseMatrixCode(hazard.InitialRiskMatrixCode.Trim());
+            
+            if (initialSeverity.HasValue && initialLikelihood.HasValue)
+            {
+                initialRiskLevel = AviationRiskMatrixCalculator.GetAviationRiskLevel(initialSeverity.Value, initialLikelihood.Value);
+                initialMatrixCode = AviationRiskMatrixCalculator.GetMatrixCode(initialSeverity.Value, initialLikelihood.Value);
+            }
+            else if (!string.IsNullOrEmpty(hazard.InitialRiskMatrixCode))
+            {
+                initialMatrixCode = hazard.InitialRiskMatrixCode;
+            }
+        }
+        if (string.IsNullOrEmpty(hazard.ResidualRiskMatrixCode))
+        {
+            residualRiskLevel = RiskLevel.Unkonwn;
+            residualMatrixCode = "TBD";
+        }
+        else 
+        {
+            var (residualSeverity, residualLikelihood) = AviationRiskMatrixCalculator.ParseMatrixCode(hazard.ResidualRiskMatrixCode.Trim());
+            if (residualSeverity.HasValue && residualLikelihood.HasValue)
+            {
+                residualRiskLevel = AviationRiskMatrixCalculator.GetAviationRiskLevel(residualSeverity.Value, residualLikelihood.Value);
+                residualMatrixCode = AviationRiskMatrixCalculator.GetMatrixCode(residualSeverity.Value, residualLikelihood.Value);
+            }
+            else if (!string.IsNullOrEmpty(hazard.ResidualRiskMatrixCode))
+            {
+                residualMatrixCode = hazard.ResidualRiskMatrixCode;
+            }
+
+        }
         var entry = new RiskRegistryEntry
         {
+            ReportStatus = report.Status ?? ReportStatus.Unknown,
             ReportCode = hazard.ReportCode ?? "N/A",
             HazardCode = hazard.Code,
             HazardDescription = hazard.Description ?? "No description available",
-            RiskMatrixCode = riskMatrixCode,
-            HazardRiskLevel = riskLevel, // ✅ Can be null now
+            InitialHazardRiskLevel = initialRiskLevel ?? RiskLevel.Unkonwn,
+            InitialRiskMatrixCode  = initialMatrixCode,
+            ResidualHazardRiskLevel = residualRiskLevel ?? RiskLevel.Unkonwn,
+            ResidualRiskMatrixCode = residualMatrixCode,
             MitigationDescription = mitigation?.Name ?? mitigation?.Description ?? "No mitigation assigned",
             MitigationStatus = mitigation?.Status, // ✅ Can be null now
             TargetDate = mitigation?.TargetDate,
@@ -430,7 +505,7 @@ public partial class RiskRegistry : ComponentBase
         // Apply risk level filter - ✅ FIXED: Add null checking
         if (!string.IsNullOrEmpty(SelectedRiskLevelFilter))
         {
-            filtered = filtered.Where(e => e.HazardRiskLevel?.Value == SelectedRiskLevelFilter);
+            filtered = filtered.Where(e => e.ResidualHazardRiskLevel?.Value == SelectedRiskLevelFilter);
             Logger.LogInformation("🔽 After risk level filter: {Count} entries", filtered.Count());
         }
 
@@ -457,22 +532,7 @@ public partial class RiskRegistry : ComponentBase
 
     #region UI Helper Methods
 
-    /// <summary>
-    /// Get style for target date based on proximity to due date
-    /// </summary>
-    private string GetTargetDateStyle(DateTime targetDate)
-    {
-        var daysUntilDue = (targetDate - DateTime.UtcNow).Days;
-
-        return daysUntilDue switch
-        {
-            < 0 => "color: #dc3545; font-weight: bold;", // Overdue - red
-            <= 7 => "color: #fd7e14; font-weight: bold;", // Due soon - orange
-            <= 30 => "color: #ffc107;", // Due this month - yellow
-            _ => "color: inherit;" // Normal - default
-        };
-    }
-
+    
     /// <summary>
     /// Get aviation matrix cell style with background color (SAME AS STEP 4)
     /// </summary>
@@ -497,14 +557,7 @@ public partial class RiskRegistry : ComponentBase
 
     #region Statistics Methods
 
-    /// <summary>
-    /// Get count of entries by risk level
-    /// </summary>
-    private int GetCountByRiskLevel(string riskLevel)
-    {
-        return RiskRegistryEntries.Count(e => e.HazardRiskLevel == riskLevel);
-    }
-
+    
     
 
     #endregion
@@ -532,11 +585,18 @@ public partial class RiskRegistry : ComponentBase
     public class RiskRegistryEntry
     {
         public string ReportCode { get; set; } = string.Empty;
+
         public string HazardCode { get; set; } = string.Empty;
         public string HazardDescription { get; set; } = string.Empty;
-        public string RiskMatrixCode { get; set; } = string.Empty;
-        public RiskLevel? HazardRiskLevel { get; set; } 
+        public string InitialRiskMatrixCode { get; set; } = string.Empty;
+
+        public string? ResidualRiskMatrixCode { get; set; } = string.Empty;
+        public RiskLevel? InitialHazardRiskLevel { get; set; }
+
+        public RiskLevel? ResidualHazardRiskLevel { get; set; }
         public string? MitigationDescription { get; set; }
+
+        public string ReportStatus { get; set; } 
         public MitigationStatus? MitigationStatus { get; set; } 
         public DateTime? TargetDate { get; set; }
         public string? AssignedTo { get; set; }
@@ -552,17 +612,7 @@ public partial class RiskRegistry : ComponentBase
     /// <summary>
     /// Filter option for dropdowns
     /// </summary>
-    public class FilterOption
-    {
-        public string Value { get; set; } = string.Empty;
-        public string Text { get; set; } = string.Empty;
-
-        public FilterOption(string value, string text)
-        {
-            Value = value;
-            Text = text;
-        }
-    }
+    
 
     #endregion
 

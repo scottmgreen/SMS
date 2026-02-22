@@ -1,5 +1,7 @@
 using Domain.Entities;
 
+using SMS3.Components.Shared.UIHelpers;
+
 namespace SMS3.Components.Pages.System.UserGroups;
 
 public partial class OrganizationalGroups : ComponentBase
@@ -67,29 +69,16 @@ public partial class OrganizationalGroups : ComponentBase
 
     #region Dropdown Options
 
+    private List<DropdownOption> GroupTypeOptions { get; set; } = new();
+    private List<DropdownOption> AuthorityLevelOptions { get; set; } = new();
+
     private readonly List<StatusOption> StatusOptions = new()
     {
         new() { Text = "Active", Value = true },
         new() { Text = "Inactive", Value = false }
     };
 
-    private readonly List<DropdownOption> GroupTypeOptions = new()
-    {
-        new() { Text = "Department", Value = "Department" },
-        new() { Text = "SMS Role", Value = "SMS Role" },
-        new() { Text = "Committee", Value = "Committee" },
-        new() { Text = "Work Group", Value = "Work Group" },
-        new() { Text = "Management Team", Value = "Management Team" }
-    };
-
-    private readonly List<DropdownOption> AuthorityLevelOptions = new()
-    {
-        new() { Text = "Strategic", Value = "Strategic" },
-        new() { Text = "Executive", Value = "Executive" },
-        new() { Text = "Operational", Value = "Operational" },
-        new() { Text = "Process", Value = "Process" },
-        new() { Text = "Support", Value = "Support" }
-    };
+    
 
     #endregion
 
@@ -97,6 +86,7 @@ public partial class OrganizationalGroups : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        InitializeDropdownOptions();
         await LoadDataAsync();
     }
 
@@ -405,22 +395,12 @@ public partial class OrganizationalGroups : ComponentBase
 
     private void ShowErrorNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message
-        });
+        NotificationHelper.ShowError(NotificationService, message);
     }
 
     private void ShowSuccessNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message
-        });
+        NotificationHelper.ShowSuccess(NotificationService, message);
     }
 
     #endregion
@@ -639,18 +619,31 @@ public partial class OrganizationalGroups : ComponentBase
 
     #endregion
 
-    #region Helper Classes
+    #region Dropdown Initialization
 
-    public class StatusOption
+    private void InitializeDropdownOptions()
     {
-        public string Text { get; set; } = string.Empty;
-        public bool Value { get; set; }
-    }
+        // Initialize group type options
+        GroupTypeOptions = new List<DropdownOption>
+        {
+            new("DEPARTMENT", "Department"),
+            new("COMMITTEE", "Committee"),
+            new("TEAM", "Team"),
+            new("DIVISION", "Division"),
+            new("EXECUTIVE", "Executive"),
+            new("FUNCTIONAL", "Functional Group")
+        };
 
-    public class DropdownOption
-    {
-        public string Text { get; set; } = string.Empty;
-        public string Value { get; set; } = string.Empty;
+        // Initialize authority level options
+        AuthorityLevelOptions = new List<DropdownOption>
+        {
+            new("EXECUTIVE", "Executive Level"),
+            new("SENIOR", "Senior Management"),
+            new("MIDDLE", "Middle Management"),
+            new("SUPERVISOR", "Supervisory"),
+            new("OPERATIONAL", "Operational"),
+            new("ADVISORY", "Advisory Only")
+        };
     }
 
     #endregion

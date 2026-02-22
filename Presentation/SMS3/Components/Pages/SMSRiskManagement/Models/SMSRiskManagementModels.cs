@@ -61,55 +61,14 @@ public class AttachedFile
 /// <summary>
 /// Dropdown option for form controls
 /// </summary>
-public class DropdownOption
-{
-    public string Value { get; set; } = string.Empty;
-    public string Text { get; set; } = string.Empty;
 
-    public DropdownOption() { }
-    public DropdownOption(string value, string text)
-    {
-        Value = value;
-        Text = text;
-    }
-}
 
 #endregion
 
 #region Confidential Reporting Specific Models
 
-/// <summary>
-/// Form data for confidential report creation
-/// </summary>
 
 
-/// <summary>
-/// Dropdown option for confidential reporting form controls
-/// </summary>
-public class ConfidentialDropdownOption
-{
-    public string Value { get; set; } = string.Empty;
-    public string Text { get; set; } = string.Empty;
 
-    public ConfidentialDropdownOption() { }
-    public ConfidentialDropdownOption(string value, string text)
-    {
-        Value = value;
-        Text = text;
-    }
-}
-
-/// <summary>
-/// File attachment information for confidential reports
-/// </summary>
-//public class ConfidentialAttachedFile
-//{
-//    public string FileName { get; set; } = string.Empty;
-//    public long FileSizeBytes { get; set; }
-//    public string SizeDisplay { get; set; } = string.Empty;
-//    public string ContentType { get; set; } = string.Empty;
-//    public byte[] Data { get; set; } = Array.Empty<byte>();
-//    public long Size { get; set; }
-//}
 
 #endregion

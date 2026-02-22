@@ -28,18 +28,69 @@
                 Style="height: calc(100vh - 200px)">
     
     <Columns>
-        <RadzenDataGridColumn TItem="HazardLocation" Property="Code" Title="Code" Width="150px" />
-        <RadzenDataGridColumn TItem="HazardLocation" Property="HazardCode" Title="Hazard Code" Width="120px" />
-        <RadzenDataGridColumn TItem="HazardLocation" Property="Latitude" Title="Latitude" Width="120px" />
-        <RadzenDataGridColumn TItem="HazardLocation" Property="Longitude" Title="Longitude" Width="120px" />
-        <RadzenDataGridColumn TItem="HazardLocation" Property="Description" Title="Description" Width="300px" />
-        <RadzenDataGridColumn TItem="HazardLocation" Property="CreatedBy" Title="Created By" Width="150px" />
-        <RadzenDataGridColumn TItem="HazardLocation" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
+        <RadzenDataGridColumn TItem="HazardLocation" Property="Code" Title="Location ID" Width="150px">
+            <Template Context="hazard">
+                <div title="@hazard.Code" style="@BasicTextStyle">
+                    @(hazard.Code)
+                </div>
+            </Template>
+
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="HazardLocation" Property="HazardCode" Title="Hazard ID" Width="120px">
+            <Template Context="hazard">
+                <div title="@hazard.HazardCode" style="@BasicTextStyle">
+                    @(hazard.HazardCode)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="HazardLocation" Property="Latitude" Title="Latitude" Width="120px">
+            <Template Context="hazard">
+                <div title="@hazard.Latitude" style="@BasicTextStyle">
+                    @(hazard.Latitude)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="HazardLocation" Property="Longitude" Title="Longitude" Width="120px">
+            <Template Context="hazard">
+                <div title="@hazard.Longitude" style="@BasicTextStyle">
+                    @(hazard.Longitude)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="HazardLocation" Property="Description" Title="Description" Width="300px">
+            <Template Context="hazard">
+                <div title="@hazard.Description" style="@BasicTextStyle">
+                    @(hazard.Description)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="HazardLocation" Property="CreatedBy" Title="Created By" Width="150px">
+            <Template Context="hazard">
+                <div title="@hazard.CreatedBy" style="@BasicTextStyle">
+                    @(hazard.CreatedBy)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="HazardLocation" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}">
+            <Template Context="hazard">
+                <div title="@hazard.CreatedDate" style="@BasicTextStyle">
+                    @if (hazard.CreatedDate.HasValue)
+                    {
+                        @(hazard.CreatedDate.Value.ToString("MM/dd/yyyy"))
+                    }
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
         
-        <RadzenDataGridColumn TItem="HazardLocation" Title="Actions" Width="100px" Sortable="false" Filterable="false">
+        <RadzenDataGridColumn TItem="HazardLocation" Title="Actions" Width="120px" Sortable="false" Filterable="false">
             <Template Context="location">
-                <RadzenButton Icon="more_vert" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
-                            Click="@(() => ShowActions(location))" Disabled="true" />
+                <RadzenButton Icon="map" 
+                            ButtonStyle="ButtonStyle.Light" 
+                            Size="ButtonSize.Small" 
+                            Text="View Map"
+                            Click="@(() => ViewLocationMap(location))"
+                            Disabled="@(!HasValidCoordinates(location))"
+                            title="@(HasValidCoordinates(location) ? "View location on map" : "No valid coordinates available")" />
             </Template>
         </RadzenDataGridColumn>
     </Columns>

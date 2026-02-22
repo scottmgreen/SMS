@@ -1,6 +1,7 @@
 ﻿using Microsoft.JSInterop;
 
 using SMS3.Components.Pages.SMSRiskManagement.Models;
+using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -774,7 +775,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                 ReportContactCell = HazardReport.ReportContactCell, 
                 ReportContactEmail  = HazardReport.ReportContactEmail,
                 Stage = "Initial",
-                Status = "Initial"
+                Status = ReportStatus.Created
                 
             };
 
@@ -1076,24 +1077,13 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     }
 
     /// <summary>
-    /// Initialize dropdown options - Simplified for confidential reporting
+    /// Initialize dropdown options using centralized helpers
     /// </summary>
     private void InitializeDropdownOptions()
     {
-        // Basic hazard category options - can be expanded later
-        HazardCategoryOptions = new List<DropdownOption>
-        {
-            new("AIRCRAFT", "Aircraft Operations"),
-            new("GROUND", "Ground Operations"),
-            new("FACILITY", "Facility & Infrastructure"),
-            new("EQUIPMENT", "Equipment & Maintenance"),
-            new("PERSONNEL", "Personnel Safety"),
-            new("SECURITY", "Security Related"),
-            new("ENVIRONMENTAL", "Environmental"),
-            new("OTHER", "Other")
-        };
-
-        HazardTypeOptions = new List<DropdownOption>();
+        var (categories, types, _) = DropdownHelper.InitializeHazardReportingDropdowns();
+        HazardCategoryOptions = categories;
+        HazardTypeOptions = types; // Empty initially
     }
 
     /// <summary>
@@ -1137,59 +1127,13 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     /// </summary>
     public async Task OnHazardCategoryChanged(string? categoryValue)
     {
-        Logger.LogInformation("Confidential reporting: Hazard category changed to: {Category}", categoryValue);
+        SelectedHazardCategory = categoryValue ?? string.Empty;
+        HazardReport.HazardType = string.Empty;
 
-        SelectedHazardCategory = categoryValue;
+        // ✅ Use centralized helper
+        HazardTypeOptions = DropdownHelper.HandleCategoryChange(categoryValue);
 
-        // Clear selected hazard type when category changes
-        HazardReport.HazardType = null;
-
-        // Load hazard types for the new category
-        HazardTypeOptions = categoryValue switch
-        {
-            "AIRCRAFT" => new List<DropdownOption>
-            {
-                new("RWY_INCURSION", "Runway Incursion"),
-                new("ACFT_DAMAGE", "Aircraft Damage"),
-                new("NEAR_MISS", "Near Miss")
-            },
-            "GROUND" => new List<DropdownOption>
-            {
-                new("GROUND_VEHICLE", "Ground Vehicle"),
-                new("GSE_MALFUNCTION", "GSE Malfunction"),
-                new("FOD", "Foreign Object Debris")
-            },
-            "PERSONNEL" => new List<DropdownOption>
-            {
-                new("PERSONNEL_INJURY", "Personnel Injury"),
-                new("UNSAFE_PRACTICE", "Unsafe Practice"),
-                new("TRAINING_ISSUE", "Training Issue")
-            },
-            "FACILITY" => new List<DropdownOption>
-            {
-                new("INFRASTRUCTURE", "Infrastructure Issue"),
-                new("LIGHTING", "Lighting Problem"),
-                new("SIGNAGE", "Signage Issue")
-            },
-            "EQUIPMENT" => new List<DropdownOption>
-            {
-                new("EQUIPMENT_FAIL", "Equipment Failure"),
-                new("MAINTENANCE_ISSUE", "Maintenance Issue")
-            },
-            "SECURITY" => new List<DropdownOption>
-            {
-                new("SECURITY_BREACH", "Security Breach"),
-                new("UNAUTHORIZED_ACCESS", "Unauthorized Access")
-            },
-            "ENVIRONMENTAL" => new List<DropdownOption>
-            {
-                new("WILDLIFE_STRIKE", "Wildlife Strike"),
-                new("WEATHER_RELATED", "Weather Related")
-            },
-            _ => new List<DropdownOption>()
-        };
-
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
     /// <summary>

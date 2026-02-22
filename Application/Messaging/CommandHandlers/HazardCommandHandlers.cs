@@ -152,6 +152,59 @@ public class UpdateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Upd
     }
 }
 
+public class ResetHazardScoresCommandHandler : BaseCommandBundle, IRequestHandler<ResetHazardScoresCommand, Result<Hazard>>
+{
+    private readonly HazardDataService _dataService;
+    private readonly ILogger<ResetHazardScoresCommandHandler> _logger;
+
+    public ResetHazardScoresCommandHandler(HazardDataService dataService, ILogger<ResetHazardScoresCommandHandler> logger)
+    {
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<Hazard>> HandleAsync(ResetHazardScoresCommand request, CancellationToken ct = default)
+    {
+        try
+        {
+            if (request?.Hazard is null)
+            {
+                _logger.LogApplicationError("UpdateHazardCommand received with null Hazard", ApplicationEventIds.Error, null);
+                return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Processing UpdateHazardCommand for ID: {Id}, Code: {Code}",request.Hazard.Id, request.Hazard.Code);
+            request.Hazard.UpdatedDate = DateTime.UtcNow;
+            var result = await _dataService.UpdateHazardAsync(request.Hazard, ct).ConfigureAwait(false);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully updated Hazard with ID: {Id}", request.Hazard.Id);
+            }
+            else
+            {
+                _logger.LogApplicationError("Failed to update Hazard with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("UpdateHazardCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error occurred while updating Hazard with ID: {Id}", ApplicationEventIds.Error, ex);
+            return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.UpdateFailed);
+        }
+    }
+}
+
+
+
+
 public class DeleteHazardCommandHandler : BaseCommandBundle, IRequestHandler<DeleteHazardCommand, Result<bool>>
 {
     private readonly HazardDataService _dataService;
