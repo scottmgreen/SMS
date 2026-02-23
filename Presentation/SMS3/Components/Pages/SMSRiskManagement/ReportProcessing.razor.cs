@@ -95,7 +95,7 @@ public class ReportProcessingSummary
                     if (HasRiskAssessment && CurrentAssessmentStep > 0)
                     {
                         // Continue to next step of existing assessment
-                        var nextStep = CurrentAssessmentStep < 5 ? CurrentAssessmentStep + 1 : CurrentAssessmentStep;
+                        var nextStep = CurrentAssessmentStep < 5 ? CurrentAssessmentStep : CurrentAssessmentStep;
                         return $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{HazardId}/{nextStep}";
                     }
                     else if (!string.IsNullOrEmpty(HazardId))
@@ -148,7 +148,7 @@ public class ReportProcessingSummary
         {
             if (HasRiskAssessment && CurrentAssessmentStep > 0)
             {
-                return CurrentAssessmentStep < 5 ? $"Continue Step {CurrentAssessmentStep + 1}" : "Review Assessment";
+                return CurrentAssessmentStep < 5 ? $"Continue Step {CurrentAssessmentStep}" : "Review Assessment";
             }
             else
             {
@@ -1210,21 +1210,7 @@ public partial class ReportProcessing : ComponentBase
                         (args) => NavigateToMitigationEdit(mitigation)));
                     actionBuilder.CloseComponent(); // ✅ Close RadzenButton
 
-                    // Quick Approve Button (only if not already approved)c///THIS CAN NOW ONLY HAPPEN AT THE REPORT LEVEL..
-                    // BECAUSE WE WANT TO CAPTURE WHO APPROVED IT
-                    //if (mitigation.Status != MitigationStatus.Approved)
-                    //{
-                    //    actionBuilder.OpenComponent<RadzenButton>(5);
-                    //    actionBuilder.AddAttribute(6, "Text", "Approve");
-                    //    actionBuilder.AddAttribute(7, "Icon", "verified");
-                    //    actionBuilder.AddAttribute(8, "ButtonStyle", ButtonStyle.Success);
-                    //    actionBuilder.AddAttribute(9, "Size", ButtonSize.Small);
-                    //    actionBuilder.AddAttribute(10, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
-                    //        (args) => QuickApproveMitigation(mitigation)));
-                    //    actionBuilder.AddAttribute(11, "Disabled", IsProcessingApproval);
-                    //    actionBuilder.CloseComponent(); // ✅ Close RadzenButton
-                    //}
-
+                   
                     // View Button
                     actionBuilder.OpenComponent<RadzenButton>(10);
                     actionBuilder.AddAttribute(11, "Text", "View");
@@ -1587,8 +1573,21 @@ public partial class ReportProcessing : ComponentBase
         RenderReportIdColumn(builder);
         RenderHazardIdColumn(builder);
         RenderRiskAssessmentIdColumn(builder);
-        RenderHazardDescriptionColumn(builder, false); 
-
+        RenderHazardDescriptionColumn(builder, false);
+        // Assigned Investigator Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(20);
+        builder.AddAttribute(21, "Property", "AssignedTo");
+        builder.AddAttribute(22, "Title", "Assigned To");
+        builder.AddAttribute(23, "Width", "125px");
+        builder.AddAttribute(24, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenText>(0);
+                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+                templateBuilder.AddAttribute(2, "Text", report.AssignedTo ?? "Not Assigned");
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
         RenderRiskAssessmentActionColumn(builder);
     }
 
@@ -1639,10 +1638,6 @@ public partial class ReportProcessing : ComponentBase
             )));
         builder.CloseComponent();
 
-
-
-
-
         // Assigned Investigator Column
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(20);
         builder.AddAttribute(21, "Property", "AssignedInvestigator");
@@ -1662,7 +1657,7 @@ public partial class ReportProcessing : ComponentBase
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(25);
         builder.AddAttribute(26, "Property", "InterviewCount");
         builder.AddAttribute(27, "Title", "Interviews");
-        builder.AddAttribute(28, "Width", "100px");
+        builder.AddAttribute(28, "Width", "80px");
         builder.AddAttribute(29, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
@@ -1673,12 +1668,10 @@ public partial class ReportProcessing : ComponentBase
             })));
         builder.CloseComponent();
 
-
-
         // Actions Column
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(50);
         builder.AddAttribute(51, "Title", "Actions");
-        builder.AddAttribute(52, "Width", "150px");
+        builder.AddAttribute(52, "Width", "175px");
         builder.AddAttribute(53, "Sortable", false);
         builder.AddAttribute(54, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
@@ -1780,147 +1773,6 @@ public partial class ReportProcessing : ComponentBase
 
     #region Bulk Approval Methods
 
-    /// <summary>
-    /// Bulk approve ALL mitigations for an entire report (all hazards and their mitigations)
-    /// </summary>
-    //private async Task BulkApproveAllMitigationsForReport(string reportId)
-    //{
-    //    try
-    //    {
-    //        IsProcessingApproval = true;
-    //        StateHasChanged();
-
-    //        Logger.LogInformation("Starting bulk approval for ALL mitigations in report: {ReportId}", reportId);
-
-    //        // ✅ FIXED: Load fresh hazard data instead of using cached PendingMitigation list
-    //        var hazardsQuery = new GetAllHazardsQuery();
-    //        var hazardsResult = await Mediator.SendAsync(hazardsQuery, CancellationToken.None);
-
-    //        if (!hazardsResult.IsSuccess || hazardsResult.Value == null)
-    //        {
-    //            ShowErrorNotification("Failed to load hazard data");
-    //            return;
-    //        }
-
-    //        var reportHazards = hazardsResult.Value.Where(h => h.ReportCode?.Trim() == reportId?.Trim()).ToList();
-
-    //        if (!reportHazards.Any())
-    //        {
-    //            ShowErrorNotification($"No hazards found for report {reportId}");
-    //            return;
-    //        }
-
-    //        var successCount = 0;
-    //        var errorCount = 0;
-    //        var processedMitigationCodes = new HashSet<string>(); // Track processed mitigations to avoid duplicates
-
-    //        // ✅ FIXED: Process each hazard's mitigations with fresh data
-    //        foreach (var hazard in reportHazards)
-    //        {
-    //            try
-    //            {
-    //                Logger.LogInformation("Processing mitigations for hazard: {HazardCode}", hazard.Code);
-
-    //                // Get fresh mitigations for this specific hazard
-    //                var mitigationQuery = new GetMitigationsByHazardCodeQuery(hazard.Code);
-    //                var mitigationResult = await Mediator.SendAsync(mitigationQuery, CancellationToken.None);
-
-    //                if (mitigationResult.IsSuccess && mitigationResult.Value?.Any() == true)
-    //                {
-    //                    // ✅ FIXED: Filter for PENDING_APPROVAL using enum value and avoid duplicates
-    //                    var pendingMitigations = mitigationResult.Value
-    //                        .Where(m => !string.IsNullOrEmpty(m.Code) &&
-    //                                   !processedMitigationCodes.Contains(m.Code) &&
-    //                                   string.Equals(m.Status, MitigationStatus.PendingApproval.Value, StringComparison.OrdinalIgnoreCase))
-    //                        .ToList();
-
-    //                    Logger.LogInformation("Found {Count} pending mitigations for hazard {HazardCode}: {MitigationCodes}",
-    //                        pendingMitigations.Count, hazard.Code,
-    //                        string.Join(", ", pendingMitigations.Select(m => $"{m.Code}({m.Status})")));
-
-    //                    // Approve each pending mitigation
-    //                    foreach (var mitigation in pendingMitigations)
-    //                    {
-    //                        try
-    //                        {
-    //                            // Track this mitigation to avoid processing duplicates
-    //                            processedMitigationCodes.Add(mitigation.Code);
-
-    //                            // Update mitigation status to Approved using enum value
-    //                            mitigation.Status = MitigationStatus.Approved;
-    //                            mitigation.UpdatedDate = DateTime.UtcNow;
-    //                            mitigation.UpdatedBy = AuthService.CurrentUser.Code; // You might want to get the current user
-
-    //                            var updateCommand = new UpdateMitigationCommand(mitigation);
-    //                            var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
-
-    //                            if (updateResult.IsSuccess)
-    //                            {
-    //                                successCount++;
-    //                                Logger.LogInformation("Approved mitigation: {Code} for hazard {HazardCode}",mitigation.Code, hazard.Code);
-    //                            }
-    //                            else
-    //                            {
-    //                                errorCount++;
-    //                                Logger.LogError("Failed to approve mitigation {Code}: {Error}",mitigation.Code, updateResult.Error?.Message);
-    //                            }
-    //                        }
-    //                        catch (Exception ex)
-    //                        {
-    //                            errorCount++;
-    //                            Logger.LogError(ex, "Error approving mitigation {Code} for hazard {HazardCode}",mitigation.Code, hazard.Code);
-    //                        }
-    //                    }
-    //                }
-    //                else
-    //                {
-    //                    Logger.LogWarning("No mitigations found for hazard {HazardCode}", hazard.Code);
-    //                }
-    //            }
-    //            catch (Exception ex)
-    //            {
-    //                Logger.LogError(ex, "Error processing mitigations for hazard {HazardCode}", hazard.Code);
-    //                // Continue with other hazards even if one fails
-    //            }
-    //        }
-
-    //        bool flowControl = await UpdateReportStatus(reportId, ReportStatus.InMitigation);
-    //        if (!flowControl)
-    //        {
-    //            return;
-    //        }
-    //        if (successCount > 0)
-    //        {
-    //            ShowSuccessNotification($"Successfully approved {successCount} mitigation(s) across {reportHazards.Count} hazard(s) for report {reportId}");
-
-    //            // Reload data to reflect changes
-    //            await LoadUserRolesAsync();
-    //        }
-    //        else if (errorCount == 0)
-    //        {
-    //            ShowInfoNotification($"No pending mitigations found for report {reportId}");
-    //        }
-
-    //        if (errorCount > 0)
-    //        {
-    //            ShowErrorNotification($"Failed to approve {errorCount} mitigation(s). Please check logs for details.");
-    //        }
-    //    }
-
-
-    //    catch (Exception ex)
-    //    {
-    //        Logger.LogError(ex, "Error during bulk approval for report {ReportId}", reportId);
-    //        ShowErrorNotification($"Error during bulk approval for report {reportId}: {ex.Message}");
-    //    }
-    //    finally
-    //    {
-    //        IsProcessingApproval = false;
-    //        StateHasChanged();
-    //    }
-    /// <summary>
-    /// ✅ FIXED: Filter for PENDING_APPROVAL using enum value and avoid duplicates
-    /// </summary>
     private async Task BulkApproveAllMitigationsForReport(string reportId, string approverCode)
     {
         try
@@ -1966,7 +1818,7 @@ public partial class ReportProcessing : ComponentBase
                         var pendingMitigations = mitigationResult.Value
                             .Where(m => !string.IsNullOrEmpty(m.Code) &&
                                        !processedMitigationCodes.Contains(m.Code) &&
-                                       m.Status == MitigationStatus.PendingApproval) // ✅ Use enum instead of string comparison
+                                       m.Status == MitigationStatus.PendingApproval) 
                             .ToList();
 
                         Logger.LogInformation("Found {Count} pending mitigations for hazard {HazardCode}: {MitigationCodes}",
@@ -1981,7 +1833,7 @@ public partial class ReportProcessing : ComponentBase
                                 processedMitigationCodes.Add(mitigation.Code);
 
                                 // ✅ Update mitigation status using enum value
-                                mitigation.Status = MitigationStatus.Approved; // ✅ Use enum instead of hardcoded string
+                                mitigation.Status = MitigationStatus.Approved; 
                                 mitigation.UpdatedDate = DateTime.UtcNow;
                                 mitigation.UpdatedBy = approverCode;
 
@@ -2053,32 +1905,22 @@ public partial class ReportProcessing : ComponentBase
         
     private async Task<bool> UpdateReportStatus(string reportId, ReportStatus status)
     {
-        var getReportQuery = new GetReportByCodeQuery(new ReportID(reportId));
-        var getReportQueryResult = await Mediator.SendAsync(getReportQuery, CancellationToken.None);
-
-        if (getReportQueryResult.IsSuccess)
-        {
-            var report = getReportQueryResult.Value;
-            report.Status = status;
-            report.UpdatedBy = AuthService.CurrentUserDisplayName;
-            report.UpdatedDate = DateTime.UtcNow;
-
-            var cmdReportUpdate = new UpdateReportCommand(report);
-            var cmdReportResult = await Mediator.SendAsync(getReportQuery, CancellationToken.None);
-
-            if (!cmdReportResult.IsSuccess)
+        
+            var cmd = new UpdateReportStatusCommand(reportId, status, AuthService.CurrentUserDisplayName);
+            var cmdResult = await Mediator.SendAsync(cmd, CancellationToken.None);
+            if (!cmdResult.IsSuccess)
             {
                 ShowErrorNotification($"Report{reportId} Status Was not Updated");
                 return false;
             }
+            else
+            {
+                ShowSuccessNotification($"Report{reportId} Status Was Updated");
+                return true;
+            }
 
 
-
-            // Show results
             
-        }
-
-        return true;
     }
 
     /// <summary>

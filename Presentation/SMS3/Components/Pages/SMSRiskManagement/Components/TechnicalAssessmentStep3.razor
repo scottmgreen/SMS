@@ -142,7 +142,7 @@
     #region Parameters
 
     [Parameter] public Step1Model Step1 { get; set; } = new();
-    [Parameter] public Step3Model Step3 { get; set; } = new();
+    [Parameter] public Step3Model Step3 { get; set; } = default!;
     [Parameter] public EventCallback<Step3Model> Step3Changed { get; set; }
     [Parameter] public List<Hazard> Step3Hazards { get; set; } = new();
 

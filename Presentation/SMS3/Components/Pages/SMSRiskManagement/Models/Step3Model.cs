@@ -5,7 +5,16 @@
 /// </summary>
 public class Step3Model
 {
-      
+    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+
+    public Step3Model(IMediator mediator, AuthenticationService authService)
+    {
+        Mediator = mediator;
+        AuthService = authService;
+        
+    }
+
     public Dictionary<string, RiskAnalysis> Step3RiskAnalyses { get; set; } = new();
 
     public (bool isValid, string message) Validate(List<Hazard> availableHazards = null)
@@ -76,9 +85,9 @@ public class Step3Model
 
 
     
-    public async Task LoadExistingRiskAnalysesAsync(IMediator mediator, List<Hazard> availableHazards)
+    public async Task LoadExistingRiskAnalysesAsync(List<Hazard> availableHazards)
     {
-        if (mediator == null || availableHazards == null) return;
+        if (Mediator == null || availableHazards == null) return;
 
         // ✅ CLEAR existing data first to ensure fresh load
         Step3RiskAnalyses.Clear();
@@ -88,7 +97,7 @@ public class Step3Model
 
         // ✅ Get ALL RiskAnalysis entities from database
         var allAnalysisQuery = new GetAllRiskAnalysisQuery();
-        var allAnalysisResult = await mediator.SendAsync(allAnalysisQuery, CancellationToken.None);
+        var allAnalysisResult = await Mediator.SendAsync(allAnalysisQuery, CancellationToken.None);
 
         if (!allAnalysisResult.IsSuccess || allAnalysisResult.Value == null)
         {
@@ -109,7 +118,7 @@ public class Step3Model
 
         // ✅ Get ALL RiskAssessments
         var allAssessmentsQuery = new GetAllRiskAssessmentsQuery();
-        var assessmentsResult = await mediator.SendAsync(allAssessmentsQuery, CancellationToken.None);
+        var assessmentsResult = await Mediator.SendAsync(allAssessmentsQuery, CancellationToken.None);
 
         if (!assessmentsResult.IsSuccess || assessmentsResult.Value == null)
         {
@@ -189,7 +198,7 @@ public class Step3Model
         if (hazardsWithoutAnalysis.Any())
         {
             Console.WriteLine($"⚠️  {hazardsWithoutAnalysis.Count} hazards don't have RiskAnalysis: {string.Join(", ", hazardsWithoutAnalysis.Select(h => h.Code))}");
-            await CreateNewRiskAnalysesForNewHazards(mediator, hazardsWithoutAnalysis, allAssessments);
+            await CreateNewRiskAnalysesForNewHazards(hazardsWithoutAnalysis, allAssessments);
         }
 
         Console.WriteLine($"🏁 LoadExistingRiskAnalysesAsync completed. Final Step3RiskAnalyses count: {Step3RiskAnalyses.Count}");
@@ -198,9 +207,9 @@ public class Step3Model
     /// <summary>
     /// Create new RiskAnalysis entities ONLY for hazards that were added in Step 2 and don't have analysis yet
     /// </summary>
-    private async Task CreateNewRiskAnalysesForNewHazards(IMediator mediator, List<Hazard> newHazards, IEnumerable<RiskAssessment> availableAssessments)
+    private async Task CreateNewRiskAnalysesForNewHazards(List<Hazard> newHazards, IEnumerable<RiskAssessment> availableAssessments)
     {
-        if (mediator == null || !newHazards.Any()) return;
+        if (Mediator == null || !newHazards.Any()) return;
 
         try
         {
@@ -241,7 +250,7 @@ public class Step3Model
 
                     // Save via CQRS
                     var createCommand = new CreateRiskAnalysisCommand(newAnalysis);
-                    var result = await mediator.SendAsync(createCommand, CancellationToken.None);
+                    var result = await Mediator.SendAsync(createCommand, CancellationToken.None);
 
                     if (result.IsSuccess && result.Value != null)
                     {
@@ -264,15 +273,15 @@ public class Step3Model
 
 
 
-    public async Task ApplyToAssessmentAsync(AuthenticationService AuthService, IMediator mediator, RiskAssessment assessment, List<Hazard> availableHazards, int currentStep)
+    public async Task ApplyToAssessmentAsync(RiskAssessment assessment, List<Hazard> availableHazards, int currentStep)
     {
-        if (mediator == null || assessment == null || availableHazards == null) return;
+        if (Mediator == null || assessment == null || availableHazards == null) return;
 
         try
         {
             assessment.CompleteStep(currentStep == 5 ? 5 : 3);
 
-            await SaveRiskAnalysesAsync(AuthService, mediator, assessment);
+            await SaveRiskAnalysesAsync(assessment);
         }
         catch (Exception ex)
         {
@@ -280,12 +289,12 @@ public class Step3Model
         }
     }
 
-    private async Task SaveRiskAnalysesAsync(AuthenticationService AuthService, IMediator mediator, RiskAssessment assessment)
+    private async Task SaveRiskAnalysesAsync(RiskAssessment assessment)
     {
-        await SaveRiskAnalysesAsync(AuthService,mediator, assessment, 3);
+        await SaveRiskAnalysesAsync(assessment, 3);
     }
     
-    private async Task SaveRiskAnalysesAsync(AuthenticationService AuthService ,IMediator mediator, RiskAssessment assessment, int currentStep)
+    private async Task SaveRiskAnalysesAsync(RiskAssessment assessment, int currentStep)
     {
         foreach (var analysisKvp in Step3RiskAnalyses)
         {
@@ -308,7 +317,7 @@ public class Step3Model
                                
                 // Update existing RiskAnalysis
                 var updateCommand = new UpdateRiskAnalysisCommand(analysis);
-                var updateResult = await mediator.SendAsync(updateCommand, CancellationToken.None);
+                var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
                     
                 if (updateResult.IsSuccess)
                 {
@@ -323,12 +332,10 @@ public class Step3Model
         }
     }
 
-    public async Task LoadFromAssessmentAsync(IMediator mediator, RiskAssessment assessment, List<Hazard> reportHazards)
+    public async Task LoadFromAssessmentAsync(RiskAssessment assessment, List<Hazard> reportHazards)
     {
         if (assessment == null) return;
-
-        
-        await LoadExistingRiskAnalysesAsync(mediator, reportHazards);
+        await LoadExistingRiskAnalysesAsync(reportHazards);
     }
 
     

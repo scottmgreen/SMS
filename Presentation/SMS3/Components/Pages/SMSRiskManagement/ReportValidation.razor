@@ -14,274 +14,271 @@
 <PageHeader Title="SMS Report Validation"
            Subtitle="Review and validate incoming safety reports for accuracy and completeness"
            Icon="fas fa-check-circle" />
+@if (IsLoading)
+{
+    <!-- Loading State -->
+    <div class="text-center py-5">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+        <p class="mt-3 text-muted">Processing your report...</p>
+    </div>
+}
+else
+{
+    <div class="container-fluid">
+        <RadzenRow Gap="0.5rem">
+            <!-- Left Column - Main Form -->
+            <RadzenColumn Size="12" SizeLG="8">
+                <RadzenCard Variant="Variant.Outlined">
+                    <!-- Card Header Section -->
+                    <RadzenStack Gap="0.5rem" Style="padding: 0.5rem;">
 
-<div class="container-fluid">
-    <RadzenRow Gap="0.5rem">
-        <!-- Left Column - Main Form -->
-        <RadzenColumn Size="12" SizeLG="8">
-            <RadzenCard Variant="Variant.Outlined">
-                <!-- Card Header Section -->
-                <RadzenStack Gap="0.5rem" Style="padding: 0.5rem;">
-                   
-                    <!-- Report Description Display with Metadata in 3 Columns -->
-                    <RadzenCard Variant="Variant.Outlined" Style="background: var(--rz-base-50);">
-                        <RadzenStack Gap="1rem" Style="padding: 1rem;">
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="border-bottom: 1px solid var(--rz-border-color); padding-bottom: 0.5rem;">
-                                <RadzenIcon Icon="description" Style="color: var(--rz-info);" />
-                                <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Report Description</RadzenText>
+                        <!-- Report Description Display with Metadata in 3 Columns -->
+                        <RadzenCard Variant="Variant.Outlined" Style="background: var(--rz-base-50);">
+                            <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="border-bottom: 1px solid var(--rz-border-color); padding-bottom: 0.5rem;">
+                                    <RadzenIcon Icon="description" Style="color: var(--rz-info);" />
+                                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Report Description</RadzenText>
+                                </RadzenStack>
+                                <br />
+                                <!-- 3-Column Layout -->
+                                <RadzenRow Gap="1rem">
+                                    <!-- Column 1: Report Description -->
+                                    <RadzenColumn Size="12" SizeLG="6">
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Report Code:</strong>@(ReportId ?? "N/A")</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Hazard Category:</strong>@(ReportHazard?.HazardCategory ?? "N/A")</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Hazard Category:</strong>@(ReportHazard?.HazardType ?? "N/A")</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; padding: 0.5rem; background: white; border-radius: 4px; border: 1px solid var(--rz-border-color); min-height: 100px;">
+                                            @(ReportDetails?.Description ?? "Report description not available")
+                                        </RadzenText>
+                                    </RadzenColumn>
+
+                                    <!-- Column 2: Field Labels -->
+                                    <RadzenColumn Size="12" SizeLG="6">
+                                        <RadzenStack Gap="0.25rem">
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Report Code:</strong>@(ReportId ?? "N/A")</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Status:</strong>@(ReportDetails?.Status ?? "N/A")</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Incident Date/Time:</strong>@(ReportDetails?.IncidentDateTime.ToString("MM/dd/yyyy HH:mm") ?? "N/A")</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Submitted Date/Time:</strong>@(ReportDetails?.SubmittedDate.ToString("MM/dd/yyyy HH:mm") ?? "N/A")</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Submitted By:</strong>@(ReportDetails?.SubmittedBy ?? "N/A")</RadzenText>
+                                            @if (IsUpdate)
+                                            {
+                                                <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Validation Code:</strong>@ValidationCode</RadzenText>
+                                            }
+                                        </RadzenStack>
+                                    </RadzenColumn>                                  
+                                </RadzenRow>
                             </RadzenStack>
-                            
-                            <!-- 3-Column Layout -->
-                            <RadzenRow Gap="1rem">
-                                <!-- Column 1: Report Description -->
-                                <RadzenColumn Size="12" SizeLG="6">
-                                    <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; padding: 0.5rem; background: white; border-radius: 4px; border: 1px solid var(--rz-border-color); min-height: 100px;">
-                                        @(ReportDetails?.Description ?? "Report description not available")
+                        </RadzenCard>
+
+                        <!-- Validation Form -->
+                        <EditForm Model="@this">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+
+                            <!-- SMS Risk Decision -->
+                            <RadzenFieldset Text="Validation Decision" Style="margin-bottom: 0.5rem;">
+                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="0.5rem">
+                                    <RadzenCheckBox @bind-Value="@this.RiskRegistryOnly"
+                                                    Name="registryonly"
+                                                    TriState="false" 
+                                                    Disabled="@IsRiskRegistryCheckboxDisabled" />
+                                    <RadzenLabel Style="font-weight:600" Text="Risk Registry Only" Component="registryonly" />
+                                </RadzenStack>
+                                <br />
+                                <RadzenRow Gap="2rem">
+                                    <RadzenColumn Size="12" SizeMD="4">
+                                        <RadzenCard Variant="Variant.Outlined" Style="@GetValidationCardStyle(ValidationDecision.SmsRisk.Value)"
+                                                    class="validation-card"
+                                                    @onclick="@(() => SetValidationDecision(ValidationDecision.SmsRisk.Value))">
+
+                                            <RadzenStack Gap="0.5rem" AlignItems="AlignItems.Center" Style="padding: 0.5rem; text-align: center;">
+                                                <RadzenIcon Icon="check_circle" Style="color: var(--rz-success); font-size: 2rem;" />
+                                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; font-weight: 600;">
+                                                    @ValidationDecision.SmsRisk.Name
+                                                </RadzenText>
+                                                
+                                            </RadzenStack>
+                                        </RadzenCard>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="12" SizeMD="4">
+                                        <RadzenCard Variant="Variant.Outlined"
+                                                    Style="@GetValidationCardStyle(ValidationDecision.NotSmsRisk.Value)"
+                                                    class="validation-card"
+                                                    @onclick="@(() => SetValidationDecision(ValidationDecision.NotSmsRisk.Value))">
+                                            <RadzenStack Gap="0.5rem" AlignItems="AlignItems.Center" Style="padding: 0.5rem; text-align: center;">
+                                                <RadzenIcon Icon="cancel" Style="color: var(--rz-danger); font-size: 2rem;" />
+                                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; font-weight: 600;">
+                                                    @ValidationDecision.NotSmsRisk.Name
+                                                </RadzenText>
+                                                
+                                            </RadzenStack>
+                                        </RadzenCard>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="12" SizeMD="4">
+                                        <RadzenCard Variant="Variant.Outlined" A
+                                                    Style="@GetValidationCardStyle(ValidationDecision.NeedsInvestigation.Value)"
+                                                    class="validation-card"
+                                                    @onclick="@(() => SetValidationDecision(ValidationDecision.NeedsInvestigation.Value))">
+                                            <RadzenStack Gap="0.5rem" AlignItems="AlignItems.Center" Style="padding: 0.5rem; text-align: center;">
+                                                <RadzenIcon Icon="search" Style="color: var(--rz-warning); font-size: 2rem;" />
+                                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; font-weight: 600;">
+                                                    @ValidationDecision.NeedsInvestigation.Name
+                                                </RadzenText>
+                                               
+                                            </RadzenStack>
+                                        </RadzenCard>
+                                    </RadzenColumn>
+                                </RadzenRow>
+
+                                <!-- Hidden radio button list for form binding -->
+                                <div style="display: none;">
+                                    <RadzenRadioButtonList @bind-Value="@ValidationDecisionValue" Name="ValidationDecision" TValue="string">
+                                        <Items>
+                                            <RadzenRadioButtonListItem Text="@ValidationDecision.SmsRisk.Name" Value="@ValidationDecision.SmsRisk.Value" />
+                                            <RadzenRadioButtonListItem Text="@ValidationDecision.NotSmsRisk.Name" Value="@ValidationDecision.NotSmsRisk.Value" />
+                                            <RadzenRadioButtonListItem Text="@ValidationDecision.NeedsInvestigation.Name" Value="@ValidationDecision.NeedsInvestigation.Value" />
+                                        </Items>
+                                    </RadzenRadioButtonList>
+                                </div>
+                            </RadzenFieldset>
+
+                            <!-- Validation Comments -->
+                            <RadzenFieldset Text="Validation Comments">
+                                <RadzenTextArea @bind-Value="@ValidationComments" Rows="4"
+                                                Placeholder="Provide detailed reasoning for your validation decision..."
+                                                Style="width: 100%;" />
+                                @if (string.IsNullOrWhiteSpace(ValidationComments))
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger); margin-top: 0.25rem;">
+                                        <RadzenIcon Icon="error" Style="font-size: 0.875rem; margin-right: 0.25rem;" />
+                                        Validation comments are required
                                     </RadzenText>
-                                </RadzenColumn>
+                                }
+                            </RadzenFieldset>
 
-                                <!-- Column 2: Field Labels -->
-                                <RadzenColumn Size="12" SizeLG="3">
-                                    <RadzenStack Gap="0.25rem">
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;">Report Code:</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;">Status:</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;">Incident Date/Time:</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;">Submitted Date/Time:</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;">Submitted By:</RadzenText>
-                                        @if (IsUpdate)
-                                        {
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;">Validation Code:</RadzenText>
-                                        }
-                                    </RadzenStack>
-                                </RadzenColumn>
-
-                                <!-- Column 3: Field Values -->
-                                <RadzenColumn Size="12" SizeLG="3">
-                                    <RadzenStack Gap="0.25rem" AlignItems="AlignItems.Start">
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@(ReportId ?? "N/A")</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@CurrentStatus</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@(ReportDetails?.IncidentDateTime.ToString("MM/dd/yyyy HH:mm") ?? "N/A")</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@(ReportDetails?.SubmittedDate.ToString("MM/dd/yyyy HH:mm") ?? "N/A")</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@(ReportDetails?.SubmittedBy ?? "N/A")</RadzenText>
-                                        @if (IsUpdate)
-                                        {
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@ValidationCode</RadzenText>
-                                        }
-                                    </RadzenStack>
-                                </RadzenColumn>
-                            </RadzenRow>
-                        </RadzenStack>
-                    </RadzenCard>
-
-                    <!-- Validation Form -->
-                    <EditForm Model="@this">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary />
-                        
-                        <!-- SMS Risk Decision -->
-                        <RadzenFieldset Text="Validation Decision" Style="margin-bottom: 0.5rem;">
-                            <RadzenRow Gap="1rem">
-                                <RadzenColumn Size="12" SizeMD="4">
-                                    <RadzenCard Variant="Variant.Outlined" Style="@GetValidationCardStyle(ValidationDecision.SmsRisk.Value)" 
-                                              class="validation-card"
-                                              @onclick="@(() => SetValidationDecision(ValidationDecision.SmsRisk.Value))">
-                                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="0.5rem">
-                                            <RadzenCheckBox @bind-Value="@this.RiskRegistryOnly"
-                                                            Name="registryonly"
-                                                            TriState="false" />
-                                            <RadzenLabel Style="font-weight:600" Text="Risk Registry Only" Component="registryonly" />
-                                        </RadzenStack>
-                                        <RadzenStack Gap="0.5rem" AlignItems="AlignItems.Center" Style="padding: 0.5rem; text-align: center;">
-                                            <RadzenIcon Icon="check_circle" Style="color: var(--rz-success); font-size: 2rem;" />
-                                            <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; font-weight: 600;">
-                                                @ValidationDecision.SmsRisk.Name
-                                            </RadzenText>
-                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                                @ValidationDecision.SmsRisk.Name
-                                            </RadzenText>
-                                        </RadzenStack>
-                                    </RadzenCard>
-                                </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="4">
-                                    <RadzenCard Variant="Variant.Outlined" 
-                                              Style="@GetValidationCardStyle(ValidationDecision.NotSmsRisk.Value)" 
-                                              class="validation-card"
-                                              @onclick="@(() => SetValidationDecision(ValidationDecision.NotSmsRisk.Value))">
-                                        <RadzenStack Gap="0.5rem" AlignItems="AlignItems.Center" Style="padding: 0.5rem; text-align: center;">
-                                            <RadzenIcon Icon="cancel" Style="color: var(--rz-danger); font-size: 2rem;" />
-                                            <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; font-weight: 600;">
-                                                @ValidationDecision.NotSmsRisk.Name
-                                            </RadzenText>
-                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                                @ValidationDecision.NotSmsRisk.Name
-                                            </RadzenText>
-                                        </RadzenStack>
-                                    </RadzenCard>
-                                </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="4">
-                                    <RadzenCard Variant="Variant.Outlined" 
-                                              Style="@GetValidationCardStyle(ValidationDecision.NeedsInvestigation.Value)" 
-                                              class="validation-card"
-                                              @onclick="@(() => SetValidationDecision(ValidationDecision.NeedsInvestigation.Value))">
-                                        <RadzenStack Gap="0.5rem" AlignItems="AlignItems.Center" Style="padding: 0.5rem; text-align: center;">
-                                            <RadzenIcon Icon="search" Style="color: var(--rz-warning); font-size: 2rem;" />
-                                            <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; font-weight: 600;">
-                                                @ValidationDecision.NeedsInvestigation.Name
-                                            </RadzenText>
-                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                                @ValidationDecision.NeedsInvestigation.Name
-                                            </RadzenText>
-                                        </RadzenStack>
-                                    </RadzenCard>
-                                </RadzenColumn>
-                            </RadzenRow>
-                            
-                            <!-- Hidden radio button list for form binding -->
-                            <div style="display: none;">
-                                <RadzenRadioButtonList @bind-Value="@ValidationDecisionValue" Name="ValidationDecision" TValue="string">
-                                    <Items>
-                                        <RadzenRadioButtonListItem Text="@ValidationDecision.SmsRisk.Name" Value="@ValidationDecision.SmsRisk.Value" />
-                                        <RadzenRadioButtonListItem Text="@ValidationDecision.NotSmsRisk.Name" Value="@ValidationDecision.NotSmsRisk.Value" />
-                                        <RadzenRadioButtonListItem Text="@ValidationDecision.NeedsInvestigation.Name" Value="@ValidationDecision.NeedsInvestigation.Value" />
-                                    </Items>
-                                </RadzenRadioButtonList>
-                            </div>
-                        </RadzenFieldset>
-
-                        <!-- Validation Comments -->
-                        <RadzenFieldset Text="Validation Comments">
-                            <RadzenTextArea @bind-Value="@ValidationComments" Rows="4" 
-                                          Placeholder="Provide detailed reasoning for your validation decision..."
-                                          Style="width: 100%;" />
-                            @if (string.IsNullOrWhiteSpace(ValidationComments))
+                            <!-- SMS Risk Fields (Conditional) -->
+                            @if (SelectedValidationDecision == ValidationDecision.SmsRisk)
                             {
-                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger); margin-top: 0.25rem;">
-                                    <RadzenIcon Icon="error" Style="font-size: 0.875rem; margin-right: 0.25rem;" />
-                                    Validation comments are required
-                                </RadzenText>
+                                <RadzenFieldset Text="Assessment Assignment" Style="margin-top: 1rem;">
+                                    <RadzenRow Gap="1rem">
+                                        <RadzenColumn Size="12" SizeMD="6">
+                                            <RadzenFormField Text="Assigned Assessor" Variant="Variant.Outlined">
+                                                <RadzenDropDown @bind-Value="@LeadAssessor"
+                                                                Data="@LeadAssessorOptions"
+                                                                TextProperty="Text"
+                                                                ValueProperty="Value"
+                                                                Placeholder=""
+                                                                AllowClear="true"
+                                                                Style="width: 100%; min-width: 100%;" />
+                                            </RadzenFormField>
+                                        </RadzenColumn>
+                                    </RadzenRow>
+                                </RadzenFieldset>
                             }
-                        </RadzenFieldset>
+                            @if (SelectedValidationDecision == ValidationDecision.NeedsInvestigation)
+                            {
+                                <RadzenFieldset Text="Investigator Assignment" Style="margin-top: 1rem;">
+                                    <RadzenRow Gap="1rem">
+                                        <RadzenColumn Size="12" SizeMD="6">
+                                            <RadzenFormField Text="Assigned Investigator" Variant="Variant.Outlined">
+                                                <RadzenDropDown @bind-Value="@LeadInvestigator"
+                                                                Data="@LeadInvestigatorOptions"
+                                                                TextProperty="Text"
+                                                                ValueProperty="Value"
+                                                                Placeholder=""
+                                                                AllowClear="true"
+                                                                Style="width: 100%; min-width: 100%;" />
+                                            </RadzenFormField>
+                                        </RadzenColumn>
+                                    </RadzenRow>
+                                </RadzenFieldset>
+                            }
+                            <!-- Action Buttons -->
+                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" class="rz-mt-4">
+                                <RadzenButton Text="Back to Processing Queue" Icon="arrow_back" ButtonStyle="ButtonStyle.Light"
+                                              Click="@(() => Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing"))" />
 
-                        <!-- SMS Risk Fields (Conditional) -->
-                        @if (SelectedValidationDecision == ValidationDecision.SmsRisk)
-                        {
-                            <RadzenFieldset Text="Assessment Assignment" Style="margin-top: 1rem;">
-                                <RadzenRow Gap="1rem">
-                                    <RadzenColumn Size="12" SizeMD="6">
-                                        <RadzenFormField Text="Assigned Assessor" Variant="Variant.Outlined">
-                                            <RadzenDropDown @bind-Value="@LeadAssessor"
-                                                            Data="@LeadAssessorOptions"
-                                                            TextProperty="Text" 
-                                                          ValueProperty="Value"
-                                                          Placeholder="" 
-                                                          AllowClear="true"
-                                                          Style="width: 100%; min-width: 100%;" />
-                                        </RadzenFormField>
-                                    </RadzenColumn>
-                                </RadzenRow>
-                            </RadzenFieldset>
-                        }
-                        @if (SelectedValidationDecision == ValidationDecision.NeedsInvestigation)
-                        {
-                            <RadzenFieldset Text="Investigator Assignment" Style="margin-top: 1rem;">
-                                <RadzenRow Gap="1rem">
-                                    <RadzenColumn Size="12" SizeMD="6">
-                                        <RadzenFormField Text="Assigned Investigator" Variant="Variant.Outlined">
-                                            <RadzenDropDown @bind-Value="@LeadInvestigator"
-                                                            Data="@LeadInvestigatorOptions"
-                                                            TextProperty="Text"
-                                                            ValueProperty="Value"
-                                                            Placeholder=""
-                                                            AllowClear="true"
-                                                            Style="width: 100%; min-width: 100%;" />
-                                        </RadzenFormField>
-                                    </RadzenColumn>
-                                </RadzenRow>
-                            </RadzenFieldset>
-                        }
-                        <!-- Action Buttons -->
-                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" class="rz-mt-4">
-                            <RadzenButton Text="Back to Processing Queue" Icon="arrow_back" ButtonStyle="ButtonStyle.Light" 
-                                        Click="@(() => Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing"))" />
-                            
-                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                                @if (SelectedValidationDecision == ValidationDecision.SmsRisk)
-                                {
-                                    <RadzenButton Text="Proceed to Risk Assessment" Icon="arrow_forward" ButtonStyle="ButtonStyle.Success" 
-                                                Click="@HandleSubmit" Disabled="@IsProcessing" />
-                                }
-                                else if (SelectedValidationDecision != null)
-                                {
-                                    <RadzenButton Text="Submit Validation" Icon="check" ButtonStyle="ButtonStyle.Primary" 
-                                                Click="@HandleSubmit" Disabled="@IsProcessing" />
-                                }
-                                
-                                @if (IsProcessing)
-                                {
-                                    <RadzenProgressBarCircular ShowValue="false" Size="ProgressBarCircularSize.Small" />
-                                }
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                    @if (SelectedValidationDecision == ValidationDecision.SmsRisk)
+                                    {
+                                        <RadzenButton Text="Proceed to Risk Assessment" Icon="arrow_forward" ButtonStyle="ButtonStyle.Success"
+                                                      Click="@HandleSubmit" Disabled="@IsProcessing" />
+                                    }
+                                    else if (SelectedValidationDecision != null)
+                                    {
+                                        <RadzenButton Text="Submit Validation" Icon="check" ButtonStyle="ButtonStyle.Primary"
+                                                      Click="@HandleSubmit" Disabled="@IsProcessing" />
+                                    }
+
+                                    @if (IsProcessing)
+                                    {
+                                        <RadzenProgressBarCircular ShowValue="false" Size="ProgressBarCircularSize.Small" />
+                                    }
+                                </RadzenStack>
                             </RadzenStack>
-                        </RadzenStack>
-                    </EditForm>
-                </RadzenStack>
-            </RadzenCard>
-        </RadzenColumn>
-
-        <!-- Right Column - Guidance -->
-        <RadzenColumn Size="12" SizeLG="4">
-            <!-- Validation Guidance -->
-            <RadzenCard Variant="Variant.Outlined">
-                <RadzenStack Gap="1rem" Style="padding: 1rem;">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="border-bottom: 1px solid var(--rz-border-color); padding-bottom: 0.5rem; background: var(--rz-warning-lighter); margin: -1rem -1rem 1rem -1rem; padding: 1rem;">
-                        <RadzenIcon Icon="lightbulb" Style="color: var(--rz-warning-dark);" />
-                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Validation Guidance</RadzenText>
+                        </EditForm>
                     </RadzenStack>
-                    <RadzenStack Gap="1rem">
-                        <RadzenStack Gap="0.5rem">
-                            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600;">A report should be classified as SMS Risk if:</RadzenText>
-                            <RadzenStack Gap="0.25rem">
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
-                                    <RadzenIcon Icon="check" Style="color: var(--rz-success); margin-right: 0.5rem;" />
-                                    Could affect safety of flight operations
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
-                                    <RadzenIcon Icon="check" Style="color: var(--rz-success); margin-right: 0.5rem;" />
-                                    Involves safety-critical systems
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
-                                    <RadzenIcon Icon="check" Style="color: var(--rz-success); margin-right: 0.5rem;" />
-                                    Has potential for serious consequences
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
-                                    <RadzenIcon Icon="check" Style="color: var(--rz-success); margin-right: 0.5rem;" />
-                                    Indicates system deficiency
-                                </RadzenText>
-                            </RadzenStack>
-                        </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
 
-                        <RadzenStack Gap="0.5rem">
-                            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600;">Not SMS Risk if:</RadzenText>
-                            <RadzenStack Gap="0.25rem">
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
-                                    <RadzenIcon Icon="close" Style="color: var(--rz-danger); margin-right: 0.5rem;" />
-                                    Routine maintenance issue only
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
-                                    <RadzenIcon Icon="close" Style="color: var(--rz-danger); margin-right: 0.5rem;" />
-                                    Administrative matter only
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
-                                    <RadzenIcon Icon="close" Style="color: var(--rz-danger); margin-right: 0.5rem;" />
-                                    Outside SMS scope
-                                </RadzenText>
+            <!-- Right Column - Guidance -->
+            <RadzenColumn Size="12" SizeLG="4">
+                <!-- Validation Guidance -->
+                <RadzenCard Variant="Variant.Outlined">
+                    <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="border-bottom: 1px solid var(--rz-border-color); padding-bottom: 0.5rem; background: var(--rz-warning-lighter); margin: -1rem -1rem 1rem -1rem; padding: 1rem;">
+                            <RadzenIcon Icon="lightbulb" Style="color: var(--rz-warning-dark);" />
+                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Validation Guidance</RadzenText>
+                        </RadzenStack>
+                        <RadzenStack Gap="1rem">
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600;">A report should be classified as SMS Risk if:</RadzenText>
+                                <RadzenStack Gap="0.25rem">
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                        <RadzenIcon Icon="check" Style="color: var(--rz-success); margin-right: 0.5rem;" />
+                                        Could affect safety of flight operations
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                        <RadzenIcon Icon="check" Style="color: var(--rz-success); margin-right: 0.5rem;" />
+                                        Involves safety-critical systems
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                        <RadzenIcon Icon="check" Style="color: var(--rz-success); margin-right: 0.5rem;" />
+                                        Has potential for serious consequences
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                        <RadzenIcon Icon="check" Style="color: var(--rz-success); margin-right: 0.5rem;" />
+                                        Indicates system deficiency
+                                    </RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600;">Not SMS Risk if:</RadzenText>
+                                <RadzenStack Gap="0.25rem">
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                        <RadzenIcon Icon="close" Style="color: var(--rz-danger); margin-right: 0.5rem;" />
+                                        Routine maintenance issue only
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                        <RadzenIcon Icon="close" Style="color: var(--rz-danger); margin-right: 0.5rem;" />
+                                        Administrative matter only
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                        <RadzenIcon Icon="close" Style="color: var(--rz-danger); margin-right: 0.5rem;" />
+                                        Outside SMS scope
+                                    </RadzenText>
+                                </RadzenStack>
                             </RadzenStack>
                         </RadzenStack>
                     </RadzenStack>
-                </RadzenStack>
-            </RadzenCard>
-        </RadzenColumn>
-    </RadzenRow>
-</div>
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenRow>
+    </div>
+    
+}
+
 
 <style>
     .validation-card {

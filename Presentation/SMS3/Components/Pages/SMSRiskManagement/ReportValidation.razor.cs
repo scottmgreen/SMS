@@ -33,8 +33,10 @@ public partial class ReportValidation : ComponentBase
     }
 
     // Display Properties
-    private Report? ReportDetails { get; set; }
-    private Hazard? ReportHazard { get; set; }
+    private bool IsLoading = true;
+    private bool IsRiskRegistryCheckboxDisabled => SelectedValidationDecision != ValidationDecision.SmsRisk;
+    private Report? ReportDetails { get; set; } = default!;
+    private Hazard? ReportHazard { get; set; } = default!;
 
     private bool RiskRegistryOnly { get; set; }
     private SMS_Domain.Entities.ReportValidation? ExistingValidation { get; set; }
@@ -45,7 +47,7 @@ public partial class ReportValidation : ComponentBase
     // State Properties
     private bool IsUpdate => ExistingValidation != null;
     private string ValidationCode => ExistingValidation?.Code ?? "New";
-    private string CurrentStatus => ExistingValidation?.Status ?? "New";
+    //private string CurrentStatus { get; set; }= string.Empty; // ExistingValidation?.Status ?? "New";
     private bool IsProcessing { get; set; } = false;
 
     
@@ -56,7 +58,9 @@ public partial class ReportValidation : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        IsLoading = true;
         await LoadDataAsync();
+        IsLoading = false;
     }
 
     #region Data Loading
@@ -81,14 +85,15 @@ public partial class ReportValidation : ComponentBase
             if (reportResult.IsSuccess)
             {
                 ReportDetails = reportResult.Value;
-            }
 
-            // Load associated hazard
-            var hazardResult = await Mediator.SendAsync(new GetAllHazardsQuery(), CancellationToken.None);
-            if (hazardResult.IsSuccess)
-            {
-                ReportHazard = hazardResult.Value?.FirstOrDefault(h => h.ReportCode.Trim() == reportCode.Value.Trim());
+                // Load associated hazard
+                var hazardResult = await Mediator.SendAsync(new GetHazardsByReportCodeQuery(reportCode), CancellationToken.None);
+                if (hazardResult.IsSuccess)
+                {
+                    ReportHazard = hazardResult.Value?.FirstOrDefault(h => h.ReportCode.Trim() == reportCode.Value.Trim());
+                }
             }
+            
 
             // Check for existing validation
             var existingValidationQuery = new GetReportValidationByReportIdQuery(reportCode);
@@ -220,6 +225,11 @@ public partial class ReportValidation : ComponentBase
         if (SMS_Domain.Enums.ValidationDecision.TryFromValue(decision, out var validationDecision))
         {
             SelectedValidationDecision = validationDecision;
+            if (SelectedValidationDecision != ValidationDecision.SmsRisk)
+            {
+                this.RiskRegistryOnly = false;
+                // The checkbox will automatically be disabled due to the Disabled binding
+            }
             StateHasChanged();
         }
     }
@@ -292,28 +302,13 @@ public partial class ReportValidation : ComponentBase
         var getReportQuery = new GetReportByCodeQuery(new ReportID(reportId));
         var getReportQueryResult = await Mediator.SendAsync(getReportQuery, CancellationToken.None);
 
-        if (getReportQueryResult.IsSuccess)
+        var cmd = new UpdateReportStatusCommand(reportId, status, AuthService.CurrentUserDisplayName);
+        var cmdResult = await Mediator.SendAsync(cmd, CancellationToken.None);
+        if (!cmdResult.IsSuccess)
         {
-            var report = getReportQueryResult.Value;
-            report.Status = status;
-            report.UpdatedBy = AuthService.CurrentUserDisplayName;
-            report.UpdatedDate = DateTime.UtcNow;
-
-            var cmdReportUpdate = new UpdateReportCommand(report);
-            var cmdReportResult = await Mediator.SendAsync(cmdReportUpdate, CancellationToken.None);
-
-            if (!cmdReportResult.IsSuccess)
-            {
-                ShowErrorNotification($"Report{reportId} Status Was not Updated");
-                return false;
-            }
-
-
-
-            // Show results
-
+            ShowErrorNotification($"Report{reportId} Status Was not Updated");
+            return false;
         }
-
         return true;
     }
     /// <summary>
@@ -743,7 +738,7 @@ public partial class ReportValidation : ComponentBase
     private string GetValidationCardStyle(string decisionValue)
     {
         //var baseStyle = "border: 2px solid var(--rz-border-color);";
-        var baseStyle = "border: 2px solid; color:black;height:200px;";
+        var baseStyle = "border: 2px solid; color:black;height:110px;";
 
         if (SelectedValidationDecision?.Value == decisionValue)
         {

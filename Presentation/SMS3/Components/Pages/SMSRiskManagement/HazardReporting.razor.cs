@@ -1,8 +1,12 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.JSInterop;
 
+using SMS_Domain.Enums;
+
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Shared.UIHelpers;
+
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -689,27 +693,23 @@ public partial class HazardReporting : ComponentBase, IDisposable
             try
             {
                 // Always reinitialize the map since the DOM element is recreated
-                await _mapModule.InvokeVoidAsync("initializeMap",
-                    AirportCenterLatitude, AirportCenterLongitude, DefaultZoomLevel, _dotNetRef);
+                await _mapModule.InvokeVoidAsync("initializeMap",AirportCenterLatitude, AirportCenterLongitude, DefaultZoomLevel, _dotNetRef);
 
                 Logger.LogInformation("Map reinitialized for modal opening");
 
                 // Restore existing location if we have one
                 if (HasGeoLocation)
                 {
-                    await Task.Delay(100); // Give map time to initialize
+                    await Task.Delay(500); // Give map time to initialize
 
-                    await _mapModule.InvokeVoidAsync("setLocationFromCoordinates",
-                        (double)SelectedGeoLocation.Latitude, (double)SelectedGeoLocation.Longitude,
-                        SelectedGeoLocation.Description);
+                    await _mapModule.InvokeVoidAsync("setLocationFromCoordinates",(double)SelectedGeoLocation.Latitude, (double)SelectedGeoLocation.Longitude,SelectedGeoLocation.Description);
 
                     // Update the form fields to match the restored location
                     SelectedLatitude = SelectedGeoLocation.Latitude;
                     SelectedLongitude = SelectedGeoLocation.Longitude;
                     LocationDescription = SelectedGeoLocation.Description ?? "";
 
-                    Logger.LogInformation("Existing location restored: {Lat}, {Lng}",
-                        SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
+                    Logger.LogInformation("Existing location restored: {Lat}, {Lng}", SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
 
                     StateHasChanged();
                 }
@@ -717,24 +717,10 @@ public partial class HazardReporting : ComponentBase, IDisposable
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error initializing map in OpenMapSelector");
-
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Warning,
-                    Summary = "Map Error",
-                    Detail = "Could not initialize map. Please try refreshing the page.",
-                    Duration = 5000
-                });
+                NotificationHelper.ShowWarning(NotificationService, "Could not initialize map. Please try refreshing the page.", 5000);
             }
         }
-
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Info,
-            Summary = "Map Selector",
-            Detail = "Click on the map to select the hazard location.",
-            Duration = 3000
-        });
+        NotificationHelper.ShowInfo(NotificationService, "Click on the map to select the hazard location.", 3000);
     }
 
     /// <summary>
@@ -754,13 +740,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
     {
         if (!HasValidCoordinates)
         {
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Warning,
-                Summary = "No Location Selected",
-                Detail = "Please click on the map to select a location first.",
-                Duration = 3000
-            });
+
+            NotificationHelper.ShowWarning(NotificationService, "Please click on the map to select a location first.", 5000);
             return;
         }
 
@@ -780,13 +761,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
         ShowMapModal = false;
         StateHasChanged();
 
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Location Set",
-            Detail = $"Location selected: {GeoLocationDisplay}",
-            Duration = 3000
-        });
+        NotificationHelper.ShowSuccess(NotificationService, $"Location selected: {GeoLocationDisplay}", 5000);
+        
     }
 
     /// <summary>
@@ -851,49 +827,13 @@ public partial class HazardReporting : ComponentBase, IDisposable
     #region Modal Methods
 
     /// <summary>
-    /// Show preview modal
-    /// </summary>
-    //public void ShowPreviewModal()
-    //{
-    //    if (!IsFormValidForPreview)
-    //    {
-    //        NotificationService.Notify(new NotificationMessage
-    //        {
-    //            Severity = NotificationSeverity.Warning,
-    //            Summary = "Incomplete Form",
-    //            Detail = "Please complete all required fields before previewing.",
-    //            Duration = 3000
-    //        });
-    //        return;
-    //    }
-
-    //    ShowPreview = true;
-    //    StateHasChanged();
-    //}
-
-    /// <summary>
-    /// Hide preview modal
-    /// </summary>
-    //public void HidePreview()
-    //{
-    //    ShowPreview = false;
-    //    StateHasChanged();
-    //}
-
-    /// <summary>
     /// Show submission confirmation modal
     /// </summary>
     public async Task ShowSubmissionConfirmationDialog()
     {
         if (!IsFormValidForSubmission())
         {
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Warning,
-                Summary = "Form Validation",
-                Detail = "Please complete all required fields before submitting.",
-                Duration = 4000
-            });
+            NotificationHelper.ShowWarning(NotificationService, "Please complete all required fields before submitting.", 5000);
             return;
         }
 
@@ -918,14 +858,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     {
         ShowSubmissionConfirmation = false;
         StateHasChanged(); // Force UI update to show buttons again
-
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Info,
-            Summary = "Submission Cancelled",
-            Detail = "You can continue editing your report.",
-            Duration = 3000
-        });
+        NotificationHelper.ShowInfo(NotificationService, "You can continue editing your report.", 5000);
     }
 
     /// <summary>
@@ -1006,13 +939,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             if (string.IsNullOrEmpty(GeneratedTrackingId) || string.IsNullOrEmpty(GeneratedReportId))
             {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Warning,
-                    Summary = "Print Error",
-                    Detail = "No report information available to print.",
-                    Duration = 3000
-                });
+                NotificationHelper.ShowWarning(NotificationService, "No report information available to print.", 5000);
                 return;
             }
 
@@ -1033,13 +960,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             Logger?.LogError(ex, "Error printing confirmation");
 
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Print Error",
-                Detail = "Failed to print confirmation. Please try again or save the page.",
-                Duration = 5000
-            });
+            NotificationHelper.ShowError(NotificationService, "Failed to print confirmation. Please try again or save the page.", 5000);
         }
     }
 
@@ -1061,14 +982,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             {
                 ShowSubmissionConfirmation = true;
                 StateHasChanged();
-
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Warning,
-                    Summary = "Form Validation",
-                    Detail = "Please complete all required fields before submitting.",
-                    Duration = 4000
-                });
+                NotificationHelper.ShowWarning(NotificationService, "Please complete all required fields before submitting.", 5000);
                 return;
             }
 
@@ -1102,14 +1016,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 IsEditMode ? "EDIT" : "CREATE");
 
             ShowSubmissionConfirmation = false;
-
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Submission Failed",
-                Detail = $"An error occurred while {(IsEditMode ? "updating" : "saving")} your report. Please try again.",
-                Duration = 5000
-            });
+            NotificationHelper.ShowError(NotificationService, $"An error occurred while {(IsEditMode ? "updating" : "saving")} your report. Please try again.", 5000);
+            
         }
         finally
         {
@@ -1195,13 +1103,9 @@ public partial class HazardReporting : ComponentBase, IDisposable
         Logger.LogInformation("✅ EDIT mode completed - Report: {ReportCode}, Hazard: {HazardCode}",
             updatedHazard.ReportCode, updatedHazard.Code);
 
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Report Updated Successfully",
-            Detail = $"Report {updatedHazard.ReportCode} and hazard {updatedHazard.Code} have been updated.",
-            Duration = 5000
-        });
+        NotificationHelper.ShowSuccess(NotificationService, $"Report {updatedHazard.ReportCode} and hazard {updatedHazard.Code} have been updated.", 5000);
+
+        
     }
 
     /// <summary>
@@ -1229,7 +1133,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
             Description = HazardReport.Description,
             Stage = "INITIAL",
-            Status = ReportStatus.Created,
+            Status = ReportStatus.NeedsValidation, //needs validation
             CreatedBy = AuthService.CurrentUserDisplayName,
             CreatedDate = DateTime.UtcNow
         };
@@ -1296,17 +1200,10 @@ public partial class HazardReporting : ComponentBase, IDisposable
         ShowSubmissionConfirmation = false;
         ShowFinalSuccessConfirmation = true;
 
-        Logger.LogInformation("✅ CREATE mode completed - Report: {ReportCode}, Hazard: {HazardCode} Tracking: { TrackingCode} ",
+        Logger.LogInformation("✅ CREATE mode completed - Report: {ReportCode}, Hazard: {HazardCode} Tracking: { TrackingCode} ", createdHazard.ReportCode, createdHazard.Code, createdTracking.TrackingCode);
 
-            createdHazard.ReportCode, createdHazard.Code, createdTracking.TrackingCode);
+        NotificationHelper.ShowSuccess(NotificationService, $"Hazard report {createdHazard.Code} has been created and linked to report {createdHazard.ReportCode} with Tracking ID {createdTracking.TrackingCode}.", 5000);
 
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Report Created Successfully",
-            Detail = $"Hazard report {createdHazard.Code} has been created and linked to report {createdHazard.ReportCode} with Tracking ID {createdTracking.TrackingCode}.",
-            Duration = 5000
-        });
     }
 
 
@@ -1518,8 +1415,6 @@ public partial class HazardReporting : ComponentBase, IDisposable
     {
         SelectedHazardCategory = categoryValue ?? string.Empty;
         HazardReport.HazardType = string.Empty;
-
-        // ✅ Use centralized helper
         HazardTypeOptions = DropdownHelper.HandleCategoryChange(categoryValue);
 
         await InvokeAsync(StateHasChanged);
@@ -1540,13 +1435,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 // Could show regulatory warning if required
                 if (hazardType.RequiresRegulatoryReporting)
                 {
-                    NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Info,
-                        Summary = "Regulatory Reporting Required",
-                        Detail = $"This hazard type ({hazardType.Name}) requires regulatory reporting to appropriate authorities.",
-                        Duration = 5000
-                    });
+                    NotificationHelper.ShowInfo(NotificationService, $"This hazard type ({hazardType.Name}) requires regulatory reporting to appropriate authorities.", 5000);
                 }
             }
         }
@@ -1765,13 +1654,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
             InitializeFormDefaults();
             StateHasChanged();
 
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Info,
-                Summary = "Form Cleared",
-                Detail = "All form data has been cleared.",
-                Duration = 2000
-            });
+            NotificationHelper.ShowInfo(NotificationService, "All form data has been cleared.", 5000);
+
         }
     }
 

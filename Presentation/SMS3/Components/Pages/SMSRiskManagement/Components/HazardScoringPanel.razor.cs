@@ -16,8 +16,8 @@ namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 public partial class HazardScoringPanel : ComponentBase
 {
     [Parameter] public Hazard Hazard { get; set; } = new(new HazardID("HZ-0000"));
-    [Parameter] public Step4Model Step4 { get; set; } = new();
-    [Parameter] public Step5Model Step5 { get; set; } = new();
+    [Parameter] public Step4Model Step4 { get; set; } =  default!;
+    [Parameter] public Step5Model Step5 { get; set; } = default!;
     [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
     [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
     [Parameter] public RiskAssessment? CurrentRiskAssessment { get; set; }   // ✅ SINGLE risk assessment parameter

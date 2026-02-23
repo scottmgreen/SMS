@@ -600,49 +600,37 @@ else
                     <!-- Location Form and Controls -->
                     <div class="p-4">
                         <!-- Selected Coordinates Display -->
-                        <div class="row mb-3">
-                            <div class="rz-w-25">
-                                <RadzenFormField Text="Selected Latitude" Variant="Variant.Outlined">
+                        <div class="location-row rz-mt-1">
+                            <div class="location-coordinate">
+                                <RadzenFormField Text="Latitude" Variant="Variant.Outlined">
                                     <RadzenTextBox Value="@SelectedLatitudeText"
                                                    ReadOnly="true"
                                                    Placeholder="Select location first"
                                                    Style="background-color: #f8f9fa; border-color: #dee2e6; width: 100%;" />
                                 </RadzenFormField>
                             </div>
-                            <div class="rz-w-25">
-                                <RadzenFormField Text="Selected Longitude" Variant="Variant.Outlined">
+
+                            <div class="location-coordinate">
+                                <RadzenFormField Text="Longitude" Variant="Variant.Outlined">
                                     <RadzenTextBox Value="@SelectedLongitudeText"
                                                    ReadOnly="true"
                                                    Placeholder="Select location first"
                                                    Style="background-color: #f8f9fa; border-color: #dee2e6; width: 100%;" />
                                 </RadzenFormField>
                             </div>
-                            <div class="rz-w-50">
-                                <RadzenFormField Text="Location Description" Variant="Variant.Outlined">
-                                    <RadzenTextBox @bind-Value="@LocationDescription" 
-                                                 Placeholder="Optional description"
-                                                   Style="width: 100%;min-width: 100%;" />
+
+                            <div class="location-description">
+                                <RadzenFormField Text="Description" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenTextBox @bind-Value="@LocationDescription"
+                                                   Placeholder="Optional description (e.g., 'Terminal A, Gate 5, near security checkpoint')"
+                                                   Style="width: 100%;" />
                                 </RadzenFormField>
                             </div>
                         </div>
+                        <br />
                         
                         <!-- Current Selection Display -->
-                        @if (HasGeoLocation)
-                        {
-                            <RadzenAlert AlertStyle="AlertStyle.Success" Size="AlertSize.Small" Variant="Variant.Flat" Class="mb-3">
-                                <h6 class="alert-heading"><i class="fas fa-map-pin"></i> Current Selection</h6>
-                                <p class="mb-1">
-                                    <strong>Coordinates:</strong> @GeoLocationDisplay
-                                </p>
-                                @if (!string.IsNullOrEmpty(SelectedGeoLocation.Description))
-                                {
-                                    <p class="mb-1">
-                                        <strong>Description:</strong> @SelectedGeoLocation.Description
-                                    </p>
-                                }
-                            </RadzenAlert>
-                        }
-                        
+                                               
                         <div class="d-flex justify-content-end gap-2">
                             <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
                                         Text="Cancel" 
@@ -736,19 +724,21 @@ else
    ============================================================================= */
 
 /* Modal Overlay and Dialog */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1050;
-    padding: 1rem;
-}
+     .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6); /* Increased opacity from 0.5 to 0.6 */
+            backdrop-filter: blur(3px); /* Add blur effect to background */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1050;
+            padding: 1rem;
+            animation: fadeIn 0.3s ease-in-out; /* Smooth fade-in animation */
+        }
 
 .sms-modal-dialog {
     position: relative;

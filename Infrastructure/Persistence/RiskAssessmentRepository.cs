@@ -263,10 +263,10 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             
 
             // Progress Tracking Fields
-            var completedStepsString = string.Join(",", riskAssessment.CompletedSteps);
-            var completionPercentage = riskAssessment.CompletedSteps.Count * 20; // 5 steps = 100%
+            
+            var completionPercentage = riskAssessment.CurrentStep * 20; // 5 steps = 100%
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletedSteps, completedStepsString));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletedSteps, riskAssessment.CurrentStep));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletionPercentage, completionPercentage));
 
             // Audit fields

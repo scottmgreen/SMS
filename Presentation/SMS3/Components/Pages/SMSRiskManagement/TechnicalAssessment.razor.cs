@@ -57,9 +57,9 @@ public partial class TechnicalAssessment : ComponentBase
 
     public Step1Model Step1 { get; set; } = new();
     public Step2Model Step2 { get; set; } = new();
-    public Step3Model Step3 { get; set; } = new();
-    public Step4Model Step4 { get; set; } = new();
-    public Step5Model Step5 { get; set; } = new();
+    public Step3Model Step3 { get; set; } = default!;  // Will be initialized in OnInitializedAsync
+    public Step4Model Step4 { get; set; } = default!;  // Will be initialized in OnInitializedAsync
+    public Step5Model Step5 { get; set; } = default!;  // Will be initialized in OnInitializedAsync
 
     #endregion
 
@@ -73,8 +73,7 @@ public partial class TechnicalAssessment : ComponentBase
     // CRITICAL: Make this a property that can trigger change detection
     public List<Hazard> ReportedHazards { get; private set; } = new();
 
-    //public List<Step4Model.PanelMemberScoreData> CompletedScores => Step4?.CompletedScores ?? new();
-
+    
     #endregion
 
     #region UI Helper Methods
@@ -136,6 +135,13 @@ public partial class TechnicalAssessment : ComponentBase
     {
         Logger.LogInformation("TechnicalAssessment OnInitializedAsync - ReportId: {ReportId}, StepNumber: {StepNumber}, HazardId: {HazardId}", ReportId, StepNumber, HazardId);
 
+        // Initialize step models that require dependency injection
+        Step3 = new Step3Model(Mediator, AuthService);
+        Step4 = new Step4Model(Mediator, AuthService);
+        Step5 = new Step5Model(Mediator, AuthService);
+
+
+
         // If no step number provided, redirect to step 1
         if (string.IsNullOrEmpty(StepNumber) || CurrentStep < 1 || CurrentStep > 5)
         {
@@ -148,8 +154,7 @@ public partial class TechnicalAssessment : ComponentBase
 
     protected override async Task OnParametersSetAsync()
     {
-        Logger.LogInformation("TechnicalAssessment OnParametersSetAsync - ReportId: {ReportId}, StepNumber: {StepNumber}, HazardId: {HazardId}",
-            ReportId, StepNumber, HazardId);
+        Logger.LogInformation("TechnicalAssessment OnParametersSetAsync - ReportId: {ReportId}, StepNumber: {StepNumber}, HazardId: {HazardId}", ReportId, StepNumber, HazardId);
 
         // Handle route parameter changes
         var currentStep = CurrentStep;
@@ -159,7 +164,7 @@ public partial class TechnicalAssessment : ComponentBase
             await NavigateToStep(1);
             return;
         }
-        // ✅ CRITICAL FIX: Reload Step3 data when navigating to Step 3
+        
         if (currentStep == 3)
         {
             Logger.LogInformation("Navigating to Step 3 - reloading Step3 data to ensure HazardRiskAnalyses is complete");
@@ -168,7 +173,7 @@ public partial class TechnicalAssessment : ComponentBase
 
             if (TechRiskAssessment != null && ReportHazards?.Any() == true)
             {
-                await Step3.LoadFromAssessmentAsync(Mediator, TechRiskAssessment, ReportHazards);
+                await Step3.LoadFromAssessmentAsync(TechRiskAssessment, ReportHazards);
             }
             else
             {
@@ -181,9 +186,6 @@ public partial class TechnicalAssessment : ComponentBase
             Logger.LogInformation("Parameter change detected - Step: {StepNumber}", StepNumber);
         }
 
-        
-
-        // If StepNumber parameter changed, we need to refresh the UI
         await InvokeAsync(StateHasChanged);
 
         Logger.LogInformation("OnParametersSetAsync completed - Current step: {CurrentStep}", CurrentStep);
@@ -501,13 +503,13 @@ public partial class TechnicalAssessment : ComponentBase
             Step1.LoadFromAssessment(TechRiskAssessment);
             Step2.LoadFromAssessment(TechRiskAssessment);
 
-            await Step3.LoadFromAssessmentAsync(Mediator, TechRiskAssessment,ReportHazards);
+            await Step3.LoadFromAssessmentAsync(TechRiskAssessment,ReportHazards);
             
             Step4.LoadFromAssessment(TechRiskAssessment);
             await Step4.LoadExistingScoringPanelsAsync(Mediator, ReportHazards);
 
             // Step 5 uses the same assessment - the step models will determine Initial vs Residual properties
-            await Step5.LoadFromAssessmentAsync(TechRiskAssessment, Mediator, ReportHazards);
+            await Step5.LoadFromAssessmentAsync(TechRiskAssessment, ReportHazards);
 
             Logger.LogInformation("Step models loaded from assessment, including RiskAnalysis entities");
         }
@@ -640,7 +642,7 @@ public partial class TechnicalAssessment : ComponentBase
 
             if (TechRiskAssessment != null && ReportHazards?.Any() == true)
             {
-                await Step3.LoadFromAssessmentAsync(Mediator, TechRiskAssessment, ReportHazards);
+                await Step3.LoadFromAssessmentAsync(TechRiskAssessment, ReportHazards);
             }
             else
             {
@@ -772,53 +774,39 @@ public partial class TechnicalAssessment : ComponentBase
 
             // ENHANCEMENT: Update the current step in the assessment
             TechRiskAssessment.CurrentStep = CurrentStep;
+            
             // Update assessment status (enum) based on current step
-            TechRiskAssessment.Status = DetermineRiskAssessmentStatusFromStep(CurrentStep); /// CurrentStep > 0 ? RiskAssessmentStatus.AssessmentUnderway : RiskAssessmentStatus.AssessmentCreate;
+            TechRiskAssessment.Status = DetermineRiskAssessmentStatusFromStep(CurrentStep); 
             TechRiskAssessment.Stage = DetermineRiskAssessmentStageFromStep(CurrentStep +1);
 
             // Update last modified info
             TechRiskAssessment.UpdatedDate = DateTime.UtcNow;
             TechRiskAssessment.UpdatedBy = AuthService.CurrentUserDisplayName;
-
+            if (CurrentStep == 5)
+            {
+                TechRiskAssessment.CompletedBy = AuthService.CurrentUserDisplayName;
+                TechRiskAssessment.CompletedDate = DateTime.UtcNow;
+            }
             
             // Save to database
             var updateCommand = new UpdateRiskAssessmentCommand(TechRiskAssessment);
             var initalresult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
-
-
-
-            var reportQuery = new GetReportByCodeQuery(new ReportID(ReportId));
-            var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
-            if (reportResult.IsSuccess) 
+            
+            //This may change but atleaset it's a start//
+            ReportStatus status = CurrentStep switch
             {
-                
-                var rpt = reportResult.Value;
-                //This may change but atleaset it's a start//
-                ReportStatus result = CurrentStep switch
-                {
-                    1 => ReportStatus.RiskAssessmentInProgress,
-                    2 => ReportStatus.RiskAssessmentInProgress,
-                    3 => ReportStatus.RiskAssessmentInProgress,
-                    4 => ReportStatus.RiskAssessmentInProgress,
-                    5 => ReportStatus.RiskAssessmentSubmitted,
-                    _ => ReportStatus.RiskAssessmentInProgress
-                };
-                rpt.Status = result;
+                1 => ReportStatus.RiskAssessmentInProgress,
+                2 => ReportStatus.RiskAssessmentInProgress,
+                3 => ReportStatus.RiskAssessmentInProgress,
+                4 => ReportStatus.RiskAssessmentInProgress,
+                5 => ReportStatus.RiskAssessmentSubmitted,
+                _ => ReportStatus.RiskAssessmentInProgress
+            };
 
-                rpt.UpdatedBy = AuthService.CurrentUserDisplayName;
-                rpt.UpdatedDate = DateTime.UtcNow;
-                
-                var rptcmd = new UpdateReportCommand(rpt);
-                var rptResult = await Mediator.SendAsync(rptcmd, CancellationToken.None);
+            var cmd = new UpdateReportStatusCommand(ReportId, status, AuthService.CurrentUserDisplayName);
+            var cmdResult = await Mediator.SendAsync(cmd, CancellationToken.None);
+            
 
-                if (!rptResult.IsSuccess) 
-                
-                { 
-                
-                }
-
-
-            }
 
             if (initalresult.IsSuccess)
             {
@@ -937,15 +925,7 @@ public partial class TechnicalAssessment : ComponentBase
         };
     }
 
-    /// <summary>
-    /// ✅ SHARED METHOD: Load scoring panels for any hazard with step-based score mapping
-    /// Uses initial scores for Step 4, residual scores for Step 5
-    /// This eliminates duplication between Step4 and Step5 components
-    /// </summary>
-    /// <param name="hazardCode">The hazard code to load panels for</param>
-    /// <param name="currentStep">Current assessment step (4 for initial, 5 for residual)</param>
-    /// <param name="riskAssessmentCode">Risk assessment code to filter panels</param>
-    /// <returns>List of scoring panels with appropriate score mapping</returns>
+   
     public async Task<List<ScoringPanel>> LoadScoringPanelsForHazard(string hazardCode, int currentStep, string? riskAssessmentCode = null)
     {
         if (string.IsNullOrEmpty(hazardCode) || hazardCode == "HZ-0000")
@@ -1280,24 +1260,8 @@ public partial class TechnicalAssessment : ComponentBase
         var updateCommand = new UpdateRiskAssessmentCommand(TechRiskAssessment);
         await Mediator.SendAsync(updateCommand, CancellationToken.None);
 
-        var reportQuery = new GetReportByCodeQuery(new ReportID(ReportId));
-        var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
-        if (reportResult.IsSuccess)
-        {
-
-            var rpt = reportResult.Value;
-            rpt.Status = ReportStatus.ValidationCompleted;
-
-            rpt.UpdatedBy = AuthService.CurrentUserDisplayName;
-            rpt.UpdatedDate = DateTime.UtcNow;
-
-            var rptcmd = new UpdateReportCommand(rpt);
-            var rptResult = await Mediator.SendAsync(rptcmd, CancellationToken.None);
-
-            
-        }
-
-
+        var cmd = new UpdateReportStatusCommand(ReportId, ReportStatus.ValidationCompleted, AuthService.CurrentUserDisplayName);
+        var cmdResult = await Mediator.SendAsync(cmd, CancellationToken.None);
 
 
     }
@@ -1318,13 +1282,13 @@ public partial class TechnicalAssessment : ComponentBase
                 Step2.ApplyToAssessment(TechRiskAssessment!);
                 break;
             case 3:
-                await Step3.ApplyToAssessmentAsync(AuthService, Mediator, TechRiskAssessment!, ReportedHazards, CurrentStep);
+                await Step3.ApplyToAssessmentAsync(TechRiskAssessment!, ReportedHazards, CurrentStep);
                 break;
             case 4:
-                await Step4.ApplyToAssessmentAsync(AuthService,TechRiskAssessment!, Mediator, ReportedHazards);
+                await Step4.ApplyToAssessmentAsync(TechRiskAssessment!, ReportedHazards);
                 break;
             case 5:
-                await Step5.ApplyToAssessmentAsync(TechRiskAssessment!, Mediator, ReportedHazards);
+                await Step5.ApplyToAssessmentAsync(TechRiskAssessment!, ReportedHazards);
                 break;
         }
     }

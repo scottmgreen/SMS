@@ -5,7 +5,14 @@
 /// </summary>
 public class Step5Model
 {
-    private const string NEW_RISK_ANALYSIS_SEED_CODE = "RA-0000";
+    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+
+    public Step5Model(IMediator mediator, AuthenticationService authService)
+    {
+        Mediator = mediator;
+        AuthService = authService;
+    }
 
     public Dictionary<string, List<string>> SavedMitigationStrategies { get; set; } = new();
     public Dictionary<string, List<Mitigation>> HazardMitigations { get; set; } = new();
@@ -45,9 +52,8 @@ public class Step5Model
 
     private RiskAnalysis CreateNewRiskAnalysis(string hazardCode, string riskAssessmentCode)
     {
-        return new RiskAnalysis(new RiskAnalysisID(NEW_RISK_ANALYSIS_SEED_CODE))
+        return new RiskAnalysis(new RiskAnalysisID("RA-0000"))
         {
-            Code = NEW_RISK_ANALYSIS_SEED_CODE,
             HazardCode = hazardCode,
             RiskAssessmentCode = riskAssessmentCode,
             AssessmentType = RiskAnalysisType.Initial, // ✅ FIXED: Start as Initial, not Residual
@@ -63,15 +69,10 @@ public class Step5Model
             UpdatedBy = "SYSTEM"
         };
     }
-    // Add this method to Step5Model.cs right after the CreateNewRiskAnalysis method:
-
-    /// <summary>
-    /// ✅ CRITICAL: Load existing RiskAnalysis entities from Step 3 for Step 5 to work with
-    /// This ensures we have the complete RiskAnalysis with both Initial and Residual properties
-    /// </summary>
-    public async Task LoadRiskAnalysisAsync(IMediator mediator, List<Hazard> availableHazards, string riskAssessmentCode)
+    
+    public async Task LoadRiskAnalysisAsync(List<Hazard> availableHazards, string riskAssessmentCode)
     {
-        if (mediator == null || availableHazards == null) return;
+        if (Mediator == null || availableHazards == null) return;
 
         try
         {
@@ -81,7 +82,7 @@ public class Step5Model
 
             // Load all existing RiskAnalysis entities
             var allAnalysisQuery = new GetAllRiskAnalysisQuery();
-            var allAnalysisResult = await mediator.SendAsync(allAnalysisQuery, CancellationToken.None);
+            var allAnalysisResult = await Mediator.SendAsync(allAnalysisQuery, CancellationToken.None);
 
             if (!allAnalysisResult.IsSuccess || allAnalysisResult.Value == null)
             {
@@ -135,89 +136,21 @@ public class Step5Model
         }
     }
 
-    // And fix your LoadFromAssessmentAsync method:
-    public async Task LoadFromAssessmentAsync(RiskAssessment assessment, IMediator mediator, List<Hazard> availableHazards)
+    public async Task LoadFromAssessmentAsync(RiskAssessment assessment, List<Hazard> availableHazards)
     {
         if (assessment == null) return;
 
-        
-
-        if (mediator != null && availableHazards?.Any() == true)
+        if (Mediator != null && availableHazards?.Any() == true)
         {
             // ✅ CRITICAL: Load RiskAnalysis entities from Step 3 FIRST
-            await LoadRiskAnalysisAsync(mediator, availableHazards, assessment.Code);
+            await LoadRiskAnalysisAsync(availableHazards, assessment.Code);
 
             // Then load mitigations
-            await LoadMitigationEntitiesAsync(mediator, availableHazards);
+            await LoadMitigationEntitiesAsync(availableHazards);
         }
     }
 
-    // And add the missing LoadFromAssessment method:
     
-    /// <summary>
-    /// Load existing Residual RiskAnalysis entities from the database for each hazard
-    /// </summary>
-    //public async Task LoadExistingResidualRiskAnalysesAsync(IMediator mediator, List<Hazard> availableHazards)
-    //{
-    //    if (mediator == null || availableHazards == null) return;
-
-    //    var hazardCodes = availableHazards.Select(h => h.Code).ToList();
-
-    //    var allAnalysisQuery = new GetAllRiskAnalysisQuery();
-    //    var allAnalysisResult = await mediator.SendAsync(allAnalysisQuery, CancellationToken.None);
-
-    //    if (!allAnalysisResult.IsSuccess || allAnalysisResult.Value == null)
-    //    {
-    //        return;
-    //    }
-
-    //    var allAssessmentsQuery = new GetAllRiskAssessmentsQuery();
-    //    var assessmentsResult = await mediator.SendAsync(allAssessmentsQuery, CancellationToken.None);
-
-    //    if (!assessmentsResult.IsSuccess || assessmentsResult.Value == null)
-    //    {
-    //        return;
-    //    }
-
-    //    // ? ENHANCED: Filter by AssessmentType.Residual instead of RiskAssessmentType.Residual
-    //    var residualAssessmentCodes = assessmentsResult.Value
-    //        .Where(a => a.AssessmentType == RiskAssessmentType.Residual)
-    //        .Select(a => a.Code)
-    //        .ToHashSet();
-
-    //    // ? ENHANCED: Filter by both hazard codes AND AssessmentType = Residual
-    //    var residualAnalyses = allAnalysisResult.Value
-    //        .Where(ra => hazardCodes.Contains(ra.HazardCode) && 
-    //                    residualAssessmentCodes.Contains(ra.RiskAssessmentCode) &&
-    //                    ra.AssessmentType == RiskAnalysisType.Residual) // ? CRITICAL: Filter by Residual AssessmentType
-    //        .ToList();
-
-    //    foreach (var analysis in residualAnalyses)
-    //    {
-    //        // ? ENHANCED: Ensure AssessmentType is properly set to Residual
-    //        if (analysis.AssessmentType != RiskAnalysisType.Residual)
-    //        {
-    //            analysis.AssessmentType = RiskAnalysisType.Residual;
-    //        }
-
-    //        // Ensure the RiskAssessmentCode is set correctly for Residual assessments
-    //        if (string.IsNullOrEmpty(analysis.RiskAssessmentCode) || analysis.RiskAssessmentCode == "RA-0000")
-    //        {
-    //            // Find the correct Residual assessment code for this analysis
-    //            var residualAssessment = assessmentsResult.Value
-    //                .FirstOrDefault(a => a.AssessmentType == RiskAssessmentType.Residual && 
-    //                                    hazardCodes.Contains(a.HazardCode ?? string.Empty));
-
-    //            if (residualAssessment != null)
-    //            {
-    //                analysis.RiskAssessmentCode = residualAssessment.Code;
-    //            }
-    //        }
-
-    //        this.HazardResidualRiskAnalyses[analysis.HazardCode] = analysis;
-    //    }
-    //}
-
     public (bool isValid, string message) Validate()
     {
         return (true, "Step 5 validation passed");
@@ -228,21 +161,21 @@ public class Step5Model
         assessment.CompleteStep(5);
     }
 
-    public async Task ApplyToAssessmentAsync(RiskAssessment assessment, IMediator mediator, List<Hazard> availableHazards)
+    public async Task ApplyToAssessmentAsync(RiskAssessment assessment, List<Hazard> availableHazards)
     {
-        if (mediator == null || assessment == null || availableHazards == null) return;
+        if (Mediator == null || assessment == null || availableHazards == null) return;
 
         try
         {
             assessment.CompleteStep(5);
-            await SaveResidualRiskAnalysesAsync(mediator, assessment);
+            await SaveResidualRiskAnalysesAsync(assessment);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error applying Step 5 to assessment: {ex.Message}");
         }
     }
-    private async Task SaveResidualRiskAnalysesAsync(IMediator mediator, RiskAssessment assessment)
+    private async Task SaveResidualRiskAnalysesAsync(RiskAssessment assessment)
     {
         foreach (var analysisKvp in HazardResidualRiskAnalyses)
         {
@@ -251,16 +184,13 @@ public class Step5Model
                 var analysis = analysisKvp.Value;
                 var hazardCode = analysisKvp.Key;
 
-                // ✅ CRITICAL FIX: Load the existing entity from database to preserve Initial properties
                 var existingQuery = new GetRiskAnalysisByHazardAndAssessmentQuery(hazardCode, assessment.Code);
-                var existingResult = await mediator.SendAsync(existingQuery, CancellationToken.None);
+                var existingResult = await Mediator.SendAsync(existingQuery, CancellationToken.None);
 
                 if (existingResult.IsSuccess && existingResult.Value != null)
                 {
                     var existingAnalysis = existingResult.Value;
 
-                    // ✅ PRESERVE Initial properties from database
-                    // ✅ UPDATE only Residual properties from Step 5
                     existingAnalysis.ResidualWorstCredibleOutcome = analysis.ResidualWorstCredibleOutcome;
                     existingAnalysis.ResidualRootCause = analysis.ResidualRootCause;
                     existingAnalysis.ResidualAdditionalComments = analysis.ResidualAdditionalComments;
@@ -275,7 +205,7 @@ public class Step5Model
 
                     // Save the merged entity
                     var updateCommand = new UpdateRiskAnalysisCommand(existingAnalysis);
-                    var updateResult = await mediator.SendAsync(updateCommand, CancellationToken.None);
+                    var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
 
                     if (updateResult.IsSuccess)
                     {
@@ -298,61 +228,9 @@ public class Step5Model
             }
         }
     }
-    //private async Task SaveResidualRiskAnalysesAsync(IMediator mediator, RiskAssessment assessment)
-    //{
-    //    foreach (var analysisKvp in HazardResidualRiskAnalyses)
-    //    {
-    //        try
-    //        {
-    //            var analysis = analysisKvp.Value;
-    //            var hazardCode = analysisKvp.Key;
+    
 
-    //            //// ? CRITICAL: Ensure AssessmentType is set to Residual before saving
-    //            //if (analysis.AssessmentType != RiskAnalysisType.Residual)
-    //            //{
-    //            //    analysis.AssessmentType = RiskAnalysisType.Residual;
-    //            //}
-
-    //            // ? ENHANCED: Ensure RiskAssessmentCode is properly set
-    //            if (string.IsNullOrEmpty(analysis.RiskAssessmentCode) && assessment != null)
-    //            {
-    //                analysis.RiskAssessmentCode = assessment.Code;
-    //            }
-
-    //            // ? Choose correct CQRS command based on entity state
-    //            //if (string.IsNullOrEmpty(analysis.Code) || analysis.Code == NEW_RISK_ANALYSIS_SEED_CODE)
-    //            //{
-    //            //    // Create new RiskAnalysis
-    //            //    var createCommand = new CreateRiskAnalysisCommand(analysis);
-    //            //    var createResult = await mediator.SendAsync(createCommand, CancellationToken.None);
-
-    //            //    if (createResult.IsSuccess)
-    //            //    {
-    //            //        HazardResidualRiskAnalyses[hazardCode] = createResult.Value;
-    //            //    }
-    //            //}
-    //            //else
-    //            //{
-    //                // Update existing RiskAnalysis
-    //                var updateCommand = new UpdateRiskAnalysisCommand(analysis);
-    //                var updateResult = await mediator.SendAsync(updateCommand, CancellationToken.None);
-
-    //                if (updateResult.IsSuccess)
-    //                {
-    //                    HazardResidualRiskAnalyses[hazardCode] = updateResult.Value;
-    //                }
-    //            //}
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            Console.WriteLine($"Error updating Residual RiskAnalysis for hazard {analysisKvp.Key}: {ex.Message}");
-    //        }
-    //    }
-    //}
-
-
-
-    private async Task LoadMitigationEntitiesAsync(IMediator mediator, List<Hazard> availableHazards)
+    private async Task LoadMitigationEntitiesAsync(List<Hazard> availableHazards)
     {
         try
         {
@@ -366,7 +244,7 @@ public class Step5Model
                 try
                 {
                     var query = new GetMitigationsByHazardCodeQuery(hazard.Code);
-                    var result = await mediator.SendAsync(query, CancellationToken.None);
+                    var result = await Mediator.SendAsync(query, CancellationToken.None);
 
                     if (result.IsSuccess && result.Value?.Any() == true)
                     {

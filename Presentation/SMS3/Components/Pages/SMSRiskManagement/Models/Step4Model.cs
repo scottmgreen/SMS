@@ -7,6 +7,14 @@ namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 /// </summary>
 public class Step4Model
 {
+    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+
+    public Step4Model(IMediator mediator, AuthenticationService authService)
+    {
+        Mediator = mediator;
+        AuthService = authService;
+    }
     public List<string> SelectedPanelMembers { get; set; } = new();
     public Dictionary<string, List<string>> HazardPanelMembers { get; set; } = new();
     public Dictionary<string, List<PanelMemberScoreData>> PanelScores { get; set; } = new();
@@ -63,17 +71,17 @@ public class Step4Model
         return (true, "Step 4 validation passed");
     }
 
-    public async Task ApplyToAssessmentAsync(AuthenticationService AuthService,RiskAssessment assessment, IMediator mediator, List<Hazard> availableHazards)
+    public async Task ApplyToAssessmentAsync(RiskAssessment assessment, List<Hazard> availableHazards)
     {
-        await SaveStep4RiskAssessmentAsync(AuthService,assessment, mediator, availableHazards);
+        await SaveStep4RiskAssessmentAsync(assessment,availableHazards);
         assessment.CompleteStep(4);
     }
 
     
 
-    private async Task SaveStep4RiskAssessmentAsync(AuthenticationService AuthService,RiskAssessment assessment, IMediator mediator, List<Hazard> availableHazards)
+    private async Task SaveStep4RiskAssessmentAsync(RiskAssessment assessment, List<Hazard> availableHazards)
     {
-        if (mediator == null || assessment == null || availableHazards == null) return;
+        if (Mediator == null || assessment == null || availableHazards == null) return;
 
         try
         {
@@ -86,7 +94,7 @@ public class Step4Model
                 finalLikelihood,
                 finalRiskLevel);
 
-            var result = await mediator.SendAsync(saveStep4Command, CancellationToken.None);
+            var result = await Mediator.SendAsync(saveStep4Command, CancellationToken.None);
 
             if (result.IsSuccess)
             {

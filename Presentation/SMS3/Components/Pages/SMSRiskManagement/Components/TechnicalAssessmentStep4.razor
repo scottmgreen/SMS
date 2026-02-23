@@ -168,7 +168,7 @@
 </RadzenRow>
 
 @code {
-    [Parameter] public Step4Model Step4 { get; set; } = new();
+    [Parameter] public Step4Model Step4 { get; set; } = default!;
     [Parameter] public EventCallback<Step4Model> Step4Changed { get; set; }
     [Parameter] public List<Hazard> Step4Hazards { get; set; } = new();
     [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
