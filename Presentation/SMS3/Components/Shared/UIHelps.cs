@@ -1,6 +1,8 @@
 ﻿using SMS_Domain.Enums;
 using Radzen;
 using SMS3.Configuration;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Http;
 
 namespace SMS3.Components.Shared.UIHelpers;
 
@@ -348,9 +350,9 @@ public static class DropdownHelper
     {
         return new List<DropdownOption>
         {
-            new("NoFurtherAction", "No Further Action"),
-            new("ContinueLater", "Continue Later"),
-            new("ReturnToValidation", "Return to Validation")
+            new("NO_FURTHER_ACTION", "No Further Action"),
+            new("CONTINUE_LATER", "Continue Later"),
+            new("RETURN_TO_VALIDATION", "Return to Validation")
         };
     }
 }
@@ -365,6 +367,9 @@ public static class NotificationHelper
     /// </summary>
     public static void ShowSuccess(NotificationService notificationService, string message, int duration = 4000, NotificationSettings? settings = null)
     {
+        // If settings not provided, try to get from current HTTP context
+        settings ??= GetNotificationSettings();
+        
         if (settings?.AllowSuccessNotifications == false) return;
         
         notificationService.Notify(new NotificationMessage
@@ -381,6 +386,9 @@ public static class NotificationHelper
     /// </summary>
     public static void ShowError(NotificationService notificationService, string message, int duration = 6000, NotificationSettings? settings = null)
     {
+        // If settings not provided, try to get from current HTTP context
+        settings ??= GetNotificationSettings();
+        
         if (settings?.AllowErrorNotifications == false) return;
         
         notificationService.Notify(new NotificationMessage
@@ -397,6 +405,9 @@ public static class NotificationHelper
     /// </summary>
     public static void ShowInfo(NotificationService notificationService, string message, int duration = 4000, NotificationSettings? settings = null)
     {
+        // If settings not provided, try to get from current HTTP context
+        settings ??= GetNotificationSettings();
+        
         if (settings?.AllowInfoNotifications == false) return;
         
         notificationService.Notify(new NotificationMessage
@@ -413,6 +424,9 @@ public static class NotificationHelper
     /// </summary>
     public static void ShowWarning(NotificationService notificationService, string message, int duration = 5000, NotificationSettings? settings = null)
     {
+        // If settings not provided, try to get from current HTTP context
+        settings ??= GetNotificationSettings();
+        
         if (settings?.AllowWarningNotifications == false) return;
         
         notificationService.Notify(new NotificationMessage
@@ -423,6 +437,39 @@ public static class NotificationHelper
             Duration = duration
         });
     }
+
+    /// <summary>
+    /// Try to get NotificationSettings from current HTTP context
+    /// </summary>
+    private static NotificationSettings? GetNotificationSettings()
+    {
+        try
+        {
+            // Access current HTTP context to get services
+            var httpContextAccessor = ServiceLocator.Current?.GetService<IHttpContextAccessor>();
+            if (httpContextAccessor?.HttpContext?.RequestServices == null)
+                return null;
+
+            var optionsAccessor = httpContextAccessor.HttpContext.RequestServices
+                .GetService<IOptions<NotificationSettings>>();
+            
+            return optionsAccessor?.Value;
+        }
+        catch
+        {
+            // If we can't get the settings, return null and let notifications through
+            // (fail-open approach for better user experience)
+            return null;
+        }
+    }
+}
+
+/// <summary>
+/// Simple service locator for accessing DI container from static contexts
+/// </summary>
+public static class ServiceLocator
+{
+    public static IServiceProvider? Current { get; set; }
 }
 
 public static class StatusOptions

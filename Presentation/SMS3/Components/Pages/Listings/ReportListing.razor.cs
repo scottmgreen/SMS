@@ -4,6 +4,8 @@ using SMS_Application.Messaging.Queries;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Components.Shared;
 using SMS_Domain.Errors;
+using System.Linq.Expressions;
+using Radzen;
 
 namespace SMS3.Components.Pages.Listings;
 
@@ -28,8 +30,14 @@ public partial class ReportListing : ComponentBase
     #region Properties
     private RadzenDataGrid<Report>? reportsGrid;
     private IEnumerable<Report> reports = new List<Report>();
+    private List<Report> allReports = new List<Report>(); // Store all reports for client-side filtering
     private int totalCount;
     private bool isLoading = false;
+
+    // Custom confirmation modal properties
+    private bool showResetConfirmModal = false;
+    private string resetConfirmationMessage = string.Empty;
+    private Report? reportToReset = null;
 
     /// <summary>
     /// Show details modal flag
@@ -82,17 +90,13 @@ public partial class ReportListing : ComponentBase
 
             if (result.IsSuccess && result.Value != null)
             {
-                reports = result.Value;
-                totalCount = reports.Count();
+                allReports = result.Value; // Store all reports for filtering/sorting
+                reports = allReports; // Initially show all reports
+                totalCount = allReports.Count();
                 Logger.LogInformation("Loaded {Count} reports for listing", totalCount);
 
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Reports Loaded",
-                    Detail = $"Successfully loaded {totalCount} reports",
-                    Duration = 2000
-                });
+                ShowSuccessNotification($"Successfully loaded {totalCount} reports");
+               
             }
             else
             {
@@ -119,8 +123,54 @@ public partial class ReportListing : ComponentBase
             isLoading = true;
             StateHasChanged();
 
-            // For now, reload all data - could be optimized with server-side filtering/paging
-            await LoadInitialData();
+            Logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
+                args.Skip, args.Top, args.OrderBy, args.Filter);
+
+            // If we don't have all reports yet, load them first
+            if (allReports == null || !allReports.Any())
+            {
+                await LoadInitialData();
+                return;
+            }
+
+            // Start with all reports
+            var query = allReports.AsQueryable();
+
+            // Apply filtering
+            if (!string.IsNullOrEmpty(args.Filter))
+            {
+                query = ApplyFiltering(query, args);
+            }
+
+            // Get total count after filtering but before paging
+            totalCount = query.Count();
+
+            // Apply sorting
+            if (!string.IsNullOrEmpty(args.OrderBy))
+            {
+                query = ApplySorting(query, args.OrderBy);
+            }
+            else
+            {
+                // Default sorting by CreatedDate descending
+                query = query.OrderByDescending(r => r.CreatedDate);
+            }
+
+            // Apply paging
+            if (args.Skip.HasValue && args.Skip > 0)
+            {
+                query = query.Skip(args.Skip.Value);
+            }
+
+            if (args.Top.HasValue && args.Top > 0)
+            {
+                query = query.Take(args.Top.Value);
+            }
+
+            reports = query.ToList();
+
+            Logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} reports", 
+                reports.Count(), totalCount);
         }
         catch (Exception ex)
         {
@@ -131,6 +181,161 @@ public partial class ReportListing : ComponentBase
         {
             isLoading = false;
             StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Apply filtering based on Radzen DataGrid filter arguments
+    /// </summary>
+    private IQueryable<Report> ApplyFiltering(IQueryable<Report> query, LoadDataArgs args)
+    {
+        try
+        {
+            // Handle simple string filter (when user types in the general filter)
+            if (!string.IsNullOrEmpty(args.Filter) && !args.Filter.Contains("("))
+            {
+                var filterValue = args.Filter.ToLower();
+                query = query.Where(r => 
+                    (!string.IsNullOrEmpty(r.Code) && r.Code.ToLower().Contains(filterValue)) ||
+                    (!string.IsNullOrEmpty(r.Name) && r.Name.ToLower().Contains(filterValue)) ||
+                    (!string.IsNullOrEmpty(r.Description) && r.Description.ToLower().Contains(filterValue)) ||
+                    (!string.IsNullOrEmpty(r.Status) && r.Status.ToLower().Contains(filterValue)) ||
+                    (!string.IsNullOrEmpty(r.SubmittedBy) && r.SubmittedBy.ToLower().Contains(filterValue)) ||
+                    (!string.IsNullOrEmpty(r.SubmittingDepartment) && r.SubmittingDepartment.ToLower().Contains(filterValue))
+                );
+                return query;
+            }
+
+            // Handle advanced column-specific filters
+            if (args.Filters != null && args.Filters.Any())
+            {
+                foreach (var filter in args.Filters)
+                {
+                    var columnName = filter.Property?.ToLower();
+                    var filterValue = filter.FilterValue?.ToString()?.ToLower();
+                    var filterOperator = filter.FilterOperator;
+
+                    if (string.IsNullOrEmpty(filterValue)) continue;
+
+                    switch (columnName)
+                    {
+                        case "code":
+                            query = ApplyStringFilter(query, r => r.Code, filterValue, filterOperator);
+                            break;
+                        case "name":
+                            query = ApplyStringFilter(query, r => r.Name, filterValue, filterOperator);
+                            break;
+                        case "description":
+                            query = ApplyStringFilter(query, r => r.Description, filterValue, filterOperator);
+                            break;
+                        case "status":
+                            query = ApplyStringFilter(query, r => r.Status, filterValue, filterOperator);
+                            break;
+                        case "submittedby":
+                            query = ApplyStringFilter(query, r => r.SubmittedBy, filterValue, filterOperator);
+                            break;
+                        case "submittingdepartment":
+                            query = ApplyStringFilter(query, r => r.SubmittingDepartment, filterValue, filterOperator);
+                            break;
+                        case "submitteddate":
+                            if (DateTime.TryParse(filter.FilterValue?.ToString(), out var dateValue))
+                            {
+                                query = ApplyDateFilter(query, r => r.SubmittedDate, dateValue, filterOperator);
+                            }
+                            break;
+                    }
+                }
+            }
+
+            return query;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error applying filters");
+            return query; // Return unfiltered query if filtering fails
+        }
+    }
+
+    /// <summary>
+    /// Apply string-based filtering with different operators
+    /// </summary>
+    private IQueryable<Report> ApplyStringFilter(IQueryable<Report> query, Expression<Func<Report, string?>> propertySelector, string filterValue, FilterOperator filterOperator)
+    {
+        return filterOperator switch
+        {
+            FilterOperator.Contains => query.Where(CombineExpressions(propertySelector, value => !string.IsNullOrEmpty(value) && value.ToLower().Contains(filterValue))),
+            FilterOperator.StartsWith => query.Where(CombineExpressions(propertySelector, value => !string.IsNullOrEmpty(value) && value.ToLower().StartsWith(filterValue))),
+            FilterOperator.EndsWith => query.Where(CombineExpressions(propertySelector, value => !string.IsNullOrEmpty(value) && value.ToLower().EndsWith(filterValue))),
+            FilterOperator.Equals => query.Where(CombineExpressions(propertySelector, value => !string.IsNullOrEmpty(value) && value.ToLower() == filterValue)),
+            FilterOperator.NotEquals => query.Where(CombineExpressions(propertySelector, value => string.IsNullOrEmpty(value) || value.ToLower() != filterValue)),
+            _ => query.Where(CombineExpressions(propertySelector, value => !string.IsNullOrEmpty(value) && value.ToLower().Contains(filterValue)))
+        };
+    }
+
+    /// <summary>
+    /// Apply date-based filtering with different operators
+    /// </summary>
+    private IQueryable<Report> ApplyDateFilter(IQueryable<Report> query, Expression<Func<Report, DateTime?>> propertySelector, DateTime filterValue, FilterOperator filterOperator)
+    {
+        return filterOperator switch
+        {
+            FilterOperator.Equals => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value.Date == filterValue.Date)),
+            FilterOperator.NotEquals => query.Where(CombineExpressions(propertySelector, value => !value.HasValue || value.Value.Date != filterValue.Date)),
+            FilterOperator.LessThan => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value.Date < filterValue.Date)),
+            FilterOperator.LessThanOrEquals => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value.Date <= filterValue.Date)),
+            FilterOperator.GreaterThan => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value.Date > filterValue.Date)),
+            FilterOperator.GreaterThanOrEquals => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value.Date >= filterValue.Date)),
+            _ => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value.Date == filterValue.Date))
+        };
+    }
+
+    /// <summary>
+    /// Combine property selector with condition expression
+    /// </summary>
+    private Expression<Func<Report, bool>> CombineExpressions<T>(Expression<Func<Report, T>> propertySelector, Expression<Func<T, bool>> condition)
+    {
+        var parameter = propertySelector.Parameters[0];
+        var property = propertySelector.Body;
+        var conditionBody = condition.Body;
+        var conditionParameter = condition.Parameters[0];
+
+        // Replace the condition parameter with the property expression
+        var visitor = new ParameterReplacementVisitor(conditionParameter, property);
+        var newConditionBody = visitor.Visit(conditionBody);
+
+        return Expression.Lambda<Func<Report, bool>>(newConditionBody, parameter);
+    }
+
+    /// <summary>
+    /// Apply sorting based on OrderBy parameter from Radzen DataGrid
+    /// </summary>
+    private IQueryable<Report> ApplySorting(IQueryable<Report> query, string orderBy)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(orderBy)) return query;
+
+            var parts = orderBy.Split(' ');
+            var propertyName = parts[0].ToLower();
+            var isDescending = parts.Length > 1 && parts[1].ToLower() == "desc";
+
+            return propertyName switch
+            {
+                "code" => isDescending ? query.OrderByDescending(r => r.Code) : query.OrderBy(r => r.Code),
+                "name" => isDescending ? query.OrderByDescending(r => r.Name) : query.OrderBy(r => r.Name),
+                "description" => isDescending ? query.OrderByDescending(r => r.Description) : query.OrderBy(r => r.Description),
+                "status" => isDescending ? query.OrderByDescending(r => r.Status) : query.OrderBy(r => r.Status),
+                "submittedby" => isDescending ? query.OrderByDescending(r => r.SubmittedBy) : query.OrderBy(r => r.SubmittedBy),
+                "submitteddate" => isDescending ? query.OrderByDescending(r => r.SubmittedDate) : query.OrderBy(r => r.SubmittedDate),
+                "submittingdepartment" => isDescending ? query.OrderByDescending(r => r.SubmittingDepartment) : query.OrderBy(r => r.SubmittingDepartment),
+                "createddate" => isDescending ? query.OrderByDescending(r => r.CreatedDate) : query.OrderBy(r => r.CreatedDate),
+                _ => query.OrderByDescending(r => r.CreatedDate) // Default sort
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error applying sorting for OrderBy: {OrderBy}", orderBy);
+            return query.OrderByDescending(r => r.CreatedDate); // Fallback to default sort
         }
     }
     #endregion
@@ -171,14 +376,8 @@ public partial class ReportListing : ComponentBase
 
             Logger.LogInformation("Displaying details for report: {ReportCode} with {HazardCount} hazards",
                 report.Code, AssociatedHazards.Count);
-
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Info,
-                Summary = "Report Details Loaded",
-                Detail = $"Displaying comprehensive details for {report.Code}",
-                Duration = 2000
-            });
+            NotificationHelper.ShowInfo(NotificationService, $"Displaying comprehensive details for {report.Code}", 4000);
+            
         }
         catch (Exception ex)
         {
@@ -217,14 +416,8 @@ public partial class ReportListing : ComponentBase
                 Navigation.NavigateTo($"/SMSRiskManagement/HazardReporting?mode=edit&reportCode={report.Code}");
 
                 Logger.LogInformation("Navigating to edit report: {ReportCode}", report.Code);
-
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Info,
-                    Summary = "Navigating to Edit",
-                    Detail = $"Opening {report.Code} for editing...",
-                    Duration = 3000
-                });
+                NotificationHelper.ShowInfo(NotificationService, $"Opening {report.Code} for editing...", 4000);
+                
             }
         }
         catch (Exception ex)
@@ -278,14 +471,8 @@ public partial class ReportListing : ComponentBase
 
                     // Reload the grid data
                     await LoadInitialData();
-
-                    NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Success,
-                        Summary = "Report Deleted",
-                        Detail = $"Report {report.Code} has been successfully deleted.",
-                        Duration = 4000
-                    });
+                    ShowSuccessNotification($"Report {report.Code} has been successfully deleted.");
+                    
                 }
                 else
                 {
@@ -573,57 +760,16 @@ public partial class ReportListing : ComponentBase
             await LoadAssociatedHazardsAsync(report.Code);
             var hazardCount = AssociatedHazards?.Count ?? 0;
 
-            // Build detailed confirmation message
-            var confirmationMessage = BuildResetConfirmationMessage(report, hazardCount);
-
-            // Show confirmation dialog
-            var confirmed = await DialogService.Confirm(
-                confirmationMessage,
-                "⚠️ Confirm Reset Report Validation",
-                new ConfirmOptions()
-                {
-                    OkButtonText = "✅ Yes, Reset Report",
-                    CancelButtonText = "❌ Cancel",
-                    AutoFocusFirstElement = false
-                });
-
-            if (confirmed == true)
-            {
-                Logger.LogInformation("User confirmed reset for report {ReportCode}", report.Code);
-
-                // Perform the reset operation
-                var result = await ResetReportValidation(report.Code);
-
-                if (result.IsSuccess && result.Value)
-                {
-                    Logger.LogInformation("Successfully reset report validation for {ReportCode}", report.Code);
-
-                    // Show success notification
-                    ShowSuccessNotification($"Report '{report.Code}' validation has been successfully reset");
-
-                    // Refresh the data grid to reflect changes
-                    await LoadInitialData();
-
-                    // Update UI state
-                    StateHasChanged();
-                }
-                else
-                {
-                    var errorMessage = result.Error?.Message ?? "Unknown error occurred during reset";
-                    Logger.LogError("Failed to reset report validation for {ReportCode}: {Error}", report.Code, errorMessage);
-
-                    ShowErrorNotification($"Failed to reset report validation: {errorMessage}");
-                }
-            }
-            else
-            {
-                Logger.LogInformation("User cancelled reset operation for report {ReportCode}", report.Code);
-            }
+            // Build detailed confirmation message and show custom modal
+            resetConfirmationMessage = BuildResetConfirmationMessage(report, hazardCount);
+            reportToReset = report;
+            showResetConfirmModal = true;
+            StateHasChanged();
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Unexpected error during reset operation for report {ReportCode}", report.Code);
-            ShowErrorNotification($"An unexpected error occurred while resetting the report: {ex.Message}");
+            Logger.LogError(ex, "Error preparing reset confirmation for report {ReportCode}", report.Code);
+            ShowErrorNotification($"Error preparing reset confirmation: {ex.Message}");
         }
         finally
         {
@@ -633,33 +779,106 @@ public partial class ReportListing : ComponentBase
     }
 
     /// <summary>
+    /// Handle the actual reset confirmation from custom modal
+    /// </summary>
+    private async Task HandleResetConfirmation()
+    {
+        if (reportToReset == null) return;
+
+        try
+        {
+            showResetConfirmModal = false;
+            isLoading = true;
+            StateHasChanged();
+
+            Logger.LogInformation("User confirmed reset for report {ReportCode}", reportToReset.Code);
+
+            // Perform the reset operation
+            var result = await ResetReportValidation(reportToReset.Code);
+
+            if (result.IsSuccess && result.Value)
+            {
+                Logger.LogInformation("Successfully reset report validation for {ReportCode}", reportToReset.Code);
+
+                // Show success notification
+                ShowSuccessNotification($"Report '{reportToReset.Code}' validation has been successfully reset");
+
+                // Refresh the data grid to reflect changes
+                await LoadInitialData();
+
+                // Update UI state
+                StateHasChanged();
+            }
+            else
+            {
+                var errorMessage = result.Error?.Message ?? "Unknown error occurred during reset";
+                Logger.LogError("Failed to reset report validation for {ReportCode}: {Error}", reportToReset.Code, errorMessage);
+
+                ShowErrorNotification($"Failed to reset report validation: {errorMessage}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unexpected error during reset operation for report {ReportCode}", reportToReset?.Code);
+            ShowErrorNotification($"An unexpected error occurred while resetting the report: {ex.Message}");
+        }
+        finally
+        {
+            // Clean up
+            reportToReset = null;
+            resetConfirmationMessage = string.Empty;
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Cancel the reset operation
+    /// </summary>
+    private void CancelResetConfirmation()
+    {
+        showResetConfirmModal = false;
+        reportToReset = null;
+        resetConfirmationMessage = string.Empty;
+        StateHasChanged();
+        
+        Logger.LogInformation("User cancelled reset operation for report {ReportCode}", reportToReset?.Code);
+    }
+
+    /// <summary>
     /// Builds a detailed confirmation message for report reset
     /// </summary>
     private string BuildResetConfirmationMessage(Report report, int hazardCount)
     {
         var message = $"Are you sure you want to reset the validation for report '{report.Code}'?\n\n" +
-                      $"📋 Report Details:\n" +
-                      $"• Code: {report.Code}\n" +
-                      $"• Name: {report.Name ?? "Unnamed Report"}\n" +
-                      $"• Status: {report.Status ?? "Unknown"}\n" +
-                      $"• Created: {report.CreatedDate:yyyy-MM-dd}\n" +
-                      $"• Associated Hazards: {hazardCount}\n\n";
+                       $"Report Details:\n" +
+                       $"Code: {report.Code}\n" +
+                       $"Name: {report.Name ?? "Unnamed Report"}\n" +
+                       $"Status: {report.Status ?? "Unknown"}\n" +
+                       $"Created: {report.CreatedDate:yyyy-MM-dd}\n" +
+                       $"Associated Hazards: {hazardCount}\n\n";
 
         if (hazardCount > 0)
         {
-            message += "⚠️  WARNING: This report has associated hazards that may also be affected by this reset.\n\n";
+            message += "WARNING: This report has associated hazards that may also be affected by this reset.\n\n";
         }
 
-        message += "🚨 This action will:\n" +
-                   "• Reset the report validation status\n" +
-                   "• Clear any validation history\n" +
-                   "• Potentially affect associated hazards\n" +
-                   "• Require re-validation of the report\n\n" +
-                   "❗ This action cannot be undone!";
+        message += "This action will:\n" +
+                   "✓ Reset the report validation status\n" +
+                   "✓ Clear any validation history\n" +
+                   "✓ Potentially affect associated hazards\n" +
+                   "✓ Require re-validation of the report";
 
         return message;
     }
 
+    /// <summary>
+    /// Gets the final warning message for display
+    /// </summary>
+    private string GetResetFinalWarning()
+    {
+        return "THIS ACTION CANNOT BE UNDONE!";
+    }
     
     /// <summary>
     /// Shows error notification to user
@@ -676,8 +895,4 @@ public partial class ReportListing : ComponentBase
     {
         NotificationHelper.ShowSuccess(NotificationService, message, 5000);
     }
-
-
-
-
 }

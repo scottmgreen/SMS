@@ -156,11 +156,7 @@ public class Step5Model
         return (true, "Step 5 validation passed");
     }
 
-    public void ApplyToAssessment(RiskAssessment assessment)
-    {
-        assessment.CompleteStep(5);
-    }
-
+    
     public async Task ApplyToAssessmentAsync(RiskAssessment assessment, List<Hazard> availableHazards)
     {
         if (Mediator == null || assessment == null || availableHazards == null) return;
@@ -265,10 +261,6 @@ public class Step5Model
         }
     }
 
-    public string ApplyToAssessmentString(List<string> appliedMitigations)
-    {
-        return string.Join("; ", appliedMitigations ?? new List<string>());
-    }
-
+    
     
 }

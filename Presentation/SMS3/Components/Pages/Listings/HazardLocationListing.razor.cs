@@ -1,55 +1,103 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SMS_Domain.Entities;
+using SMS_Domain.Enums;
 using SMS_Domain.ValueObjects;
 using SMS_Application.Messaging.Queries;
 using SMS_Application.Interfaces;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Components.Shared;
+using SMS_Domain.Errors;
+using System.Linq.Expressions;
 using Radzen;
 using Radzen.Blazor;
-using System.Linq.Expressions;
 
 namespace SMS3.Components.Pages.Listings;
 
+/// <summary>
+/// Hazard Location Listing Component - Enhanced with full CRUD operations and advanced filtering
+/// Provides comprehensive data grid listing with view details, edit navigation, and delete functionality
+/// </summary>
 public partial class HazardLocationListing : ComponentBase
 {
+    private string BasicTextStyle = "font-size:smaller;font-weight: 600";
+
+    #region Dependencies
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<HazardLocationListing> Logger { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
+    #endregion
 
+    #region Properties
     private RadzenDataGrid<HazardLocation>? locationsGrid;
     private IEnumerable<HazardLocation> locations = new List<HazardLocation>();
+    private List<HazardLocation> allLocations = new List<HazardLocation>(); // Store all locations for client-side filtering
     private int totalCount;
     private bool isLoading = false;
-    private string BasicTextStyle = "font-size:smaller;font-weight: 600";
+    #endregion
+    
+    #region Lifecycle Methods
     protected override async Task OnInitializedAsync()
     {
         await LoadInitialData();
     }
+    #endregion
 
+    #region Data Loading Methods
     private async Task LoadInitialData()
     {
         try
         {
+            isLoading = true;
+            StateHasChanged();
+
+            Logger.LogInformation("Loading hazard locations for listing view");
+
             var query = new GetAllHazardLocationsQuery();
             var result = await Mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
-                locations = result.Value;
-                totalCount = locations.Count();
-                Logger.LogInformation("Loaded {Count} hazard locations", totalCount);
+                allLocations = result.Value.ToList(); // Store all locations for filtering/sorting
+                locations = allLocations; // Initially show all locations
+                totalCount = allLocations.Count();
+                Logger.LogInformation("Loaded {Count} hazard locations for listing", totalCount);
+
+                // Show success notification if we have data
+                if (totalCount > 0)
+                {
+                    ShowSuccessNotification($"Successfully loaded {totalCount} hazard locations");
+                }
+                else
+                {
+                    ShowInfoNotification("No hazard locations found");
+                }
             }
             else
             {
+                // Initialize with empty lists to prevent null reference issues
+                allLocations = new List<HazardLocation>();
+                locations = allLocations;
+                totalCount = 0;
+                
                 ShowErrorNotification("Failed to load hazard locations");
                 Logger.LogError("Failed to load hazard locations: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
+            // Ensure we always have valid collections even if an error occurs
+            allLocations = new List<HazardLocation>();
+            locations = allLocations;
+            totalCount = 0;
+            
             Logger.LogError(ex, "Error loading hazard locations");
-            ShowErrorNotification("Error loading hazard locations");
+            ShowErrorNotification($"Error loading hazard locations: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
         }
     }
 
@@ -60,34 +108,82 @@ public partial class HazardLocationListing : ComponentBase
             isLoading = true;
             StateHasChanged();
 
-            await LoadInitialData();
+            Logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
+                args.Skip, args.Top, args.OrderBy, args.Filter);
 
-            var query = locations.AsQueryable();
-
-            if (!string.IsNullOrEmpty(args.OrderBy))
+            // If we don't have all locations yet, load them first
+            if (allLocations == null || !allLocations.Any())
             {
-                query = args.OrderBy.Contains("desc")
-                    ? query.OrderByDescending(GetPropertyExpression(args.OrderBy.Replace(" desc", "")))
-                    : query.OrderBy(GetPropertyExpression(args.OrderBy));
+                Logger.LogInformation("No locations cached, loading initial data");
+                await LoadInitialData();
+                return;
             }
 
-            if (args.Skip.HasValue)
+            // Start with all locations
+            var query = allLocations.AsQueryable();
+            Logger.LogInformation("Starting with {Count} total locations", query.Count());
+
+            // Apply filtering
+            if (!string.IsNullOrEmpty(args.Filter))
             {
+                Logger.LogInformation("Applying filter: {Filter}", args.Filter);
+                query = ApplyFiltering(query, args);
+                Logger.LogInformation("After filtering: {Count} locations", query.Count());
+            }
+
+            // Get total count after filtering but before paging
+            totalCount = query.Count();
+
+            // Apply sorting
+            if (!string.IsNullOrEmpty(args.OrderBy))
+            {
+                Logger.LogInformation("Applying sorting: {OrderBy}", args.OrderBy);
+                query = ApplySorting(query, args.OrderBy);
+                Logger.LogInformation("Sorting applied successfully");
+            }
+            else
+            {
+                // Default sorting by CreatedDate descending
+                Logger.LogInformation("Applying default sort by CreatedDate");
+                query = query.OrderByDescending(l => l.CreatedDate ?? DateTime.MinValue);
+            }
+
+            // Apply paging
+            if (args.Skip.HasValue && args.Skip > 0)
+            {
+                Logger.LogInformation("Applying skip: {Skip}", args.Skip);
                 query = query.Skip(args.Skip.Value);
             }
 
-            if (args.Top.HasValue)
+            if (args.Top.HasValue && args.Top > 0)
             {
+                Logger.LogInformation("Applying take: {Top}", args.Top);
                 query = query.Take(args.Top.Value);
             }
 
             locations = query.ToList();
-            totalCount = locations.Count();
+
+            Logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} locations", 
+                locations.Count(), totalCount);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in LoadData");
-            ShowErrorNotification("Error loading data");
+            Logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
+                args.Skip, args.Top, args.OrderBy, args.Filter);
+            ShowErrorNotification($"Error loading data: {ex.Message}");
+            
+            // Fallback to show all data without filtering/sorting
+            try
+            {
+                locations = allLocations ?? new List<HazardLocation>();
+                totalCount = locations.Count();
+            }
+            catch (Exception fallbackEx)
+            {
+                Logger.LogError(fallbackEx, "Error in LoadData fallback");
+                locations = new List<HazardLocation>();
+                totalCount = 0;
+            }
         }
         finally
         {
@@ -96,6 +192,269 @@ public partial class HazardLocationListing : ComponentBase
         }
     }
 
+    /// <summary>
+    /// Apply filtering based on Radzen DataGrid filter arguments
+    /// </summary>
+    private IQueryable<HazardLocation> ApplyFiltering(IQueryable<HazardLocation> query, LoadDataArgs args)
+    {
+        try
+        {
+            Logger.LogInformation("ApplyFiltering called with Filter: {Filter}, Filters count: {FilterCount}", 
+                args.Filter, args.Filters?.Count() ?? 0);
+
+            // Handle simple string filter (when user types in the general filter)
+            if (!string.IsNullOrEmpty(args.Filter) && !args.Filter.Contains("("))
+            {
+                var filterValue = args.Filter.ToLower();
+                Logger.LogInformation("Applying simple string filter: {FilterValue}", filterValue);
+                
+                query = query.Where(l => 
+                    (!string.IsNullOrEmpty(l.Code) && l.Code.ToLower().Contains(filterValue)) ||
+                    (!string.IsNullOrEmpty(l.HazardCode) && l.HazardCode.ToLower().Contains(filterValue)) ||
+                    (!string.IsNullOrEmpty(l.Description) && l.Description.ToLower().Contains(filterValue)) ||
+                    (!string.IsNullOrEmpty(l.CreatedBy) && l.CreatedBy.ToLower().Contains(filterValue)) ||
+                    (l.Latitude.HasValue && l.Latitude.ToString()!.Contains(filterValue)) ||
+                    (l.Longitude.HasValue && l.Longitude.ToString()!.Contains(filterValue))
+                );
+                return query;
+            }
+
+            // Handle advanced column-specific filters
+            if (args.Filters != null && args.Filters.Any())
+            {
+                Logger.LogInformation("Applying {Count} advanced filters", args.Filters.Count());
+                
+                foreach (var filter in args.Filters)
+                {
+                    var columnName = filter.Property?.ToLower();
+                    var filterValue = filter.FilterValue?.ToString()?.ToLower();
+                    var filterOperator = filter.FilterOperator;
+
+                    Logger.LogInformation("Processing filter - Column: {Column}, Value: {Value}, Operator: {Operator}", 
+                        columnName, filterValue, filterOperator);
+
+                    if (string.IsNullOrEmpty(filterValue)) continue;
+
+                    switch (columnName)
+                    {
+                        case "code":
+                            query = ApplyStringFilter(query, l => l.Code, filterValue, filterOperator);
+                            break;
+                        case "hazardcode":
+                            query = ApplyStringFilter(query, l => l.HazardCode, filterValue, filterOperator);
+                            break;
+                        case "description":
+                            query = ApplyStringFilter(query, l => l.Description, filterValue, filterOperator);
+                            break;
+                        case "createdby":
+                            query = ApplyStringFilter(query, l => l.CreatedBy, filterValue, filterOperator);
+                            break;
+                        case "latitude":
+                            if (decimal.TryParse(filter.FilterValue?.ToString(), out var latValue))
+                            {
+                                query = ApplyDecimalFilter(query, l => l.Latitude, latValue, filterOperator);
+                            }
+                            break;
+                        case "longitude":
+                            if (decimal.TryParse(filter.FilterValue?.ToString(), out var lonValue))
+                            {
+                                query = ApplyDecimalFilter(query, l => l.Longitude, lonValue, filterOperator);
+                            }
+                            break;
+                        case "createddate":
+                            if (DateTime.TryParse(filter.FilterValue?.ToString(), out var createdDateValue))
+                            {
+                                query = ApplyDateFilter(query, l => l.CreatedDate, createdDateValue, filterOperator);
+                            }
+                            break;
+                        case "dateselected":
+                            if (DateTime.TryParse(filter.FilterValue?.ToString(), out var selectedDateValue))
+                            {
+                                query = ApplyDateFilter(query, l => l.DateSelected, selectedDateValue, filterOperator);
+                            }
+                            break;
+                        default:
+                            Logger.LogWarning("Unknown filter column: {ColumnName}", columnName);
+                            break;
+                    }
+                }
+            }
+
+            return query;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error applying filters - Filter: {Filter}, Filters: {@Filters}", 
+                args.Filter, args.Filters?.Select(f => new { f.Property, f.FilterValue, f.FilterOperator }));
+            return query; // Return unfiltered query if filtering fails
+        }
+    }
+
+    /// <summary>
+    /// Apply string-based filtering with different operators
+    /// </summary>
+    private IQueryable<HazardLocation> ApplyStringFilter(IQueryable<HazardLocation> query, Expression<Func<HazardLocation, string?>> propertySelector, string filterValue, FilterOperator filterOperator)
+    {
+        return filterOperator switch
+        {
+            FilterOperator.Contains => query.Where(CombineExpressions(propertySelector, value => !string.IsNullOrEmpty(value) && value.ToLower().Contains(filterValue))),
+            FilterOperator.StartsWith => query.Where(CombineExpressions(propertySelector, value => !string.IsNullOrEmpty(value) && value.ToLower().StartsWith(filterValue))),
+            FilterOperator.EndsWith => query.Where(CombineExpressions(propertySelector, value => !string.IsNullOrEmpty(value) && value.ToLower().EndsWith(filterValue))),
+            FilterOperator.Equals => query.Where(CombineExpressions(propertySelector, value => !string.IsNullOrEmpty(value) && value.ToLower() == filterValue)),
+            FilterOperator.NotEquals => query.Where(CombineExpressions(propertySelector, value => string.IsNullOrEmpty(value) || value.ToLower() != filterValue)),
+            _ => query.Where(CombineExpressions(propertySelector, value => !string.IsNullOrEmpty(value) && value.ToLower().Contains(filterValue)))
+        };
+    }
+
+    /// <summary>
+    /// Apply decimal-based filtering (for Latitude, Longitude, etc.)
+    /// </summary>
+    private IQueryable<HazardLocation> ApplyDecimalFilter(IQueryable<HazardLocation> query, Expression<Func<HazardLocation, decimal?>> propertySelector, decimal filterValue, FilterOperator filterOperator)
+    {
+        return filterOperator switch
+        {
+            FilterOperator.Equals => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value == filterValue)),
+            FilterOperator.NotEquals => query.Where(CombineExpressions(propertySelector, value => !value.HasValue || value.Value != filterValue)),
+            FilterOperator.LessThan => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value < filterValue)),
+            FilterOperator.LessThanOrEquals => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value <= filterValue)),
+            FilterOperator.GreaterThan => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value > filterValue)),
+            FilterOperator.GreaterThanOrEquals => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value >= filterValue)),
+            _ => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value == filterValue))
+        };
+    }
+
+    /// <summary>
+    /// Apply date-based filtering with different operators
+    /// </summary>
+    private IQueryable<HazardLocation> ApplyDateFilter(IQueryable<HazardLocation> query, Expression<Func<HazardLocation, DateTime?>> propertySelector, DateTime filterValue, FilterOperator filterOperator)
+    {
+        return filterOperator switch
+        {
+            FilterOperator.Equals => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value.Date == filterValue.Date)),
+            FilterOperator.NotEquals => query.Where(CombineExpressions(propertySelector, value => !value.HasValue || value.Value.Date != filterValue.Date)),
+            FilterOperator.LessThan => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value.Date < filterValue.Date)),
+            FilterOperator.LessThanOrEquals => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value.Date <= filterValue.Date)),
+            FilterOperator.GreaterThan => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value.Date > filterValue.Date)),
+            FilterOperator.GreaterThanOrEquals => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value.Date >= filterValue.Date)),
+            _ => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value.Date == filterValue.Date))
+        };
+    }
+
+    /// <summary>
+    /// Apply date-based filtering for non-nullable DateTime
+    /// </summary>
+    private IQueryable<HazardLocation> ApplyDateFilter(IQueryable<HazardLocation> query, Expression<Func<HazardLocation, DateTime>> propertySelector, DateTime filterValue, FilterOperator filterOperator)
+    {
+        return filterOperator switch
+        {
+            FilterOperator.Equals => query.Where(CombineExpressions(propertySelector, value => value.Date == filterValue.Date)),
+            FilterOperator.NotEquals => query.Where(CombineExpressions(propertySelector, value => value.Date != filterValue.Date)),
+            FilterOperator.LessThan => query.Where(CombineExpressions(propertySelector, value => value.Date < filterValue.Date)),
+            FilterOperator.LessThanOrEquals => query.Where(CombineExpressions(propertySelector, value => value.Date <= filterValue.Date)),
+            FilterOperator.GreaterThan => query.Where(CombineExpressions(propertySelector, value => value.Date > filterValue.Date)),
+            FilterOperator.GreaterThanOrEquals => query.Where(CombineExpressions(propertySelector, value => value.Date >= filterValue.Date)),
+            _ => query.Where(CombineExpressions(propertySelector, value => value.Date == filterValue.Date))
+        };
+    }
+
+    /// <summary>
+    /// Combine property selector with condition expression
+    /// </summary>
+    private Expression<Func<HazardLocation, bool>> CombineExpressions<T>(Expression<Func<HazardLocation, T>> propertySelector, Expression<Func<T, bool>> condition)
+    {
+        var parameter = propertySelector.Parameters[0];
+        var property = propertySelector.Body;
+        var conditionBody = condition.Body;
+        var conditionParameter = condition.Parameters[0];
+
+        // Replace the condition parameter with the property expression
+        var visitor = new ParameterReplacementVisitor(conditionParameter, property);
+        var newConditionBody = visitor.Visit(conditionBody);
+
+        return Expression.Lambda<Func<HazardLocation, bool>>(newConditionBody, parameter);
+    }
+
+    /// <summary>
+    /// Apply sorting based on OrderBy parameter from Radzen DataGrid
+    /// </summary>
+    private IQueryable<HazardLocation> ApplySorting(IQueryable<HazardLocation> query, string orderBy)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(orderBy)) return query;
+
+            var parts = orderBy.Split(' ');
+            var propertyName = parts[0].ToLower();
+            var isDescending = parts.Length > 1 && parts[1].ToLower() == "desc";
+
+            Logger.LogInformation("Applying sorting: Property={PropertyName}, Descending={IsDescending}", propertyName, isDescending);
+
+            return propertyName switch
+            {
+                "code" => isDescending ? query.OrderByDescending(l => l.Code ?? "") : query.OrderBy(l => l.Code ?? ""),
+                "hazardcode" => isDescending ? query.OrderByDescending(l => l.HazardCode ?? "") : query.OrderBy(l => l.HazardCode ?? ""),
+                "description" => isDescending ? query.OrderByDescending(l => l.Description ?? "") : query.OrderBy(l => l.Description ?? ""),
+                "createdby" => isDescending ? query.OrderByDescending(l => l.CreatedBy ?? "") : query.OrderBy(l => l.CreatedBy ?? ""),
+                "latitude" => isDescending ? query.OrderByDescending(l => l.Latitude) : query.OrderBy(l => l.Latitude),
+                "longitude" => isDescending ? query.OrderByDescending(l => l.Longitude) : query.OrderBy(l => l.Longitude),
+                "createddate" => isDescending ? query.OrderByDescending(l => l.CreatedDate) : query.OrderBy(l => l.CreatedDate),
+                "updateddate" => isDescending ? query.OrderByDescending(l => l.UpdatedDate) : query.OrderBy(l => l.UpdatedDate),
+                "dateselected" => isDescending ? query.OrderByDescending(l => l.DateSelected) : query.OrderBy(l => l.DateSelected),
+                _ => query.OrderByDescending(l => l.CreatedDate ?? DateTime.MinValue) // Default sort with null handling
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error applying sorting for OrderBy: {OrderBy}", orderBy);
+            return query.OrderByDescending(l => l.CreatedDate ?? DateTime.MinValue); // Fallback to default sort
+        }
+    }
+    #endregion
+
+    #region Helper Methods - Keep existing functionality but improved
+    private static Expression<Func<HazardLocation, object>> GetPropertyExpression(string propertyName)
+    {
+        var parameter = Expression.Parameter(typeof(HazardLocation), "x");
+        var property = Expression.Property(parameter, propertyName);
+        var conversion = Expression.Convert(property, typeof(object));
+        return Expression.Lambda<Func<HazardLocation, object>>(conversion, parameter);
+    }
+
+    /// <summary>
+    /// Check if a HazardLocation has valid coordinates for mapping
+    /// </summary>
+    public bool HasValidCoordinates(HazardLocation location)
+    {
+        return location.Latitude.HasValue && location.Longitude.HasValue &&
+               location.Latitude.Value != 0 && location.Longitude.Value != 0;
+    }
+
+    /// <summary>
+    /// Shows error notification to user
+    /// </summary>
+    private void ShowErrorNotification(string message)
+    {
+        NotificationHelper.ShowError(NotificationService, message, 7000);
+    }
+
+    /// <summary>
+    /// Shows success notification to user
+    /// </summary>
+    private void ShowSuccessNotification(string message)
+    {
+        NotificationHelper.ShowSuccess(NotificationService, message, 5000);
+    }
+
+    /// <summary>
+    /// Shows info notification to user
+    /// </summary>
+    private void ShowInfoNotification(string message)
+    {
+        NotificationHelper.ShowInfo(NotificationService, message, 5000);
+    }
+    #endregion
+
+    #region Action Methods - Enhanced with better error handling
     /// <summary>
     /// Show location map in modal dialog
     /// </summary>
@@ -205,6 +564,8 @@ public partial class HazardLocationListing : ComponentBase
                     Draggable = true,
                     CloseDialogOnOverlayClick = false
                 });
+
+            ShowInfoNotification($"Opened location map for {location.Code}");
         }
         catch (Exception ex)
         {
@@ -241,30 +602,9 @@ public partial class HazardLocationListing : ComponentBase
         }
     }
 
-    /// <summary>
-    /// Check if a HazardLocation has valid coordinates for mapping
-    /// </summary>
-    private bool HasValidCoordinates(HazardLocation location)
-    {
-        return location.Latitude.HasValue && location.Longitude.HasValue &&
-               location.Latitude.Value != 0 && location.Longitude.Value != 0;
-    }
-
-    private static Expression<Func<HazardLocation, object>> GetPropertyExpression(string propertyName)
-    {
-        var parameter = Expression.Parameter(typeof(HazardLocation), "x");
-        var property = Expression.Property(parameter, propertyName);
-        var conversion = Expression.Convert(property, typeof(object));
-        return Expression.Lambda<Func<HazardLocation, object>>(conversion, parameter);
-    }
-
     private void ShowActions(HazardLocation location)
     {
         Logger.LogInformation("Actions requested for hazard location: {Code}", location.Code);
     }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationHelper.ShowError(NotificationService, message);
-    }
+    #endregion
 }

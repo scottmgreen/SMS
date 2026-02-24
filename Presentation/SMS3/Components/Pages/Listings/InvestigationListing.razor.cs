@@ -1,45 +1,101 @@
+using SMS_Domain.Entities;
+using SMS_Domain.Enums;
+using SMS_Domain.ValueObjects;
+using SMS_Application.Messaging.Queries;
+using SMS_Application.Messaging.Commands;
+using SMS3.Components.Shared.UIHelpers;
+using SMS3.Components.Shared;
+using SMS_Domain.Errors;
+using System.Linq.Expressions;
+using Radzen;
+
 namespace SMS3.Components.Pages.Listings;
 
+/// <summary>
+/// Investigation Listing Component - Enhanced with full CRUD operations and advanced filtering
+/// Provides comprehensive data grid listing with view details, edit navigation, and delete functionality
+/// </summary>
 public partial class InvestigationListing : ComponentBase
 {
+    private string BasicTextStyle = "font-size:smaller;font-weight: 600";
+
+    #region Dependencies
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<InvestigationListing> Logger { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
+    #endregion
 
+    #region Properties
     private RadzenDataGrid<Investigation>? investigationsGrid;
     private IEnumerable<Investigation> investigations = new List<Investigation>();
+    private List<Investigation> allInvestigations = new List<Investigation>(); // Store all investigations for client-side filtering
     private int totalCount;
     private bool isLoading = false;
-
+    #endregion
+    
+    #region Lifecycle Methods
     protected override async Task OnInitializedAsync()
     {
         await LoadInitialData();
     }
+    #endregion
 
+    #region Data Loading Methods
     private async Task LoadInitialData()
     {
         try
         {
+            isLoading = true;
+            StateHasChanged();
+
+            Logger.LogInformation("Loading investigations for listing view");
+
             var query = new GetAllInvestigationsQuery();
             var result = await Mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
-                investigations = result.Value;
-                totalCount = investigations.Count();
-                Logger.LogInformation("Loaded {Count} investigations", totalCount);
+                allInvestigations = result.Value.ToList(); // Store all investigations for filtering/sorting
+                investigations = allInvestigations; // Initially show all investigations
+                totalCount = allInvestigations.Count();
+                Logger.LogInformation("Loaded {Count} investigations for listing", totalCount);
+
+                // Show success notification if we have data
+                if (totalCount > 0)
+                {
+                    ShowSuccessNotification($"Successfully loaded {totalCount} investigations");
+                }
+                else
+                {
+                    ShowInfoNotification("No investigations found");
+                }
             }
             else
             {
+                // Initialize with empty lists to prevent null reference issues
+                allInvestigations = new List<Investigation>();
+                investigations = allInvestigations;
+                totalCount = 0;
+                
                 ShowErrorNotification("Failed to load investigations");
                 Logger.LogError("Failed to load investigations: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
+            // Ensure we always have valid collections even if an error occurs
+            allInvestigations = new List<Investigation>();
+            investigations = allInvestigations;
+            totalCount = 0;
+            
             Logger.LogError(ex, "Error loading investigations");
-            ShowErrorNotification("Error loading investigations");
+            ShowErrorNotification($"Error loading investigations: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
         }
     }
 
@@ -50,34 +106,82 @@ public partial class InvestigationListing : ComponentBase
             isLoading = true;
             StateHasChanged();
 
-            await LoadInitialData();
+            Logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
+                args.Skip, args.Top, args.OrderBy, args.Filter);
 
-            var query = investigations.AsQueryable();
-
-            if (!string.IsNullOrEmpty(args.OrderBy))
+            // If we don't have all investigations yet, load them first
+            if (allInvestigations == null || !allInvestigations.Any())
             {
-                query = args.OrderBy.Contains("desc")
-                    ? query.OrderByDescending(GetPropertyExpression(args.OrderBy.Replace(" desc", "")))
-                    : query.OrderBy(GetPropertyExpression(args.OrderBy));
+                Logger.LogInformation("No investigations cached, loading initial data");
+                await LoadInitialData();
+                return;
             }
 
-            if (args.Skip.HasValue)
+            // Start with all investigations
+            var query = allInvestigations.AsQueryable();
+            Logger.LogInformation("Starting with {Count} total investigations", query.Count());
+
+            // Apply filtering
+            if (!string.IsNullOrEmpty(args.Filter))
             {
+                Logger.LogInformation("Applying filter: {Filter}", args.Filter);
+                query = ApplyFiltering(query, args);
+                Logger.LogInformation("After filtering: {Count} investigations", query.Count());
+            }
+
+            // Get total count after filtering but before paging
+            totalCount = query.Count();
+
+            // Apply sorting
+            if (!string.IsNullOrEmpty(args.OrderBy))
+            {
+                Logger.LogInformation("Applying sorting: {OrderBy}", args.OrderBy);
+                query = ApplySorting(query, args.OrderBy);
+                Logger.LogInformation("Sorting applied successfully");
+            }
+            else
+            {
+                // Default sorting by CreatedDate descending
+                Logger.LogInformation("Applying default sort by CreatedDate");
+                query = query.OrderByDescending(i => i.CreatedDate ?? DateTime.MinValue);
+            }
+
+            // Apply paging
+            if (args.Skip.HasValue && args.Skip > 0)
+            {
+                Logger.LogInformation("Applying skip: {Skip}", args.Skip);
                 query = query.Skip(args.Skip.Value);
             }
 
-            if (args.Top.HasValue)
+            if (args.Top.HasValue && args.Top > 0)
             {
+                Logger.LogInformation("Applying take: {Top}", args.Top);
                 query = query.Take(args.Top.Value);
             }
 
             investigations = query.ToList();
-            totalCount = investigations.Count();
+
+            Logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} investigations", 
+                investigations.Count(), totalCount);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in LoadData");
-            ShowErrorNotification("Error loading data");
+            Logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
+                args.Skip, args.Top, args.OrderBy, args.Filter);
+            ShowErrorNotification($"Error loading data: {ex.Message}");
+            
+            // Fallback to show all data without filtering/sorting
+            try
+            {
+                investigations = allInvestigations ?? new List<Investigation>();
+                totalCount = investigations.Count();
+            }
+            catch (Exception fallbackEx)
+            {
+                Logger.LogError(fallbackEx, "Error in LoadData fallback");
+                investigations = new List<Investigation>();
+                totalCount = 0;
+            }
         }
         finally
         {
@@ -86,6 +190,211 @@ public partial class InvestigationListing : ComponentBase
         }
     }
 
+    /// <summary>
+    /// Apply filtering based on Radzen DataGrid filter arguments
+    /// </summary>
+    private IQueryable<Investigation> ApplyFiltering(IQueryable<Investigation> query, LoadDataArgs args)
+    {
+        try
+        {
+            Logger.LogInformation("ApplyFiltering called with Filter: {Filter}, Filters count: {FilterCount}", 
+                args.Filter, args.Filters?.Count() ?? 0);
+
+            // Handle simple string filter (when user types in the general filter)
+            if (!string.IsNullOrEmpty(args.Filter) && !args.Filter.Contains("("))
+            {
+                var filterValue = args.Filter.ToLower();
+                Logger.LogInformation("Applying simple string filter: {FilterValue}", filterValue);
+                
+                query = query.Where(i => 
+                    (!string.IsNullOrEmpty(i.Code) && i.Code.ToLower().Contains(filterValue)) ||
+                    (!string.IsNullOrEmpty(i.ReportCode) && i.ReportCode.ToLower().Contains(filterValue)) ||
+                    (!string.IsNullOrEmpty(i.HazardCode) && i.HazardCode.ToLower().Contains(filterValue)) ||
+                    (!string.IsNullOrEmpty(i.InvestigationNotes) && i.InvestigationNotes.ToLower().Contains(filterValue)) ||
+                    (!string.IsNullOrEmpty(i.AssignedInvestigatorId) && i.AssignedInvestigatorId.ToLower().Contains(filterValue)) ||
+                    (!string.IsNullOrEmpty(i.CreatedBy) && i.CreatedBy.ToLower().Contains(filterValue))
+                );
+                return query;
+            }
+
+            // Handle advanced column-specific filters
+            if (args.Filters != null && args.Filters.Any())
+            {
+                Logger.LogInformation("Applying {Count} advanced filters", args.Filters.Count());
+                
+                foreach (var filter in args.Filters)
+                {
+                    var columnName = filter.Property?.ToLower();
+                    var filterValue = filter.FilterValue?.ToString()?.ToLower();
+                    var filterOperator = filter.FilterOperator;
+
+                    Logger.LogInformation("Processing filter - Column: {Column}, Value: {Value}, Operator: {Operator}", 
+                        columnName, filterValue, filterOperator);
+
+                    if (string.IsNullOrEmpty(filterValue)) continue;
+
+                    switch (columnName)
+                    {
+                        case "reportcode":
+                            query = ApplyStringFilter(query, i => i.ReportCode, filterValue, filterOperator);
+                            break;
+                        case "hazardcode":
+                            query = ApplyStringFilter(query, i => i.HazardCode, filterValue, filterOperator);
+                            break;
+                        case "code":
+                            query = ApplyStringFilter(query, i => i.Code, filterValue, filterOperator);
+                            break;
+                        case "investigationnotes":
+                            query = ApplyStringFilter(query, i => i.InvestigationNotes, filterValue, filterOperator);
+                            break;
+                        case "assignedinvestigatorid":
+                            query = ApplyStringFilter(query, i => i.AssignedInvestigatorId, filterValue, filterOperator);
+                            break;
+                        case "createdby":
+                            query = ApplyStringFilter(query, i => i.CreatedBy, filterValue, filterOperator);
+                            break;
+                        case "status":
+                            query = ApplyEnumFilter(query, i => i.Status.ToString(), filterValue, filterOperator);
+                            break;
+                        case "completeddate":
+                            if (DateTime.TryParse(filter.FilterValue?.ToString(), out var completedDateValue))
+                            {
+                                query = ApplyDateFilter(query, i => i.CompletedDate, completedDateValue, filterOperator);
+                            }
+                            break;
+                        case "createddate":
+                            if (DateTime.TryParse(filter.FilterValue?.ToString(), out var createdDateValue))
+                            {
+                                query = ApplyDateFilter(query, i => i.CreatedDate, createdDateValue, filterOperator);
+                            }
+                            break;
+                        case "decisiondate":
+                            if (DateTime.TryParse(filter.FilterValue?.ToString(), out var decisionDateValue))
+                            {
+                                query = ApplyDateFilter(query, i => i.DecisionDate, decisionDateValue, filterOperator);
+                            }
+                            break;
+                        default:
+                            Logger.LogWarning("Unknown filter column: {ColumnName}", columnName);
+                            break;
+                    }
+                }
+            }
+
+            return query;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error applying filters - Filter: {Filter}, Filters: {@Filters}", 
+                args.Filter, args.Filters?.Select(f => new { f.Property, f.FilterValue, f.FilterOperator }));
+            return query; // Return unfiltered query if filtering fails
+        }
+    }
+
+    /// <summary>
+    /// Apply string-based filtering with different operators
+    /// </summary>
+    private IQueryable<Investigation> ApplyStringFilter(IQueryable<Investigation> query, Expression<Func<Investigation, string?>> propertySelector, string filterValue, FilterOperator filterOperator)
+    {
+        return filterOperator switch
+        {
+            FilterOperator.Contains => query.Where(CombineExpressions(propertySelector, value => !string.IsNullOrEmpty(value) && value.ToLower().Contains(filterValue))),
+            FilterOperator.StartsWith => query.Where(CombineExpressions(propertySelector, value => !string.IsNullOrEmpty(value) && value.ToLower().StartsWith(filterValue))),
+            FilterOperator.EndsWith => query.Where(CombineExpressions(propertySelector, value => !string.IsNullOrEmpty(value) && value.ToLower().EndsWith(filterValue))),
+            FilterOperator.Equals => query.Where(CombineExpressions(propertySelector, value => !string.IsNullOrEmpty(value) && value.ToLower() == filterValue)),
+            FilterOperator.NotEquals => query.Where(CombineExpressions(propertySelector, value => string.IsNullOrEmpty(value) || value.ToLower() != filterValue)),
+            _ => query.Where(CombineExpressions(propertySelector, value => !string.IsNullOrEmpty(value) && value.ToLower().Contains(filterValue)))
+        };
+    }
+
+    /// <summary>
+    /// Apply enum-based filtering (for Status, etc.)
+    /// </summary>
+    private IQueryable<Investigation> ApplyEnumFilter(IQueryable<Investigation> query, Expression<Func<Investigation, string?>> propertySelector, string filterValue, FilterOperator filterOperator)
+    {
+        return filterOperator switch
+        {
+            FilterOperator.Equals => query.Where(CombineExpressions(propertySelector, value => !string.IsNullOrEmpty(value) && value.ToLower() == filterValue)),
+            FilterOperator.NotEquals => query.Where(CombineExpressions(propertySelector, value => string.IsNullOrEmpty(value) || value.ToLower() != filterValue)),
+            FilterOperator.Contains => query.Where(CombineExpressions(propertySelector, value => !string.IsNullOrEmpty(value) && value.ToLower().Contains(filterValue))),
+            _ => query.Where(CombineExpressions(propertySelector, value => !string.IsNullOrEmpty(value) && value.ToLower() == filterValue))
+        };
+    }
+
+    /// <summary>
+    /// Apply date-based filtering with different operators
+    /// </summary>
+    private IQueryable<Investigation> ApplyDateFilter(IQueryable<Investigation> query, Expression<Func<Investigation, DateTime?>> propertySelector, DateTime filterValue, FilterOperator filterOperator)
+    {
+        return filterOperator switch
+        {
+            FilterOperator.Equals => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value.Date == filterValue.Date)),
+            FilterOperator.NotEquals => query.Where(CombineExpressions(propertySelector, value => !value.HasValue || value.Value.Date != filterValue.Date)),
+            FilterOperator.LessThan => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value.Date < filterValue.Date)),
+            FilterOperator.LessThanOrEquals => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value.Date <= filterValue.Date)),
+            FilterOperator.GreaterThan => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value.Date > filterValue.Date)),
+            FilterOperator.GreaterThanOrEquals => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value.Date >= filterValue.Date)),
+            _ => query.Where(CombineExpressions(propertySelector, value => value.HasValue && value.Value.Date == filterValue.Date))
+        };
+    }
+
+    /// <summary>
+    /// Combine property selector with condition expression
+    /// </summary>
+    private Expression<Func<Investigation, bool>> CombineExpressions<T>(Expression<Func<Investigation, T>> propertySelector, Expression<Func<T, bool>> condition)
+    {
+        var parameter = propertySelector.Parameters[0];
+        var property = propertySelector.Body;
+        var conditionBody = condition.Body;
+        var conditionParameter = condition.Parameters[0];
+
+        // Replace the condition parameter with the property expression
+        var visitor = new ParameterReplacementVisitor(conditionParameter, property);
+        var newConditionBody = visitor.Visit(conditionBody);
+
+        return Expression.Lambda<Func<Investigation, bool>>(newConditionBody, parameter);
+    }
+
+    /// <summary>
+    /// Apply sorting based on OrderBy parameter from Radzen DataGrid
+    /// </summary>
+    private IQueryable<Investigation> ApplySorting(IQueryable<Investigation> query, string orderBy)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(orderBy)) return query;
+
+            var parts = orderBy.Split(' ');
+            var propertyName = parts[0].ToLower();
+            var isDescending = parts.Length > 1 && parts[1].ToLower() == "desc";
+
+            Logger.LogInformation("Applying sorting: Property={PropertyName}, Descending={IsDescending}", propertyName, isDescending);
+
+            return propertyName switch
+            {
+                "reportcode" => isDescending ? query.OrderByDescending(i => i.ReportCode ?? "") : query.OrderBy(i => i.ReportCode ?? ""),
+                "hazardcode" => isDescending ? query.OrderByDescending(i => i.HazardCode ?? "") : query.OrderBy(i => i.HazardCode ?? ""),
+                "code" => isDescending ? query.OrderByDescending(i => i.Code ?? "") : query.OrderBy(i => i.Code ?? ""),
+                "investigationnotes" => isDescending ? query.OrderByDescending(i => i.InvestigationNotes ?? "") : query.OrderBy(i => i.InvestigationNotes ?? ""),
+                "assignedinvestigatorid" => isDescending ? query.OrderByDescending(i => i.AssignedInvestigatorId ?? "") : query.OrderBy(i => i.AssignedInvestigatorId ?? ""),
+                "createdby" => isDescending ? query.OrderByDescending(i => i.CreatedBy ?? "") : query.OrderBy(i => i.CreatedBy ?? ""),
+                "status" => isDescending ? query.OrderByDescending(i => i.Status.ToString()) : query.OrderBy(i => i.Status.ToString()),
+                "completeddate" => isDescending ? query.OrderByDescending(i => i.CompletedDate) : query.OrderBy(i => i.CompletedDate),
+                "createddate" => isDescending ? query.OrderByDescending(i => i.CreatedDate) : query.OrderBy(i => i.CreatedDate),
+                "updateddate" => isDescending ? query.OrderByDescending(i => i.UpdatedDate) : query.OrderBy(i => i.UpdatedDate),
+                "decisiondate" => isDescending ? query.OrderByDescending(i => i.DecisionDate) : query.OrderBy(i => i.DecisionDate),
+                _ => query.OrderByDescending(i => i.CreatedDate ?? DateTime.MinValue) // Default sort with null handling
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error applying sorting for OrderBy: {OrderBy}", orderBy);
+            return query.OrderByDescending(i => i.CreatedDate ?? DateTime.MinValue); // Fallback to default sort
+        }
+    }
+    #endregion
+
+    #region Helper Methods - Keep existing functionality but improved
     private static Expression<Func<Investigation, object>> GetPropertyExpression(string propertyName)
     {
         var parameter = Expression.Parameter(typeof(Investigation), "x");
@@ -94,6 +403,32 @@ public partial class InvestigationListing : ComponentBase
         return Expression.Lambda<Func<Investigation, object>>(conversion, parameter);
     }
 
+    /// <summary>
+    /// Shows error notification to user
+    /// </summary>
+    private void ShowErrorNotification(string message)
+    {
+        NotificationHelper.ShowError(NotificationService, message, 7000);
+    }
+
+    /// <summary>
+    /// Shows success notification to user
+    /// </summary>
+    private void ShowSuccessNotification(string message)
+    {
+        NotificationHelper.ShowSuccess(NotificationService, message, 5000);
+    }
+
+    /// <summary>
+    /// Shows info notification to user
+    /// </summary>
+    private void ShowInfoNotification(string message)
+    {
+        NotificationHelper.ShowInfo(NotificationService, message, 5000);
+    }
+    #endregion
+
+    #region Action Methods - Enhanced with better error handling
     private void ShowActions(Investigation investigation)
     {
         Logger.LogInformation("Actions requested for investigation: {Code}", investigation.Code);
@@ -101,38 +436,46 @@ public partial class InvestigationListing : ComponentBase
 
     private void ViewInvestigation(Investigation investigation)
     {
-        if (investigation == null) return;
+        try
+        {
+            if (investigation == null) return;
 
-        // Navigate to Investigation with HazardCode if available
-        var navigationUrl = string.IsNullOrWhiteSpace(investigation.HazardCode)
-            ? $"/SMSRiskManagement/Investigations/{investigation.Code}"
-            : $"/SMSRiskManagement/Investigations/{investigation.Code}/{investigation.HazardCode}";
+            // Navigate to Investigation with HazardCode if available
+            var navigationUrl = string.IsNullOrWhiteSpace(investigation.HazardCode)
+                ? $"/SMSRiskManagement/Investigations/{investigation.Code}"
+                : $"/SMSRiskManagement/Investigations/{investigation.Code}/{investigation.HazardCode}";
 
-        Logger.LogInformation("Navigating to investigation: {Code} with URL: {Url}", investigation.Code, navigationUrl);
-        Navigation.NavigateTo(navigationUrl);
+            Logger.LogInformation("Navigating to investigation: {Code} with URL: {Url}", investigation.Code, navigationUrl);
+            Navigation.NavigateTo(navigationUrl);
+            ShowInfoNotification($"Opening investigation {investigation.Code}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error viewing investigation {Code}", investigation?.Code);
+            ShowErrorNotification("Error opening investigation");
+        }
     }
 
     private void EditInvestigation(Investigation investigation)
     {
-        if (investigation == null) return;
-
-        // Navigate to Investigation edit mode with HazardCode if available
-        var navigationUrl = string.IsNullOrWhiteSpace(investigation.HazardCode)
-            ? $"/SMSRiskManagement/Investigations/{investigation.Code}"
-            : $"/SMSRiskManagement/Investigations/{investigation.Code}/{investigation.HazardCode}";
-
-        Logger.LogInformation("Navigating to edit investigation: {Code} with URL: {Url}", investigation.Code, navigationUrl);
-        Navigation.NavigateTo(navigationUrl);
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
+        try
         {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
+            if (investigation == null) return;
+
+            // Navigate to Investigation edit mode with HazardCode if available
+            var navigationUrl = string.IsNullOrWhiteSpace(investigation.HazardCode)
+                ? $"/SMSRiskManagement/Investigations/{investigation.Code}"
+                : $"/SMSRiskManagement/Investigations/{investigation.Code}/{investigation.HazardCode}";
+
+            Logger.LogInformation("Navigating to edit investigation: {Code} with URL: {Url}", investigation.Code, navigationUrl);
+            Navigation.NavigateTo(navigationUrl);
+            ShowInfoNotification($"Opening investigation editor for {investigation.Code}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error editing investigation {Code}", investigation?.Code);
+            ShowErrorNotification("Error opening investigation editor");
+        }
     }
+    #endregion
 }

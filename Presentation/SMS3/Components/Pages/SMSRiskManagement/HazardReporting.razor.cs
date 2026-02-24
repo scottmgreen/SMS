@@ -1,13 +1,7 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.JSInterop;
+﻿using Microsoft.JSInterop;
 using SMS_Domain.Errors;
-
-using SMS_Domain.Enums;
-
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Shared.UIHelpers;
-
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -233,8 +227,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             }
         }
 
-        // Don't auto-initialize the map here - let OpenMapSelector handle it
-        // This prevents conflicts between automatic and manual initialization
+        
     }
 
     public void Dispose()
@@ -279,14 +272,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             Logger.LogError(ex, "Error checking for edit mode");
             IsEditMode = false;
-
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Edit Mode Error",
-                Detail = "Unable to determine edit mode. Defaulting to create mode.",
-                Duration = 3000
-            });
+            NotificationHelper.ShowError(NotificationService, "Unable to determine edit mode. Defaulting to create mode.", 5000);
+            
         }
     }
 
@@ -326,19 +313,15 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 EditingHazard = primaryHazard;
                 EditHazardCode = primaryHazard.Code;
 
-                Logger.LogInformation("Found primary hazard {HazardCode} with type: {HazardType}",
-                    primaryHazard.Code, primaryHazard.HazardType);
+                Logger.LogInformation("Found primary hazard {HazardCode} with type: {HazardType}", primaryHazard.Code, primaryHazard.HazardType);
 
                 // Try to determine category from hazard type
                 var hazardType = HazardType.FromValue(primaryHazard.HazardType ?? "");
                 var category = hazardType != null ? HazardCategory.FromValue(hazardType.Category) : null;
 
-                Logger.LogInformation("Determined category: {Category} from hazard type: {HazardType}",
-                    category?.Value ?? "NULL", primaryHazard.HazardType);
+                Logger.LogInformation("Determined category: {Category} from hazard type: {HazardType}", category?.Value ?? "NULL", primaryHazard.HazardType);
 
-                //Step 0 Basic Reporting details.
                 
-
 
 
                 // STEP 1: Set the category first
@@ -431,27 +414,14 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 DepartmentOptions.Clear();
                 SelectedDepartment =null;
             }
-
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Info,
-                Summary = "Report Loaded",
-                Detail = $"Loaded report {reportCode} for editing.",
-                Duration = 3000
-            });
+            NotificationHelper.ShowInfo(NotificationService, $"Loaded report {reportCode} for editing.", 5000);
+            
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading report for editing: {ReportCode}", reportCode);
-
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Load Failed",
-                Detail = "Failed to load report for editing. Redirecting to Reports page.",
-                Duration = 5000
-            });
-
+            NotificationHelper.ShowError(NotificationService, "Failed to load report for editing. Redirecting to Reports page.", 5000);
+            
             // Redirect back to reports on failure
             Navigation.NavigateTo("/SMSRiskManagement/Reports");
         }
@@ -504,7 +474,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 }
             }
 
-            Logger.LogInformation("Loaded {Count} hazard types for category: {Category}",
+                Logger.LogInformation("Loaded {Count} hazard types for category: {Category}",
                 HazardTypeOptions.Count, category.Name);
         }
         else
@@ -531,13 +501,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
             if (!IsFormValidForSubmission())
             {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Warning,
-                    Summary = "Form Validation",
-                    Detail = "Please complete all required fields before submitting.",
-                    Duration = 4000
-                });
+                NotificationHelper.ShowWarning(NotificationService, "Please complete all required fields before submitting.", 5000);
                 return;
             }
 
@@ -546,14 +510,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error during form submission");
-
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Submission Error",
-                Detail = "An error occurred while submitting your report. Please try again.",
-                Duration = 5000
-            });
+            NotificationHelper.ShowError(NotificationService, "An error occurred while submitting your report. Please try again.", 5000);
+            
         }
     }
 
@@ -633,37 +591,18 @@ public partial class HazardReporting : ComponentBase, IDisposable
             // Show notification about results
             if (successfullyProcessedFiles.Any() && failedFiles.Any())
             {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Warning,
-                    Summary = "Partial Success",
-                    Detail = $"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued.",
-                    Duration = 4000
-                });
+                NotificationHelper.ShowWarning(NotificationService, $"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued.", 5000);
             }
             else if (successfullyProcessedFiles.Any())
             {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Files Added",
-                    Detail = $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.",
-                    Duration = 3000
-                });
+                NotificationHelper.ShowSuccess(NotificationService, $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.", 5000);
             }
             else if (failedFiles.Any())
             {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "File Processing Failed",
-                    Detail = $"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.",
-                    Duration = 5000
-                });
+                NotificationHelper.ShowError(NotificationService, $"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.", 5000);
             }
 
-            Logger.LogInformation("📁 File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",
-                successfullyProcessedFiles.Count, failedFiles.Count, AttachedFiles.Count);
+            Logger.LogInformation("📁 File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",successfullyProcessedFiles.Count, failedFiles.Count, AttachedFiles.Count);
         }
         else
         {
@@ -686,7 +625,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         StateHasChanged();
 
         // Give DOM time to render the modal
-        await Task.Delay(300);
+        await Task.Delay(500);
 
         // Always try to initialize the map when modal opens
         if (_mapModule != null)
@@ -790,14 +729,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
 
         StateHasChanged();
-
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Info,
-            Summary = "Selection Cleared",
-            Detail = "Map selection has been cleared.",
-            Duration = 2000
-        });
+        NotificationHelper.ShowInfo(NotificationService, "Map selection has been cleared.", 5000);
+        
     }
 
     [JSInvokable("OnMapLocationSelected")]
@@ -813,13 +746,11 @@ public partial class HazardReporting : ComponentBase, IDisposable
             Logger?.LogWarning("Received zero coordinates from map click");
         }
 
-        Logger?.LogInformation("Map location received from JS: Lat={Lat}, Lng={Lng}, Description={Desc}",
-            latitude, longitude, description);
+        Logger?.LogInformation("Map location received from JS: Lat={Lat}, Lng={Lng}, Description={Desc}", latitude, longitude, description);
 
         await InvokeAsync(StateHasChanged);
 
-        Logger?.LogInformation("Map location selected: {Lat}, {Lng} - HasValidCoordinates: {HasValid}",
-            latitude, longitude, HasValidCoordinates);
+        Logger?.LogInformation("Map location selected: {Lat}, {Lng} - HasValidCoordinates: {HasValid}", latitude, longitude, HasValidCoordinates);
     }
 
 
@@ -843,8 +774,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             foreach (var file in AttachedFiles)
             {
-                Logger.LogInformation("📄 Cached file ready for submission: {FileName} ({Size} bytes, {DataSize} bytes cached)",
-                    file.FileName, file.Size, file.Data?.Length ?? 0);
+                Logger.LogInformation("📄 Cached file ready for submission: {FileName} ({Size} bytes, {DataSize} bytes cached)", file.FileName, file.Size, file.Data?.Length ?? 0);
             }
         }
 
@@ -1456,8 +1386,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             var hazardType = HazardType.FromValue(hazardTypeValue);
             if (hazardType != null)
             {
-                Logger.LogInformation("Hazard type changed to: {HazardType}, requires regulatory: {RequiresRegulatory}",
-                    hazardType.Name, hazardType.RequiresRegulatoryReporting);
+                Logger.LogInformation("Hazard type changed to: {HazardType}, requires regulatory: {RequiresRegulatory}",hazardType.Name, hazardType.RequiresRegulatoryReporting);
 
                 // Could show regulatory warning if required
                 if (hazardType.RequiresRegulatoryReporting)

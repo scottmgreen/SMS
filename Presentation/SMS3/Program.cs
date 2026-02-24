@@ -10,6 +10,7 @@ using SMS_Shared.Configuration;
 
 using SMS3.Components;
 using SMS3.Configuration;
+using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3;
 public class Program
@@ -22,6 +23,9 @@ public class Program
         builder.Services.AddRazorComponents()
             .AddInteractiveServerComponents();
         builder.Services.AddRadzenComponents();
+        
+        // Add HTTP context accessor for static notification access
+        builder.Services.AddHttpContextAccessor();
 
         builder.Services.AddScoped<ApiKeyAuthenticationFilter>();
         // Register authentication service as singleton
@@ -81,6 +85,9 @@ public class Program
 
 
         var app = builder.Build();
+        
+        // Set up service locator for static access
+        ServiceLocator.Current = app.Services;
 
         // Configure the HTTP request pipeline.
         if (!app.Environment.IsDevelopment())
@@ -235,7 +242,7 @@ public class Program
                 {
                     HazardCode = createdHazard.Code,
                     ReportCode = createdHazard.ReportCode,
-                    TrackingCode = "HT-TEMP", // Database will generate actual tracking code
+                    TrackingCode = "HT-0000", // Database will generate actual tracking code
                     CreatedBy = "EXTERNAL_SYSTEM",
                     CreatedDate = DateTime.UtcNow
                 };

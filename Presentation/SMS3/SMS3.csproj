@@ -18,6 +18,8 @@
 
   <ItemGroup>
     <Content Remove="Components\Pages\Counter.razor" />
+    <Content Remove="Components\Pages\SMSRiskManagement\Components\HazardLocationCard.razor" />
+    <Content Remove="Components\Pages\SMSRiskManagement\Components\HazardLocationDialog.razor" />
     <Content Remove="Components\Pages\SMSRiskManagement\Components\ReportEdit.razor" />
     <Content Remove="Components\Pages\SMSRiskManagement\Deprecated_Reports.razor" />
     <Content Remove="Components\Pages\SMSRiskManagement\HybridRiskAssessment.razor" />

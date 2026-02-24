@@ -61,9 +61,11 @@ else
                                                 <RadzenFormField Text="Assigned Investigator" Variant="Variant.Outlined">
                                                     <RadzenDropDown @bind-Value="InvestigationEntity.AssignedInvestigatorId" 
                                                                    Data="AvailableInvestigators"
-                                                                    TextProperty="DisplayName"
-                                                                    ValueProperty="Code" 
-                                                                   AllowClear="false" />
+                                                                   TextProperty="DisplayName"
+                                                                   ValueProperty="Code" 
+                                                                   AllowClear="false"
+                                                                   Placeholder="Select an investigator..."
+                                                                   Style="width: 100%;" />
                                                 </RadzenFormField>
                                             </RadzenColumn>
                                             <RadzenColumn Size="4" SizeMD="4">
@@ -172,6 +174,53 @@ else
     </RadzenRow>
 }
 
+<!-- Custom Return to Validation Confirmation Modal -->
+@if (showReturnToValidationModal)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog" style="max-width: 700px; width: 90%;">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header" style="background-color: #dc3545; color: white;">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <h5 class="sms-modal-title mb-0">
+                            <i class="fas fa-exclamation-triangle"></i> Confirm Return to Validation
+                        </h5>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                    Variant="Variant.Text"
+                                    Icon="close"
+                                    Size="ButtonSize.Small"
+                                    Click="CancelReturnToValidationConfirmation" 
+                                    Style="color: white;" />
+                    </div>
+                </div>
+                <div class="sms-modal-body" style="padding: 1.5rem;">
+                    <div class="return-to-validation-confirmation-message">
+                        @returnToValidationMessage
+                    </div>
+                    <div class="return-to-validation-warning-final">
+                        @GetReturnToValidationFinalWarning()
+                    </div>
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end gap-2">
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                    Text="Cancel" 
+                                    Icon="close"
+                                    Click="CancelReturnToValidationConfirmation"
+                                    Size="ButtonSize.Medium" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" 
+                                    Text="Yes, Return to Validation" 
+                                    Icon="refresh"
+                                    Click="HandleReturnToValidationConfirmation"
+                                    Size="ButtonSize.Medium"
+                                    Disabled="@IsSaving" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <style>
 .loading-container {
     display: flex;
@@ -179,5 +228,74 @@ else
     align-items: center;
     justify-content: center;
     height: 400px;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+    padding: 1rem;
+}
+
+.sms-modal-dialog {
+    position: relative;
+    margin: 0 auto;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+}
+
+.sms-modal-content {
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+}
+
+.sms-modal-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.sms-modal-title {
+    margin: 0;
+    font-weight: 600;
+}
+
+.sms-modal-body {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+.sms-modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e9ecef;
+    border-radius: 0 0 0.5rem 0.5rem;
+}
+
+/* Enhanced styles for return to validation confirmation modal */
+.return-to-validation-confirmation-message {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    font-size: 14px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.return-to-validation-warning-final {
+    text-align: center;
+    font-weight: bold;
+    color: #dc3545;
+    font-size: 16px;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 0.25rem;
 }
 </style>

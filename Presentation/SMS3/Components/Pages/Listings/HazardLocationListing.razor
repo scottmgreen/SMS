@@ -25,58 +25,59 @@
                 ShowPagingSummary="true"
                 FilterMode="FilterMode.Advanced"
                 SelectionMode="DataGridSelectionMode.Single"
-                Style="height: calc(100vh - 200px)">
+                Style="height: calc(100vh - 200px)"
+                IsLoading="@isLoading">
     
     <Columns>
         <RadzenDataGridColumn TItem="HazardLocation" Property="Code" Title="Location ID" Width="150px">
-            <Template Context="hazard">
-                <div title="@hazard.Code" style="@BasicTextStyle">
-                    @(hazard.Code)
+            <Template Context="location">
+                <div title="@location.Code" style="@BasicTextStyle">
+                    @(location.Code)
                 </div>
             </Template>
 
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardLocation" Property="HazardCode" Title="Hazard ID" Width="120px">
-            <Template Context="hazard">
-                <div title="@hazard.HazardCode" style="@BasicTextStyle">
-                    @(hazard.HazardCode)
+            <Template Context="location">
+                <div title="@location.HazardCode" style="@BasicTextStyle">
+                    @(location.HazardCode)
                 </div>
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardLocation" Property="Latitude" Title="Latitude" Width="120px">
-            <Template Context="hazard">
-                <div title="@hazard.Latitude" style="@BasicTextStyle">
-                    @(hazard.Latitude)
+            <Template Context="location">
+                <div title="@(location.Latitude?.ToString("F6"))" style="@BasicTextStyle">
+                    @(location.Latitude?.ToString("F6") ?? "N/A")
                 </div>
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardLocation" Property="Longitude" Title="Longitude" Width="120px">
-            <Template Context="hazard">
-                <div title="@hazard.Longitude" style="@BasicTextStyle">
-                    @(hazard.Longitude)
+            <Template Context="location">
+                <div title="@(location.Longitude?.ToString("F6"))" style="@BasicTextStyle">
+                    @(location.Longitude?.ToString("F6") ?? "N/A")
                 </div>
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardLocation" Property="Description" Title="Description" Width="300px">
-            <Template Context="hazard">
-                <div title="@hazard.Description" style="@BasicTextStyle">
-                    @(hazard.Description)
+            <Template Context="location">
+                <div title="@location.Description" style="@BasicTextStyle">
+                    @(location.Description)
                 </div>
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardLocation" Property="CreatedBy" Title="Created By" Width="150px">
-            <Template Context="hazard">
-                <div title="@hazard.CreatedBy" style="@BasicTextStyle">
-                    @(hazard.CreatedBy)
+            <Template Context="location">
+                <div title="@location.CreatedBy" style="@BasicTextStyle">
+                    @(location.CreatedBy)
                 </div>
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardLocation" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}">
-            <Template Context="hazard">
-                <div title="@hazard.CreatedDate" style="@BasicTextStyle">
-                    @if (hazard.CreatedDate.HasValue)
+            <Template Context="location">
+                <div title="@location.CreatedDate" style="@BasicTextStyle">
+                    @if (location.CreatedDate.HasValue)
                     {
-                        @(hazard.CreatedDate.Value.ToString("MM/dd/yyyy"))
+                        @(location.CreatedDate.Value.ToString("MM/dd/yyyy"))
                     }
                 </div>
             </Template>

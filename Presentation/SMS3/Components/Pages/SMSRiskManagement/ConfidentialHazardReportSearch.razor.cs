@@ -5,8 +5,7 @@ using SMS3.Components.Shared.UIHelpers;
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
 /// <summary>
-/// Confidential/Anonymous Hazard Report Search page - allows users to search for reports using tracking ID without logging in
-/// This is specifically designed for users who submitted confidential reports and want to check status anonymously
+/// Hazard Report Search page - allows users to search for reports using tracking ID or advanced criteria
 /// </summary>
 public partial class ConfidentialHazardReportSearch : ComponentBase
 {
@@ -27,29 +26,44 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
     public string TrackingIdSearch { get; set; } = string.Empty;
 
     /// <summary>
-    /// Format validation message for tracking ID
+    /// Advanced search: Report Code
     /// </summary>
-    public string TrackingIdFormatMessage { get; set; } = string.Empty;
+    public string ReportCodeSearch { get; set; } = string.Empty;
 
     /// <summary>
-    /// Color for tracking ID format message
+    /// Advanced search: Hazard Code
     /// </summary>
-    public string TrackingIdFormatColor { get; set; } = "#6c757d";
+    public string HazardCodeSearch { get; set; } = string.Empty;
 
     /// <summary>
-    /// Icon for tracking ID format message
+    /// Advanced search: Reported By
     /// </summary>
-    public string TrackingIdFormatIcon { get; set; } = "fa-info-circle";
+    public string SubmittedBySearch { get; set; } = string.Empty;
 
     /// <summary>
-    /// Indicates if we found similar results instead of exact match
+    /// Advanced search: Date from
     /// </summary>
-    public bool HasSimilarResults { get; set; }
+    public DateTime? DateFromSearch { get; set; }
 
     /// <summary>
-    /// List of tracking IDs with their similarity scores for highlighting best matches
+    /// Advanced search: Date to
     /// </summary>
-    public Dictionary<string, int> SimilarityScores { get; set; } = new();
+    public DateTime? DateToSearch { get; set; }
+
+    /// <summary>
+    /// Show/hide advanced search section
+    /// </summary>
+    public bool ShowAdvancedSearch { get; set; }
+
+    /// <summary>
+    /// Check if advanced search has any criteria
+    /// </summary>
+    public bool HasAdvancedSearchCriteria =>
+        !string.IsNullOrWhiteSpace(ReportCodeSearch) ||
+        !string.IsNullOrWhiteSpace(HazardCodeSearch) ||
+        !string.IsNullOrWhiteSpace(SubmittedBySearch) ||
+        DateFromSearch.HasValue ||
+        DateToSearch.HasValue;
     #endregion
 
     #region State Properties
@@ -77,34 +91,43 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
     /// Reference to the search results grid
     /// </summary>
     public RadzenDataGrid<HazardReportSearchResult>? SearchResultsGrid { get; set; }
+
+    /// <summary>
+    /// Format validation message for tracking ID
+    /// </summary>
+    public string TrackingIdFormatMessage { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Color for tracking ID format message
+    /// </summary>
+    public string TrackingIdFormatColor { get; set; } = "#6c757d";
+
+    /// <summary>
+    /// Icon for tracking ID format message
+    /// </summary>
+    public string TrackingIdFormatIcon { get; set; } = "fa-info-circle";
+
+    /// <summary>
+    /// Indicates if we found similar results instead of exact match
+    /// </summary>
+    public bool HasSimilarResults { get; set; }
+
+    /// <summary>
+    /// List of tracking IDs with their similarity scores for highlighting best matches
+    /// </summary>
+    public Dictionary<string, int> SimilarityScores { get; set; } = new();
     #endregion
 
     #region UI Properties
     /// <summary>
     /// Page title for header component
     /// </summary>
-    public string PageTitle => "Track Your Confidential Report";
+    public string PageTitle => "Hazard Report Search";
 
     /// <summary>
     /// Page subtitle for header component
     /// </summary>
-    public string PageSubtitle => "Check the status of your anonymously submitted hazard report using your tracking ID";
-
-    /// <summary>
-    /// Additional header content with anonymous badge
-    /// </summary>
-    public RenderFragment AdditionalHeaderContent => builder =>
-    {
-        builder.OpenElement(0, "small");
-        builder.AddAttribute(1, "class", "text-white-50");
-        
-        builder.OpenElement(2, "i");
-        builder.AddAttribute(3, "class", "fas fa-shield-alt me-1");
-        builder.CloseElement();
-        
-        builder.AddContent(4, "Anonymous & Secure");
-        builder.CloseElement();
-    };
+    public string PageSubtitle => "Search for hazard reports using tracking ID or report details";
     #endregion
 
     #region Event Handlers
@@ -119,6 +142,15 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
         {
             await SearchByTrackingId();
         }
+    }
+
+    /// <summary>
+    /// Toggle advanced search visibility
+    /// </summary>
+    public void ToggleAdvancedSearch()
+    {
+        ShowAdvancedSearch = !ShowAdvancedSearch;
+        StateHasChanged();
     }
 
     /// <summary>
@@ -149,7 +181,7 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
         // Check for exact HT-YYYY-NNNN format
         if (global::System.Text.RegularExpressions.Regex.IsMatch(cleaned, @"^HT-\d{4}-\d{4}$"))
         {
-            TrackingIdFormatMessage = "Valid tracking ID format";
+            TrackingIdFormatMessage = "? Valid tracking ID format";
             TrackingIdFormatColor = "#28a745";
             TrackingIdFormatIcon = "fa-check-circle";
         }
@@ -161,20 +193,20 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
                 ? $"HT-{currentYear}-{cleaned.PadLeft(4, '0')}"
                 : $"HT-{currentYear}-{cleaned}";
 
-            TrackingIdFormatMessage = $"Will search for format: {suggestion}";
+            TrackingIdFormatMessage = $"?? Will search for format: {suggestion}";
             TrackingIdFormatColor = "#ffc107";
             TrackingIdFormatIcon = "fa-exclamation-triangle";
         }
         // Check for partial HT- format
         else if (cleaned.StartsWith("HT-"))
         {
-            TrackingIdFormatMessage = "Continue typing or search anyway";
+            TrackingIdFormatMessage = "?? Incomplete format - continue typing or search anyway";
             TrackingIdFormatColor = "#17a2b8";
             TrackingIdFormatIcon = "fa-info-circle";
         }
         else
         {
-            TrackingIdFormatMessage = "Expected format: HT-YYYY-NNNN (e.g., HT-2026-0006)";
+            TrackingIdFormatMessage = "? Expected format: HT-YYYY-NNNN (e.g., HT-2026-0006)";
             TrackingIdFormatColor = "#dc3545";
             TrackingIdFormatIcon = "fa-times-circle";
         }
@@ -203,7 +235,7 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
             LastSearchQuery = TrackingIdSearch.Trim();
             StateHasChanged();
 
-            Logger.LogInformation("Anonymous search by tracking ID: {TrackingId}", TrackingIdSearch);
+            Logger.LogInformation("Searching by tracking ID: {TrackingId}", TrackingIdSearch);
 
             // Clean and validate the tracking ID format
             var cleanedTrackingId = CleanTrackingId(TrackingIdSearch.Trim());
@@ -217,8 +249,8 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
 
             if (result.IsSuccess && result.Value != null)
             {
-                // Get detailed information for the found tracking record - but filter for confidential only
-                var searchResult = await BuildSearchResultFromTracking(result.Value, isAnonymousSearch: true);
+                // Get detailed information for the found tracking record
+                var searchResult = await BuildSearchResultFromTracking(result.Value);
                 if (searchResult != null)
                 {
                     SearchResults.Add(searchResult);
@@ -237,20 +269,20 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
             if (!SearchResults.Any())
             {
                 await ShowNoResultsFoundMessage(cleanedTrackingId);
-                Logger.LogInformation("No anonymous results found for tracking ID: {TrackingId}", TrackingIdSearch);
+                Logger.LogInformation("No results found for tracking ID: {TrackingId}", TrackingIdSearch);
             }
             else
             {
                 var message = SearchResults.Count == 1
-                    ? $"Found your confidential report for tracking ID: {TrackingIdSearch}"
+                    ? $"Found hazard report for tracking ID: {TrackingIdSearch}"
                     : $"Found {SearchResults.Count} similar tracking IDs for: {TrackingIdSearch}";
                 ShowSuccessNotification(message);
-                Logger.LogInformation("Found {Count} anonymous result(s) for tracking ID: {TrackingId}", SearchResults.Count, TrackingIdSearch);
+                Logger.LogInformation("Found {Count} result(s) for tracking ID: {TrackingId}", SearchResults.Count, TrackingIdSearch);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in anonymous search by tracking ID: {TrackingId}", TrackingIdSearch);
+            Logger.LogError(ex, "Error searching by tracking ID: {TrackingId}", TrackingIdSearch);
             ShowErrorNotification("Error occurred while searching. Please try again.");
         }
         finally
@@ -285,7 +317,7 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
     }
 
     /// <summary>
-    /// Search for tracking IDs that are similar to the input (anonymous version)
+    /// Search for tracking IDs that are similar to the input
     /// </summary>
     /// <param name="trackingId">Input tracking ID</param>
     private async Task SearchForSimilarTrackingIds(string trackingId)
@@ -303,17 +335,23 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
                 foreach (var tracking in similarTrackingIds.Take(5)) // Limit to top 5 matches
                 {
                     var trackingDetails = CreateTrackingDetails(tracking);
-                    var searchResult = await BuildSearchResultFromTracking(trackingDetails, isAnonymousSearch: true);
+                    var searchResult = await BuildSearchResultFromTracking(trackingDetails);
                     if (searchResult != null)
                     {
                         SearchResults.Add(searchResult);
                     }
                 }
+
+                // Indicate that similar results were found
+                HasSimilarResults = true;
+
+                // Highlight best matches
+                HighlightBestMatches(similarTrackingIds);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogWarning(ex, "Error searching for similar tracking IDs in anonymous search for: {TrackingId}", trackingId);
+            Logger.LogWarning(ex, "Error searching for similar tracking IDs for: {TrackingId}", trackingId);
         }
     }
 
@@ -326,7 +364,7 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
     private List<HazardReportTracking> FindSimilarTrackingIds(string searchId, List<HazardReportTracking> allTracking)
     {
         var similarIds = new List<(HazardReportTracking tracking, int score)>();
-
+        
         foreach (var tracking in allTracking)
         {
             var score = CalculateSimilarityScore(searchId, tracking.TrackingCode);
@@ -437,11 +475,11 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
     }
 
     /// <summary>
-    /// Show detailed no results found message with suggestions (anonymous version)
+    /// Show detailed no results found message with suggestions
     /// </summary>
     private async Task ShowNoResultsFoundMessage(string trackingId)
     {
-        var message = $"No confidential report found for tracking ID: {trackingId}";
+        var message = $"No hazard report found for tracking ID: {trackingId}";
         var suggestions = GenerateTrackingIdSuggestions(trackingId);
 
         if (suggestions.Any())
@@ -453,7 +491,7 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
             message += "\n\nPlease check:\n" +
                       "• Tracking ID format (HT-YYYY-NNNN)\n" +
                       "• Correct year (current year: " + DateTime.Now.Year + ")\n" +
-                      "• Call our confidential hotline: (503) 555-0199";
+                      "• Contact support if you need assistance";
         }
 
         ShowInfoNotification(message);
@@ -495,6 +533,145 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
     }
 
     /// <summary>
+    /// Advanced search using multiple criteria
+    /// </summary>
+    public async Task SearchAdvanced()
+    {
+        if (!HasAdvancedSearchCriteria)
+        {
+            ShowWarningNotification("Please enter at least one search criteria");
+            return;
+        }
+
+        try
+        {
+            IsSearching = true;
+            HasSearched = false;
+            SearchResults.Clear();
+            LastSearchQuery = "Advanced search criteria";
+            StateHasChanged();
+
+            Logger.LogInformation("Performing advanced search with criteria: ReportCode={ReportCode}, HazardCode={HazardCode}, SubmittedBy={SubmittedBy}",
+                ReportCodeSearch, HazardCodeSearch, SubmittedBySearch);
+
+            // Step 1: Search by report code if provided
+            if (!string.IsNullOrWhiteSpace(ReportCodeSearch))
+            {
+                await SearchByReportCode(ReportCodeSearch.Trim());
+            }
+
+            // Step 2: Search by hazard code if provided
+            if (!string.IsNullOrWhiteSpace(HazardCodeSearch))
+            {
+                await SearchByHazardCode(HazardCodeSearch.Trim());
+            }
+
+            // Step 3: If no specific codes provided, search all tracking records and filter
+            if (string.IsNullOrWhiteSpace(ReportCodeSearch) && string.IsNullOrWhiteSpace(HazardCodeSearch))
+            {
+                await SearchAllWithFilters();
+            }
+
+            HasSearched = true;
+
+            if (!SearchResults.Any())
+            {
+                ShowInfoNotification("No hazard reports found matching your search criteria");
+                Logger.LogInformation("No results found for advanced search criteria");
+            }
+            else
+            {
+                ShowSuccessNotification($"Found {SearchResults.Count} hazard report(s) matching your criteria");
+                Logger.LogInformation("Found {Count} result(s) for advanced search", SearchResults.Count);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error performing advanced search");
+            ShowErrorNotification("Error occurred while searching. Please try again.");
+        }
+        finally
+        {
+            IsSearching = false;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Search by report code
+    /// </summary>
+    private async Task SearchByReportCode(string reportCode)
+    {
+        var query = new GetHazardReportTrackingByReportCodeQuery(reportCode);
+        var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+        if (result.IsSuccess && result.Value?.Any() == true)
+        {
+            foreach (var tracking in result.Value)
+            {
+                var trackingDetails = CreateTrackingDetails(tracking);
+                var searchResult = await BuildSearchResultFromTracking(trackingDetails);
+                if (searchResult != null && MatchesAdvancedFilters(searchResult))
+                {
+                    // Avoid duplicates
+                    if (!SearchResults.Any(sr => sr.TrackingCode == searchResult.TrackingCode))
+                    {
+                        SearchResults.Add(searchResult);
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Search by hazard code
+    /// </summary>
+    private async Task SearchByHazardCode(string hazardCode)
+    {
+        var query = new GetHazardReportTrackingByHazardCodeQuery(hazardCode);
+        var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+        if (result.IsSuccess && result.Value?.Any() == true)
+        {
+            foreach (var tracking in result.Value)
+            {
+                var trackingDetails = CreateTrackingDetails(tracking);
+                var searchResult = await BuildSearchResultFromTracking(trackingDetails);
+                if (searchResult != null && MatchesAdvancedFilters(searchResult))
+                {
+                    // Avoid duplicates
+                    if (!SearchResults.Any(sr => sr.TrackingCode == searchResult.TrackingCode))
+                    {
+                        SearchResults.Add(searchResult);
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Search all tracking records and apply filters
+    /// </summary>
+    private async Task SearchAllWithFilters()
+    {
+        var query = new GetAllHazardReportTrackingQuery();
+        var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+        if (result.IsSuccess && result.Value?.Any() == true)
+        {
+            foreach (var tracking in result.Value)
+            {
+                var trackingDetails = CreateTrackingDetails(tracking);
+                var searchResult = await BuildSearchResultFromTracking(trackingDetails);
+                if (searchResult != null && MatchesAdvancedFilters(searchResult))
+                {
+                    SearchResults.Add(searchResult);
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Helper method to create HazardReportTrackingDetails from HazardReportTracking
     /// </summary>
     private HazardReportTrackingDetails CreateTrackingDetails(HazardReportTracking tracking)
@@ -502,96 +679,11 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
         return new HazardReportTrackingDetails
         {
             HazardReportTracking = tracking,
-            CurrentStatus = "Under Review",
-            ProcessingStage = "SMS Evaluation",
+            CurrentStatus = "Processing",
+            ProcessingStage = "Analysis",
             LastUpdated = tracking.UpdatedDate ?? tracking.CreatedDate,
             ProcessingNotes = new List<string>()
         };
-    }
-
-    #endregion
-
-    #region Navigation Methods
-
-    /// <summary>
-    /// View detailed results for a tracking ID (anonymous version)
-    /// </summary>
-    /// <param name="trackingCode">Tracking code to view details for</param>
-    public void ViewDetails(string trackingCode)
-    {
-        Logger.LogInformation("Navigating to anonymous details view for tracking code: {TrackingCode}", trackingCode);
-        Navigation.NavigateTo($"/ConfidentialReporting/TrackStatus/{trackingCode}");
-    }
-
-    /// <summary>
-    /// Navigate to confidential reporting page
-    /// </summary>
-    public void NavigateToReporting()
-    {
-        Navigation.NavigateTo("/ConfidentialReporting");
-    }
-
-    #endregion
-
-    #region UI Helper Methods
-
-    /// <summary>
-    /// Get badge style for report status
-    /// </summary>
-    /// <param name="status">Report status</param>
-    /// <returns>Badge style</returns>
-    public BadgeStyle GetStatusBadgeStyle(string status)
-    {
-        return status?.ToLower() switch
-        {
-            "completed" or "closed" => BadgeStyle.Success,
-            "under review" or "processing" => BadgeStyle.Info,
-            "initial" or "submitted" => BadgeStyle.Warning,
-            "cancelled" => BadgeStyle.Danger,
-            _ => BadgeStyle.Secondary
-        };
-    }
-
-    /// <summary>
-    /// Get badge style for validation decision
-    /// </summary>
-    /// <param name="decision">Validation decision</param>
-    /// <returns>Badge style</returns>
-    public BadgeStyle GetValidationBadgeStyle(string decision)
-    {
-        return decision?.ToUpper() switch
-        {
-            "SMS_RISK" => BadgeStyle.Success,
-            "NOT_SMS_RISK" => BadgeStyle.Danger,
-            "NEEDS_INVESTIGATION" => BadgeStyle.Warning,
-            _ => BadgeStyle.Secondary
-        };
-    }
-
-    /// <summary>
-    /// Get display text for validation decision
-    /// </summary>
-    /// <param name="decision">Validation decision value</param>
-    /// <returns>Display text</returns>
-    public string GetValidationDecisionDisplay(string decision)
-    {
-        return decision?.ToUpper() switch
-        {
-            "SMS_RISK" => "SMS Risk",
-            "NOT_SMS_RISK" => "Not SMS Risk",
-            "NEEDS_INVESTIGATION" => "Under Investigation",
-            _ => decision ?? "Under Review"
-        };
-    }
-
-    /// <summary>
-    /// Check if a tracking code is a high similarity match
-    /// </summary>
-    /// <param name="trackingCode">Tracking code to check</param>
-    /// <returns>True if it's a high match (similarity score > 50)</returns>
-    public bool IsHighMatch(string trackingCode)
-    {
-        return SimilarityScores.TryGetValue(trackingCode, out var score) && score > 50;
     }
 
     #endregion
@@ -636,16 +728,104 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
 
     #endregion
 
+    #region Navigation Methods
+
+    /// <summary>
+    /// View detailed results for a tracking ID
+    /// </summary>
+    /// <param name="trackingCode">Tracking code to view details for</param>
+    public void ViewDetails(string trackingCode)
+    {
+        Logger.LogInformation("Navigating to details view for tracking code: {TrackingCode}", trackingCode);
+        Navigation.NavigateTo($"/SMSRiskManagement/HazardReportSearchResult/{trackingCode}");
+    }
+
+    #endregion
+
+    #region UI Helper Methods
+
+    /// <summary>
+    /// Get badge style for report status
+    /// </summary>
+    /// <param name="status">Report status</param>
+    /// <returns>Badge style</returns>
+    public BadgeStyle GetStatusBadgeStyle(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "completed" or "closed" => BadgeStyle.Success,
+            "in_progress" or "processing" => BadgeStyle.Info,
+            "initial" or "draft" => BadgeStyle.Warning,
+            "cancelled" => BadgeStyle.Danger,
+            _ => BadgeStyle.Secondary
+        };
+    }
+
+    /// <summary>
+    /// Get badge style for validation decision
+    /// </summary>
+    /// <param name="decision">Validation decision</param>
+    /// <returns>Badge style</returns>
+    public BadgeStyle GetValidationBadgeStyle(string decision)
+    {
+        return decision?.ToUpper() switch
+        {
+            "SMS_RISK" => BadgeStyle.Success,
+            "NOT_SMS_RISK" => BadgeStyle.Danger,
+            "NEEDS_INVESTIGATION" => BadgeStyle.Warning,
+            _ => BadgeStyle.Secondary
+        };
+    }
+
+    /// <summary>
+    /// Get display text for validation decision
+    /// </summary>
+    /// <param name="decision">Validation decision value</param>
+    /// <returns>Display text</returns>
+    public string GetValidationDecisionDisplay(string decision)
+    {
+        return decision?.ToUpper() switch
+        {
+            "SMS_RISK" => "SMS Risk",
+            "NOT_SMS_RISK" => "Not SMS Risk",
+            "NEEDS_INVESTIGATION" => "Needs Investigation",
+            _ => decision ?? "Unknown"
+        };
+    }
+
+    /// <summary>
+    /// Clear advanced search criteria
+    /// </summary>
+    public void ClearAdvancedSearch()
+    {
+        ReportCodeSearch = string.Empty;
+        HazardCodeSearch = string.Empty;
+        SubmittedBySearch = string.Empty;
+        DateFromSearch = null;
+        DateToSearch = null;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Check if a tracking code is a high similarity match
+    /// </summary>
+    /// <param name="trackingCode">Tracking code to check</param>
+    /// <returns>True if it's a high match (similarity score > 50)</returns>
+    public bool IsHighMatch(string trackingCode)
+    {
+        return SimilarityScores.TryGetValue(trackingCode, out var score) && score > 50;
+    }
+
+    #endregion
+
     #region Helper Methods
 
     /// <summary>
-    /// Build a search result object from the tracking query result (anonymous version)
-    /// Filters out sensitive information for anonymous access
+    /// Build a search result object from the tracking query result
     /// </summary>
-    /// <param name="tracking">Tracking query result</param>
-    /// <param name="isAnonymousSearch">Flag indicating this is an anonymous search</param>
+    /// <param name="trackingResult">Tracking query result</param>
     /// <returns>Search result object</returns>
-    private async Task<HazardReportSearchResult?> BuildSearchResultFromTracking(HazardReportTrackingDetails tracking, bool isAnonymousSearch = false)
+    private async Task<HazardReportSearchResult?> BuildSearchResultFromTracking(HazardReportTrackingDetails tracking)
     {
         try
         {
@@ -654,14 +834,10 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
                 TrackingCode = tracking.TrackingCode,
                 HazardCode = tracking.HazardCode,
                 ReportCode = tracking.ReportCode,
-                CreatedDate = tracking.CreatedDate,
-                // Anonymous-specific defaults
-                SubmittedBy = "Anonymous", // Never show actual reporter name
-                CurrentStatus = "Under Review", // Generic status for anonymous
-                HazardType = "Confidential Report" // Generic type
+                CreatedDate = tracking.CreatedDate
             };
 
-            // Get basic hazard details if available (but filter sensitive info for anonymous)
+            // Get hazard details if available
             if (!string.IsNullOrEmpty(tracking.HazardCode))
             {
                 try
@@ -672,28 +848,55 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
                     if (hazardResult.IsSuccess && hazardResult.Value != null)
                     {
                         var hazard = hazardResult.Value;
-
-                        // Only show non-sensitive information for anonymous users
+                        searchResult.HazardType = hazard.HazardType ?? "Unknown";
+                        searchResult.HazardCategory = hazard.HazardCategory ?? "Unknown";
+                        //searchResult.SubmittedBy = hazard.SubmittedBy ?? "Unknown";
                         //searchResult.SubmittedDate = hazard.SubmittedDate != DateTime.MinValue ? hazard.SubmittedDate : DateTime.MinValue;
-                        //searchResult.IsAnonymous = hazard.IsAnonymous;
-
-                        // Show generic hazard type rather than specific details
-                        if (!string.IsNullOrEmpty(hazard.HazardType))
-                        {
-                            searchResult.HazardType = GetGenericHazardType(hazard.HazardType);
-                        }
-
-                        // Don't show actual status, description, or reporter info for anonymous access
-                        searchResult.Description = "Details available to authorized personnel only";
+                        searchResult.Description = hazard.Description;
+                        searchResult.CurrentStatus = hazard.Status ?? "Unknown";
+                        //searchResult.IsConfidential = hazard.IsAnonymous;
                     }
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogWarning(ex, "Could not load hazard details for anonymous search, code: {HazardCode}", tracking.HazardCode);
+                    Logger.LogWarning(ex, "Could not load hazard details for code: {HazardCode}", tracking.HazardCode);
                 }
             }
 
-            // Get basic validation info if available (but anonymized)
+            // Get report details if available
+            if (!string.IsNullOrEmpty(tracking.ReportCode))
+            {
+                try
+                {
+                    var reportQuery = new GetReportByCodeQuery(new ReportID(tracking.ReportCode));
+                    var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
+
+                    if (reportResult.IsSuccess && reportResult.Value != null)
+                    {
+                        var report = reportResult.Value;
+
+                        // Use report details if hazard details not available
+                        if (string.IsNullOrEmpty(searchResult.SubmittedBy))
+                        {
+                            searchResult.SubmittedBy = report.SubmittedBy ?? "Unknown";
+                        }
+                        if (searchResult.SubmittedDate == DateTime.MinValue)
+                        {
+                            searchResult.SubmittedDate = report.SubmittedDate != DateTime.MinValue ? report.SubmittedDate : DateTime.MinValue;
+                        }
+                        if (string.IsNullOrEmpty(searchResult.CurrentStatus))
+                        {
+                            searchResult.CurrentStatus = report.Status ?? "Unknown";
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogWarning(ex, "Could not load report details for code: {ReportCode}", tracking.ReportCode);
+                }
+            }
+
+            // Get validation details if available
             if (!string.IsNullOrEmpty(tracking.ReportCode))
             {
                 try
@@ -705,12 +908,12 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
                     {
                         searchResult.ValidationDecision = validationResult.Value.ValidationDecision ?? "";
                         searchResult.ValidationDate = validationResult.Value.ValidatedDate;
-                        searchResult.ValidatedBy = "SMS Team"; // Anonymous - don't show actual validator
+                        searchResult.ValidatedBy = validationResult.Value.ValidatedBy;
                     }
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogWarning(ex, "Could not load validation details for anonymous search, report: {ReportCode}", tracking.ReportCode);
+                    Logger.LogWarning(ex, "Could not load validation details for report: {ReportCode}", tracking.ReportCode);
                 }
             }
 
@@ -718,29 +921,54 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error building anonymous search result for tracking: {TrackingCode}", tracking.TrackingCode);
+            Logger.LogError(ex, "Error building search result for tracking: {TrackingCode}", tracking.TrackingCode);
             return null;
         }
     }
 
     /// <summary>
-    /// Get generic hazard type for anonymous display
+    /// Check if search result matches advanced filter criteria
     /// </summary>
-    /// <param name="specificType">Specific hazard type</param>
-    /// <returns>Generic type for anonymous display</returns>
-    private string GetGenericHazardType(string specificType)
+    private bool MatchesAdvancedFilters(HazardReportSearchResult result)
     {
-        return specificType?.ToUpper() switch
+        // Filter by reported by
+        if (!string.IsNullOrWhiteSpace(SubmittedBySearch) &&
+            !result.SubmittedBy.Contains(SubmittedBySearch, StringComparison.OrdinalIgnoreCase))
         {
-            "RWY_INCURSION" => "Runway Safety",
-            "ACFT_DAMAGE" => "Aircraft Incident",
-            "GROUND_VEHICLE" => "Ground Operations",
-            "WILDLIFE_STRIKE" => "Wildlife Hazard",
-            "FOD" => "Foreign Object",
-            "EQUIPMENT_FAIL" => "Equipment Issue",
-            "PERSONNEL_INJURY" => "Personnel Safety",
-            _ => "Safety Report"
-        };
+            return false;
+        }
+
+        // Filter by date range
+        if (DateFromSearch.HasValue && result.SubmittedDate < DateFromSearch.Value.Date)
+        {
+            return false;
+        }
+
+        if (DateToSearch.HasValue && result.SubmittedDate > DateToSearch.Value.Date.AddDays(1))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Highlight the best matches in the search results
+    /// </summary>
+    /// <param name="similarTrackingIds">List of similar tracking IDs</param>
+    private void HighlightBestMatches(List<HazardReportTracking> similarTrackingIds)
+    {
+        // Clear previous similarity scores
+        SimilarityScores.Clear();
+
+        foreach (var tracking in similarTrackingIds)
+        {
+            // Calculate the similarity score for each result
+            var score = CalculateSimilarityScore(TrackingIdSearch.Trim(), tracking.TrackingCode);
+
+            // Add to the similarity scores dictionary
+            SimilarityScores[tracking.TrackingCode] = score;
+        }
     }
 
     #endregion
@@ -748,7 +976,7 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
     #region Models
 
     /// <summary>
-    /// Search result model for display in grid (same as authenticated version)
+    /// Search result model for display in grid
     /// </summary>
     public class HazardReportSearchResult
     {
@@ -756,6 +984,7 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
         public string HazardCode { get; set; } = string.Empty;
         public string ReportCode { get; set; } = string.Empty;
         public string HazardType { get; set; } = string.Empty;
+        public string HazardCategory { get; set; } = string.Empty;
         public string SubmittedBy { get; set; } = string.Empty;
         public DateTime SubmittedDate { get; set; }
         public string CurrentStatus { get; set; } = string.Empty;
@@ -763,7 +992,7 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
         public DateTime? ValidationDate { get; set; }
         public string ValidatedBy { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public bool IsAnonymous { get; set; }
+        public bool IsConfidential { get; set; }
         public DateTime CreatedDate { get; set; }
     }
 

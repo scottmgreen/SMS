@@ -33,27 +33,7 @@ public sealed class Investigation : BaseAuditableEntity
 
     #region Factory Methods
 
-    //public static Investigation CreateForHazard(string code, string hazardCode, string assignedInvestigatorId, string? reportCode = null)
-    //{
-    //    // Validate required parameters
-    //    if (string.IsNullOrWhiteSpace(code))
-    //        throw new ArgumentException("Investigation code is required", nameof(code));
-
-    //    if (string.IsNullOrWhiteSpace(hazardCode))
-    //        throw new ArgumentException("HazardCode is required and cannot be null", nameof(hazardCode));
-
-    //    if (string.IsNullOrWhiteSpace(assignedInvestigatorId))
-    //        throw new ArgumentException("Assigned investigator ID is required", nameof(assignedInvestigatorId));
-
-    //    var id = new InvestigationID(code);
-    //    return new Investigation(id, code)
-    //    {
-    //        HazardCode = hazardCode, // Critical: Set HazardCode explicitly
-    //        AssignedInvestigatorId = assignedInvestigatorId,
-    //        ReportCode = reportCode,
-    //        Status = "Assigned"
-    //    };
-    //}
+   
 
     #endregion
 

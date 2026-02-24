@@ -26,7 +26,7 @@
                 PageSize="25"
                 PagerHorizontalAlign="HorizontalAlign.Left"
                 ShowPagingSummary="true"
-                FilterMode="FilterMode.SimpleWithMenu"
+                FilterMode="FilterMode.Advanced"
                 SelectionMode="DataGridSelectionMode.Single"
                 Style="height: calc(100vh - 250px)"
                 IsLoading="@isLoading"
@@ -60,7 +60,7 @@
                     @(report.Status)
                 </div>
             </Template>
-        </RadzenDataGridColumn>/>
+        </RadzenDataGridColumn>
 
         <RadzenDataGridColumn TItem="Report" Property="SubmittedBy" Title="Submitted By" Width="150px">
             <Template Context="report">
@@ -89,11 +89,17 @@
         <RadzenDataGridColumn TItem="Report" Title="Actions" Width="150px" Sortable="false" Filterable="false">
             <Template Context="report">
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
-                    <RadzenButton ButtonStyle="ButtonStyle.Success"
-                                  Size="ButtonSize.Small"
-                                  Click="@(() => OnResetReportAsync(report))"
-                                  title="Reset Report"
-                                  Icon="visibility" />
+
+                    @if ((report.Status?.Trim() != ReportStatus.NeedsValidation.Value))
+                    {
+                        <RadzenButton ButtonStyle="ButtonStyle.Success"
+                                      Size="ButtonSize.Small"
+                                      Click="@(() => OnResetReportAsync(report))"
+                                      title="Reset Report"
+                                      Icon="visibility" />
+                    }
+
+                
                     <RadzenButton ButtonStyle="ButtonStyle.Base" 
                                 Size="ButtonSize.Small"
                                 Click="@(() => OnViewReportAsync(report))"
@@ -297,6 +303,53 @@
     </div>
 }
 
+<!-- Custom Reset Confirmation Modal -->
+@if (showResetConfirmModal)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog" style="max-width: 700px; width: 90%;">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header" style="background-color: #dc3545; color: white;">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <h5 class="sms-modal-title mb-0">
+                            <i class="fas fa-exclamation-triangle"></i> Confirm Reset Report Validation
+                        </h5>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                    Variant="Variant.Text"
+                                    Icon="close"
+                                    Size="ButtonSize.Small"
+                                    Click="CancelResetConfirmation" 
+                                    Style="color: white;" />
+                    </div>
+                </div>
+                <div class="sms-modal-body" style="padding: 1.5rem;">
+                    <div class="reset-confirmation-message">
+                        @resetConfirmationMessage
+                    </div>
+                    <div class="reset-warning-final">
+                        @GetResetFinalWarning()
+                    </div>
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end gap-2">
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                    Text="Cancel" 
+                                    Icon="close"
+                                    Click="CancelResetConfirmation"
+                                    Size="ButtonSize.Medium" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" 
+                                    Text="Yes, Reset Report" 
+                                    Icon="refresh"
+                                    Click="HandleResetConfirmation"
+                                    Size="ButtonSize.Medium"
+                                    Disabled="@isLoading" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <style>
 .sms-modal-xxl {
     max-width: 1400px;
@@ -355,5 +408,25 @@
     padding: 1rem 1.5rem;
     border-top: 1px solid #e9ecef;
     border-radius: 0 0 0.5rem 0.5rem;
+}
+
+/* Enhanced styles for reset confirmation modal */
+.reset-confirmation-message {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    font-size: 14px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.reset-warning-final {
+    text-align: center;
+    font-weight: bold;
+    color: #dc3545;
+    font-size: 16px;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 0.25rem;
 }
 </style>

@@ -10,7 +10,7 @@
 @using Radzen.Blazor
 
 <PageTitle>Hazard Files</PageTitle>
-<PageHeader Title="Investigation Listing"
+<PageHeader Title="Hazard Report Attached File Listing"
             Subtitle="Complete listing and management interface for all SMS Hazard Evidence Files"
             Icon="fas fa-list" />
 
@@ -26,23 +26,73 @@
                 ShowPagingSummary="true"
                 FilterMode="FilterMode.Advanced"
                 SelectionMode="DataGridSelectionMode.Single"
-                Style="height: calc(100vh - 200px)">
+                Style="height: calc(100vh - 200px)"
+                IsLoading="@isLoading">
     
     <Columns>
-        <RadzenDataGridColumn TItem="HazardFile" Property="Code" Title="Code" Width="150px" />
-        <RadzenDataGridColumn TItem="HazardFile" Property="HazardCode" Title="Hazard Code" Width="120px" />
-        <RadzenDataGridColumn TItem="HazardFile" Property="FileName" Title="File Name" Width="200px" />
-        <RadzenDataGridColumn TItem="HazardFile" Property="FileType" Title="Type" Width="120px" />
+        <RadzenDataGridColumn TItem="HazardFile" Property="Code" Title="File ID" Width="150px">
+            <Template Context="file">
+                <div title="@file.Code" style="font-size:smaller;font-weight: 600">
+                    @(file.Code)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="HazardFile" Property="HazardCode" Title="Hazard ID" Width="150px">
+            <Template Context="file">
+                <div title="@file.HazardCode" style="font-size:smaller;font-weight: 600">
+                    @(file.HazardCode)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="HazardFile" Property="FileName" Title="File Name" Width="200px">
+            <Template Context="file">
+                <div title="@file.FileName" style="font-size:smaller;font-weight: 600">
+                    @(file.FileName?.Length > 30 ? file.FileName.Substring(0, 27) + "..." : file.FileName)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="HazardFile" Property="FileType" Title="Type" Width="120px">
+            <Template Context="file">
+                <div title="@file.FileType" style="font-size:smaller;font-weight: 600">
+                    @(file.FileType)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardFile" Property="FileSizeBytes" Title="Size" Width="100px">
             <Template Context="file">
                 @FormatFileSize(file.FileSizeBytes)
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="HazardFile" Property="Description" Title="Description" Width="300px" />
-        <RadzenDataGridColumn TItem="HazardFile" Property="UploadedBy" Title="Uploaded By" Width="150px" />
-        <RadzenDataGridColumn TItem="HazardFile" Property="UploadedDate" Title="Uploaded Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
-        <RadzenDataGridColumn TItem="HazardFile" Property="CreatedBy" Title="Created By" Width="150px" />
-        <RadzenDataGridColumn TItem="HazardFile" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
+        <RadzenDataGridColumn TItem="HazardFile" Property="Description" Title="Description" Width="300px">
+            <Template Context="file">
+                <div title="@file.Description" style="font-size:smaller;font-weight: 600">
+                    @(file.Description?.Length > 50 ? file.Description.Substring(0, 47) + "..." : file.Description)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="HazardFile" Property="UploadedBy" Title="Uploaded By" Width="150px">
+            <Template Context="file">
+                <div title="@file.UploadedBy" style="font-size:smaller;font-weight: 600">
+                    @(file.UploadedBy)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="HazardFile" Property="UploadedDate" Title="Uploaded Date" Width="150px" FormatString="{0:MM/dd/yyyy}">
+            <Template Context="file">
+                <div title="@file.UploadedDate" style="font-size:smaller;font-weight: 600">
+                    @if (file.UploadedDate.HasValue)
+                    {
+                        @(file.UploadedDate.Value.ToString("MM/dd/yyyy"))
+                    }
+                    else
+                    {
+                        <span style="color: var(--rz-text-tertiary-color);">N/A</span>
+                    }
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        @* <RadzenDataGridColumn TItem="HazardFile" Property="CreatedBy" Title="Created By" Width="150px" />
+        <RadzenDataGridColumn TItem="HazardFile" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}" /> *@
         
         <RadzenDataGridColumn TItem="HazardFile" Title="Actions" Width="120px" Sortable="false" Filterable="false">
             <Template Context="file">

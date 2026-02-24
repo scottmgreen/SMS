@@ -63,7 +63,8 @@
                 ShowPagingSummary="true"
                 FilterMode="FilterMode.Advanced"
                 SelectionMode="DataGridSelectionMode.Single"
-                Style="height: calc(100vh - 300px)">
+                Style="height: calc(100vh - 300px)"
+                IsLoading="@isLoading">
 
     <Columns>
         <!-- Report ID Column -->
@@ -78,8 +79,8 @@
         <!-- Hazard ID Column -->
         <RadzenDataGridColumn TItem="MitigationModel" Property="HazardCode" Title="Hazard ID" Width="120px">
             <Template Context="mitigation">
-                <div title="@mitigation.ReportCode" style="@BasicTextStyle">
-                    @(mitigation.ReportCode)
+                <div title="@mitigation.HazardCode" style="@BasicTextStyle">
+                    @(mitigation.HazardCode)
                 </div>
             </Template>
         </RadzenDataGridColumn>
@@ -88,7 +89,7 @@
         <RadzenDataGridColumn TItem="MitigationModel" Property="Code" Title="Mitigation ID" Width="120px">
             <Template Context="mitigation">
                 <div title="@mitigation.Code" style="@BasicTextStyle">
-                    @(mitigation.ReportCode)
+                    @(mitigation.Code)
                 </div>
             </Template>
         </RadzenDataGridColumn>
@@ -103,7 +104,9 @@
         <!-- Status Column -->
         <RadzenDataGridColumn TItem="MitigationModel" Property="Status" Title="Status" Width="120px">
             <Template Context="mitigation">
-                @mitigation.Status
+                <div title="@mitigation.Status.ToString()" style="@BasicTextStyle">
+                    @mitigation.Status.Value
+                </div>
             </Template>
         </RadzenDataGridColumn>
 
@@ -122,16 +125,9 @@
             <Template Context="mitigation">
                 @if (mitigation.TargetDate.HasValue)
                 {
-                    
-                        <div title="@mitigation.ReportCode" style="@BasicTextStyle">
+                    <div title="@mitigation.TargetDate.Value.ToString("MM/dd/yyyy")" style="@BasicTextStyle">
                         @mitigation.TargetDate.Value.ToString("MM/dd/yyyy")
-                        </div>
-            
-                    
-                    
-                    
-                    
-                   
+                    </div>
                 }
                 else
                 {
@@ -152,7 +148,7 @@
                                   Tooltip="Edit Mitigation"
                                   Click="@(() => EditMitigation(mitigation.Mitigation))" />
 
-                    @if (mitigation.Status != "Approved")
+                    @if (mitigation.Status != MitigationStatus.Approved)
                     {
                         <RadzenButton Icon="verified" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
                                       Tooltip="Quick Approve"
@@ -285,40 +281,6 @@
 @if (ShowViewDialog && SelectedMitigation != null)
 {
     <!-- Keep existing view dialog markup -->
-}
-
-<!-- Add quick approve method to code-behind -->
-@code {
-    [Inject] private AuthenticationService AuthService { get; set; } = default!;
-
-    private async Task QuickApproveMitigation(Mitigation mitigation)
-    {
-        try
-        {
-            mitigation.Status = MitigationStatus.Approved;
-            mitigation.UpdatedDate = DateTime.UtcNow;
-            mitigation.UpdatedBy = AuthService.CurrentUser.Code;
-
-            var updateCommand = new UpdateMitigationCommand(mitigation);
-            var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
-
-            if (result.IsSuccess)
-            {
-                ShowSuccessNotification($"Mitigation {mitigation.Code} approved successfully");
-                await LoadInitialData();
-                StateHasChanged();
-            }
-            else
-            {
-                ShowErrorNotification($"Failed to approve mitigation: {result.Error?.Message}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error quick approving mitigation {Code}", mitigation.Code);
-            ShowErrorNotification("Error approving mitigation");
-        }
-    }
 }
 
 <style>

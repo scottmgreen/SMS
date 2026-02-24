@@ -255,13 +255,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
 
             if (!IsFormValidForSubmission())
             {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Warning,
-                    Summary = "Form Validation",
-                    Detail = "Please complete all required fields before submitting.",
-                    Duration = 4000
-                });
+                NotificationHelper.ShowWarning(NotificationService, "Please complete all required fields before submitting.", 4000);
                 return;
             }
 
@@ -271,13 +265,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         {
             Logger.LogError(ex, "Error during confidential form submission");
 
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Submission Error",
-                Detail = "An error occurred while submitting your report. Please try again.",
-                Duration = 5000
-            });
+            NotificationHelper.ShowError(NotificationService, "An error occurred while submitting your report. Please try again.", 5000);
         }
     }
 
@@ -355,13 +343,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
             // Show notification about results
             if (successfullyProcessedFiles.Any())
             {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Files Added",
-                    Detail = $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.",
-                    Duration = 3000
-                });
+                NotificationHelper.ShowSuccess(NotificationService, $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.", 3000);
             }
         }
         else
@@ -447,33 +429,15 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
             // Show notification about results
             if (successfullyProcessedFiles.Any() && failedFiles.Any())
             {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Warning,
-                    Summary = "Partial Success",
-                    Detail = $"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued.",
-                    Duration = 4000
-                });
+                NotificationHelper.ShowWarning(NotificationService, $"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued.", 4000);
             }
             else if (successfullyProcessedFiles.Any())
             {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Files Added",
-                    Detail = $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.",
-                    Duration = 3000
-                });
+                NotificationHelper.ShowSuccess(NotificationService, $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.", 3000);
             }
             else if (failedFiles.Any())
             {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "File Processing Failed",
-                    Detail = $"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.",
-                    Duration = 5000
-                });
+                NotificationHelper.ShowError(NotificationService, $"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.", 5000);
             }
 
             Logger.LogInformation("?? File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",
@@ -533,23 +497,11 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
             {
                 Logger.LogError(ex, "Error initializing map in confidential reporting OpenMapSelector");
 
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Warning,
-                    Summary = "Map Error",
-                    Detail = "Could not initialize map. Please try refreshing the page.",
-                    Duration = 5000
-                });
+                NotificationHelper.ShowWarning(NotificationService, "Could not initialize map. Please try refreshing the page.", 5000);
             }
         }
 
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Info,
-            Summary = "Map Selector",
-            Detail = "Click on the map to select the incident location.",
-            Duration = 3000
-        });
+        NotificationHelper.ShowInfo(NotificationService, "Click on the map to select the incident location.", 3000);
     }
 
     /// <summary>
@@ -568,13 +520,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     {
         if (!HasValidCoordinates)
         {
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Warning,
-                Summary = "No Location Selected",
-                Detail = "Please click on the map to select a location first.",
-                Duration = 3000
-            });
+            NotificationHelper.ShowWarning(NotificationService, "Please click on the map to select a location first.", 3000);
             return;
         }
 
@@ -591,13 +537,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         ShowMapModal = false;
         StateHasChanged();
 
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Location Set",
-            Detail = $"Location selected: {GeoLocationDisplay}",
-            Duration = 3000
-        });
+        NotificationHelper.ShowSuccess(NotificationService, $"Location selected: {GeoLocationDisplay}", 3000);
     }
 
     /// <summary>
@@ -625,13 +565,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
 
         StateHasChanged();
 
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Info,
-            Summary = "Selection Cleared",
-            Detail = "Map selection has been cleared.",
-            Duration = 2000
-        });
+        NotificationHelper.ShowInfo(NotificationService, "Map selection has been cleared.", 2000);
     }
 
     /// <summary>
@@ -660,13 +594,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     {
         if (!IsFormValidForPreview)
         {
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Warning,
-                Summary = "Incomplete Form",
-                Detail = "Please complete all required fields before previewing.",
-                Duration = 3000
-            });
+            NotificationHelper.ShowWarning(NotificationService, "Please complete all required fields before previewing.", 3000);
             return;
         }
 
@@ -690,13 +618,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     {
         if (!IsFormValidForSubmission())
         {
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Warning,
-                Summary = "Form Validation",
-                Detail = "Please complete all required fields before submitting.",
-                Duration = 4000
-            });
+            NotificationHelper.ShowWarning(NotificationService, "Please complete all required fields before submitting.", 4000);
             return;
         }
 
@@ -746,13 +668,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                 ShowSubmissionConfirmation = true;
                 StateHasChanged();
 
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Warning,
-                    Summary = "Form Validation",
-                    Detail = "Please complete all required fields before submitting.",
-                    Duration = 4000
-                });
+                NotificationHelper.ShowWarning(NotificationService, "Please complete all required fields before submitting.", 4000);
                 return;
             }
 
@@ -855,13 +771,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
             Logger.LogInformation("? Confidential report submission completed - Report: {ReportCode}, Hazard: {HazardCode}, Tracking: {TrackingCode}",
                 createdHazard.ReportCode, createdHazard.Code, createdTracking.TrackingCode);
 
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Success,
-                Summary = "Confidential Report Submitted Successfully",
-                Detail = $"Your confidential report has been securely submitted with tracking ID: {createdTracking.TrackingCode}",
-                Duration = 5000
-            });
+            NotificationHelper.ShowSuccess(NotificationService, $"Your confidential report has been securely submitted with tracking ID: {createdTracking.TrackingCode}", 5000);
         }
         catch (Exception ex)
         {
@@ -869,13 +779,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
 
             ShowSubmissionConfirmation = false;
 
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Submission Failed",
-                Detail = "An error occurred while submitting your confidential report. Please try again.",
-                Duration = 5000
-            });
+            NotificationHelper.ShowError(NotificationService, "An error occurred while submitting your confidential report. Please try again.", 5000);
         }
         finally
         {
@@ -1178,10 +1082,10 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                 Logger.LogInformation("Hazard type changed to: {HazardType}, requires regulatory: {RequiresRegulatory}",
                     hazardType.Name, hazardType.RequiresRegulatoryReporting);
 
-                // Could show regulatory warning if required
-                if (hazardType.RequiresRegulatoryReporting)
+                // Could show regulatory notification if required
+                if (RequiresRegulatoryReporting(hazardTypeValue))
                 {
-                    NotificationHelper.ShowInfo(NotificationService, $"This hazard type ({hazardType.Name}) requires regulatory reporting to appropriate authorities.", 5000);
+                    NotificationHelper.ShowInfo(NotificationService, $"This hazard type may require regulatory reporting to appropriate authorities.", 5000);
                 }
             }
         }
@@ -1295,13 +1199,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         ShowSubmissionConfirmation = false;
         StateHasChanged();
 
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Info,
-            Summary = "Submission Cancelled",
-            Detail = "You can continue editing your confidential report.",
-            Duration = 3000
-        });
+        NotificationHelper.ShowInfo(NotificationService, "You can continue editing your confidential report.", 3000);
     }
 
     #endregion
@@ -1330,13 +1228,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         {
             if (string.IsNullOrEmpty(GeneratedTrackingId) || string.IsNullOrEmpty(GeneratedReportId))
             {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Warning,
-                    Summary = "Print Error",
-                    Detail = "No report information available to print.",
-                    Duration = 3000
-                });
+                NotificationHelper.ShowWarning(NotificationService, "No report information available to print.", 3000);
                 return;
             }
 
@@ -1357,13 +1249,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         {
             Logger?.LogError(ex, "Error printing confirmation");
 
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Print Error",
-                Detail = "Failed to print confirmation. Please try again or save the page.",
-                Duration = 5000
-            });
+            NotificationHelper.ShowError(NotificationService, "Failed to print confirmation. Please try again or save the page.", 5000);
         }
     }
 

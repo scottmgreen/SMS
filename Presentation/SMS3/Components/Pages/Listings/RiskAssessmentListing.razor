@@ -28,7 +28,8 @@
                 ShowPagingSummary="true"
                 FilterMode="FilterMode.Advanced"
                 SelectionMode="DataGridSelectionMode.Single"
-                Style="height: calc(100vh - 200px)">
+                Style="height: calc(100vh - 200px)"
+                IsLoading="@isLoading">
     
     <Columns>
         <RadzenDataGridColumn TItem="RiskAssessment" Property="ReportCode" Title="Report ID" Width="150px">
@@ -61,7 +62,7 @@
             </Template>
             </RadzenDataGridColumn>
         <!-- Progress Column -->
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="CurrentStep" Title="Progress" Width="100px">
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="CurrentStep" Title="Progress" Width="100px" Sortable="true">
             <Template Context="assessment">
                 @if (assessment.CurrentStep == 1 )
                 {

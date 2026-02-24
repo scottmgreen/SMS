@@ -1,9 +1,11 @@
+using SMS3.Components.Shared;
+
 namespace SMS3.Configuration;
 
 /// <summary>
 /// Configuration settings for controlling notification display
 /// </summary>
-public class NotificationSettings
+public class NotificationSettings 
 {
     public const string SectionName = "NotificationSettings";
     

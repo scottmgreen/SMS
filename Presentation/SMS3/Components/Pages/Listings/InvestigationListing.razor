@@ -26,19 +26,38 @@
                 ShowPagingSummary="true"
                 FilterMode="FilterMode.Advanced"
                 SelectionMode="DataGridSelectionMode.Single"
-                Style="height: calc(100vh - 200px)" >
+                Style="height: calc(100vh - 200px)"
+                IsLoading="@isLoading">
     
     <Columns>
-        <RadzenDataGridColumn TItem="Investigation" Property="ReportCode" Title="Report ID" Width="120px" />
-        <RadzenDataGridColumn TItem="Investigation" Property="HazardCode" Title="Hazard ID" Width="120px" />
-        <RadzenDataGridColumn TItem="Investigation" Property="Code" Title="Investigation ID" Width="150px" />
-        <RadzenDataGridColumn TItem="Investigation" Property="Status" Title="Status" Width="225px">
+        <RadzenDataGridColumn TItem="Investigation" Property="ReportCode" Title="Report ID" Width="120px">
             <Template Context="investigation">
-                <div title="@investigation.Status" style="font-size:smaller">
-                    @(investigation.Status)
+                <div title="@investigation.ReportCode" style="font-size:smaller;font-weight: 600">
+                    @(investigation.ReportCode)
                 </div>
             </Template>
-        </RadzenDataGridColumn>/>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Investigation" Property="HazardCode" Title="Hazard ID" Width="120px">
+            <Template Context="investigation">
+                <div title="@investigation.HazardCode" style="font-size:smaller;font-weight: 600">
+                    @(investigation.HazardCode)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Investigation" Property="Code" Title="Investigation ID" Width="150px">
+            <Template Context="investigation">
+                <div title="@investigation.Code" style="font-size:smaller;font-weight: 600">
+                    @(investigation.Code)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Investigation" Property="Status" Title="Status" Width="225px">
+            <Template Context="investigation">
+                <div title="@investigation.Status.ToString()" style="font-size:smaller;font-weight: 600">
+                    @(investigation.Status.Value)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Investigation" Property="AssignedInvestigatorId" Title="Assigned To" Width="150px" />
         <RadzenDataGridColumn TItem="Investigation" Property="CompletedDate" Title="Completed Date" Width="150px" FormatString="{0:MM/dd/yyyy}" />
         <RadzenDataGridColumn TItem="Investigation" Property="CreatedBy" Title="Created By" Width="150px" />
