@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.JSInterop;
+using SMS_Domain.Errors;
 
 using SMS_Domain.Enums;
 
@@ -1209,13 +1210,39 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
     private async Task<Result<HazardReportTracking>> GenerateTracking(Hazard createdHazard)
     {
-        HazardReportTracking hazardreporttracking = new HazardReportTracking(new HazardReportTrackingID("HT-0000"));
-        hazardreporttracking.HazardCode = createdHazard.Code;
-        hazardreporttracking.ReportCode = createdHazard.ReportCode;
-        hazardreporttracking.TrackingCode = "HT-0000";
-        var trackingcodeCommand = new CreateHazardReportTrackingCommand(hazardreporttracking);
-        var createdtrackingcodeResult = await Mediator.SendAsync(trackingcodeCommand, CancellationToken.None);
-        return createdtrackingcodeResult;
+        try
+        {
+            // Create tracking entity - Database will generate the actual tracking code
+            HazardReportTracking hazardReportTracking = new HazardReportTracking(new HazardReportTrackingID("HT-TEMP"))
+            {
+                HazardCode = createdHazard.Code,
+                ReportCode = createdHazard.ReportCode,
+                TrackingCode = "HT-0000", // This will be replaced by database
+                CreatedBy = AuthService.CurrentUserDisplayName,
+                CreatedDate = DateTime.UtcNow
+            };
+
+            var trackingCommand = new CreateHazardReportTrackingCommand(hazardReportTracking);
+            var createdTrackingResult = await Mediator.SendAsync(trackingCommand, CancellationToken.None);
+
+            if (createdTrackingResult.IsSuccess)
+            {
+                Logger.LogInformation("✅ Tracking code generated: {TrackingCode} for Hazard: {HazardCode}", 
+                    createdTrackingResult.Value.TrackingCode, createdHazard.Code);
+            }
+            else
+            {
+                Logger.LogError("❌ Failed to generate tracking code for Hazard: {HazardCode}. Error: {Error}", 
+                    createdHazard.Code, createdTrackingResult.Error?.Message);
+            }
+
+            return createdTrackingResult;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Exception generating tracking code for Hazard: {HazardCode}", createdHazard.Code);
+            return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.CreateFailed);
+        }
     }
 
     /// <summary>

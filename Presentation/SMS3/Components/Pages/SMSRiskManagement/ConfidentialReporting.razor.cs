@@ -1,5 +1,8 @@
 ﻿using Microsoft.JSInterop;
 
+using SMS_Domain.Enums;
+using SMS_Domain.Errors;
+
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Shared.UIHelpers;
 
@@ -182,12 +185,12 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     /// <summary>
     /// Page title
     /// </summary>
-    public string PageTitle => "Submit Confidential Report";
+    public string PageTitle => "Submit Hazard Report";
 
     /// <summary>
     /// Page subtitle
     /// </summary>
-    public string PageSubtitle => "Enhanced protection for sensitive safety reports with reporter anonymity";
+    public string PageSubtitle => "";
 
     // Airport coordinates
     private double AirportCenterLatitude => 45.58808;
@@ -883,13 +886,39 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
 
     private async Task<Result<HazardReportTracking>> GenerateTracking(Hazard createdHazard)
     {
-        HazardReportTracking hazardreporttracking = new HazardReportTracking(new HazardReportTrackingID("HT-0000"));
-        hazardreporttracking.HazardCode = createdHazard.Code;
-        hazardreporttracking.ReportCode = createdHazard.ReportCode;
-        hazardreporttracking.TrackingCode = "HT-0000";
-        var trackingcodeCommand = new CreateHazardReportTrackingCommand(hazardreporttracking);
-        var createdtrackingcodeResult = await Mediator.SendAsync(trackingcodeCommand, CancellationToken.None);
-        return createdtrackingcodeResult;
+        try
+        {
+            // Create tracking entity - Database will generate the actual tracking code
+            HazardReportTracking hazardReportTracking = new HazardReportTracking(new HazardReportTrackingID("HT-TEMP"))
+            {
+                HazardCode = createdHazard.Code,
+                ReportCode = createdHazard.ReportCode,
+                TrackingCode = "HT-TEMP", // This will be replaced by database
+                CreatedBy = "CONFIDENTIAL_USER",
+                CreatedDate = DateTime.UtcNow
+            };
+
+            var trackingCommand = new CreateHazardReportTrackingCommand(hazardReportTracking);
+            var createdTrackingResult = await Mediator.SendAsync(trackingCommand, CancellationToken.None);
+
+            if (createdTrackingResult.IsSuccess)
+            {
+                Logger.LogInformation("✅ Confidential tracking code generated: {TrackingCode} for Hazard: {HazardCode}", 
+                    createdTrackingResult.Value.TrackingCode, createdHazard.Code);
+            }
+            else
+            {
+                Logger.LogError("❌ Failed to generate confidential tracking code for Hazard: {HazardCode}. Error: {Error}", 
+                    createdHazard.Code, createdTrackingResult.Error?.Message);
+            }
+
+            return createdTrackingResult;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Exception generating confidential tracking code for Hazard: {HazardCode}", createdHazard.Code);
+            return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.CreateFailed);
+        }
     }
 
     /// <summary>
@@ -1129,8 +1158,6 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     {
         SelectedHazardCategory = categoryValue ?? string.Empty;
         HazardReport.HazardType = string.Empty;
-
-        // ✅ Use centralized helper
         HazardTypeOptions = DropdownHelper.HandleCategoryChange(categoryValue);
 
         await InvokeAsync(StateHasChanged);
@@ -1145,22 +1172,21 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
 
         if (!string.IsNullOrEmpty(hazardTypeValue))
         {
-            Logger.LogInformation("Confidential reporting: Hazard type changed to: {HazardType}", hazardTypeValue);
-
-            // Show regulatory notification if required
-            if (RequiresRegulatoryReporting(hazardTypeValue))
+            var hazardType = HazardType.FromValue(hazardTypeValue);
+            if (hazardType != null)
             {
-                NotificationService.Notify(new NotificationMessage
+                Logger.LogInformation("Hazard type changed to: {HazardType}, requires regulatory: {RequiresRegulatory}",
+                    hazardType.Name, hazardType.RequiresRegulatoryReporting);
+
+                // Could show regulatory warning if required
+                if (hazardType.RequiresRegulatoryReporting)
                 {
-                    Severity = NotificationSeverity.Info,
-                    Summary = "Regulatory Reporting Required",
-                    Detail = $"This hazard type may require regulatory reporting to appropriate authorities.",
-                    Duration = 5000
-                });
+                    NotificationHelper.ShowInfo(NotificationService, $"This hazard type ({hazardType.Name}) requires regulatory reporting to appropriate authorities.", 5000);
+                }
             }
         }
 
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
     /// <summary>
@@ -1168,17 +1194,26 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     /// </summary>
     public string GetHazardTypeGuidance(string? hazardTypeValue)
     {
-        return hazardTypeValue switch
+        if (!string.IsNullOrEmpty(hazardTypeValue))
         {
-            "RWY_INCURSION" => "Report any unauthorized presence on a runway or failure to comply with ATC clearances.",
-            "ACFT_DAMAGE" => "Document any damage to aircraft including ground handling incidents.",
-            "GROUND_VEHICLE" => "Report incidents involving ground support equipment or vehicles.",
-            "PERSONNEL_INJURY" => "Report any injury to personnel including slips, trips, and falls.",
-            "EQUIPMENT_FAIL" => "Report any equipment malfunction or failure that could impact safety.",
-            "SECURITY_BREACH" => "Report any breach of security protocols or unauthorized access.",
-            "WILDLIFE_STRIKE" => "Report any wildlife collision or near-miss with aircraft.",
-            _ => "Provide detailed description of the hazard or incident."
-        };
+            var hazardType = HazardType.FromValue(hazardTypeValue);
+            if (hazardType != null)
+            {
+                Logger.LogInformation("Hazard type changed to: {HazardType}, requires regulatory: {RequiresRegulatory}", hazardType.Name, hazardType.RequiresRegulatoryReporting);
+
+                // Could show regulatory warning if required
+                return hazardType?.GuidanceText ?? string.Empty;
+            }
+            else
+            {
+                return hazardType?.GuidanceText ?? string.Empty;
+            }
+        }
+        else
+        {
+            return string.Empty;
+        }
+           
     }
 
     /// <summary>
@@ -1186,14 +1221,11 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     /// </summary>
     public bool RequiresRegulatoryReporting(string? hazardTypeValue)
     {
-        return hazardTypeValue switch
-        {
-            "RWY_INCURSION" => true,
-            "ACFT_DAMAGE" => true,
-            "WILDLIFE_STRIKE" => true,
-            "SECURITY_BREACH" => true,
-            _ => false
-        };
+        if (string.IsNullOrEmpty(hazardTypeValue))
+            return false;
+
+        var hazardType = HazardType.FromValue(hazardTypeValue);
+        return hazardType?.RequiresRegulatoryReporting ?? false;
     }
 
     /// <summary>
@@ -1201,17 +1233,11 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     /// </summary>
     public string GetHazardCategoryDescription(string? categoryValue)
     {
-        return categoryValue switch
-        {
-            "AIRCRAFT" => "Aircraft operations, movements, and related incidents",
-            "GROUND" => "Ground operations, equipment, and vehicle-related events",
-            "PERSONNEL" => "Personnel safety, training, and procedure-related issues",
-            "FACILITY" => "Facility infrastructure, lighting, and physical plant issues",
-            "EQUIPMENT" => "Equipment malfunctions, maintenance, and technical problems",
-            "SECURITY" => "Security breaches, unauthorized access, and safety-security interface issues",
-            "ENVIRONMENTAL" => "Wildlife, weather, and environmental safety concerns",
-            _ => "General safety hazards and incidents"
-        };
+        if (string.IsNullOrEmpty(categoryValue))
+            return string.Empty;
+
+        var category = HazardCategory.FromValue(categoryValue);
+        return category?.Description ?? string.Empty;
     }
 
     /// <summary>

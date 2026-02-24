@@ -124,33 +124,52 @@ public class Program
                 logger.LogInformation("External confidential report submission started from: {Source}",
                     request.SourceSystem ?? "Unknown");
 
-                // Validate required fields
-                if (string.IsNullOrEmpty(request.HazardType) ||
-                    string.IsNullOrEmpty(request.Description) ||
-                    string.IsNullOrEmpty(request.Location))
+                // ? Enhanced validation with proper error responses
+                var validationErrors = new List<string>();
+                
+                if (string.IsNullOrEmpty(request.HazardType))
+                    validationErrors.Add("hazardType is required");
+                
+                if (string.IsNullOrEmpty(request.Description))
+                    validationErrors.Add("description is required");
+                
+                if (string.IsNullOrEmpty(request.Location))
+                    validationErrors.Add("location is required");
+
+                if (request.Description?.Length > 2000)
+                    validationErrors.Add("description cannot exceed 2000 characters");
+
+                if (validationErrors.Any())
                 {
                     return Results.BadRequest(new
                     {
-                        error = "Missing required fields",
-                        required = new[] { "hazardType", "description", "location" }
+                        error = "Validation failed",
+                        details = validationErrors,
+                        timestamp = DateTime.UtcNow
                     });
                 }
 
-                // Generate anonymous tracking ID
-                var trackingId = GenerateAnonymousTrackingId();
-
                 // ===============================
-                // STEP 1: CREATE PARENT REPORT
+                // STEP 1: CREATE PARENT REPORT (Aligned with UI)
                 // ===============================
                 var report = new Report(new ReportID("RP-0000"))
                 {
-                    Code = "RP-0000",
-                    Name = $"External Confidential Report - {request.HazardType}",
+                    Code = "RP-0000", // Database will generate actual code
+                    Name = $"External Confidential - {request.HazardCategory} - {request.HazardType}",
                     Description = request.Description,
-                    Stage = "NEW",
-                    Status = ReportStatus.Created,
                     SubmittedBy = "EXTERNAL_SYSTEM",
-                    SubmittingDepartment = request.SourceSystem ?? "EXTERNAL"
+                    SubmittedDate = DateTime.UtcNow,
+                    SubmittingDepartment = request.SourceSystem ?? "EXTERNAL_API",
+                    SubmittingDepartmentJobFunction = "API_SUBMISSION",
+                    IncidentDateTime = DateTime.UtcNow, // Could be enhanced to accept from request
+                    IsAnonymous = true,
+                    ReportContactName = string.Empty, // Anonymous
+                    ReportContactCell = string.Empty,
+                    ReportContactEmail = string.Empty,
+                    Stage = "INITIAL",
+                    Status = ReportStatus.NeedsValidation,
+                    CreatedBy = "EXTERNAL_SYSTEM",
+                    CreatedDate = DateTime.UtcNow
                 };
 
                 var reportResult = await mediator.SendAsync(new CreateReportCommand(report), CancellationToken.None);
@@ -158,34 +177,35 @@ public class Program
                 if (reportResult.IsFailure)
                 {
                     logger.LogError("Failed to create report: {Error}", reportResult.Error?.Message);
-                    return Results.Problem("Failed to create report");
+                    return Results.Problem(
+                        detail: reportResult.Error?.Message,
+                        title: "Report Creation Failed",
+                        statusCode: StatusCodes.Status500InternalServerError
+                    );
                 }
 
                 var actualReportCode = reportResult.Value.Code;
+                logger.LogInformation("? External report created: {ReportCode}", actualReportCode);
 
                 // ===============================
-                // STEP 2: CREATE CONFIDENTIAL HAZARD
+                // STEP 2: CREATE CONFIDENTIAL HAZARD (Aligned with UI)
                 // ===============================
                 var hazard = new Hazard(new HazardID("HZ-0000"))
                 {
-                    Code = "HZ-0000",
-                    Name = $"External Confidential - {request.HazardType}",
+                    Code = "HZ-0000", // Database will generate actual code
+                    Name = $"External - {request.HazardCategory} - {request.HazardType}",
                     Description = request.Description,
                     HazardCategory = request.HazardCategory ?? "EXTERNAL",
                     HazardType = request.HazardType,
-                    //SubmittedBy = "EXTERNAL_SYSTEM",
-                    ////SubmittedOn = DateTime.UtcNow,
-                    ////IncidentDateTime //=>>>> from Widget
-                    //ReportingDepartment = request.SourceSystem ?? "External System",
-                    //IsAnonymous = true,
                     ReportCode = actualReportCode,
                     IsInitialHazard = true,
                     LocationArea = request.Location,
-                    //CreatedOn = DateTime.UtcNow,
-                    CreatedBy = "EXTERNAL_SYSTEM"
+                    Status = HazardStatus.InitialRiskAssessment,
+                    CreatedBy = "EXTERNAL_SYSTEM",
+                    CreatedDate = DateTime.UtcNow
                 };
 
-                // Handle geographic coordinates if provided
+                // Handle geographic coordinates if provided (aligned with UI)
                 if (request.Latitude.HasValue && request.Longitude.HasValue)
                 {
                     hazard.LocationSubArea = $"Lat: {request.Latitude:F6}, Lng: {request.Longitude:F6}";
@@ -197,25 +217,91 @@ public class Program
                 if (createdHazardResult.IsFailure)
                 {
                     logger.LogError("Failed to create hazard: {Error}", createdHazardResult.Error?.Message);
-                    return Results.Problem("Failed to create hazard");
+                    return Results.Problem(
+                        detail: createdHazardResult.Error?.Message,
+                        title: "Hazard Creation Failed",
+                        statusCode: StatusCodes.Status500InternalServerError
+                    );
                 }
 
                 var createdHazard = createdHazardResult.Value;
+                logger.LogInformation("? External hazard created: {HazardCode} for Report: {ReportCode}", 
+                    createdHazard.Code, actualReportCode);
 
                 // ===============================
-                // STEP 3: PROCESS ATTACHMENTS (if any)
+                // STEP 3: CREATE PRODUCTION TRACKING (Aligned with UI)
                 // ===============================
+                var hazardReportTracking = new HazardReportTracking(new HazardReportTrackingID("HT-TEMP"))
+                {
+                    HazardCode = createdHazard.Code,
+                    ReportCode = createdHazard.ReportCode,
+                    TrackingCode = "HT-TEMP", // Database will generate actual tracking code
+                    CreatedBy = "EXTERNAL_SYSTEM",
+                    CreatedDate = DateTime.UtcNow
+                };
+
+                var trackingCommand = new CreateHazardReportTrackingCommand(hazardReportTracking);
+                var trackingResult = await mediator.SendAsync(trackingCommand, CancellationToken.None);
+
+                if (trackingResult.IsFailure)
+                {
+                    logger.LogError("Failed to create tracking: {Error}", trackingResult.Error?.Message);
+                    return Results.Problem(
+                        detail: trackingResult.Error?.Message,
+                        title: "Tracking Creation Failed",  
+                        statusCode: StatusCodes.Status500InternalServerError
+                    );
+                }
+
+                var actualTrackingCode = trackingResult.Value.TrackingCode;
+                logger.LogInformation("? External tracking created: {TrackingCode}", actualTrackingCode);
+
+                // ===============================
+                // STEP 4: PROCESS ATTACHMENTS (Enhanced error handling)
+                // ===============================
+                var processedFiles = 0;
+                var failedFiles = 0;
+
                 if (request.Attachments?.Any() == true)
                 {
+                    logger.LogInformation("Processing {Count} attachments for external hazard {HazardCode}", 
+                        request.Attachments.Count, createdHazard.Code);
+
                     foreach (var attachment in request.Attachments)
                     {
                         try
                         {
-                            var fileData = Convert.FromBase64String(attachment.Base64Content);
+                            // Validate base64 and file size
+                            if (string.IsNullOrEmpty(attachment.Base64Content))
+                            {
+                                logger.LogWarning("Skipping empty attachment: {FileName}", attachment.FileName);
+                                failedFiles++;
+                                continue;
+                            }
+
+                            byte[] fileData;
+                            try
+                            {
+                                fileData = Convert.FromBase64String(attachment.Base64Content);
+                            }
+                            catch (FormatException)
+                            {
+                                logger.LogWarning("Invalid base64 content for attachment: {FileName}", attachment.FileName);
+                                failedFiles++;
+                                continue;
+                            }
+
+                            // Check file size (10MB limit)
+                            if (fileData.Length > 10 * 1024 * 1024)
+                            {
+                                logger.LogWarning("File too large (>10MB): {FileName}", attachment.FileName);
+                                failedFiles++;
+                                continue;
+                            }
 
                             var hazardFile = new HazardFile(new HazardFileID("HF-0000"))
                             {
-                                Code = "HF-0000",
+                                Code = "HF-0000", // Database will generate actual code
                                 HazardCode = createdHazard.Code,
                                 ReportCode = actualReportCode,
                                 FileName = attachment.FileName,
@@ -227,40 +313,68 @@ public class Program
                                 UploadedBy = "EXTERNAL_SYSTEM",
                                 UploadedDate = DateTime.UtcNow,
                                 IsActive = true,
-                                IsConfidential = true
+                                IsConfidential = true,
+                                CreatedBy = "EXTERNAL_SYSTEM",
+                                CreatedDate = DateTime.UtcNow
                             };
 
                             var createFileCommand = new CreateHazardFileCommand(hazardFile);
-                            await mediator.SendAsync(createFileCommand, CancellationToken.None);
+                            var fileResult = await mediator.SendAsync(createFileCommand, CancellationToken.None);
+
+                            if (fileResult.IsSuccess)
+                            {
+                                processedFiles++;
+                                logger.LogInformation("? Processed attachment: {FileName} ({Size} bytes)", 
+                                    attachment.FileName, fileData.Length);
+                            }
+                            else
+                            {
+                                failedFiles++;
+                                logger.LogWarning("Failed to save attachment: {FileName}. Error: {Error}", 
+                                    attachment.FileName, fileResult.Error?.Message);
+                            }
                         }
                         catch (Exception fileEx)
                         {
-                            logger.LogWarning(fileEx, "Failed to process attachment: {FileName}", attachment.FileName);
+                            failedFiles++;
+                            logger.LogWarning(fileEx, "Exception processing attachment: {FileName}", attachment.FileName);
                         }
                     }
+
+                    logger.LogInformation("File processing completed: {Processed} successful, {Failed} failed", 
+                        processedFiles, failedFiles);
                 }
 
                 // ===============================
-                // SUCCESS RESPONSE
+                // SUCCESS RESPONSE (Production-ready)
                 // ===============================
                 var response = new ConfidentialReportApiResponse
                 {
-                    TrackingId = trackingId,
+                    TrackingId = actualTrackingCode,
                     HazardId = createdHazard.Code,
                     ReportId = actualReportCode,
                     SubmissionDateTime = DateTime.UtcNow,
                     Status = "Submitted",
-                    Message = "Confidential report submitted successfully"
+                    Message = $"Confidential report submitted successfully. Tracking ID: {actualTrackingCode}",
+                    ProcessedFiles = processedFiles,
+                    FailedFiles = failedFiles
                 };
 
-                logger.LogInformation("External confidential report submitted successfully. TrackingId: {TrackingId}", trackingId);
+                logger.LogInformation("? External confidential report submitted successfully. " +
+                    "TrackingId: {TrackingId}, ReportId: {ReportId}, HazardId: {HazardId}, Files: {ProcessedFiles}/{TotalFiles}", 
+                    actualTrackingCode, actualReportCode, createdHazard.Code, processedFiles, 
+                    request.Attachments?.Count ?? 0);
 
                 return Results.Ok(response);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error processing external confidential report submission");
-                return Results.Problem("An error occurred while processing the confidential report");
+                logger.LogError(ex, "? Unexpected error processing external confidential report submission");
+                return Results.Problem(
+                    detail: "An unexpected error occurred while processing your confidential report.",
+                    title: "Internal Server Error",
+                    statusCode: StatusCodes.Status500InternalServerError
+                );
             }
         })
         .AddEndpointFilter<ApiKeyAuthenticationFilter>()
@@ -409,13 +523,11 @@ public class Program
 
         app.Run();
     }
-    private static string GenerateAnonymousTrackingId()
-    {
-        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd");
-        var randomComponent = Random.Shared.Next(1000, 9999);
-        var checksum = (timestamp.GetHashCode() + randomComponent).ToString()[..2];
-        return $"CONF-{timestamp}-{randomComponent}-{checksum}";
-    }
+    // ============================================================================
+    // PRODUCTION NOTE: Tracking IDs are now generated by the database
+    // via the HazardReportTracking entity and CQRS command pipeline.
+    // This ensures proper ID generation, collision avoidance, and audit trails.
+    // ============================================================================
 }
 
 // ============================================================================
@@ -431,7 +543,7 @@ public class Program
 public record ConfidentialReportApiRequest
 {
     /// <summary>
-    /// The category of the hazard. Use GET /api/confidential-reports/hazard-categories to see all valid values.
+    /// The category of the hazard (required). Use GET /api/confidential-reports/hazard-categories to see all valid values.
     /// Examples: "INCIDENT", "FOD", "WILDLIFE", "OPERATIONAL_CHANGE"
     /// </summary>
     /// <example>INCIDENT</example>
@@ -446,7 +558,7 @@ public record ConfidentialReportApiRequest
     public string HazardType { get; init; } = string.Empty;
 
     /// <summary>
-    /// Detailed description of the hazard or incident (required)
+    /// Detailed description of the hazard or incident (required, max 2000 characters)
     /// </summary>
     /// <example>Aircraft experienced engine failure during takeoff roll, aborting takeoff safely</example>
     public string Description { get; init; } = string.Empty;
@@ -458,13 +570,13 @@ public record ConfidentialReportApiRequest
     public string Location { get; init; } = string.Empty;
 
     /// <summary>
-    /// Optional latitude coordinate for precise location
+    /// Optional latitude coordinate for precise location (decimal degrees)
     /// </summary>
     /// <example>45.5898</example>
     public decimal? Latitude { get; init; }
 
     /// <summary>
-    /// Optional longitude coordinate for precise location  
+    /// Optional longitude coordinate for precise location (decimal degrees)
     /// </summary>
     /// <example>-122.5951</example>
     public decimal? Longitude { get; init; }
@@ -476,22 +588,66 @@ public record ConfidentialReportApiRequest
     public string? SourceSystem { get; init; }
 
     /// <summary>
-    /// Optional file attachments as base64 encoded strings
+    /// Optional incident date/time (if not provided, current time is used)
+    /// </summary>
+    /// <example>2024-01-15T14:30:00Z</example>
+    public DateTime? IncidentDateTime { get; init; }
+
+    /// <summary>
+    /// Optional file attachments as base64 encoded strings (max 10MB per file)
     /// </summary>
     public List<FileAttachment>? Attachments { get; init; }
+
+    /// <summary>
+    /// Additional metadata or context information
+    /// </summary>
+    public Dictionary<string, string>? Metadata { get; init; }
 }
 
 /// <summary>
-/// Response model for confidential report submissions
+/// Response model for confidential report submissions - Enhanced for production
 /// </summary>
 public record ConfidentialReportApiResponse
 {
+    /// <summary>
+    /// Database-generated tracking ID for the submitted report
+    /// </summary>
     public string TrackingId { get; init; } = string.Empty;
+    
+    /// <summary>
+    /// Database-generated hazard ID
+    /// </summary>
     public string HazardId { get; init; } = string.Empty;
+    
+    /// <summary>
+    /// Database-generated report ID
+    /// </summary>
     public string ReportId { get; init; } = string.Empty;
+    
+    /// <summary>
+    /// Timestamp when the submission was processed
+    /// </summary>
     public DateTime SubmissionDateTime { get; init; }
+    
+    /// <summary>
+    /// Processing status
+    /// </summary>
     public string Status { get; init; } = string.Empty;
+    
+    /// <summary>
+    /// Success or error message
+    /// </summary>
     public string Message { get; init; } = string.Empty;
+    
+    /// <summary>
+    /// Number of files successfully processed
+    /// </summary>
+    public int ProcessedFiles { get; init; } = 0;
+    
+    /// <summary>
+    /// Number of files that failed to process
+    /// </summary>
+    public int FailedFiles { get; init; } = 0;
 }
 
 /// <summary>

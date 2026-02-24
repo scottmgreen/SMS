@@ -109,11 +109,11 @@ else
             <RadzenCard>
                 <RadzenStack Gap="1rem" Class="rz-p-3">
                     <!-- Confidentiality Notice -->
-                    <RadzenAlert Size="AlertSize.Small" Variant="Variant.Flat">
+                    @* <RadzenAlert Size="AlertSize.Small" Variant="Variant.Flat">
                         <strong>Confidential Protection:</strong> Your identity will be protected and access to this report will be restricted to authorized SMS personnel only.
                         <br><strong>Benefits:</strong> Enhanced protection from retaliation, restricted access, anonymous follow-up options.
                         <br><strong>Note:</strong> Confidential reports may take longer to process due to additional security measures.
-                    </RadzenAlert>
+                    </RadzenAlert> *@
 
                     <RadzenTemplateForm Data="@HazardReport" Submit="@HandleFormSubmit" TItem="HazardReportForm">
                         <RadzenRow>
@@ -416,7 +416,7 @@ else
                                 </RadzenText>
                                 @if (AttachedFiles.Any())
                                 {
-                                    <RadzenAlert AlertStyle="AlertStyle.Base" Size="AlertSize.Small" Variant="Variant.Flat" Class="rz-mt-6">
+                                    @* <RadzenAlert AlertStyle="AlertStyle.Base" Size="AlertSize.Small" Variant="Variant.Flat" Class="rz-mt-6"> *@
                                         <RadzenStack Gap="1rem">
                                             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
                                                 <strong>Queued files (@AttachedFiles.Count):</strong>
@@ -451,7 +451,7 @@ else
                                                 }
                                             </RadzenStack>
                                         </RadzenStack>
-                                    </RadzenAlert>
+                                    @* </RadzenAlert> *@
                                 }
                             </RadzenColumn>
                         </RadzenRow>

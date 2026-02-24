@@ -417,8 +417,8 @@ else
                                 </RadzenText>
                                 @if (AttachedFiles.Any())
                                 {
-                                    <RadzenAlert AlertStyle="AlertStyle.Base" Size="AlertSize.Small" Variant="Variant.Flat" Class="rz-mt-6">
-                                        <RadzenStack Gap="1rem">
+                                    
+                                    <RadzenStack Gap="1rem">
                                             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
                                                 <strong>Queued files (@AttachedFiles.Count):</strong>
                                                 <RadzenButton ButtonStyle="ButtonStyle.Base" 
@@ -452,7 +452,7 @@ else
                                                 }
                                             </RadzenStack>
                                         </RadzenStack>
-                                    </RadzenAlert>
+                                    
                                 }
                             </RadzenColumn>
                         </RadzenRow>
