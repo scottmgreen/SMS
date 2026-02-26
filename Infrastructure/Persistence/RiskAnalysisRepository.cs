@@ -1,4 +1,14 @@
-﻿using SMS_Domain.Entities;
+﻿//-----------------------------------------------------------------------
+// <copyright file="RiskAnalysisRepository.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Repository implementing data access operations for SMS riskanalysis entities supporting risk assessment workflows.
+//                  Repository implementation providing data access operations
+//                  with stored procedure integration and entity mapping.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using SMS_Domain.Entities;
 using SMS_Domain.Errors;
 
 using SMS_Infrastructure.Interfaces;

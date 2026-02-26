@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="IHazardRepository.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Repository implementing data access operations for SMS ihazard entities with safety management integration.
+//                  Infrastructure service contract defining data access operations
+//                  and external system integration interfaces.
+// </copyright>
+//-----------------------------------------------------------------------
+
 namespace SMS_Infrastructure.Interfaces;
 
 /// <summary>
@@ -14,3 +24,4 @@ public interface IHazardRepository
     Task<Result<IEnumerable<Hazard>>> GetByStatusAsync(string status);
     Task<Result<IEnumerable<Hazard>>> GetByReportCodeAsync(string reportCode);
 }
+

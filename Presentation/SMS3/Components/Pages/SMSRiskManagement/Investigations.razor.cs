@@ -73,8 +73,9 @@ public partial class Investigations : ComponentBase
     #region Lifecycle Methods
     protected override async Task OnInitializedAsync()
     {
-                await LoadAvailableInvestigators();
-                await LoadInvestigationData();
+               
+        await LoadInvestigationData();
+        await LoadAvailableInvestigators();
     }
     #endregion
 
@@ -119,8 +120,7 @@ public partial class Investigations : ComponentBase
             }
             else
             {
-                Logger.LogError("Investigation {InvestigationId} not found: {Error}",
-                    InvestigationId, investigationResult.Error?.Message);
+                Logger.LogError("Investigation {InvestigationId} not found: {Error}",InvestigationId, investigationResult.Error?.Message);
                 ShowErrorNotification($"Investigation not found: {investigationResult.Error?.Message}");
                 Navigation.NavigateTo("/Listings/Investigations");
             }
@@ -155,7 +155,7 @@ public partial class Investigations : ComponentBase
                 // Verify if the assigned investigator exists in the list
                 if (!string.IsNullOrEmpty(InvestigationEntity?.AssignedInvestigatorId))
                 {
-                    var assignedInvestigator = AvailableInvestigators.FirstOrDefault(i => i.Code == InvestigationEntity.AssignedInvestigatorId);
+                    var assignedInvestigator = AvailableInvestigators.FirstOrDefault(i => i.UserName == InvestigationEntity.AssignedInvestigatorId);
                     if (assignedInvestigator != null)
                     {
                         Logger.LogInformation("Found assigned investigator: {Name} ({Code})", assignedInvestigator.DisplayName, assignedInvestigator.Code);

@@ -1,4 +1,14 @@
-﻿namespace SMS_Infrastructure.Common;
+﻿//-----------------------------------------------------------------------
+// <copyright file="InfrastructureLogMessages.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Infrastructure service interface defining nfrastructurelogmessages operations and contracts.
+//                  Infrastructure service contract defining data access operations
+//                  and external system integration interfaces.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Infrastructure.Common;
 
 
 public static class InfrastructureLogMessages
@@ -183,3 +193,4 @@ public static class InfrastructureLogMessages
 
 
 }
+

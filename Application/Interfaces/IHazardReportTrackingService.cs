@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="IHazardReportTrackingService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: SMS Hazard management service handling hazard identification and lifecycle.
+//                  Provides business logic operations and coordinates domain entities
+//                  through the CQRS pattern via Mediator services.
+// </copyright>
+//-----------------------------------------------------------------------
+
 using SMS_Application.Messaging.Queries;
 
 namespace SMS_Application.Interfaces;

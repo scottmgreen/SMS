@@ -1,4 +1,14 @@
-﻿namespace SMS_Domain.ValueObjects;
+﻿//-----------------------------------------------------------------------
+// <copyright file="URL.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Value object representing url with immutable properties and business validation.
+//                  Immutable value object encapsulating domain concepts with
+//                  business logic and validation rules.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Domain.ValueObjects;
 
 public sealed class URL : BaseValueObject
 {
@@ -56,3 +66,4 @@ public sealed class URL : BaseValueObject
         yield return Value;
     }
 }
+

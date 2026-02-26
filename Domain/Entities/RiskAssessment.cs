@@ -1,4 +1,14 @@
-﻿namespace SMS_Domain.Entities;
+﻿//-----------------------------------------------------------------------
+// <copyright file="RiskAssessment.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: SMS risk entity representing riskassessment for risk assessment and management.
+//                  Domain entity implementing business rules and invariants
+//                  following Domain-Driven Design principles.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Domain.Entities;
 
 /// <summary>
 /// Risk Assessment Aggregate Root - BUSINESS RULE ENFORCED VERSION
@@ -207,3 +217,4 @@ public sealed class RiskAssessment : BaseAuditableEntity
         };
     }
 }
+

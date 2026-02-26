@@ -1,4 +1,14 @@
-﻿namespace SMS_Domain.Common;
+﻿//-----------------------------------------------------------------------
+// <copyright file="BaseEntity.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Base entity class providing common functionality for SMS domain entities with identity and lifecycle management.
+//                  Shared domain infrastructure providing base classes
+//                  and common functionality for Domain-Driven Design.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Domain.Common;
 
 //public class EntityId<T> : BaseID<T>
 //{
@@ -183,5 +193,6 @@ public abstract class Entity : IEquatable<Entity>
     /// <inheritdoc />
     public override int GetHashCode() => Id.GetHashCode(StringComparison.InvariantCulture) * 41;
 }
+
 
 

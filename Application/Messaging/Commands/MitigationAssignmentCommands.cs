@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="MitigationAssignmentCommands.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Command definitions for write operations in the SMS CQRS architecture.
+//                  Defines command objects for write operations in the CQRS pattern.
+//                  Commands represent business intentions and trigger state changes.
+// </copyright>
+//-----------------------------------------------------------------------
+
 namespace SMS_Application.Messaging.Commands;
 
 public class CreateMitigationAssignmentCommand : BaseCommandBundle, IRequest<Result<MitigationAssignment>>, ICreateCommand

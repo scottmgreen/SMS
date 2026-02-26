@@ -1,4 +1,14 @@
-﻿namespace SMS_Domain.Interfaces;
+﻿//-----------------------------------------------------------------------
+// <copyright file="IHazard.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Domain contract defining operations and ensuring clean architecture boundaries for SMS business logic.
+//                  Domain service contract defining business operations
+//                  and ensuring clean architecture boundaries.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Domain.Interfaces;
 
 /// <summary>
 /// Hazard interface defining the contract for SMS hazard entities
@@ -129,3 +139,4 @@ public interface IHazard
     int GetAgeInDays();
     #endregion
 }
+

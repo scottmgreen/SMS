@@ -1,4 +1,14 @@
-﻿namespace SMS_Domain.Entities;
+﻿//-----------------------------------------------------------------------
+// <copyright file="Investigation.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: SMS investigation entity representing investigation for safety investigation workflows.
+//                  Domain entity implementing business rules and invariants
+//                  following Domain-Driven Design principles.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Domain.Entities;
 
 /// <summary>
 /// Investigation Domain Entity
@@ -59,3 +69,4 @@ public sealed class Investigation : BaseAuditableEntity
 
     #endregion
 }
+

@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="SMSAuditPlanDataService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Data service coordinating smsauditplan repository operations supporting compliance and audit processes.
+//                  Infrastructure service providing external system integration
+//                  and technical functionality support.
+// </copyright>
+//-----------------------------------------------------------------------
+
 using Domain.Models;
 
 using Infrastructure.Persistence;

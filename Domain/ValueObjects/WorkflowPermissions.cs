@@ -1,4 +1,14 @@
-﻿//using SMS_Domain.Common;
+﻿//-----------------------------------------------------------------------
+// <copyright file="WorkflowPermissions.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Value object representing workflowpermissions with access control and authorization logic.
+//                  Immutable value object encapsulating domain concepts with
+//                  business logic and validation rules.
+// </copyright>
+//-----------------------------------------------------------------------
+
+//using SMS_Domain.Common;
 //using SMS_Shared.Common;
 //using SMS_Domain.Errors;
 //using SMS_Domain.Enums;

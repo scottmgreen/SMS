@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="HazardReportTrackingDataService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Data service coordinating hazardreporttracking repository operations with safety management workflows.
+//                  Infrastructure service providing external system integration
+//                  and technical functionality support.
+// </copyright>
+//-----------------------------------------------------------------------
+
 using SMS_Domain.Errors;
 
 

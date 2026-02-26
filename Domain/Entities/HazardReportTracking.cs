@@ -1,4 +1,14 @@
-﻿namespace SMS_Domain.Entities;
+﻿//-----------------------------------------------------------------------
+// <copyright file="HazardReportTracking.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: SMS hazard entity representing hazardreporttracking for safety management processes.
+//                  Domain entity implementing business rules and invariants
+//                  following Domain-Driven Design principles.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Domain.Entities;
 
 /// <summary>
 /// Hazard Domain Entity - Mission Critical
@@ -22,3 +32,4 @@ public sealed class HazardReportTracking : BaseAuditableEntity
     #endregion Core Properties
 
 }
+

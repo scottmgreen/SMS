@@ -180,14 +180,14 @@
                                 <div class="rz-menuitem">
                                     <RadzenButton Text="My Profile & Permissions"
                                                   Icon="account_circle"
-                                                  ButtonStyle="ButtonStyle.Base"
+                                                  ButtonStyle="ButtonStyle.Success"
                                                   Variant="Variant.Text"
                                                   Click="@ShowUserProfileModal"
                                                   Style="width: 100%; justify-content: flex-start;" />
                                 </div>
                                 <div class="rz-separator"></div>
                                 <RadzenProfileMenuItem Text="My Dashboard" Path="/dashboard" Icon="dashboard" />
-                                <RadzenProfileMenuItem Text="Settings" Path="/Settings" Icon="settings" />
+                                @* <RadzenProfileMenuItem Text="Settings" Path="/Settings" Icon="settings" /> *@
                                 <RadzenProfileMenuItem Text="Help" Path="/Help" Icon="help" />
                                 <RadzenProfileMenuItem Text="About" Path="/About" Icon="info" />
                                 <div class="rz-separator"></div>
@@ -195,7 +195,7 @@
                                 <div class="rz-menuitem">
                                     <RadzenButton Text="Logout"
                                                   Icon="logout"
-                                                  ButtonStyle="ButtonStyle.Danger"
+                                                  ButtonStyle="ButtonStyle.Primary"
                                                   Variant="Variant.Text"
                                                   Click="@OnLogoutClick"
                                                   Style="width: 100%; justify-content: flex-start;" />

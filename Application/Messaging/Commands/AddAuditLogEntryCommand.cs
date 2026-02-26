@@ -1,4 +1,14 @@
-﻿namespace SMS_Application.Messaging.Commands;
+﻿//-----------------------------------------------------------------------
+// <copyright file="AddAuditLogEntryCommand.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Application layer component providing functionality for the SMS safety management system.
+//                  Provides shared utilities, constants, and base classes
+//                  for Application layer components.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Application.Messaging.Commands;
 
 public class AddAuditLogEntryCommand : BaseCommandBundle, IRequest<Result<bool>>, ICreateCommand
 {
@@ -24,4 +34,5 @@ public class AddAuditLogEntryCommand : BaseCommandBundle, IRequest<Result<bool>>
         // For audit log entries, we typically don't set UpdatedBy
     }
 }
+
 

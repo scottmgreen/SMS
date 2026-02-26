@@ -1,4 +1,14 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿//-----------------------------------------------------------------------
+// <copyright file="BaseDataService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Base infrastructure class providing common functionality for SMS domain components.
+//                  Shared domain infrastructure providing base classes
+//                  and common functionality for Domain-Driven Design.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SMS_Domain.Common;
 
@@ -43,3 +53,4 @@ where TEntity : class
 
 
 }
+

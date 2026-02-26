@@ -1,4 +1,14 @@
-﻿namespace SMS_Domain.Entities;
+﻿//-----------------------------------------------------------------------
+// <copyright file="RiskAnalysis.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: SMS risk entity representing riskanalysis for risk assessment and management.
+//                  Domain entity implementing business rules and invariants
+//                  following Domain-Driven Design principles.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Domain.Entities;
 
 public sealed class RiskAnalysis : BaseAuditableEntity
 {
@@ -16,3 +26,4 @@ public sealed class RiskAnalysis : BaseAuditableEntity
     public string? ResidualRootCause { get; set; }
     public string? ResidualAdditionalComments { get; set; }
 }
+

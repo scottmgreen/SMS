@@ -1,4 +1,14 @@
-﻿namespace SMS_Domain.Entities;
+﻿//-----------------------------------------------------------------------
+// <copyright file="Report.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: SMS report entity representing report for safety reporting processes.
+//                  Domain entity implementing business rules and invariants
+//                  following Domain-Driven Design principles.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Domain.Entities;
 
 public sealed class Report : BaseAuditableEntity
 {
@@ -24,3 +34,4 @@ public sealed class Report : BaseAuditableEntity
 
     public bool IsAnonymous { get; set; }
 }
+

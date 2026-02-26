@@ -1,4 +1,14 @@
-﻿using Application.Interfaces;
+﻿//-----------------------------------------------------------------------
+// <copyright file="ReportService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: SMS Report management service handling report creation, validation, and processing.
+//                  Provides business logic operations and coordinates domain entities
+//                  through the CQRS pattern via Mediator services.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using Application.Interfaces;
 
 using Microsoft.Extensions.Logging;
 

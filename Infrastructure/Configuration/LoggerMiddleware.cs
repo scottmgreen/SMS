@@ -1,4 +1,14 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿//-----------------------------------------------------------------------
+// <copyright file="LoggerMiddleware.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: ASP.NET Core middleware providing request/response logging with correlation IDs and performance metrics.
+//                  ASP.NET Core middleware component providing cross-cutting
+//                  concerns in the HTTP request pipeline.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using Microsoft.AspNetCore.Http;
 
 namespace SMS_Infrastructure.Configuration
 {
@@ -27,3 +37,4 @@ namespace SMS_Infrastructure.Configuration
 
     }
 }
+

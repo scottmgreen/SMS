@@ -1,4 +1,14 @@
-﻿using Microsoft.Extensions.Logging;
+﻿//-----------------------------------------------------------------------
+// <copyright file="InvestigationService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: SMS Investigation workflow service managing safety investigation processes.
+//                  Provides business logic operations and coordinates domain entities
+//                  through the CQRS pattern via Mediator services.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using Microsoft.Extensions.Logging;
 
 namespace SMS_Application.Services;
 

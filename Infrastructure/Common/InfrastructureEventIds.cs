@@ -1,4 +1,14 @@
-﻿namespace SMS_Infrastructure.Common;
+﻿//-----------------------------------------------------------------------
+// <copyright file="InfrastructureEventIds.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Infrastructure service interface defining nfrastructureeventds operations and contracts.
+//                  Infrastructure service contract defining data access operations
+//                  and external system integration interfaces.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Infrastructure.Common;
 public static class InfrastructureEventIds
 {
     public const int Critical = 1000;
@@ -27,3 +37,4 @@ public static class InfrastructureEventIds
     public const int DeleteItemError = 4005;
     public const int InfrastructureError = 4006;
 }
+

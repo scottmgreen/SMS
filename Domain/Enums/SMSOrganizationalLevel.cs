@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="SMSOrganizationalLevel.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Enumeration defining level classifications for SMS smsorganizational assessment.
+//                  Domain enumeration defining valid states and classifications
+//                  for business entities and processes.
+// </copyright>
+//-----------------------------------------------------------------------
+
 namespace SMS_Domain.Enums;
 
 public abstract class SMSOrganizationalLevel : BaseEnum<SMSOrganizationalLevel>

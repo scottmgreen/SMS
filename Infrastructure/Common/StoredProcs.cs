@@ -1,4 +1,14 @@
-﻿namespace SMS_Infrastructure.Common
+﻿//-----------------------------------------------------------------------
+// <copyright file="StoredProcs.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Stored procedure name constants providing centralized database procedure reference management with lazy initialization.
+//                  Infrastructure utility providing shared functionality
+//                  for data access and external system integration.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Infrastructure.Common
 {
     public static class StoredProcs
     {

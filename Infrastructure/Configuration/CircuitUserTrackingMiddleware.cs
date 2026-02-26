@@ -1,4 +1,14 @@
-﻿using System.Collections.Concurrent;
+﻿//-----------------------------------------------------------------------
+// <copyright file="CircuitUserTrackingMiddleware.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: ASP.NET Core middleware providing user context tracking and session management for Blazor applications.
+//                  ASP.NET Core middleware component providing cross-cutting
+//                  concerns in the HTTP request pipeline.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 
@@ -171,3 +181,4 @@ namespace SMS_Infrastructure.Configuration
         }
     }
 }
+

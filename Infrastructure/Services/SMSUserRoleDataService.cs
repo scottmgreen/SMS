@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="SMSUserRoleDataService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Data service coordinating smsuserrole repository operations with business logic and validation.
+//                  Infrastructure service providing external system integration
+//                  and technical functionality support.
+// </copyright>
+//-----------------------------------------------------------------------
+
 using SMS_Domain.Errors;
 
 using SMS_Infrastructure.Interfaces;

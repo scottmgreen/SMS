@@ -1,4 +1,14 @@
-﻿using Domain.Entities;
+﻿//-----------------------------------------------------------------------
+// <copyright file="Mappers.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Entity mapping utilities providing conversion between domain entities and database models with validation.
+//                  Infrastructure utility providing shared functionality
+//                  for data access and external system integration.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using Domain.Entities;
 
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;

@@ -1,4 +1,14 @@
-﻿using SMS_Domain.Common;
+﻿//-----------------------------------------------------------------------
+// <copyright file="InterviewStatus.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Enumeration defining valid status values for SMS interview workflows.
+//                  Domain enumeration defining valid states and classifications
+//                  for business entities and processes.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using SMS_Domain.Common;
 
 namespace SMS_Domain.Enums;
 

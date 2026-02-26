@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="Password.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Value object representing secure password with hashing, validation, and policy enforcement.
+//                  Immutable value object encapsulating domain concepts with
+//                  business logic and validation rules.
+// </copyright>
+//-----------------------------------------------------------------------
+
 namespace SMS_Domain.ValueObjects;
 
 /// <summary>

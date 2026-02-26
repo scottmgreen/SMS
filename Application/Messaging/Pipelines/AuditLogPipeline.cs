@@ -1,4 +1,14 @@
-﻿using Microsoft.FeatureManagement;
+﻿//-----------------------------------------------------------------------
+// <copyright file="AuditLogPipeline.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Application layer component providing functionality for the SMS safety management system.
+//                  Implements cross-cutting concerns in the request/response pipeline.
+//                  Handles logging, auditing, validation, and other aspects.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using Microsoft.FeatureManagement;
 
 namespace SMS_Application.Messaging.Pipelines;
 
@@ -52,6 +62,7 @@ public class AuditLogPipeline<TRequest, TResult> : IPipeline<TRequest, TResult> 
         return result;
     }
 }
+
 
 
 

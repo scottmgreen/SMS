@@ -1,4 +1,14 @@
-﻿namespace SMS_Domain.Entities;
+﻿//-----------------------------------------------------------------------
+// <copyright file="Mitigation.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: SMS mitigation entity representing mitigation for risk mitigation strategies.
+//                  Domain entity implementing business rules and invariants
+//                  following Domain-Driven Design principles.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Domain.Entities;
 
 /// <summary>
 /// Mitigation Domain Entity - Comprehensive implementation matching tbld_Mitigations schema
@@ -88,3 +98,4 @@ public sealed class Mitigation : BaseAuditableEntity
 
   
 }
+

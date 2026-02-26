@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="UserRoleStatistics.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Domain model representing statistical data and metrics for SMS userrole reporting.
+//                  Domain model representing complex data structures
+//                  for business reporting and analytics.
+// </copyright>
+//-----------------------------------------------------------------------
+
 namespace SMS_Domain.Models;
 
 /// <summary>

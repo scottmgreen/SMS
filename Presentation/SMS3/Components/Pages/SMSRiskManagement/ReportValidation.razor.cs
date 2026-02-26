@@ -486,9 +486,11 @@ public partial class ReportValidation : ComponentBase
             RiskAssessment? existingRiskAssessment = null;
             if (existingResult.IsSuccess && existingResult.Value != null)
             {
-                existingRiskAssessment = existingResult.Value.FirstOrDefault(inv =>
-                    !string.IsNullOrWhiteSpace(inv.HazardCode) && inv.HazardCode.Equals(ReportHazard.Code, StringComparison.OrdinalIgnoreCase) );
-                    
+                existingRiskAssessment = existingResult.Value.FirstOrDefault(inv => !string.IsNullOrWhiteSpace(inv.HazardCode) && inv.HazardCode.Equals(ReportHazard.Code, StringComparison.OrdinalIgnoreCase) );
+                existingRiskAssessment.LeadAssessorId = LeadAssessor;
+
+                var cmd = new UpdateRiskAssessmentCommand(existingRiskAssessment);
+                var cmdResult = await Mediator.SendAsync(cmd, CancellationToken.None);
             }
 
             string navigationUrl;
@@ -634,7 +636,7 @@ public partial class ReportValidation : ComponentBase
                 investigation.Status = InvestigationStatus.InvestigatorAssigned;
                 investigation.CreatedBy = AuthService.CurrentUserDisplayName;
                 investigation.ReportCode = ReportId;
-                investigation.AssignedInvestigatorId = AuthService.CurrentUserDisplayName;
+                investigation.AssignedInvestigatorId = LeadInvestigator;
                 investigation.InvestigationObjectives = $"Investigation required based on validation decision for hazard {ReportHazard.Code}";
                 investigation.InvestigationNotes = $"Investigation initiated from report validation. Validation comments: {ValidationComments}";
 

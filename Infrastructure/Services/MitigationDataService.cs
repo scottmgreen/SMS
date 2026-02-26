@@ -1,4 +1,14 @@
-﻿// =============================================
+﻿//-----------------------------------------------------------------------
+// <copyright file="MitigationDataService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Data service coordinating mitigation repository operations supporting mitigation implementation and tracking.
+//                  Infrastructure service providing external system integration
+//                  and technical functionality support.
+// </copyright>
+//-----------------------------------------------------------------------
+
+// =============================================
 // SMS DATA SERVICES - COMPLETE SET
 // All 10 SMS Data Services for easy copy/paste
 // =============================================
@@ -56,3 +66,4 @@ public class MitigationDataService : BaseDataService<MitigationDataService>
         return _repo.GetMitigationsByHazardCodeAsync(hazardCode, ct);
     }
 }
+

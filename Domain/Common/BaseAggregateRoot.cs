@@ -1,4 +1,14 @@
-﻿// -----------------------------------------------------------------------------
+﻿//-----------------------------------------------------------------------
+// <copyright file="BaseAggregateRoot.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Base infrastructure class providing common functionality for SMS domain components.
+//                  Shared domain infrastructure providing base classes
+//                  and common functionality for Domain-Driven Design.
+// </copyright>
+//-----------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
 // <copyright file="BaseAggregateRoot.cs" company="">
 //     Author: Scott Green
 //     Date: 2025-07-24
@@ -42,3 +52,4 @@ public abstract class BaseAggregateRoot
     /// </summary>
     public void ClearDomainEvents() => _domainEvents.Clear();
 }
+

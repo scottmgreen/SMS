@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="SMSAuditService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: SMS Audit management service coordinating audit planning, execution, and reporting.
+//                  Provides business logic operations and coordinates domain entities
+//                  through the CQRS pattern via Mediator services.
+// </copyright>
+//-----------------------------------------------------------------------
+
 using Microsoft.Extensions.Logging;
 
 using SMS_Application.Messaging.Queries;

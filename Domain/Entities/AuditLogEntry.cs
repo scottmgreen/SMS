@@ -1,4 +1,14 @@
-﻿namespace SMS_Domain.Entities;
+﻿//-----------------------------------------------------------------------
+// <copyright file="AuditLogEntry.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: SMS audit entity representing auditlogentry for compliance and regulatory requirements.
+//                  Domain entity implementing business rules and invariants
+//                  following Domain-Driven Design principles.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Domain.Entities;
 
 public class AuditLogEntry : BaseEntity
 {
@@ -16,3 +26,4 @@ public class AuditLogEntry : BaseEntity
 
 
 }
+

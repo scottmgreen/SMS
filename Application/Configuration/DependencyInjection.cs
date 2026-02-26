@@ -1,8 +1,20 @@
-﻿// -----------------------------------------------------------------------------
-// <copyright file="DependencyInjection.cs" company="">
-//     Author: Scott Green
-//     Date: 2025-07-24
-//     Summary: Provides extension methods for registering application services in the DI container.
+﻿//-----------------------------------------------------------------------
+// <copyright file="DependencyInjection.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Configuration component for Application layer dependency injection and setup.
+//                  Provides dependency injection configuration and service registration
+//                  for the Application layer in the Clean Architecture.
+// </copyright>
+//-----------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+// <copyright file="DependencyInjection.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Provides dependency injection configuration and service registration
+//                  for the Application layer in the Clean Architecture.
+//                  Handles mediator setup, handler discovery, and service lifetime management.
 // </copyright>
 // ----------------------------------------------------------------------------->
 
@@ -11,7 +23,13 @@ using Application.Interfaces;
 namespace SMS_Application.Configuration
 {
     /// <summary>
+    /// Application Layer Dependency Injection Configuration
     /// Provides extension methods for registering application services in the DI container.
+    /// Handles automatic handler discovery, mediator configuration, and service lifetime management.
+    /// 
+    /// Methods:
+    /// - AddApplicationServices: Registers all application layer services with appropriate lifetimes
+    /// - AddApplicationMediator: Configures CQRS mediator and automatically discovers handlers
     /// </summary>
     public static class DependencyInjection
     {
@@ -108,4 +126,5 @@ namespace SMS_Application.Configuration
         }
     }
 }
+
 

@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="ReportValidationStatus.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Enumeration defining valid status values for SMS reportvalidation workflows.
+//                  Domain enumeration defining valid states and classifications
+//                  for business entities and processes.
+// </copyright>
+//-----------------------------------------------------------------------
+
 namespace SMS_Domain.Enums;
 
 public abstract class ReportValidationStatus : BaseEnum<ReportValidationStatus>
@@ -88,3 +98,4 @@ public abstract class ReportValidationStatus : BaseEnum<ReportValidationStatus>
         return validationDecision != null;
     }
 }
+

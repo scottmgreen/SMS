@@ -1,4 +1,14 @@
-﻿// =============================================
+﻿//-----------------------------------------------------------------------
+// <copyright file="InvestigationDataService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Data service coordinating investigation repository operations with investigation workflow management.
+//                  Infrastructure service providing external system integration
+//                  and technical functionality support.
+// </copyright>
+//-----------------------------------------------------------------------
+
+// =============================================
 // SMS DATA SERVICES - COMPLETE SET
 // All 10 SMS Data Services for easy copy/paste
 // =============================================
@@ -88,3 +98,4 @@ public class InvestigationDataService : BaseDataService<InvestigationDataService
         return _repo.CompleteInvestigationAsync(investigationCode, ct);
     }
 }
+

@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="RiskAnalysisType.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Enumeration defining classification types for SMS riskanalysis entities.
+//                  Domain enumeration defining valid states and classifications
+//                  for business entities and processes.
+// </copyright>
+//-----------------------------------------------------------------------
+
 namespace SMS_Domain.Enums;
 
 public abstract class RiskAnalysisType : BaseEnum<RiskAnalysisType>

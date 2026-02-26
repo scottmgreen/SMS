@@ -1,4 +1,14 @@
-﻿
+﻿//-----------------------------------------------------------------------
+// <copyright file="BaseID.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Strongly-typed identifier for base entities ensuring type safety.
+//                  Shared domain infrastructure providing base classes
+//                  and common functionality for Domain-Driven Design.
+// </copyright>
+//-----------------------------------------------------------------------
+
+
 namespace SMS_Domain.Common;
 public abstract class BaseID<T> : IEquatable<BaseID<T>>
 {
@@ -65,4 +75,5 @@ public abstract class BaseID<T> : IEquatable<BaseID<T>>
 
 
 }
+
 

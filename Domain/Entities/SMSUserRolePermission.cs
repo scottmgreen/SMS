@@ -1,4 +1,14 @@
-﻿namespace SMS_Domain.Entities;
+﻿//-----------------------------------------------------------------------
+// <copyright file="SMSUserRolePermission.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: SMS user entity representing smsuserrolepermission with authentication and authorization capabilities.
+//                  Domain entity implementing business rules and invariants
+//                  following Domain-Driven Design principles.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Domain.Entities;
 
 public sealed class SMSUserRolePermission : BaseAuditableEntity
 {
@@ -12,3 +22,4 @@ public sealed class SMSUserRolePermission : BaseAuditableEntity
     public bool Update { get; set; }
     public bool Delete { get; set; }
 }
+

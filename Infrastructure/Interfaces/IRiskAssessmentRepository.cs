@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="IRiskAssessmentRepository.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Repository implementing data access operations for SMS iriskassessment entities supporting risk assessment workflows.
+//                  Infrastructure service contract defining data access operations
+//                  and external system integration interfaces.
+// </copyright>
+//-----------------------------------------------------------------------
+
 namespace SMS_Infrastructure.Interfaces;
 
 /// <summary>
@@ -17,3 +27,4 @@ public interface IRiskAssessmentRepository
     Task<Result<IEnumerable<RiskAssessment>>> GetActiveAssessmentsAsync();
     Task<Result<IEnumerable<RiskAssessment>>> GetResidualAssessmentsAsync(string parentAssessmentId);
 }
+

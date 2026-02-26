@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="MitigationQueryHandlers.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Query handlers implementing data retrieval logic for SMS read operations.
+//                  Implements query handlers for processing read operations.
+//                  Retrieves and transforms data for presentation layer consumption.
+// </copyright>
+//-----------------------------------------------------------------------
+
 using Microsoft.Extensions.Logging;
 
 using SMS_Application.Messaging.Queries;

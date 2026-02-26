@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="IBaseUserRepository.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Repository contract defining data access operations for SMS baseuser entities.
+//                  Domain service contract defining business operations
+//                  and ensuring clean architecture boundaries.
+// </copyright>
+//-----------------------------------------------------------------------
+
 namespace SMS_Domain.Interfaces;
 
 /// <summary>

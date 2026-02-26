@@ -1,4 +1,14 @@
-﻿// -----------------------------------------------------------------------------
+﻿//-----------------------------------------------------------------------
+// <copyright file="LogSupport.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Infrastructure configuration component providing system setup, service registration, and dependency management.
+//                  Infrastructure configuration providing dependency injection,
+//                  service registration, and system setup.
+// </copyright>
+//-----------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
 // <copyright file="LogSupport.cs" company="">
 //     Author: Scott Green
 //     Date: 2025-07-24
@@ -53,3 +63,4 @@ public class LogSupport : ILogSupport
         return $"{timestamp} {currentUser} {currentUserIp} =>";
     }
 }
+

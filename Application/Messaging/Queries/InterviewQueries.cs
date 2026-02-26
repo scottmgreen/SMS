@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="InterviewQueries.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Query definitions for read operations in the SMS CQRS architecture.
+//                  Defines query objects for read operations in the CQRS pattern.
+//                  Queries retrieve data without causing side effects.
+// </copyright>
+//-----------------------------------------------------------------------
+
 namespace SMS_Application.Messaging.Queries;
 
 // =============================================

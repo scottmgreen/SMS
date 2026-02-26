@@ -1,4 +1,14 @@
-﻿//using SMS_Application.Messaging.Pipelines;
+﻿//-----------------------------------------------------------------------
+// <copyright file="BaseLoggingPipeline.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Shared utility providing common functionality for Application layer components.
+//                  Implements cross-cutting concerns in the request/response pipeline.
+//                  Handles logging, auditing, validation, and other aspects.
+// </copyright>
+//-----------------------------------------------------------------------
+
+//using SMS_Application.Messaging.Pipelines;
 //using SMS_Domain.Common;
 
 //using Microsoft.Extensions.Logging;

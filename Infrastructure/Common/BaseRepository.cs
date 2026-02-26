@@ -1,4 +1,14 @@
-﻿using SMS_Infrastructure.Interfaces;
+﻿//-----------------------------------------------------------------------
+// <copyright file="BaseRepository.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Base repository class providing common data access functionality with connection management and stored procedure execution.
+//                  Repository implementation providing data access operations
+//                  with stored procedure integration and entity mapping.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Common;
 
@@ -34,3 +44,4 @@ public abstract class BaseRepository<TEntity, TModel> : IBaseRepository<TEntity,
     //public abstract Task<bool> UpdateAsync(TModel model);
     //public abstract Task<bool> DeleteAsync(TModel model);
 }
+

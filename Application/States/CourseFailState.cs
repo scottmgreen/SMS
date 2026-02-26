@@ -1,4 +1,14 @@
-﻿namespace SMS_Application.States;
+﻿//-----------------------------------------------------------------------
+// <copyright file="CourseFailState.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: State management component for workflow and business process coordination.
+//                  Implements state management for workflow and business process
+//                  coordination within the Application layer.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Application.States;
 
 //public class CourseFailState : BaseState
 //{
@@ -31,6 +41,7 @@
 
 
 //}
+
 
 
 

@@ -1,4 +1,14 @@
-﻿using System.Net;
+﻿//-----------------------------------------------------------------------
+// <copyright file="ConnectionService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Connection service managing database connectivity, connection pooling, and performance monitoring.
+//                  Infrastructure service providing external system integration
+//                  and technical functionality support.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using System.Net;
 using System.Net.Sockets;
 
 using Microsoft.AspNetCore.Http;

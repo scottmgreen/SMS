@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="SMSApplicationUserRepository.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Repository implementing data access operations for SMS smsapplicationuser entities with CRUD operations and business queries.
+//                  Repository implementation providing data access operations
+//                  with stored procedure integration and entity mapping.
+// </copyright>
+//-----------------------------------------------------------------------
+
 using Infrastructure.Interfaces;
 
 using SMS_Domain.Errors;

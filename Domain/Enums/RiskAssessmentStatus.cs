@@ -1,4 +1,14 @@
-﻿using SMS_Domain.Common;
+﻿//-----------------------------------------------------------------------
+// <copyright file="RiskAssessmentStatus.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Enumeration defining valid status values for SMS riskassessment workflows.
+//                  Domain enumeration defining valid states and classifications
+//                  for business entities and processes.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using SMS_Domain.Common;
 using System.Reflection;
 
 namespace SMS_Domain.Enums;
@@ -80,3 +90,4 @@ public abstract class RiskAssessmentStatus : BaseEnum<RiskAssessmentStatus>
     }
 
 }
+

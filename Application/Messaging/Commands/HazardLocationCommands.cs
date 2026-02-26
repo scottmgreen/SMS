@@ -1,4 +1,14 @@
-﻿namespace SMS_Application.Messaging.Commands;
+﻿//-----------------------------------------------------------------------
+// <copyright file="HazardLocationCommands.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Command definitions for SMS hazard management and lifecycle operations.
+//                  Defines command objects for write operations in the CQRS pattern.
+//                  Commands represent business intentions and trigger state changes.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Application.Messaging.Commands;
 
 /// <summary>
 /// Command to create a hazard location from an existing HazardLocation entity

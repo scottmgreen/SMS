@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="HazardLocationDataService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Data service coordinating hazardlocation repository operations with safety management workflows.
+//                  Data service providing business-focused data operations
+//                  with repository coordination and transaction management.
+// </copyright>
+//-----------------------------------------------------------------------
+
 using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Services;

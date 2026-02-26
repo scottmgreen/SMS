@@ -1,4 +1,14 @@
-﻿// =============================================
+﻿//-----------------------------------------------------------------------
+// <copyright file="HazardDataService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Data service coordinating hazard repository operations with safety management workflows.
+//                  Data service providing business-focused data operations
+//                  with repository coordination and transaction management.
+// </copyright>
+//-----------------------------------------------------------------------
+
+// =============================================
 // SMS DATA SERVICES - COMPLETE SET
 // All 10 SMS Data Services for easy copy/paste
 // =============================================
@@ -58,3 +68,4 @@ public class HazardDataService : BaseDataService<HazardDataService>, IHazardData
         return _repo.DeleteHazardAsync(id, ct);
     }
 }
+

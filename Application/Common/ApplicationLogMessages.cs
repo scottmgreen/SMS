@@ -1,11 +1,34 @@
-﻿using Microsoft.Extensions.Logging;
+﻿//-----------------------------------------------------------------------
+// <copyright file="ApplicationLogMessages.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Provides structured logging extension methods for the Application layer.
+//                  Implements high-performance logging using LoggerMessage delegates for
+//                  consistent message formatting and optimal performance.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using Microsoft.Extensions.Logging;
 
 using SMS_Shared.Common;
 
 
 namespace SMS_Application.Common;
 
-
+/// <summary>
+/// Application Layer Logging Extensions
+/// Provides structured logging extension methods with high-performance LoggerMessage delegates.
+/// Ensures consistent log message formatting and optimal performance across application services.
+/// 
+/// Methods:
+/// - LogApplicationInformation: Logs informational messages with event ID
+/// - LogApplicationDebug: Logs debug messages for troubleshooting
+/// - LogApplicationError: Logs error conditions with exception details
+/// - LogApplicationCritical: Logs critical system events requiring immediate attention
+/// - LogApplicationNone: Logs messages without specific severity level
+/// - LogApplicationTrace: Logs detailed execution flow information
+/// - LogApplicationWarning: Logs warning conditions that don't halt execution
+/// </summary>
 public static class ApplicationLogMessages
 {
 
@@ -65,6 +88,11 @@ public static class ApplicationLogMessages
     {
         _LogWarning(logger, message, LoggingEventIds.SMS_ApplicationEventIds.Warning, null);
     }
+
+
+
+
+
 
 
 

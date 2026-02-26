@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="SMSRoleService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Application service providing business logic operations for SMS domain entities.
+//                  Provides business logic operations and coordinates domain entities
+//                  through the CQRS pattern via Mediator services.
+// </copyright>
+//-----------------------------------------------------------------------
+
 using SMS_Domain.Interfaces;
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;

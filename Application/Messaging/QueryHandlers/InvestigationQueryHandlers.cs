@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="InvestigationQueryHandlers.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Query handlers implementing SMS investigation data retrieval and tracking logic.
+//                  Defines contract for application services ensuring clean architecture
+//                  boundaries and dependency inversion compliance.
+// </copyright>
+//-----------------------------------------------------------------------
+
 using Microsoft.Extensions.Logging;
 
 using SMS_Application.Messaging.Queries;

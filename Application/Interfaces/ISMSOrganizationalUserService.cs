@@ -1,4 +1,14 @@
-﻿namespace Application.Interfaces;
+﻿//-----------------------------------------------------------------------
+// <copyright file="ISMSOrganizationalUserService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: SMS User management service handling user lifecycle and authentication operations.
+//                  Provides business logic operations and coordinates domain entities
+//                  through the CQRS pattern via Mediator services.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace Application.Interfaces;
 
 public interface ISMSOrganizationalUserService
 {

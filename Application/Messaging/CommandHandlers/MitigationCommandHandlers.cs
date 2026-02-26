@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="MitigationCommandHandlers.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Command handlers implementing business logic for SMS write operations.
+//                  Implements command handlers for processing write operations.
+//                  Handles business logic execution and domain entity coordination.
+// </copyright>
+//-----------------------------------------------------------------------
+
 using Microsoft.Extensions.Logging;
 
 namespace SMS_Application.Messaging.CommandHandlers;

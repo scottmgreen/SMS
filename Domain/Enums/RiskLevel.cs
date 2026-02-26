@@ -1,4 +1,14 @@
-﻿using System.Reflection;
+﻿//-----------------------------------------------------------------------
+// <copyright file="RiskLevel.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Enumeration defining level classifications for SMS risk assessment.
+//                  Domain enumeration defining valid states and classifications
+//                  for business entities and processes.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using System.Reflection;
 using SMS_Domain.Common;
 
 namespace SMS_Domain.Enums;

@@ -1,4 +1,14 @@
-﻿using SMS_Domain.Errors;
+﻿//-----------------------------------------------------------------------
+// <copyright file="FileService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: File service providing document management, storage operations, and file system integration.
+//                  Infrastructure service providing external system integration
+//                  and technical functionality support.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using SMS_Domain.Errors;
 
 namespace SMS_Infrastructure.Services
 {
@@ -29,3 +39,4 @@ namespace SMS_Infrastructure.Services
     }
 
 }
+

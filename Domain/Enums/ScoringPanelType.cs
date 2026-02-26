@@ -1,4 +1,14 @@
-﻿namespace SMS_Domain.Enums;
+﻿//-----------------------------------------------------------------------
+// <copyright file="ScoringPanelType.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Enumeration defining classification types for SMS scoringpanel entities.
+//                  Domain enumeration defining valid states and classifications
+//                  for business entities and processes.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Domain.Enums;
 
 /// <summary>
 /// Risk Assessment Type Enumeration - BUSINESS RULE ENFORCED
@@ -43,3 +53,4 @@ public abstract class ScoringPanelType : BaseEnum<ScoringPanelType>
 
 
 }
+

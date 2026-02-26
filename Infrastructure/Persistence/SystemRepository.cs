@@ -1,4 +1,14 @@
-﻿using Microsoft.FeatureManagement;
+﻿//-----------------------------------------------------------------------
+// <copyright file="SystemRepository.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Repository implementing data access operations for SMS system entities with stored procedure integration.
+//                  Repository implementation providing data access operations
+//                  with stored procedure integration and entity mapping.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using Microsoft.FeatureManagement;
 
 using SMS_Domain.Errors;
 
@@ -80,4 +90,5 @@ public sealed class SystemRepository : BaseRepository<SystemRepository, AuditLog
 
 
 }
+
 

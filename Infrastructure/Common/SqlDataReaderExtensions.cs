@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="SqlDataReaderExtensions.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Extension methods providing enhanced functionality for sqldatareader operations and data manipulation.
+//                  Infrastructure utility providing shared functionality
+//                  for data access and external system integration.
+// </copyright>
+//-----------------------------------------------------------------------
+
 namespace SMS_Infrastructure.Common;
 
 /// <summary>

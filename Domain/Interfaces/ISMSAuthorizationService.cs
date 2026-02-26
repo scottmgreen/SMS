@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="ISMSAuthorizationService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Domain service contract defining complex business operations for SMS smsauthorization coordination.
+//                  Domain service contract defining business operations
+//                  and ensuring clean architecture boundaries.
+// </copyright>
+//-----------------------------------------------------------------------
+
 namespace SMS_Domain.Interfaces;
 
 /// <summary>

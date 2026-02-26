@@ -1,0 +1,170 @@
+﻿To Do Port 443 from Her Device for Test and Prod to Destination and Send to Russle 
+Need Her IP Pinned for this 
+
+PORT 443 from both 
+
+Ryan , Conrad and Brendan ..  SMS .. in a AWS world .. 
+
+
+
+
+=>>>> FOLLOWING STEPS  <=======
+ 1. Install .NET 8 Hosting Bundle / Core DonNet 8/ Make sure ASPModeuleV2 is found in IIS
+
+ 2. Enable Windows Features
+# Run as Administrator
+Enable-WindowsOptionalFeature -Online -FeatureName IIS-WebServerRole
+Enable-WindowsOptionalFeature -Online -FeatureName IIS-WebServer
+Enable-WindowsOptionalFeature -Online -FeatureName IIS-CommonHttpFeatures
+Enable-WindowsOptionalFeature -Online -FeatureName IIS-HttpErrors
+Enable-WindowsOptionalFeature -Online -FeatureName IIS-HttpLogging
+Enable-WindowsOptionalFeature -Online -FeatureName IIS-ASPNET45 ***
+Enable-WindowsOptionalFeature -Online -FeatureName IIS-NetFxExtensibility45 ***
+Enable-WindowsOptionalFeature -Online -FeatureName IIS-ISAPIExtensions ***
+Enable-WindowsOptionalFeature -Online -FeatureName IIS-ISAPIFilter ***
+
+Step 1: Database Setup
+
+Connection sTring :
+
+{
+  "ConnectionStrings": {
+    "DefaultConnectionString": "Data Source=YOUR_SQL_SERVER;Initial Catalog=PDXSMS_V2;Integrated Security=True;Connect Timeout=30;Encrypt=True;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"
+  },
+  
+  "NotificationSettings": {
+    "AllowErrorNotifications": true,
+    "AllowSuccessNotifications": true,
+    "AllowWarningNotifications": true,
+    "AllowInfoNotifications": true
+  },
+
+  "Logging": {
+    "LogLevel": {
+      "Default": "Warning",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}
+
+🏗️ Step 2: Build and Publish Application
+# Navigate to your project directory
+cd "C:\Projects\PDXSMS_V2\Presentation\SMS3"
+
+# Publish the application
+dotnet publish --configuration Release --output "C:\Projects\SMSDeployment\SMS_IIS" --self-contained false --runtime win-x64
+
+=> Scripted Database <=
+=> SMS3Depoy <=
+=> Create Iso of these folders to Mount on PSMSAPP01 and PPORTDB01 for install
+
+
+
+🌐 Step 3: IIS Configuration
+1. Create Website Directory
+# Create application directory
+New-Item -Path "C:\inetpub\wwwroot\SMS3" -ItemType Directory -Force
+
+# Copy published files (Mounted Iso Drive as source)
+Copy-Item -Path "*MountedDrive*C:\SMS3Deploy\*" -Destination "D:\inetpub\wwwroot\SMS3" -Recurse -Force
+
+2. Set Permissions
+# Grant IIS_IUSRS permissions
+icacls "C:\inetpub\wwwroot\SMS3" /grant "IIS_IUSRS:(OI)(CI)F" /T
+icacls "C:\inetpub\wwwroot\SMS3" /grant "IIS AppPool\SMS3AppPool:(OI)(CI)F" /T
+
+3. Create Application Pool
+# Import WebAdministration module
+Import-Module WebAdministration
+
+# Create new application pool
+New-WebAppPool -Name "SMS3AppPool"
+Set-ItemProperty -Path "IIS:\AppPools\SMS3AppPool" -Name "managedRuntimeVersion" -Value ""
+Set-ItemProperty -Path "IIS:\AppPools\SMS3AppPool" -Name "enable32BitAppOnWin64" -Value $false
+Set-ItemProperty -Path "IIS:\AppPools\SMS3AppPool" -Name "processModel.identityType" -Value "ApplicationPoolIdentity"
+
+4. Create IIS Website
+# Remove default website (optional)
+Remove-Website -Name "Default Web Site" -ErrorAction SilentlyContinue
+
+# Create new website
+New-Website -Name "SMS3" -Port 80 -PhysicalPath "D:\inetpub\wwwroot\SMS3" -ApplicationPool "SMS3AppPool"
+
+🔧 Step 4: Configure web.config
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <location path="." inheritInChildApplications="false">
+    <system.webServer>
+      <handlers>
+        <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
+      </handlers>
+      <aspNetCore processPath="dotnet" arguments=".\SMS3.dll" 
+                  stdoutLogEnabled="true" 
+                  stdoutLogFile=".\logs\stdout" 
+                  hostingModel="inprocess">
+        <environmentVariables>
+          <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="Production" />
+        </environmentVariables>
+      </aspNetCore>
+    </system.webServer>
+  </location>
+</configuration>
+
+📁 Step 5: Create Logs Directory
+New-Item -Path "D:\inetpub\wwwroot\SMS3\logs" -ItemType Directory -Force
+icacls "D:\inetpub\wwwroot\SMS3\logs" /grant "IIS_IUSRS:(OI)(CI)F" /T
+
+🔐 Step 6: SSL Certificate (Optional but Recommended)
+# Create self-signed certificate
+$cert = New-SelfSignedCertificate -DnsName "sms3.yourdomain.com" -CertStoreLocation "cert:\LocalMachine\My"
+
+# Bind to HTTPS
+New-WebBinding -Name "SMS3" -Protocol https -Port 443 -SslFlags 0 -Thumbprint $cert.Thumbprint
+
+Production Certificate
+•	Obtain SSL certificate from CA
+•	Install in Local Computer\Personal store
+•	Bind to website using IIS Manager
+
+🗃️ Step 7: SQL Server Configuration
+Edit appsettings.Production.json to point to your production SQL Server:
+{
+  "ConnectionStrings": {
+    "DefaultConnectionString": "Data Source=YOUR_PROD_SQL_SERVER;Initial Catalog=PDXSMS_V2_PROD;User Id=SMS_USER;Password=YOUR_SECURE_PASSWORD;Connect Timeout=30;Encrypt=True;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"
+  }
+}
+
+🚀 Step 8: Start and Test
+2. Test the Application
+•	Main App: http://your-server-ip or https://your-server-ip
+•	Swagger API: http://your-server-ip/swagger (only in Development mode)
+•	API Endpoints: http://your-server-ip/api/confidential-reports/reference-data
+
+🔧 Step 9: Firewall Configuration
+# Allow HTTP traffic
+New-NetFirewallRule -DisplayName "SMS3 HTTP" -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow
+
+# Allow HTTPS traffic  
+New-NetFirewallRule -DisplayName "SMS3 HTTPS" -Direction Inbound -Protocol TCP -LocalPort 443 -Action Allow
+
+📊 Step 10: Monitoring and Troubleshooting
+Check Application Logs
+•	IIS Logs: D:\inetpub\logs\LogFiles\W3SVC1\
+•	Application Logs: D:\inetpub\wwwroot\SMS3\logs\
+•	Event Viewer: Windows Logs > Application
+
+
+
+ [x] .NET 8 Hosting Bundle installed
+•	[ ] Application published successfully
+•	[ ] IIS Application Pool created and configured
+•	[ ] Website created and bound to correct port
+•	[ ] Permissions set correctly on application directory
+•	[ ] web.config file in place
+•	[ ] Database connection string updated for production
+•	[ ] SSL certificate installed (optional)
+•	[ ] Firewall rules configured
+•	[ ] Application loads without errors
+•	[ ] API endpoints responding (test with /api/confidential-reports/reference-data)
+•	[ ] Database connectivity verified
+

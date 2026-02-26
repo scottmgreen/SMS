@@ -1,4 +1,14 @@
-﻿using Microsoft.Extensions.Logging;
+﻿//-----------------------------------------------------------------------
+// <copyright file="SMSApplicationGroupCommandHandler.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Application layer component providing functionality for the SMS safety management system.
+//                  Implements command handlers for processing write operations.
+//                  Handles business logic execution and domain entity coordination.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using Microsoft.Extensions.Logging;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 

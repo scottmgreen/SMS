@@ -1,4 +1,14 @@
-﻿using Microsoft.AspNetCore.Components.Server.Circuits;
+﻿//-----------------------------------------------------------------------
+// <copyright file="BaseCircuitHandler.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Application layer component providing functionality for the SMS safety management system.
+//                  Provides shared utilities, constants, and base classes
+//                  for Application layer components.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 

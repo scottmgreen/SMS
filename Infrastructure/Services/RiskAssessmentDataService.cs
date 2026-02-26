@@ -1,4 +1,14 @@
-﻿// =============================================
+﻿//-----------------------------------------------------------------------
+// <copyright file="RiskAssessmentDataService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Data service coordinating riskassessment repository operations supporting risk assessment and analysis.
+//                  Infrastructure service providing external system integration
+//                  and technical functionality support.
+// </copyright>
+//-----------------------------------------------------------------------
+
+// =============================================
 // SMS DATA SERVICES - RISK ASSESSMENT ENHANCED FOR STEPS 1-5
 // Enhanced RiskAssessmentDataService with Steps 1-5 support
 // =============================================
@@ -519,3 +529,4 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
 
     #endregion
 }
+

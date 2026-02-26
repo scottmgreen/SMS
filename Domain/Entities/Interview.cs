@@ -1,4 +1,14 @@
-﻿namespace SMS_Domain.Entities;
+﻿//-----------------------------------------------------------------------
+// <copyright file="Interview.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: SMS domain entity representing interview with business rules and lifecycle management.
+//                  Domain entity implementing business rules and invariants
+//                  following Domain-Driven Design principles.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Domain.Entities;
 
 /// <summary>
 /// Interview Domain Entity - Enhanced for comprehensive investigation interviews
@@ -383,3 +393,4 @@ public sealed class Interview : BaseAuditableEntity
 
     #endregion
 }
+

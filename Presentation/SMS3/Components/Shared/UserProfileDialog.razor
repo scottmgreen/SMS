@@ -62,7 +62,6 @@
                                             <h6>@User.UserRole.Name</h6>
                                             <small class="text-muted">Code: @User.UserRole.Code</small>
                                         </div>
-                                        <RadzenBadge Text="Active" BadgeStyle="BadgeStyle.Success" />
                                     </div>
                                 </RadzenCard>
                             </div>
@@ -79,51 +78,136 @@
                     <div class="permissions-section">
                         <h5>
                             <RadzenIcon Icon="shield" />
-                            Permissions Summary
+                            Module Permissions
                         </h5>
 
-                        @if (User?.Permissions?.Any() == true)
+                        @if (User?.Permissions?.Any() == true && SMSModules.Any())
                         {
-                            <div class="permissions-grid">
-                                @foreach (var moduleGroup in User.Permissions.GroupBy(p => p.SMSModule ?? "Unknown Module"))
-                                {
-                                    <RadzenCard Class="permission-module-card">
-                                        <h6>@moduleGroup.Key</h6>
-                                        <div class="permission-badges">
-                                            @foreach (var permission in moduleGroup)
-                                            {
-                                                <div class="permission-row">
-                                                    @if (permission.Create)
-                                                    {
-                                                        <RadzenBadge Text="Create" BadgeStyle="BadgeStyle.Success" Class="me-1 mb-1" />
-                                                    }
-                                                    @if (permission.Read)
-                                                    {
-                                                        <RadzenBadge Text="Read" BadgeStyle="BadgeStyle.Base" Class="me-1 mb-1" />
-                                                    }
-                                                    @if (permission.Update)
-                                                    {
-                                                        <RadzenBadge Text="Update" BadgeStyle="BadgeStyle.Warning" Class="me-1 mb-1" />
-                                                    }
-                                                    @if (permission.Delete)
-                                                    {
-                                                        <RadzenBadge Text="Delete" BadgeStyle="BadgeStyle.Danger" Class="me-1 mb-1" />
-                                                    }
-                                                </div>
-                                            }
-                                        </div>
-                                    </RadzenCard>
-                                }
-                            </div>
+                            <RadzenDataGrid Data="@SMSModules" TItem="string" AllowPaging="false" class="permission-view-grid" Style="height: 700px; overflow-y:auto">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="string" Title="Module" Width="30%">
+                                        <Template Context="module">
+                                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@module</RadzenText>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="string" Title="Create" Width="17.5%">
+                                        <Template Context="module">
+                                            <div class="text-center">
+                                                @if (IsPermissionGranted(module, "Create"))
+                                                {
+                                                    <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" />
+                                                    <div><small class="text-success">Granted</small></div>
+                                                }
+                                                else
+                                                {
+                                                    <RadzenIcon Icon="cancel" Style="color: var(--rz-text-disabled-color);" />
+                                                    <div><small class="text-muted">Denied</small></div>
+                                                }
+                                            </div>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="string" Title="Read" Width="17.5%">
+                                        <Template Context="module">
+                                            <div class="text-center">
+                                                @if (IsPermissionGranted(module, "Read"))
+                                                {
+                                                    <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" />
+                                                    <div><small class="text-success">Granted</small></div>
+                                                }
+                                                else
+                                                {
+                                                    <RadzenIcon Icon="cancel" Style="color: var(--rz-text-disabled-color);" />
+                                                    <div><small class="text-muted">Denied</small></div>
+                                                }
+                                            </div>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="string" Title="Update" Width="17.5%">
+                                        <Template Context="module">
+                                            <div class="text-center">
+                                                @if (IsPermissionGranted(module, "Update"))
+                                                {
+                                                    <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" />
+                                                    <div><small class="text-success">Granted</small></div>
+                                                }
+                                                else
+                                                {
+                                                    <RadzenIcon Icon="cancel" Style="color: var(--rz-text-disabled-color);" />
+                                                    <div><small class="text-muted">Denied</small></div>
+                                                }
+                                            </div>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="string" Title="Delete" Width="17.5%">
+                                        <Template Context="module">
+                                            <div class="text-center">
+                                                @if (IsPermissionGranted(module, "Delete"))
+                                                {
+                                                    <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" />
+                                                    <div><small class="text-success">Granted</small></div>
+                                                }
+                                                else
+                                                {
+                                                    <RadzenIcon Icon="cancel" Style="color: var(--rz-text-disabled-color);" />
+                                                    <div><small class="text-muted">Denied</small></div>
+                                                }
+                                            </div>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
                         }
-                        else
+                        else if (User?.Permissions?.Any() != true)
                         {
                             <RadzenAlert AlertStyle="AlertStyle.Base" Size="AlertSize.Small">
                                 <RadzenIcon Icon="info" />
                                 No specific permissions assigned. User may have default access based on user type.
                             </RadzenAlert>
                         }
+                        else
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Warning" Size="AlertSize.Small">
+                                <RadzenIcon Icon="warning" />
+                                No modules found. Please check the system configuration.
+                            </RadzenAlert>
+                        }
                     </div>
+
+                    <!-- Permission Summary -->
+                    @if (User?.Permissions?.Any() == true)
+                    {
+                        <div class="permission-summary-section">
+                            <h6>Permission Summary</h6>
+                            <RadzenCard Class="permission-summary">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="summary-item">
+                                            <RadzenIcon Icon="add_circle" Style="color: var(--rz-success);" />
+                                            <span>Create: @GetPermissionCount("Create")</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="summary-item">
+                                            <RadzenIcon Icon="visibility" Style="color: var(--rz-info);" />
+                                            <span>Read: @GetPermissionCount("Read")</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="summary-item">
+                                            <RadzenIcon Icon="edit" Style="color: var(--rz-warning);" />
+                                            <span>Update: @GetPermissionCount("Update")</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="summary-item">
+                                            <RadzenIcon Icon="delete" Style="color: var(--rz-danger);" />
+                                            <span>Delete: @GetPermissionCount("Delete")</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </RadzenCard>
+                        </div>
+                    }
 
                     <!-- Permission Check Helper -->
                     <div class="permission-check-section">
@@ -196,9 +280,55 @@
     private string _moduleToCheck = "";
     private string _permissionCheckResult = "";
 
+    // Get unique modules from user permissions
+    private string[] SMSModules
+    {
+        get
+        {
+            if (User?.Permissions?.Any() != true)
+                return Array.Empty<string>();
+
+            return User.Permissions
+                .Select(p => p.SMSModule)
+                .Where(module => !string.IsNullOrWhiteSpace(module))
+                .Distinct()
+                .OrderBy(module => module)
+                .ToArray();
+        }
+    }
+
     private async Task CloseModal()
     {
         await OnClose.InvokeAsync();
+    }
+
+    private bool IsPermissionGranted(string module, string action)
+    {
+        if (User?.Permissions == null) return false;
+
+        var permission = User.Permissions.FirstOrDefault(p => p.SMSModule == module);
+        return action switch
+        {
+            "Create" => permission?.Create == true,
+            "Read" => permission?.Read == true,
+            "Update" => permission?.Update == true,
+            "Delete" => permission?.Delete == true,
+            _ => false
+        };
+    }
+
+    private int GetPermissionCount(string action)
+    {
+        if (User?.Permissions == null) return 0;
+
+        return action switch
+        {
+            "Create" => User.Permissions.Count(p => p.Create),
+            "Read" => User.Permissions.Count(p => p.Read),
+            "Update" => User.Permissions.Count(p => p.Update),
+            "Delete" => User.Permissions.Count(p => p.Delete),
+            _ => 0
+        };
     }
 
     private void CheckModulePermissions()
@@ -236,7 +366,7 @@
 
 <style>
     .user-profile-modal {
-        max-width: 800px;
+        max-width: 1000px; /* Increased width for grid */
         margin: 0 auto;
     }
 
@@ -282,6 +412,7 @@
 
     .role-section,
     .permissions-section,
+    .permission-summary-section,
     .permission-check-section {
         margin-bottom: 2rem;
     }
@@ -299,25 +430,22 @@
         margin-bottom: 1rem;
     }
 
-    .permissions-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 1rem;
+    .permission-view-grid {
+        border: 1px solid var(--rz-grid-border-color);
+        border-radius: 4px;
     }
 
-    .permission-module-card {
+    .permission-summary {
+        background: #f8f9fa;
         border: 1px solid #e9ecef;
     }
 
-        .permission-module-card h6 {
-            margin: 0 0 1rem 0;
-            color: #212e61;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 0.5rem;
-        }
-
-    .permission-row {
-        margin-bottom: 0.5rem;
+    .summary-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        font-weight: 500;
     }
 
     .permission-checker {
@@ -345,8 +473,4 @@
         padding-top: 1rem;
         border-top: 1px solid #e9ecef;
     }
-
-    
-
-    
 </style>

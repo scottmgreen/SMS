@@ -1,4 +1,14 @@
-﻿namespace SMS_Domain.Errors;
+﻿//-----------------------------------------------------------------------
+// <copyright file="DomainErrors.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Comprehensive error catalog defining structured error handling for SMS domain operations with business-meaningful error codes and messages.
+//                  Domain error definitions providing structured error handling
+//                  with business-meaningful error codes and messages.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Domain.Errors;
 
 /// <summary>
 /// Contains the domain errors for Safety Management System (SMS).
@@ -1066,3 +1076,4 @@ public static class DomainErrors
         public static Error InvalidCurrentStatus => new Error("HazardReportTracking.InvalidCurrentStatus", "The current status is invalid.");
     }
 }
+

@@ -1,4 +1,14 @@
-﻿//using System;
+﻿//-----------------------------------------------------------------------
+// <copyright file="UserDetails.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Infrastructure configuration component providing system setup, service registration, and dependency management.
+//                  Infrastructure configuration providing dependency injection,
+//                  service registration, and system setup.
+// </copyright>
+//-----------------------------------------------------------------------
+
+//using System;
 //using System.Net.Sockets;
 //using System.Security.Principal;
 
@@ -181,3 +191,4 @@ namespace SMS_Infrastructure.Configuration
     }
 
 }
+

@@ -1,4 +1,14 @@
-﻿
+﻿//-----------------------------------------------------------------------
+// <copyright file="BaseResult.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Result pattern implementation for SMS domain operations providing explicit success/failure handling.
+//                  Shared domain infrastructure providing base classes
+//                  and common functionality for Domain-Driven Design.
+// </copyright>
+//-----------------------------------------------------------------------
+
+
 
 namespace SMS_Domain.Common;
 
@@ -141,6 +151,7 @@ public class Result<TValue> : Result
                 ? _value
                 : throw new InvalidOperationException("The value of a failure result can not be accessed.");
 }
+
 
 
 

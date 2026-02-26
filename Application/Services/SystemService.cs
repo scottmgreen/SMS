@@ -1,4 +1,14 @@
-﻿
+﻿//-----------------------------------------------------------------------
+// <copyright file="SystemService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Application service providing business logic operations for SMS domain entities.
+//                  Provides business logic operations and coordinates domain entities
+//                  through the CQRS pattern via Mediator services.
+// </copyright>
+//-----------------------------------------------------------------------
+
+
 using Microsoft.FeatureManagement;
 
 namespace SMS_Application.Services;
@@ -70,3 +80,4 @@ public sealed class SystemService : IFeatureManager
 
 
 }
+

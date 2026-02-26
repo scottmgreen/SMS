@@ -1,4 +1,14 @@
-﻿using Microsoft.Extensions.Logging;
+﻿//-----------------------------------------------------------------------
+// <copyright file="RiskAnalysisService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: SMS Risk assessment service managing risk analysis and mitigation strategies.
+//                  Provides business logic operations and coordinates domain entities
+//                  through the CQRS pattern via Mediator services.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using Microsoft.Extensions.Logging;
 
 namespace SMS_Application.Services;
 

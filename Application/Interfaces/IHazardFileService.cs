@@ -1,4 +1,14 @@
-﻿namespace SMS_Application.Interfaces;
+﻿//-----------------------------------------------------------------------
+// <copyright file="IHazardFileService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: SMS Hazard management service handling hazard identification and lifecycle.
+//                  Provides business logic operations and coordinates domain entities
+//                  through the CQRS pattern via Mediator services.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Application.Interfaces;
 public interface IHazardFileService
 {
     Task<Result<HazardFile>> CreateHazardFileAsync(HazardFile hazardFile, CancellationToken ct = default);

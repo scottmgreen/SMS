@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="InterviewType.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Enumeration defining classification types for SMS interview entities.
+//                  Domain enumeration defining valid states and classifications
+//                  for business entities and processes.
+// </copyright>
+//-----------------------------------------------------------------------
+
 namespace SMS_Domain.Enums;
 
 /// <summary>

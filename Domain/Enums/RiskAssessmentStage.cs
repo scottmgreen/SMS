@@ -1,4 +1,14 @@
-﻿namespace SMS_Domain.Enums;
+﻿//-----------------------------------------------------------------------
+// <copyright file="RiskAssessmentStage.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Enumeration defining valid values and classifications for SMS riskassessmentstage domain concepts.
+//                  Domain enumeration defining valid states and classifications
+//                  for business entities and processes.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Domain.Enums;
 
 /// <summary>
 /// Risk Assessment Status Smart Enumeration -

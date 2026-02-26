@@ -1,7 +1,33 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="SPIConstants.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Shared utility providing common functionality for Application layer components.
+//                  Provides shared utilities, constants, and base classes
+//                  for Application layer components.
+// </copyright>
+//-----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+// <copyright file="SPIConstants.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Defines constants and shared data for Safety Performance Indicators (SPI).
+//                  Provides standardized data sources, validation messages, and helper methods
+//                  for SPI management across the application.
+// </copyright>
+//----------------------------------------------------------------------
+
 namespace SMS_Application.Common;
 
 /// <summary>
-/// Constants and shared data for Safety Performance Indicators
+/// Safety Performance Indicator Constants and Utilities
+/// Provides constants, validation messages, and shared data for Safety Performance Indicators.
+/// Ensures consistency in data source definitions and validation across all SPI operations.
+/// 
+/// Classes:
+/// - DataSources: Standard data source options for SPIs with helper methods
+/// - ValidationMessages: Common validation error messages for SPI operations
 /// </summary>
 public static class SPIConstants
 {

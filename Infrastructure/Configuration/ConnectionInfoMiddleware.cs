@@ -1,4 +1,14 @@
-﻿using System.Collections.Concurrent;
+﻿//-----------------------------------------------------------------------
+// <copyright file="ConnectionInfoMiddleware.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: ASP.NET Core middleware providing database connection tracking and performance monitoring.
+//                  ASP.NET Core middleware component providing cross-cutting
+//                  concerns in the HTTP request pipeline.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 

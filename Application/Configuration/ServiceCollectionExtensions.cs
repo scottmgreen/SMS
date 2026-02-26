@@ -1,4 +1,14 @@
-﻿using SMS_Application.Messaging.Pipelines;
+﻿//-----------------------------------------------------------------------
+// <copyright file="ServiceCollectionExtensions.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Configuration component for Application layer dependency injection and setup.
+//                  Provides dependency injection configuration and service registration
+//                  for the Application layer in the Clean Architecture.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using SMS_Application.Messaging.Pipelines;
 
 namespace SMS_Application.Configuration;
 
@@ -96,3 +106,4 @@ internal static class ServiceCollectionExtensions
 //// Register Messaging Services
 //services.AddScoped<MediatorService>();
 //services.AddScoped<MessengerService>();
+

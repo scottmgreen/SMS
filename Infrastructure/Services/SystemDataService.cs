@@ -1,4 +1,14 @@
-﻿namespace SMS_Infrastructure.Services
+﻿//-----------------------------------------------------------------------
+// <copyright file="SystemDataService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Data service coordinating system repository operations with transaction management and business validation.
+//                  Data service providing business-focused data operations
+//                  with repository coordination and transaction management.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Infrastructure.Services
 {
     public class SystemDataService : BaseDataService<SystemDataService>
     {
@@ -32,3 +42,4 @@
         }
     }
 }
+

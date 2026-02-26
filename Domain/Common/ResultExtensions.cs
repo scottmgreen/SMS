@@ -1,4 +1,14 @@
-﻿namespace SMS_Domain.Common;
+﻿//-----------------------------------------------------------------------
+// <copyright file="ResultExtensions.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Result pattern implementation for SMS domain operations providing explicit success/failure handling.
+//                  Shared domain infrastructure providing base classes
+//                  and common functionality for Domain-Driven Design.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Domain.Common;
 
 /// <summary>
 /// Contains extension methods for the result class.
@@ -101,4 +111,5 @@ public static class ResultExtensions
         return result.IsSuccess ? onSuccess(result.Value) : onFailure(result.Error);
     }
 }
+
 

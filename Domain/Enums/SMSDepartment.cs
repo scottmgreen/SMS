@@ -1,4 +1,14 @@
-﻿namespace SMS_Domain.Enums;
+﻿//-----------------------------------------------------------------------
+// <copyright file="SMSDepartment.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Enumeration defining valid values and classifications for SMS smsdepartment domain concepts.
+//                  Domain enumeration defining valid states and classifications
+//                  for business entities and processes.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Domain.Enums;
 
 public abstract class SMSDepartment : BaseEnum<SMSDepartment>
 {

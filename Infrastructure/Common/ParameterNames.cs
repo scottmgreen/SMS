@@ -1,4 +1,14 @@
-﻿namespace SMS_Infrastructure.Common;
+﻿//-----------------------------------------------------------------------
+// <copyright file="ParameterNames.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Parameter name constants providing standardized stored procedure parameter naming and validation.
+//                  Infrastructure utility providing shared functionality
+//                  for data access and external system integration.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace SMS_Infrastructure.Common;
 
 public static class ParameterNames
 {

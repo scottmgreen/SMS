@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="RiskAssessmentCategory.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Enumeration defining category classifications for SMS riskassessment management.
+//                  Domain enumeration defining valid states and classifications
+//                  for business entities and processes.
+// </copyright>
+//-----------------------------------------------------------------------
+
 namespace SMS_Domain.Enums;
 
 /// <summary>

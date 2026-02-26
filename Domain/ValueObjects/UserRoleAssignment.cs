@@ -1,3 +1,13 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="UserRoleAssignment.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Value object representing userroleassignment with workflow and validation rules.
+//                  Immutable value object encapsulating domain concepts with
+//                  business logic and validation rules.
+// </copyright>
+//-----------------------------------------------------------------------
+
 namespace SMS_Domain.ValueObjects;
 
 /// <summary>

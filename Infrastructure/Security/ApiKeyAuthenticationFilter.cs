@@ -1,4 +1,14 @@
-﻿// Create a new file: Infrastructure/Security/ApiKeyAuthenticationFilter.cs
+﻿//-----------------------------------------------------------------------
+// <copyright file="ApiKeyAuthenticationFilter.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: API key authentication filter providing secure service-to-service communication with validation and audit logging.
+//                  Security component providing authentication, authorization,
+//                  and access control functionality.
+// </copyright>
+//-----------------------------------------------------------------------
+
+// Create a new file: Infrastructure/Security/ApiKeyAuthenticationFilter.cs
 using Microsoft.AspNetCore.Http;
 
 namespace SMS_Infrastructure.Security;
