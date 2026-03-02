@@ -1,0 +1,270 @@
+@page "/Help"
+@using SMS3.Components.Shared.UIHelpers
+
+<PageTitle>Help - SMS3</PageTitle>
+
+<!-- SMS Help Page -->
+<div class="help-page-container">
+    <RadzenCard Class="help-header-card">
+        <RadzenStack Gap="1rem" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center">
+            <RadzenIcon Icon="help_center" Style="font-size: 4rem; color: var(--sms-blue-primary);" />
+            <div class="text-center">
+                <RadzenText TextStyle="TextStyle.H3" Style="color: var(--sms-blue-dark-bold); margin-bottom: 0.5rem;">
+                    SMS3 Help & Documentation
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--sms-blue-primary);">
+                    Get help and find resources for using the Safety Management System
+                </RadzenText>
+            </div>
+        </RadzenStack>
+    </RadzenCard>
+
+    <RadzenRow Gap="1.5rem">
+        <RadzenColumn Size="12" SizeLG="4">
+            <RadzenCard Style="height: 100%;">
+                <RadzenStack Gap="1rem">
+                    <div class="d-flex align-items-center gap-2">
+                        <RadzenIcon Icon="school" Style="color: var(--sms-green-primary); font-size: 1.5rem;" />
+                        <RadzenText TextStyle="TextStyle.H5" Style="color: var(--sms-blue-dark-bold);">
+                            Getting Started
+                        </RadzenText>
+                    </div>
+
+                    <div class="help-section">
+                        <div class="help-item">
+                            <RadzenIcon Icon="play_circle" Style="color: var(--sms-green-primary);" />
+                            <div>
+                                <strong>Quick Start Guide</strong>
+                                <p>Learn the basics of SMS3 navigation and core features.</p>
+                            </div>
+                        </div>
+                        <div class="help-item">
+                            <RadzenIcon Icon="report_problem" Style="color: var(--sms-red-primary);" />
+                            <div>
+                                <strong>Create Your First Report</strong>
+                                <p>Step-by-step guide to submitting a hazard report.</p>
+                            </div>
+                        </div>
+                        <div class="help-item">
+                            <RadzenIcon Icon="account_circle" Style="color: var(--sms-blue-primary);" />
+                            <div>
+                                <strong>User Profile Setup</strong>
+                                <p>Configure your profile and notification preferences.</p>
+                            </div>
+                        </div>
+                    </div>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeLG="4">
+            <RadzenCard Style="height: 100%;">
+                <RadzenStack Gap="1rem">
+                    <div class="d-flex align-items-center gap-2">
+                        <RadzenIcon Icon="menu_book" Style="color: var(--sms-blue-primary); font-size: 1.5rem;" />
+                        <RadzenText TextStyle="TextStyle.H5" Style="color: var(--sms-blue-dark-bold);">
+                            Documentation
+                        </RadzenText>
+                    </div>
+
+                    <div class="help-section">
+                        <div class="help-item">
+                            <RadzenIcon Icon="description" Style="color: var(--sms-blue-primary);" />
+                            <div>
+                                <strong>User Manual</strong>
+                                <p>Complete guide to all SMS3 features and functions.</p>
+                            </div>
+                        </div>
+                        <div class="help-item">
+                            <RadzenIcon Icon="api" Style="color: var(--sms-green-primary);" />
+                            <div>
+                                <strong>API Documentation</strong>
+                                <p>Technical documentation for system integrations.</p>
+                            </div>
+                        </div>
+                        <div class="help-item">
+                            <RadzenIcon Icon="update" Style="color: var(--sms-red-accent);" />
+                            <div>
+                                <strong>Release Notes</strong>
+                                <p>Latest updates, new features, and improvements.</p>
+                            </div>
+                        </div>
+                    </div>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeLG="4">
+            <RadzenCard Style="height: 100%;">
+                <RadzenStack Gap="1rem">
+                    <div class="d-flex align-items-center gap-2">
+                        <RadzenIcon Icon="support_agent" Style="color: var(--sms-red-primary); font-size: 1.5rem;" />
+                        <RadzenText TextStyle="TextStyle.H5" Style="color: var(--sms-blue-dark-bold);">
+                            Support
+                        </RadzenText>
+                    </div>
+
+                    <div class="help-section">
+                        <div class="help-item">
+                            <RadzenIcon Icon="contact_support" Style="color: var(--sms-red-primary);" />
+                            <div>
+                                <strong>Contact Support</strong>
+                                <p>Get help from our technical support team.</p>
+                            </div>
+                        </div>
+                        <div class="help-item">
+                            <RadzenIcon Icon="forum" Style="color: var(--sms-blue-primary);" />
+                            <div>
+                                <strong>Community Forum</strong>
+                                <p>Connect with other users and share best practices.</p>
+                            </div>
+                        </div>
+                        <div class="help-item">
+                            <RadzenIcon Icon="bug_report" Style="color: var(--sms-red-accent);" />
+                            <div>
+                                <strong>Report Issues</strong>
+                                <p>Submit bug reports and feature requests.</p>
+                            </div>
+                        </div>
+                    </div>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Quick Actions -->
+    <RadzenCard>
+        <RadzenStack Gap="1rem">
+            <RadzenText TextStyle="TextStyle.H5" Style="color: var(--sms-blue-dark-bold);">
+                Quick Actions
+            </RadzenText>
+            
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="6" SizeMD="3">
+                    <RadzenButton Text="Create Report" Icon="add_circle" ButtonStyle="ButtonStyle.Primary" 
+                                Style="width: 100%;" Click="@(() => Navigation.NavigateTo("/SMSRiskManagement/HazardReporting"))" />
+                </RadzenColumn>
+                <RadzenColumn Size="6" SizeMD="3">
+                    <RadzenButton Text="View Dashboard" Icon="dashboard" ButtonStyle="ButtonStyle.Info" 
+                                Style="width: 100%;" Click="@(() => Navigation.NavigateTo("/dashboard"))" />
+                </RadzenColumn>
+                <RadzenColumn Size="6" SizeMD="3">
+                    <RadzenButton Text="Search Reports" Icon="search" ButtonStyle="ButtonStyle.Success" 
+                                Style="width: 100%;" Click="@(() => Navigation.NavigateTo("/Listings/Reports"))" />
+                </RadzenColumn>
+                <RadzenColumn Size="6" SizeMD="3">
+                    <RadzenButton Text="Contact Support" Icon="support" ButtonStyle="ButtonStyle.Warning" 
+                                Style="width: 100%;" Click="ContactSupport" />
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenCard>
+
+    <!-- FAQ Section -->
+    <RadzenCard>
+        <RadzenStack Gap="1rem">
+            <RadzenText TextStyle="TextStyle.H5" Style="color: var(--sms-blue-dark-bold);">
+                Frequently Asked Questions
+            </RadzenText>
+            
+            <RadzenAccordion>
+                <Items>
+                    <RadzenAccordionItem Text="How do I submit a hazard report?" Icon="help">
+                        <p>To submit a hazard report, navigate to "SMS Risk Management" > "Create Hazard Report" from the main menu. 
+                           Fill out all required fields including hazard description, location, and severity assessment.</p>
+                    </RadzenAccordionItem>
+                    
+                    <RadzenAccordionItem Text="How can I track the status of my reports?" Icon="help">
+                        <p>You can view all your submitted reports by going to "Listings" > "Reports". Use the filter options to 
+                           search for specific reports or filter by status, date, or other criteria.</p>
+                    </RadzenAccordionItem>
+                    
+                    <RadzenAccordionItem Text="What should I do if I encounter a system error?" Icon="help">
+                        <p>If you encounter an error, first try refreshing the page. If the problem persists, contact technical 
+                           support at sms-support@pdx.com or call (503) 555-SMS3 (7673) during business hours.</p>
+                    </RadzenAccordionItem>
+                    
+                    <RadzenAccordionItem Text="How do I update my user profile information?" Icon="help">
+                        <p>Click on your name in the top-right corner and select "My Profile & Permissions" to update your 
+                           contact information, notification preferences, and view your system permissions.</p>
+                    </RadzenAccordionItem>
+                </Items>
+            </RadzenAccordion>
+        </RadzenStack>
+    </RadzenCard>
+</div>
+
+@code {
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    
+    private void ContactSupport()
+    {
+        NotificationHelper.ShowInfo(NotificationService, 
+            "Support Contact: sms-support@pdx.com or call (503) 555-SMS3 (7673)", 8000);
+    }
+}
+
+<style>
+    .help-page-container {
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        gap: 1.5rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .help-header-card {
+        background: linear-gradient(135deg, var(--sms-blue-light) 0%, rgba(255,255,255,0.9) 100%);
+        border: 1px solid var(--sms-blue-primary);
+        margin-bottom: 1rem;
+    }
+
+    .help-section {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .help-item {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+        padding: 1rem;
+        background-color: rgba(var(--rz-base-200), 0.5);
+        border-radius: 0.375rem;
+        transition: background-color 0.2s;
+    }
+
+    .help-item:hover {
+        background-color: rgba(var(--rz-base-300), 0.7);
+    }
+
+    .help-item div {
+        flex: 1;
+    }
+
+    .help-item strong {
+        display: block;
+        margin-bottom: 0.25rem;
+        color: var(--sms-blue-dark-bold);
+    }
+
+    .help-item p {
+        margin: 0;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        color: var(--rz-text-color);
+    }
+
+    @@media (max-width: 768px) {
+        .help-page-container {
+            padding: 1rem;
+        }
+
+        .help-item {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+</style>

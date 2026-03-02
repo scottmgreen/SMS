@@ -1,0 +1,382 @@
+@page "/About"
+@using SMS3.Components.Shared.UIHelpers
+@using SMS3.Components.Shared
+
+<PageTitle>About - SMS3</PageTitle>
+
+<!-- SMS About Page -->
+<div class="about-page-container">
+    <PageHeader Title="@PageTitle"
+                Subtitle="@PageSubtitle"
+                Icon="flight_takeoff" />
+
+    <RadzenRow Gap="1.5rem">
+        <!-- System Information -->
+        <RadzenColumn Size="12" SizeLG="6">
+            <RadzenCard Style="height: 100%;">
+                <RadzenStack Gap="1rem">
+                    <div class="d-flex align-items-center gap-2">
+                        <RadzenIcon Icon="info" Style="color: var(--sms-green-primary); font-size: 1.5rem;" />
+                        <RadzenText TextStyle="TextStyle.H5" Style="color: var(--sms-blue-dark-bold);">
+                            System Information
+                        </RadzenText>
+                    </div>
+
+                    <RadzenFieldset Text="Application Details" Style="margin-top: 1rem;">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <strong>Application Name:</strong>
+                                <span>PDX Safety Management System</span>
+                            </div>
+                            <div class="info-item">
+                                <strong>Version:</strong>
+                                <RadzenBadge Text="@ApplicationVersion" BadgeStyle="BadgeStyle.Success" />
+                            </div>
+                            <div class="info-item">
+                                <strong>Build Date:</strong>
+                                <span>@ApplicationBuildDate</span>
+                            </div>
+                            <div class="info-item">
+                                <strong>Environment:</strong>
+                                <RadzenBadge Text="@Environment" BadgeStyle="@GetEnvironmentBadgeStyle()" />
+                            </div>
+                            <div class="info-item">
+                                <strong>Framework:</strong>
+                                <span>.NET @FrameworkVersion</span>
+                            </div>
+                            <div class="info-item">
+                                <strong>Build Configuration:</strong>
+                                <span>@BuildConfiguration</span>
+                            </div>
+                        </div>
+                    </RadzenFieldset>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <!-- Assembly Versions -->
+        <RadzenColumn Size="12" SizeLG="6">
+            <RadzenCard Style="height: 100%;">
+                <RadzenStack Gap="1rem">
+                    <div class="d-flex align-items-center gap-2">
+                        <RadzenIcon Icon="extension" Style="color: var(--sms-blue-primary); font-size: 1.5rem;" />
+                        <RadzenText TextStyle="TextStyle.H5" Style="color: var(--sms-blue-dark-bold);">
+                            Assembly Versions
+                        </RadzenText>
+                    </div>
+
+                    <RadzenFieldset Text="Core Assemblies" Style="margin-top: 1rem;">
+                        <div class="assembly-grid">
+                            @foreach (var assembly in AssemblyVersions)
+                            {
+                                <div class="assembly-item">
+                                    <div class="assembly-header">
+                                        <RadzenIcon Icon="@GetAssemblyIcon(assembly.Name)" Style="color: var(--sms-green-primary); margin-right: 0.5rem;" />
+                                        <strong>@assembly.Name</strong>
+                                    </div>
+                                    <div class="assembly-details">
+                                        <div><strong>Version:</strong> @assembly.Version</div>
+                                        <div><strong>File Version:</strong> @assembly.FileVersion</div>
+                                        
+                                        @if (assembly.Dependencies.Any())
+                                        {
+                                            <div class="dependencies-section">
+                                                <strong>Dependencies:</strong>
+                                                <div class="dependencies-list">
+                                                    @foreach (var dependency in assembly.Dependencies)
+                                                    {
+                                                        <div class="dependency-item">
+                                                            <RadzenIcon Icon="package" Style="color: var(--sms-blue-primary); font-size: 0.8rem; margin-right: 0.25rem;" />
+                                                            <span class="dependency-name">@dependency.Name</span>
+                                                            <RadzenBadge Text="@dependency.Version" BadgeStyle="BadgeStyle.Info" Size="BadgeSize.Small" />
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                        
+                                        <div><strong>Location:</strong> <small>@assembly.Location</small></div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </RadzenFieldset>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Features and Description -->
+    <RadzenRow Gap="1.5rem">
+        <RadzenColumn Size="12">
+            <RadzenCard>
+                <RadzenStack Gap="1rem">
+                    <div class="d-flex align-items-center gap-2">
+                        <RadzenIcon Icon="featured_play_list" Style="color: var(--sms-red-accent); font-size: 1.5rem;" />
+                        <RadzenText TextStyle="TextStyle.H5" Style="color: var(--sms-blue-dark-bold);">
+                            Key Features
+                        </RadzenText>
+                    </div>
+
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                            <div class="feature-card">
+                                <RadzenIcon Icon="report_problem" Style="font-size: 2rem; color: var(--sms-red-primary);" />
+                                <h6>Hazard Reporting</h6>
+                                <p>Comprehensive hazard identification and reporting system with automated workflows.</p>
+                            </div>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                            <div class="feature-card">
+                                <RadzenIcon Icon="assessment" Style="font-size: 2rem; color: var(--sms-blue-primary);" />
+                                <h6>Risk Assessment</h6>
+                                <p>Advanced risk analysis tools with matrix-based scoring and mitigation tracking.</p>
+                            </div>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                            <div class="feature-card">
+                                <RadzenIcon Icon="search" Style="font-size: 2rem; color: var(--sms-green-primary);" />
+                                <h6>Investigation Management</h6>
+                                <p>Structured investigation processes with interview scheduling and evidence management.</p>
+                            </div>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                            <div class="feature-card">
+                                <RadzenIcon Icon="dashboard" Style="font-size: 2rem; color: var(--sms-red-accent);" />
+                                <h6>Safety Performance</h6>
+                                <p>Real-time dashboards and key performance indicators for safety management.</p>
+                            </div>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Support and Contact -->
+    <RadzenRow Gap="1.5rem">
+        <RadzenColumn Size="12" SizeLG="6">
+            <RadzenCard Style="height: 100%;">
+                <RadzenStack Gap="1rem">
+                    <div class="d-flex align-items-center gap-2">
+                        <RadzenIcon Icon="support" Style="color: var(--sms-blue-primary); font-size: 1.5rem;" />
+                        <RadzenText TextStyle="TextStyle.H5" Style="color: var(--sms-blue-dark-bold);">
+                            Support Information
+                        </RadzenText>
+                    </div>
+
+                    <div class="support-info">
+                        <div class="support-item">
+                            <RadzenIcon Icon="email" Style="color: var(--sms-green-primary); margin-right: 0.5rem;" />
+                            <strong>Technical Support:</strong> sms-support@pdx.com
+                        </div>
+                        <div class="support-item">
+                            <RadzenIcon Icon="phone" Style="color: var(--sms-green-primary); margin-right: 0.5rem;" />
+                            <strong>Help Desk:</strong> (503) 555-SMS3 (7673)
+                        </div>
+                        <div class="support-item">
+                            <RadzenIcon Icon="schedule" Style="color: var(--sms-green-primary); margin-right: 0.5rem;" />
+                            <strong>Business Hours:</strong> Monday - Friday, 7:00 AM - 6:00 PM PST
+                        </div>
+                    </div>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeLG="6">
+            <RadzenCard Style="height: 100%;">
+                <RadzenStack Gap="1rem">
+                    <div class="d-flex align-items-center gap-2">
+                        <RadzenIcon Icon="security" Style="color: var(--sms-red-primary); font-size: 1.5rem;" />
+                        <RadzenText TextStyle="TextStyle.H5" Style="color: var(--sms-blue-dark-bold);">
+                            System Status
+                        </RadzenText>
+                    </div>
+
+                    <div class="status-info">
+                        <div class="status-item">
+                            <RadzenBadge Text="System Operational" BadgeStyle="BadgeStyle.Success" />
+                            <span>All services running normally</span>
+                        </div>
+                        <div class="status-item">
+                            <RadzenIcon Icon="update" Style="color: var(--sms-blue-primary); margin-right: 0.5rem;" />
+                            <strong>Last Updated:</strong> @LastUpdateTime
+                        </div>
+                        <div class="status-item">
+                            <RadzenIcon Icon="schedule" Style="color: var(--sms-blue-primary); margin-right: 0.5rem;" />
+                            <strong>Uptime:</strong> @SystemUptime
+                        </div>
+                    </div>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Style="margin-top: 1rem;">
+                        <RadzenButton Text="System Health" Icon="health_and_safety" ButtonStyle="ButtonStyle.Info" 
+                                    Size="ButtonSize.Small" Click="CheckSystemHealth" />
+                        <RadzenButton Text="Copy Version Info" Icon="content_copy" ButtonStyle="ButtonStyle.Secondary" 
+                                    Size="ButtonSize.Small" Click="CopyVersionInfo" />
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Footer -->
+    <RadzenCard Class="about-footer">
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+            <div>
+                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--sms-blue-primary);">
+                    © 2024 Portland International Airport - Safety Management System
+                </RadzenText>
+            </div>
+            <div>
+                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--sms-blue-primary);">
+                    Built with .NET 8 & Radzen Blazor
+                </RadzenText>
+            </div>
+        </RadzenStack>
+    </RadzenCard>
+</div>
+
+<style>
+    .about-page-container {
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        gap: 1.5rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .info-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background-color: var(--sms-blue-light);
+        border-radius: 0.375rem;
+        border-left: 4px solid var(--sms-blue-primary);
+    }
+
+    .assembly-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .assembly-item {
+        padding: 1rem;
+        background-color: var(--sms-green-light);
+        border-radius: 0.375rem;
+        border-left: 4px solid var(--sms-green-primary);
+    }
+
+    .assembly-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .assembly-details {
+        margin-left: 2rem;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+
+    .assembly-details div {
+        margin-bottom: 0.25rem;
+    }
+
+    .dependencies-section {
+        margin: 0.75rem 0;
+        padding: 0.5rem;
+        background-color: rgba(var(--sms-blue-primary-rgb), 0.1);
+        border-radius: 0.25rem;
+        border-left: 3px solid var(--sms-blue-primary);
+    }
+
+    .dependencies-list {
+        margin-top: 0.5rem;
+        display: grid;
+        gap: 0.25rem;
+    }
+
+    .dependency-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0;
+        font-size: 0.85rem;
+    }
+
+    .dependency-name {
+        flex: 1;
+        font-family: 'Courier New', monospace;
+        color: var(--sms-blue-dark-bold);
+    }
+
+    .feature-card {
+        text-align: center;
+        padding: 1.5rem;
+        background-color: var(--sms-card-bg);
+        border: 1px solid var(--sms-card-border);
+        border-radius: 0.5rem;
+        height: 100%;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .feature-card h6 {
+        margin: 1rem 0 0.5rem 0;
+        color: var(--sms-blue-dark-bold);
+    }
+
+    .feature-card p {
+        margin: 0;
+        color: var(--sms-text-muted);
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+
+    .support-info, .status-info {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .support-item, .status-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        background-color: var(--sms-blue-light);
+        border-radius: 0.375rem;
+    }
+
+    .about-footer {
+        background-color: var(--sms-blue-light);
+        border: 1px solid var(--sms-blue-primary);
+        margin-top: 1rem;
+    }
+
+    @@media (max-width: 768px) {
+        .about-page-container {
+            padding: 1rem;
+        }
+
+        .info-item, .assembly-item, .support-item, .status-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .assembly-details {
+            margin-left: 0;
+        }
+    }
+</style>
