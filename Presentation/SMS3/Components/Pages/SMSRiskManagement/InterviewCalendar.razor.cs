@@ -1,4 +1,5 @@
 ﻿using SMS3.Components.Pages.SMSAssurance.Components;
+using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -111,7 +112,7 @@ public partial class InterviewCalendar : ComponentBase
         {
             InterviewId = interview.Id?.Value ?? "",
             InterviewCode = interview.Code ?? "Unknown",
-            Text = $"Interview: {interview.Code} - {interview.PersonInterviewed}",
+            Text = $"{interview.Code} - {interview.PersonInterviewed}",
             Start = interviewDate,
             End = interviewDate.AddMinutes(duration),
             InterviewType = interview.Type,
@@ -220,13 +221,15 @@ public partial class InterviewCalendar : ComponentBase
 
             var cssClasses = new List<string>();
 
-            // Base status class
+            // Base status class using actual enum values instead of hardcoded strings
             var statusClass = interviewItem.InterviewStatus.Value switch
             {
-                "SCHEDULED" => "interview-scheduled",
-                "IN_PROGRESS" => "interview-inprogress",
-                "COMPLETED" => "interview-completed",
-                "CANCELLED" => "interview-cancelled",
+                var v when v == InterviewStatus.InterviewScheduled.Value => "interview-scheduled",
+                var v when v == InterviewStatus.InterviewInProgress.Value => "interview-inprogress", 
+                var v when v == InterviewStatus.InterviewComplete.Value => "interview-completed",
+                var v when v == InterviewStatus.InterviewCanceled.Value => "interview-cancelled",
+                var v when v == InterviewStatus.IntervieweeIdentified.Value => "interview-identified",
+                var v when v == InterviewStatus.UnableToConduct.Value => "interview-unable",
                 _ => "interview-scheduled" // Default to scheduled
             };
             cssClasses.Add(statusClass);
@@ -239,7 +242,7 @@ public partial class InterviewCalendar : ComponentBase
 
             // Add high priority class for urgent interviews
             if (interviewItem.InterviewType.Value == "WITNESS" &&
-                interviewItem.InterviewStatus.Value == "SCHEDULED" &&
+                interviewItem.InterviewStatus.Value == InterviewStatus.InterviewScheduled.Value &&
                 interviewItem.Start.Date == DateTime.Today)
             {
                 cssClasses.Add("high-priority");
@@ -247,14 +250,16 @@ public partial class InterviewCalendar : ComponentBase
 
             args.Attributes["class"] = string.Join(" ", cssClasses);
 
-            // Set background color based on status for better visibility
+            // Set background color using CSS custom properties instead of hardcoded colors
             var backgroundColor = interviewItem.InterviewStatus.Value switch
             {
-                "SCHEDULED" => "#17a2b8",
-                "IN_PROGRESS" => "#ffc107",
-                "COMPLETED" => "#28a745",
-                "CANCELLED" => "#dc3545",
-                _ => "#17a2b8" // Default to scheduled color
+                var v when v == InterviewStatus.InterviewScheduled.Value => "var(--sms-blue-primary)",
+                var v when v == InterviewStatus.InterviewInProgress.Value => "var(--sms-red-accent)",
+                var v when v == InterviewStatus.InterviewComplete.Value => "var(--sms-green-primary)",
+                var v when v == InterviewStatus.InterviewCanceled.Value => "var(--sms-red-primary)",
+                var v when v == InterviewStatus.IntervieweeIdentified.Value => "var(--sms-blue-dark-bold)",
+                var v when v == InterviewStatus.UnableToConduct.Value => "var(--sms-red-dark-bold)",
+                _ => "var(--sms-blue-primary)" // Default to scheduled color
             };
 
             args.Attributes["style"] = $"background: {backgroundColor}; color: white;";
@@ -545,24 +550,12 @@ public partial class InterviewCalendar : ComponentBase
     #region Notification Methods
     private void ShowSuccessNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
+        NotificationHelper.ShowSuccess(NotificationService, message);
     }
 
     private void ShowErrorNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
+        NotificationHelper.ShowError(NotificationService, message);
     }
     #endregion
 

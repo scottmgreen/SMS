@@ -1,5 +1,5 @@
 using System.Text;
-
+using SMS3.Components.Shared.UIHelpers;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 
@@ -289,24 +289,12 @@ public partial class FileViewerDialog : ComponentBase
     #region Notification Methods
     private void ShowSuccessNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "File Viewer",
-            Detail = message,
-            Duration = 3000
-        });
+        NotificationHelper.ShowSuccess(NotificationService, message, 3000);
     }
 
     private void ShowErrorNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "File Viewer Error",
-            Detail = message,
-            Duration = 5000
-        });
+        NotificationHelper.ShowError(NotificationService, message, 5000);
     }
     #endregion
 }

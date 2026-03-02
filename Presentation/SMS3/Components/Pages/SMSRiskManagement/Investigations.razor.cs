@@ -73,13 +73,15 @@ public partial class Investigations : ComponentBase
     #region Lifecycle Methods
     protected override async Task OnInitializedAsync()
     {
-               
+
         await LoadInvestigationData();
         await LoadAvailableInvestigators();
+        await LoadInterviews();
     }
+
     #endregion
 
-    #region Data Loading
+        #region Data Loading
     private async Task LoadInvestigationData()
     {
         try
@@ -292,6 +294,21 @@ public partial class Investigations : ComponentBase
                 return;
             }
 
+            // Check for incomplete interviews before allowing investigation completion
+            var incompleteInterviews = await ValidateInterviewsComplete();
+            if (incompleteInterviews.Any())
+            {
+                var incompleteCount = incompleteInterviews.Count;
+                var incompleteList = string.Join(", ", incompleteInterviews.Select(i => $"{i.Code} ({i.Status.Name})"));
+                
+                ShowErrorNotification($"Cannot complete investigation. {incompleteCount} interview(s) are still incomplete: {incompleteList}. Please complete or close all interviews first.");
+                
+                // Switch to interviews tab to show the incomplete interviews
+                selectedTabIndex = 1; // Assuming interviews tab is index 1
+                StateHasChanged();
+                return;
+            }
+
             var confirmed = await DialogService.Confirm(
                 "Are you sure you want to complete this investigation? This action cannot be undone.",
                 "Complete Investigation",
@@ -352,7 +369,29 @@ public partial class Investigations : ComponentBase
             InvestigationEntity.DecisionMaker = AuthService.CurrentUserDisplayName;
             InvestigationEntity.Status = InvestigationStatus.FromValue(InvestigationStatusId);
 
-            if (InvestigationEntity.Status !=InvestigationStatus.InvestigationComplete)
+            // Check if user is trying to set status to complete
+            if (InvestigationEntity.Status == InvestigationStatus.InvestigationComplete)
+            {
+                // Validate that all interviews are completed before allowing investigation completion
+                var incompleteInterviews = await ValidateInterviewsComplete();
+                if (incompleteInterviews.Any())
+                {
+                    var incompleteCount = incompleteInterviews.Count;
+                    var incompleteList = string.Join(", ", incompleteInterviews.Select(i => $"{i.Code} ({i.Status.Name})"));
+                    
+                    ShowErrorNotification($"Cannot set investigation status to Complete. {incompleteCount} interview(s) are still incomplete: {incompleteList}. Please complete or close all interviews first.");
+                    
+                    // Reset the status back to previous value
+                    InvestigationStatusId = InvestigationEntity.Status.Value;
+                    
+                    // Switch to interviews tab to show the incomplete interviews
+                    selectedTabIndex = 1; // Assuming interviews tab is index 1
+                    StateHasChanged();
+                    return;
+                }
+            }
+
+            if (InvestigationEntity.Status != InvestigationStatus.InvestigationComplete)
             {
                 InvestigationEntity.DecisionType = "UNDER_REVIEW";
             }
@@ -387,6 +426,20 @@ public partial class Investigations : ComponentBase
 
         try
         {
+            // Check for incomplete interviews before allowing investigation completion
+            var incompleteInterviews = await ValidateInterviewsComplete();
+            if (incompleteInterviews.Any())
+            {
+                var incompleteCount = incompleteInterviews.Count;
+                var incompleteList = string.Join(", ", incompleteInterviews.Select(i => $"{i.Code} ({i.Status.Name})"));
+                
+                ShowErrorNotification($"Cannot complete investigation and return to validation. {incompleteCount} interview(s) are still incomplete: {incompleteList}. Please complete or close all interviews first.");
+                
+                // Switch to interviews tab to show the incomplete interviews
+                selectedTabIndex = 1; // Assuming interviews tab is index 1
+                StateHasChanged();
+                return;
+            }
             
             // Step 1: Complete the investigation (set status to Completed)
             InvestigationEntity.Status = InvestigationStatus.InvestigationComplete;
@@ -453,7 +506,6 @@ public partial class Investigations : ComponentBase
             ShowErrorNotification($"Error processing return to validation: {ex.Message}");
         }
     }
-
     private async Task ResetReportValidation(string reportCode)
     {
         try
@@ -695,16 +747,10 @@ public partial class Investigations : ComponentBase
         // Refresh the interviews count for the tab
         await LoadInterviews();
         StateHasChanged();
-    }
-
-    private void NavigateToListings()
-    {
-        Navigation.NavigateTo("/Listings/Investigations");
-    }
-
-    private string GetFileCountText()
-    {
-        return EvidenceFiles.Count.ToString();
+        
+        // Log the interview status change for debugging
+        Logger.LogInformation("Interview status changed for investigation {Code}. {CompletedCount} completed, {IncompleteCount} incomplete", 
+            InvestigationEntity?.Code, GetCompletedInterviewsCount(), GetIncompleteInterviewsCount());
     }
 
     private void EditDecision()
@@ -716,6 +762,145 @@ public partial class Investigations : ComponentBase
         StateHasChanged();
 
         ShowSuccessNotification("Decision opened for editing. Make your changes and click 'Record Decision' to save.");
+    }
+    #endregion
+
+    #region Validation Methods
+    /// <summary>
+    /// Validates that all interviews associated with this investigation are complete
+    /// </summary>
+    /// <returns>List of incomplete interviews</returns>
+    private async Task<List<Interview>> ValidateInterviewsComplete()
+    {
+        try
+        {
+            // Reload interviews to get the most current status
+            await LoadInterviews();
+
+            // Filter interviews that are NOT in a completed state
+            var incompleteInterviews = Interviews.Where(interview => 
+                interview.Status != InterviewStatus.InterviewComplete &&
+                interview.Status != InterviewStatus.UnableToConduct &&
+                interview.Status != InterviewStatus.InterviewCanceled
+            ).ToList();
+
+            Logger.LogInformation("Investigation {Code}: Found {TotalInterviews} total interviews, {IncompleteCount} incomplete", 
+                InvestigationEntity?.Code, Interviews.Count, incompleteInterviews.Count);
+
+            if (incompleteInterviews.Any())
+            {
+                Logger.LogWarning("Investigation {Code} has incomplete interviews: {IncompleteInterviews}", 
+                    InvestigationEntity?.Code, 
+                    string.Join(", ", incompleteInterviews.Select(i => $"{i.Code}={i.Status.Name}")));
+            }
+
+            return incompleteInterviews;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error validating interview completeness for investigation {Code}", InvestigationEntity?.Code);
+            ShowErrorNotification("Error checking interview status. Please try again.");
+            return new List<Interview>(); // Return empty list to allow operation but log the error
+        }
+    }
+    #endregion
+
+    #region UI Helper Methods
+    /// <summary>
+    /// Gets the count of incomplete interviews for UI display
+    /// </summary>
+    /// <returns>Number of incomplete interviews</returns>
+    private int GetIncompleteInterviewsCount()
+    {
+        return Interviews.Count(interview => 
+            interview.Status != InterviewStatus.InterviewComplete &&
+            interview.Status != InterviewStatus.UnableToConduct &&
+            interview.Status != InterviewStatus.InterviewCanceled);
+    }
+
+    /// <summary>
+    /// Gets the count of completed interviews for UI display
+    /// </summary>
+    /// <returns>Number of completed interviews</returns>
+    private int GetCompletedInterviewsCount()
+    {
+        return Interviews.Count(interview => 
+            interview.Status == InterviewStatus.InterviewComplete ||
+            interview.Status == InterviewStatus.UnableToConduct ||
+            interview.Status == InterviewStatus.InterviewCanceled);
+    }
+
+    /// <summary>
+    /// Determines if the investigation can be completed based on interview status
+    /// </summary>
+    /// <returns>True if all interviews are complete, false otherwise</returns>
+    private bool CanCompleteInvestigation()
+    {
+        if (InvestigationEntity == null) return false;
+        
+        // Must have decision recorded
+        if (!InvestigationEntity.HasDecision) return false;
+        
+        // All interviews must be in completed state
+        return GetIncompleteInterviewsCount() == 0;
+    }
+
+    /// <summary>
+    /// Gets a summary message about interview completion status
+    /// </summary>
+    /// <returns>Status message for display</returns>
+    private string GetInterviewCompletionStatus()
+    {
+        var total = Interviews.Count;
+        var completed = GetCompletedInterviewsCount();
+        var incomplete = GetIncompleteInterviewsCount();
+
+        if (total == 0)
+            return "No interviews associated with this investigation";
+        
+        if (incomplete == 0)
+            return $"All {total} interview(s) are completed";
+        
+        return $"{completed} of {total} interview(s) completed, {incomplete} still pending";
+    }
+
+    /// <summary>
+    /// Gets the subtitle for the page header showing completion status
+    /// </summary>
+    /// <returns>Subtitle with completion status</returns>
+    private string GetInvestigationSubtitle()
+    {
+        var baseSubtitle = "Conduct comprehensive investigations into safety incidents and hazard reports";
+        
+        if (InvestigationEntity == null) 
+            return baseSubtitle;
+
+        var total = Interviews.Count;
+        if (total == 0) 
+            return baseSubtitle;
+
+        var incomplete = GetIncompleteInterviewsCount();
+        if (incomplete > 0)
+            return $"{baseSubtitle} • {incomplete} of {total} interview(s) still pending completion";
+        
+        return $"{baseSubtitle} • All {total} interview(s) completed - Ready to close";
+    }
+
+    /// <summary>
+    /// Gets the file count text for the Evidence tab
+    /// </summary>
+    /// <returns>File count as string</returns>
+    private string GetFileCountText()
+    {
+        return EvidenceFiles.Count.ToString();
+    }
+
+    /// <summary>
+    /// Navigate back to investigations listings
+    /// </summary>
+    private void NavigateToListings()
+    {
+        Navigation.NavigateTo("/Listings/Investigations");
     }
     #endregion
 }

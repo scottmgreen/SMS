@@ -66,10 +66,10 @@
         <RadzenDataGridColumn TItem="Investigation" Title="Actions" Width="150px" Sortable="false" Filterable="false">
             <Template Context="investigation">
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                    <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" 
+                    <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" 
                                 Click="@(() => ViewInvestigation(investigation))" 
                                 Tooltip="View Investigation Details" />
-                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" 
+                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" 
                                 Click="@(() => EditInvestigation(investigation))" 
                                 Tooltip="Edit Investigation" />
                 </RadzenStack>

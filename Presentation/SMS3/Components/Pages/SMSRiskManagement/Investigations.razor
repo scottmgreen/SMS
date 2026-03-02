@@ -25,7 +25,7 @@
 else
 {
     <PageHeader Title="@($"SMS Investigation {InvestigationEntity.Code} for Hazard: {InvestigationEntity.HazardCode}")"
-                Subtitle="Conduct comprehensive investigations into safety incidents and hazard reports"
+                Subtitle="@GetInvestigationSubtitle()"
                 Icon="fas fa-search" />
 
 
@@ -76,6 +76,14 @@ else
                                                                     ValueProperty="Value" 
                                                                     Style="width: 100%; min-width: 100%;" />
                                                 </RadzenFormField>
+                                                <!-- Warning when trying to set status to complete with incomplete interviews -->
+                                                @if (InvestigationStatusId == InvestigationStatus.InvestigationComplete.Value && !CanCompleteInvestigation())
+                                                {
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: #dc3545; font-size: 0.75rem; margin-top: 0.25rem;">
+                                                        <RadzenIcon Icon="warning" Style="font-size: 0.75rem;" />
+                                                        Cannot complete: @GetIncompleteInterviewsCount() interview(s) still pending
+                                                    </RadzenText>
+                                                }
                                             </RadzenColumn>
                                             @if (InvestigationStatusId == InvestigationStatus.InvestigationComplete.Value)
                                             {
@@ -123,6 +131,36 @@ else
                                 <!-- Interviews Tab -->
                                 <RadzenTabsItem Text="@($"Interviews ({Interviews.Count})")">
                                     <div style="padding: 1rem;">
+                                        <!-- Interview Completion Status Alert -->
+                                        @if (Interviews.Any())
+                                        {
+                                            var incompleteCount = GetIncompleteInterviewsCount();
+                                            if (incompleteCount > 0)
+                                            {
+                                                <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Style="margin-bottom: 1rem;">
+                                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                                        <RadzenIcon Icon="warning" Style="color: #856404;" />
+                                                        <RadzenText TextStyle="TextStyle.Body1" Style="color: #856404;">
+                                                            <strong>@GetInterviewCompletionStatus()</strong><br/>
+                                                            Investigation cannot be completed until all interviews are finished.
+                                                        </RadzenText>
+                                                    </RadzenStack>
+                                                </RadzenAlert>
+                                            }
+                                            else
+                                            {
+                                                <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Style="margin-bottom: 1rem;">
+                                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                                        <RadzenIcon Icon="check_circle" Style="color: #155724;" />
+                                                        <RadzenText TextStyle="TextStyle.Body1" Style="color: #155724;">
+                                                            <strong>@GetInterviewCompletionStatus()</strong><br/>
+                                                            All interviews are complete. Investigation can be closed.
+                                                        </RadzenText>
+                                                    </RadzenStack>
+                                                </RadzenAlert>
+                                            }
+                                        }
+                                        
                                         <InterviewsManager @ref="interviewsManager" 
                                                          InvestigationCode="@InvestigationEntity.Code"
                                                          OnInterviewsChanged="@OnInterviewsChanged" />

@@ -22,16 +22,16 @@
     
     <RadzenButton Icon="today" Text="Today" Click="@GoToToday" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" />
     <RadzenButton Icon="refresh" Text="Refresh" Click="@RefreshData" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@IsLoading" />
-    <RadzenButton Icon="add" Text="Schedule Interview" Click="@(() => ShowCreateInterviewDialog())" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" />
+    @* <RadzenButton Icon="add" Text="Schedule Interview" Click="@(() => ShowCreateInterviewDialog())" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" /> *@
     
     <!-- Legend - Status-based styling -->
-    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Style="margin-left: 2rem;">
+    @* <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Style="margin-left: 2rem;">
         <RadzenText TextStyle="TextStyle.Caption">Legend:</RadzenText>
         <RadzenBadge Text="Scheduled" BadgeStyle="BadgeStyle.Info" />
         <RadzenBadge Text="In Progress" BadgeStyle="BadgeStyle.Warning" />
         <RadzenBadge Text="Completed" BadgeStyle="BadgeStyle.Success" />
         <RadzenBadge Text="Cancelled" BadgeStyle="BadgeStyle.Danger" />
-    </RadzenStack>
+    </RadzenStack> *@
 </RadzenStack>
 
 <!-- Calendar Scheduler -->
@@ -78,7 +78,7 @@
 <!-- Interview Statistics Card -->
 <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
     <RadzenColumn Size="12" SizeMD="3">
-        <RadzenCard Style="text-align: center; padding: 1.5rem;">
+        <RadzenCard Style="text-align: center; padding: 1.5rem;border: 2px solid; color:black;height:110px;">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
                 <RadzenIcon Icon="people" Style="font-size: 2rem; color: var(--rz-primary);" />
                 <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: bold;">@Interviews.Count</RadzenText>
@@ -88,7 +88,7 @@
     </RadzenColumn>
     
     <RadzenColumn Size="12" SizeMD="3">
-        <RadzenCard Style="text-align: center; padding: 1.5rem;">
+        <RadzenCard Style="text-align: center; padding: 1.5rem;border: 2px solid; color:black;height:110px;">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
                 <RadzenIcon Icon="event" Style="font-size: 2rem; color: var(--rz-success);" />
                 <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: bold;">@GetInterviewsThisMonth()</RadzenText>
@@ -98,7 +98,7 @@
     </RadzenColumn>
     
     <RadzenColumn Size="12" SizeMD="3">
-        <RadzenCard Style="text-align: center; padding: 1.5rem;">
+        <RadzenCard Style="text-align: center; padding: 1.5rem;border: 2px solid; color:black;height:110px;">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
                 <RadzenIcon Icon="calendar_today" Style="font-size: 2rem; color: var(--rz-warning);" />
                 <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: bold;">@GetInterviewsThisWeek()</RadzenText>
@@ -108,7 +108,7 @@
     </RadzenColumn>
     
     <RadzenColumn Size="12" SizeMD="3">
-        <RadzenCard Style="text-align: center; padding: 1.5rem;">
+        <RadzenCard Style="text-align: center; padding: 1.5rem;border: 2px solid; color:black;height:110px;">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Center">
                 <RadzenIcon Icon="today" Style="font-size: 2rem; color: var(--rz-info);" />
                 <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: bold;">@GetInterviewsToday()</RadzenText>

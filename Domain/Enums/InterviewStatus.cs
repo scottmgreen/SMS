@@ -9,215 +9,112 @@
 //-----------------------------------------------------------------------
 
 using SMS_Domain.Common;
+using System.Reflection;
 
 namespace SMS_Domain.Enums;
 
 /// <summary>
-/// Interview Status Smart Enumeration - COMPLETELY REPLACED
+/// Interview Status Smart Enumeration - COMPLETELY REWRITTEN
 /// Represents the approved final interview workflow statuses
 /// Based on approved final status list from StatusList.txt
 /// </summary>
-public sealed class InterviewStatus : BaseEnum<InterviewStatus>
+public abstract class InterviewStatus : BaseEnum<InterviewStatus>
 {
+    protected InterviewStatus(string value, string name, string description, bool allowsModification, int workflowOrder) : base(value, name)
+    {
+        Description = description;
+        AllowsModification = allowsModification;
+        WorkflowOrder = workflowOrder;
+    }
+
+    public string Description { get; }
+    public bool AllowsModification { get; }
+    public int WorkflowOrder { get; }
+
     #region ✅ APPROVED FINAL INTERVIEW STATUS VALUES FROM StatusList.txt
 
     /// <summary>Interviewee has been identified for the interview</summary>
-    public static readonly InterviewStatus IntervieweeIdentified = new("INTERVIEWEE_IDENTIFIED", "Interviewee Identified");
+    public static readonly InterviewStatus IntervieweeIdentified = new IntervieweeIdentifiedStatus();
 
     /// <summary>Interview has been scheduled with specific date and time</summary>
-    public static readonly InterviewStatus InterviewScheduled = new("INTERVIEW_SCHEDULED", "Interview Scheduled");
+    public static readonly InterviewStatus InterviewScheduled = new InterviewScheduledStatus();
+
+    /// <summary>Interview is currently in progress</summary>
+    public static readonly InterviewStatus InterviewInProgress = new InterviewInProgressStatus();
 
     /// <summary>Interview has been completed successfully</summary>
-    public static readonly InterviewStatus InterviewComplete = new("INTERVIEW_COMPLETE", "Interview Complete");
+    public static readonly InterviewStatus InterviewComplete = new InterviewCompleteStatus();
 
     /// <summary>Interview could not be conducted due to various reasons</summary>
-    public static readonly InterviewStatus UnableToConduct = new("UNABLE_TO_CONDUCT", "Unable to Conduct");
+    public static readonly InterviewStatus UnableToConduct = new UnableToConductStatus();
 
-    /// <summary>Interview could not be conducted due to various reasons</summary>
-    public static readonly InterviewStatus InterviewInProgress = new("INTERVIEW_INPROGRESS", "Interview In Progress");
+    /// <summary>Interview was canceled before completion</summary>
+    public static readonly InterviewStatus InterviewCanceled = new InterviewCanceledStatus();
 
-    public static readonly InterviewStatus InterviewCanceled = new("INTERVIEW_CANCELED", "Interview Canceled");
     #endregion
 
-    private InterviewStatus(string value, string name) : base(value, name)
+    #region Implementations
+
+    private sealed class IntervieweeIdentifiedStatus : InterviewStatus
     {
-    }
-
-    /// <summary>
-    /// Get all interview statuses that are considered active
-    /// </summary>
-    public static IEnumerable<InterviewStatus> GetActiveStatuses()
-    {
-        return new[] { IntervieweeIdentified, InterviewScheduled };
-    }
-
-    /// <summary>
-    /// Get all interview statuses that are considered final
-    /// </summary>
-    public static IEnumerable<InterviewStatus> GetFinalStatuses()
-    {
-        return new[] { InterviewComplete, UnableToConduct };
-    }
-
-    /// <summary>
-    /// Get all interview statuses that allow modifications
-    /// </summary>
-    public static IEnumerable<InterviewStatus> GetModifiableStatuses()
-    {
-        return new[] { IntervieweeIdentified, InterviewScheduled };
-    }
-
-    /// <summary>
-    /// Check if this status allows modifications
-    /// </summary>
-    public bool AllowsModifications()
-    {
-        return this == IntervieweeIdentified || this == InterviewScheduled;
-    }
-
-    
-
-    /// <summary>
-    /// Check if this status indicates interview is scheduled
-    /// </summary>
-    public bool IsScheduled()
-    {
-        return this == InterviewScheduled;
-    }
-
-    /// <summary>
-    /// Check if this status indicates the interview is complete
-    /// </summary>
-    public bool IsComplete()
-    {
-        return this == InterviewComplete;
-    }
-
-    /// <summary>
-    /// Check if this status indicates interview could not be conducted
-    /// </summary>
-    public bool IsUnableToConduct()
-    {
-        return this == UnableToConduct;
-    }
-
-    
-
-    /// <summary>
-    /// Check if this status allows the interview to be conducted
-    /// </summary>
-    public bool CanConduct()
-    {
-        return this == InterviewScheduled;
-    }
-
-    /// <summary>
-    /// Check if this status allows the interview to be marked as unable to conduct
-    /// </summary>
-    public bool CanMarkUnableToConduct()
-    {
-        return this == IntervieweeIdentified || this == InterviewScheduled;
-    }
-
-    /// <summary>
-    /// Get the next possible statuses from this status
-    /// </summary>
-    public IEnumerable<InterviewStatus> GetPossibleNextStatuses()
-    {
-        return Value switch
+        public IntervieweeIdentifiedStatus() : base("INTERVIEWEE_IDENTIFIED", "Interviewee Identified",
+            "Interviewee has been identified and contacted for the interview", true, 1)
         {
-            "INTERVIEWEE_IDENTIFIED" => new[] { InterviewScheduled, UnableToConduct },
-            "INTERVIEW_SCHEDULED" => new[] { InterviewComplete, UnableToConduct },
-            "INTERVIEW_COMPLETE" => new InterviewStatus[] { }, // Final state
-            "UNABLE_TO_CONDUCT" => new InterviewStatus[] { }, // Final state
-            _ => new InterviewStatus[] { }
-        };
+        }
     }
 
-    
-
-    
-
-    
-
-    /// <summary>
-    /// Determines if this status is an active processing state
-    /// </summary>
-    public bool IsActiveStatus => this == IntervieweeIdentified || this == InterviewScheduled;
-
-    /// <summary>
-    /// Gets the UI color for this status
-    /// </summary>
-    public string GetDisplayColor()
+    private sealed class InterviewScheduledStatus : InterviewStatus
     {
-        return this switch
+        public InterviewScheduledStatus() : base("INTERVIEW_SCHEDULED", "Interview Scheduled",
+            "Interview has been scheduled with specific date and time", true, 2)
         {
-            var s when s == IntervieweeIdentified => "#17a2b8", // Info blue
-            var s when s == InterviewScheduled => "#ffc107", // Warning yellow
-            var s when s == InterviewComplete => "#28a745", // Success green
-            var s when s == UnableToConduct => "#dc3545", // Danger red
-            _ => "#6c757d"
-        };
+        }
     }
 
-    /// <summary>
-    /// Gets the status description for workflow display
-    /// </summary>
-    public string GetWorkflowDescription()
+    private sealed class InterviewInProgressStatus : InterviewStatus
     {
-        return this switch
+        public InterviewInProgressStatus() : base("INTERVIEW_INPROGRESS", "Interview In Progress",
+            "Interview is currently being conducted", true, 3)
         {
-            var s when s == IntervieweeIdentified => "Interviewee identified, ready to schedule interview",
-            var s when s == InterviewScheduled => "Interview scheduled, ready to conduct",
-            var s when s == InterviewComplete => "Interview completed successfully",
-            var s when s == UnableToConduct => "Interview could not be conducted",
-            _ => Name
-        };
+        }
     }
 
-    /// <summary>
-    /// Get display description for this status
-    /// </summary>
-    public string GetDisplayDescription()
+    private sealed class InterviewCompleteStatus : InterviewStatus
     {
-        return Value switch
+        public InterviewCompleteStatus() : base("INTERVIEW_COMPLETE", "Interview Complete",
+            "Interview has been completed successfully with all required information captured", false, 4)
         {
-            "INTERVIEWEE_IDENTIFIED" => "Potential interviewee has been identified for the investigation",
-            "INTERVIEW_SCHEDULED" => "Interview has been scheduled with confirmed date and time",
-            "INTERVIEW_COMPLETE" => "Interview has been completed with documented findings",
-            "UNABLE_TO_CONDUCT" => "Interview could not be conducted due to availability or other constraints",
-            _ => Name
-        };
+        }
     }
 
-    /// <summary>
-    /// Get progress percentage for this status
-    /// </summary>
-    public int GetProgressPercentage()
+    private sealed class UnableToConductStatus : InterviewStatus
     {
-        return Value switch
+        public UnableToConductStatus() : base("UNABLE_TO_CONDUCT", "Unable to Conduct",
+            "Interview could not be conducted due to unavailability, refusal, or other circumstances", false, 5)
         {
-            "INTERVIEWEE_IDENTIFIED" => 25,
-            "INTERVIEW_SCHEDULED" => 50,
-            "INTERVIEW_COMPLETE" => 100,
-            "UNABLE_TO_CONDUCT" => 0,
-            _ => 0
-        };
+        }
     }
 
-    /// <summary>
-    /// Check if this status represents an interview that can be rescheduled
-    /// </summary>
-    public bool CanBeRescheduled()
+    private sealed class InterviewCanceledStatus : InterviewStatus
     {
-        return this == InterviewScheduled;
+        public InterviewCanceledStatus() : base("INTERVIEW_CANCELED", "Interview Canceled",
+            "Interview was canceled before completion by investigator or interviewee", true, 6)
+        {
+        }
     }
 
+    #endregion
+
     /// <summary>
-    /// Check if this status represents an active interview workflow state
+    /// Gets all available interview status values
     /// </summary>
-    public bool IsActiveWorkflow()
+    public static IEnumerable<InterviewStatus> GetAllValues()
     {
-        return this == IntervieweeIdentified || this == InterviewScheduled;
+        return typeof(InterviewStatus)
+            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
+            .Where(f => f.FieldType == typeof(InterviewStatus))
+            .Select(f => (InterviewStatus)f.GetValue(null))
+            .Where(ins => ins != null)
+            .OrderBy(ins => ins.WorkflowOrder);
     }
 }

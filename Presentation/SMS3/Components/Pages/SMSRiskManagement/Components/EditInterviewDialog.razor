@@ -27,16 +27,10 @@
                     <RadzenCard Variant="Variant.Outlined" Style="background-color: var(--rz-base-50); padding: 0.75rem;">
                         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
                             <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
-                                @* <RadzenBadge Text="@Model.Status.ToString()" BadgeStyle="@GetStatusBadgeStyle()" /> *@
                                 <RadzenText TextStyle="TextStyle.Caption">
                                    Scheduled For : @(Model.InterviewDate?.ToString("MMM dd, yyyy HH:mm") ?? "Not Scheduled")
                                 </RadzenText>
-                                @* @if (Model.DurationMinutes.HasValue)
-                                {
-                                    <RadzenText TextStyle="TextStyle.Caption">
-                                        Duration: @Model.DurationMinutes min
-                                    </RadzenText>
-                                } *@
+                               
                             </RadzenStack>
                             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
                                 @if (CanStartInterview)
@@ -58,76 +52,88 @@
                         <Tabs>
                             <!-- Basic Information Tab -->
                             <RadzenTabsItem Text="Basic Info" Icon="person" >
-                                <RadzenFieldset Text="Interview Details">
-                                    <RadzenRow Gap="1rem">
-                                        <RadzenColumn Size="4" SizeMD="4">
-                                            <RadzenFormField Text="Person to Interview *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
-                                                <RadzenTextBox @bind-Value="@Model.PersonInterviewed"
-                                                               Placeholder="Enter the name of person to interview"
-                                                               Style="width: 100%;" />
-                                            </RadzenFormField>
-                                        </RadzenColumn>
-                                        <RadzenColumn Size="4" SizeMD="4">
-                                            <RadzenFormField Text="Role/Position" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
-                                                <RadzenTextBox @bind-Value="@Model.PersonInterviewedRole"
-                                                               Placeholder="e.g., Ground Crew, Pilot, Supervisor"
-                                                               Style="width: 100%;" />
-                                            </RadzenFormField>
-                                        </RadzenColumn>
-                                        <RadzenColumn Size="3">
-                                            <RadzenFormField Text="Submitting Department *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                <RadzenFieldset Text="Interview Basics" Style=" height:470px;">
+                                    <RadzenFieldset Text="Interview Details">
+                                        <RadzenRow Gap="1rem">
+                                            <RadzenColumn Size="4" SizeMD="4">
+                                                <RadzenFormField Text="Person to Interview *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                                    <RadzenTextBox @bind-Value="@Model.PersonInterviewed"
+                                                                   Placeholder="Enter the name of person to interview"
+                                                                   Style="width: 100%;" />
+                                                </RadzenFormField>
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="4" SizeMD="4">
+                                                <RadzenFormField Text="Role/Position" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                                    <RadzenTextBox @bind-Value="@Model.PersonInterviewedRole"
+                                                                   Placeholder="e.g., Ground Crew, Pilot, Supervisor"
+                                                                   Style="width: 100%;" />
+                                                </RadzenFormField>
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="3">
+                                                <RadzenFormField Text="Department *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
 
-                                                <RadzenDropDown @bind-Value="@Model.PersonInterviewedDepartmentId"
-                                                                Data="@DepartmentOptions"
-                                                                TextProperty="Text"
-                                                                ValueProperty="Value"
-                                                                Placeholder="Select submitting department..."
-                                                                Name="SubmittingDepartment"
-                                                                Change="@(async (object value) => await OnDepartmentChanged(value?.ToString()))"
-                                                                Style="width: 100%; min-width: 100%;" />
-                                            </RadzenFormField>
-                                            <RadzenRequiredValidator Component="ReportingDepartment" Text="Reporting Department by is required" />
-                                        </RadzenColumn>
+                                                    <RadzenDropDown @bind-Value="@Model.PersonInterviewedDepartmentId"
+                                                                    Data="@DepartmentOptions"
+                                                                    TextProperty="Text"
+                                                                    ValueProperty="Value"
+                                                                    Name="SubmittingDepartment"
+                                                                    Change="@(async (object value) => await OnDepartmentChanged(value?.ToString()))"
+                                                                    Style="width: 100%; min-width: 100%;" />
+                                                </RadzenFormField>
+                                                <RadzenRequiredValidator Component="ReportingDepartment" Text="Reporting Department by is required" />
+                                            </RadzenColumn>
 
-                                    </RadzenRow>
-                                    
+                                        </RadzenRow>
+
+                                    </RadzenFieldset>
+
+                                    <RadzenFieldset Text="Interview Schedule">
+                                        <RadzenRow Gap="1rem">
+                                            <RadzenColumn Size="3">
+                                                <RadzenFormField Text="Interview Type" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                                    <RadzenDropDown @bind-Value="@Model.InterviewTypeId"
+                                                                    Data="@InterviewTypeOptions"
+                                                                    TextProperty="Text"
+                                                                    ValueProperty="Value"
+                                                                    Change="@(async (object value) => await OnWitnessInterviewTypeChanged(value?.ToString()))"
+                                                                    Style="width: 100%;" />
+                                                </RadzenFormField>
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="3">
+                                                <RadzenFormField Text="Interview Status" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                                    <RadzenDropDown @bind-Value="@Model.Status"
+                                                                    Data="@InterviewStatusOptions"
+                                                                    TextProperty="Name"
+                                                                    ValueProperty="Status"
+                                                                    Style="width: 100%;" />
+                                                </RadzenFormField>
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="3" SizeMD="3">
+                                                <RadzenFormField Text="Interview Date & Time" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                                    <RadzenDatePicker @bind-Value="@Model.InterviewDate"
+                                                                      ShowTime="true"
+                                                                      DateFormat="MM/dd/yyyy HH:mm"
+                                                                      Style="width: 100%;" />
+                                                </RadzenFormField>
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="3" SizeMD="3">
+                                                <RadzenFormField Text="Location" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                                    <RadzenTextBox @bind-Value="@Model.InterviewLocation"
+                                                                   Placeholder="Conference room, office, etc."
+                                                                   Style="width: 100%;" />
+                                                </RadzenFormField>
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                    </RadzenFieldset>
+
                                 </RadzenFieldset>
                                 
-                                <RadzenFieldset Text="Interview Schedule" >
-                                    <RadzenRow Gap="1rem">
-                                        <RadzenColumn Size="3">
-                                            <RadzenFormField Text="Interview Type" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
-                                                <RadzenDropDown @bind-Value="@Model.InterviewTypeId"
-                                                                Data="@InterviewTypeOptions"
-                                                                TextProperty="Text"
-                                                                ValueProperty="Value"
-                                                                Change="@(async (object value) => await OnWitnessInterviewTypeChanged(value?.ToString()))"
-                                                                Style="width: 100%;" />
-                                            </RadzenFormField>
-                                        </RadzenColumn>
-                                        <RadzenColumn Size="3" SizeMD="3">
-                                            <RadzenFormField Text="Interview Date & Time" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
-                                                <RadzenDatePicker @bind-Value="@Model.InterviewDate"
-                                                                    ShowTime="true"
-                                                                    DateFormat="MM/dd/yyyy HH:mm"
-                                                                    Style="width: 100%;" />
-                                            </RadzenFormField>
-                                        </RadzenColumn>
-                                        <RadzenColumn Size="6" SizeMD="6">
-                                            <RadzenFormField Text="Location" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
-                                                <RadzenTextBox @bind-Value="@Model.InterviewLocation"
-                                                                Placeholder="Conference room, office, etc."
-                                                                Style="width: 100%;" />
-                                            </RadzenFormField>
-                                        </RadzenColumn>
-                                    </RadzenRow>
-                                </RadzenFieldset>
                                     
                             </RadzenTabsItem>
 
                             <!-- Preparation Tab -->
-                            <RadzenTabsItem Text="Preparation" Icon="edit_note">
-                                <RadzenFieldset Text="Interview Notes" >
+                            <RadzenTabsItem Text="Preparation" Icon="edit_note" >
+                                <RadzenFieldset Text="Preparation Notes" Style="height:470px;">
                                     <RadzenRow Gap="1rem">
                                         <RadzenFormField Text="Preparation Notes" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
                                                 <RadzenTextArea @bind-Value="@Model.PreparationNotes" 
@@ -157,70 +163,76 @@
 
                             <!-- Conducting Interview Tab -->
                             <RadzenTabsItem Text="@GetConductingTabText()" Icon="record_voice_over">
-                                <RadzenStack Gap="0.75rem" Style="padding: 1rem;">
-                                    @if (Model.Status.Equals(InterviewStatus.InterviewInProgress) || Model.Status.Equals(InterviewStatus.InterviewComplete))
-                                    {
-                                        <!-- Interview Notes Side by Side -->
-                                        <RadzenRow Gap="0.75rem">
-                                            <RadzenColumn Size="6">
-                                                <RadzenFormField Text="Interviewee Notes/Responses" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
-                                                    <RadzenTextArea @bind-Value="@Model.PersonInterviewedNotes" 
-                                                                  Rows="6" 
-                                                                  Placeholder="Notes and responses from the interviewee..."
-                                                                  Style="width: 100%;" />
-                                                </RadzenFormField>
-                                            </RadzenColumn>
-                                            <RadzenColumn Size="6">
-                                                <RadzenFormField Text="Investigator Observations" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
-                                                    <RadzenTextArea @bind-Value="@Model.InvestigatorNotes" 
-                                                                  Rows="6" 
-                                                                  Placeholder="Your observations and analysis..."
-                                                                  Style="width: 100%;" />
-                                                </RadzenFormField>
-                                            </RadzenColumn>
-                                        </RadzenRow>
+                                
+                                <RadzenFieldset Text="Interview Notes" Style="height:470px;">
+                                    <RadzenStack Gap="0.75rem" Style="padding: 1rem;">
+                                        @if (Model.Status.Equals(InterviewStatus.InterviewInProgress) || Model.Status.Equals(InterviewStatus.InterviewComplete))
+                                        {
+                                            <!-- Interview Notes Side by Side -->
+                                            <RadzenRow Gap="0.75rem">
+                                                <RadzenColumn Size="6">
+                                                    <RadzenFormField Text="Interviewee Notes/Responses" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                                        <RadzenTextArea @bind-Value="@Model.PersonInterviewedNotes"
+                                                                        Rows="6"
+                                                                        Placeholder="Notes and responses from the interviewee..."
+                                                                        Style="width: 100%;" />
+                                                    </RadzenFormField>
+                                                </RadzenColumn>
+                                                <RadzenColumn Size="6">
+                                                    <RadzenFormField Text="Investigator Observations" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                                        <RadzenTextArea @bind-Value="@Model.InvestigatorNotes"
+                                                                        Rows="6"
+                                                                        Placeholder="Your observations and analysis..."
+                                                                        Style="width: 100%;" />
+                                                    </RadzenFormField>
+                                                </RadzenColumn>
+                                            </RadzenRow>
 
-                                        <!-- Key Findings -->
-                                        <RadzenFormField Text="Key Findings *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
-                                            <RadzenTextArea @bind-Value="@Model.KeyFindings" 
-                                                          Rows="3" 
-                                                          Placeholder="Key findings and important information discovered..."
-                                                          Style="width: 100%;" />
-                                        </RadzenFormField>
+                                            <!-- Key Findings -->
+                                            <RadzenFormField Text="Key Findings *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                                <RadzenTextArea @bind-Value="@Model.KeyFindings"
+                                                                Rows="3"
+                                                                Placeholder="Key findings and important information discovered..."
+                                                                Style="width: 100%;" />
+                                            </RadzenFormField>
 
-                                        <!-- Follow-up and Witnesses -->
-                                        <RadzenRow Gap="0.75rem">
-                                            <RadzenColumn Size="6">
-                                                <RadzenFormField Text="Follow-Up Required" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
-                                                    <RadzenTextArea @bind-Value="@Model.FollowUpRequired" 
-                                                                  Rows="2" 
-                                                                  Placeholder="Any follow-up actions needed..."
-                                                                  Style="width: 100%;" />
-                                                </RadzenFormField>
-                                            </RadzenColumn>
-                                            <RadzenColumn Size="6">
-                                                <RadzenFormField Text="Additional Witnesses Mentioned" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
-                                                    <RadzenTextArea @bind-Value="@Model.AdditionalWitnesses" 
-                                                                  Rows="2" 
-                                                                  Placeholder="Other witnesses mentioned..."
-                                                                  Style="width: 100%;" />
-                                                </RadzenFormField>
-                                            </RadzenColumn>
-                                        </RadzenRow>
-                                    }
-                                    else
-                                    {
-                                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
-                                            <RadzenText TextStyle="TextStyle.H6">Interview Not Started</RadzenText>
-                                            <RadzenText>Start the interview to begin recording notes and findings.</RadzenText>
-                                            @if (CanStartInterview)
-                                            {
-                                                <RadzenButton Text="Start Interview Now" Icon="play_arrow" ButtonStyle="ButtonStyle.Success" 
-                                                            Click="StartInterview" Style="margin-top: 0.75rem;" />
-                                            }
-                                        </RadzenAlert>
-                                    }
-                                </RadzenStack>
+                                            <!-- Follow-up and Witnesses -->
+                                            <RadzenRow Gap="0.75rem">
+                                                <RadzenColumn Size="6">
+                                                    <RadzenFormField Text="Follow-Up Required" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                                        <RadzenTextArea @bind-Value="@Model.FollowUpRequired"
+                                                                        Rows="2"
+                                                                        Placeholder="Any follow-up actions needed..."
+                                                                        Style="width: 100%;" />
+                                                    </RadzenFormField>
+                                                </RadzenColumn>
+                                                <RadzenColumn Size="6">
+                                                    <RadzenFormField Text="Additional Witnesses Mentioned" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                                        <RadzenTextArea @bind-Value="@Model.AdditionalWitnesses"
+                                                                        Rows="2"
+                                                                        Placeholder="Other witnesses mentioned..."
+                                                                        Style="width: 100%;" />
+                                                    </RadzenFormField>
+                                                </RadzenColumn>
+                                            </RadzenRow>
+                                        }
+                                        else
+                                        {
+                                            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
+                                                <RadzenText TextStyle="TextStyle.H6">Interview Not Started</RadzenText>
+                                                <RadzenText>Start the interview to begin recording notes and findings.</RadzenText>
+                                                @if (CanStartInterview)
+                                                {
+                                                    <RadzenButton Text="Start Interview Now" Icon="play_arrow" ButtonStyle="ButtonStyle.Success"
+                                                                  Click="StartInterview" Style="margin-top: 0.75rem;" />
+                                                }
+                                            </RadzenAlert>
+                                        }
+                                    </RadzenStack>
+                                </RadzenFieldset>
+                                
+                                
+                                
                             </RadzenTabsItem>
                         </Tabs>
                     </RadzenTabs>
@@ -279,7 +291,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 1050;
+        z-index: 9999; /* Increased to ensure it's above NavMenu */
         padding: 1rem;
     }
 
@@ -288,6 +300,7 @@
         margin: 0 auto;
         max-height: calc(100vh - 2rem);
         overflow-y: auto;
+        z-index: 10000; /* Ensure dialog content is above overlay */
     }
 
     .sms-modal-xl {
@@ -299,6 +312,8 @@
         background: white;
         border-radius: 0.5rem;
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+        position: relative;
+        z-index: 10001; /* Highest z-index for modal content */
     }
 
     .sms-modal-header {

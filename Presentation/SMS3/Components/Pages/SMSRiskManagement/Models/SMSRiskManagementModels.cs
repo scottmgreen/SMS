@@ -17,7 +17,6 @@ public class HazardReportForm
 {
     public string? HazardCategory { get; set; }
     public string? HazardType { get; set; }
-    public string? ReportType { get; set; }
     public string? Location { get; set; }
 
     public DateTime IncidentDateTime { get; set; } = DateTime.UtcNow;

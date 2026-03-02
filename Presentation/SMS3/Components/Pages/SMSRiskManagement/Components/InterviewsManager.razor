@@ -28,12 +28,6 @@
     {
         <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
     }
-    else if (!Interviews.Any())
-    {
-        @* <RadzenAlert AlertStyle="AlertStyle.Info" Icon="info" Title="No Interviews Scheduled">
-            No interviews have been scheduled for this investigation yet. Click "Schedule Interview" to add the first interview.
-        </RadzenAlert> *@
-    }
     else
     {
         <!-- Interviews List -->
@@ -49,14 +43,7 @@
                                     </RadzenText>
                                     <RadzenBadge Text="@interview.Status.Name" BadgeStyle="@GetInterviewStatusBadge(interview)" IsPill="true" />
                                     <RadzenBadge Text="@interview.Type.Name" BadgeStyle="BadgeStyle.Info" IsPill="true" />
-                                   @*  @if (interview.IsScheduled)
-                                    {
-                                        <RadzenBadge Text="Ready to Start" BadgeStyle="BadgeStyle.Success" IsPill="true" />
-                                    }
-                                    @if (interview.IsInProgress)
-                                    {
-                                        <RadzenBadge Text="In Progress" BadgeStyle="BadgeStyle.Warning" IsPill="true" />
-                                    } *@
+                                  
                                 </RadzenStack>
                                 
                                 <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
@@ -86,28 +73,7 @@
                                     </RadzenText>
                                 }
 
-                                @* @if (interview.IsScheduled && interview.InterviewDate.HasValue)
-                                {
-                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-success); font-weight: 500;">
-                                        <RadzenIcon Icon="play_arrow" Style="font-size: 14px; margin-right: 0.25rem;" />
-                                        Ready to start interview
-                                    </RadzenText>
-                                }
-                                else if (interview.IsInProgress)
-                                {
-                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-warning); font-weight: 500;">
-                                        <RadzenIcon Icon="record_voice_over" Style="font-size: 14px; margin-right: 0.25rem;" />
-                                        Interview in progress - Continue conducting
-                                    </RadzenText>
-                                }
-
-                                @if (interview.HasFindings)
-                                {
-                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-success);">
-                                        <RadzenIcon Icon="check_circle" Style="font-size: 14px; margin-right: 0.25rem;" />
-                                        Key findings recorded
-                                    </RadzenText>
-                                } *@
+                               
                             </RadzenStack>
                         </RadzenColumn>
                         
@@ -138,16 +104,7 @@
                                                 Title="Start conducting this interview" />
                                 }
                                 
-                               @*  @if (interview.IsInProgress)
-                                {
-                                    <RadzenButton Text="Conduct Interview"
-                                                Icon="record_voice_over" 
-                                                ButtonStyle="ButtonStyle.Warning" 
-                                                Size="ButtonSize.Small"
-                                                Click="@(() => OpenConductInterviewDialog(interview))" 
-                                                Title="Continue conducting this interview" />
-                                } *@
-                                
+                                                              
                                 @if (!interview.IsCompleted && !interview.IsCancelled)
                                 {
                                     <RadzenButton Icon="delete" 

@@ -32,6 +32,8 @@ public partial class EditInterviewDialog : ComponentBase
     #region Dropdown Options
     private List<DropdownOption> InterviewTypeOptions { get; set; } = new();
     public List<DropdownOption> DepartmentOptions { get; set; } = new();
+    private List<InterviewStatusOption> InterviewStatusOptions { get; set; } = new();
+    
     private void InitializeDropdownOptions()
     {
         DepartmentOptions = SMSDepartment.GetAllValues()
@@ -41,6 +43,15 @@ public partial class EditInterviewDialog : ComponentBase
 
         InterviewTypeOptions = InterviewType.GetAllValues()
             .Select(hc => new DropdownOption(hc.Value, hc.Name))
+            .ToList();
+
+        // Initialize Interview Status Options from the Domain Enum
+        InterviewStatusOptions = InterviewStatus.GetAllValues()
+            .Select(status => new InterviewStatusOption 
+            { 
+                Status = status, 
+                Name = status.Name 
+            })
             .ToList();
     }
    
@@ -177,11 +188,11 @@ public partial class EditInterviewDialog : ComponentBase
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(Model.KeyFindings))
-            {
-                ShowErrorNotification("Key findings are required to complete the interview");
-                return;
-            }
+            //if (string.IsNullOrWhiteSpace(Model.KeyFindings))
+            //{
+            //    ShowErrorNotification("Key findings are required to complete the interview");
+            //    return;
+            //}
 
             var result = Interview.CompleteInterview(
                 Model.PersonInterviewedNotes,
@@ -265,11 +276,7 @@ public partial class EditInterviewDialog : ComponentBase
             }
 
             // Validate interview completion requirements
-            if (model.Status == InterviewStatus.InterviewComplete && string.IsNullOrWhiteSpace(model.KeyFindings))
-            {
-                ShowErrorNotification("Key findings are required for completed interviews");
-                return;
-            }
+            
 
             IsSaving = true;
             StateHasChanged();
@@ -338,6 +345,10 @@ public partial class EditInterviewDialog : ComponentBase
                     Interview.Code, CurrentUserService.UserId);
 
                 ShowSuccessNotification("Interview updated successfully");
+
+                // Close the dialog and return true to indicate success
+                // This will trigger the calendar to refresh
+                DialogService.Close(true);
             }
             else
             {
@@ -362,24 +373,12 @@ public partial class EditInterviewDialog : ComponentBase
     #region Notification Methods
     private void ShowSuccessNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
+        NotificationHelper.ShowSuccess(NotificationService, message);
     }
 
     private void ShowErrorNotification(string message)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
+        NotificationHelper.ShowError(NotificationService, message);
     }
     #endregion
 
@@ -408,6 +407,12 @@ public partial class EditInterviewDialog : ComponentBase
         public string? FollowUpRequired { get; set; }
         public string? AdditionalWitnesses { get; set; }
         public DateTime? CompletedDate { get; set; }
+    }
+
+    public class InterviewStatusOption
+    {
+        public InterviewStatus Status { get; set; } = default!;
+        public string Name { get; set; } = "";
     }
 
     
