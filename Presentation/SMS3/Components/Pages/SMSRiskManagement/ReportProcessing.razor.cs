@@ -175,6 +175,8 @@ public class MitigationSummary
     public MitigationStatus Status { get; set; } 
     public string AssignedTo { get; set; } = string.Empty;
 
+    public string ApprovedBy { get; set; } = string.Empty;
+
     public string AssignedDepartment { get; set; } = string.Empty;
     public DateTime? TargetDate { get; set; }
     
@@ -1258,6 +1260,7 @@ public partial class ReportProcessing : ComponentBase
             {
                 var fullMitigation = mitigationResult.Value;
                 fullMitigation.Status = MitigationStatus.Approved;
+                fullMitigation.ApprovedBy = mitigation.ApprovedBy;
                 fullMitigation.UpdatedDate = DateTime.UtcNow;
                 fullMitigation.UpdatedBy = AuthService.CurrentUser.Code; // You might want to get the current user
 
@@ -1835,8 +1838,8 @@ public partial class ReportProcessing : ComponentBase
                                 // ✅ Update mitigation status using enum value
                                 mitigation.Status = MitigationStatus.Approved; 
                                 mitigation.UpdatedDate = DateTime.UtcNow;
-                                mitigation.UpdatedBy = approverCode;
-
+                                mitigation.UpdatedBy = AuthService.CurrentUserDisplayName;
+                                mitigation.ApprovedBy = approverCode;
                                 var updateCommand = new UpdateMitigationCommand(mitigation);
                                 var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
 
@@ -2074,7 +2077,7 @@ public partial class ReportProcessing : ComponentBase
         Logger.LogInformation("Bulk approval authorized: {ApproverName} ({ApproverCode}) approving {RiskLevel} risk mitigations for report {ReportId}",
             $"{approver.FirstName?.Value} {approver.LastName?.Value}", SelectedApprover, highestRiskLevel, SelectedReportForApproval.ReportId);
 
-        await BulkApproveAllMitigationsForReport(SelectedReportForApproval.ReportId, SelectedApprover);
+        await BulkApproveAllMitigationsForReport(SelectedReportForApproval.ReportId, approver.DisplayName); //SelectedApprover);
         await CloseBulkApprovalConfirmation();
     }
 

@@ -953,7 +953,7 @@ public partial class TechnicalAssessment : ComponentBase
             var query = new GetScoringPanelsByHazardCodeQuery(hazardCode);
             var result = await Mediator.SendAsync(query, CancellationToken.None);
 
-            if (!result.IsSuccess || result.Value == null)
+            if (!result.IsSuccess || result.Value.Count == 0)
             {
                 Logger.LogWarning("No scoring panels found for hazard {HazardCode}", hazardCode);
                 return new List<ScoringPanel>();

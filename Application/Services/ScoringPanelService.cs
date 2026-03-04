@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace SMS_Application.Services;
 
-public sealed class ScoringPanelService
+public sealed class ScoringPanelService : IScoringPanelService
 {
     private readonly ScoringPanelDataService _dataService;
     private readonly ILogger<ScoringPanelService> _logger;
@@ -23,12 +23,14 @@ public sealed class ScoringPanelService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<ScoringPanel>> CreateScoringPanelAsync(ScoringPanel scoringPanel, CancellationToken ct = default)
+    #region IScoringPanelService Implementation
+
+    public async Task<Result<ScoringPanel>> CreateScoringPanelAsync(ScoringPanel panel, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Creating scoring panel with code: {Code}", scoringPanel?.Code);
-            var result = await _dataService.CreateScoringPanelAsync(scoringPanel, ct).ConfigureAwait(false);
+            _logger.LogInformation("Creating scoring panel with code: {Code}", panel?.Code);
+            var result = await _dataService.CreateScoringPanelAsync(panel, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
@@ -62,20 +64,6 @@ public sealed class ScoringPanelService
         }
     }
 
-    public async Task<Result<List<ScoringPanel>>> GetAllScoringPanelsAsync(CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving all scoring panels");
-            return await _dataService.GetAllScoringPanelsAsync(ct).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error retrieving all scoring panels");
-            return Result<List<ScoringPanel>>.Failure<List<ScoringPanel>>(DomainErrors.ScoringPanelError.NullOrEmpty);
-        }
-    }
-
     public async Task<Result<List<ScoringPanel>>> GetScoringPanelsByHazardCodeAsync(string hazardCode, CancellationToken ct = default)
     {
         try
@@ -103,16 +91,16 @@ public sealed class ScoringPanelService
         }
     }
 
-    public async Task<Result<ScoringPanel>> UpdateScoringPanelAsync(ScoringPanel scoringPanel, CancellationToken ct = default)
+    public async Task<Result<ScoringPanel>> UpdateScoringPanelAsync(ScoringPanel panel, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Updating scoring panel with ID: {Id}", scoringPanel?.Id);
-            var result = await _dataService.UpdateScoringPanelAsync(scoringPanel, ct).ConfigureAwait(false);
+            _logger.LogInformation("Updating scoring panel with ID: {Id}", panel?.Id);
+            var result = await _dataService.UpdateScoringPanelAsync(panel, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated scoring panel with ID: {Id}", scoringPanel?.Id);
+                _logger.LogInformation("Successfully updated scoring panel with ID: {Id}", panel?.Id);
             }
             else
             {
@@ -123,7 +111,7 @@ public sealed class ScoringPanelService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating scoring panel with ID: {Id}", scoringPanel?.Id);
+            _logger.LogError(ex, "Unexpected error updating scoring panel with ID: {Id}", panel?.Id);
             return Result<ScoringPanel>.Failure<ScoringPanel>(DomainErrors.ScoringPanelError.UpdateFailed);
         }
     }
@@ -152,4 +140,24 @@ public sealed class ScoringPanelService
             return Result<bool>.Failure<bool>(DomainErrors.ScoringPanelError.DeleteFailed);
         }
     }
+
+    #endregion
+
+    #region Legacy Methods (keeping for backward compatibility)
+
+    public async Task<Result<List<ScoringPanel>>> GetAllScoringPanelsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving all scoring panels");
+            return await _dataService.GetAllScoringPanelsAsync(ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving all scoring panels");
+            return Result<List<ScoringPanel>>.Failure<List<ScoringPanel>>(DomainErrors.ScoringPanelError.NullOrEmpty);
+        }
+    }
+
+    #endregion
 }

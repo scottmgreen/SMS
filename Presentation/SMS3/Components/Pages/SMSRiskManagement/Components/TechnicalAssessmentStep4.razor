@@ -27,6 +27,7 @@
                     AvailableStakeholders = AvailableStakeholders.Where(predicate => predicate.IsPOPEmployee == true).ToList();
                     <HazardScoringPanel @key="@($"panel-{hazard.Code}")" 
                                         Hazard="@hazard" 
+                                        Step4="@Step4"
                                         AvailableStakeholders="@AvailableStakeholders"
                                         AvailableAssessors="@AvailableAssessors"
                                         CurrentRiskAssessment="@CurrentRiskAssessment"
@@ -141,8 +142,7 @@
                                     <RadzenText TextStyle="TextStyle.Caption" Text="Low Risk" />
                                 </RadzenStack>
                             </RadzenStack>
-                        </RadzenStack>
-                    </RadzenStack> *@
+                        </RadzenStack> *@
                         <RadzenStack Gap="0.5rem">
                             <RadzenText TextStyle="TextStyle.Subtitle2" Text="Risk Levels:" Style="margin: 0;" />
                             <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">

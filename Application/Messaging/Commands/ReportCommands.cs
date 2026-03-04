@@ -17,10 +17,10 @@ namespace SMS_Application.Messaging.Commands;
 public class UpdateReportStatusCommand : BaseCommandBundle, IRequest<Result<bool>>
 {
     public string ReportCode { get; set; }
-    public string ReportStatus { get; set; }
+    public ReportStatus ReportStatus { get; set; }
 
     public string UpdatedBy { get; set; }   
-    public UpdateReportStatusCommand(string reportcode,string reportstatus ,string updatedby)
+    public UpdateReportStatusCommand(string reportcode, ReportStatus reportstatus ,string updatedby)
     {
         ReportCode = reportcode ?? throw new ArgumentNullException(nameof(reportcode));
         ReportStatus = reportstatus ?? throw new ArgumentNullException(nameof(reportstatus));

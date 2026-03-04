@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace SMS_Application.Services;
 
-public sealed class RiskAnalysisService
+public sealed class RiskAnalysisService : IRiskAnalysisService
 {
     private readonly RiskAnalysisDataService _dataService;
     private readonly ILogger<RiskAnalysisService> _logger;
@@ -23,12 +23,14 @@ public sealed class RiskAnalysisService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<RiskAnalysis>> CreateRiskAnalysisAsync(RiskAnalysis riskAnalysis, CancellationToken ct = default)
+    #region IRiskAnalysisService Implementation
+
+    public async Task<Result<RiskAnalysis>> CreateRiskAnalysisAsync(RiskAnalysis analysis, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Creating risk analysis with code: {Code}", riskAnalysis?.Code);
-            var result = await _dataService.CreateRiskAnalysisAsync(riskAnalysis, ct).ConfigureAwait(false);
+            _logger.LogInformation("Creating risk analysis with code: {Code}", analysis?.Code);
+            var result = await _dataService.CreateRiskAnalysisAsync(analysis, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
@@ -61,43 +63,45 @@ public sealed class RiskAnalysisService
             return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NotFound);
         }
     }
-    public async Task<Result<RiskAnalysis>> GetRiskAnalysisByHazardIdAsync(HazardID id, CancellationToken ct = default)
+
+    public async Task<Result<List<RiskAnalysis>>> GetRiskAnalysesByHazardCodeAsync(string hazardCode, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Retrieving risk analysis with ID: {Id}", id);
-            return await _dataService.GetRiskAnalysisByHazardCodeAsync(id, ct).ConfigureAwait(false);
+            _logger.LogInformation("Retrieving risk analyses for hazard: {HazardCode}", hazardCode);
+            var hazardId = new HazardID(hazardCode);
+            
+            // The data service returns a single RiskAnalysis, so we wrap it in a list
+            var singleResult = await _dataService.GetRiskAnalysisByHazardCodeAsync(hazardId, ct).ConfigureAwait(false);
+            
+            if (singleResult.IsFailure)
+            {
+                return Result<List<RiskAnalysis>>.Failure<List<RiskAnalysis>>(singleResult.Error);
+            }
+
+            var resultList = singleResult.Value != null 
+                ? new List<RiskAnalysis> { singleResult.Value }
+                : new List<RiskAnalysis>();
+
+            return Result<List<RiskAnalysis>>.Success(resultList);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving risk analysis with ID: {Id}", id);
-            return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NotFound);
-        }
-    }
-    public async Task<Result<List<RiskAnalysis>>> GetAllRiskAnalysisAsync(CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving all risk analysis");
-            return await _dataService.GetAllRiskAnalysisAsync(ct).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error retrieving all risk analysis");
-            return Result<List<RiskAnalysis>>.Failure<List<RiskAnalysis>>(DomainErrors.RiskAnalysisError.NullOrEmpty);
+            _logger.LogError(ex, "Unexpected error retrieving risk analyses for hazard: {HazardCode}", hazardCode);
+            return Result<List<RiskAnalysis>>.Failure<List<RiskAnalysis>>(DomainErrors.RiskAnalysisError.NotFound);
         }
     }
 
-    public async Task<Result<RiskAnalysis>> UpdateRiskAnalysisAsync(RiskAnalysis riskAnalysis, CancellationToken ct = default)
+    public async Task<Result<RiskAnalysis>> UpdateRiskAnalysisAsync(RiskAnalysis analysis, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Updating risk analysis with ID: {Id}", riskAnalysis?.Id);
-            var result = await _dataService.UpdateRiskAnalysisAsync(riskAnalysis, ct).ConfigureAwait(false);
+            _logger.LogInformation("Updating risk analysis with ID: {Id}", analysis?.Id);
+            var result = await _dataService.UpdateRiskAnalysisAsync(analysis, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated risk analysis with ID: {Id}", riskAnalysis?.Id);
+                _logger.LogInformation("Successfully updated risk analysis with ID: {Id}", analysis?.Id);
             }
             else
             {
@@ -108,7 +112,7 @@ public sealed class RiskAnalysisService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating risk analysis with ID: {Id}", riskAnalysis?.Id);
+            _logger.LogError(ex, "Unexpected error updating risk analysis with ID: {Id}", analysis?.Id);
             return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.UpdateFailed);
         }
     }
@@ -137,4 +141,98 @@ public sealed class RiskAnalysisService
             return Result<bool>.Failure<bool>(DomainErrors.RiskAnalysisError.DeleteFailed);
         }
     }
+
+    public async Task<Result<RiskAnalysisResult>> PerformRiskAnalysisAsync(RiskAnalysisParameters parameters, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Performing risk analysis for hazard: {HazardCode}", parameters?.HazardCode);
+            
+            if (parameters == null)
+            {
+                return Result<RiskAnalysisResult>.Failure<RiskAnalysisResult>(DomainErrors.RiskAnalysisError.NullOrEmpty);
+            }
+
+            // Business logic for comprehensive risk analysis
+            var riskScore = parameters.Severity * parameters.Likelihood;
+            var riskLevel = riskScore switch
+            {
+                >= 20 => "Very High",
+                >= 15 => "High", 
+                >= 10 => "Medium",
+                >= 5 => "Low",
+                _ => "Very Low"
+            };
+
+            var recommendations = GenerateRecommendations(riskLevel, parameters);
+
+            var result = new RiskAnalysisResult
+            {
+                RiskLevel = riskLevel,
+                RiskScore = riskScore,
+                Recommendations = recommendations,
+                AnalyzedDate = DateTime.UtcNow
+            };
+
+            _logger.LogInformation("Completed risk analysis for hazard {HazardCode} with level {RiskLevel}", 
+                parameters.HazardCode, riskLevel);
+
+            return Result<RiskAnalysisResult>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error performing risk analysis for hazard: {HazardCode}", parameters?.HazardCode);
+            return Result<RiskAnalysisResult>.Failure<RiskAnalysisResult>(DomainErrors.RiskAnalysisError.UpdateFailed);
+        }
+    }
+
+    #endregion
+
+    #region Legacy Methods (keeping for backward compatibility)
+
+    public async Task<Result<RiskAnalysis>> GetRiskAnalysisByHazardIdAsync(HazardID id, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving risk analysis with hazard ID: {Id}", id);
+            return await _dataService.GetRiskAnalysisByHazardCodeAsync(id, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving risk analysis with hazard ID: {Id}", id);
+            return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NotFound);
+        }
+    }
+
+    public async Task<Result<List<RiskAnalysis>>> GetAllRiskAnalysisAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving all risk analysis");
+            return await _dataService.GetAllRiskAnalysisAsync(ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving all risk analysis");
+            return Result<List<RiskAnalysis>>.Failure<List<RiskAnalysis>>(DomainErrors.RiskAnalysisError.NullOrEmpty);
+        }
+    }
+
+    #endregion
+
+    #region Private Helper Methods
+
+    private string GenerateRecommendations(string riskLevel, RiskAnalysisParameters parameters)
+    {
+        return riskLevel switch
+        {
+            "Very High" => "Immediate action required. Stop operations and implement emergency controls.",
+            "High" => "Urgent action required. Implement additional controls within 24 hours.",
+            "Medium" => "Action required. Implement additional controls within reasonable timeframe.",
+            "Low" => "Consider additional controls. Monitor for changes.",
+            _ => "Continue current practices. Regular monitoring recommended."
+        };
+    }
+
+    #endregion
 }

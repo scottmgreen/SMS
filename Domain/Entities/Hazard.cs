@@ -20,21 +20,7 @@ public sealed class Hazard : BaseAuditableEntity
     // Public constructor for domain usage
     public Hazard(HazardID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
 
-    // Private constructor for creation with validation
-    //private Hazard(HazardID id, string code, string description, string category)
-    //    : base(id, "SYSTEM", DateTime.UtcNow)
-    //{
-    //    Code = code;
-    //    Name = HazardType;
-    //    Description = description;
-    //    HazardCategory = category;
-    //    Status = HazardStatus.Active;
-    //    Priority = HazardPriority.Medium;
-    //    CreatedDate = DateTime.UtcNow;
-    //    UpdatedDate = DateTime.UtcNow;
-    //    HazardLocation = new HazardLocation(new HazardLocationID("HL-0000"));
-    //}
-
+    
     #region Core Properties
 
     public string Code { get; set; } = string.Empty;
@@ -102,9 +88,7 @@ public sealed class Hazard : BaseAuditableEntity
 
     #endregion
 
-
-
-     
+        
 
     #region Related Entity Management
 
@@ -124,15 +108,6 @@ public sealed class Hazard : BaseAuditableEntity
 
 
     #endregion
-
-
-    /// <summary>
-    /// Analyze and suggest Five M component based on hazard description
-    /// </summary>
-    
-
-
-
 
 
 

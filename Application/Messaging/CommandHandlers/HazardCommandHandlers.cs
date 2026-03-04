@@ -9,42 +9,43 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
-
 using SMS_Infrastructure.Interfaces;
-using SMS_Infrastructure.Services;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 
 // =============================================
-// HAZARD COMMAND HANDLERS - SMS Backend Integration
+// HAZARD COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
 /// <summary>
-/// Command handler for creating hazards using individual properties
-/// Used by HazardReporting page for direct SMS Backend integration
+/// Command handler for creating hazards using Application Services
+/// Used by HazardReporting page following Clean Architecture principles
 /// </summary>
 public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<CreateHazardCommand, Result<Hazard>>
 {
-    private readonly HazardDataService _hazardDataService;
-    private readonly ScoringPanelDataService _scoringPanelDataService;
-    private readonly HazardLocationDataService _locationDataService;
-    private readonly RiskAssessmentDataService _riskAssessmentDataService;
-    private readonly RiskAnalysisDataService _riskAnalysisDataService;
+    private readonly HazardService _hazardService;
+    private readonly IScoringPanelService _scoringPanelService;
+    private readonly HazardLocationService _hazardLocationService;
+    private readonly IRiskAssessmentService _riskAssessmentService;
+    private readonly IRiskAnalysisService _riskAnalysisService;
     private readonly ILogger<CreateHazardCommandHandler> _logger;
     private readonly ILogSupport _logsupport;
     private readonly string _logheader = string.Empty;
 
     public CreateHazardCommandHandler(
-        HazardDataService hazardDataService, ScoringPanelDataService scoringPanelDataService,
-        HazardLocationDataService locationDataService,
-        RiskAssessmentDataService riskAssessmentDataService, RiskAnalysisDataService riskAnalysisDataService, ILogSupport logsupport,
-    ILogger<CreateHazardCommandHandler> logger)
+        HazardService hazardService,
+        IScoringPanelService scoringPanelService,
+        HazardLocationService hazardLocationService,
+        IRiskAssessmentService riskAssessmentService,
+        IRiskAnalysisService riskAnalysisService,
+        ILogSupport logsupport,
+        ILogger<CreateHazardCommandHandler> logger)
     {
-        _hazardDataService = hazardDataService ?? throw new ArgumentNullException(nameof(hazardDataService));
-        _scoringPanelDataService = scoringPanelDataService ?? throw new ArgumentNullException(nameof(scoringPanelDataService));
-        _locationDataService = locationDataService ?? throw new ArgumentNullException(nameof(locationDataService));
-        _riskAssessmentDataService = riskAssessmentDataService ?? throw new ArgumentNullException(nameof(riskAssessmentDataService));
-        _riskAnalysisDataService = riskAnalysisDataService ?? throw new ArgumentNullException(nameof(riskAnalysisDataService));
+        _hazardService = hazardService ?? throw new ArgumentNullException(nameof(hazardService));
+        _scoringPanelService = scoringPanelService ?? throw new ArgumentNullException(nameof(scoringPanelService));
+        _hazardLocationService = hazardLocationService ?? throw new ArgumentNullException(nameof(hazardLocationService));
+        _riskAssessmentService = riskAssessmentService ?? throw new ArgumentNullException(nameof(riskAssessmentService));
+        _riskAnalysisService = riskAnalysisService ?? throw new ArgumentNullException(nameof(riskAnalysisService));
         _logsupport = logsupport;
         _logheader = _logsupport.GenerateLogHeader();
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -54,32 +55,35 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
     {
         try
         {
-            _logger.LogInformation("? SMS Backend: Creating new hazard - {Name} for Report: {ReportCode}", 
+            _logger.LogInformation("✅ Clean Architecture: Creating new hazard - {Name} for Report: {ReportCode}", 
                 request.Hazard.Name, request.Hazard.ReportCode);
 
             Hazard hazard = request.Hazard;
             hazard.ReportCode = request.Hazard.ReportCode;
 
-            var hazardResult = await _hazardDataService.CreateHazardAsync(hazard, ct);
+            var hazardResult = await _hazardService.CreateHazardAsync(hazard, ct);
             if (hazardResult.IsFailure)
             {
-                _logger.LogApplicationError($"{_logheader} SMS Backend: Failed to save hazard via data service", ApplicationEventIds.Error, null);
+                _logger.LogApplicationError($"{_logheader} Clean Architecture: Failed to save hazard via application service", ApplicationEventIds.Error, null);
                 return Result<Hazard>.Failure<Hazard>(hazardResult.Error);
             }
             else
             {
                 hazard = hazardResult.Value;
 
-               
+                //// Create scoring panel using Application Service
+                //var scoringPanel = new ScoringPanel(new ScoringPanelID("SP-0000"))
+                //{
+                //    HazardCode = hazard.Code
+                //};
 
+                //var scoringPanelResult = await _scoringPanelService.CreateScoringPanelAsync(scoringPanel, ct);
+                //if (scoringPanelResult.IsFailure)
+                //{
+                //    _logger.LogWarning("Failed to create scoring panel for hazard {HazardCode}", hazard.Code);
+                //}
 
-
-                // Create scoring panel and location as before
-                var scoringPanel = new ScoringPanel(new ScoringPanelID("SP-0000"))
-                {
-                    HazardCode = hazard.Code
-                };
-
+                // Create hazard location using Application Service
                 var hazardLocation = new HazardLocation(new HazardLocationID("HL-0000"))
                 {
                     HazardCode = hazard.Code,
@@ -88,37 +92,32 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
                     Description = "Map selected location"
                 };
 
-                var createdLocationResult = await _locationDataService.CreateHazardLocationAsync(hazardLocation, ct);
-                hazard.HazardLocation = createdLocationResult.Value;
-
-                
-
+                var createdLocationResult = await _hazardLocationService.CreateHazardLocationAsync(hazardLocation, ct);
+                if (createdLocationResult.IsSuccess)
+                {
+                    hazard.HazardLocation = createdLocationResult.Value;
+                }
             }
 
-            _logger.LogApplicationInformation(ApplicationEventIds.Information, "? SMS Backend: Hazard saved via data service - {Code}", hazard.Code);
+            _logger.LogApplicationInformation(ApplicationEventIds.Information, "✅ Clean Architecture: Hazard saved via application service - {Code}", hazard.Code);
             return Result<Hazard>.Success(hazardResult.Value);
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("? SMS Backend: Exception creating hazard - {Name}", ApplicationEventIds.Error, ex);
+            _logger.LogApplicationError("✅ Clean Architecture: Exception creating hazard - {Name}", ApplicationEventIds.Error, ex);
             return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.CreateFailed);
         }
     }
-
-   
-
-    
 }
-
 
 public class UpdateHazardCommandHandler : BaseCommandBundle, IRequestHandler<UpdateHazardCommand, Result<Hazard>>
 {
-    private readonly HazardDataService _dataService;
+    private readonly HazardService _hazardService;
     private readonly ILogger<UpdateHazardCommandHandler> _logger;
 
-    public UpdateHazardCommandHandler(HazardDataService dataService, ILogger<UpdateHazardCommandHandler> logger)
+    public UpdateHazardCommandHandler(HazardService hazardService, ILogger<UpdateHazardCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _hazardService = hazardService ?? throw new ArgumentNullException(nameof(hazardService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -135,7 +134,7 @@ public class UpdateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Upd
             _logger.LogInformation("Processing UpdateHazardCommand for ID: {Id}, Code: {Code}",
                 request.Hazard.Id, request.Hazard.Code);
 
-            var result = await _dataService.UpdateHazardAsync(request.Hazard, ct).ConfigureAwait(false);
+            var result = await _hazardService.UpdateHazardAsync(request.Hazard, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
@@ -164,12 +163,12 @@ public class UpdateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Upd
 
 public class ResetHazardScoresCommandHandler : BaseCommandBundle, IRequestHandler<ResetHazardScoresCommand, Result<Hazard>>
 {
-    private readonly HazardDataService _dataService;
+    private readonly HazardService _hazardService;
     private readonly ILogger<ResetHazardScoresCommandHandler> _logger;
 
-    public ResetHazardScoresCommandHandler(HazardDataService dataService, ILogger<ResetHazardScoresCommandHandler> logger)
+    public ResetHazardScoresCommandHandler(HazardService hazardService, ILogger<ResetHazardScoresCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _hazardService = hazardService ?? throw new ArgumentNullException(nameof(hazardService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -179,21 +178,21 @@ public class ResetHazardScoresCommandHandler : BaseCommandBundle, IRequestHandle
         {
             if (request?.Hazard is null)
             {
-                _logger.LogApplicationError("UpdateHazardCommand received with null Hazard", ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("ResetHazardScoresCommand received with null Hazard", ApplicationEventIds.Error, null);
                 return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateHazardCommand for ID: {Id}, Code: {Code}",request.Hazard.Id, request.Hazard.Code);
+            _logger.LogInformation("Processing ResetHazardScoresCommand for ID: {Id}, Code: {Code}", request.Hazard.Id, request.Hazard.Code);
             request.Hazard.UpdatedDate = DateTime.UtcNow;
-            var result = await _dataService.UpdateHazardAsync(request.Hazard, ct).ConfigureAwait(false);
+            var result = await _hazardService.UpdateHazardAsync(request.Hazard, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated Hazard with ID: {Id}", request.Hazard.Id);
+                _logger.LogInformation("Successfully reset scores for Hazard with ID: {Id}", request.Hazard.Id);
             }
             else
             {
-                _logger.LogApplicationError("Failed to update Hazard with ID: {Id}. Error: {Error}",
+                _logger.LogApplicationError("Failed to reset scores for Hazard with ID: {Id}. Error: {Error}",
                     ApplicationEventIds.Error, null);
             }
 
@@ -201,28 +200,25 @@ public class ResetHazardScoresCommandHandler : BaseCommandBundle, IRequestHandle
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateHazardCommand operation was cancelled");
+            _logger.LogWarning("ResetHazardScoresCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("Unexpected error occurred while updating Hazard with ID: {Id}", ApplicationEventIds.Error, ex);
+            _logger.LogApplicationError("Unexpected error occurred while resetting Hazard scores with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.UpdateFailed);
         }
     }
 }
 
-
-
-
 public class DeleteHazardCommandHandler : BaseCommandBundle, IRequestHandler<DeleteHazardCommand, Result<bool>>
 {
-    private readonly HazardDataService _dataService;
+    private readonly HazardService _hazardService;
     private readonly ILogger<DeleteHazardCommandHandler> _logger;
 
-    public DeleteHazardCommandHandler(HazardDataService dataService, ILogger<DeleteHazardCommandHandler> logger)
+    public DeleteHazardCommandHandler(HazardService hazardService, ILogger<DeleteHazardCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _hazardService = hazardService ?? throw new ArgumentNullException(nameof(hazardService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -238,7 +234,7 @@ public class DeleteHazardCommandHandler : BaseCommandBundle, IRequestHandler<Del
 
             _logger.LogInformation("Processing DeleteHazardCommand for ID: {Id}", request.HazardId);
 
-            var result = await _dataService.DeleteHazardAsync(request.HazardId, ct).ConfigureAwait(false);
+            var result = await _hazardService.DeleteHazardAsync(request.HazardId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {

@@ -13,17 +13,17 @@ using Microsoft.Extensions.Logging;
 namespace SMS_Application.Messaging.CommandHandlers;
 
 // =============================================
-// INTERVIEW COMMAND HANDLERS
+// INTERVIEW COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
 public class CreateInterviewCommandHandler : BaseCommandBundle, IRequestHandler<CreateInterviewCommand, Result<Interview>>
 {
-    private readonly InterviewDataService _dataService;
+    private readonly IInterviewService _interviewService;
     private readonly ILogger<CreateInterviewCommandHandler> _logger;
 
-    public CreateInterviewCommandHandler(InterviewDataService dataService, ILogger<CreateInterviewCommandHandler> logger)
+    public CreateInterviewCommandHandler(IInterviewService interviewService, ILogger<CreateInterviewCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _interviewService = interviewService ?? throw new ArgumentNullException(nameof(interviewService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -37,13 +37,13 @@ public class CreateInterviewCommandHandler : BaseCommandBundle, IRequestHandler<
                 return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing CreateInterviewCommand for Code: {Code}", request.Interview.Code);
+            _logger.LogInformation("✅ Clean Architecture: Processing CreateInterviewCommand for Code: {Code}", request.Interview.Code);
 
-            var result = await _dataService.CreateInterviewAsync(request.Interview, ct).ConfigureAwait(false);
+            var result = await _interviewService.CreateInterviewAsync(request.Interview, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created Interview with ID: {Id}, Code: {Code}",
+                _logger.LogInformation("✅ Clean Architecture: Successfully created Interview with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -69,12 +69,12 @@ public class CreateInterviewCommandHandler : BaseCommandBundle, IRequestHandler<
 
 public class UpdateInterviewCommandHandler : BaseCommandBundle, IRequestHandler<UpdateInterviewCommand, Result<Interview>>
 {
-    private readonly InterviewDataService _dataService;
+    private readonly IInterviewService _interviewService;
     private readonly ILogger<UpdateInterviewCommandHandler> _logger;
 
-    public UpdateInterviewCommandHandler(InterviewDataService dataService, ILogger<UpdateInterviewCommandHandler> logger)
+    public UpdateInterviewCommandHandler(IInterviewService interviewService, ILogger<UpdateInterviewCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _interviewService = interviewService ?? throw new ArgumentNullException(nameof(interviewService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -88,14 +88,14 @@ public class UpdateInterviewCommandHandler : BaseCommandBundle, IRequestHandler<
                 return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateInterviewCommand for ID: {Id}, Code: {Code}",
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateInterviewCommand for ID: {Id}, Code: {Code}",
                 request.Interview.Id, request.Interview.Code);
 
-            var result = await _dataService.UpdateInterviewAsync(request.Interview, ct).ConfigureAwait(false);
+            var result = await _interviewService.UpdateInterviewAsync(request.Interview, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated Interview with ID: {Id}", request.Interview.Id);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated Interview with ID: {Id}", request.Interview.Id);
             }
             else
             {
@@ -120,12 +120,12 @@ public class UpdateInterviewCommandHandler : BaseCommandBundle, IRequestHandler<
 
 public class DeleteInterviewCommandHandler : BaseCommandBundle, IRequestHandler<DeleteInterviewCommand, Result<bool>>
 {
-    private readonly InterviewDataService _dataService;
+    private readonly IInterviewService _interviewService;
     private readonly ILogger<DeleteInterviewCommandHandler> _logger;
 
-    public DeleteInterviewCommandHandler(InterviewDataService dataService, ILogger<DeleteInterviewCommandHandler> logger)
+    public DeleteInterviewCommandHandler(IInterviewService interviewService, ILogger<DeleteInterviewCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _interviewService = interviewService ?? throw new ArgumentNullException(nameof(interviewService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -139,13 +139,13 @@ public class DeleteInterviewCommandHandler : BaseCommandBundle, IRequestHandler<
                 return Result<bool>.Failure<bool>(DomainErrors.InterviewError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing DeleteInterviewCommand for ID: {Id}", request.InterviewId);
+            _logger.LogInformation("✅ Clean Architecture: Processing DeleteInterviewCommand for ID: {Id}", request.InterviewId);
 
-            var result = await _dataService.DeleteInterviewAsync(request.InterviewId, ct).ConfigureAwait(false);
+            var result = await _interviewService.DeleteInterviewAsync(request.InterviewId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted Interview with ID: {Id}", request.InterviewId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully deleted Interview with ID: {Id}", request.InterviewId);
             }
             else
             {

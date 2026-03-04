@@ -13,17 +13,17 @@ using Microsoft.Extensions.Logging;
 namespace SMS_Application.Messaging.CommandHandlers;
 
 // =============================================
-// HAZARD FILE COMMAND HANDLERS - Following Exact SMS Pattern
+// HAZARD FILE COMMAND HANDLERS - Following Clean Architecture Pattern
 // =============================================
 
 public class CreateHazardFileCommandHandler : BaseCommandBundle, IRequestHandler<CreateHazardFileCommand, Result<HazardFile>>
 {
-    private readonly HazardFileDataService _dataService;
+    private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<CreateHazardFileCommandHandler> _logger;
 
-    public CreateHazardFileCommandHandler(HazardFileDataService dataService, ILogger<CreateHazardFileCommandHandler> logger)
+    public CreateHazardFileCommandHandler(IHazardFileService hazardFileService, ILogger<CreateHazardFileCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _hazardFileService = hazardFileService ?? throw new ArgumentNullException(nameof(hazardFileService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -40,7 +40,7 @@ public class CreateHazardFileCommandHandler : BaseCommandBundle, IRequestHandler
             _logger.LogInformation("Processing CreateHazardFileCommand for Code: {Code}, HazardCode: {HazardCode}",
                 request.HazardFile.Code, request.HazardFile.HazardCode);
 
-            var result = await _dataService.CreateHazardFileAsync(request.HazardFile, ct).ConfigureAwait(false);
+            var result = await _hazardFileService.CreateHazardFileAsync(request.HazardFile, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
@@ -70,12 +70,12 @@ public class CreateHazardFileCommandHandler : BaseCommandBundle, IRequestHandler
 
 public class UpdateHazardFileCommandHandler : BaseCommandBundle, IRequestHandler<UpdateHazardFileCommand, Result<HazardFile>>
 {
-    private readonly HazardFileDataService _dataService;
+    private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<UpdateHazardFileCommandHandler> _logger;
 
-    public UpdateHazardFileCommandHandler(HazardFileDataService dataService, ILogger<UpdateHazardFileCommandHandler> logger)
+    public UpdateHazardFileCommandHandler(IHazardFileService hazardFileService, ILogger<UpdateHazardFileCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _hazardFileService = hazardFileService ?? throw new ArgumentNullException(nameof(hazardFileService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -92,7 +92,7 @@ public class UpdateHazardFileCommandHandler : BaseCommandBundle, IRequestHandler
             _logger.LogInformation("Processing UpdateHazardFileCommand for Code: {Code}",
                 request.HazardFile.Code);
 
-            var result = await _dataService.UpdateHazardFileAsync(request.HazardFile, ct).ConfigureAwait(false);
+            var result = await _hazardFileService.UpdateHazardFileAsync(request.HazardFile, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
@@ -121,12 +121,12 @@ public class UpdateHazardFileCommandHandler : BaseCommandBundle, IRequestHandler
 
 public class DeactivateHazardFileCommandHandler : BaseCommandBundle, IRequestHandler<DeactivateHazardFileCommand, Result<bool>>
 {
-    private readonly HazardFileDataService _dataService;
+    private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<DeactivateHazardFileCommandHandler> _logger;
 
-    public DeactivateHazardFileCommandHandler(HazardFileDataService dataService, ILogger<DeactivateHazardFileCommandHandler> logger)
+    public DeactivateHazardFileCommandHandler(IHazardFileService hazardFileService, ILogger<DeactivateHazardFileCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _hazardFileService = hazardFileService ?? throw new ArgumentNullException(nameof(hazardFileService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -143,7 +143,7 @@ public class DeactivateHazardFileCommandHandler : BaseCommandBundle, IRequestHan
             _logger.LogInformation("Processing DeactivateHazardFileCommand for FileId: {FileId}, Reason: {Reason}",
                 request.FileId, request.Reason);
 
-            var result = await _dataService.DeactivateHazardFileAsync(request.FileId, request.Reason, request.DeactivatedBy, ct).ConfigureAwait(false);
+            var result = await _hazardFileService.DeactivateHazardFileAsync(request.FileId, request.Reason, request.DeactivatedBy, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
@@ -172,12 +172,12 @@ public class DeactivateHazardFileCommandHandler : BaseCommandBundle, IRequestHan
 
 public class ReactivateHazardFileCommandHandler : BaseCommandBundle, IRequestHandler<ReactivateHazardFileCommand, Result<bool>>
 {
-    private readonly HazardFileDataService _dataService;
+    private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<ReactivateHazardFileCommandHandler> _logger;
 
-    public ReactivateHazardFileCommandHandler(HazardFileDataService dataService, ILogger<ReactivateHazardFileCommandHandler> logger)
+    public ReactivateHazardFileCommandHandler(IHazardFileService hazardFileService, ILogger<ReactivateHazardFileCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _hazardFileService = hazardFileService ?? throw new ArgumentNullException(nameof(hazardFileService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -193,7 +193,7 @@ public class ReactivateHazardFileCommandHandler : BaseCommandBundle, IRequestHan
 
             _logger.LogInformation("Processing ReactivateHazardFileCommand for FileId: {FileId}", request.FileId);
 
-            var result = await _dataService.ReactivateHazardFileAsync(request.FileId, request.ReactivatedBy, ct).ConfigureAwait(false);
+            var result = await _hazardFileService.ReactivateHazardFileAsync(request.FileId, request.ReactivatedBy, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
@@ -222,12 +222,12 @@ public class ReactivateHazardFileCommandHandler : BaseCommandBundle, IRequestHan
 
 public class SetHazardFileConfidentialityCommandHandler : BaseCommandBundle, IRequestHandler<SetHazardFileConfidentialityCommand, Result<bool>>
 {
-    private readonly HazardFileDataService _dataService;
+    private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<SetHazardFileConfidentialityCommandHandler> _logger;
 
-    public SetHazardFileConfidentialityCommandHandler(HazardFileDataService dataService, ILogger<SetHazardFileConfidentialityCommandHandler> logger)
+    public SetHazardFileConfidentialityCommandHandler(IHazardFileService hazardFileService, ILogger<SetHazardFileConfidentialityCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _hazardFileService = hazardFileService ?? throw new ArgumentNullException(nameof(hazardFileService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -244,7 +244,7 @@ public class SetHazardFileConfidentialityCommandHandler : BaseCommandBundle, IRe
             _logger.LogInformation("Processing SetHazardFileConfidentialityCommand for FileCode: {FileCode}, Confidential: {IsConfidential}",
                 request.FileCode, request.IsConfidential);
 
-            var result = await _dataService.SetFileConfidentialityAsync(request.FileCode, request.IsConfidential, request.UpdatedBy, ct).ConfigureAwait(false);
+            var result = await _hazardFileService.SetFileConfidentialityAsync(request.FileCode, request.IsConfidential, request.UpdatedBy, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {

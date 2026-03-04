@@ -17,6 +17,11 @@ public partial class HazardReportSearch : ComponentBase
     [Inject] private DialogService DialogService { get; set; } = default!;
 
     [Inject] private AuthenticationService AuthService { get; set; } = default!;
+    
+    /// <summary>
+    /// Optional tracking ID parameter from URL for direct search
+    /// </summary>
+    [Parameter] public string? trackingId { get; set; }
     #endregion
 
     #region Search Properties
@@ -994,6 +999,26 @@ public partial class HazardReportSearch : ComponentBase
         public string Description { get; set; } = string.Empty;
         public bool IsConfidential { get; set; }
         public DateTime CreatedDate { get; set; }
+    }
+
+    #endregion
+
+    #region Lifecycle Methods
+
+    /// <summary>
+    /// Initialize component and handle trackingId parameter if provided
+    /// </summary>
+    protected override async Task OnInitializedAsync()
+    {
+        // If trackingId parameter is provided in URL, automatically search for it
+        if (!string.IsNullOrEmpty(trackingId))
+        {
+            TrackingIdSearch = trackingId;
+            Logger.LogInformation("Auto-searching for tracking ID from URL parameter: {TrackingId}", trackingId);
+            
+            // Automatically trigger search for the provided tracking ID
+            await SearchByTrackingId();
+        }
     }
 
     #endregion

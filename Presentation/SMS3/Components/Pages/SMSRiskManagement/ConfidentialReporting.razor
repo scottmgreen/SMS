@@ -30,8 +30,8 @@
 else if (ShowFinalSuccessConfirmation)
 {
     <!-- Final Success Modal -->
-    <div class="modal-overlay">
-        <div class="sms-modal-dialog sms-modal-lg">
+    @* <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-submission">
             <div class="sms-modal-content">
                 <div class="sms-modal-header sms-header-success">
                     <h5 class="sms-modal-title">
@@ -72,13 +72,6 @@ else if (ShowFinalSuccessConfirmation)
                         </div>
                     </RadzenCard>
 
-                    @* <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mb-3">
-                        <h6 class="mb-1">
-                            <i class="fas fa-shield-alt"></i> Your Identity is Protected
-                        </h6>
-                        <p class="mb-0">Your anonymous report has been submitted and will be reviewed by authorized SMS personnel only. Save your tracking ID for future reference.</p>
-                    </RadzenAlert> *@
-
                     <!-- Action Buttons -->
                     <div class="text-center">
                         <div class="d-flex justify-content-center gap-3 flex-wrap">
@@ -98,6 +91,69 @@ else if (ShowFinalSuccessConfirmation)
                 </div>
             </div>
         </div>
+    </div> *@
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-submission">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-success">
+                    <h5 class="sms-modal-title">
+                        <i class="fas fa-check-circle"></i> Port of Portland Hazard Report Successfully Submitted!
+                    </h5>
+                </div>
+                <div class="sms-modal-body">
+                    <div class="mb-3">
+                        <h6 class="text-primary mb-2">
+                            <i class="fas fa-info-circle"></i> Report Summary
+                        </h6>
+                        <hr />
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeLG="12">
+                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Tracking URL: </strong>@GetTrackingUrl()</RadzenText>
+                            </RadzenColumn>
+                        </RadzenRow>
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeLG="12">
+                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Report ID: </strong> @GeneratedReportId</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Hazard ID: </strong> @GeneratedHazardId</RadzenText>
+                            </RadzenColumn>
+                        </RadzenRow>
+                        <br />
+                        <br />
+                        <RadzenRow Gap="0.5rem">
+                            <RadzenColumn Size="12" SizeLG="12">
+                                <div class="text-center">
+                                    <RadzenFieldset Text="Track Report URL">
+                                        <RadzenQRCode Value="@GetTrackingUrl()" Size="100" />
+                                        <div class="small text-muted mt-2">
+                                            Scan to track your report
+                                        </div>
+                                    </RadzenFieldset>
+                                </div>
+                            </RadzenColumn>
+
+                        </RadzenRow>
+                    </div>
+
+                    <div class="row">
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <RadzenButton ButtonStyle="ButtonStyle.Warning"
+                                          Click="PrintConfirmation"
+                                          Text="Print Details"
+                                          Icon="print"
+                                          Size="ButtonSize.Medium" />
+
+                            <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                          Click="CloseFinalConfirmation"
+                                          Text="Continue & Clear Form"
+                                          Icon="check"
+                                          Size="ButtonSize.Medium" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 }
 else
@@ -660,7 +716,7 @@ else
 @if (ShowSubmissionConfirmation)
 {
     <div class="modal-overlay">
-        <div class="sms-modal-dialog sms-modal-lg">
+        <div class="sms-modal-dialog sms-modal-submission">
             <div class="sms-modal-content">
                 <div class="sms-modal-header sms-header-warning">
                     <h5 class="sms-modal-title">
@@ -673,11 +729,10 @@ else
                     <div class="mb-3">
                         <h6 class="text-primary mb-2">Report Summary:</h6>
                         <div class="row">
-                            <div class="small col-sm-4">
+                            <div class="small col-sm-12">
                                 <p class="mb-1"><strong>Submitted By:</strong> @HazardReport.SubmittedBy</p>
                                 <p class="mb-1"><strong>Submitted On:</strong> @HazardReport.SubmittedDate.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt")</p>
-                                <p class="mb-1"><strong>Submitting Department:</strong> @HazardReport.IncidentDateTime.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt")</p>
-                                <p class="mb-1"><strong>Incident Date/Time:</strong> @GetHazardCategoryDisplay(HazardReport.HazardCategory)</p>
+                                <p class="mb-1"><strong>Incident Date/Time:</strong>@HazardReport.IncidentDateTime.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt")</p>
                                 <p class="mb-1"><strong>Category:</strong> @GetHazardCategoryDisplay(HazardReport.HazardCategory)</p>
                                 <p class="mb-1"><strong>Type:</strong> @GetHazardTypeDisplay(HazardReport.HazardType)</p>
                                 <p class="mb-1"><strong>Location:</strong> @LocationDisplayText</p>
@@ -746,7 +801,12 @@ else
     max-height: calc(100vh - 2rem);
     overflow-y: auto;
 }
+    .sms-modal-submission {
+            max-width: 900px;
+            width: 100%;
+            height:700px;
 
+        }
 .sms-modal-lg {
     max-width: 1100px;
     width: 100%;

@@ -1006,7 +1006,8 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
 
         var lat = SelectedGeoLocation.Latitude;
         var lng = SelectedGeoLocation.Longitude;
-        return $"Lat: {lat:F6}, Lng: {lng:F6} - {SelectedGeoLocation.Description}";
+        //return $"Lat: {lat:F6}, Lng: {lng:F6} - {SelectedGeoLocation.Description}";
+        return $"{SelectedGeoLocation.Description}";
     }
 
     /// <summary>

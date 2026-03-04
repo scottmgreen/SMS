@@ -20,12 +20,12 @@ namespace SMS_Application.Messaging.QueryHandlers;
 
 public class GetScoringPanelByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetScoringPanelByIdQuery, Result<ScoringPanel>>
 {
-    private readonly ScoringPanelDataService _scoringPanelDataService;
+    private readonly IScoringPanelService _scoringPanelService;
     private readonly ILogger<GetScoringPanelByIdQueryHandler> _logger;
 
-    public GetScoringPanelByIdQueryHandler(ScoringPanelDataService scoringPanelDataService, ILogger<GetScoringPanelByIdQueryHandler> logger)
+    public GetScoringPanelByIdQueryHandler(IScoringPanelService scoringPanelService, ILogger<GetScoringPanelByIdQueryHandler> logger)
     {
-        _scoringPanelDataService = scoringPanelDataService ?? throw new ArgumentNullException(nameof(scoringPanelDataService));
+        _scoringPanelService = scoringPanelService ?? throw new ArgumentNullException(nameof(scoringPanelService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -34,7 +34,7 @@ public class GetScoringPanelByIdQueryHandler : BaseQueryBundle, IRequestHandler<
         try
         {
             _logger.LogInformation("Processing GetScoringPanelByIdQuery for ID: {Id}", request.ScoringPanelId);
-            var result = await _scoringPanelDataService.GetScoringPanelByIdAsync(request.ScoringPanelId, ct).ConfigureAwait(false);
+            var result = await _scoringPanelService.GetScoringPanelByIdAsync(request.ScoringPanelId, ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)
@@ -47,12 +47,12 @@ public class GetScoringPanelByIdQueryHandler : BaseQueryBundle, IRequestHandler<
 
 public class GetAllScoringPanelsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllScoringPanelsQuery, Result<List<ScoringPanel>>>
 {
-    private readonly ScoringPanelService _scoringPanelService;
+    private readonly IScoringPanelService _scoringPanelService;
     private readonly ILogger<GetAllScoringPanelsQueryHandler> _logger;
 
-    public GetAllScoringPanelsQueryHandler(ScoringPanelService scoringPanelDataService, ILogger<GetAllScoringPanelsQueryHandler> logger)
+    public GetAllScoringPanelsQueryHandler(IScoringPanelService scoringPanelService, ILogger<GetAllScoringPanelsQueryHandler> logger)
     {
-        _scoringPanelService = scoringPanelDataService ?? throw new ArgumentNullException(nameof(scoringPanelDataService));
+        _scoringPanelService = scoringPanelService ?? throw new ArgumentNullException(nameof(scoringPanelService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -74,12 +74,12 @@ public class GetAllScoringPanelsQueryHandler : BaseQueryBundle, IRequestHandler<
 
 public class GetScoringPanelsByHazardCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetScoringPanelsByHazardCodeQuery, Result<List<ScoringPanel>>>
 {
-    private readonly ScoringPanelDataService _scoringPanelDataService;
+    private readonly IScoringPanelService _scoringPanelService;
     private readonly ILogger<GetScoringPanelsByHazardCodeQueryHandler> _logger;
 
-    public GetScoringPanelsByHazardCodeQueryHandler(ScoringPanelDataService scoringPanelDataService, ILogger<GetScoringPanelsByHazardCodeQueryHandler> logger)
+    public GetScoringPanelsByHazardCodeQueryHandler(IScoringPanelService scoringPanelService, ILogger<GetScoringPanelsByHazardCodeQueryHandler> logger)
     {
-        _scoringPanelDataService = scoringPanelDataService ?? throw new ArgumentNullException(nameof(scoringPanelDataService));
+        _scoringPanelService = scoringPanelService ?? throw new ArgumentNullException(nameof(scoringPanelService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -88,7 +88,7 @@ public class GetScoringPanelsByHazardCodeQueryHandler : BaseQueryBundle, IReques
         try
         {
             _logger.LogInformation("Processing GetScoringPanelsByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
-            var result = await _scoringPanelDataService.GetScoringPanelsByHazardCodeAsync(request.HazardCode, ct).ConfigureAwait(false);
+            var result = await _scoringPanelService.GetScoringPanelsByHazardCodeAsync(request.HazardCode, ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)

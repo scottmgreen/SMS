@@ -20,8 +20,6 @@ public interface IHazardRepository
     Task<Result<bool>> UpdateAsync(Hazard hazard);
     Task<Result<bool>> DeleteAsync(HazardID id);
     Task<Result<IEnumerable<Hazard>>> GetAllAsync();
-    Task<Result<IEnumerable<Hazard>>> GetAllActiveAsync();
-    Task<Result<IEnumerable<Hazard>>> GetByStatusAsync(string status);
     Task<Result<IEnumerable<Hazard>>> GetByReportCodeAsync(string reportCode);
 }
 

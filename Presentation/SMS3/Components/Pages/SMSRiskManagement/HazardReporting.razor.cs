@@ -807,7 +807,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             return string.Empty;
 
         var baseUri = Navigation.BaseUri.TrimEnd('/');
-        return $"{baseUri}/ConfidentialReporting/TrackStatus/{GeneratedTrackingId}";
+        return $"{baseUri}/SMSRiskManagement/HazardReportSearch/TrackStatus/{GeneratedTrackingId}";
     }
 
     /// <summary>

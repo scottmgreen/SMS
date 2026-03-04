@@ -484,7 +484,7 @@ public partial class ReportValidation : ComponentBase
 
 
             RiskAssessment? existingRiskAssessment = null;
-            if (existingResult.IsSuccess && existingResult.Value != null)
+            if (existingResult.IsSuccess && existingResult.Value.Count >0)
             {
                 existingRiskAssessment = existingResult.Value.FirstOrDefault(inv => !string.IsNullOrWhiteSpace(inv.HazardCode) && inv.HazardCode.Equals(ReportHazard.Code, StringComparison.OrdinalIgnoreCase) );
                 existingRiskAssessment.LeadAssessorId = LeadAssessor;

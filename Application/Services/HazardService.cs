@@ -245,34 +245,6 @@ public sealed class HazardService
         }
     }
 
-    /// <summary>
-    /// Gets HazardLocation for a specific hazard
-    /// This method can be called independently when location data is needed
-    /// </summary>
-    public async Task<Result<HazardLocation>> GetHazardLocationForHazardAsync(string hazardCode, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving location for hazard: {HazardCode}", hazardCode);
-
-            var locationsResult = await _hazardLocationService.GetHazardLocationsByHazardCodeAsync(hazardCode, ct);
-
-            if (locationsResult.IsSuccess && locationsResult.Value.Any())
-            {
-                var primaryLocation = locationsResult.Value.OrderByDescending(l => l.CreatedDate).First();
-                return Result<HazardLocation>.Success(primaryLocation);
-            }
-            else
-            {
-                return Result<HazardLocation>.Failure<HazardLocation>(DomainErrors.HazardLocationError.NotFound);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error retrieving location for hazard: {HazardCode}", hazardCode);
-            return Result<HazardLocation>.Failure<HazardLocation>(DomainErrors.HazardLocationError.NullOrEmpty);
-        }
-    }
-
+    
     #endregion
 }

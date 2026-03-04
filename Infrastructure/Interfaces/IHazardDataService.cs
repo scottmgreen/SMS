@@ -61,7 +61,7 @@ public interface IHazardDataService
     /// <param name="reportId">The report identifier</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result containing list of hazards for the report or error</returns>
-    Task<Result<List<Hazard>>> GetHazardsByReportIdAsync(ReportID reportId, CancellationToken ct = default);
+    Task<Result<List<Hazard>>> GetHazardsByReportCodeAsync(ReportID reportId, CancellationToken ct = default);
 
     /// <summary>
     /// Retrieves hazards by report ID with their associated mitigations loaded separately
@@ -70,5 +70,5 @@ public interface IHazardDataService
     /// <param name="reportId">The report identifier</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result containing list of hazards with mitigations for the report or error</returns>
-    Task<Result<List<Hazard>>> GetHazardsByReportIdWithMitigationsAsync(ReportID reportId, CancellationToken ct = default);
+    Task<Result<List<Hazard>>> GetHazardsByReportCodeWithMitigationsAsync(ReportID reportId, CancellationToken ct = default);
 }

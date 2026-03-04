@@ -9,22 +9,21 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
-
 using SMS_Application.Messaging.Queries;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 
 // =============================================
-// REPORT COMMAND HANDLERS
+// REPORT COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 public class UpdateReportStatusCommandHandler : BaseCommandBundle, IRequestHandler<UpdateReportStatusCommand, Result<bool>>
 {
-    private readonly ReportDataService _dataService;
+    private readonly ReportService _reportService;
     private readonly ILogger<UpdateReportStatusCommandHandler> _logger;
 
-    public UpdateReportStatusCommandHandler(ReportDataService dataService, ILogger<UpdateReportStatusCommandHandler> logger)
+    public UpdateReportStatusCommandHandler(ReportService reportService, ILogger<UpdateReportStatusCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -38,47 +37,38 @@ public class UpdateReportStatusCommandHandler : BaseCommandBundle, IRequestHandl
                 return Result<bool>.Failure<bool>(DomainErrors.ReportError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing CreateReportCommand for Code: {Code}", request.ReportCode);
+            _logger.LogInformation("Processing UpdateReportStatusCommand for Code: {Code}", request.ReportCode);
 
-            var report = _dataService.GetReportByCodeAsync(new ReportID(request.ReportCode)).Result.Value;
-            
-            if (report !=null)
+            var result = await _reportService.UpdateReportStatusAsync(request.ReportCode, request.ReportStatus, request.UpdatedBy, ct);
+
+            if (result.IsSuccess)
             {
-                report.Status = request?.ReportStatus;
-                report.UpdatedBy = request?.UpdatedBy;
-                report.UpdatedDate = DateTime.UtcNow;
-
-                var result = _dataService.UpdateReportAsync(report);
-
-                if (!result.Result.IsSuccess)
-                {
-                    return false;
-                }
+                _logger.LogInformation("Successfully updated report status for Code: {Code}", request.ReportCode);
+            }
+            else
+            {
+                _logger.LogApplicationError("Failed to update report status for Code: {Code}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
             }
 
-            return true;
-
+            return result;
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("Unexpected error occurred while updating Report", ApplicationEventIds.Error, ex);
+            _logger.LogApplicationError("Unexpected error occurred while updating Report status", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.ReportError.UpdateFailed);
         }
     }
 }
 
-
-
-
-
 public class CreateReportCommandHandler : BaseCommandBundle, IRequestHandler<CreateReportCommand, Result<Report>>
 {
-    private readonly ReportDataService _dataService;
+    private readonly ReportService _reportService;
     private readonly ILogger<CreateReportCommandHandler> _logger;
 
-    public CreateReportCommandHandler(ReportDataService dataService, ILogger<CreateReportCommandHandler> logger)
+    public CreateReportCommandHandler(ReportService reportService, ILogger<CreateReportCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -94,7 +84,7 @@ public class CreateReportCommandHandler : BaseCommandBundle, IRequestHandler<Cre
 
             _logger.LogInformation("Processing CreateReportCommand for Code: {Code}", request.Report.Code);
 
-            var result = await _dataService.CreateReportAsync(request.Report, ct).ConfigureAwait(false);
+            var result = await _reportService.CreateReportAsync(request.Report, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
@@ -124,12 +114,12 @@ public class CreateReportCommandHandler : BaseCommandBundle, IRequestHandler<Cre
 
 public class UpdateReportCommandHandler : BaseCommandBundle, IRequestHandler<UpdateReportCommand, Result<Report>>
 {
-    private readonly ReportDataService _dataService;
+    private readonly ReportService _reportService;
     private readonly ILogger<UpdateReportCommandHandler> _logger;
 
-    public UpdateReportCommandHandler(ReportDataService dataService, ILogger<UpdateReportCommandHandler> logger)
+    public UpdateReportCommandHandler(ReportService reportService, ILogger<UpdateReportCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -146,7 +136,7 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IRequestHandler<Upd
             _logger.LogInformation("Processing UpdateReportCommand for ID: {Id}, Code: {Code}",
                 request.Report.Id, request.Report.Code);
 
-            var result = await _dataService.UpdateReportAsync(request.Report, ct).ConfigureAwait(false);
+            var result = await _reportService.UpdateReportAsync(request.Report, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
@@ -175,12 +165,12 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IRequestHandler<Upd
 
 public class DeleteReportCommandHandler : BaseCommandBundle, IRequestHandler<DeleteReportCommand, Result<bool>>
 {
-    private readonly ReportDataService _dataService;
+    private readonly ReportService _reportService;
     private readonly ILogger<DeleteReportCommandHandler> _logger;
 
-    public DeleteReportCommandHandler(ReportDataService dataService, ILogger<DeleteReportCommandHandler> logger)
+    public DeleteReportCommandHandler(ReportService reportService, ILogger<DeleteReportCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -196,7 +186,7 @@ public class DeleteReportCommandHandler : BaseCommandBundle, IRequestHandler<Del
 
             _logger.LogInformation("Processing DeleteReportCommand for ID: {Id}", request.ReportId);
 
-            var result = await _dataService.DeleteReportAsync(request.ReportId, ct).ConfigureAwait(false);
+            var result = await _reportService.DeleteReportAsync(request.ReportId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {

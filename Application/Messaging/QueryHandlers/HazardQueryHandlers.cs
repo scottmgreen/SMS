@@ -109,7 +109,7 @@ public class GetHazardsByReportIdQueryHandler : BaseQueryBundle, IRequestHandler
             ReportID reportid = request.ReportId;
 
             _logger.LogInformation("Processing GetAllHazardsByReportIdQuery");
-            var result = await _hazardDataService.GetHazardsByReportIdAsync(reportid, ct).ConfigureAwait(false);
+            var result = await _hazardDataService.GetHazardsByReportCodeAsync(reportid, ct).ConfigureAwait(false);
             List<Hazard> hazards = new();
             foreach (Hazard hz in result.Value)
             {
@@ -152,7 +152,7 @@ public class GetHazardsByReportCodeQueryHandler : BaseQueryBundle, IRequestHandl
             var reportId = new ReportID(request.ReportId.Value);
 
             // ? FIXED: Use the clean method that doesn't include complex mitigation joins
-            var result = await _hazardDataService.GetHazardsByReportIdAsync(reportId, ct).ConfigureAwait(false);
+            var result = await _hazardDataService.GetHazardsByReportCodeAsync(reportId, ct).ConfigureAwait(false);
 
             if (result.IsFailure || result.Value == null)
             {
@@ -173,7 +173,7 @@ public class GetHazardsByReportCodeQueryHandler : BaseQueryBundle, IRequestHandl
             }
 
             // ? PERFORMANCE NOTE: If you need mitigations, load them separately:
-            // var hazardsWithMitigations = await _hazardDataService.GetHazardsByReportIdWithMitigationsAsync(reportId, ct);
+            // var hazardsWithMitigations = await _hazardDataService.GetHazardsByReportCodeWithMitigationsAsync(reportId, ct);
 
             return Result<List<Hazard>>.Success(hazards);
         }

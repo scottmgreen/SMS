@@ -16,8 +16,8 @@ namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 public partial class HazardScoringPanel : ComponentBase
 {
     [Parameter] public Hazard Hazard { get; set; } = new(new HazardID("HZ-0000"));
-    [Parameter] public Step4Model Step4 { get; set; } =  default!;
-    [Parameter] public Step5Model Step5 { get; set; } = default!;
+    [Parameter] public Step4Model? Step4 { get; set; }  // Made nullable to handle null cases
+    [Parameter] public Step5Model? Step5 { get; set; } // Made nullable to handle null cases
     [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
     [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
     [Parameter] public RiskAssessment? CurrentRiskAssessment { get; set; }   // ✅ SINGLE risk assessment parameter
@@ -737,18 +737,27 @@ public partial class HazardScoringPanel : ComponentBase
                 // ✅ STEP 4: Update the base HazardRiskLevel (this is the hazard's inherent risk)
                 Hazard.HazardRiskLevel = calculation.IsValid ? calculation.RiskLevel : RiskLevel.Unkonwn;
 
-                // ✅ ALWAYS update Step4 dictionary with calculated values
-                if (calculation.IsValid)
+                // ✅ ALWAYS update Step4 dictionary with calculated values (with null check)
+                if (calculation.IsValid && Step4 != null)
                 {
                     Step4.HazardAverageScores[Hazard.Code] = (double)calculation.AverageScore;
                     Step4.HazardRiskLevels[Hazard.Code] = calculation.RiskLevel;
                     Step4.HazardMatrixCodes[Hazard.Code] = calculation.MatrixCode;
+                    
+                    Logger.LogInformation("✅ Updated Step4 model dictionaries for hazard {HazardCode}", Hazard.Code);
                 }
-                else
+                else if (Step4 != null)
                 {
                     Step4.HazardAverageScores.Remove(Hazard.Code);
                     Step4.HazardRiskLevels.Remove(Hazard.Code);
                     Step4.HazardMatrixCodes.Remove(Hazard.Code);
+                    
+                    Logger.LogInformation("✅ Cleared Step4 model dictionaries for hazard {HazardCode}", Hazard.Code);
+                }
+                else
+                {
+                    Logger.LogWarning("⚠️ Step4 model is null - cannot update dictionaries for hazard {HazardCode} (CurrentStep: {CurrentStep})", 
+                        Hazard.Code, CurrentStep);
                 }
 
                 Logger.LogInformation("Step 4: Updated base HazardRiskLevel to {RiskLevel} for hazard {HazardCode}",

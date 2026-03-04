@@ -86,6 +86,14 @@ namespace SMS_Application.Configuration
             services.AddScoped<ScoringPanelService>();
             services.AddScoped<SafetyPerformanceIndicatorService>();
 
+            // NEW: Missing Application Service Interface Bindings
+            services.AddScoped<IScoringPanelService, ScoringPanelService>();
+            services.AddScoped<IRiskAssessmentService, RiskAssessmentService>();
+            services.AddScoped<IRiskAnalysisService, RiskAnalysisService>();
+            services.AddScoped<IInterviewService, InterviewService>();
+            services.AddScoped<IMitigationService, MitigationService>();
+            services.AddScoped<IReportValidationService, ReportValidationService>();
+
             // SMS Audit Management Services (NEW) - TEMPORARILY DISABLED UNTIL INFRASTRUCTURE IS READY
             services.AddScoped<SMSAuditPlanService>();
             services.AddScoped<SMSAuditService>();

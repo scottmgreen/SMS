@@ -13,17 +13,17 @@ using Microsoft.Extensions.Logging;
 namespace SMS_Application.Messaging.CommandHandlers;
 
 // =============================================
-// MITIGATION COMMAND HANDLERS
+// MITIGATION COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
 public class CreateMitigationCommandHandler : BaseCommandBundle, IRequestHandler<CreateMitigationCommand, Result<Mitigation>>
 {
-    private readonly MitigationDataService _dataService;
+    private readonly IMitigationService _mitigationService;
     private readonly ILogger<CreateMitigationCommandHandler> _logger;
 
-    public CreateMitigationCommandHandler(MitigationDataService dataService, ILogger<CreateMitigationCommandHandler> logger)
+    public CreateMitigationCommandHandler(IMitigationService mitigationService, ILogger<CreateMitigationCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _mitigationService = mitigationService ?? throw new ArgumentNullException(nameof(mitigationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -37,15 +37,14 @@ public class CreateMitigationCommandHandler : BaseCommandBundle, IRequestHandler
                 return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing CreateMitigationCommand for Code: {Code}", request.Mitigation.Code);
-            request.Mitigation.Status = MitigationStatus.PendingApproval;
+            _logger.LogInformation("✅ Clean Architecture: Processing CreateMitigationCommand for Code: {Code}", request.Mitigation.Code);
 
-            var result = await _dataService.CreateMitigationAsync(request.Mitigation, ct).ConfigureAwait(false);
+            var result = await _mitigationService.CreateMitigationAsync(request.Mitigation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created Mitigation with ID: {Id}, Code: {Code}",
-                    result.Value?.Id, result.Value?.Code);
+                _logger.LogInformation("✅ Clean Architecture: Successfully created Mitigation with Code: {Code}",
+                    result.Value?.Code);
             }
             else
             {
@@ -70,12 +69,12 @@ public class CreateMitigationCommandHandler : BaseCommandBundle, IRequestHandler
 
 public class UpdateMitigationCommandHandler : BaseCommandBundle, IRequestHandler<UpdateMitigationCommand, Result<Mitigation>>
 {
-    private readonly MitigationDataService _dataService;
+    private readonly IMitigationService _mitigationService;
     private readonly ILogger<UpdateMitigationCommandHandler> _logger;
 
-    public UpdateMitigationCommandHandler(MitigationDataService dataService, ILogger<UpdateMitigationCommandHandler> logger)
+    public UpdateMitigationCommandHandler(IMitigationService mitigationService, ILogger<UpdateMitigationCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _mitigationService = mitigationService ?? throw new ArgumentNullException(nameof(mitigationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -89,18 +88,18 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IRequestHandler
                 return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateMitigationCommand for ID: {Id}, Code: {Code}",
-                request.Mitigation.Id, request.Mitigation.Code);
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateMitigationCommand for Code: {Code}",
+                request.Mitigation.Code);
 
-            var result = await _dataService.UpdateMitigationAsync(request.Mitigation, ct).ConfigureAwait(false);
+            var result = await _mitigationService.UpdateMitigationAsync(request.Mitigation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated Mitigation with ID: {Id}", request.Mitigation.Id);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated Mitigation with Code: {Code}", request.Mitigation.Code);
             }
             else
             {
-                _logger.LogApplicationError("Failed to update Mitigation with ID: {Id}. Error: {Error}",
+                _logger.LogApplicationError("Failed to update Mitigation with Code: {Code}. Error: {Error}",
                     ApplicationEventIds.Error, null);
             }
 
@@ -113,7 +112,7 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IRequestHandler
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("Unexpected error occurred while updating Mitigation with ID: {Id}", ApplicationEventIds.Error, ex);
+            _logger.LogApplicationError("Unexpected error occurred while updating Mitigation with Code: {Code}", ApplicationEventIds.Error, ex);
             return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.UpdateFailed);
         }
     }
@@ -121,12 +120,12 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IRequestHandler
 
 public class DeleteMitigationCommandHandler : BaseCommandBundle, IRequestHandler<DeleteMitigationCommand, Result<bool>>
 {
-    private readonly MitigationDataService _dataService;
+    private readonly IMitigationService _mitigationService;
     private readonly ILogger<DeleteMitigationCommandHandler> _logger;
 
-    public DeleteMitigationCommandHandler(MitigationDataService dataService, ILogger<DeleteMitigationCommandHandler> logger)
+    public DeleteMitigationCommandHandler(IMitigationService mitigationService, ILogger<DeleteMitigationCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _mitigationService = mitigationService ?? throw new ArgumentNullException(nameof(mitigationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -140,17 +139,17 @@ public class DeleteMitigationCommandHandler : BaseCommandBundle, IRequestHandler
                 return Result<bool>.Failure<bool>(DomainErrors.MitigationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing DeleteMitigationCommand for ID: {Id}", request.MitigationId);
+            _logger.LogInformation("✅ Clean Architecture: Processing DeleteMitigationCommand for Code: {Code}", request.MitigationId);
 
-            var result = await _dataService.DeleteMitigationAsync(request.MitigationId, ct).ConfigureAwait(false);
+            var result = await _mitigationService.DeleteMitigationAsync(request.MitigationId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted Mitigation with ID: {Id}", request.MitigationId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully deleted Mitigation with Code: {Code}", request.MitigationId);
             }
             else
             {
-                _logger.LogApplicationError("Failed to delete Mitigation with ID: {Id}. Error: {Error}",
+                _logger.LogApplicationError("Failed to delete Mitigation with Code: {Code}. Error: {Error}",
                     ApplicationEventIds.Error, null);
             }
 
@@ -163,7 +162,7 @@ public class DeleteMitigationCommandHandler : BaseCommandBundle, IRequestHandler
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("Unexpected error occurred while deleting Mitigation with ID: {Id}", ApplicationEventIds.Error, ex);
+            _logger.LogApplicationError("Unexpected error occurred while deleting Mitigation with Code: {Code}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.MitigationError.DeleteFailed);
         }
     }

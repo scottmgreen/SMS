@@ -50,6 +50,20 @@ public sealed class ReportService : IReportService
         }
     }
 
+    public async Task<Result<Report>> GetReportByIdAsync(ReportID id, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving report with ID: {Id}", id);
+            return await _dataService.GetReportByCodeAsync(id, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving report with ID: {Id}", id);
+            return Result<Report>.Failure<Report>(DomainErrors.ReportError.NotFound);
+        }
+    }
+
     public async Task<Result<Report>> GetReportByCodeAsync(ReportID code, CancellationToken ct = default)
     {
         try
@@ -125,6 +139,76 @@ public sealed class ReportService : IReportService
         {
             _logger.LogError(ex, "Unexpected error deleting report with ID: {Id}", id);
             return Result<bool>.Failure<bool>(DomainErrors.ReportError.DeleteFailed);
+        }
+    }
+
+    public async Task<Result<bool>> UpdateReportStatusAsync(string reportCode, ReportStatus status, string updatedBy, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Updating report status for Code: {Code} to {Status}", reportCode, status);
+            
+            // Get the current report
+            var reportResult = await _dataService.GetReportByCodeAsync(new ReportID(reportCode), ct);
+            if (reportResult.IsFailure || reportResult.Value == null)
+            {
+                return Result<bool>.Failure<bool>(DomainErrors.ReportError.NotFound);
+            }
+
+            var report = reportResult.Value;
+            report.Status = status;
+            report.UpdatedBy = updatedBy;
+            report.UpdatedDate = DateTime.UtcNow;
+
+            var updateResult = await _dataService.UpdateReportAsync(report, ct);
+            
+            if (updateResult.IsSuccess)
+            {
+                _logger.LogInformation("Successfully updated report status for Code: {Code}", reportCode);
+                return Result<bool>.Success(true);
+            }
+            else
+            {
+                _logger.LogError("Failed to update report status. Error: {Error}", updateResult.Error?.Message);
+                return Result<bool>.Failure<bool>(updateResult.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error updating report status for Code: {Code}", reportCode);
+            return Result<bool>.Failure<bool>(DomainErrors.ReportError.UpdateFailed);
+        }
+    }
+
+    public async Task<Result<Report>> SubmitReportAsync(ReportID id, string submittedBy, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Submitting report with ID: {Id}", id);
+            
+            var reportResult = await _dataService.GetReportByCodeAsync(id, ct);
+            if (reportResult.IsFailure || reportResult.Value == null)
+            {
+                return Result<Report>.Failure<Report>(DomainErrors.ReportError.NotFound);
+            }
+
+            var report = reportResult.Value;
+            report.Status = ReportStatus.Created;
+            report.UpdatedBy = submittedBy;
+            report.UpdatedDate = DateTime.UtcNow;
+
+            var result = await _dataService.UpdateReportAsync(report, ct);
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully submitted report with ID: {Id}", id);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error submitting report with ID: {Id}", id);
+            return Result<Report>.Failure<Report>(DomainErrors.ReportError.UpdateFailed);
         }
     }
 }

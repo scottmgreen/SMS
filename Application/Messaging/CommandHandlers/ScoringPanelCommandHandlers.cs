@@ -18,12 +18,12 @@ namespace SMS_Application.Messaging.CommandHandlers;
 
 public class CreateScoringPanelCommandHandler : BaseCommandBundle, IRequestHandler<CreateScoringPanelCommand, Result<ScoringPanel>>
 {
-    private readonly ScoringPanelDataService _dataService;
+    private readonly IScoringPanelService _scoringPanelService;
     private readonly ILogger<CreateScoringPanelCommandHandler> _logger;
 
-    public CreateScoringPanelCommandHandler(ScoringPanelDataService dataService, ILogger<CreateScoringPanelCommandHandler> logger)
+    public CreateScoringPanelCommandHandler(IScoringPanelService scoringPanelService, ILogger<CreateScoringPanelCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _scoringPanelService = scoringPanelService ?? throw new ArgumentNullException(nameof(scoringPanelService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -39,7 +39,7 @@ public class CreateScoringPanelCommandHandler : BaseCommandBundle, IRequestHandl
 
             _logger.LogInformation("Processing CreateScoringPanelCommand for Code: {Code}", request.ScoringPanel.Code);
 
-            var result = await _dataService.CreateScoringPanelAsync(request.ScoringPanel, ct).ConfigureAwait(false);
+            var result = await _scoringPanelService.CreateScoringPanelAsync(request.ScoringPanel, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
@@ -69,12 +69,12 @@ public class CreateScoringPanelCommandHandler : BaseCommandBundle, IRequestHandl
 
 public class UpdateScoringPanelCommandHandler : BaseCommandBundle, IRequestHandler<UpdateScoringPanelCommand, Result<ScoringPanel>>
 {
-    private readonly ScoringPanelDataService _dataService;
+    private readonly IScoringPanelService _scoringPanelService;
     private readonly ILogger<UpdateScoringPanelCommandHandler> _logger;
 
-    public UpdateScoringPanelCommandHandler(ScoringPanelDataService dataService, ILogger<UpdateScoringPanelCommandHandler> logger)
+    public UpdateScoringPanelCommandHandler(IScoringPanelService scoringPanelService, ILogger<UpdateScoringPanelCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _scoringPanelService = scoringPanelService ?? throw new ArgumentNullException(nameof(scoringPanelService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -91,7 +91,7 @@ public class UpdateScoringPanelCommandHandler : BaseCommandBundle, IRequestHandl
             _logger.LogInformation("Processing UpdateScoringPanelCommand for ID: {Id}, Code: {Code}",
                 request.ScoringPanel.Id, request.ScoringPanel.Code);
 
-            var result = await _dataService.UpdateScoringPanelAsync(request.ScoringPanel, ct).ConfigureAwait(false);
+            var result = await _scoringPanelService.UpdateScoringPanelAsync(request.ScoringPanel, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
@@ -120,12 +120,12 @@ public class UpdateScoringPanelCommandHandler : BaseCommandBundle, IRequestHandl
 
 public class DeleteScoringPanelCommandHandler : BaseCommandBundle, IRequestHandler<DeleteScoringPanelCommand, Result<bool>>
 {
-    private readonly ScoringPanelDataService _dataService;
+    private readonly IScoringPanelService _scoringPanelService;
     private readonly ILogger<DeleteScoringPanelCommandHandler> _logger;
 
-    public DeleteScoringPanelCommandHandler(ScoringPanelDataService dataService, ILogger<DeleteScoringPanelCommandHandler> logger)
+    public DeleteScoringPanelCommandHandler(IScoringPanelService scoringPanelService, ILogger<DeleteScoringPanelCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _scoringPanelService = scoringPanelService ?? throw new ArgumentNullException(nameof(scoringPanelService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -141,7 +141,7 @@ public class DeleteScoringPanelCommandHandler : BaseCommandBundle, IRequestHandl
 
             _logger.LogInformation("Processing DeleteScoringPanelCommand for ID: {Id}", request.ScoringPanelId);
 
-            var result = await _dataService.DeleteScoringPanelAsync(request.ScoringPanelId, ct).ConfigureAwait(false);
+            var result = await _scoringPanelService.DeleteScoringPanelAsync(request.ScoringPanelId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {

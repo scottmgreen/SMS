@@ -60,19 +60,7 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
             : Result<IEnumerable<Hazard>>.Failure<IEnumerable<Hazard>>(result.Error);
     }
 
-    public async Task<Result<IEnumerable<Hazard>>> GetAllActiveAsync()
-    {
-        // TODO: Implement proper filter for active hazards
-        // For now, return all hazards
-        return await GetAllAsync();
-    }
-
-    public async Task<Result<IEnumerable<Hazard>>> GetByStatusAsync(string status)
-    {
-        // TODO: Implement proper filter by status
-        // For now, return all hazards
-        return await GetAllAsync();
-    }
+        
 
     public async Task<Result<IEnumerable<Hazard>>> GetByReportCodeAsync(string reportCode)
     {
@@ -244,7 +232,7 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
     /// Get hazards with their associated mitigations loaded separately
     /// This avoids the complex JOIN and ensures clean data mapping
     /// </summary>
-    public async Task<Result<List<Hazard>>> GetHazardsByReportIdWithMitigationsAsync(ReportID reportId, CancellationToken ct = default)
+    public async Task<Result<List<Hazard>>> GetHazardsByReportCodeWithMitigationsAsync(ReportID reportId, CancellationToken ct = default)
     {
         try
         {

@@ -2,9 +2,8 @@
 // <copyright file="InterviewService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Application service providing business logic operations for SMS domain entities.
-//                  Provides business logic operations and coordinates domain entities
-//                  through the CQRS pattern via Mediator services.
+//     Description: Application service for SMS interview management.
+//                  Provides business logic operations and coordinates domain entities.
 // </copyright>
 //-----------------------------------------------------------------------
 
@@ -12,16 +11,23 @@ using Microsoft.Extensions.Logging;
 
 namespace SMS_Application.Services;
 
-public sealed class InterviewService
+/// <summary>
+/// Application service for Interview management and business operations
+/// </summary>
+public sealed class InterviewService : IInterviewService
 {
     private readonly InterviewDataService _dataService;
     private readonly ILogger<InterviewService> _logger;
 
-    public InterviewService(InterviewDataService dataService, ILogger<InterviewService> logger)
+    public InterviewService(
+        InterviewDataService dataService,
+        ILogger<InterviewService> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
+
+    #region IInterviewService Implementation
 
     public async Task<Result<Interview>> CreateInterviewAsync(Interview interview, CancellationToken ct = default)
     {
@@ -32,7 +38,7 @@ public sealed class InterviewService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created interview with ID: {Id}", result.Value?.Id);
+                _logger.LogInformation("Successfully created interview with Code: {Code}", result.Value?.Code);
             }
             else
             {
@@ -76,16 +82,38 @@ public sealed class InterviewService
         }
     }
 
+    public async Task<Result<List<Interview>>> GetInterviewsByInvestigationCodeAsync(InvestigationID investigationCode, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving interviews for investigation Code: {InvestigationCode}", investigationCode);
+            var result = await _dataService.GetByInvestigationAsync(investigationCode.Value, ct).ConfigureAwait(false);
+            
+            if (result.IsSuccess && result.Value != null)
+            {
+                var interviewList = result.Value.ToList();
+                return Result<List<Interview>>.Success(interviewList);
+            }
+            
+            return Result<List<Interview>>.Failure<List<Interview>>(result.Error);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving interviews for investigation Code: {InvestigationCode}", investigationCode);
+            return Result<List<Interview>>.Failure<List<Interview>>(DomainErrors.InterviewError.NotFound);
+        }
+    }
+
     public async Task<Result<Interview>> UpdateInterviewAsync(Interview interview, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Updating interview with ID: {Id}", interview?.Id);
+            _logger.LogInformation("Updating interview with Code: {Code}", interview?.Code);
             var result = await _dataService.UpdateInterviewAsync(interview, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated interview with ID: {Id}", interview?.Id);
+                _logger.LogInformation("Successfully updated interview with Code: {Code}", interview?.Code);
             }
             else
             {
@@ -96,21 +124,21 @@ public sealed class InterviewService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating interview with ID: {Id}", interview?.Id);
+            _logger.LogError(ex, "Unexpected error updating interview with Code: {Code}", interview?.Code);
             return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.UpdateFailed);
         }
     }
 
-    public async Task<Result<bool>> DeleteInterviewAsync(InterviewID id, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteInterviewAsync(InterviewID code, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Deleting interview with ID: {Id}", id);
-            var result = await _dataService.DeleteInterviewAsync(id, ct).ConfigureAwait(false);
+            _logger.LogInformation("Deleting interview with Code: {Code}", code);
+            var result = await _dataService.DeleteInterviewAsync(code, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted interview with ID: {Id}", id);
+                _logger.LogInformation("Successfully deleted interview with Code: {Code}", code);
             }
             else
             {
@@ -121,8 +149,75 @@ public sealed class InterviewService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting interview with ID: {Id}", id);
+            _logger.LogError(ex, "Unexpected error deleting interview with Code: {Code}", code);
             return Result<bool>.Failure<bool>(DomainErrors.InterviewError.DeleteFailed);
         }
     }
+
+    public async Task<Result<Interview>> ScheduleInterviewAsync(InterviewID code, DateTime scheduledDateTime, string scheduledBy, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Scheduling interview {Code} for {DateTime} by {ScheduledBy}", code, scheduledDateTime, scheduledBy);
+            
+            var interviewResult = await _dataService.GetInterviewByCodeAsync(code, ct);
+            if (interviewResult.IsFailure || interviewResult.Value == null)
+            {
+                return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.NotFound);
+            }
+
+            var interview = interviewResult.Value;
+            interview.InterviewDate = scheduledDateTime;
+            interview.UpdatedBy = scheduledBy;
+            interview.UpdatedDate = DateTime.UtcNow;
+
+            var result = await _dataService.UpdateInterviewAsync(interview, ct);
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully scheduled interview {Code}", code);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error scheduling interview with Code: {Code}", code);
+            return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.UpdateFailed);
+        }
+    }
+
+    public async Task<Result<Interview>> CompleteInterviewAsync(InterviewID code, string notes, string completedBy, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Completing interview {Code} by {CompletedBy}", code, completedBy);
+            
+            var interviewResult = await _dataService.GetInterviewByCodeAsync(code, ct);
+            if (interviewResult.IsFailure || interviewResult.Value == null)
+            {
+                return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.NotFound);
+            }
+
+            var interview = interviewResult.Value;
+            interview.InvestigatorNotes = notes;
+            interview.UpdatedBy = completedBy;
+            interview.UpdatedDate = DateTime.UtcNow;
+            interview.CompletedDate = DateTime.UtcNow;
+
+            var result = await _dataService.UpdateInterviewAsync(interview, ct);
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully completed interview {Code}", code);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error completing interview with Code: {Code}", code);
+            return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.UpdateFailed);
+        }
+    }
+
+    #endregion
 }

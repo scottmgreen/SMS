@@ -169,5 +169,53 @@ public sealed class HazardFileService : IHazardFileService
         }
     }
 
+    public async Task<Result<bool>> ReactivateHazardFileAsync(int fileId, string reactivatedBy, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Reactivating hazard file with ID: {FileId}", fileId);
+            var result = await _dataService.ReactivateHazardFileAsync(fileId, reactivatedBy, ct).ConfigureAwait(false);
 
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully reactivated hazard file with ID: {FileId}", fileId);
+            }
+            else
+            {
+                _logger.LogError("Failed to reactivate hazard file. Error: {Error}", result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error reactivating hazard file with ID: {FileId}", fileId);
+            return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.UpdateFailed);
+        }
+    }
+
+    public async Task<Result<bool>> SetFileConfidentialityAsync(string fileCode, bool isConfidential, string updatedBy, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Setting confidentiality for hazard file with Code: {FileCode} to {IsConfidential}", fileCode, isConfidential);
+            var result = await _dataService.SetFileConfidentialityAsync(fileCode, isConfidential, updatedBy, ct).ConfigureAwait(false);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully set confidentiality for hazard file with Code: {FileCode}", fileCode);
+            }
+            else
+            {
+                _logger.LogError("Failed to set confidentiality for hazard file. Error: {Error}", result.Error?.Message);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error setting confidentiality for hazard file with Code: {FileCode}", fileCode);
+            return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.UpdateFailed);
+        }
+    }
 }

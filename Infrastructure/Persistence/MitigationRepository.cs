@@ -232,6 +232,7 @@ public sealed class MitigationRepository : BaseRepository<MitigationRepository, 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationDescription, mitigation.Description ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationType, mitigation.Type ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationStatus, mitigation.Status.Value ?? MitigationStatus.PendingApproval.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationApprovedBy, mitigation.ApprovedBy ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationRiskAssessmentCode, mitigation.RiskAssessmentCode ?? (object)DBNull.Value));
 
             // Timeline Properties
@@ -240,6 +241,7 @@ public sealed class MitigationRepository : BaseRepository<MitigationRepository, 
             
             // Assignment Properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignedDepartment, mitigation.AssignedDepartment ?? (object)DBNull.Value));
+            
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignedTo, mitigation.AssignedTo ?? (object)DBNull.Value));
             
 
@@ -279,7 +281,7 @@ public sealed class MitigationRepository : BaseRepository<MitigationRepository, 
             
 
             // Audit Fields
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, mitigation.UpdatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
