@@ -9,21 +9,22 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
+using Application.Interfaces;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 
 // =============================================
-// SMS STAKEHOLDER USER COMMAND HANDLERS
+// SMS STAKEHOLDER USER COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
 public class CreateSMSStakeholderUserCommandHandler : BaseCommandBundle, IRequestHandler<CreateSMSStakeholderUserCommand, Result<SMSStakeholderUser>>
 {
-    private readonly SMSStakeholderUserDataService _dataService;
+    private readonly ISMSStakeholderUserService _stakeholderUserService;
     private readonly ILogger<CreateSMSStakeholderUserCommandHandler> _logger;
 
-    public CreateSMSStakeholderUserCommandHandler(SMSStakeholderUserDataService dataService, ILogger<CreateSMSStakeholderUserCommandHandler> logger)
+    public CreateSMSStakeholderUserCommandHandler(ISMSStakeholderUserService stakeholderUserService, ILogger<CreateSMSStakeholderUserCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _stakeholderUserService = stakeholderUserService ?? throw new ArgumentNullException(nameof(stakeholderUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -37,13 +38,13 @@ public class CreateSMSStakeholderUserCommandHandler : BaseCommandBundle, IReques
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing CreateSMSStakeholderUserCommand for UserName: {UserName}", request.SMSStakeholderUser.UserName);
+            _logger.LogInformation("✅ Clean Architecture: Processing CreateSMSStakeholderUserCommand for UserName: {UserName}", request.SMSStakeholderUser.UserName);
 
-            var result = await _dataService.AddAsync(request.SMSStakeholderUser, cancellationToken);
+            var result = await _stakeholderUserService.CreateSMSStakeholderUserAsync(request.SMSStakeholderUser, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS Stakeholder User with ID: {Id}, UserName: {UserName}",
+                _logger.LogInformation("✅ Clean Architecture: Successfully created SMS Stakeholder User with ID: {Id}, UserName: {UserName}",
                     result.Value?.UserId, result.Value?.UserName);
             }
             else
@@ -69,12 +70,12 @@ public class CreateSMSStakeholderUserCommandHandler : BaseCommandBundle, IReques
 
 public class UpdateSMSStakeholderUserCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSStakeholderUserCommand, Result<SMSStakeholderUser>>
 {
-    private readonly SMSStakeholderUserDataService _dataService;
+    private readonly ISMSStakeholderUserService _stakeholderUserService;
     private readonly ILogger<UpdateSMSStakeholderUserCommandHandler> _logger;
 
-    public UpdateSMSStakeholderUserCommandHandler(SMSStakeholderUserDataService dataService, ILogger<UpdateSMSStakeholderUserCommandHandler> logger)
+    public UpdateSMSStakeholderUserCommandHandler(ISMSStakeholderUserService stakeholderUserService, ILogger<UpdateSMSStakeholderUserCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _stakeholderUserService = stakeholderUserService ?? throw new ArgumentNullException(nameof(stakeholderUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -88,13 +89,13 @@ public class UpdateSMSStakeholderUserCommandHandler : BaseCommandBundle, IReques
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateSMSStakeholderUserCommand for UserID: {UserId}", request.SMSStakeholderUser.UserId);
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateSMSStakeholderUserCommand for UserID: {UserId}", request.SMSStakeholderUser.UserId);
 
-            var result = await _dataService.UpdateAsync(request.SMSStakeholderUser, cancellationToken);
+            var result = await _stakeholderUserService.UpdateSMSStakeholderUserAsync(request.SMSStakeholderUser, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated SMS Stakeholder User with ID: {UserId}", request.SMSStakeholderUser.UserId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated SMS Stakeholder User with ID: {UserId}", request.SMSStakeholderUser.UserId);
             }
             else
             {
@@ -119,12 +120,12 @@ public class UpdateSMSStakeholderUserCommandHandler : BaseCommandBundle, IReques
 
 public class UpdateSMSStakeholderUserPasswordCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSStakeholderUserPasswordCommand, Result<bool>>
 {
-    private readonly SMSStakeholderUserDataService _dataService;
+    private readonly ISMSStakeholderUserService _stakeholderUserService;
     private readonly ILogger<UpdateSMSStakeholderUserPasswordCommandHandler> _logger;
 
-    public UpdateSMSStakeholderUserPasswordCommandHandler(SMSStakeholderUserDataService dataService, ILogger<UpdateSMSStakeholderUserPasswordCommandHandler> logger)
+    public UpdateSMSStakeholderUserPasswordCommandHandler(ISMSStakeholderUserService stakeholderUserService, ILogger<UpdateSMSStakeholderUserPasswordCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _stakeholderUserService = stakeholderUserService ?? throw new ArgumentNullException(nameof(stakeholderUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -138,10 +139,10 @@ public class UpdateSMSStakeholderUserPasswordCommandHandler : BaseCommandBundle,
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateSMSStakeholderUserPasswordCommand for UserID: {UserId}", request.UserId);
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateSMSStakeholderUserPasswordCommand for UserID: {UserId}", request.UserId);
 
             // Get the existing user
-            var userResult = await _dataService.GetByIdAsync(request.UserId, cancellationToken);
+            var userResult = await _stakeholderUserService.GetSMSStakeholderUserByIdAsync(request.UserId, cancellationToken);
             if (userResult.IsFailure)
             {
                 return Result<bool>.Failure<bool>(userResult.Error);
@@ -151,21 +152,19 @@ public class UpdateSMSStakeholderUserPasswordCommandHandler : BaseCommandBundle,
 
             // Create new password
             var passwordResult = Password.Create(request.NewPassword);
-
             if (passwordResult.IsFailure)
                 return Result<bool>.Failure<bool>(passwordResult.Error);
 
             // Update user password
             user.UpdatePassword(passwordResult.Value);
-            user.UpdatedBy = "SYSTEM"; // TODO: Get current user
+            user.UpdatedBy = "SYSTEM";
             user.UpdatedDate = DateTime.UtcNow;
 
-            // Update the entire user record (which includes the new password)
-            var updateResult = await _dataService.UpdateAsync(user, cancellationToken);
+            var updateResult = await _stakeholderUserService.UpdateSMSStakeholderUserAsync(user, cancellationToken);
 
             if (updateResult.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated password for SMS Stakeholder User with ID: {UserId}", request.UserId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated password for SMS Stakeholder User with ID: {UserId}", request.UserId);
                 return Result<bool>.Success(true);
             }
             else
@@ -190,12 +189,12 @@ public class UpdateSMSStakeholderUserPasswordCommandHandler : BaseCommandBundle,
 
 public class AuthenticateSMSStakeholderUserCommandHandler : BaseCommandBundle, IRequestHandler<AuthenticateSMSStakeholderUserCommand, Result<bool>>
 {
-    private readonly SMSStakeholderUserDataService _dataService;
+    private readonly ISMSStakeholderUserService _stakeholderUserService;
     private readonly ILogger<AuthenticateSMSStakeholderUserCommandHandler> _logger;
 
-    public AuthenticateSMSStakeholderUserCommandHandler(SMSStakeholderUserDataService dataService, ILogger<AuthenticateSMSStakeholderUserCommandHandler> logger)
+    public AuthenticateSMSStakeholderUserCommandHandler(ISMSStakeholderUserService stakeholderUserService, ILogger<AuthenticateSMSStakeholderUserCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _stakeholderUserService = stakeholderUserService ?? throw new ArgumentNullException(nameof(stakeholderUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -209,13 +208,13 @@ public class AuthenticateSMSStakeholderUserCommandHandler : BaseCommandBundle, I
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing authentication request for UserName: {UserName}", request.UserName);
+            _logger.LogInformation("✅ Clean Architecture: Processing authentication request for UserName: {UserName}", request.UserName);
 
-            var result = await _dataService.AuthenticateUserAsync(request.UserName, request.Password, cancellationToken);
+            var result = await _stakeholderUserService.AuthenticateSMSStakeholderUserAsync(request.UserName, request.Password, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully authenticated SMS Stakeholder User: {UserName}", request.UserName);
+                _logger.LogInformation("✅ Clean Architecture: Successfully authenticated SMS Stakeholder User: {UserName}", request.UserName);
             }
             else
             {
@@ -239,12 +238,12 @@ public class AuthenticateSMSStakeholderUserCommandHandler : BaseCommandBundle, I
 
 public class RecordSMSStakeholderUserLoginCommandHandler : BaseCommandBundle, IRequestHandler<RecordSMSStakeholderUserLoginCommand, Result<bool>>
 {
-    private readonly SMSStakeholderUserDataService _dataService;
+    private readonly ISMSStakeholderUserService _stakeholderUserService;
     private readonly ILogger<RecordSMSStakeholderUserLoginCommandHandler> _logger;
 
-    public RecordSMSStakeholderUserLoginCommandHandler(SMSStakeholderUserDataService dataService, ILogger<RecordSMSStakeholderUserLoginCommandHandler> logger)
+    public RecordSMSStakeholderUserLoginCommandHandler(ISMSStakeholderUserService stakeholderUserService, ILogger<RecordSMSStakeholderUserLoginCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _stakeholderUserService = stakeholderUserService ?? throw new ArgumentNullException(nameof(stakeholderUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -258,25 +257,23 @@ public class RecordSMSStakeholderUserLoginCommandHandler : BaseCommandBundle, IR
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing RecordSMSStakeholderUserLoginCommand for UserID: {UserId}", request.UserId);
+            _logger.LogInformation("✅ Clean Architecture: Processing RecordSMSStakeholderUserLoginCommand for UserID: {UserId}", request.UserId);
 
-            // Get the existing user
-            var userResult = await _dataService.GetByIdAsync(request.UserId, cancellationToken);
+            // Get the existing user and record login
+            var userResult = await _stakeholderUserService.GetSMSStakeholderUserByIdAsync(request.UserId, cancellationToken);
             if (userResult.IsFailure)
             {
                 return Result<bool>.Failure<bool>(userResult.Error);
             }
 
             var user = userResult.Value;
-
-            // Record the login
             user.RecordLogin();
 
-            var updateResult = await _dataService.UpdateAsync(user, cancellationToken);
+            var updateResult = await _stakeholderUserService.UpdateSMSStakeholderUserAsync(user, cancellationToken);
 
             if (updateResult.IsSuccess)
             {
-                _logger.LogInformation("Successfully recorded login for SMS Stakeholder User with ID: {UserId}", request.UserId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully recorded login for SMS Stakeholder User with ID: {UserId}", request.UserId);
                 return Result<bool>.Success(true);
             }
             else
@@ -301,12 +298,12 @@ public class RecordSMSStakeholderUserLoginCommandHandler : BaseCommandBundle, IR
 
 public class DeleteSMSStakeholderUserCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSStakeholderUserCommand, Result<bool>>
 {
-    private readonly SMSStakeholderUserDataService _dataService;
+    private readonly ISMSStakeholderUserService _stakeholderUserService;
     private readonly ILogger<DeleteSMSStakeholderUserCommandHandler> _logger;
 
-    public DeleteSMSStakeholderUserCommandHandler(SMSStakeholderUserDataService dataService, ILogger<DeleteSMSStakeholderUserCommandHandler> logger)
+    public DeleteSMSStakeholderUserCommandHandler(ISMSStakeholderUserService stakeholderUserService, ILogger<DeleteSMSStakeholderUserCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _stakeholderUserService = stakeholderUserService ?? throw new ArgumentNullException(nameof(stakeholderUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -320,21 +317,33 @@ public class DeleteSMSStakeholderUserCommandHandler : BaseCommandBundle, IReques
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing DeleteSMSStakeholderUserCommand for UserID: {UserId}", request.SMSStakeholderUserId);
+            _logger.LogInformation("✅ Clean Architecture: Processing DeleteSMSStakeholderUserCommand for UserID: {UserId}", request.SMSStakeholderUserId);
 
-            var result = await _dataService.DeleteUserAsync(request.SMSStakeholderUserId.Value, cancellationToken);
-
-            if (result.IsSuccess)
+            // For now, implement as logical delete by updating the user record
+            var userResult = await _stakeholderUserService.GetSMSStakeholderUserByIdAsync(request.SMSStakeholderUserId, cancellationToken);
+            if (userResult.IsFailure)
             {
-                _logger.LogInformation("Successfully deleted SMS Stakeholder User with ID: {UserId}", request.SMSStakeholderUserId);
+                return Result<bool>.Failure<bool>(userResult.Error);
+            }
+
+            var user = userResult.Value;
+            user.IsActive = false;
+            user.UpdatedBy = "SYSTEM";
+            user.UpdatedDate = DateTime.UtcNow;
+
+            var updateResult = await _stakeholderUserService.UpdateSMSStakeholderUserAsync(user, cancellationToken);
+
+            if (updateResult.IsSuccess)
+            {
+                _logger.LogInformation("✅ Clean Architecture: Successfully deleted (deactivated) SMS Stakeholder User with ID: {UserId}", request.SMSStakeholderUserId);
+                return Result<bool>.Success(true);
             }
             else
             {
                 _logger.LogApplicationError("Failed to delete SMS Stakeholder User with ID: {UserId}. Error: {Error}",
                     ApplicationEventIds.Error, null);
+                return Result<bool>.Failure<bool>(updateResult.Error);
             }
-
-            return result;
         }
         catch (OperationCanceledException)
         {

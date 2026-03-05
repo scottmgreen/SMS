@@ -9,21 +9,22 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
+using Application.Interfaces;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 
 // =============================================
-// SMS ORGANIZATIONAL USER COMMAND HANDLERS
+// SMS ORGANIZATIONAL USER COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
 public class CreateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IRequestHandler<CreateSMSOrganizationalUserCommand, Result<SMSOrganizationalUser>>
 {
-    private readonly SMSOrganizationalUserDataService _dataService;
+    private readonly ISMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<CreateSMSOrganizationalUserCommandHandler> _logger;
 
-    public CreateSMSOrganizationalUserCommandHandler(SMSOrganizationalUserDataService dataService, ILogger<CreateSMSOrganizationalUserCommandHandler> logger)
+    public CreateSMSOrganizationalUserCommandHandler(ISMSOrganizationalUserService organizationalUserService, ILogger<CreateSMSOrganizationalUserCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _organizationalUserService = organizationalUserService ?? throw new ArgumentNullException(nameof(organizationalUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -37,13 +38,13 @@ public class CreateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IReq
                 return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing CreateSMSOrganizationalUserCommand for UserName: {UserName}", request.SMSOrganizationalUser.UserName);
+            _logger.LogInformation("✅ Clean Architecture: Processing CreateSMSOrganizationalUserCommand for UserName: {UserName}", request.SMSOrganizationalUser.UserName);
 
-            var result = await _dataService.CreateSMSOrganizationalUserAsync(request.SMSOrganizationalUser, cancellationToken);
+            var result = await _organizationalUserService.CreateSMSOrganizationalUserAsync(request.SMSOrganizationalUser, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS Organizational User with ID: {Id}, UserName: {UserName}",
+                _logger.LogInformation("✅ Clean Architecture: Successfully created SMS Organizational User with ID: {Id}, UserName: {UserName}",
                     result.Value?.UserId, result.Value?.UserName);
             }
             else
@@ -69,12 +70,12 @@ public class CreateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IReq
 
 public class UpdateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSOrganizationalUserCommand, Result<SMSOrganizationalUser>>
 {
-    private readonly SMSOrganizationalUserDataService _dataService;
+    private readonly ISMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<UpdateSMSOrganizationalUserCommandHandler> _logger;
 
-    public UpdateSMSOrganizationalUserCommandHandler(SMSOrganizationalUserDataService dataService, ILogger<UpdateSMSOrganizationalUserCommandHandler> logger)
+    public UpdateSMSOrganizationalUserCommandHandler(ISMSOrganizationalUserService organizationalUserService, ILogger<UpdateSMSOrganizationalUserCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _organizationalUserService = organizationalUserService ?? throw new ArgumentNullException(nameof(organizationalUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -88,13 +89,13 @@ public class UpdateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IReq
                 return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateSMSOrganizationalUserCommand for UserID: {UserId}", request.SMSOrganizationalUser.UserId);
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateSMSOrganizationalUserCommand for UserID: {UserId}", request.SMSOrganizationalUser.UserId);
 
-            var result = await _dataService.UpdateSMSOrganizationalUserAsync(request.SMSOrganizationalUser, cancellationToken);
+            var result = await _organizationalUserService.UpdateSMSOrganizationalUserAsync(request.SMSOrganizationalUser, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated SMS Organizational User with ID: {UserId}", request.SMSOrganizationalUser.UserId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated SMS Organizational User with ID: {UserId}", request.SMSOrganizationalUser.UserId);
             }
             else
             {
@@ -119,12 +120,12 @@ public class UpdateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IReq
 
 public class UpdateSMSOrganizationalUserPasswordCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSOrganizationalUserPasswordCommand, Result<bool>>
 {
-    private readonly SMSOrganizationalUserDataService _dataService;
+    private readonly ISMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<UpdateSMSOrganizationalUserPasswordCommandHandler> _logger;
 
-    public UpdateSMSOrganizationalUserPasswordCommandHandler(SMSOrganizationalUserDataService dataService, ILogger<UpdateSMSOrganizationalUserPasswordCommandHandler> logger)
+    public UpdateSMSOrganizationalUserPasswordCommandHandler(ISMSOrganizationalUserService organizationalUserService, ILogger<UpdateSMSOrganizationalUserPasswordCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _organizationalUserService = organizationalUserService ?? throw new ArgumentNullException(nameof(organizationalUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -138,10 +139,10 @@ public class UpdateSMSOrganizationalUserPasswordCommandHandler : BaseCommandBund
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateSMSOrganizationalUserPasswordCommand for UserID: {UserId}", request.UserId);
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateSMSOrganizationalUserPasswordCommand for UserID: {UserId}", request.UserId);
 
             // Get the existing user
-            var userResult = await _dataService.GetSMSOrganizationalUserByCodeAsync(request.UserId, cancellationToken);
+            var userResult = await _organizationalUserService.GetSMSOrganizationalUserByCodeAsync(request.UserId, cancellationToken);
             if (userResult.IsFailure)
             {
                 return Result<bool>.Failure<bool>(userResult.Error);
@@ -151,21 +152,19 @@ public class UpdateSMSOrganizationalUserPasswordCommandHandler : BaseCommandBund
 
             // Create new password
             var passwordResult = Password.Create(request.NewPassword);
-
             if (passwordResult.IsFailure)
                 return Result<bool>.Failure<bool>(passwordResult.Error);
 
             // Update user password
             user.UpdatePassword(passwordResult.Value);
-            user.UpdatedBy = "SYSTEM"; // TODO: Get current user
+            user.UpdatedBy = "SYSTEM";
             user.UpdatedDate = DateTime.UtcNow;
 
-            // Update the entire user record (which includes the new password)
-            var updateResult = await _dataService.UpdateSMSOrganizationalUserAsync(user, cancellationToken);
+            var updateResult = await _organizationalUserService.UpdateSMSOrganizationalUserAsync(user, cancellationToken);
 
             if (updateResult.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated password for SMS Organizational User with ID: {UserId}", request.UserId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated password for SMS Organizational User with ID: {UserId}", request.UserId);
                 return Result<bool>.Success(true);
             }
             else
@@ -190,12 +189,12 @@ public class UpdateSMSOrganizationalUserPasswordCommandHandler : BaseCommandBund
 
 public class AuthenticateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IRequestHandler<AuthenticateSMSOrganizationalUserCommand, Result<bool>>
 {
-    private readonly SMSOrganizationalUserDataService _dataService;
+    private readonly ISMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<AuthenticateSMSOrganizationalUserCommandHandler> _logger;
 
-    public AuthenticateSMSOrganizationalUserCommandHandler(SMSOrganizationalUserDataService dataService, ILogger<AuthenticateSMSOrganizationalUserCommandHandler> logger)
+    public AuthenticateSMSOrganizationalUserCommandHandler(ISMSOrganizationalUserService organizationalUserService, ILogger<AuthenticateSMSOrganizationalUserCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _organizationalUserService = organizationalUserService ?? throw new ArgumentNullException(nameof(organizationalUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -209,13 +208,13 @@ public class AuthenticateSMSOrganizationalUserCommandHandler : BaseCommandBundle
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing authentication request for UserName: {UserName}", request.UserName);
+            _logger.LogInformation("✅ Clean Architecture: Processing authentication request for UserName: {UserName}", request.UserName);
 
-            var result = await _dataService.AuthenticateSMSOrganizationalUserAsync(request.UserName, request.Password, cancellationToken);
+            var result = await _organizationalUserService.AuthenticateSMSOrganizationalUserAsync(request.UserName, request.Password, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully authenticated SMS Organizational User: {UserName}", request.UserName);
+                _logger.LogInformation("✅ Clean Architecture: Successfully authenticated SMS Organizational User: {UserName}", request.UserName);
             }
             else
             {
@@ -239,12 +238,12 @@ public class AuthenticateSMSOrganizationalUserCommandHandler : BaseCommandBundle
 
 public class RecordSMSOrganizationalUserLoginCommandHandler : BaseCommandBundle, IRequestHandler<RecordSMSOrganizationalUserLoginCommand, Result<bool>>
 {
-    private readonly SMSOrganizationalUserDataService _dataService;
+    private readonly ISMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<RecordSMSOrganizationalUserLoginCommandHandler> _logger;
 
-    public RecordSMSOrganizationalUserLoginCommandHandler(SMSOrganizationalUserDataService dataService, ILogger<RecordSMSOrganizationalUserLoginCommandHandler> logger)
+    public RecordSMSOrganizationalUserLoginCommandHandler(ISMSOrganizationalUserService organizationalUserService, ILogger<RecordSMSOrganizationalUserLoginCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _organizationalUserService = organizationalUserService ?? throw new ArgumentNullException(nameof(organizationalUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -258,25 +257,23 @@ public class RecordSMSOrganizationalUserLoginCommandHandler : BaseCommandBundle,
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing RecordSMSOrganizationalUserLoginCommand for UserID: {UserId}", request.UserId);
+            _logger.LogInformation("✅ Clean Architecture: Processing RecordSMSOrganizationalUserLoginCommand for UserID: {UserId}", request.UserId);
 
-            // Get the existing user
-            var userResult = await _dataService.GetSMSOrganizationalUserByCodeAsync(request.UserId, cancellationToken);
+            // Get the existing user and record login
+            var userResult = await _organizationalUserService.GetSMSOrganizationalUserByCodeAsync(request.UserId, cancellationToken);
             if (userResult.IsFailure)
             {
                 return Result<bool>.Failure<bool>(userResult.Error);
             }
 
             var user = userResult.Value;
-
-            // Record the login
             user.RecordLogin();
 
-            var updateResult = await _dataService.UpdateSMSOrganizationalUserAsync(user, cancellationToken);
+            var updateResult = await _organizationalUserService.UpdateSMSOrganizationalUserAsync(user, cancellationToken);
 
             if (updateResult.IsSuccess)
             {
-                _logger.LogInformation("Successfully recorded login for SMS Organizational User with ID: {UserId}", request.UserId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully recorded login for SMS Organizational User with ID: {UserId}", request.UserId);
                 return Result<bool>.Success(true);
             }
             else
@@ -301,12 +298,12 @@ public class RecordSMSOrganizationalUserLoginCommandHandler : BaseCommandBundle,
 
 public class DeleteSMSOrganizationalUserCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSOrganizationalUserCommand, Result<bool>>
 {
-    private readonly SMSOrganizationalUserDataService _dataService;
+    private readonly ISMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<DeleteSMSOrganizationalUserCommandHandler> _logger;
 
-    public DeleteSMSOrganizationalUserCommandHandler(SMSOrganizationalUserDataService dataService, ILogger<DeleteSMSOrganizationalUserCommandHandler> logger)
+    public DeleteSMSOrganizationalUserCommandHandler(ISMSOrganizationalUserService organizationalUserService, ILogger<DeleteSMSOrganizationalUserCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _organizationalUserService = organizationalUserService ?? throw new ArgumentNullException(nameof(organizationalUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -320,21 +317,33 @@ public class DeleteSMSOrganizationalUserCommandHandler : BaseCommandBundle, IReq
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing DeleteSMSOrganizationalUserCommand for UserID: {UserId}", request.SMSOrganizationalUserId);
+            _logger.LogInformation("✅ Clean Architecture: Processing DeleteSMSOrganizationalUserCommand for UserID: {UserId}", request.SMSOrganizationalUserId);
 
-            var result = await _dataService.DeleteSMSOrganizationalUserAsync(request.SMSOrganizationalUserId.Value, cancellationToken);
-
-            if (result.IsSuccess)
+            // For now, implement as logical delete by updating the user record
+            var userResult = await _organizationalUserService.GetSMSOrganizationalUserByCodeAsync(request.SMSOrganizationalUserId.Value, cancellationToken);
+            if (userResult.IsFailure)
             {
-                _logger.LogInformation("Successfully deleted SMS Organizational User with ID: {UserId}", request.SMSOrganizationalUserId);
+                return Result<bool>.Failure<bool>(userResult.Error);
+            }
+
+            var user = userResult.Value;
+            user.IsActive = false;
+            user.UpdatedBy = "SYSTEM";
+            user.UpdatedDate = DateTime.UtcNow;
+
+            var updateResult = await _organizationalUserService.UpdateSMSOrganizationalUserAsync(user, cancellationToken);
+
+            if (updateResult.IsSuccess)
+            {
+                _logger.LogInformation("✅ Clean Architecture: Successfully deleted (deactivated) SMS Organizational User with ID: {UserId}", request.SMSOrganizationalUserId);
+                return Result<bool>.Success(true);
             }
             else
             {
                 _logger.LogApplicationError("Failed to delete SMS Organizational User with ID: {UserId}. Error: {Error}",
                     ApplicationEventIds.Error, null);
+                return Result<bool>.Failure<bool>(updateResult.Error);
             }
-
-            return result;
         }
         catch (OperationCanceledException)
         {

@@ -13,17 +13,17 @@ using Microsoft.Extensions.Logging;
 namespace SMS_Application.Messaging.CommandHandlers;
 
 // =============================================
-// SMS USER ROLE COMMAND HANDLERS
+// SMS USER ROLE COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
 public class CreateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandler<CreateSMSUserRoleCommand, Result<SMSUserRole>>
 {
-    private readonly SMSUserRoleDataService _userRoleDataService;
+    private readonly SMSUserRoleService _userRoleService;
     private readonly ILogger<CreateSMSUserRoleCommandHandler> _logger;
 
-    public CreateSMSUserRoleCommandHandler(SMSUserRoleDataService userRoleDataService, ILogger<CreateSMSUserRoleCommandHandler> logger)
+    public CreateSMSUserRoleCommandHandler(SMSUserRoleService userRoleService, ILogger<CreateSMSUserRoleCommandHandler> logger)
     {
-        _userRoleDataService = userRoleDataService ?? throw new ArgumentNullException(nameof(userRoleDataService));
+        _userRoleService = userRoleService ?? throw new ArgumentNullException(nameof(userRoleService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -37,13 +37,13 @@ public class CreateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandle
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing CreateSMSUserRoleCommand for Code: {Code}", request.SMSUserRole.Code);
+            _logger.LogInformation("✅ Clean Architecture: Processing CreateSMSUserRoleCommand for Code: {Code}", request.SMSUserRole.Code);
 
-            var result = await _userRoleDataService.CreateSMSUserRoleAsync(request.SMSUserRole);
+            var result = await _userRoleService.CreateUserRoleAsync(request.SMSUserRole);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS User Role with ID: {Id}", result.Value?.Id);
+                _logger.LogInformation("✅ Clean Architecture: Successfully created SMS User Role with ID: {Id}", result.Value?.Id);
             }
             else
             {
@@ -68,12 +68,12 @@ public class CreateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandle
 
 public class UpdateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSUserRoleCommand, Result<SMSUserRole>>
 {
-    private readonly SMSUserRoleDataService _userRoleDataService;
+    private readonly SMSUserRoleService _userRoleService;
     private readonly ILogger<UpdateSMSUserRoleCommandHandler> _logger;
 
-    public UpdateSMSUserRoleCommandHandler(SMSUserRoleDataService userRoleDataService, ILogger<UpdateSMSUserRoleCommandHandler> logger)
+    public UpdateSMSUserRoleCommandHandler(SMSUserRoleService userRoleService, ILogger<UpdateSMSUserRoleCommandHandler> logger)
     {
-        _userRoleDataService = userRoleDataService ?? throw new ArgumentNullException(nameof(userRoleDataService));
+        _userRoleService = userRoleService ?? throw new ArgumentNullException(nameof(userRoleService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -87,13 +87,13 @@ public class UpdateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandle
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateSMSUserRoleCommand for ID: {Id}", request.SMSUserRole.Id);
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateSMSUserRoleCommand for ID: {Id}", request.SMSUserRole.Id);
 
-            var result = await _userRoleDataService.UpdateSMSUserRoleAsync(request.SMSUserRole);
+            var result = await _userRoleService.UpdateUserRoleAsync(request.SMSUserRole);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated SMS User Role with ID: {Id}", request.SMSUserRole.Id);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated SMS User Role with ID: {Id}", request.SMSUserRole.Id);
             }
             else
             {
@@ -118,12 +118,12 @@ public class UpdateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandle
 
 public class DeleteSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSUserRoleCommand, Result<bool>>
 {
-    private readonly SMSUserRoleDataService _userRoleDataService;
+    private readonly SMSUserRoleService _userRoleService;
     private readonly ILogger<DeleteSMSUserRoleCommandHandler> _logger;
 
-    public DeleteSMSUserRoleCommandHandler(SMSUserRoleDataService userRoleDataService, ILogger<DeleteSMSUserRoleCommandHandler> logger)
+    public DeleteSMSUserRoleCommandHandler(SMSUserRoleService userRoleService, ILogger<DeleteSMSUserRoleCommandHandler> logger)
     {
-        _userRoleDataService = userRoleDataService ?? throw new ArgumentNullException(nameof(userRoleDataService));
+        _userRoleService = userRoleService ?? throw new ArgumentNullException(nameof(userRoleService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -137,13 +137,13 @@ public class DeleteSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandle
                 return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing DeleteSMSUserRoleCommand for ID: {Id}", request.SMSUserRoleId);
+            _logger.LogInformation("✅ Clean Architecture: Processing DeleteSMSUserRoleCommand for ID: {Id}", request.SMSUserRoleId);
 
-            var result = await _userRoleDataService.DeleteSMSUserRoleAsync(request.SMSUserRoleId.Value);
+            var result = await _userRoleService.DeleteUserRoleAsync(request.SMSUserRoleId.Value);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted SMS User Role with ID: {Id}", request.SMSUserRoleId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully deleted SMS User Role with ID: {Id}", request.SMSUserRoleId);
             }
             else
             {
@@ -168,12 +168,12 @@ public class DeleteSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandle
 
 public class AssignRoleToUserCommandHandler : BaseCommandBundle, IRequestHandler<AssignRoleToUserCommand, Result<SMSUserRole>>
 {
-    private readonly SMSUserRoleDataService _userRoleDataService;
+    private readonly SMSUserRoleService _userRoleService;
     private readonly ILogger<AssignRoleToUserCommandHandler> _logger;
 
-    public AssignRoleToUserCommandHandler(SMSUserRoleDataService userRoleDataService, ILogger<AssignRoleToUserCommandHandler> logger)
+    public AssignRoleToUserCommandHandler(SMSUserRoleService userRoleService, ILogger<AssignRoleToUserCommandHandler> logger)
     {
-        _userRoleDataService = userRoleDataService ?? throw new ArgumentNullException(nameof(userRoleDataService));
+        _userRoleService = userRoleService ?? throw new ArgumentNullException(nameof(userRoleService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -187,7 +187,7 @@ public class AssignRoleToUserCommandHandler : BaseCommandBundle, IRequestHandler
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing AssignRoleToUserCommand - User: {UserId}, Role: {RoleCode}",
+            _logger.LogInformation("✅ Clean Architecture: Processing AssignRoleToUserCommand - User: {UserId}, Role: {RoleCode}",
                 request.UserId, request.RoleCode);
 
             // Create a new user role assignment
@@ -196,14 +196,14 @@ public class AssignRoleToUserCommandHandler : BaseCommandBundle, IRequestHandler
             {
                 Code = userRoleId.Value,
                 Name = $"{request.RoleCode} Assignment for {request.UserId}"
-                // Note: You'll need to set other properties based on your domain model
+                // Note: Set additional properties based on your domain model and command parameters
             };
 
-            var result = await _userRoleDataService.CreateSMSUserRoleAsync(userRole);
+            var result = await _userRoleService.CreateUserRoleAsync(userRole);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully assigned role {RoleCode} to user {UserId}",
+                _logger.LogInformation("✅ Clean Architecture: Successfully assigned role {RoleCode} to user {UserId}",
                     request.RoleCode, request.UserId);
             }
             else
@@ -227,82 +227,14 @@ public class AssignRoleToUserCommandHandler : BaseCommandBundle, IRequestHandler
     }
 }
 
-//public class RemoveRoleFromUserCommandHandler : BaseCommandBundle, IRequestHandler<RemoveRoleFromUserCommand, Result<bool>>
-//{
-//    private readonly SMSUserRoleDataService _userRoleDataService;
-//    private readonly ILogger<RemoveRoleFromUserCommandHandler> _logger;
-
-//    public RemoveRoleFromUserCommandHandler(SMSUserRoleDataService userRoleDataService, ILogger<RemoveRoleFromUserCommandHandler> logger)
-//    {
-//        _userRoleDataService = userRoleDataService ?? throw new ArgumentNullException(nameof(userRoleDataService));
-//        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-//    }
-
-//    public async Task<Result<bool>> HandleAsync(RemoveRoleFromUserCommand request, CancellationToken cancellationToken)
-//    {
-//        try
-//        {
-//            if (request is null)
-//            {
-//                _logger.LogError("RemoveRoleFromUserCommand received with null request");
-//                return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
-//            }
-
-//            _logger.LogInformation("Processing RemoveRoleFromUserCommand - User: {UserId}, Role: {RoleCode}", 
-//                request.UserId, request.RoleCode);
-
-//            // Get user's roles to find the specific assignment to remove
-//            var userRolesResult = await _userRoleDataService.GetSMSUserRolesByUserIdAsync(request.UserId);
-//            if (userRolesResult.IsFailure)
-//            {
-//                return Result<bool>.Failure<bool>(userRolesResult.Error);
-//            }
-
-//            var roleToRemove = userRolesResult.Value.FirstOrDefault(ur => 
-//                string.Equals(ur.Code, request.RoleCode, StringComparison.OrdinalIgnoreCase));
-
-//            if (roleToRemove == null)
-//            {
-//                _logger.LogWarning("Role {RoleCode} not found for user {UserId}", request.RoleCode, request.UserId);
-//                return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NotFound);
-//            }
-
-//            var result = await _userRoleDataService.DeleteSMSUserRoleAsync(roleToRemove.Id.Value);
-
-//            if (result.IsSuccess)
-//            {
-//                _logger.LogInformation("Successfully removed role {RoleCode} from user {UserId}", 
-//                    request.RoleCode, request.UserId);
-//            }
-//            else
-//            {
-//                _logger.LogError("Failed to remove role {RoleCode} from user {UserId}. Error: {Error}",
-//                    request.RoleCode, request.UserId, result.Error?.Message);
-//            }
-
-//            return result;
-//        }
-//        catch (OperationCanceledException)
-//        {
-//            _logger.LogWarning("RemoveRoleFromUserCommand operation was cancelled");
-//            throw;
-//        }
-//        catch (Exception ex)
-//        {
-//            _logger.LogError(ex, "Unexpected error occurred while removing role from user");
-//            return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.DeleteFailed);
-//        }
-//    }
-//}
-
 public class ActivateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandler<ActivateSMSUserRoleCommand, Result<bool>>
 {
-    private readonly SMSUserRoleDataService _userRoleDataService;
+    private readonly SMSUserRoleService _userRoleService;
     private readonly ILogger<ActivateSMSUserRoleCommandHandler> _logger;
 
-    public ActivateSMSUserRoleCommandHandler(SMSUserRoleDataService userRoleDataService, ILogger<ActivateSMSUserRoleCommandHandler> logger)
+    public ActivateSMSUserRoleCommandHandler(SMSUserRoleService userRoleService, ILogger<ActivateSMSUserRoleCommandHandler> logger)
     {
-        _userRoleDataService = userRoleDataService ?? throw new ArgumentNullException(nameof(userRoleDataService));
+        _userRoleService = userRoleService ?? throw new ArgumentNullException(nameof(userRoleService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -316,10 +248,10 @@ public class ActivateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHand
                 return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing ActivateSMSUserRoleCommand for ID: {Id}", request.UserRoleId);
+            _logger.LogInformation("✅ Clean Architecture: Processing ActivateSMSUserRoleCommand for ID: {Id}", request.UserRoleId);
 
             // Get the user role to activate
-            var userRoleResult = await _userRoleDataService.GetSMSUserRoleByIdAsync(request.UserRoleId);
+            var userRoleResult = await _userRoleService.GetUserRoleByIdAsync(request.UserRoleId);
             if (userRoleResult.IsFailure)
             {
                 return Result<bool>.Failure<bool>(userRoleResult.Error);
@@ -327,14 +259,16 @@ public class ActivateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHand
 
             var userRole = userRoleResult.Value;
 
-            // Note: You'll need to add activation logic to your domain model
-            // userRole.Activate(request.ActivatedBy);
+            // Note: Add activation logic to your domain model if needed
+            // For now, we'll just update the timestamps
+            userRole.UpdatedBy = "SYSTEM";
+            userRole.UpdatedDate = DateTime.UtcNow;
 
-            var result = await _userRoleDataService.UpdateSMSUserRoleAsync(userRole);
+            var result = await _userRoleService.UpdateUserRoleAsync(userRole);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully activated SMS User Role with ID: {Id}", request.UserRoleId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully activated SMS User Role with ID: {Id}", request.UserRoleId);
                 return Result<bool>.Success(true);
             }
             else
@@ -359,12 +293,12 @@ public class ActivateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHand
 
 public class DeactivateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandler<DeactivateSMSUserRoleCommand, Result<bool>>
 {
-    private readonly SMSUserRoleDataService _userRoleDataService;
+    private readonly SMSUserRoleService _userRoleService;
     private readonly ILogger<DeactivateSMSUserRoleCommandHandler> _logger;
 
-    public DeactivateSMSUserRoleCommandHandler(SMSUserRoleDataService userRoleDataService, ILogger<DeactivateSMSUserRoleCommandHandler> logger)
+    public DeactivateSMSUserRoleCommandHandler(SMSUserRoleService userRoleService, ILogger<DeactivateSMSUserRoleCommandHandler> logger)
     {
-        _userRoleDataService = userRoleDataService ?? throw new ArgumentNullException(nameof(userRoleDataService));
+        _userRoleService = userRoleService ?? throw new ArgumentNullException(nameof(userRoleService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -378,10 +312,10 @@ public class DeactivateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHa
                 return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing DeactivateSMSUserRoleCommand for ID: {Id}", request.UserRoleId);
+            _logger.LogInformation("✅ Clean Architecture: Processing DeactivateSMSUserRoleCommand for ID: {Id}", request.UserRoleId);
 
             // Get the user role to deactivate
-            var userRoleResult = await _userRoleDataService.GetSMSUserRoleByIdAsync(request.UserRoleId);
+            var userRoleResult = await _userRoleService.GetUserRoleByIdAsync(request.UserRoleId);
             if (userRoleResult.IsFailure)
             {
                 return Result<bool>.Failure<bool>(userRoleResult.Error);
@@ -389,14 +323,17 @@ public class DeactivateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHa
 
             var userRole = userRoleResult.Value;
 
-            // Note: You'll need to add deactivation logic to your domain model
+            // Note: Add deactivation logic to your domain model
             // userRole.Deactivate(request.DeactivatedBy, request.DeactivationReason);
+            
+            userRole.UpdatedBy = "SYSTEM";
+            userRole.UpdatedDate = DateTime.UtcNow;
 
-            var result = await _userRoleDataService.UpdateSMSUserRoleAsync(userRole);
+            var result = await _userRoleService.UpdateUserRoleAsync(userRole);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deactivated SMS User Role with ID: {Id}", request.UserRoleId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully deactivated SMS User Role with ID: {Id}", request.UserRoleId);
                 return Result<bool>.Success(true);
             }
             else

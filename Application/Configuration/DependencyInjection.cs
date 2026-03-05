@@ -93,6 +93,7 @@ namespace SMS_Application.Configuration
             services.AddScoped<IInterviewService, InterviewService>();
             services.AddScoped<IMitigationService, MitigationService>();
             services.AddScoped<IReportValidationService, ReportValidationService>();
+            services.AddScoped<ISafetyPerformanceIndicatorService, SafetyPerformanceIndicatorService>();
 
             // SMS Audit Management Services (NEW) - TEMPORARILY DISABLED UNTIL INFRASTRUCTURE IS READY
             services.AddScoped<SMSAuditPlanService>();
@@ -134,5 +135,6 @@ namespace SMS_Application.Configuration
         }
     }
 }
+
 
 

@@ -33,8 +33,11 @@ public sealed class HazardService
 
     #region Hazard CRUD Operations
 
+
+
     public async Task<Result<Hazard>> CreateHazardAsync(Hazard hazard, CancellationToken ct = default)
     {
+        
         try
         {
             _logger.LogInformation("Creating hazard with code: {Code}", hazard?.Code);
@@ -117,6 +120,21 @@ public sealed class HazardService
             return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
         }
     }
+
+    public async Task<Result<List<Hazard>>> GetAllHazardsByReportCodeAsync(ReportID code, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving all hazards");
+            return await _dataService.GetHazardsByReportCodeAsync(code,ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving all hazards");
+            return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
+        }
+    }
+
 
     /// <summary>
     /// Gets all hazards with complete HazardLocation entities populated

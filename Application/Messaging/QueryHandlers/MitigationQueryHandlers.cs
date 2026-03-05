@@ -9,23 +9,23 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
-
+using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Queries;
 
 namespace SMS_Application.Messaging.QueryHandlers;
 
 // =============================================
-// MITIGATION QUERY HANDLERS
+// MITIGATION QUERY HANDLERS - Clean Architecture Pattern
 // =============================================
 
 public class GetMitigationByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetMitigationByCodeQuery, Result<Mitigation>>
 {
-    private readonly MitigationService _appService;
+    private readonly IMitigationService _mitigationService;
     private readonly ILogger<GetMitigationByCodeQueryHandler> _logger;
 
-    public GetMitigationByCodeQueryHandler(MitigationService appService, ILogger<GetMitigationByCodeQueryHandler> logger)
+    public GetMitigationByCodeQueryHandler(IMitigationService mitigationService, ILogger<GetMitigationByCodeQueryHandler> logger)
     {
-        _appService = appService ?? throw new ArgumentNullException(nameof(appService));
+        _mitigationService = mitigationService ?? throw new ArgumentNullException(nameof(mitigationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -39,13 +39,13 @@ public class GetMitigationByCodeQueryHandler : BaseQueryBundle, IRequestHandler<
                 return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.NotFound);
             }
 
-            _logger.LogInformation("Processing GetMitigationByIdQuery for ID: {Id}", request.MitigationId.Value);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetMitigationByIdQuery for ID: {Id}", request.MitigationId.Value);
 
-            var result = await _appService.GetMitigationByCodeAsync(request.MitigationId, ct).ConfigureAwait(false);
+            var result = await _mitigationService.GetMitigationByCodeAsync(new MitigationID(request.MitigationId.Value), ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved Mitigation with ID: {Id}", request.MitigationId.Value);
+                _logger.LogInformation("✅ Clean Architecture: Successfully retrieved Mitigation with ID: {Id}", request.MitigationId.Value);
             }
             else
             {
@@ -70,12 +70,12 @@ public class GetMitigationByCodeQueryHandler : BaseQueryBundle, IRequestHandler<
 
 public class GetAllMitigationsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllMitigationsQuery, Result<List<Mitigation>>>
 {
-    private readonly MitigationDataService _dataService;
+    private readonly IMitigationService _mitigationService;
     private readonly ILogger<GetAllMitigationsQueryHandler> _logger;
 
-    public GetAllMitigationsQueryHandler(MitigationDataService dataService, ILogger<GetAllMitigationsQueryHandler> logger)
+    public GetAllMitigationsQueryHandler(IMitigationService mitigationService, ILogger<GetAllMitigationsQueryHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _mitigationService = mitigationService ?? throw new ArgumentNullException(nameof(mitigationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -83,13 +83,13 @@ public class GetAllMitigationsQueryHandler : BaseQueryBundle, IRequestHandler<Ge
     {
         try
         {
-            _logger.LogInformation("Processing GetAllMitigationsQuery");
+            _logger.LogInformation("✅ Clean Architecture: Processing GetAllMitigationsQuery");
 
-            var result = await _dataService.GetAllMitigationsAsync(ct).ConfigureAwait(false);
+            var result = await _mitigationService.GetAllMitigationsAsync(ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} Mitigations", result.Value?.Count ?? 0);
+                _logger.LogInformation("✅ Clean Architecture: Successfully retrieved {Count} Mitigations", result.Value?.Count ?? 0);
             }
             else
             {
@@ -112,16 +112,16 @@ public class GetAllMitigationsQueryHandler : BaseQueryBundle, IRequestHandler<Ge
 }
 
 /// <summary>
-/// NEW: Handler for getting mitigations by hazard code
+/// Handler for getting mitigations by hazard code
 /// </summary>
 public class GetMitigationsByHazardCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetMitigationsByHazardCodeQuery, Result<List<Mitigation>>>
 {
-    private readonly MitigationDataService _mitigationDataService;
+    private readonly IMitigationService _mitigationService;
     private readonly ILogger<GetMitigationsByHazardCodeQueryHandler> _logger;
 
-    public GetMitigationsByHazardCodeQueryHandler(MitigationDataService mitigationDataService, ILogger<GetMitigationsByHazardCodeQueryHandler> logger)
+    public GetMitigationsByHazardCodeQueryHandler(IMitigationService mitigationService, ILogger<GetMitigationsByHazardCodeQueryHandler> logger)
     {
-        _mitigationDataService = mitigationDataService ?? throw new ArgumentNullException(nameof(mitigationDataService));
+        _mitigationService = mitigationService ?? throw new ArgumentNullException(nameof(mitigationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -129,8 +129,8 @@ public class GetMitigationsByHazardCodeQueryHandler : BaseQueryBundle, IRequestH
     {
         try
         {
-            _logger.LogInformation("Processing GetMitigationsByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
-            var result = await _mitigationDataService.GetMitigationsByHazardCodeAsync(request.HazardCode, ct).ConfigureAwait(false);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetMitigationsByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
+            var result = await _mitigationService.GetMitigationsByHazardCodeAsync(request.HazardCode, ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)

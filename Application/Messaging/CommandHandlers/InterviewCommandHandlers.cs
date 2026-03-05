@@ -2,7 +2,7 @@
 // <copyright file="InterviewCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Command handlers implementing business logic for SMS write operations.
+//     Description: Command handlers implementing SMS interview management business logic and operations.
 //                  Implements command handlers for processing write operations.
 //                  Handles business logic execution and domain entity coordination.
 // </copyright>
@@ -27,19 +27,19 @@ public class CreateInterviewCommandHandler : BaseCommandBundle, IRequestHandler<
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<Interview>> HandleAsync(CreateInterviewCommand request, CancellationToken ct = default)
+    public async Task<Result<Interview>> HandleAsync(CreateInterviewCommand request, CancellationToken cancellationToken)
     {
         try
         {
             if (request?.Interview is null)
             {
-                _logger.LogApplicationError("CreateInterviewCommand received with null Interview", ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("CreateInterviewCommand received with null request or interview", ApplicationEventIds.Error, null);
                 return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.NullOrEmpty);
             }
 
             _logger.LogInformation("✅ Clean Architecture: Processing CreateInterviewCommand for Code: {Code}", request.Interview.Code);
 
-            var result = await _interviewService.CreateInterviewAsync(request.Interview, ct).ConfigureAwait(false);
+            var result = await _interviewService.CreateInterviewAsync(request.Interview, cancellationToken);
 
             if (result.IsSuccess)
             {
@@ -78,20 +78,19 @@ public class UpdateInterviewCommandHandler : BaseCommandBundle, IRequestHandler<
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<Interview>> HandleAsync(UpdateInterviewCommand request, CancellationToken ct = default)
+    public async Task<Result<Interview>> HandleAsync(UpdateInterviewCommand request, CancellationToken cancellationToken)
     {
         try
         {
             if (request?.Interview is null)
             {
-                _logger.LogApplicationError("UpdateInterviewCommand received with null Interview", ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("UpdateInterviewCommand received with null request or interview", ApplicationEventIds.Error, null);
                 return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateInterviewCommand for ID: {Id}, Code: {Code}",
-                request.Interview.Id, request.Interview.Code);
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateInterviewCommand for ID: {Id}", request.Interview.Id);
 
-            var result = await _interviewService.UpdateInterviewAsync(request.Interview, ct).ConfigureAwait(false);
+            var result = await _interviewService.UpdateInterviewAsync(request.Interview, cancellationToken);
 
             if (result.IsSuccess)
             {
@@ -129,19 +128,19 @@ public class DeleteInterviewCommandHandler : BaseCommandBundle, IRequestHandler<
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<bool>> HandleAsync(DeleteInterviewCommand request, CancellationToken ct = default)
+    public async Task<Result<bool>> HandleAsync(DeleteInterviewCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            if (request?.InterviewId is null)
+            if (request is null)
             {
-                _logger.LogApplicationError("DeleteInterviewCommand received with null InterviewId", ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("DeleteInterviewCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.InterviewError.NullOrEmpty);
             }
 
             _logger.LogInformation("✅ Clean Architecture: Processing DeleteInterviewCommand for ID: {Id}", request.InterviewId);
 
-            var result = await _interviewService.DeleteInterviewAsync(request.InterviewId, ct).ConfigureAwait(false);
+            var result = await _interviewService.DeleteInterviewAsync(request.InterviewId, cancellationToken);
 
             if (result.IsSuccess)
             {

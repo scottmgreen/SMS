@@ -23,11 +23,11 @@ namespace SMS_Application.Messaging.QueryHandlers;
 /// </summary>
 public class GetAllSMSAuditsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSAuditsQuery, Result<List<SMSAudit>>>
 {
-    private readonly SMSAuditDataService _dataService;
+    private readonly SMSAuditService _dataService;
     private readonly ILogger<GetAllSMSAuditsQueryHandler> _logger;
 
     public GetAllSMSAuditsQueryHandler(
-        SMSAuditDataService dataService,
+        SMSAuditService dataService,
         ILogger<GetAllSMSAuditsQueryHandler> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));

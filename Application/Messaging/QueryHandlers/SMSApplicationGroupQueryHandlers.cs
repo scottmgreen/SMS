@@ -19,11 +19,11 @@ namespace SMS_Application.Messaging.QueryHandlers;
 /// </summary>
 public class GetAllSMSApplicationGroupsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSApplicationGroupsQuery, Result<IEnumerable<SMSApplicationGroup>>>
 {
-    private readonly SMSApplicationGroupDataService _applicationGroupDataService;
+    private readonly SMSApplicationGroupService _applicationGroupDataService;
     private readonly ILogger<GetAllSMSApplicationGroupsQueryHandler> _logger;
 
     public GetAllSMSApplicationGroupsQueryHandler(
-        SMSApplicationGroupDataService applicationGroupDataService,
+        SMSApplicationGroupService applicationGroupDataService,
         ILogger<GetAllSMSApplicationGroupsQueryHandler> logger)
     {
         _applicationGroupDataService = applicationGroupDataService ?? throw new ArgumentNullException(nameof(applicationGroupDataService));
@@ -36,7 +36,7 @@ public class GetAllSMSApplicationGroupsQueryHandler : BaseQueryBundle, IRequestH
         {
             _logger.LogInformation("Processing GetAllSMSApplicationGroupsQuery");
 
-            var result = await _applicationGroupDataService.GetAllAsync();
+            var result = await _applicationGroupDataService.GetAllSMSApplicationGroupsAsync();
 
             if (result.IsSuccess)
             {

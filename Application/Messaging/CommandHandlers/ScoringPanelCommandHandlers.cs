@@ -2,7 +2,7 @@
 // <copyright file="ScoringPanelCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Command handlers implementing business logic for SMS write operations.
+//     Description: Command handlers implementing SMS scoring panel business logic and operations.
 //                  Implements command handlers for processing write operations.
 //                  Handles business logic execution and domain entity coordination.
 // </copyright>
@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging;
 namespace SMS_Application.Messaging.CommandHandlers;
 
 // =============================================
-// SCORING PANEL COMMAND HANDLERS
+// SCORING PANEL COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
 public class CreateScoringPanelCommandHandler : BaseCommandBundle, IRequestHandler<CreateScoringPanelCommand, Result<ScoringPanel>>
@@ -27,23 +27,23 @@ public class CreateScoringPanelCommandHandler : BaseCommandBundle, IRequestHandl
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<ScoringPanel>> HandleAsync(CreateScoringPanelCommand request, CancellationToken ct = default)
+    public async Task<Result<ScoringPanel>> HandleAsync(CreateScoringPanelCommand request, CancellationToken cancellationToken)
     {
         try
         {
             if (request?.ScoringPanel is null)
             {
-                _logger.LogApplicationError("CreateScoringPanelCommand received with null ScoringPanel", ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("CreateScoringPanelCommand received with null request or scoring panel", ApplicationEventIds.Error, null);
                 return Result<ScoringPanel>.Failure<ScoringPanel>(DomainErrors.ScoringPanelError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing CreateScoringPanelCommand for Code: {Code}", request.ScoringPanel.Code);
+            _logger.LogInformation("✅ Clean Architecture: Processing CreateScoringPanelCommand for Code: {Code}", request.ScoringPanel.Code);
 
-            var result = await _scoringPanelService.CreateScoringPanelAsync(request.ScoringPanel, ct).ConfigureAwait(false);
+            var result = await _scoringPanelService.CreateScoringPanelAsync(request.ScoringPanel, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created ScoringPanel with ID: {Id}, Code: {Code}",
+                _logger.LogInformation("✅ Clean Architecture: Successfully created ScoringPanel with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -78,24 +78,23 @@ public class UpdateScoringPanelCommandHandler : BaseCommandBundle, IRequestHandl
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<ScoringPanel>> HandleAsync(UpdateScoringPanelCommand request, CancellationToken ct = default)
+    public async Task<Result<ScoringPanel>> HandleAsync(UpdateScoringPanelCommand request, CancellationToken cancellationToken)
     {
         try
         {
             if (request?.ScoringPanel is null)
             {
-                _logger.LogApplicationError("UpdateScoringPanelCommand received with null ScoringPanel", ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("UpdateScoringPanelCommand received with null request or scoring panel", ApplicationEventIds.Error, null);
                 return Result<ScoringPanel>.Failure<ScoringPanel>(DomainErrors.ScoringPanelError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateScoringPanelCommand for ID: {Id}, Code: {Code}",
-                request.ScoringPanel.Id, request.ScoringPanel.Code);
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateScoringPanelCommand for ID: {Id}", request.ScoringPanel.Id);
 
-            var result = await _scoringPanelService.UpdateScoringPanelAsync(request.ScoringPanel, ct).ConfigureAwait(false);
+            var result = await _scoringPanelService.UpdateScoringPanelAsync(request.ScoringPanel, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated ScoringPanel with ID: {Id}", request.ScoringPanel.Id);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated ScoringPanel with ID: {Id}", request.ScoringPanel.Id);
             }
             else
             {
@@ -129,23 +128,23 @@ public class DeleteScoringPanelCommandHandler : BaseCommandBundle, IRequestHandl
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<bool>> HandleAsync(DeleteScoringPanelCommand request, CancellationToken ct = default)
+    public async Task<Result<bool>> HandleAsync(DeleteScoringPanelCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            if (request?.ScoringPanelId is null)
+            if (request is null)
             {
-                _logger.LogApplicationError("DeleteScoringPanelCommand received with null ScoringPanelId", ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("DeleteScoringPanelCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.ScoringPanelError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing DeleteScoringPanelCommand for ID: {Id}", request.ScoringPanelId);
+            _logger.LogInformation("✅ Clean Architecture: Processing DeleteScoringPanelCommand for ID: {Id}", request.ScoringPanelId);
 
-            var result = await _scoringPanelService.DeleteScoringPanelAsync(request.ScoringPanelId, ct).ConfigureAwait(false);
+            var result = await _scoringPanelService.DeleteScoringPanelAsync(request.ScoringPanelId, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted ScoringPanel with ID: {Id}", request.ScoringPanelId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully deleted ScoringPanel with ID: {Id}", request.ScoringPanelId);
             }
             else
             {

@@ -13,17 +13,17 @@ using Microsoft.Extensions.Logging;
 namespace SMS_Application.Messaging.CommandHandlers;
 
 // =============================================
-// RISK ASSESSMENT COMMAND HANDLERS
+// RISK ASSESSMENT COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
 public class CreateRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHandler<CreateRiskAssessmentCommand, Result<RiskAssessment>>
 {
-    private readonly RiskAssessmentDataService _dataService;
+    private readonly IRiskAssessmentService _riskAssessmentService;
     private readonly ILogger<CreateRiskAssessmentCommandHandler> _logger;
 
-    public CreateRiskAssessmentCommandHandler(RiskAssessmentDataService dataService, ILogger<CreateRiskAssessmentCommandHandler> logger)
+    public CreateRiskAssessmentCommandHandler(IRiskAssessmentService riskAssessmentService, ILogger<CreateRiskAssessmentCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _riskAssessmentService = riskAssessmentService ?? throw new ArgumentNullException(nameof(riskAssessmentService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -37,13 +37,13 @@ public class CreateRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHan
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing CreateRiskAssessmentCommand for Code: {Code}", request.RiskAssessment.Code);
+            _logger.LogInformation("✅ Clean Architecture: Processing CreateRiskAssessmentCommand for Code: {Code}", request.RiskAssessment.Code);
 
-            var result = await _dataService.CreateRiskAssessmentAsync(request.RiskAssessment, ct).ConfigureAwait(false);
+            var result = await _riskAssessmentService.CreateRiskAssessmentAsync(request.RiskAssessment, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created RiskAssessment with ID: {Id}, Code: {Code}",
+                _logger.LogInformation("✅ Clean Architecture: Successfully created RiskAssessment with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -69,12 +69,12 @@ public class CreateRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHan
 
 public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHandler<UpdateRiskAssessmentCommand, Result<RiskAssessment>>
 {
-    private readonly RiskAssessmentDataService _dataService;
+    private readonly IRiskAssessmentService _riskAssessmentService;
     private readonly ILogger<UpdateRiskAssessmentCommandHandler> _logger;
 
-    public UpdateRiskAssessmentCommandHandler(RiskAssessmentDataService dataService, ILogger<UpdateRiskAssessmentCommandHandler> logger)
+    public UpdateRiskAssessmentCommandHandler(IRiskAssessmentService riskAssessmentService, ILogger<UpdateRiskAssessmentCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _riskAssessmentService = riskAssessmentService ?? throw new ArgumentNullException(nameof(riskAssessmentService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -88,14 +88,14 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHan
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateRiskAssessmentCommand for ID: {Id}, Code: {Code}",
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateRiskAssessmentCommand for ID: {Id}, Code: {Code}",
                 request.RiskAssessment.Id, request.RiskAssessment.Code);
 
-            var result = await _dataService.UpdateRiskAssessmentAsync(request.RiskAssessment, ct).ConfigureAwait(false);
+            var result = await _riskAssessmentService.UpdateRiskAssessmentAsync(request.RiskAssessment, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated RiskAssessment with ID: {Id}", request.RiskAssessment.Id);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated RiskAssessment with ID: {Id}", request.RiskAssessment.Id);
             }
             else
             {
@@ -120,12 +120,12 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHan
 
 public class DeleteRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHandler<DeleteRiskAssessmentCommand, Result<bool>>
 {
-    private readonly RiskAssessmentDataService _dataService;
+    private readonly IRiskAssessmentService _riskAssessmentService;
     private readonly ILogger<DeleteRiskAssessmentCommandHandler> _logger;
 
-    public DeleteRiskAssessmentCommandHandler(RiskAssessmentDataService dataService, ILogger<DeleteRiskAssessmentCommandHandler> logger)
+    public DeleteRiskAssessmentCommandHandler(IRiskAssessmentService riskAssessmentService, ILogger<DeleteRiskAssessmentCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _riskAssessmentService = riskAssessmentService ?? throw new ArgumentNullException(nameof(riskAssessmentService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -139,13 +139,13 @@ public class DeleteRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHan
                 return Result<bool>.Failure<bool>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing DeleteRiskAssessmentCommand for ID: {Id}", request.RiskAssessmentId);
+            _logger.LogInformation("✅ Clean Architecture: Processing DeleteRiskAssessmentCommand for ID: {Id}", request.RiskAssessmentId);
 
-            var result = await _dataService.DeleteRiskAssessmentAsync(request.RiskAssessmentId, ct).ConfigureAwait(false);
+            var result = await _riskAssessmentService.DeleteRiskAssessmentAsync(request.RiskAssessmentId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted RiskAssessment with ID: {Id}", request.RiskAssessmentId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully deleted RiskAssessment with ID: {Id}", request.RiskAssessmentId);
             }
             else
             {
@@ -169,17 +169,17 @@ public class DeleteRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHan
 }
 
 // =============================================
-// STEP-SPECIFIC COMMAND HANDLERS FOR STEPS 1-5
+// STEP-SPECIFIC COMMAND HANDLERS FOR STEPS 1-5 - Clean Architecture Pattern
 // =============================================
 
 public class SaveStep1CommandHandler : BaseCommandBundle, IRequestHandler<SaveStep1Command, Result<RiskAssessment>>
 {
-    private readonly RiskAssessmentDataService _dataService;
+    private readonly IRiskAssessmentService _riskAssessmentService;
     private readonly ILogger<SaveStep1CommandHandler> _logger;
 
-    public SaveStep1CommandHandler(RiskAssessmentDataService dataService, ILogger<SaveStep1CommandHandler> logger)
+    public SaveStep1CommandHandler(IRiskAssessmentService riskAssessmentService, ILogger<SaveStep1CommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _riskAssessmentService = riskAssessmentService ?? throw new ArgumentNullException(nameof(riskAssessmentService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -193,26 +193,36 @@ public class SaveStep1CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing SaveStep1Command for RiskAssessment: {Id}", request.RiskAssessmentId.Value);
+            _logger.LogInformation("✅ Clean Architecture: Processing SaveStep1Command for RiskAssessment: {Id}", request.RiskAssessmentId.Value);
 
-            var result = await _dataService.SaveStep1Async(
-                request.RiskAssessmentId,
-                request.LeadAssessorId,
-                request.SystemDescription,
-                request.SystemBoundaries,
-                request.SystemPurpose,
-                request.FiveMPersonnel,
-                request.FiveMEquipment,
-                request.FiveMProcedures,
-                request.FiveMResources,
-                request.FiveMPhysicalEnvironment,
-                request.FiveMOperationalEnvironment,
-                request.UpdatedBy,
-                ct).ConfigureAwait(false);
+            // Get the existing assessment first
+            var assessmentResult = await _riskAssessmentService.GetRiskAssessmentByIdAsync(request.RiskAssessmentId, ct);
+            if (assessmentResult.IsFailure)
+            {
+                return Result<RiskAssessment>.Failure<RiskAssessment>(assessmentResult.Error);
+            }
+
+            var assessment = assessmentResult.Value;
+
+            // Update the assessment with Step 1 data
+            assessment.LeadAssessorId = request.LeadAssessorId;
+            assessment.SystemDescription = request.SystemDescription;
+            assessment.SystemBoundaries = request.SystemBoundaries;
+            assessment.SystemPurpose = request.SystemPurpose;
+            assessment.FiveMPersonnel = request.FiveMPersonnel;
+            assessment.FiveMEquipment = request.FiveMEquipment;
+            assessment.FiveMProcedures = request.FiveMProcedures;
+            assessment.FiveMResources = request.FiveMResources;
+            assessment.FiveMPhysicalEnvironment = request.FiveMPhysicalEnvironment;
+            assessment.FiveMOperationalEnvironment = request.FiveMOperationalEnvironment;
+            assessment.UpdatedBy = request.UpdatedBy;
+            assessment.UpdatedDate = DateTime.UtcNow;
+
+            var result = await _riskAssessmentService.UpdateRiskAssessmentAsync(assessment, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully saved Step 1 for RiskAssessment: {Id}", request.RiskAssessmentId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully saved Step 1 for RiskAssessment: {Id}", request.RiskAssessmentId);
             }
             else
             {
@@ -235,69 +245,14 @@ public class SaveStep1CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
     }
 }
 
-//public class SaveStep3CommandHandler : BaseCommandBundle, IRequestHandler<SaveStep3Command, Result<RiskAssessment>>
-//{
-//    private readonly RiskAssessmentDataService _dataService;
-//    private readonly ILogger<SaveStep3CommandHandler> _logger;
-
-//    public SaveStep3CommandHandler(RiskAssessmentDataService dataService, ILogger<SaveStep3CommandHandler> logger)
-//    {
-//        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
-//        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-//    }
-
-//    public async Task<Result<RiskAssessment>> HandleAsync(SaveStep3Command request, CancellationToken ct = default)
-//    {
-//        try
-//        {
-//            if (request is null)
-//            {
-//                _logger.LogApplicationError("SaveStep3Command received with null request", ApplicationEventIds.Error, null);
-//                return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
-//            }
-
-//            _logger.LogInformation("Processing SaveStep3Command for RiskAssessment: {Id}", request.RiskAssessmentId.Value);
-
-//            var result = await _dataService.SaveStep3Async(
-//                request.RiskAssessmentId,
-//                request.RiskAnalysisMethod,
-//                request.RiskCriteria,
-//                request.UpdatedBy,
-//                ct).ConfigureAwait(false);
-
-//            if (result.IsSuccess)
-//            {
-//                _logger.LogInformation("Successfully saved Step 3 for RiskAssessment: {Id}", request.RiskAssessmentId);
-//            }
-//            else
-//            {
-//                _logger.LogApplicationError("Failed to save Step 3 for RiskAssessment: {Id}. Error: {Error}",
-//                    ApplicationEventIds.Error, null);
-//            }
-
-//            return result;
-//        }
-//        catch (OperationCanceledException)
-//        {
-//            _logger.LogWarning("SaveStep3Command operation was cancelled");
-//            throw;
-//        }
-//        catch (Exception ex)
-//        {
-//            _logger.LogApplicationError("Unexpected error occurred while saving Step 3 for RiskAssessment: {Id}", ApplicationEventIds.Error, ex);
-//            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
-//        }
-//    }
-//}
-
 public class SaveStep4CommandHandler : BaseCommandBundle, IRequestHandler<SaveStep4Command, Result<RiskAssessment>>
 {
-    private readonly RiskAssessmentDataService _dataService;
+    private readonly IRiskAssessmentService _riskAssessmentService;
     private readonly ILogger<SaveStep4CommandHandler> _logger;
 
-    public SaveStep4CommandHandler(RiskAssessmentDataService dataService, ILogger<SaveStep4CommandHandler> logger)
+    public SaveStep4CommandHandler(IRiskAssessmentService riskAssessmentService, ILogger<SaveStep4CommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _riskAssessmentService = riskAssessmentService ?? throw new ArgumentNullException(nameof(riskAssessmentService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -311,19 +266,29 @@ public class SaveStep4CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing SaveStep4Command for RiskAssessment: {Id}", request.RiskAssessmentId.Value);
+            _logger.LogInformation("✅ Clean Architecture: Processing SaveStep4Command for RiskAssessment: {Id}", request.RiskAssessmentId.Value);
 
-            var result = await _dataService.SaveStep4Async(
-                request.RiskAssessmentId,
-                request.FinalSeverityScore,
-                request.FinalLikelihoodScore,
-                request.FinalRiskLevel,
-                request.UpdatedBy,
-                ct).ConfigureAwait(false);
+            // Get the existing assessment first
+            var assessmentResult = await _riskAssessmentService.GetRiskAssessmentByIdAsync(request.RiskAssessmentId, ct);
+            if (assessmentResult.IsFailure)
+            {
+                return Result<RiskAssessment>.Failure<RiskAssessment>(assessmentResult.Error);
+            }
+
+            var assessment = assessmentResult.Value;
+
+            // Update the assessment with Step 4 data
+            assessment.FinalSeverityScore = request.FinalSeverityScore;
+            assessment.FinalLikelihoodScore = request.FinalLikelihoodScore;
+            assessment.FinalRiskLevel = request.FinalRiskLevel;
+            assessment.UpdatedBy = request.UpdatedBy;
+            assessment.UpdatedDate = DateTime.UtcNow;
+
+            var result = await _riskAssessmentService.UpdateRiskAssessmentAsync(assessment, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully saved Step 4 for RiskAssessment: {Id}", request.RiskAssessmentId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully saved Step 4 for RiskAssessment: {Id}", request.RiskAssessmentId);
             }
             else
             {
@@ -348,12 +313,12 @@ public class SaveStep4CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
 
 public class SaveStep5CommandHandler : BaseCommandBundle, IRequestHandler<SaveStep5Command, Result<RiskAssessment>>
 {
-    private readonly RiskAssessmentDataService _dataService;
+    private readonly IRiskAssessmentService _riskAssessmentService;
     private readonly ILogger<SaveStep5CommandHandler> _logger;
 
-    public SaveStep5CommandHandler(RiskAssessmentDataService dataService, ILogger<SaveStep5CommandHandler> logger)
+    public SaveStep5CommandHandler(IRiskAssessmentService riskAssessmentService, ILogger<SaveStep5CommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _riskAssessmentService = riskAssessmentService ?? throw new ArgumentNullException(nameof(riskAssessmentService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -367,13 +332,26 @@ public class SaveStep5CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing SaveStep5Command for RiskAssessment: {Id}", request.RiskAssessmentId);
+            _logger.LogInformation("✅ Clean Architecture: Processing SaveStep5Command for RiskAssessment: {Id}", request.RiskAssessmentId);
 
-            var result = await _dataService.SaveStep5Async(request.RiskAssessmentId,  request.UpdatedBy,  ct).ConfigureAwait(false);
+            // Get the existing assessment first
+            var assessmentResult = await _riskAssessmentService.GetRiskAssessmentByIdAsync(request.RiskAssessmentId, ct);
+            if (assessmentResult.IsFailure)
+            {
+                return Result<RiskAssessment>.Failure<RiskAssessment>(assessmentResult.Error);
+            }
+
+            var assessment = assessmentResult.Value;
+
+            // Update the assessment with Step 5 data
+            assessment.UpdatedBy = request.UpdatedBy;
+            assessment.UpdatedDate = DateTime.UtcNow;
+
+            var result = await _riskAssessmentService.UpdateRiskAssessmentAsync(assessment, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully saved Step 5 for RiskAssessment: {Id}", request.RiskAssessmentId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully saved Step 5 for RiskAssessment: {Id}", request.RiskAssessmentId);
             }
             else
             {
@@ -398,12 +376,12 @@ public class SaveStep5CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
 
 public class UpdateProgressCommandHandler : BaseCommandBundle, IRequestHandler<UpdateProgressCommand, Result<RiskAssessment>>
 {
-    private readonly RiskAssessmentDataService _dataService;
+    private readonly IRiskAssessmentService _riskAssessmentService;
     private readonly ILogger<UpdateProgressCommandHandler> _logger;
 
-    public UpdateProgressCommandHandler(RiskAssessmentDataService dataService, ILogger<UpdateProgressCommandHandler> logger)
+    public UpdateProgressCommandHandler(IRiskAssessmentService riskAssessmentService, ILogger<UpdateProgressCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _riskAssessmentService = riskAssessmentService ?? throw new ArgumentNullException(nameof(riskAssessmentService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -417,22 +395,48 @@ public class UpdateProgressCommandHandler : BaseCommandBundle, IRequestHandler<U
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateProgressCommand for RiskAssessment: {Id}, Step: {Step}",
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateProgressCommand for RiskAssessment: {Id}, Step: {Step}",
                 request.RiskAssessmentId, request.CurrentStep);
 
-            var result = await _dataService.UpdateProgressAsync(
-                request.RiskAssessmentId,
-                request.CurrentStep,
-                request.CompletedSteps,
-                request.CompletionPercentage,
-                request.Status,
-                request.Stage,
-                request.UpdatedBy,
-                ct).ConfigureAwait(false);
+            // Get the existing assessment first
+            var assessmentResult = await _riskAssessmentService.GetRiskAssessmentByIdAsync(request.RiskAssessmentId, ct);
+            if (assessmentResult.IsFailure)
+            {
+                return Result<RiskAssessment>.Failure<RiskAssessment>(assessmentResult.Error);
+            }
+
+            var assessment = assessmentResult.Value;
+
+            // Update the assessment with progress data
+            assessment.CurrentStep = request.CurrentStep;
+
+            // Handle Smart Enumeration status conversion using the proper method
+            var statusFromString = RiskAssessmentStatus.GetAllValues()
+                .FirstOrDefault(s => s.Value == request.Status || s.Name == request.Status);
+            if (statusFromString != null)
+            {
+                assessment.Status = statusFromString;
+            }
+
+            // Handle Smart Enumeration stage conversion using the proper method  
+            var stageFromString = RiskAssessmentStage.GetAllValues()
+                .FirstOrDefault(s => s.Value == request.Stage || s.Name == request.Stage);
+            if (stageFromString != null)
+            {
+                assessment.Stage = stageFromString;
+            }
+
+            // Use the CompleteStep method which will handle status and stage updates based on business rules
+            assessment.CompleteStep(request.CurrentStep);
+
+            assessment.UpdatedBy = request.UpdatedBy;
+            assessment.UpdatedDate = DateTime.UtcNow;
+
+            var result = await _riskAssessmentService.UpdateRiskAssessmentAsync(assessment, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated progress for RiskAssessment: {Id}", request.RiskAssessmentId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated progress for RiskAssessment: {Id}", request.RiskAssessmentId);
             }
             else
             {

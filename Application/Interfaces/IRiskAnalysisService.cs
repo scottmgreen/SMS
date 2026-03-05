@@ -27,7 +27,7 @@ public interface IRiskAnalysisService
     /// <summary>
     /// Gets all risk analyses for a specific hazard
     /// </summary>
-    Task<Result<List<RiskAnalysis>>> GetRiskAnalysesByHazardCodeAsync(string hazardCode, CancellationToken ct = default);
+    Task<Result<RiskAnalysis>> GetRiskAnalysisByHazardCodeAsync(string hazardCode, CancellationToken ct = default);
 
     /// <summary>
     /// Updates an existing risk analysis

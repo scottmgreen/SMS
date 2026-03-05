@@ -23,11 +23,11 @@ namespace SMS_Application.Messaging.QueryHandlers;
 /// </summary>
 public class GetAllSafetyPerformanceIndicatorsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSafetyPerformanceIndicatorsQuery, Result<List<SafetyPerformanceIndicator>>>
 {
-    private readonly SafetyPerformanceIndicatorDataService _dataService;
+    private readonly SafetyPerformanceIndicatorService _dataService;
     private readonly ILogger<GetAllSafetyPerformanceIndicatorsQueryHandler> _logger;
 
     public GetAllSafetyPerformanceIndicatorsQueryHandler(
-        SafetyPerformanceIndicatorDataService dataService,
+        SafetyPerformanceIndicatorService dataService,
         ILogger<GetAllSafetyPerformanceIndicatorsQueryHandler> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
@@ -80,11 +80,11 @@ public class GetAllSafetyPerformanceIndicatorsQueryHandler : BaseQueryBundle, IR
 /// </summary>
 public class GetSafetyPerformanceIndicatorByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetSafetyPerformanceIndicatorByIdQuery, Result<SafetyPerformanceIndicator>>
 {
-    private readonly SafetyPerformanceIndicatorDataService _dataService;
+    private readonly SafetyPerformanceIndicatorService _dataService;
     private readonly ILogger<GetSafetyPerformanceIndicatorByIdQueryHandler> _logger;
 
     public GetSafetyPerformanceIndicatorByIdQueryHandler(
-        SafetyPerformanceIndicatorDataService dataService,
+        SafetyPerformanceIndicatorService dataService,
         ILogger<GetSafetyPerformanceIndicatorByIdQueryHandler> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
@@ -114,11 +114,11 @@ public class GetSafetyPerformanceIndicatorByIdQueryHandler : BaseQueryBundle, IR
 /// </summary>
 public class GetSafetyPerformanceIndicatorByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSafetyPerformanceIndicatorByCodeQuery, Result<SafetyPerformanceIndicator>>
 {
-    private readonly SafetyPerformanceIndicatorDataService _dataService;
+    private readonly SafetyPerformanceIndicatorService _dataService;
     private readonly ILogger<GetSafetyPerformanceIndicatorByCodeQueryHandler> _logger;
 
     public GetSafetyPerformanceIndicatorByCodeQueryHandler(
-        SafetyPerformanceIndicatorDataService dataService,
+        SafetyPerformanceIndicatorService dataService,
         ILogger<GetSafetyPerformanceIndicatorByCodeQueryHandler> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
@@ -148,11 +148,11 @@ public class GetSafetyPerformanceIndicatorByCodeQueryHandler : BaseQueryBundle, 
 /// </summary>
 public class GetSPIsByTypeQueryHandler : BaseQueryBundle, IRequestHandler<GetSPIsByTypeQuery, Result<List<SafetyPerformanceIndicator>>>
 {
-    private readonly SafetyPerformanceIndicatorDataService _dataService;
+    private readonly SafetyPerformanceIndicatorService _dataService;
     private readonly ILogger<GetSPIsByTypeQueryHandler> _logger;
 
     public GetSPIsByTypeQueryHandler(
-        SafetyPerformanceIndicatorDataService dataService,
+        SafetyPerformanceIndicatorService dataService,
         ILogger<GetSPIsByTypeQueryHandler> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
@@ -188,11 +188,11 @@ public class GetSPIsByTypeQueryHandler : BaseQueryBundle, IRequestHandler<GetSPI
 /// </summary>
 public class GetSPIsByDepartmentQueryHandler : BaseQueryBundle, IRequestHandler<GetSPIsByDepartmentQuery, Result<List<SafetyPerformanceIndicator>>>
 {
-    private readonly SafetyPerformanceIndicatorDataService _dataService;
+    private readonly SafetyPerformanceIndicatorService _dataService;
     private readonly ILogger<GetSPIsByDepartmentQueryHandler> _logger;
 
     public GetSPIsByDepartmentQueryHandler(
-        SafetyPerformanceIndicatorDataService dataService,
+        SafetyPerformanceIndicatorService dataService,
         ILogger<GetSPIsByDepartmentQueryHandler> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
@@ -461,11 +461,11 @@ public class GetSPIReviewScheduleQueryHandler : BaseQueryBundle, IRequestHandler
 /// </summary>
 public class GetSPIDataPointsQueryHandler : BaseQueryBundle, IRequestHandler<GetSPIDataPointsQuery, Result<List<SPIDataPoint>>>
 {
-    private readonly SafetyPerformanceIndicatorDataService _dataService;
+    private readonly SafetyPerformanceIndicatorService _dataService;
     private readonly ILogger<GetSPIDataPointsQueryHandler> _logger;
 
     public GetSPIDataPointsQueryHandler(
-        SafetyPerformanceIndicatorDataService dataService,
+        SafetyPerformanceIndicatorService dataService,
         ILogger<GetSPIDataPointsQueryHandler> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));

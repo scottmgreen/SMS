@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
-
+using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Queries;
 
 namespace SMS_Application.Services;
@@ -18,7 +18,7 @@ namespace SMS_Application.Services;
 /// Application service for Safety Performance Indicator business operations
 /// Provides high-level business logic and coordination between domain and infrastructure
 /// </summary>
-public class SafetyPerformanceIndicatorService
+public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorService
 {
     private readonly SafetyPerformanceIndicatorDataService _dataService;
     private readonly ILogger<SafetyPerformanceIndicatorService> _logger;
@@ -30,6 +30,281 @@ public class SafetyPerformanceIndicatorService
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
+
+    #region ISafetyPerformanceIndicatorService Implementation
+
+    /// <summary>
+    /// Creates a new safety performance indicator
+    /// </summary>
+    public async Task<Result<SafetyPerformanceIndicator>> CreateSafetyPerformanceIndicatorAsync(SafetyPerformanceIndicator spi, CancellationToken ct = default)
+    {
+        try
+        {
+            if (spi is null)
+            {
+                _logger.LogError("CreateSafetyPerformanceIndicatorAsync received null SPI");
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Creating safety performance indicator: {Name} (Code: {Code})", spi.Name, spi.Code);
+            return await _dataService.CreateSafetyPerformanceIndicatorAsync(spi, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error creating safety performance indicator");
+            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.CreateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Gets safety performance indicator by ID
+    /// </summary>
+    public async Task<Result<SafetyPerformanceIndicator>> GetSafetyPerformanceIndicatorByIdAsync(SafetyPerformanceIndicatorID id, CancellationToken ct = default)
+    {
+        try
+        {
+            if (id is null)
+            {
+                _logger.LogError("GetSafetyPerformanceIndicatorByIdAsync received null ID");
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Retrieving safety performance indicator with ID: {Id}", id.Value);
+            return await _dataService.GetSafetyPerformanceIndicatorByIdAsync(id, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving safety performance indicator with ID: {Id}", id?.Value);
+            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NotFound);
+        }
+    }
+
+    /// <summary>
+    /// Gets safety performance indicator by code
+    /// </summary>
+    public async Task<Result<SafetyPerformanceIndicator>> GetSafetyPerformanceIndicatorByCodeAsync(string code, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                _logger.LogError("GetSafetyPerformanceIndicatorByCodeAsync received null or empty code");
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Retrieving safety performance indicator with Code: {Code}", code);
+            return await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(code, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving safety performance indicator with Code: {Code}", code);
+            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NotFound);
+        }
+    }
+
+    /// <summary>
+    /// Gets all safety performance indicators
+    /// </summary>
+    public async Task<Result<IEnumerable<SafetyPerformanceIndicator>>> GetAllSafetyPerformanceIndicatorsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving all safety performance indicators");
+            var result = await _dataService.GetAllSafetyPerformanceIndicatorsAsync(ct);
+            
+            if (result.IsSuccess)
+            {
+                return Result<IEnumerable<SafetyPerformanceIndicator>>.Success(result.Value.AsEnumerable());
+            }
+            else
+            {
+                return Result<IEnumerable<SafetyPerformanceIndicator>>.Failure<IEnumerable<SafetyPerformanceIndicator>>(result.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving all safety performance indicators");
+            return Result<IEnumerable<SafetyPerformanceIndicator>>.Failure<IEnumerable<SafetyPerformanceIndicator>>(DomainErrors.SPIError.NotFound);
+        }
+    }
+
+    /// <summary>
+    /// Updates an existing safety performance indicator
+    /// </summary>
+    public async Task<Result<SafetyPerformanceIndicator>> UpdateSafetyPerformanceIndicatorAsync(SafetyPerformanceIndicator spi, CancellationToken ct = default)
+    {
+        try
+        {
+            if (spi is null)
+            {
+                _logger.LogError("UpdateSafetyPerformanceIndicatorAsync received null SPI");
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Updating safety performance indicator with ID: {Id}", spi.Id);
+            return await _dataService.UpdateSafetyPerformanceIndicatorAsync(spi, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error updating safety performance indicator with ID: {Id}", spi?.Id);
+            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.UpdateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Deletes a safety performance indicator
+    /// </summary>
+    public async Task<Result<bool>> DeleteSafetyPerformanceIndicatorAsync(SafetyPerformanceIndicatorID id, CancellationToken ct = default)
+    {
+        try
+        {
+            if (id is null)
+            {
+                _logger.LogError("DeleteSafetyPerformanceIndicatorAsync received null ID");
+                return Result<bool>.Failure<bool>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Deleting safety performance indicator with ID: {Id}", id.Value);
+            return await _dataService.DeleteSafetyPerformanceIndicatorAsync(id, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error deleting safety performance indicator with ID: {Id}", id?.Value);
+            return Result<bool>.Failure<bool>(DomainErrors.SPIError.DeleteFailed);
+        }
+    }
+
+    /// <summary>
+    /// Adds a data point to an SPI
+    /// </summary>
+    public async Task<Result<SafetyPerformanceIndicator>> AddSPIDataPointAsync(string spiCode, SPIDataPoint dataPoint, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(spiCode) || dataPoint is null)
+            {
+                _logger.LogError("AddSPIDataPointAsync received null or empty parameters");
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Adding data point to SPI: {SPICode}", spiCode);
+
+            // Get the SPI first
+            var spiResult = await GetSafetyPerformanceIndicatorByCodeAsync(spiCode, ct);
+            if (spiResult.IsFailure)
+            {
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(spiResult.Error);
+            }
+
+            var spi = spiResult.Value;
+
+            // Add the data point (assuming the SPI entity has an AddDataPoint method)
+            if (spi.DataPoints == null)
+                spi.DataPoints = new List<SPIDataPoint>();
+
+            spi.DataPoints.Add(dataPoint);
+
+            // Update the SPI
+            return await UpdateSafetyPerformanceIndicatorAsync(spi, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error adding data point to SPI: {SPICode}", spiCode);
+            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.UpdateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Updates an SPI data point
+    /// </summary>
+    public async Task<Result<SafetyPerformanceIndicator>> UpdateSPIDataPointAsync(SPIDataPoint dataPoint, CancellationToken ct = default)
+    {
+        try
+        {
+            if (dataPoint is null)
+            {
+                _logger.LogError("UpdateSPIDataPointAsync received null data point");
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Updating SPI data point: {Code}", dataPoint.Code);
+
+            // Get the SPI that contains this data point
+            var spiResult = await GetSafetyPerformanceIndicatorByCodeAsync(dataPoint.SPIId, ct);
+            if (spiResult.IsFailure)
+            {
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(spiResult.Error);
+            }
+
+            var spi = spiResult.Value;
+
+            // Update the data point
+            var existingDataPoint = spi.DataPoints?.FirstOrDefault(dp => dp.Code == dataPoint.Code);
+            if (existingDataPoint != null)
+            {
+                var index = spi.DataPoints.IndexOf(existingDataPoint);
+                spi.DataPoints[index] = dataPoint;
+            }
+
+            // Update the SPI
+            return await UpdateSafetyPerformanceIndicatorAsync(spi, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error updating SPI data point: {Code}", dataPoint?.Code);
+            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.UpdateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Deletes an SPI data point
+    /// </summary>
+    public async Task<Result<SafetyPerformanceIndicator>> DeleteSPIDataPointAsync(string dataPointCode, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(dataPointCode))
+            {
+                _logger.LogError("DeleteSPIDataPointAsync received null or empty data point code");
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("Deleting SPI data point: {Code}", dataPointCode);
+
+            // Get all SPIs and find the one containing the data point
+            var allSPIsResult = await GetAllSafetyPerformanceIndicatorsAsync(ct);
+            if (allSPIsResult.IsFailure)
+            {
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(allSPIsResult.Error);
+            }
+
+            var targetSPI = allSPIsResult.Value?.FirstOrDefault(spi => 
+                spi.DataPoints?.Any(dp => dp.Code == dataPointCode) == true);
+
+            if (targetSPI == null)
+            {
+                _logger.LogWarning("Data point {Code} not found in any SPI", dataPointCode);
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NotFound);
+            }
+
+            // Remove the data point
+            var dataPointToRemove = targetSPI.DataPoints.FirstOrDefault(dp => dp.Code == dataPointCode);
+            if (dataPointToRemove != null)
+            {
+                targetSPI.DataPoints.Remove(dataPointToRemove);
+            }
+
+            // Update the SPI
+            return await UpdateSafetyPerformanceIndicatorAsync(targetSPI, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error deleting SPI data point: {Code}", dataPointCode);
+            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.DeleteFailed);
+        }
+    }
+
+    #endregion
 
     /// <summary>
     /// Updates SPI configuration with business validation
@@ -475,7 +750,7 @@ public class SafetyPerformanceIndicatorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting SPI alerts");
-            return Result<List<SPIAlert>>.Failure<List<SPIAlert>>(DomainErrors.SPIError.NotFound);
+            return Result<List<SPIAlert>>.Failure<List<SPIAlert>(DomainErrors.SPIError.NotFound);
         }
     }
 
@@ -525,7 +800,7 @@ public class SafetyPerformanceIndicatorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting SPI compliance status");
-            return Result<List<SPIComplianceStatus>>.Failure<List<SPIComplianceStatus>>(DomainErrors.SPIError.NotFound);
+            return Result<List<SPIComplianceStatus>>.Failure<List<SPIComplianceStatus>(DomainErrors.SPIError.NotFound);
         }
     }
 

@@ -2,64 +2,19 @@
 // <copyright file="ReportCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Command handlers implementing SMS report management and processing logic.
+//     Description: Command handlers implementing SMS report management business logic and operations.
 //                  Implements command handlers for processing write operations.
 //                  Handles business logic execution and domain entity coordination.
 // </copyright>
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
-using SMS_Application.Messaging.Queries;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 
 // =============================================
 // REPORT COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
-public class UpdateReportStatusCommandHandler : BaseCommandBundle, IRequestHandler<UpdateReportStatusCommand, Result<bool>>
-{
-    private readonly ReportService _reportService;
-    private readonly ILogger<UpdateReportStatusCommandHandler> _logger;
-
-    public UpdateReportStatusCommandHandler(ReportService reportService, ILogger<UpdateReportStatusCommandHandler> logger)
-    {
-        _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<bool>> HandleAsync(UpdateReportStatusCommand request, CancellationToken ct = default)
-    {
-        try
-        {
-            if (request?.ReportCode is null)
-            {
-                _logger.LogApplicationError("UpdateReportStatusCommand received with null ReportCode", ApplicationEventIds.Error, null);
-                return Result<bool>.Failure<bool>(DomainErrors.ReportError.NullOrEmpty);
-            }
-
-            _logger.LogInformation("Processing UpdateReportStatusCommand for Code: {Code}", request.ReportCode);
-
-            var result = await _reportService.UpdateReportStatusAsync(request.ReportCode, request.ReportStatus, request.UpdatedBy, ct);
-
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Successfully updated report status for Code: {Code}", request.ReportCode);
-            }
-            else
-            {
-                _logger.LogApplicationError("Failed to update report status for Code: {Code}. Error: {Error}",
-                    ApplicationEventIds.Error, null);
-            }
-
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError("Unexpected error occurred while updating Report status", ApplicationEventIds.Error, ex);
-            return Result<bool>.Failure<bool>(DomainErrors.ReportError.UpdateFailed);
-        }
-    }
-}
 
 public class CreateReportCommandHandler : BaseCommandBundle, IRequestHandler<CreateReportCommand, Result<Report>>
 {
@@ -72,23 +27,23 @@ public class CreateReportCommandHandler : BaseCommandBundle, IRequestHandler<Cre
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<Report>> HandleAsync(CreateReportCommand request, CancellationToken ct = default)
+    public async Task<Result<Report>> HandleAsync(CreateReportCommand request, CancellationToken cancellationToken)
     {
         try
         {
             if (request?.Report is null)
             {
-                _logger.LogApplicationError("CreateReportCommand received with null Report", ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("CreateReportCommand received with null request or report", ApplicationEventIds.Error, null);
                 return Result<Report>.Failure<Report>(DomainErrors.ReportError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing CreateReportCommand for Code: {Code}", request.Report.Code);
+            _logger.LogInformation("✅ Clean Architecture: Processing CreateReportCommand for Code: {Code}", request.Report.Code);
 
-            var result = await _reportService.CreateReportAsync(request.Report, ct).ConfigureAwait(false);
+            var result = await _reportService.CreateReportAsync(request.Report, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created Report with ID: {Id}, Code: {Code}",
+                _logger.LogInformation("✅ Clean Architecture: Successfully created Report with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -123,24 +78,23 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IRequestHandler<Upd
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<Report>> HandleAsync(UpdateReportCommand request, CancellationToken ct = default)
+    public async Task<Result<Report>> HandleAsync(UpdateReportCommand request, CancellationToken cancellationToken)
     {
         try
         {
             if (request?.Report is null)
             {
-                _logger.LogApplicationError("UpdateReportCommand received with null Report", ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("UpdateReportCommand received with null request or report", ApplicationEventIds.Error, null);
                 return Result<Report>.Failure<Report>(DomainErrors.ReportError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateReportCommand for ID: {Id}, Code: {Code}",
-                request.Report.Id, request.Report.Code);
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateReportCommand for ID: {Id}", request.Report.Id);
 
-            var result = await _reportService.UpdateReportAsync(request.Report, ct).ConfigureAwait(false);
+            var result = await _reportService.UpdateReportAsync(request.Report, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated Report with ID: {Id}", request.Report.Id);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated Report with ID: {Id}", request.Report.Id);
             }
             else
             {
@@ -174,23 +128,23 @@ public class DeleteReportCommandHandler : BaseCommandBundle, IRequestHandler<Del
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<bool>> HandleAsync(DeleteReportCommand request, CancellationToken ct = default)
+    public async Task<Result<bool>> HandleAsync(DeleteReportCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            if (request?.ReportId is null)
+            if (request is null)
             {
-                _logger.LogApplicationError("DeleteReportCommand received with null ReportId", ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("DeleteReportCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.ReportError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing DeleteReportCommand for ID: {Id}", request.ReportId);
+            _logger.LogInformation("✅ Clean Architecture: Processing DeleteReportCommand for ID: {Id}", request.ReportId);
 
-            var result = await _reportService.DeleteReportAsync(request.ReportId, ct).ConfigureAwait(false);
+            var result = await _reportService.DeleteReportAsync(request.ReportId, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted Report with ID: {Id}", request.ReportId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully deleted Report with ID: {Id}", request.ReportId);
             }
             else
             {
@@ -208,7 +162,59 @@ public class DeleteReportCommandHandler : BaseCommandBundle, IRequestHandler<Del
         catch (Exception ex)
         {
             _logger.LogApplicationError("Unexpected error occurred while deleting Report with ID: {Id}", ApplicationEventIds.Error, ex);
-            return Result<bool>.Failure<bool>(DomainErrors.ReportError.DeleteFailed);
+            return Result<bool>. Failure<bool>(DomainErrors.ReportError.DeleteFailed);
+        }
+    }
+}
+
+public class UpdateReportStatusCommandHandler : BaseCommandBundle, IRequestHandler<UpdateReportStatusCommand, Result<bool>>
+{
+    private readonly ReportService _reportService;
+    private readonly ILogger<UpdateReportStatusCommandHandler> _logger;
+
+    public UpdateReportStatusCommandHandler(ReportService reportService, ILogger<UpdateReportStatusCommandHandler> logger)
+    {
+        _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<bool>> HandleAsync(UpdateReportStatusCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request is null)
+            {
+                _logger.LogApplicationError("UpdateReportStatusCommand received with null request", ApplicationEventIds.Error, null);
+                return Result<bool>.Failure<bool>(DomainErrors.ReportError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateReportStatusCommand for ReportCode: {ReportCode}, Status: {Status}",
+                request.ReportCode, request.ReportStatus);
+
+            var result = await _reportService.UpdateReportStatusAsync(request.ReportCode, request.ReportStatus, request.UpdatedBy, cancellationToken);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated Report status for Code: {ReportCode} to {Status}",
+                    request.ReportCode, request.ReportStatus);
+            }
+            else
+            {
+                _logger.LogApplicationError("Failed to update Report status for Code: {ReportCode}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("UpdateReportStatusCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error occurred while updating Report status for Code: {ReportCode}", ApplicationEventIds.Error, ex);
+            return Result<bool>.Failure<bool>(DomainErrors.ReportError.UpdateFailed);
         }
     }
 }

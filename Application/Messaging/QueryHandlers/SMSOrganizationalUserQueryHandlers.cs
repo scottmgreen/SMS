@@ -20,10 +20,10 @@ namespace SMS_Application.Messaging.QueryHandlers;
 
 public class GetAllSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSOrganizationalUsersQuery, Result<IEnumerable<SMSOrganizationalUser>>>
 {
-    private readonly SMSOrganizationalUserDataService _dataService;
+    private readonly SMSOrganizationalUserService _dataService;
     private readonly ILogger<GetAllSMSOrganizationalUsersQueryHandler> _logger;
 
-    public GetAllSMSOrganizationalUsersQueryHandler(SMSOrganizationalUserDataService dataService, ILogger<GetAllSMSOrganizationalUsersQueryHandler> logger)
+    public GetAllSMSOrganizationalUsersQueryHandler(SMSOrganizationalUserService dataService, ILogger<GetAllSMSOrganizationalUsersQueryHandler> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

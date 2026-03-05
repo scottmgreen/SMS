@@ -13,17 +13,17 @@ using Microsoft.Extensions.Logging;
 namespace SMS_Application.Messaging.CommandHandlers;
 
 // =============================================
-// MITIGATION ASSIGNMENT COMMAND HANDLERS
+// MITIGATION ASSIGNMENT COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
 public class CreateMitigationAssignmentCommandHandler : BaseCommandBundle, IRequestHandler<CreateMitigationAssignmentCommand, Result<MitigationAssignment>>
 {
-    private readonly MitigationAssignmentDataService _dataService;
+    private readonly MitigationAssignmentService _mitigationAssignmentService;
     private readonly ILogger<CreateMitigationAssignmentCommandHandler> _logger;
 
-    public CreateMitigationAssignmentCommandHandler(MitigationAssignmentDataService dataService, ILogger<CreateMitigationAssignmentCommandHandler> logger)
+    public CreateMitigationAssignmentCommandHandler(MitigationAssignmentService mitigationAssignmentService, ILogger<CreateMitigationAssignmentCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _mitigationAssignmentService = mitigationAssignmentService ?? throw new ArgumentNullException(nameof(mitigationAssignmentService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -37,13 +37,13 @@ public class CreateMitigationAssignmentCommandHandler : BaseCommandBundle, IRequ
                 return Result<MitigationAssignment>.Failure<MitigationAssignment>(DomainErrors.MitigationAssignmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing CreateMitigationAssignmentCommand for Code: {Code}", request.MitigationAssignment.Code);
+            _logger.LogInformation("✅ Clean Architecture: Processing CreateMitigationAssignmentCommand for Code: {Code}", request.MitigationAssignment.Code);
 
-            var result = await _dataService.CreateMitigationAssignmentAsync(request.MitigationAssignment, ct).ConfigureAwait(false);
+            var result = await _mitigationAssignmentService.CreateMitigationAssignmentAsync(request.MitigationAssignment, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created MitigationAssignment with ID: {Id}, Code: {Code}",
+                _logger.LogInformation("✅ Clean Architecture: Successfully created MitigationAssignment with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -69,12 +69,12 @@ public class CreateMitigationAssignmentCommandHandler : BaseCommandBundle, IRequ
 
 public class UpdateMitigationAssignmentCommandHandler : BaseCommandBundle, IRequestHandler<UpdateMitigationAssignmentCommand, Result<MitigationAssignment>>
 {
-    private readonly MitigationAssignmentDataService _dataService;
+    private readonly MitigationAssignmentService _mitigationAssignmentService;
     private readonly ILogger<UpdateMitigationAssignmentCommandHandler> _logger;
 
-    public UpdateMitigationAssignmentCommandHandler(MitigationAssignmentDataService dataService, ILogger<UpdateMitigationAssignmentCommandHandler> logger)
+    public UpdateMitigationAssignmentCommandHandler(MitigationAssignmentService mitigationAssignmentService, ILogger<UpdateMitigationAssignmentCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _mitigationAssignmentService = mitigationAssignmentService ?? throw new ArgumentNullException(nameof(mitigationAssignmentService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -88,14 +88,14 @@ public class UpdateMitigationAssignmentCommandHandler : BaseCommandBundle, IRequ
                 return Result<MitigationAssignment>.Failure<MitigationAssignment>(DomainErrors.MitigationAssignmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateMitigationAssignmentCommand for ID: {Id}, Code: {Code}",
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateMitigationAssignmentCommand for ID: {Id}, Code: {Code}",
                 request.MitigationAssignment.Id, request.MitigationAssignment.Code);
 
-            var result = await _dataService.UpdateMitigationAssignmentAsync(request.MitigationAssignment, ct).ConfigureAwait(false);
+            var result = await _mitigationAssignmentService.UpdateMitigationAssignmentAsync(request.MitigationAssignment, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated MitigationAssignment with ID: {Id}", request.MitigationAssignment.Id);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated MitigationAssignment with ID: {Id}", request.MitigationAssignment.Id);
             }
             else
             {
@@ -120,12 +120,12 @@ public class UpdateMitigationAssignmentCommandHandler : BaseCommandBundle, IRequ
 
 public class DeleteMitigationAssignmentCommandHandler : BaseCommandBundle, IRequestHandler<DeleteMitigationAssignmentCommand, Result<bool>>
 {
-    private readonly MitigationAssignmentDataService _dataService;
+    private readonly MitigationAssignmentService _mitigationAssignmentService;
     private readonly ILogger<DeleteMitigationAssignmentCommandHandler> _logger;
 
-    public DeleteMitigationAssignmentCommandHandler(MitigationAssignmentDataService dataService, ILogger<DeleteMitigationAssignmentCommandHandler> logger)
+    public DeleteMitigationAssignmentCommandHandler(MitigationAssignmentService mitigationAssignmentService, ILogger<DeleteMitigationAssignmentCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _mitigationAssignmentService = mitigationAssignmentService ?? throw new ArgumentNullException(nameof(mitigationAssignmentService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -139,13 +139,13 @@ public class DeleteMitigationAssignmentCommandHandler : BaseCommandBundle, IRequ
                 return Result<bool>.Failure<bool>(DomainErrors.MitigationAssignmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing DeleteMitigationAssignmentCommand for ID: {Id}", request.MitigationAssignmentId);
+            _logger.LogInformation("✅ Clean Architecture: Processing DeleteMitigationAssignmentCommand for ID: {Id}", request.MitigationAssignmentId);
 
-            var result = await _dataService.DeleteMitigationAssignmentAsync(request.MitigationAssignmentId, ct).ConfigureAwait(false);
+            var result = await _mitigationAssignmentService.DeleteMitigationAssignmentAsync(request.MitigationAssignmentId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted MitigationAssignment with ID: {Id}", request.MitigationAssignmentId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully deleted MitigationAssignment with ID: {Id}", request.MitigationAssignmentId);
             }
             else
             {

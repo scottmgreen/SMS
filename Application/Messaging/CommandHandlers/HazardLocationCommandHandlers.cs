@@ -9,19 +9,20 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
+using SMS_Application.Messaging.CommandHandlers;
 
 // =============================================
-// HAZARD LOCATION COMMAND HANDLERS  
+// HAZARD LOCATION COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
 public class CreateHazardLocationCommandHandler : BaseCommandBundle, IRequestHandler<CreateHazardLocationCommand, Result<HazardLocation>>
 {
-    private readonly HazardLocationDataService _dataService;
+    private readonly HazardLocationService _hazardLocationService;
     private readonly ILogger<CreateHazardLocationCommandHandler> _logger;
 
-    public CreateHazardLocationCommandHandler(HazardLocationDataService dataService, ILogger<CreateHazardLocationCommandHandler> logger)
+    public CreateHazardLocationCommandHandler(HazardLocationService hazardLocationService, ILogger<CreateHazardLocationCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _hazardLocationService = hazardLocationService ?? throw new ArgumentNullException(nameof(hazardLocationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -35,13 +36,13 @@ public class CreateHazardLocationCommandHandler : BaseCommandBundle, IRequestHan
                 return Result<HazardLocation>.Failure<HazardLocation>(DomainErrors.HazardLocationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing CreateHazardLocationCommand for Code: {Code}", request.HazardLocation.Code);
+            _logger.LogInformation("✅ Clean Architecture: Processing CreateHazardLocationCommand for Code: {Code}", request.HazardLocation.Code);
 
-            var result = await _dataService.CreateHazardLocationAsync(request.HazardLocation, ct).ConfigureAwait(false);
+            var result = await _hazardLocationService.CreateHazardLocationAsync(request.HazardLocation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created HazardLocation with ID: {Id}, Code: {Code}",
+                _logger.LogInformation("✅ Clean Architecture: Successfully created HazardLocation with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -67,12 +68,12 @@ public class CreateHazardLocationCommandHandler : BaseCommandBundle, IRequestHan
 
 public class UpdateHazardLocationCommandHandler : BaseCommandBundle, IRequestHandler<UpdateHazardLocationCommand, Result<HazardLocation>>
 {
-    private readonly HazardLocationDataService _dataService;
+    private readonly HazardLocationService _hazardLocationService;
     private readonly ILogger<UpdateHazardLocationCommandHandler> _logger;
 
-    public UpdateHazardLocationCommandHandler(HazardLocationDataService dataService, ILogger<UpdateHazardLocationCommandHandler> logger)
+    public UpdateHazardLocationCommandHandler(HazardLocationService hazardLocationService, ILogger<UpdateHazardLocationCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _hazardLocationService = hazardLocationService ?? throw new ArgumentNullException(nameof(hazardLocationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -86,14 +87,14 @@ public class UpdateHazardLocationCommandHandler : BaseCommandBundle, IRequestHan
                 return Result<HazardLocation>.Failure<HazardLocation>(DomainErrors.HazardLocationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateHazardLocationCommand for ID: {Id}, Code: {Code}",
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateHazardLocationCommand for ID: {Id}, Code: {Code}",
                 request.HazardLocation.Id, request.HazardLocation.Code);
 
-            var result = await _dataService.UpdateHazardLocationAsync(request.HazardLocation, ct).ConfigureAwait(false);
+            var result = await _hazardLocationService.UpdateHazardLocationAsync(request.HazardLocation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated HazardLocation with ID: {Id}", request.HazardLocation.Id);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated HazardLocation with ID: {Id}", request.HazardLocation.Id);
             }
             else
             {
@@ -118,12 +119,12 @@ public class UpdateHazardLocationCommandHandler : BaseCommandBundle, IRequestHan
 
 public class DeleteHazardLocationCommandHandler : BaseCommandBundle, IRequestHandler<DeleteHazardLocationCommand, Result<bool>>
 {
-    private readonly HazardLocationDataService _dataService;
+    private readonly HazardLocationService _hazardLocationService;
     private readonly ILogger<DeleteHazardLocationCommandHandler> _logger;
 
-    public DeleteHazardLocationCommandHandler(HazardLocationDataService dataService, ILogger<DeleteHazardLocationCommandHandler> logger)
+    public DeleteHazardLocationCommandHandler(HazardLocationService hazardLocationService, ILogger<DeleteHazardLocationCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _hazardLocationService = hazardLocationService ?? throw new ArgumentNullException(nameof(hazardLocationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -137,13 +138,13 @@ public class DeleteHazardLocationCommandHandler : BaseCommandBundle, IRequestHan
                 return Result<bool>.Failure<bool>(DomainErrors.HazardLocationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing DeleteHazardLocationCommand for ID: {Id}", request.HazardLocationId);
+            _logger.LogInformation("✅ Clean Architecture: Processing DeleteHazardLocationCommand for ID: {Id}", request.HazardLocationId);
 
-            var result = await _dataService.DeleteHazardLocationAsync(request.HazardLocationId, ct).ConfigureAwait(false);
+            var result = await _hazardLocationService.DeleteHazardLocationAsync(request.HazardLocationId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted HazardLocation with ID: {Id}", request.HazardLocationId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully deleted HazardLocation with ID: {Id}", request.HazardLocationId);
             }
             else
             {

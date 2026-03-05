@@ -13,17 +13,17 @@ using Microsoft.Extensions.Logging;
 namespace SMS_Application.Messaging.CommandHandlers;
 
 // =============================================
-// INVESTIGATION COMMAND HANDLERS
+// INVESTIGATION COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
 public class CreateInvestigationCommandHandler : BaseCommandBundle, IRequestHandler<CreateInvestigationCommand, Result<Investigation>>
 {
-    private readonly InvestigationDataService _dataService;
+    private readonly InvestigationService _investigationService;
     private readonly ILogger<CreateInvestigationCommandHandler> _logger;
 
-    public CreateInvestigationCommandHandler(InvestigationDataService dataService, ILogger<CreateInvestigationCommandHandler> logger)
+    public CreateInvestigationCommandHandler(InvestigationService investigationService, ILogger<CreateInvestigationCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _investigationService = investigationService ?? throw new ArgumentNullException(nameof(investigationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -37,13 +37,13 @@ public class CreateInvestigationCommandHandler : BaseCommandBundle, IRequestHand
                 return Result<Investigation>.Failure<Investigation>(DomainErrors.InvestigationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing CreateInvestigationCommand for Code: {Code}", request.Investigation.Code);
+            _logger.LogInformation("✅ Clean Architecture: Processing CreateInvestigationCommand for Code: {Code}", request.Investigation.Code);
 
-            var result = await _dataService.CreateInvestigationAsync(request.Investigation, ct).ConfigureAwait(false);
+            var result = await _investigationService.CreateInvestigationAsync(request.Investigation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created Investigation with ID: {Id}, Code: {Code}",
+                _logger.LogInformation("✅ Clean Architecture: Successfully created Investigation with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -69,12 +69,12 @@ public class CreateInvestigationCommandHandler : BaseCommandBundle, IRequestHand
 
 public class UpdateInvestigationCommandHandler : BaseCommandBundle, IRequestHandler<UpdateInvestigationCommand, Result<Investigation>>
 {
-    private readonly InvestigationDataService _dataService;
+    private readonly InvestigationService _investigationService;
     private readonly ILogger<UpdateInvestigationCommandHandler> _logger;
 
-    public UpdateInvestigationCommandHandler(InvestigationDataService dataService, ILogger<UpdateInvestigationCommandHandler> logger)
+    public UpdateInvestigationCommandHandler(InvestigationService investigationService, ILogger<UpdateInvestigationCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _investigationService = investigationService ?? throw new ArgumentNullException(nameof(investigationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -88,14 +88,14 @@ public class UpdateInvestigationCommandHandler : BaseCommandBundle, IRequestHand
                 return Result<Investigation>.Failure<Investigation>(DomainErrors.InvestigationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateInvestigationCommand for ID: {Id}, Code: {Code}",
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateInvestigationCommand for ID: {Id}, Code: {Code}",
                 request.Investigation.Id, request.Investigation.Code);
 
-            var result = await _dataService.UpdateInvestigationAsync(request.Investigation, ct).ConfigureAwait(false);
+            var result = await _investigationService.UpdateInvestigationAsync(request.Investigation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated Investigation with ID: {Id}", request.Investigation.Id);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated Investigation with ID: {Id}", request.Investigation.Id);
             }
             else
             {
@@ -120,12 +120,12 @@ public class UpdateInvestigationCommandHandler : BaseCommandBundle, IRequestHand
 
 public class DeleteInvestigationCommandHandler : BaseCommandBundle, IRequestHandler<DeleteInvestigationCommand, Result<bool>>
 {
-    private readonly InvestigationDataService _dataService;
+    private readonly InvestigationService _investigationService;
     private readonly ILogger<DeleteInvestigationCommandHandler> _logger;
 
-    public DeleteInvestigationCommandHandler(InvestigationDataService dataService, ILogger<DeleteInvestigationCommandHandler> logger)
+    public DeleteInvestigationCommandHandler(InvestigationService investigationService, ILogger<DeleteInvestigationCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _investigationService = investigationService ?? throw new ArgumentNullException(nameof(investigationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -139,13 +139,13 @@ public class DeleteInvestigationCommandHandler : BaseCommandBundle, IRequestHand
                 return Result<bool>.Failure<bool>(DomainErrors.InvestigationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing DeleteInvestigationCommand for ID: {Id}", request.InvestigationId);
+            _logger.LogInformation("✅ Clean Architecture: Processing DeleteInvestigationCommand for ID: {Id}", request.InvestigationId);
 
-            var result = await _dataService.DeleteInvestigationAsync(request.InvestigationId, ct).ConfigureAwait(false);
+            var result = await _investigationService.DeleteInvestigationAsync(request.InvestigationId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted Investigation with ID: {Id}", request.InvestigationId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully deleted Investigation with ID: {Id}", request.InvestigationId);
             }
             else
             {

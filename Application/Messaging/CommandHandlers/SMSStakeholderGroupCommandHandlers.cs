@@ -10,23 +10,25 @@
 
 using Microsoft.Extensions.Logging;
 
-using SMS_Infrastructure.Persistence;
-
 namespace SMS_Application.Messaging.CommandHandlers;
+
+// =============================================
+// SMS STAKEHOLDER GROUP COMMAND HANDLERS - Clean Architecture Pattern
+// =============================================
 
 /// <summary>
 /// Command handler for creating SMS stakeholder groups
 /// </summary>
 public class CreateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IRequestHandler<CreateSMSStakeholderGroupCommand, Result<SMSStakeholderGroup>>
 {
-    private readonly SMSStakeholderGroupDataService _stakeholderGroupDataService;
+    private readonly SMSStakeholderGroupService _stakeholderGroupService;
     private readonly ILogger<CreateSMSStakeholderGroupCommandHandler> _logger;
 
     public CreateSMSStakeholderGroupCommandHandler(
-        SMSStakeholderGroupDataService stakeholderGroupDataService,
+        SMSStakeholderGroupService stakeholderGroupService,
         ILogger<CreateSMSStakeholderGroupCommandHandler> logger)
     {
-        _stakeholderGroupDataService = stakeholderGroupDataService ?? throw new ArgumentNullException(nameof(stakeholderGroupDataService));
+        _stakeholderGroupService = stakeholderGroupService ?? throw new ArgumentNullException(nameof(stakeholderGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -34,7 +36,7 @@ public class CreateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
     {
         try
         {
-            _logger.LogInformation("Processing CreateSMSStakeholderGroupCommand for group: {GroupCode}", request.StakeholderGroup?.Code);
+            _logger.LogInformation("✅ Clean Architecture: Processing CreateSMSStakeholderGroupCommand for group: {GroupCode}", request.StakeholderGroup?.Code);
 
             if (request?.StakeholderGroup == null)
             {
@@ -42,11 +44,14 @@ public class CreateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
                 return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.NullOrEmpty);
             }
 
-            var result = await _stakeholderGroupDataService.CreateAsync(request.StakeholderGroup);
+            var result = await _stakeholderGroupService.CreateStakeholderGroupAsync(
+                request.StakeholderGroup.Name,
+                request.StakeholderGroup.Description,
+                request.StakeholderGroup.CreatedBy ?? "SYSTEM");
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS stakeholder group: {GroupCode}", request.StakeholderGroup.Code);
+                _logger.LogInformation("✅ Clean Architecture: Successfully created SMS stakeholder group: {GroupCode}", request.StakeholderGroup.Code);
             }
             else
             {
@@ -75,14 +80,14 @@ public class CreateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
 /// </summary>
 public class UpdateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSStakeholderGroupCommand, Result<SMSStakeholderGroup>>
 {
-    private readonly SMSStakeholderGroupRepository _stakeholderGroupRepository;
+    private readonly SMSStakeholderGroupService _stakeholderGroupService;
     private readonly ILogger<UpdateSMSStakeholderGroupCommandHandler> _logger;
 
     public UpdateSMSStakeholderGroupCommandHandler(
-        SMSStakeholderGroupRepository stakeholderGroupRepository,
+        SMSStakeholderGroupService stakeholderGroupService,
         ILogger<UpdateSMSStakeholderGroupCommandHandler> logger)
     {
-        _stakeholderGroupRepository = stakeholderGroupRepository ?? throw new ArgumentNullException(nameof(stakeholderGroupRepository));
+        _stakeholderGroupService = stakeholderGroupService ?? throw new ArgumentNullException(nameof(stakeholderGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -90,7 +95,7 @@ public class UpdateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
     {
         try
         {
-            _logger.LogInformation("Processing UpdateSMSStakeholderGroupCommand for group: {GroupCode}", request.StakeholderGroup?.Code);
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateSMSStakeholderGroupCommand for group: {GroupCode}", request.StakeholderGroup?.Code);
 
             if (request?.StakeholderGroup == null)
             {
@@ -98,11 +103,15 @@ public class UpdateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
                 return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.NullOrEmpty);
             }
 
-            var result = await _stakeholderGroupRepository.UpdateAsync(request.StakeholderGroup);
+            var result = await _stakeholderGroupService.UpdateStakeholderGroupAsync(
+                request.StakeholderGroup.Code,
+                request.StakeholderGroup.Name,
+                request.StakeholderGroup.Description,
+                request.StakeholderGroup.UpdatedBy ?? "SYSTEM");
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated SMS stakeholder group: {GroupCode}", request.StakeholderGroup.Code);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated SMS stakeholder group: {GroupCode}", request.StakeholderGroup.Code);
             }
             else
             {
@@ -131,14 +140,14 @@ public class UpdateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
 /// </summary>
 public class DeleteSMSStakeholderGroupCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSStakeholderGroupCommand, Result<bool>>
 {
-    private readonly SMSStakeholderGroupRepository _stakeholderGroupRepository;
+    private readonly SMSStakeholderGroupService _stakeholderGroupService;
     private readonly ILogger<DeleteSMSStakeholderGroupCommandHandler> _logger;
 
     public DeleteSMSStakeholderGroupCommandHandler(
-        SMSStakeholderGroupRepository stakeholderGroupRepository,
+        SMSStakeholderGroupService stakeholderGroupService,
         ILogger<DeleteSMSStakeholderGroupCommandHandler> logger)
     {
-        _stakeholderGroupRepository = stakeholderGroupRepository ?? throw new ArgumentNullException(nameof(stakeholderGroupRepository));
+        _stakeholderGroupService = stakeholderGroupService ?? throw new ArgumentNullException(nameof(stakeholderGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -146,7 +155,7 @@ public class DeleteSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
     {
         try
         {
-            _logger.LogInformation("Processing DeleteSMSStakeholderGroupCommand for group: {GroupCode}", request.StakeholderGroup.Code);
+            _logger.LogInformation("✅ Clean Architecture: Processing DeleteSMSStakeholderGroupCommand for group: {GroupCode}", request.StakeholderGroup.Code);
 
             if (string.IsNullOrWhiteSpace(request.StakeholderGroup.Code))
             {
@@ -154,11 +163,11 @@ public class DeleteSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.CodeRequired);
             }
 
-            var result = await _stakeholderGroupRepository.DeleteAsync(request.StakeholderGroup.Code);
+            var result = await _stakeholderGroupService.DeleteStakeholderGroupAsync(request.StakeholderGroup);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted SMS stakeholder group: {GroupCode}", request.StakeholderGroup.Code);
+                _logger.LogInformation("✅ Clean Architecture: Successfully deleted SMS stakeholder group: {GroupCode}", request.StakeholderGroup.Code);
             }
             else
             {
@@ -186,14 +195,14 @@ public class DeleteSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
 /// </summary>
 public class AssignUserToStakeholderGroupCommandHandler : BaseCommandBundle, IRequestHandler<AssignUserToStakeholderGroupCommand, Result<bool>>
 {
-    private readonly SMSStakeholderGroupRepository _stakeholderGroupRepository;
+    private readonly SMSStakeholderGroupService _stakeholderGroupService;
     private readonly ILogger<AssignUserToStakeholderGroupCommandHandler> _logger;
 
     public AssignUserToStakeholderGroupCommandHandler(
-        SMSStakeholderGroupRepository stakeholderGroupRepository,
+        SMSStakeholderGroupService stakeholderGroupService,
         ILogger<AssignUserToStakeholderGroupCommandHandler> logger)
     {
-        _stakeholderGroupRepository = stakeholderGroupRepository ?? throw new ArgumentNullException(nameof(stakeholderGroupRepository));
+        _stakeholderGroupService = stakeholderGroupService ?? throw new ArgumentNullException(nameof(stakeholderGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -201,7 +210,7 @@ public class AssignUserToStakeholderGroupCommandHandler : BaseCommandBundle, IRe
     {
         try
         {
-            _logger.LogInformation("Processing AssignUserToStakeholderGroupCommand for user: {UserCode} to group: {GroupCode}",
+            _logger.LogInformation("✅ Clean Architecture: Processing AssignUserToStakeholderGroupCommand for user: {UserCode} to group: {GroupCode}",
                 request.UserCode, request.StakeholderGroupID);
 
             if (string.IsNullOrWhiteSpace(request.UserCode) || string.IsNullOrWhiteSpace(request.StakeholderGroupID.Value))
@@ -210,11 +219,11 @@ public class AssignUserToStakeholderGroupCommandHandler : BaseCommandBundle, IRe
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.UserCodeRequired);
             }
 
-            var result = await _stakeholderGroupRepository.AssignUserToGroupAsync(request.UserCode, request.StakeholderGroupID.Value, request.AssignedBy);
+            var result = await _stakeholderGroupService.AssignUserToGroupAsync(request.UserCode, request.StakeholderGroupID, request.AssignedBy);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully assigned user {UserCode} to group {GroupCode}", request.UserCode, request.StakeholderGroupID.Value);
+                _logger.LogInformation("✅ Clean Architecture: Successfully assigned user {UserCode} to group {GroupCode}", request.UserCode, request.StakeholderGroupID.Value);
             }
             else
             {
@@ -243,14 +252,14 @@ public class AssignUserToStakeholderGroupCommandHandler : BaseCommandBundle, IRe
 /// </summary>
 public class RemoveUserFromStakeholderGroupCommandHandler : BaseCommandBundle, IRequestHandler<RemoveUserFromStakeholderGroupCommand, Result<bool>>
 {
-    private readonly SMSStakeholderGroupRepository _stakeholderGroupRepository;
+    private readonly SMSStakeholderGroupService _stakeholderGroupService;
     private readonly ILogger<RemoveUserFromStakeholderGroupCommandHandler> _logger;
 
     public RemoveUserFromStakeholderGroupCommandHandler(
-        SMSStakeholderGroupRepository stakeholderGroupRepository,
+        SMSStakeholderGroupService stakeholderGroupService,
         ILogger<RemoveUserFromStakeholderGroupCommandHandler> logger)
     {
-        _stakeholderGroupRepository = stakeholderGroupRepository ?? throw new ArgumentNullException(nameof(stakeholderGroupRepository));
+        _stakeholderGroupService = stakeholderGroupService ?? throw new ArgumentNullException(nameof(stakeholderGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -258,7 +267,7 @@ public class RemoveUserFromStakeholderGroupCommandHandler : BaseCommandBundle, I
     {
         try
         {
-            _logger.LogInformation("Processing RemoveUserFromStakeholderGroupCommand for user: {UserCode} from group: {GroupCode}",
+            _logger.LogInformation("✅ Clean Architecture: Processing RemoveUserFromStakeholderGroupCommand for user: {UserCode} from group: {GroupCode}",
                 request.UserCode, request.StakeholderGroupID.Value);
 
             if (string.IsNullOrWhiteSpace(request.UserCode) || string.IsNullOrWhiteSpace(request.StakeholderGroupID.Value))
@@ -267,11 +276,11 @@ public class RemoveUserFromStakeholderGroupCommandHandler : BaseCommandBundle, I
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.UserCodeRequired);
             }
 
-            var result = await _stakeholderGroupRepository.RemoveUserFromGroupAsync(request.UserCode, request.StakeholderGroupID.Value);
+            var result = await _stakeholderGroupService.RemoveUserFromGroupAsync(request.UserCode, request.StakeholderGroupID);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully removed user {UserCode} from group {GroupCode}", request.UserCode, request.StakeholderGroupID.Value);
+                _logger.LogInformation("✅ Clean Architecture: Successfully removed user {UserCode} from group {GroupCode}", request.UserCode, request.StakeholderGroupID.Value);
             }
             else
             {
@@ -300,14 +309,14 @@ public class RemoveUserFromStakeholderGroupCommandHandler : BaseCommandBundle, I
 /// </summary>
 public class ClearUserStakeholderGroupsCommandHandler : BaseCommandBundle, IRequestHandler<ClearUserStakeholderGroupsCommand, Result<bool>>
 {
-    private readonly SMSStakeholderGroupRepository _stakeholderGroupRepository;
+    private readonly SMSStakeholderGroupService _stakeholderGroupService;
     private readonly ILogger<ClearUserStakeholderGroupsCommandHandler> _logger;
 
     public ClearUserStakeholderGroupsCommandHandler(
-        SMSStakeholderGroupRepository stakeholderGroupRepository,
+        SMSStakeholderGroupService stakeholderGroupService,
         ILogger<ClearUserStakeholderGroupsCommandHandler> logger)
     {
-        _stakeholderGroupRepository = stakeholderGroupRepository ?? throw new ArgumentNullException(nameof(stakeholderGroupRepository));
+        _stakeholderGroupService = stakeholderGroupService ?? throw new ArgumentNullException(nameof(stakeholderGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -315,7 +324,7 @@ public class ClearUserStakeholderGroupsCommandHandler : BaseCommandBundle, IRequ
     {
         try
         {
-            _logger.LogInformation("Processing ClearUserStakeholderGroupsCommand for user: {UserCode}", request.UserCode);
+            _logger.LogInformation("✅ Clean Architecture: Processing ClearUserStakeholderGroupsCommand for user: {UserCode}", request.UserCode);
 
             if (string.IsNullOrWhiteSpace(request.UserCode))
             {
@@ -323,11 +332,11 @@ public class ClearUserStakeholderGroupsCommandHandler : BaseCommandBundle, IRequ
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.UserCodeRequired);
             }
 
-            var result = await _stakeholderGroupRepository.ClearUserGroupsAsync(request.UserCode);
+            var result = await _stakeholderGroupService.ClearUserGroupMembershipsAsync(request.UserCode);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully cleared all group memberships for user: {UserCode}", request.UserCode);
+                _logger.LogInformation("✅ Clean Architecture: Successfully cleared all group memberships for user: {UserCode}", request.UserCode);
             }
             else
             {

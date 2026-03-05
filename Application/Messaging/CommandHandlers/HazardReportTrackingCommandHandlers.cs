@@ -2,7 +2,7 @@
 // <copyright file="HazardReportTrackingCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Command handlers implementing SMS hazard management and lifecycle logic.
+//     Description: Command handlers implementing SMS hazard report tracking business logic and operations.
 //                  Implements command handlers for processing write operations.
 //                  Handles business logic execution and domain entity coordination.
 // </copyright>
@@ -13,45 +13,42 @@ using Microsoft.Extensions.Logging;
 namespace SMS_Application.Messaging.CommandHandlers;
 
 // =============================================
-// HAZARD REPORT TRACKING COMMAND HANDLERS
+// HAZARD REPORT TRACKING COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
 public class CreateHazardReportTrackingCommandHandler : BaseCommandBundle, IRequestHandler<CreateHazardReportTrackingCommand, Result<HazardReportTracking>>
 {
-    private readonly HazardReportTrackingService _service;
+    private readonly HazardReportTrackingService _hazardReportTrackingService;
     private readonly ILogger<CreateHazardReportTrackingCommandHandler> _logger;
 
-    public CreateHazardReportTrackingCommandHandler(
-        HazardReportTrackingService service,
-        ILogger<CreateHazardReportTrackingCommandHandler> logger)
+    public CreateHazardReportTrackingCommandHandler(HazardReportTrackingService hazardReportTrackingService, ILogger<CreateHazardReportTrackingCommandHandler> logger)
     {
-        _service = service ?? throw new ArgumentNullException(nameof(service));
+        _hazardReportTrackingService = hazardReportTrackingService ?? throw new ArgumentNullException(nameof(hazardReportTrackingService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<HazardReportTracking>> HandleAsync(CreateHazardReportTrackingCommand request, CancellationToken ct = default)
+    public async Task<Result<HazardReportTracking>> HandleAsync(CreateHazardReportTrackingCommand request, CancellationToken cancellationToken)
     {
         try
         {
             if (request?.HazardReportTracking is null)
             {
-                _logger.LogApplicationError("CreateHazardReportTrackingCommand received with null HazardReportTracking", ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("CreateHazardReportTrackingCommand received with null request or tracking", ApplicationEventIds.Error, null);
                 return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing CreateHazardReportTrackingCommand for HazardCode: {HazardCode}, ReportCode: {ReportCode}",
-                request.HazardReportTracking.HazardCode, request.HazardReportTracking.ReportCode);
+            _logger.LogInformation("✅ Clean Architecture: Processing CreateHazardReportTrackingCommand for ID: {Id}", request.HazardReportTracking.Id);
 
-            var result = await _service.CreateHazardReportTrackingAsync(request.HazardReportTracking, ct).ConfigureAwait(false);
+            var result = await _hazardReportTrackingService.CreateHazardReportTrackingAsync(request.HazardReportTracking, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created HazardReportTracking with TrackingCode: {TrackingCode}",
-                    result.Value?.TrackingCode);
+                _logger.LogInformation("✅ Clean Architecture: Successfully created HazardReportTracking with ID: {Id}",
+                    result.Value?.Id);
             }
             else
             {
-                _logger.LogApplicationError("Failed to create HazardReportTracking. Error: {Error}",
+                _logger.LogApplicationError("Failed to create HazardReportTracking with TrackingId: {TrackingId}. Error: {Error}",
                     ApplicationEventIds.Error, null);
             }
 
@@ -72,40 +69,36 @@ public class CreateHazardReportTrackingCommandHandler : BaseCommandBundle, IRequ
 
 public class UpdateHazardReportTrackingCommandHandler : BaseCommandBundle, IRequestHandler<UpdateHazardReportTrackingCommand, Result<HazardReportTracking>>
 {
-    private readonly HazardReportTrackingService _service;
+    private readonly HazardReportTrackingService _hazardReportTrackingService;
     private readonly ILogger<UpdateHazardReportTrackingCommandHandler> _logger;
 
-    public UpdateHazardReportTrackingCommandHandler(
-        HazardReportTrackingService service,
-        ILogger<UpdateHazardReportTrackingCommandHandler> logger)
+    public UpdateHazardReportTrackingCommandHandler(HazardReportTrackingService hazardReportTrackingService, ILogger<UpdateHazardReportTrackingCommandHandler> logger)
     {
-        _service = service ?? throw new ArgumentNullException(nameof(service));
+        _hazardReportTrackingService = hazardReportTrackingService ?? throw new ArgumentNullException(nameof(hazardReportTrackingService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<HazardReportTracking>> HandleAsync(UpdateHazardReportTrackingCommand request, CancellationToken ct = default)
+    public async Task<Result<HazardReportTracking>> HandleAsync(UpdateHazardReportTrackingCommand request, CancellationToken cancellationToken)
     {
         try
         {
             if (request?.HazardReportTracking is null)
             {
-                _logger.LogApplicationError("UpdateHazardReportTrackingCommand received with null HazardReportTracking", ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("UpdateHazardReportTrackingCommand received with null request or tracking", ApplicationEventIds.Error, null);
                 return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateHazardReportTrackingCommand for TrackingCode: {TrackingCode}",
-                request.HazardReportTracking.TrackingCode);
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateHazardReportTrackingCommand for ID: {Id}", request.HazardReportTracking.Id);
 
-            var result = await _service.UpdateHazardReportTrackingAsync(request.HazardReportTracking, ct).ConfigureAwait(false);
+            var result = await _hazardReportTrackingService.UpdateHazardReportTrackingAsync(request.HazardReportTracking, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated HazardReportTracking with TrackingCode: {TrackingCode}",
-                    request.HazardReportTracking.TrackingCode);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated HazardReportTracking with ID: {Id}", request.HazardReportTracking.Id);
             }
             else
             {
-                _logger.LogApplicationError("Failed to update HazardReportTracking. Error: {Error}",
+                _logger.LogApplicationError("Failed to update HazardReportTracking with ID: {Id}. Error: {Error}",
                     ApplicationEventIds.Error, null);
             }
 
@@ -118,8 +111,7 @@ public class UpdateHazardReportTrackingCommandHandler : BaseCommandBundle, IRequ
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("Unexpected error occurred while updating HazardReportTracking with TrackingCode: {TrackingCode}",
-                ApplicationEventIds.Error, ex);
+            _logger.LogApplicationError("Unexpected error occurred while updating HazardReportTracking with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.UpdateFailed);
         }
     }
@@ -127,34 +119,32 @@ public class UpdateHazardReportTrackingCommandHandler : BaseCommandBundle, IRequ
 
 public class DeleteHazardReportTrackingCommandHandler : BaseCommandBundle, IRequestHandler<DeleteHazardReportTrackingCommand, Result<bool>>
 {
-    private readonly HazardReportTrackingService _service;
+    private readonly HazardReportTrackingService _hazardReportTrackingService;
     private readonly ILogger<DeleteHazardReportTrackingCommandHandler> _logger;
 
-    public DeleteHazardReportTrackingCommandHandler(
-        HazardReportTrackingService service,
-        ILogger<DeleteHazardReportTrackingCommandHandler> logger)
+    public DeleteHazardReportTrackingCommandHandler(HazardReportTrackingService hazardReportTrackingService, ILogger<DeleteHazardReportTrackingCommandHandler> logger)
     {
-        _service = service ?? throw new ArgumentNullException(nameof(service));
+        _hazardReportTrackingService = hazardReportTrackingService ?? throw new ArgumentNullException(nameof(hazardReportTrackingService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<bool>> HandleAsync(DeleteHazardReportTrackingCommand request, CancellationToken ct = default)
+    public async Task<Result<bool>> HandleAsync(DeleteHazardReportTrackingCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            if (request?.HazardReportTrackingId is null)
+            if (request is null)
             {
-                _logger.LogApplicationError("DeleteHazardReportTrackingCommand received with null HazardReportTrackingId", ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("DeleteHazardReportTrackingCommand received with null request", ApplicationEventIds.Error, null);
                 return Result<bool>.Failure<bool>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing DeleteHazardReportTrackingCommand for ID: {Id}", request.HazardReportTrackingId);
+            _logger.LogInformation("✅ Clean Architecture: Processing DeleteHazardReportTrackingCommand for ID: {Id}", request.HazardReportTrackingId);
 
-            var result = await _service.DeleteHazardReportTrackingAsync(request.HazardReportTrackingId, ct).ConfigureAwait(false);
+            var result = await _hazardReportTrackingService.DeleteHazardReportTrackingAsync(request.HazardReportTrackingId, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted HazardReportTracking with ID: {Id}", request.HazardReportTrackingId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully deleted HazardReportTracking with ID: {Id}", request.HazardReportTrackingId);
             }
             else
             {
@@ -171,8 +161,7 @@ public class DeleteHazardReportTrackingCommandHandler : BaseCommandBundle, IRequ
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("Unexpected error occurred while deleting HazardReportTracking with ID: {Id}",
-                ApplicationEventIds.Error, ex);
+            _logger.LogApplicationError("Unexpected error occurred while deleting HazardReportTracking with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.HazardReportTrackingError.DeleteFailed);
         }
     }

@@ -20,10 +20,10 @@ namespace SMS_Application.Messaging.QueryHandlers;
 
 public class GetAllSMSUserRolesQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSUserRolesQuery, Result<IEnumerable<SMSUserRole>>>
 {
-    private readonly SMSUserRoleDataService _userRoleDataService;
+    private readonly SMSUserRoleService _userRoleDataService;
     private readonly ILogger<GetAllSMSUserRolesQueryHandler> _logger;
 
-    public GetAllSMSUserRolesQueryHandler(SMSUserRoleDataService userRoleDataService, ILogger<GetAllSMSUserRolesQueryHandler> logger)
+    public GetAllSMSUserRolesQueryHandler(SMSUserRoleService userRoleDataService, ILogger<GetAllSMSUserRolesQueryHandler> logger)
     {
         _userRoleDataService = userRoleDataService ?? throw new ArgumentNullException(nameof(userRoleDataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -35,7 +35,7 @@ public class GetAllSMSUserRolesQueryHandler : BaseQueryBundle, IRequestHandler<G
         {
             _logger.LogInformation("Processing GetAllSMSUserRolesQuery");
 
-            var result = await _userRoleDataService.GetAllSMSUserRolesAsync();
+            var result = await _userRoleDataService.GetAllUserRolesAsync();
 
             if (result.IsSuccess)
             {

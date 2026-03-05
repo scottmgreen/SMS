@@ -9,24 +9,23 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
-
+using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Queries;
 
 namespace SMS_Application.Messaging.QueryHandlers;
 
 // =============================================
-// HAZARD FILE QUERY HANDLERS - Following Exact SMS Pattern
+// HAZARD FILE QUERY HANDLERS - Clean Architecture Pattern
 // =============================================
-
 
 public class GetHazardFileByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardFileByCodeQuery, Result<HazardFile>>
 {
-    private readonly HazardFileDataService _hazardFileDataService;
+    private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<GetHazardFileByCodeQueryHandler> _logger;
 
-    public GetHazardFileByCodeQueryHandler(HazardFileDataService hazardFileDataService, ILogger<GetHazardFileByCodeQueryHandler> logger)
+    public GetHazardFileByCodeQueryHandler(IHazardFileService hazardFileService, ILogger<GetHazardFileByCodeQueryHandler> logger)
     {
-        _hazardFileDataService = hazardFileDataService ?? throw new ArgumentNullException(nameof(hazardFileDataService));
+        _hazardFileService = hazardFileService ?? throw new ArgumentNullException(nameof(hazardFileService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -34,8 +33,8 @@ public class GetHazardFileByCodeQueryHandler : BaseQueryBundle, IRequestHandler<
     {
         try
         {
-            _logger.LogInformation("Processing GetHazardFileByCodeQuery for Code: {Code}", request.Code);
-            var result = await _hazardFileDataService.GetHazardFileByCodeAsync(request.Code, ct).ConfigureAwait(false);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetHazardFileByCodeQuery for Code: {Code}", request.Code);
+            var result = await _hazardFileService.GetHazardFileByCodeAsync(request.Code, ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)
@@ -48,12 +47,12 @@ public class GetHazardFileByCodeQueryHandler : BaseQueryBundle, IRequestHandler<
 
 public class GetHazardFilesByHazardCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardFilesByHazardCodeQuery, Result<IEnumerable<HazardFile>>>
 {
-    private readonly HazardFileDataService _hazardFileDataService;
+    private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<GetHazardFilesByHazardCodeQueryHandler> _logger;
 
-    public GetHazardFilesByHazardCodeQueryHandler(HazardFileDataService hazardFileDataService, ILogger<GetHazardFilesByHazardCodeQueryHandler> logger)
+    public GetHazardFilesByHazardCodeQueryHandler(IHazardFileService hazardFileService, ILogger<GetHazardFilesByHazardCodeQueryHandler> logger)
     {
-        _hazardFileDataService = hazardFileDataService ?? throw new ArgumentNullException(nameof(hazardFileDataService));
+        _hazardFileService = hazardFileService ?? throw new ArgumentNullException(nameof(hazardFileService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -61,8 +60,8 @@ public class GetHazardFilesByHazardCodeQueryHandler : BaseQueryBundle, IRequestH
     {
         try
         {
-            _logger.LogInformation("Processing GetHazardFilesByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
-            var result = await _hazardFileDataService.GetHazardFilesByHazardCodeAsync(request.HazardCode, request.IncludeFileData, request.Category, ct).ConfigureAwait(false);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetHazardFilesByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
+            var result = await _hazardFileService.GetHazardFilesByHazardCodeAsync(request.HazardCode, request.IncludeFileData, request.Category, ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)
@@ -75,12 +74,12 @@ public class GetHazardFilesByHazardCodeQueryHandler : BaseQueryBundle, IRequestH
 
 public class GetHazardFilesByReportCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardFilesByReportCodeQuery, Result<IEnumerable<HazardFile>>>
 {
-    private readonly HazardFileDataService _hazardFileDataService;
+    private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<GetHazardFilesByReportCodeQueryHandler> _logger;
 
-    public GetHazardFilesByReportCodeQueryHandler(HazardFileDataService hazardFileDataService, ILogger<GetHazardFilesByReportCodeQueryHandler> logger)
+    public GetHazardFilesByReportCodeQueryHandler(IHazardFileService hazardFileService, ILogger<GetHazardFilesByReportCodeQueryHandler> logger)
     {
-        _hazardFileDataService = hazardFileDataService ?? throw new ArgumentNullException(nameof(hazardFileDataService));
+        _hazardFileService = hazardFileService ?? throw new ArgumentNullException(nameof(hazardFileService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -88,8 +87,8 @@ public class GetHazardFilesByReportCodeQueryHandler : BaseQueryBundle, IRequestH
     {
         try
         {
-            _logger.LogInformation("Processing GetHazardFilesByReportCodeQuery for ReportCode: {ReportCode}", request.ReportCode);
-            var result = await _hazardFileDataService.GetHazardFilesByReportCodeAsync(request.ReportCode, request.IncludeFileData, ct).ConfigureAwait(false);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetHazardFilesByReportCodeQuery for ReportCode: {ReportCode}", request.ReportCode);
+            var result = await _hazardFileService.GetHazardFilesByReportCodeAsync(request.ReportCode, request.IncludeFileData, ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)
@@ -102,12 +101,12 @@ public class GetHazardFilesByReportCodeQueryHandler : BaseQueryBundle, IRequestH
 
 public class GetHazardFileDataQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardFileDataQuery, Result<HazardFile>>
 {
-    private readonly HazardFileDataService _hazardFileDataService;
+    private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<GetHazardFileDataQueryHandler> _logger;
 
-    public GetHazardFileDataQueryHandler(HazardFileDataService hazardFileDataService, ILogger<GetHazardFileDataQueryHandler> logger)
+    public GetHazardFileDataQueryHandler(IHazardFileService hazardFileService, ILogger<GetHazardFileDataQueryHandler> logger)
     {
-        _hazardFileDataService = hazardFileDataService ?? throw new ArgumentNullException(nameof(hazardFileDataService));
+        _hazardFileService = hazardFileService ?? throw new ArgumentNullException(nameof(hazardFileService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -115,8 +114,8 @@ public class GetHazardFileDataQueryHandler : BaseQueryBundle, IRequestHandler<Ge
     {
         try
         {
-            _logger.LogInformation("Processing GetHazardFileDataQuery for Code: {Code}", request.Code);
-            var result = await _hazardFileDataService.GetHazardFileDataAsync(request.Code, ct).ConfigureAwait(false);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetHazardFileDataQuery for Code: {Code}", request.Code);
+            var result = await _hazardFileService.GetHazardFileDataAsync(request.Code, ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)
@@ -129,12 +128,12 @@ public class GetHazardFileDataQueryHandler : BaseQueryBundle, IRequestHandler<Ge
 
 public class GetActiveHazardFilesQueryHandler : BaseQueryBundle, IRequestHandler<GetActiveHazardFilesQuery, Result<IEnumerable<HazardFile>>>
 {
-    private readonly HazardFileDataService _hazardFileDataService;
+    private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<GetActiveHazardFilesQueryHandler> _logger;
 
-    public GetActiveHazardFilesQueryHandler(HazardFileDataService hazardFileDataService, ILogger<GetActiveHazardFilesQueryHandler> logger)
+    public GetActiveHazardFilesQueryHandler(IHazardFileService hazardFileService, ILogger<GetActiveHazardFilesQueryHandler> logger)
     {
-        _hazardFileDataService = hazardFileDataService ?? throw new ArgumentNullException(nameof(hazardFileDataService));
+        _hazardFileService = hazardFileService ?? throw new ArgumentNullException(nameof(hazardFileService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -142,8 +141,8 @@ public class GetActiveHazardFilesQueryHandler : BaseQueryBundle, IRequestHandler
     {
         try
         {
-            _logger.LogInformation("Processing GetActiveHazardFilesQuery");
-            var result = await _hazardFileDataService.GetActiveHazardFilesAsync(ct).ConfigureAwait(false);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetActiveHazardFilesQuery");
+            var result = await _hazardFileService.GetActiveHazardFilesAsync(ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)
@@ -156,12 +155,12 @@ public class GetActiveHazardFilesQueryHandler : BaseQueryBundle, IRequestHandler
 
 public class SearchHazardFilesQueryHandler : BaseQueryBundle, IRequestHandler<SearchHazardFilesQuery, Result<IEnumerable<HazardFile>>>
 {
-    private readonly HazardFileDataService _hazardFileDataService;
+    private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<SearchHazardFilesQueryHandler> _logger;
 
-    public SearchHazardFilesQueryHandler(HazardFileDataService hazardFileDataService, ILogger<SearchHazardFilesQueryHandler> logger)
+    public SearchHazardFilesQueryHandler(IHazardFileService hazardFileService, ILogger<SearchHazardFilesQueryHandler> logger)
     {
-        _hazardFileDataService = hazardFileDataService ?? throw new ArgumentNullException(nameof(hazardFileDataService));
+        _hazardFileService = hazardFileService ?? throw new ArgumentNullException(nameof(hazardFileService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -169,8 +168,8 @@ public class SearchHazardFilesQueryHandler : BaseQueryBundle, IRequestHandler<Se
     {
         try
         {
-            _logger.LogInformation("Processing SearchHazardFilesQuery with criteria");
-            var result = await _hazardFileDataService.SearchHazardFilesAsync(
+            _logger.LogInformation("✅ Clean Architecture: Processing SearchHazardFilesQuery with criteria");
+            var result = await _hazardFileService.SearchHazardFilesAsync(
                 request.HazardCode, request.ReportCode, request.FileType, request.Category,
                 request.SearchText, request.UploadedBy, request.DateFrom, request.DateTo,
                 request.IncludeConfidential, request.MaxResults, ct).ConfigureAwait(false);
@@ -184,16 +183,14 @@ public class SearchHazardFilesQueryHandler : BaseQueryBundle, IRequestHandler<Se
     }
 }
 
-
-
 public class GetHazardPhotosQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardPhotosQuery, Result<IEnumerable<HazardFile>>>
 {
-    private readonly HazardFileDataService _hazardFileDataService;
+    private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<GetHazardPhotosQueryHandler> _logger;
 
-    public GetHazardPhotosQueryHandler(HazardFileDataService hazardFileDataService, ILogger<GetHazardPhotosQueryHandler> logger)
+    public GetHazardPhotosQueryHandler(IHazardFileService hazardFileService, ILogger<GetHazardPhotosQueryHandler> logger)
     {
-        _hazardFileDataService = hazardFileDataService ?? throw new ArgumentNullException(nameof(hazardFileDataService));
+        _hazardFileService = hazardFileService ?? throw new ArgumentNullException(nameof(hazardFileService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -201,8 +198,8 @@ public class GetHazardPhotosQueryHandler : BaseQueryBundle, IRequestHandler<GetH
     {
         try
         {
-            _logger.LogInformation("Processing GetHazardPhotosQuery for HazardCode: {HazardCode}", request.HazardCode);
-            var result = await _hazardFileDataService.GetHazardPhotosAsync(request.HazardCode, ct).ConfigureAwait(false);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetHazardPhotosQuery for HazardCode: {HazardCode}", request.HazardCode);
+            var result = await _hazardFileService.GetHazardPhotosAsync(request.HazardCode, ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)
@@ -215,12 +212,12 @@ public class GetHazardPhotosQueryHandler : BaseQueryBundle, IRequestHandler<GetH
 
 public class GetHazardDocumentsQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardDocumentsQuery, Result<IEnumerable<HazardFile>>>
 {
-    private readonly HazardFileDataService _hazardFileDataService;
+    private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<GetHazardDocumentsQueryHandler> _logger;
 
-    public GetHazardDocumentsQueryHandler(HazardFileDataService hazardFileDataService, ILogger<GetHazardDocumentsQueryHandler> logger)
+    public GetHazardDocumentsQueryHandler(IHazardFileService hazardFileService, ILogger<GetHazardDocumentsQueryHandler> logger)
     {
-        _hazardFileDataService = hazardFileDataService ?? throw new ArgumentNullException(nameof(hazardFileDataService));
+        _hazardFileService = hazardFileService ?? throw new ArgumentNullException(nameof(hazardFileService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -228,8 +225,8 @@ public class GetHazardDocumentsQueryHandler : BaseQueryBundle, IRequestHandler<G
     {
         try
         {
-            _logger.LogInformation("Processing GetHazardDocumentsQuery for HazardCode: {HazardCode}", request.HazardCode);
-            var result = await _hazardFileDataService.GetHazardDocumentsAsync(request.HazardCode, ct).ConfigureAwait(false);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetHazardDocumentsQuery for HazardCode: {HazardCode}", request.HazardCode);
+            var result = await _hazardFileService.GetHazardDocumentsAsync(request.HazardCode, ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)
@@ -242,12 +239,12 @@ public class GetHazardDocumentsQueryHandler : BaseQueryBundle, IRequestHandler<G
 
 public class GetHazardVideosQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardVideosQuery, Result<IEnumerable<HazardFile>>>
 {
-    private readonly HazardFileDataService _hazardFileDataService;
+    private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<GetHazardVideosQueryHandler> _logger;
 
-    public GetHazardVideosQueryHandler(HazardFileDataService hazardFileDataService, ILogger<GetHazardVideosQueryHandler> logger)
+    public GetHazardVideosQueryHandler(IHazardFileService hazardFileService, ILogger<GetHazardVideosQueryHandler> logger)
     {
-        _hazardFileDataService = hazardFileDataService ?? throw new ArgumentNullException(nameof(hazardFileDataService));
+        _hazardFileService = hazardFileService ?? throw new ArgumentNullException(nameof(hazardFileService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -255,8 +252,8 @@ public class GetHazardVideosQueryHandler : BaseQueryBundle, IRequestHandler<GetH
     {
         try
         {
-            _logger.LogInformation("Processing GetHazardVideosQuery for HazardCode: {HazardCode}", request.HazardCode);
-            var result = await _hazardFileDataService.GetHazardVideosAsync(request.HazardCode, ct).ConfigureAwait(false);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetHazardVideosQuery for HazardCode: {HazardCode}", request.HazardCode);
+            var result = await _hazardFileService.GetHazardVideosAsync(request.HazardCode, ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)
@@ -269,12 +266,12 @@ public class GetHazardVideosQueryHandler : BaseQueryBundle, IRequestHandler<GetH
 
 public class GetConfidentialHazardFilesQueryHandler : BaseQueryBundle, IRequestHandler<GetConfidentialHazardFilesQuery, Result<IEnumerable<HazardFile>>>
 {
-    private readonly HazardFileDataService _hazardFileDataService;
+    private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<GetConfidentialHazardFilesQueryHandler> _logger;
 
-    public GetConfidentialHazardFilesQueryHandler(HazardFileDataService hazardFileDataService, ILogger<GetConfidentialHazardFilesQueryHandler> logger)
+    public GetConfidentialHazardFilesQueryHandler(IHazardFileService hazardFileService, ILogger<GetConfidentialHazardFilesQueryHandler> logger)
     {
-        _hazardFileDataService = hazardFileDataService ?? throw new ArgumentNullException(nameof(hazardFileDataService));
+        _hazardFileService = hazardFileService ?? throw new ArgumentNullException(nameof(hazardFileService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -282,8 +279,8 @@ public class GetConfidentialHazardFilesQueryHandler : BaseQueryBundle, IRequestH
     {
         try
         {
-            _logger.LogInformation("Processing GetConfidentialHazardFilesQuery for HazardCode: {HazardCode}", request.HazardCode);
-            var result = await _hazardFileDataService.GetConfidentialHazardFilesAsync(request.HazardCode, ct).ConfigureAwait(false);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetConfidentialHazardFilesQuery for HazardCode: {HazardCode}", request.HazardCode);
+            var result = await _hazardFileService.GetConfidentialHazardFilesAsync(request.HazardCode, ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)

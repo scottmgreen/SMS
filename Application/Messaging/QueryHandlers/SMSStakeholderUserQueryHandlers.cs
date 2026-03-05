@@ -20,10 +20,10 @@ namespace SMS_Application.Messaging.QueryHandlers;
 
 public class GetAllSMSStakeholderUsersQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSStakeholderUsersQuery, Result<IEnumerable<SMSStakeholderUser>>>
 {
-    private readonly SMSStakeholderUserDataService _dataService;
+    private readonly SMSStakeholderUserService _dataService;
     private readonly ILogger<GetAllSMSStakeholderUsersQueryHandler> _logger;
 
-    public GetAllSMSStakeholderUsersQueryHandler(SMSStakeholderUserDataService dataService, ILogger<GetAllSMSStakeholderUsersQueryHandler> logger)
+    public GetAllSMSStakeholderUsersQueryHandler(SMSStakeholderUserService dataService, ILogger<GetAllSMSStakeholderUsersQueryHandler> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -34,7 +34,7 @@ public class GetAllSMSStakeholderUsersQueryHandler : BaseQueryBundle, IRequestHa
         try
         {
             _logger.LogInformation("Processing GetAllSMSStakeholderUsersQuery");
-            var result = await _dataService.GetAllAsync(ct);
+            var result = await _dataService.GetAllSMSStakeholderUsersAsync(ct);
 
             if (result.IsSuccess)
             {

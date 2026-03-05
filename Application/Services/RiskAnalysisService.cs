@@ -64,7 +64,7 @@ public sealed class RiskAnalysisService : IRiskAnalysisService
         }
     }
 
-    public async Task<Result<List<RiskAnalysis>>> GetRiskAnalysesByHazardCodeAsync(string hazardCode, CancellationToken ct = default)
+    public async Task<Result<RiskAnalysis>> GetRiskAnalysisByHazardCodeAsync(string hazardCode, CancellationToken ct = default)
     {
         try
         {
@@ -76,19 +76,18 @@ public sealed class RiskAnalysisService : IRiskAnalysisService
             
             if (singleResult.IsFailure)
             {
-                return Result<List<RiskAnalysis>>.Failure<List<RiskAnalysis>>(singleResult.Error);
+                return Result<RiskAnalysis>.Failure<RiskAnalysis>(singleResult.Error);
             }
 
-            var resultList = singleResult.Value != null 
-                ? new List<RiskAnalysis> { singleResult.Value }
-                : new List<RiskAnalysis>();
+            var resultList = singleResult; 
+               
 
-            return Result<List<RiskAnalysis>>.Success(resultList);
+            return resultList;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error retrieving risk analyses for hazard: {HazardCode}", hazardCode);
-            return Result<List<RiskAnalysis>>.Failure<List<RiskAnalysis>>(DomainErrors.RiskAnalysisError.NotFound);
+            return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NotFound);
         }
     }
 

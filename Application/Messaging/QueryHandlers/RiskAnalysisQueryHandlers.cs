@@ -9,23 +9,22 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
-
 using SMS_Application.Messaging.Queries;
 
 namespace SMS_Application.Messaging.QueryHandlers;
 
 // =============================================
-// RISK ANALYSIS QUERY HANDLERS
+// RISK ANALYSIS QUERY HANDLERS - Clean Architecture Pattern
 // =============================================
 
 public class GetRiskAnalysisByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetRiskAnalysisByCodeQuery, Result<RiskAnalysis>>
 {
-    private readonly RiskAnalysisDataService _riskAnalysisDataService;
+    private readonly RiskAnalysisService _riskAnalysisService;
     private readonly ILogger<GetRiskAnalysisByCodeQueryHandler> _logger;
 
-    public GetRiskAnalysisByCodeQueryHandler(RiskAnalysisDataService riskAnalysisDataService, ILogger<GetRiskAnalysisByCodeQueryHandler> logger)
+    public GetRiskAnalysisByCodeQueryHandler(RiskAnalysisService riskAnalysisService, ILogger<GetRiskAnalysisByCodeQueryHandler> logger)
     {
-        _riskAnalysisDataService = riskAnalysisDataService ?? throw new ArgumentNullException(nameof(riskAnalysisDataService));
+        _riskAnalysisService = riskAnalysisService ?? throw new ArgumentNullException(nameof(riskAnalysisService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -33,8 +32,8 @@ public class GetRiskAnalysisByCodeQueryHandler : BaseQueryBundle, IRequestHandle
     {
         try
         {
-            _logger.LogInformation("Processing GetRiskAnalysisByCodeQuery for Code: {Code}", request.RiskAnalysisCode);
-            var result = await _riskAnalysisDataService.GetRiskAnalysisByCodeAsync(request.RiskAnalysisCode, ct).ConfigureAwait(false);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetRiskAnalysisByCodeQuery for Code: {Code}", request.RiskAnalysisCode);
+            var result = await _riskAnalysisService.GetRiskAnalysisByIdAsync(new RiskAnalysisID(request.RiskAnalysisCode.Value), ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)
@@ -47,12 +46,12 @@ public class GetRiskAnalysisByCodeQueryHandler : BaseQueryBundle, IRequestHandle
 
 public class GetRiskAnalysisByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetRiskAnalysisByIdQuery, Result<RiskAnalysis>>
 {
-    private readonly RiskAnalysisDataService _riskAnalysisDataService;
+    private readonly RiskAnalysisService _riskAnalysisService;
     private readonly ILogger<GetRiskAnalysisByIdQueryHandler> _logger;
 
-    public GetRiskAnalysisByIdQueryHandler(RiskAnalysisDataService riskAnalysisDataService, ILogger<GetRiskAnalysisByIdQueryHandler> logger)
+    public GetRiskAnalysisByIdQueryHandler(RiskAnalysisService riskAnalysisService, ILogger<GetRiskAnalysisByIdQueryHandler> logger)
     {
-        _riskAnalysisDataService = riskAnalysisDataService ?? throw new ArgumentNullException(nameof(riskAnalysisDataService));
+        _riskAnalysisService = riskAnalysisService ?? throw new ArgumentNullException(nameof(riskAnalysisService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -60,8 +59,8 @@ public class GetRiskAnalysisByIdQueryHandler : BaseQueryBundle, IRequestHandler<
     {
         try
         {
-            _logger.LogInformation("Processing GetRiskAnalysisByIdQuery for ID: {Id}", request.RiskAnalysisId);
-            var result = await _riskAnalysisDataService.GetRiskAnalysisByCodeAsync(request.RiskAnalysisId, ct).ConfigureAwait(false);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetRiskAnalysisByIdQuery for ID: {Id}", request.RiskAnalysisId);
+            var result = await _riskAnalysisService.GetRiskAnalysisByIdAsync(new RiskAnalysisID(request.RiskAnalysisId.Value), ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)
@@ -74,12 +73,12 @@ public class GetRiskAnalysisByIdQueryHandler : BaseQueryBundle, IRequestHandler<
 
 public class GetRiskAnalysisByHazardCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetRiskAnalysisByHazardCodeQuery, Result<RiskAnalysis>>
 {
-    private readonly RiskAnalysisDataService _riskAnalysisDataService;
+    private readonly RiskAnalysisService _riskAnalysisService;
     private readonly ILogger<GetRiskAnalysisByHazardCodeQueryHandler> _logger;
 
-    public GetRiskAnalysisByHazardCodeQueryHandler(RiskAnalysisDataService riskAnalysisDataService, ILogger<GetRiskAnalysisByHazardCodeQueryHandler> logger)
+    public GetRiskAnalysisByHazardCodeQueryHandler(RiskAnalysisService riskAnalysisService, ILogger<GetRiskAnalysisByHazardCodeQueryHandler> logger)
     {
-        _riskAnalysisDataService = riskAnalysisDataService ?? throw new ArgumentNullException(nameof(riskAnalysisDataService));
+        _riskAnalysisService = riskAnalysisService ?? throw new ArgumentNullException(nameof(riskAnalysisService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -87,8 +86,9 @@ public class GetRiskAnalysisByHazardCodeQueryHandler : BaseQueryBundle, IRequest
     {
         try
         {
-            _logger.LogInformation("Processing GetRiskAnalysisByHazardCodeQuery for Code: {Code}", request.HazardCode);
-            var result = await _riskAnalysisDataService.GetRiskAnalysisByHazardCodeAsync(request.HazardCode, ct).ConfigureAwait(false);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetRiskAnalysisByHazardCodeQuery for Code: {Code}", request.HazardCode);
+            var result = await _riskAnalysisService.GetRiskAnalysisByHazardCodeAsync(request.HazardCode.Value, ct).ConfigureAwait(false);
+ 
             return result;
         }
         catch (Exception ex)
@@ -101,12 +101,12 @@ public class GetRiskAnalysisByHazardCodeQueryHandler : BaseQueryBundle, IRequest
 
 public class GetRiskAnalysisByHazardAndAssessmentQueryHandler : BaseQueryBundle, IRequestHandler<GetRiskAnalysisByHazardAndAssessmentQuery, Result<RiskAnalysis>>
 {
-    private readonly RiskAnalysisDataService _riskAnalysisDataService;
+    private readonly RiskAnalysisService _riskAnalysisService;
     private readonly ILogger<GetRiskAnalysisByHazardAndAssessmentQueryHandler> _logger;
 
-    public GetRiskAnalysisByHazardAndAssessmentQueryHandler(RiskAnalysisDataService riskAnalysisDataService, ILogger<GetRiskAnalysisByHazardAndAssessmentQueryHandler> logger)
+    public GetRiskAnalysisByHazardAndAssessmentQueryHandler(RiskAnalysisService riskAnalysisService, ILogger<GetRiskAnalysisByHazardAndAssessmentQueryHandler> logger)
     {
-        _riskAnalysisDataService = riskAnalysisDataService ?? throw new ArgumentNullException(nameof(riskAnalysisDataService));
+        _riskAnalysisService = riskAnalysisService ?? throw new ArgumentNullException(nameof(riskAnalysisService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -117,7 +117,7 @@ public class GetRiskAnalysisByHazardAndAssessmentQueryHandler : BaseQueryBundle,
             _logger.LogInformation("🔍 Processing GetRiskAnalysisByHazardAndAssessmentQuery for Hazard: {HazardCode}, Assessment: {AssessmentCode}",   request.HazardCode, request.RiskAssessmentCode);
 
             // Use LINQ filtering approach to eliminate database round trip
-            var getAllResult = await _riskAnalysisDataService.GetAllRiskAnalysisAsync(ct).ConfigureAwait(false);
+            var getAllResult = await _riskAnalysisService.GetAllRiskAnalysisAsync(ct).ConfigureAwait(false);
             
             if (!getAllResult.IsSuccess || getAllResult.Value == null)
             {
@@ -162,21 +162,20 @@ public class GetRiskAnalysisByHazardAndAssessmentQueryHandler : BaseQueryBundle,
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("❌ Error processing GetRiskAnalysisByHazardAndAssessmentQuery for Hazard: {HazardCode}, Assessment: {AssessmentCode}", 
-                ApplicationEventIds.Error, ex);
-            return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.GeneralError.UnProcessableRequest);
+            _logger.LogApplicationError("Error processing GetRiskAnalysisByHazardAndAssessmentQuery for HazardCode: {HazardCode}", ApplicationEventIds.Error, ex);
+            return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NotFound);
         }
     }
 }
 
 public class GetAllRiskAnalysisQueryHandler : BaseQueryBundle, IRequestHandler<GetAllRiskAnalysisQuery, Result<List<RiskAnalysis>>>
 {
-    private readonly RiskAnalysisDataService _riskAnalysisDataService;
+    private readonly RiskAnalysisService _riskAnalysisService;
     private readonly ILogger<GetAllRiskAnalysisQueryHandler> _logger;
 
-    public GetAllRiskAnalysisQueryHandler(RiskAnalysisDataService riskAnalysisDataService, ILogger<GetAllRiskAnalysisQueryHandler> logger)
+    public GetAllRiskAnalysisQueryHandler(RiskAnalysisService riskAnalysisService, ILogger<GetAllRiskAnalysisQueryHandler> logger)
     {
-        _riskAnalysisDataService = riskAnalysisDataService ?? throw new ArgumentNullException(nameof(riskAnalysisDataService));
+        _riskAnalysisService = riskAnalysisService ?? throw new ArgumentNullException(nameof(riskAnalysisService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -184,8 +183,8 @@ public class GetAllRiskAnalysisQueryHandler : BaseQueryBundle, IRequestHandler<G
     {
         try
         {
-            _logger.LogInformation("Processing GetAllRiskAnalysisQuery");
-            var result = await _riskAnalysisDataService.GetAllRiskAnalysisAsync(ct).ConfigureAwait(false);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetAllRiskAnalysisQuery");
+            var result = await _riskAnalysisService.GetAllRiskAnalysisAsync(ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)

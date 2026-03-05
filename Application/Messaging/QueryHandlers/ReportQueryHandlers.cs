@@ -9,23 +9,22 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
-
 using SMS_Application.Messaging.Queries;
 
 namespace SMS_Application.Messaging.QueryHandlers;
 
 // =============================================
-// REPORT QUERY HANDLERS
+// REPORT QUERY HANDLERS - Clean Architecture Pattern
 // =============================================
 
 public class GetReportByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetReportByCodeQuery, Result<Report>>
 {
-    private readonly ReportDataService _reportDataService;
+    private readonly ReportService _reportService;
     private readonly ILogger<GetReportByCodeQueryHandler> _logger;
 
-    public GetReportByCodeQueryHandler(ReportDataService reportDataService, ILogger<GetReportByCodeQueryHandler> logger)
+    public GetReportByCodeQueryHandler(ReportService reportService, ILogger<GetReportByCodeQueryHandler> logger)
     {
-        _reportDataService = reportDataService ?? throw new ArgumentNullException(nameof(reportDataService));
+        _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -33,8 +32,8 @@ public class GetReportByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetR
     {
         try
         {
-            _logger.LogInformation("Processing GetReportByCodeQuery for Code: {Code}", request.ReportCode);
-            var result = await _reportDataService.GetReportByCodeAsync(request.ReportCode, ct).ConfigureAwait(false);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetReportByCodeQuery for Code: {Code}", request.ReportCode);
+            var result = await _reportService.GetReportByCodeAsync(request.ReportCode, ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)
@@ -47,12 +46,12 @@ public class GetReportByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetR
 
 public class GetAllReportsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllReportsQuery, Result<List<Report>>>
 {
-    private readonly ReportDataService _reportDataService;
+    private readonly ReportService _reportService;
     private readonly ILogger<GetAllReportsQueryHandler> _logger;
 
-    public GetAllReportsQueryHandler(ReportDataService reportDataService, ILogger<GetAllReportsQueryHandler> logger)
+    public GetAllReportsQueryHandler(ReportService reportService, ILogger<GetAllReportsQueryHandler> logger)
     {
-        _reportDataService = reportDataService ?? throw new ArgumentNullException(nameof(reportDataService));
+        _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -60,8 +59,8 @@ public class GetAllReportsQueryHandler : BaseQueryBundle, IRequestHandler<GetAll
     {
         try
         {
-            _logger.LogInformation("Processing GetAllReportsQuery");
-            var result = await _reportDataService.GetAllReportsAsync(ct).ConfigureAwait(false);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetAllReportsQuery");
+            var result = await _reportService.GetAllReportsAsync(ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)

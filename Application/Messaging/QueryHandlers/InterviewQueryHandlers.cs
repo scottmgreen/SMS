@@ -9,23 +9,23 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
-
+using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Queries;
 
 namespace SMS_Application.Messaging.QueryHandlers;
 
 // =============================================
-// INTERVIEW QUERY HANDLERS
+// INTERVIEW QUERY HANDLERS - Clean Architecture Pattern
 // =============================================
 
 public class GetInterviewByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetInterviewByCodeQuery, Result<Interview>>
 {
-    private readonly InterviewDataService _interviewDataService;
+    private readonly IInterviewService _interviewService;
     private readonly ILogger<GetInterviewByCodeQueryHandler> _logger;
 
-    public GetInterviewByCodeQueryHandler(InterviewDataService interviewDataService, ILogger<GetInterviewByCodeQueryHandler> logger)
+    public GetInterviewByCodeQueryHandler(IInterviewService interviewService, ILogger<GetInterviewByCodeQueryHandler> logger)
     {
-        _interviewDataService = interviewDataService ?? throw new ArgumentNullException(nameof(interviewDataService));
+        _interviewService = interviewService ?? throw new ArgumentNullException(nameof(interviewService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -33,8 +33,8 @@ public class GetInterviewByCodeQueryHandler : BaseQueryBundle, IRequestHandler<G
     {
         try
         {
-            _logger.LogInformation("Processing GetInterviewByCodeQuery for Code: {Code}", request.InterviewId);
-            var result = await _interviewDataService.GetInterviewByCodeAsync(request.InterviewId, ct).ConfigureAwait(false);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetInterviewByCodeQuery for Code: {Code}", request.InterviewId);
+            var result = await _interviewService.GetInterviewByCodeAsync(new InterviewID(request.InterviewId.Value), ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)
@@ -47,12 +47,12 @@ public class GetInterviewByCodeQueryHandler : BaseQueryBundle, IRequestHandler<G
 
 public class GetAllInterviewsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllInterviewsQuery, Result<List<Interview>>>
 {
-    private readonly InterviewDataService _interviewDataService;
+    private readonly IInterviewService _interviewService;
     private readonly ILogger<GetAllInterviewsQueryHandler> _logger;
 
-    public GetAllInterviewsQueryHandler(InterviewDataService interviewDataService, ILogger<GetAllInterviewsQueryHandler> logger)
+    public GetAllInterviewsQueryHandler(IInterviewService interviewService, ILogger<GetAllInterviewsQueryHandler> logger)
     {
-        _interviewDataService = interviewDataService ?? throw new ArgumentNullException(nameof(interviewDataService));
+        _interviewService = interviewService ?? throw new ArgumentNullException(nameof(interviewService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -60,8 +60,8 @@ public class GetAllInterviewsQueryHandler : BaseQueryBundle, IRequestHandler<Get
     {
         try
         {
-            _logger.LogInformation("Processing GetAllInterviewsQuery");
-            var result = await _interviewDataService.GetAllInterviewsAsync(ct).ConfigureAwait(false);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetAllInterviewsQuery");
+            var result = await _interviewService.GetAllInterviewsAsync(ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)

@@ -9,22 +9,27 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
+using SMS_Application.Interfaces;
 
 namespace SMS_Application.Messaging.CommandHandlers;
+
+// =============================================
+// SMS ORGANIZATIONAL GROUP COMMAND HANDLERS - Clean Architecture Pattern
+// =============================================
 
 /// <summary>
 /// Command handler for creating SMS organizational groups
 /// </summary>
 public class CreateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRequestHandler<CreateSMSOrganizationalGroupCommand, Result<SMSOrganizationalGroup>>
 {
-    private readonly SMSOrganizationalGroupDataService _organizationalGroupDataService;
+    private readonly ISMSOrganizationalGroupService _organizationalGroupService;
     private readonly ILogger<CreateSMSOrganizationalGroupCommandHandler> _logger;
 
     public CreateSMSOrganizationalGroupCommandHandler(
-        SMSOrganizationalGroupDataService organizationalGroupDataService,
+        ISMSOrganizationalGroupService organizationalGroupService,
         ILogger<CreateSMSOrganizationalGroupCommandHandler> logger)
     {
-        _organizationalGroupDataService = organizationalGroupDataService ?? throw new ArgumentNullException(nameof(organizationalGroupDataService));
+        _organizationalGroupService = organizationalGroupService ?? throw new ArgumentNullException(nameof(organizationalGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -32,13 +37,13 @@ public class CreateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRe
     {
         try
         {
-            _logger.LogInformation("Processing CreateSMSOrganizationalGroupCommand for group: {GroupName}", request.OrganizationalGroup?.Name);
+            _logger.LogInformation("✅ Clean Architecture: Processing CreateSMSOrganizationalGroupCommand for group: {GroupName}", request.OrganizationalGroup?.Name);
 
-            var result = await _organizationalGroupDataService.CreateAsync(request.OrganizationalGroup, ct);
+            var result = await _organizationalGroupService.CreateSMSOrganizationalGroupAsync(request.OrganizationalGroup, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS organizational group: {GroupCode}", result.Value?.Code);
+                _logger.LogInformation("✅ Clean Architecture: Successfully created SMS organizational group: {GroupCode}", result.Value?.Code);
             }
             else
             {
@@ -65,14 +70,14 @@ public class CreateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRe
 /// </summary>
 public class UpdateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSOrganizationalGroupCommand, Result<SMSOrganizationalGroup>>
 {
-    private readonly SMSOrganizationalGroupDataService _organizationalGroupDataService;
+    private readonly ISMSOrganizationalGroupService _organizationalGroupService;
     private readonly ILogger<UpdateSMSOrganizationalGroupCommandHandler> _logger;
 
     public UpdateSMSOrganizationalGroupCommandHandler(
-        SMSOrganizationalGroupDataService organizationalGroupDataService,
+        ISMSOrganizationalGroupService organizationalGroupService,
         ILogger<UpdateSMSOrganizationalGroupCommandHandler> logger)
     {
-        _organizationalGroupDataService = organizationalGroupDataService ?? throw new ArgumentNullException(nameof(organizationalGroupDataService));
+        _organizationalGroupService = organizationalGroupService ?? throw new ArgumentNullException(nameof(organizationalGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -80,13 +85,13 @@ public class UpdateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRe
     {
         try
         {
-            _logger.LogInformation("Processing UpdateSMSOrganizationalGroupCommand for group: {GroupCode}", request.OrganizationalGroup?.Code);
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateSMSOrganizationalGroupCommand for group: {GroupCode}", request.OrganizationalGroup?.Code);
 
-            var result = await _organizationalGroupDataService.UpdateAsync(request.OrganizationalGroup, ct);
+            var result = await _organizationalGroupService.UpdateSMSOrganizationalGroupAsync(request.OrganizationalGroup, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated SMS organizational group: {GroupCode}", request.OrganizationalGroup?.Code);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated SMS organizational group: {GroupCode}", request.OrganizationalGroup?.Code);
             }
             else
             {
@@ -113,14 +118,14 @@ public class UpdateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRe
 /// </summary>
 public class DeleteSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSOrganizationalGroupCommand, Result<bool>>
 {
-    private readonly SMSOrganizationalGroupDataService _organizationalGroupDataService;
+    private readonly ISMSOrganizationalGroupService _organizationalGroupService;
     private readonly ILogger<DeleteSMSOrganizationalGroupCommandHandler> _logger;
 
     public DeleteSMSOrganizationalGroupCommandHandler(
-        SMSOrganizationalGroupDataService organizationalGroupDataService,
+        ISMSOrganizationalGroupService organizationalGroupService,
         ILogger<DeleteSMSOrganizationalGroupCommandHandler> logger)
     {
-        _organizationalGroupDataService = organizationalGroupDataService ?? throw new ArgumentNullException(nameof(organizationalGroupDataService));
+        _organizationalGroupService = organizationalGroupService ?? throw new ArgumentNullException(nameof(organizationalGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -128,13 +133,13 @@ public class DeleteSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRe
     {
         try
         {
-            _logger.LogInformation("Processing DeleteSMSOrganizationalGroupCommand for group: {GroupCode}", request.OrganizationalGroup?.Code);
+            _logger.LogInformation("✅ Clean Architecture: Processing DeleteSMSOrganizationalGroupCommand for group: {GroupCode}", request.OrganizationalGroup?.Code);
 
-            var result = await _organizationalGroupDataService.DeleteAsync(request.OrganizationalGroup.Code, ct);
+            var result = await _organizationalGroupService.DeleteSMSOrganizationalGroupAsync(request.OrganizationalGroup.Code, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted SMS organizational group: {GroupCode}", request.OrganizationalGroup?.Code);
+                _logger.LogInformation("✅ Clean Architecture: Successfully deleted SMS organizational group: {GroupCode}", request.OrganizationalGroup?.Code);
             }
             else
             {
@@ -161,14 +166,14 @@ public class DeleteSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRe
 /// </summary>
 public class AssignUserToOrganizationalGroupCommandHandler : BaseCommandBundle, IRequestHandler<AssignUserToOrganizationalGroupCommand, Result<bool>>
 {
-    private readonly SMSOrganizationalGroupDataService _organizationalGroupDataService;
+    private readonly ISMSOrganizationalGroupService _organizationalGroupService;
     private readonly ILogger<AssignUserToOrganizationalGroupCommandHandler> _logger;
 
     public AssignUserToOrganizationalGroupCommandHandler(
-        SMSOrganizationalGroupDataService organizationalGroupDataService,
+        ISMSOrganizationalGroupService organizationalGroupService,
         ILogger<AssignUserToOrganizationalGroupCommandHandler> logger)
     {
-        _organizationalGroupDataService = organizationalGroupDataService ?? throw new ArgumentNullException(nameof(organizationalGroupDataService));
+        _organizationalGroupService = organizationalGroupService ?? throw new ArgumentNullException(nameof(organizationalGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -176,15 +181,15 @@ public class AssignUserToOrganizationalGroupCommandHandler : BaseCommandBundle, 
     {
         try
         {
-            _logger.LogInformation("Processing AssignUserToOrganizationalGroupCommand for user: {UserCode} to group: {GroupId}",
-                request.UserCode, request.GroupId.Value);
+            _logger.LogInformation("✅ Clean Architecture: Processing AssignUserToOrganizationalGroupCommand for user: {UserCode} to group: {GroupId}",
+                request.UserCode, request.GroupId);
 
-            var result = await _organizationalGroupDataService.AssignUserToGroupAsync(request.UserCode, request.GroupId.Value, request.AssignedBy, ct);
+            var result = await _organizationalGroupService.AssignUserToGroupAsync(request.UserCode, request.GroupId, request.AssignedBy, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully assigned user {UserCode} to organizational group {GroupId}",
-                    request.UserCode, request.GroupId.Value);
+                _logger.LogInformation("✅ Clean Architecture: Successfully assigned user {UserCode} to organizational group {GroupId}",
+                    request.UserCode, request.GroupId);
             }
             else
             {
@@ -211,14 +216,14 @@ public class AssignUserToOrganizationalGroupCommandHandler : BaseCommandBundle, 
 /// </summary>
 public class RemoveUserFromOrganizationalGroupCommandHandler : BaseCommandBundle, IRequestHandler<RemoveUserFromOrganizationalGroupCommand, Result<bool>>
 {
-    private readonly SMSOrganizationalGroupDataService _organizationalGroupDataService;
+    private readonly ISMSOrganizationalGroupService _organizationalGroupService;
     private readonly ILogger<RemoveUserFromOrganizationalGroupCommandHandler> _logger;
 
     public RemoveUserFromOrganizationalGroupCommandHandler(
-        SMSOrganizationalGroupDataService organizationalGroupDataService,
+        ISMSOrganizationalGroupService organizationalGroupService,
         ILogger<RemoveUserFromOrganizationalGroupCommandHandler> logger)
     {
-        _organizationalGroupDataService = organizationalGroupDataService ?? throw new ArgumentNullException(nameof(organizationalGroupDataService));
+        _organizationalGroupService = organizationalGroupService ?? throw new ArgumentNullException(nameof(organizationalGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -226,15 +231,15 @@ public class RemoveUserFromOrganizationalGroupCommandHandler : BaseCommandBundle
     {
         try
         {
-            _logger.LogInformation("Processing RemoveUserFromOrganizationalGroupCommand for user: {UserCode} from group: {GroupId}",
-                request.UserCode, request.GroupId.Value);
+            _logger.LogInformation("✅ Clean Architecture: Processing RemoveUserFromOrganizationalGroupCommand for user: {UserCode} from group: {GroupId}",
+                request.UserCode, request.GroupId);
 
-            var result = await _organizationalGroupDataService.RemoveUserFromGroupAsync(request.UserCode, request.GroupId.Value, ct);
+            var result = await _organizationalGroupService.RemoveUserFromGroupAsync(request.UserCode, request.GroupId.Value, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully removed user {UserCode} from organizational group {GroupId}",
-                    request.UserCode, request.GroupId.Value);
+                _logger.LogInformation("✅ Clean Architecture: Successfully removed user {UserCode} from organizational group {GroupId}",
+                    request.UserCode, request.GroupId);
             }
             else
             {
@@ -261,14 +266,14 @@ public class RemoveUserFromOrganizationalGroupCommandHandler : BaseCommandBundle
 /// </summary>
 public class ClearUserOrganizationalGroupsCommandHandler : BaseCommandBundle, IRequestHandler<ClearUserOrganizationalGroupsCommand, Result<bool>>
 {
-    private readonly SMSOrganizationalGroupDataService _organizationalGroupDataService;
+    private readonly ISMSOrganizationalGroupService _organizationalGroupService;
     private readonly ILogger<ClearUserOrganizationalGroupsCommandHandler> _logger;
 
     public ClearUserOrganizationalGroupsCommandHandler(
-        SMSOrganizationalGroupDataService organizationalGroupDataService,
+        ISMSOrganizationalGroupService organizationalGroupService,
         ILogger<ClearUserOrganizationalGroupsCommandHandler> logger)
     {
-        _organizationalGroupDataService = organizationalGroupDataService ?? throw new ArgumentNullException(nameof(organizationalGroupDataService));
+        _organizationalGroupService = organizationalGroupService ?? throw new ArgumentNullException(nameof(organizationalGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -276,13 +281,13 @@ public class ClearUserOrganizationalGroupsCommandHandler : BaseCommandBundle, IR
     {
         try
         {
-            _logger.LogInformation("Processing ClearUserOrganizationalGroupsCommand for user: {UserCode}", request.UserCode);
+            _logger.LogInformation("✅ Clean Architecture: Processing ClearUserOrganizationalGroupsCommand for user: {UserCode}", request.UserCode);
 
-            var result = await _organizationalGroupDataService.ClearUserGroupsAsync(request.UserCode, ct);
+            var result = await _organizationalGroupService.ClearUserGroupsAsync(request.UserCode, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully cleared organizational group memberships for user {UserCode}", request.UserCode);
+                _logger.LogInformation("✅ Clean Architecture: Successfully cleared organizational group memberships for user {UserCode}", request.UserCode);
             }
             else
             {

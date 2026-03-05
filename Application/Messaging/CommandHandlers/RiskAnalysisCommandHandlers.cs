@@ -2,7 +2,7 @@
 // <copyright file="RiskAnalysisCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Command handlers implementing SMS risk assessment and analysis logic.
+//     Description: Command handlers implementing SMS risk analysis business logic and operations.
 //                  Implements command handlers for processing write operations.
 //                  Handles business logic execution and domain entity coordination.
 // </copyright>
@@ -13,17 +13,17 @@ using Microsoft.Extensions.Logging;
 namespace SMS_Application.Messaging.CommandHandlers;
 
 // =============================================
-// RISK ANALYSIS COMMAND HANDLERS
+// RISK ANALYSIS COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
 public class CreateRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandler<CreateRiskAnalysisCommand, Result<RiskAnalysis>>
 {
-    private readonly RiskAnalysisDataService _dataService;
+    private readonly IRiskAnalysisService _riskAnalysisService;
     private readonly ILogger<CreateRiskAnalysisCommandHandler> _logger;
 
-    public CreateRiskAnalysisCommandHandler(RiskAnalysisDataService dataService, ILogger<CreateRiskAnalysisCommandHandler> logger)
+    public CreateRiskAnalysisCommandHandler(IRiskAnalysisService riskAnalysisService, ILogger<CreateRiskAnalysisCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _riskAnalysisService = riskAnalysisService ?? throw new ArgumentNullException(nameof(riskAnalysisService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -37,13 +37,13 @@ public class CreateRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandl
                 return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing CreateRiskAnalysisCommand for Code: {Code}", request.RiskAnalysis.Code);
+            _logger.LogInformation("✅ Clean Architecture: Processing CreateRiskAnalysisCommand for Code: {Code}", request.RiskAnalysis.Code);
 
-            var result = await _dataService.CreateRiskAnalysisAsync(request.RiskAnalysis, ct).ConfigureAwait(false);
+            var result = await _riskAnalysisService.CreateRiskAnalysisAsync(request.RiskAnalysis, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created RiskAnalysis with ID: {Id}, Code: {Code}",
+                _logger.LogInformation("✅ Clean Architecture: Successfully created RiskAnalysis with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -69,12 +69,12 @@ public class CreateRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandl
 
 public class UpdateRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandler<UpdateRiskAnalysisCommand, Result<RiskAnalysis>>
 {
-    private readonly RiskAnalysisDataService _dataService;
+    private readonly IRiskAnalysisService _riskAnalysisService;
     private readonly ILogger<UpdateRiskAnalysisCommandHandler> _logger;
 
-    public UpdateRiskAnalysisCommandHandler(RiskAnalysisDataService dataService, ILogger<UpdateRiskAnalysisCommandHandler> logger)
+    public UpdateRiskAnalysisCommandHandler(IRiskAnalysisService riskAnalysisService, ILogger<UpdateRiskAnalysisCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _riskAnalysisService = riskAnalysisService ?? throw new ArgumentNullException(nameof(riskAnalysisService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -88,14 +88,14 @@ public class UpdateRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandl
                 return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateRiskAnalysisCommand for ID: {Id}, Code: {Code}",
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateRiskAnalysisCommand for ID: {Id}, Code: {Code}",
                 request.RiskAnalysis.Id, request.RiskAnalysis.Code);
 
-            var result = await _dataService.UpdateRiskAnalysisAsync(request.RiskAnalysis, ct).ConfigureAwait(false);
+            var result = await _riskAnalysisService.UpdateRiskAnalysisAsync(request.RiskAnalysis, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated RiskAnalysis with ID: {Id}", request.RiskAnalysis.Id);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated RiskAnalysis with ID: {Id}", request.RiskAnalysis.Id);
             }
             else
             {
@@ -120,12 +120,12 @@ public class UpdateRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandl
 
 public class DeleteRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandler<DeleteRiskAnalysisCommand, Result<bool>>
 {
-    private readonly RiskAnalysisDataService _dataService;
+    private readonly IRiskAnalysisService _riskAnalysisService;
     private readonly ILogger<DeleteRiskAnalysisCommandHandler> _logger;
 
-    public DeleteRiskAnalysisCommandHandler(RiskAnalysisDataService dataService, ILogger<DeleteRiskAnalysisCommandHandler> logger)
+    public DeleteRiskAnalysisCommandHandler(IRiskAnalysisService riskAnalysisService, ILogger<DeleteRiskAnalysisCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _riskAnalysisService = riskAnalysisService ?? throw new ArgumentNullException(nameof(riskAnalysisService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -139,13 +139,13 @@ public class DeleteRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandl
                 return Result<bool>.Failure<bool>(DomainErrors.RiskAnalysisError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing DeleteRiskAnalysisCommand for ID: {Id}", request.RiskAnalysisId);
+            _logger.LogInformation("✅ Clean Architecture: Processing DeleteRiskAnalysisCommand for ID: {Id}", request.RiskAnalysisId);
 
-            var result = await _dataService.DeleteRiskAnalysisAsync(request.RiskAnalysisId, ct).ConfigureAwait(false);
+            var result = await _riskAnalysisService.DeleteRiskAnalysisAsync(request.RiskAnalysisId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted RiskAnalysis with ID: {Id}", request.RiskAnalysisId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully deleted RiskAnalysis with ID: {Id}", request.RiskAnalysisId);
             }
             else
             {

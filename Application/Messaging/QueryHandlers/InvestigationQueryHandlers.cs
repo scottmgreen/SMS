@@ -9,23 +9,22 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
-
 using SMS_Application.Messaging.Queries;
 
 namespace SMS_Application.Messaging.QueryHandlers;
 
 // =============================================
-// INVESTIGATION QUERY HANDLERS
+// INVESTIGATION QUERY HANDLERS - Clean Architecture Pattern
 // =============================================
 
 public class GetInvestigationByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetInvestigationByCodeQuery, Result<Investigation>>
 {
-    private readonly InvestigationDataService _investigationDataService;
+    private readonly InvestigationService _investigationService;
     private readonly ILogger<GetInvestigationByCodeQueryHandler> _logger;
 
-    public GetInvestigationByCodeQueryHandler(InvestigationDataService investigationDataService, ILogger<GetInvestigationByCodeQueryHandler> logger)
+    public GetInvestigationByCodeQueryHandler(InvestigationService investigationService, ILogger<GetInvestigationByCodeQueryHandler> logger)
     {
-        _investigationDataService = investigationDataService ?? throw new ArgumentNullException(nameof(investigationDataService));
+        _investigationService = investigationService ?? throw new ArgumentNullException(nameof(investigationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -33,9 +32,8 @@ public class GetInvestigationByCodeQueryHandler : BaseQueryBundle, IRequestHandl
     {
         try
         {
-            _logger.LogInformation("Processing GetInvestigationByCodeQuery for Code: {Code}", request.InvestigationId.Value);
-            // Use the string overload since that's what the service has implemented
-            var result = await _investigationDataService.GetInvestigationByCodeAsync(request.InvestigationId.Value, ct).ConfigureAwait(false);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetInvestigationByCodeQuery for Code: {Code}", request.InvestigationId.Value);
+            var result = await _investigationService.GetInvestigationByCodeAsync(new InvestigationID(request.InvestigationId.Value), ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)
@@ -48,12 +46,12 @@ public class GetInvestigationByCodeQueryHandler : BaseQueryBundle, IRequestHandl
 
 public class GetAllInvestigationsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllInvestigationsQuery, Result<List<Investigation>>>
 {
-    private readonly InvestigationDataService _investigationDataService;
+    private readonly InvestigationService _investigationService;
     private readonly ILogger<GetAllInvestigationsQueryHandler> _logger;
 
-    public GetAllInvestigationsQueryHandler(InvestigationDataService investigationDataService, ILogger<GetAllInvestigationsQueryHandler> logger)
+    public GetAllInvestigationsQueryHandler(InvestigationService investigationService, ILogger<GetAllInvestigationsQueryHandler> logger)
     {
-        _investigationDataService = investigationDataService ?? throw new ArgumentNullException(nameof(investigationDataService));
+        _investigationService = investigationService ?? throw new ArgumentNullException(nameof(investigationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -61,8 +59,8 @@ public class GetAllInvestigationsQueryHandler : BaseQueryBundle, IRequestHandler
     {
         try
         {
-            _logger.LogInformation("Processing GetAllInvestigationsQuery");
-            var result = await _investigationDataService.GetAllInvestigationsAsync(ct).ConfigureAwait(false);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetAllInvestigationsQuery");
+            var result = await _investigationService.GetAllInvestigationsAsync(ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)

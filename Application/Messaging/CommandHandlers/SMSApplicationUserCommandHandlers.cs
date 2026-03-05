@@ -13,17 +13,17 @@ using Microsoft.Extensions.Logging;
 namespace SMS_Application.Messaging.CommandHandlers;
 
 // =============================================
-// SMS APPLICATION USER COMMAND HANDLERS
+// SMS APPLICATION USER COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
 public class CreateSMSApplicationUserCommandHandler : BaseCommandBundle, IRequestHandler<CreateSMSApplicationUserCommand, Result<SMSApplicationUser>>
 {
-    private readonly SMSApplicationUserDataService _dataService;
+    private readonly ISMSApplicationUserService _applicationUserService;
     private readonly ILogger<CreateSMSApplicationUserCommandHandler> _logger;
 
-    public CreateSMSApplicationUserCommandHandler(SMSApplicationUserDataService dataService, ILogger<CreateSMSApplicationUserCommandHandler> logger)
+    public CreateSMSApplicationUserCommandHandler(ISMSApplicationUserService applicationUserService, ILogger<CreateSMSApplicationUserCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _applicationUserService = applicationUserService ?? throw new ArgumentNullException(nameof(applicationUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -37,13 +37,13 @@ public class CreateSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
                 return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing CreateSMSApplicationUserCommand for UserName: {UserName}", request.SMSApplicationUser.UserName);
+            _logger.LogInformation("✅ Clean Architecture: Processing CreateSMSApplicationUserCommand for UserName: {UserName}", request.SMSApplicationUser.UserName);
 
-            var result = await _dataService.CreateSMSApplicationUserAsync(request.SMSApplicationUser, cancellationToken);
+            var result = await _applicationUserService.CreateSMSApplicationUserAsync(request.SMSApplicationUser, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS Application User with ID: {Id}, UserName: {UserName}",
+                _logger.LogInformation("✅ Clean Architecture: Successfully created SMS Application User with ID: {Id}, UserName: {UserName}",
                     result.Value?.UserId, result.Value?.UserName);
             }
             else
@@ -69,12 +69,12 @@ public class CreateSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
 
 public class UpdateSMSApplicationUserCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSApplicationUserCommand, Result<SMSApplicationUser>>
 {
-    private readonly SMSApplicationUserDataService _dataService;
+    private readonly ISMSApplicationUserService _applicationUserService;
     private readonly ILogger<UpdateSMSApplicationUserCommandHandler> _logger;
 
-    public UpdateSMSApplicationUserCommandHandler(SMSApplicationUserDataService dataService, ILogger<UpdateSMSApplicationUserCommandHandler> logger)
+    public UpdateSMSApplicationUserCommandHandler(ISMSApplicationUserService applicationUserService, ILogger<UpdateSMSApplicationUserCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _applicationUserService = applicationUserService ?? throw new ArgumentNullException(nameof(applicationUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -88,13 +88,13 @@ public class UpdateSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
                 return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateSMSApplicationUserCommand for UserID: {UserId}", request.SMSApplicationUser.UserId);
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateSMSApplicationUserCommand for UserID: {UserId}", request.SMSApplicationUser.UserId);
 
-            var result = await _dataService.UpdateSMSApplicationUserAsync(request.SMSApplicationUser, cancellationToken);
+            var result = await _applicationUserService.UpdateSMSApplicationUserAsync(request.SMSApplicationUser, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated SMS Application User with ID: {UserId}", request.SMSApplicationUser.UserId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated SMS Application User with ID: {UserId}", request.SMSApplicationUser.UserId);
             }
             else
             {
@@ -119,12 +119,12 @@ public class UpdateSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
 
 public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSApplicationUserPasswordCommand, Result<bool>>
 {
-    private readonly SMSApplicationUserDataService _dataService;
+    private readonly ISMSApplicationUserService _applicationUserService;
     private readonly ILogger<UpdateSMSApplicationUserPasswordCommandHandler> _logger;
 
-    public UpdateSMSApplicationUserPasswordCommandHandler(SMSApplicationUserDataService dataService, ILogger<UpdateSMSApplicationUserPasswordCommandHandler> logger)
+    public UpdateSMSApplicationUserPasswordCommandHandler(ISMSApplicationUserService applicationUserService, ILogger<UpdateSMSApplicationUserPasswordCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _applicationUserService = applicationUserService ?? throw new ArgumentNullException(nameof(applicationUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -138,10 +138,10 @@ public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle,
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing UpdateSMSApplicationUserPasswordCommand for UserID: {UserId}", request.UserId);
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateSMSApplicationUserPasswordCommand for UserID: {UserId}", request.UserId);
 
-            // Get the existing user
-            var userResult = await _dataService.GetSMSApplicationUserByIdAsync(request.UserId, cancellationToken);
+            // Get the existing user first
+            var userResult = await _applicationUserService.GetSMSApplicationUserByIdAsync(request.UserId, cancellationToken);
             if (userResult.IsFailure)
             {
                 return Result<bool>.Failure<bool>(userResult.Error);
@@ -151,7 +151,6 @@ public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle,
 
             // Create new password
             var passwordResult = Password.Create(request.NewPassword);
-
             if (passwordResult.IsFailure)
                 return Result<bool>.Failure<bool>(passwordResult.Error);
 
@@ -160,11 +159,12 @@ public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle,
             user.UpdatedBy = request.UpdatedBy;
             user.UpdatedDate = DateTime.UtcNow;
 
-            var updateResult = await _dataService.UpdateSMSApplicationUserPasswordAsync(user.Code, user.Password.HashedValue, cancellationToken);
+            // Update the user via the service
+            var updateResult = await _applicationUserService.UpdateSMSApplicationUserAsync(user, cancellationToken);
 
             if (updateResult.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated password for SMS Application User with ID: {UserId}", request.UserId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated password for SMS Application User with ID: {UserId}", request.UserId);
                 return Result<bool>.Success(true);
             }
             else
@@ -189,12 +189,12 @@ public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle,
 
 public class AuthenticateSMSApplicationUserCommandHandler : BaseCommandBundle, IRequestHandler<AuthenticateSMSApplicationUserCommand, Result<bool>>
 {
-    private readonly SMSApplicationUserDataService _dataService;
+    private readonly ISMSApplicationUserService _applicationUserService;
     private readonly ILogger<AuthenticateSMSApplicationUserCommandHandler> _logger;
 
-    public AuthenticateSMSApplicationUserCommandHandler(SMSApplicationUserDataService dataService, ILogger<AuthenticateSMSApplicationUserCommandHandler> logger)
+    public AuthenticateSMSApplicationUserCommandHandler(ISMSApplicationUserService applicationUserService, ILogger<AuthenticateSMSApplicationUserCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _applicationUserService = applicationUserService ?? throw new ArgumentNullException(nameof(applicationUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -208,20 +208,20 @@ public class AuthenticateSMSApplicationUserCommandHandler : BaseCommandBundle, I
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing authentication request for UserName: {UserName}", request.UserName);
+            _logger.LogInformation("✅ Clean Architecture: Processing authentication request for UserName: {UserName}", request.UserName);
 
-            var result = await _dataService.AuthenticateSMSApplicationUserAsync(request.UserName, request.Password, cancellationToken);
+            var result = await _applicationUserService.AuthenticateSMSApplicationUserAsync(request.UserName, request.Password, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully authenticated SMS Application User: {UserName}", request.UserName);
+                _logger.LogInformation("✅ Clean Architecture: Successfully authenticated SMS Application User: {UserName}", request.UserName);
             }
             else
             {
                 _logger.LogWarning("Authentication failed for user: {UserName}", request.UserName);
             }
 
-            return result.Value;
+            return result;
         }
         catch (OperationCanceledException)
         {
@@ -238,12 +238,12 @@ public class AuthenticateSMSApplicationUserCommandHandler : BaseCommandBundle, I
 
 public class RecordSMSApplicationUserLoginCommandHandler : BaseCommandBundle, IRequestHandler<RecordSMSApplicationUserLoginCommand, Result<bool>>
 {
-    private readonly SMSApplicationUserDataService _dataService;
+    private readonly ISMSApplicationUserService _applicationUserService;
     private readonly ILogger<RecordSMSApplicationUserLoginCommandHandler> _logger;
 
-    public RecordSMSApplicationUserLoginCommandHandler(SMSApplicationUserDataService dataService, ILogger<RecordSMSApplicationUserLoginCommandHandler> logger)
+    public RecordSMSApplicationUserLoginCommandHandler(ISMSApplicationUserService applicationUserService, ILogger<RecordSMSApplicationUserLoginCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _applicationUserService = applicationUserService ?? throw new ArgumentNullException(nameof(applicationUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -257,22 +257,36 @@ public class RecordSMSApplicationUserLoginCommandHandler : BaseCommandBundle, IR
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing RecordSMSApplicationUserLoginCommand for UserID: {UserId}", request.UserId);
+            _logger.LogInformation("✅ Clean Architecture: Processing RecordSMSApplicationUserLoginCommand for UserID: {UserId}", request.UserId);
 
-            var applicationUserId = new SMSApplicationUserID(request.UserId);
-            var result = await _dataService.RecordSMSApplicationUserLoginAsync(applicationUserId, request.LoginDate, cancellationToken);
-
-            if (result.IsSuccess)
+            // Get the existing user
+            var userResult = await _applicationUserService.GetSMSApplicationUserByIdAsync(request.UserId, cancellationToken);
+            if (userResult.IsFailure)
             {
-                _logger.LogInformation("Successfully recorded login for SMS Application User with ID: {UserId}", request.UserId);
+                return Result<bool>.Failure<bool>(userResult.Error);
+            }
+
+            var user = userResult.Value;
+
+            // Record the login
+            user.RecordLogin();
+            user.UpdatedBy = "SYSTEM";
+            user.UpdatedDate = DateTime.UtcNow;
+
+            // Update the user via the service
+            var updateResult = await _applicationUserService.UpdateSMSApplicationUserAsync(user, cancellationToken);
+
+            if (updateResult.IsSuccess)
+            {
+                _logger.LogInformation("✅ Clean Architecture: Successfully recorded login for SMS Application User with ID: {UserId}", request.UserId);
+                return Result<bool>.Success(true);
             }
             else
             {
                 _logger.LogApplicationError("Failed to record login for SMS Application User with ID: {UserId}. Error: {Error}",
                     ApplicationEventIds.Error, null);
+                return Result<bool>.Failure<bool>(updateResult.Error);
             }
-
-            return result;
         }
         catch (OperationCanceledException)
         {
@@ -289,12 +303,12 @@ public class RecordSMSApplicationUserLoginCommandHandler : BaseCommandBundle, IR
 
 public class DeleteSMSApplicationUserCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSApplicationUserCommand, Result<bool>>
 {
-    private readonly SMSApplicationUserDataService _dataService;
+    private readonly ISMSApplicationUserService _applicationUserService;
     private readonly ILogger<DeleteSMSApplicationUserCommandHandler> _logger;
 
-    public DeleteSMSApplicationUserCommandHandler(SMSApplicationUserDataService dataService, ILogger<DeleteSMSApplicationUserCommandHandler> logger)
+    public DeleteSMSApplicationUserCommandHandler(ISMSApplicationUserService applicationUserService, ILogger<DeleteSMSApplicationUserCommandHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _applicationUserService = applicationUserService ?? throw new ArgumentNullException(nameof(applicationUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -308,13 +322,13 @@ public class DeleteSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing DeleteSMSApplicationUserCommand for UserID: {UserId}", request.SMSApplicationUserId);
+            _logger.LogInformation("✅ Clean Architecture: Processing DeleteSMSApplicationUserCommand for UserID: {UserId}", request.SMSApplicationUserId);
 
-            var result = await _dataService.DeleteSMSApplicationUserAsync(request.SMSApplicationUserId, cancellationToken);
+            var result = await _applicationUserService.DeleteSMSApplicationUserAsync(request.SMSApplicationUserId, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted SMS Application User with ID: {UserId}", request.SMSApplicationUserId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully deleted SMS Application User with ID: {UserId}", request.SMSApplicationUserId);
             }
             else
             {

@@ -2,16 +2,14 @@
 // <copyright file="ReportValidationCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Command handlers implementing SMS report management and processing logic.
+//     Description: Command handlers implementing SMS report validation business logic and operations.
 //                  Implements command handlers for processing write operations.
 //                  Handles business logic execution and domain entity coordination.
 // </copyright>
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
-using SMS_Application.Messaging.Queries;
-using SMS_Domain.Common;
-using Application.Interfaces;
+using SMS_Application.Interfaces;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 
@@ -21,37 +19,37 @@ namespace SMS_Application.Messaging.CommandHandlers;
 
 public class CreateReportValidationCommandHandler : BaseCommandBundle, IRequestHandler<CreateReportValidationCommand, Result<ReportValidation>>
 {
-    private readonly IReportValidationService _reportValidationService;
+    private readonly ReportValidationService _reportValidationService;
     private readonly ILogger<CreateReportValidationCommandHandler> _logger;
 
-    public CreateReportValidationCommandHandler(IReportValidationService reportValidationService, ILogger<CreateReportValidationCommandHandler> logger)
+    public CreateReportValidationCommandHandler(ReportValidationService reportValidationService, ILogger<CreateReportValidationCommandHandler> logger)
     {
         _reportValidationService = reportValidationService ?? throw new ArgumentNullException(nameof(reportValidationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<ReportValidation>> HandleAsync(CreateReportValidationCommand request, CancellationToken ct = default)
+    public async Task<Result<ReportValidation>> HandleAsync(CreateReportValidationCommand request, CancellationToken cancellationToken)
     {
         try
         {
             if (request?.ReportValidation is null)
             {
-                _logger.LogApplicationError("CreateReportValidationCommand received with null ReportValidation", ApplicationEventIds.Error, null);
-                return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.NullOrEmpty);
+                _logger.LogApplicationError("CreateReportValidationCommand received with null request or report validation", ApplicationEventIds.Error, null);
+                return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.NullOrEmpty);
             }
 
             _logger.LogInformation("✅ Clean Architecture: Processing CreateReportValidationCommand for Code: {Code}", request.ReportValidation.Code);
 
-            // 🎯 CLEAN ARCHITECTURE: All complex business logic is now encapsulated in the Application Service
-            var result = await _reportValidationService.CreateReportValidationAsync(request.ReportValidation, ct).ConfigureAwait(false);
+            var result = await _reportValidationService.CreateReportValidationAsync(request.ReportValidation, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully created ReportValidation with Code: {Code}", result.Value?.Code);
+                _logger.LogInformation("✅ Clean Architecture: Successfully created Report Validation with ID: {Id}, Code: {Code}",
+                    result.Value?.Id, result.Value?.Code);
             }
             else
             {
-                _logger.LogApplicationError("Failed to create ReportValidation with Code: {Code}. Error: {Error}",
+                _logger.LogApplicationError("Failed to create Report Validation with Code: {Code}. Error: {Error}",
                     ApplicationEventIds.Error, null);
             }
 
@@ -64,44 +62,44 @@ public class CreateReportValidationCommandHandler : BaseCommandBundle, IRequestH
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("Unexpected error occurred while creating ReportValidation", ApplicationEventIds.Error, ex);
-            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.CreateFailed);
+            _logger.LogApplicationError("Unexpected error occurred while creating Report Validation", ApplicationEventIds.Error, ex);
+            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.CreateFailed);
         }
     }
 }
 
 public class UpdateReportValidationCommandHandler : BaseCommandBundle, IRequestHandler<UpdateReportValidationCommand, Result<ReportValidation>>
 {
-    private readonly IReportValidationService _reportValidationService;
+    private readonly ReportValidationService _reportValidationService;
     private readonly ILogger<UpdateReportValidationCommandHandler> _logger;
 
-    public UpdateReportValidationCommandHandler(IReportValidationService reportValidationService, ILogger<UpdateReportValidationCommandHandler> logger)
+    public UpdateReportValidationCommandHandler(ReportValidationService reportValidationService, ILogger<UpdateReportValidationCommandHandler> logger)
     {
         _reportValidationService = reportValidationService ?? throw new ArgumentNullException(nameof(reportValidationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<ReportValidation>> HandleAsync(UpdateReportValidationCommand request, CancellationToken ct = default)
+    public async Task<Result<ReportValidation>> HandleAsync(UpdateReportValidationCommand request, CancellationToken cancellationToken)
     {
         try
         {
             if (request?.ReportValidation is null)
             {
-                _logger.LogApplicationError("UpdateReportValidationCommand received with null ReportValidation", ApplicationEventIds.Error, null);
-                return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.NullOrEmpty);
+                _logger.LogApplicationError("UpdateReportValidationCommand received with null request or report validation", ApplicationEventIds.Error, null);
+                return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateReportValidationCommand for Code: {Code}", request.ReportValidation.Code);
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateReportValidationCommand for ID: {Id}", request.ReportValidation.Id);
 
-            var result = await _reportValidationService.UpdateReportValidationAsync(request.ReportValidation, ct).ConfigureAwait(false);
+            var result = await _reportValidationService.UpdateReportValidationAsync(request.ReportValidation, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated ReportValidation with Code: {Code}", request.ReportValidation.Code);
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated Report Validation with ID: {Id}", request.ReportValidation.Id);
             }
             else
             {
-                _logger.LogApplicationError("Failed to update ReportValidation with Code: {Code}. Error: {Error}",
+                _logger.LogApplicationError("Failed to update Report Validation with ID: {Id}. Error: {Error}",
                     ApplicationEventIds.Error, null);
             }
 
@@ -114,44 +112,44 @@ public class UpdateReportValidationCommandHandler : BaseCommandBundle, IRequestH
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("Unexpected error occurred while updating ReportValidation", ApplicationEventIds.Error, ex);
-            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.UpdateFailed);
+            _logger.LogApplicationError("Unexpected error occurred while updating Report Validation with ID: {Id}", ApplicationEventIds.Error, ex);
+            return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.UpdateFailed);
         }
     }
 }
 
 public class DeleteReportValidationCommandHandler : BaseCommandBundle, IRequestHandler<DeleteReportValidationCommand, Result<bool>>
 {
-    private readonly IReportValidationService _reportValidationService;
+    private readonly ReportValidationService _reportValidationService;
     private readonly ILogger<DeleteReportValidationCommandHandler> _logger;
 
-    public DeleteReportValidationCommandHandler(IReportValidationService reportValidationService, ILogger<DeleteReportValidationCommandHandler> logger)
+    public DeleteReportValidationCommandHandler(ReportValidationService reportValidationService, ILogger<DeleteReportValidationCommandHandler> logger)
     {
         _reportValidationService = reportValidationService ?? throw new ArgumentNullException(nameof(reportValidationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<bool>> HandleAsync(DeleteReportValidationCommand request, CancellationToken ct = default)
+    public async Task<Result<bool>> HandleAsync(DeleteReportValidationCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            if (request?.ReportValidationId is null)
+            if (request is null)
             {
-                _logger.LogApplicationError("DeleteReportValidationCommand received with null ReportValidationId", ApplicationEventIds.Error, null);
-                return Result<bool>.Failure<bool>(DomainErrors.ReportError.NullOrEmpty);
+                _logger.LogApplicationError("DeleteReportValidationCommand received with null request", ApplicationEventIds.Error, null);
+                return Result<bool>.Failure<bool>(DomainErrors.ReportValidationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing DeleteReportValidationCommand for Code: {Code}", request.ReportValidationId);
+            _logger.LogInformation("✅ Clean Architecture: Processing DeleteReportValidationCommand for ID: {Id}", request.ReportValidationId);
 
-            var result = await _reportValidationService.DeleteReportValidationAsync(request.ReportValidationId, ct).ConfigureAwait(false);
+            var result = await _reportValidationService.DeleteReportValidationAsync(request.ReportValidationId, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deleted ReportValidation with Code: {Code}", request.ReportValidationId);
+                _logger.LogInformation("✅ Clean Architecture: Successfully deleted Report Validation with ID: {Id}", request.ReportValidationId);
             }
             else
             {
-                _logger.LogApplicationError("Failed to delete ReportValidation with Code: {Code}. Error: {Error}",
+                _logger.LogApplicationError("Failed to delete Report Validation with ID: {Id}. Error: {Error}",
                     ApplicationEventIds.Error, null);
             }
 
@@ -164,59 +162,8 @@ public class DeleteReportValidationCommandHandler : BaseCommandBundle, IRequestH
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("Unexpected error occurred while deleting ReportValidation", ApplicationEventIds.Error, ex);
-            return Result<bool>.Failure<bool>(DomainErrors.ReportError.DeleteFailed);
-        }
-    }
-}
-
-public class ResetReportValidationCommandHandler : BaseCommandBundle, IRequestHandler<ResetReportValidationCommand, Result<bool>>
-{
-    private readonly IReportValidationService _reportValidationService;
-    private readonly ILogger<ResetReportValidationCommandHandler> _logger;
-
-    public ResetReportValidationCommandHandler(IReportValidationService reportValidationService, ILogger<ResetReportValidationCommandHandler> logger)
-    {
-        _reportValidationService = reportValidationService ?? throw new ArgumentNullException(nameof(reportValidationService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<bool>> HandleAsync(ResetReportValidationCommand request, CancellationToken ct = default)
-    {
-        try
-        {
-            if (request?.ReportValidationId is null)
-            {
-                _logger.LogApplicationError("ResetReportValidationCommand received with null ReportValidationId", ApplicationEventIds.Error, null);
-                return Result<bool>.Failure<bool>(DomainErrors.ReportError.NullOrEmpty);
-            }
-
-            _logger.LogInformation("✅ Clean Architecture: Processing ResetReportValidationCommand for Code: {Code}", request.ReportValidationId);
-
-            // 🎯 CLEAN ARCHITECTURE: Complex business logic is now in the Application Service
-            var result = await _reportValidationService.ResetReportValidationAsync(request.ReportValidationId, ct).ConfigureAwait(false);
-
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("✅ Clean Architecture: Successfully reset ReportValidation with Code: {Code}", request.ReportValidationId);
-            }
-            else
-            {
-                _logger.LogApplicationError("Failed to reset ReportValidation with Code: {Code}. Error: {Error}",
-                    ApplicationEventIds.Error, null);
-            }
-
-            return result;
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogWarning("ResetReportValidationCommand operation was cancelled");
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError("Unexpected error occurred while resetting ReportValidation", ApplicationEventIds.Error, ex);
-            return Result<bool>.Failure<bool>(DomainErrors.ReportError.DeleteFailed);
+            _logger.LogApplicationError("Unexpected error occurred while deleting Report Validation with ID: {Id}", ApplicationEventIds.Error, ex);
+            return Result<bool>.Failure<bool>(DomainErrors.ReportValidationError.DeleteFailed);
         }
     }
 }
