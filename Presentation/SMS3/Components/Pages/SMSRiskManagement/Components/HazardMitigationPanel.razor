@@ -356,7 +356,7 @@
     [Parameter] public EventCallback<string> OnMitigationUpdated { get; set; }
     [Parameter] public EventCallback<string> OnResidualHazardScored { get; set; } // ✅ NEW: For residual scoring callbacks
 
-    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
     // State properties
     private bool IsLoading { get; set; } = true;
@@ -854,7 +854,7 @@
                 
                 // Update audit fields
                 currentHazard.UpdatedDate = DateTime.UtcNow;
-                currentHazard.UpdatedBy = AuthService.CurrentUser.Code;  // You might want to get the current user
+                currentHazard.UpdatedBy = CurrentUserService.UserCode;  // You might want to get the current user
 
                 // Save hazard using CQRS UpdateHazardCommand
                 var updateHazardCommand = new UpdateHazardCommand(currentHazard);

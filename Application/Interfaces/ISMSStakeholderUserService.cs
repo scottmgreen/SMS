@@ -8,7 +8,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace Application.Interfaces;
+namespace SMS_Application.Interfaces;
 
 public interface ISMSStakeholderUserService
 {

@@ -52,12 +52,18 @@ public class UpdateInterviewCommand : BaseCommandBundle, IRequest<Result<Intervi
     }
 }
 
-public class DeleteInterviewCommand : BaseCommandBundle, IRequest<Result<bool>>
+public class DeleteInterviewCommand : BaseCommandBundle, IRequest<Result<bool>>, IDeleteCommand
 {
     public InterviewID InterviewId { get; set; }
+    public string DeletedBy { get; set; } = string.Empty;
 
     public DeleteInterviewCommand(InterviewID interviewId)
     {
         InterviewId = interviewId ?? throw new ArgumentNullException(nameof(interviewId));
+    }
+
+    public void SetDeletedBy(string userId, DateTime timestamp)
+    {
+        DeletedBy = userId;
     }
 }

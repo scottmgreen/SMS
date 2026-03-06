@@ -32,7 +32,7 @@ public partial class MitigationListing : ComponentBase
     [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
     #endregion
 
     #region Properties
@@ -611,8 +611,8 @@ public partial class MitigationListing : ComponentBase
         {
             mitigation.Status = MitigationStatus.Approved;
             mitigation.UpdatedDate = DateTime.UtcNow;
-            mitigation.UpdatedBy = AuthService?.CurrentUser?.Code ?? "System";
-            mitigation.ApprovedBy = AuthService?.CurrentUser?.Code ?? "System";  // ? FIXED: Set ApprovedBy property
+            mitigation.UpdatedBy = CurrentUserService.UserCode ?? "System";
+            mitigation.ApprovedBy = CurrentUserService?.UserCode ?? "System";  // ? FIXED: Set ApprovedBy property
 
             var updateCommand = new UpdateMitigationCommand(mitigation);
             var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
@@ -686,8 +686,8 @@ public partial class MitigationListing : ComponentBase
                 {
                     mitigation.Status = MitigationStatus.Approved;
                     mitigation.UpdatedDate = DateTime.UtcNow;
-                    mitigation.UpdatedBy = AuthService?.CurrentUser?.Code ?? "System";
-                    mitigation.ApprovedBy = AuthService?.CurrentUser?.Code ?? "System";  // ? FIXED: Set ApprovedBy property
+                    mitigation.UpdatedBy = CurrentUserService?.UserCode ?? "System";
+                    mitigation.ApprovedBy = CurrentUserService?.UserCode ?? "System";  // ? FIXED: Set ApprovedBy property
 
                     var updateCommand = new UpdateMitigationCommand(mitigation);
                     var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);

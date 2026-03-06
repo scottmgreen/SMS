@@ -98,7 +98,7 @@ public partial class CreateInterviewDialog : ComponentBase
             StateHasChanged();
 
             // Create interview entity with current user
-            var currentUserId = CurrentUserService.UserId;
+            var currentUserId = CurrentUserService.UserCode;
             var interviewResult = Interview.CreateForInvestigation(
                 model.InvestigationCode,
                 model.PersonInterviewed,

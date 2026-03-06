@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
-
+using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Queries;
 
 namespace SMS_Application.Messaging.QueryHandlers;
@@ -23,14 +23,14 @@ namespace SMS_Application.Messaging.QueryHandlers;
 /// </summary>
 public class GetAllSafetyPerformanceIndicatorsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSafetyPerformanceIndicatorsQuery, Result<List<SafetyPerformanceIndicator>>>
 {
-    private readonly SafetyPerformanceIndicatorService _dataService;
+    private readonly ISafetyPerformanceIndicatorService _spiService;
     private readonly ILogger<GetAllSafetyPerformanceIndicatorsQueryHandler> _logger;
 
     public GetAllSafetyPerformanceIndicatorsQueryHandler(
-        SafetyPerformanceIndicatorService dataService,
+        ISafetyPerformanceIndicatorService spiService,
         ILogger<GetAllSafetyPerformanceIndicatorsQueryHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _spiService = spiService ?? throw new ArgumentNullException(nameof(spiService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -38,13 +38,13 @@ public class GetAllSafetyPerformanceIndicatorsQueryHandler : BaseQueryBundle, IR
     {
         try
         {
-            _logger.LogInformation("Processing GetAllSafetyPerformanceIndicatorsQuery");
+            _logger.LogInformation("✅ Clean Architecture: Processing GetAllSafetyPerformanceIndicatorsQuery");
 
-            var result = await _dataService.GetAllSafetyPerformanceIndicatorsAsync(ct);
+            var result = await _spiService.GetAllSafetyPerformanceIndicatorsAsync(ct);
 
             if (result.IsSuccess)
             {
-                var spis = result.Value;
+                var spis = result.Value.ToList(); // Convert IEnumerable to List
 
                 // Apply filters if specified
                 if (!string.IsNullOrEmpty(request.StatusFilter))
@@ -62,10 +62,13 @@ public class GetAllSafetyPerformanceIndicatorsQueryHandler : BaseQueryBundle, IR
                     spis = spis.Where(spi => spi.ResponsibleDepartment.Equals(request.DepartmentFilter, StringComparison.OrdinalIgnoreCase)).ToList();
                 }
 
+                _logger.LogInformation("✅ Clean Architecture: Successfully retrieved {Count} Safety Performance Indicators", spis.Count);
                 return Result<List<SafetyPerformanceIndicator>>.Success(spis);
             }
 
-            return result;
+            _logger.LogApplicationError("Failed to retrieve Safety Performance Indicators. Error: {Error}",
+                ApplicationEventIds.Error, null);
+            return Result<List<SafetyPerformanceIndicator>>.Failure<List<SafetyPerformanceIndicator>>(result.Error);
         }
         catch (Exception ex)
         {
@@ -80,14 +83,14 @@ public class GetAllSafetyPerformanceIndicatorsQueryHandler : BaseQueryBundle, IR
 /// </summary>
 public class GetSafetyPerformanceIndicatorByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetSafetyPerformanceIndicatorByIdQuery, Result<SafetyPerformanceIndicator>>
 {
-    private readonly SafetyPerformanceIndicatorService _dataService;
+    private readonly ISafetyPerformanceIndicatorService _spiService;
     private readonly ILogger<GetSafetyPerformanceIndicatorByIdQueryHandler> _logger;
 
     public GetSafetyPerformanceIndicatorByIdQueryHandler(
-        SafetyPerformanceIndicatorService dataService,
+        ISafetyPerformanceIndicatorService spiService,
         ILogger<GetSafetyPerformanceIndicatorByIdQueryHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _spiService = spiService ?? throw new ArgumentNullException(nameof(spiService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -95,9 +98,19 @@ public class GetSafetyPerformanceIndicatorByIdQueryHandler : BaseQueryBundle, IR
     {
         try
         {
-            _logger.LogInformation("Processing GetSafetyPerformanceIndicatorByIdQuery for ID: {Id}", request.SPIId);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetSafetyPerformanceIndicatorByIdQuery for ID: {Id}", request.SPIId);
 
-            var result = await _dataService.GetSafetyPerformanceIndicatorByIdAsync(request.SPIId, ct);
+            var result = await _spiService.GetSafetyPerformanceIndicatorByIdAsync(request.SPIId, ct);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("✅ Clean Architecture: Successfully retrieved Safety Performance Indicator with ID: {Id}", request.SPIId);
+            }
+            else
+            {
+                _logger.LogApplicationError("Failed to retrieve Safety Performance Indicator with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
+            }
 
             return result;
         }
@@ -114,14 +127,14 @@ public class GetSafetyPerformanceIndicatorByIdQueryHandler : BaseQueryBundle, IR
 /// </summary>
 public class GetSafetyPerformanceIndicatorByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSafetyPerformanceIndicatorByCodeQuery, Result<SafetyPerformanceIndicator>>
 {
-    private readonly SafetyPerformanceIndicatorService _dataService;
+    private readonly ISafetyPerformanceIndicatorService _spiService;
     private readonly ILogger<GetSafetyPerformanceIndicatorByCodeQueryHandler> _logger;
 
     public GetSafetyPerformanceIndicatorByCodeQueryHandler(
-        SafetyPerformanceIndicatorService dataService,
+        ISafetyPerformanceIndicatorService spiService,
         ILogger<GetSafetyPerformanceIndicatorByCodeQueryHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _spiService = spiService ?? throw new ArgumentNullException(nameof(spiService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -129,9 +142,19 @@ public class GetSafetyPerformanceIndicatorByCodeQueryHandler : BaseQueryBundle, 
     {
         try
         {
-            _logger.LogInformation("Processing GetSafetyPerformanceIndicatorByCodeQuery for Code: {Code}", request.Code);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetSafetyPerformanceIndicatorByCodeQuery for Code: {Code}", request.Code);
 
-            var result = await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(request.Code, ct);
+            var result = await _spiService.GetSafetyPerformanceIndicatorByCodeAsync(request.Code, ct);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("✅ Clean Architecture: Successfully retrieved Safety Performance Indicator with Code: {Code}", request.Code);
+            }
+            else
+            {
+                _logger.LogApplicationError("Failed to retrieve Safety Performance Indicator with Code: {Code}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
+            }
 
             return result;
         }
@@ -143,85 +166,6 @@ public class GetSafetyPerformanceIndicatorByCodeQueryHandler : BaseQueryBundle, 
     }
 }
 
-/// <summary>
-/// Query handler for getting SPIs by type
-/// </summary>
-public class GetSPIsByTypeQueryHandler : BaseQueryBundle, IRequestHandler<GetSPIsByTypeQuery, Result<List<SafetyPerformanceIndicator>>>
-{
-    private readonly SafetyPerformanceIndicatorService _dataService;
-    private readonly ILogger<GetSPIsByTypeQueryHandler> _logger;
-
-    public GetSPIsByTypeQueryHandler(
-        SafetyPerformanceIndicatorService dataService,
-        ILogger<GetSPIsByTypeQueryHandler> logger)
-    {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<List<SafetyPerformanceIndicator>>> HandleAsync(GetSPIsByTypeQuery request, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Processing GetSPIsByTypeQuery for Type: {Type}", request.IndicatorType);
-
-            var result = await _dataService.GetSafetyPerformanceIndicatorsByTypeAsync(request.IndicatorType, ct);
-
-            if (result.IsSuccess && !string.IsNullOrEmpty(request.StatusFilter))
-            {
-                var filteredSpis = result.Value.Where(spi => spi.Status.Value.Equals(request.StatusFilter, StringComparison.OrdinalIgnoreCase)).ToList();
-                return Result<List<SafetyPerformanceIndicator>>.Success(filteredSpis);
-            }
-
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError("Error processing GetSPIsByTypeQuery for Type: {Type}", ApplicationEventIds.Error, ex);
-            return Result<List<SafetyPerformanceIndicator>>.Failure<List<SafetyPerformanceIndicator>>(DomainErrors.SPIError.NotFound);
-        }
-    }
-}
-
-/// <summary>
-/// Query handler for getting SPIs by department
-/// </summary>
-public class GetSPIsByDepartmentQueryHandler : BaseQueryBundle, IRequestHandler<GetSPIsByDepartmentQuery, Result<List<SafetyPerformanceIndicator>>>
-{
-    private readonly SafetyPerformanceIndicatorService _dataService;
-    private readonly ILogger<GetSPIsByDepartmentQueryHandler> _logger;
-
-    public GetSPIsByDepartmentQueryHandler(
-        SafetyPerformanceIndicatorService dataService,
-        ILogger<GetSPIsByDepartmentQueryHandler> logger)
-    {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<List<SafetyPerformanceIndicator>>> HandleAsync(GetSPIsByDepartmentQuery request, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Processing GetSPIsByDepartmentQuery for Department: {Department}", request.Department);
-
-            var result = await _dataService.GetSafetyPerformanceIndicatorsByDepartmentAsync(request.Department, ct);
-
-            if (result.IsSuccess && !string.IsNullOrEmpty(request.StatusFilter))
-            {
-                var filteredSpis = result.Value.Where(spi => spi.Status.Value.Equals(request.StatusFilter, StringComparison.OrdinalIgnoreCase)).ToList();
-                return Result<List<SafetyPerformanceIndicator>>.Success(filteredSpis);
-            }
-
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError("Error processing GetSPIsByDepartmentQuery for Department: {Department}", ApplicationEventIds.Error, ex);
-            return Result<List<SafetyPerformanceIndicator>>.Failure<List<SafetyPerformanceIndicator>>(DomainErrors.SPIError.NotFound);
-        }
-    }
-}
 
 /// <summary>
 /// Query handler for getting SPI dashboard data
@@ -243,7 +187,7 @@ public class GetSPIDashboardDataQueryHandler : BaseQueryBundle, IRequestHandler<
     {
         try
         {
-            _logger.LogInformation("Processing GetSPIDashboardDataQuery");
+            _logger.LogInformation("✅ Clean Architecture: Processing GetSPIDashboardDataQuery");
 
             var result = await _spiService.GetDashboardDataAsync(
                 request.StartDate,
@@ -254,6 +198,16 @@ public class GetSPIDashboardDataQueryHandler : BaseQueryBundle, IRequestHandler<
                 request.IncludeTrends,
                 request.IncludeAlerts,
                 ct);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("✅ Clean Architecture: Successfully retrieved SPI dashboard data");
+            }
+            else
+            {
+                _logger.LogApplicationError("Failed to retrieve SPI dashboard data. Error: {Error}",
+                    ApplicationEventIds.Error, null);
+            }
 
             return result;
         }
@@ -461,14 +415,14 @@ public class GetSPIReviewScheduleQueryHandler : BaseQueryBundle, IRequestHandler
 /// </summary>
 public class GetSPIDataPointsQueryHandler : BaseQueryBundle, IRequestHandler<GetSPIDataPointsQuery, Result<List<SPIDataPoint>>>
 {
-    private readonly SafetyPerformanceIndicatorService _dataService;
+    private readonly ISafetyPerformanceIndicatorService _spiService;
     private readonly ILogger<GetSPIDataPointsQueryHandler> _logger;
 
     public GetSPIDataPointsQueryHandler(
-        SafetyPerformanceIndicatorService dataService,
+        ISafetyPerformanceIndicatorService spiService,
         ILogger<GetSPIDataPointsQueryHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _spiService = spiService ?? throw new ArgumentNullException(nameof(spiService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -476,11 +430,13 @@ public class GetSPIDataPointsQueryHandler : BaseQueryBundle, IRequestHandler<Get
     {
         try
         {
-            _logger.LogInformation("Processing GetSPIDataPointsQuery for SPI: {SPIId}", request.SPIId);
+            _logger.LogInformation("✅ Clean Architecture: Processing GetSPIDataPointsQuery for SPI: {SPIId}", request.SPIId);
 
-            var spiResult = await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(request.SPIId, ct);
+            var spiResult = await _spiService.GetSafetyPerformanceIndicatorByCodeAsync(request.SPIId, ct);
             if (spiResult.IsFailure)
             {
+                _logger.LogApplicationError("Failed to retrieve SPI with Code: {SPIId}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
                 return Result<List<SPIDataPoint>>.Failure<List<SPIDataPoint>>(spiResult.Error);
             }
 
@@ -504,6 +460,7 @@ public class GetSPIDataPointsQueryHandler : BaseQueryBundle, IRequestHandler<Get
                 .Take(request.MaxRecords ?? 1000)
                 .ToList();
 
+            _logger.LogInformation("✅ Clean Architecture: Successfully retrieved {Count} data points for SPI: {SPIId}", results.Count, request.SPIId);
             return Result<List<SPIDataPoint>>.Success(results);
         }
         catch (Exception ex)

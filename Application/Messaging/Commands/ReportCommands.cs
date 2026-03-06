@@ -14,20 +14,28 @@ namespace SMS_Application.Messaging.Commands;
 /// Special Handling Commands 
 /// </summary>
 
-public class UpdateReportStatusCommand : BaseCommandBundle, IRequest<Result<bool>>
+public class UpdateReportStatusCommand : BaseCommandBundle, IRequest<Result<bool>>, IUpdateCommand
 {
     public string ReportCode { get; set; }
     public ReportStatus ReportStatus { get; set; }
-
     public string UpdatedBy { get; set; }   
-    public UpdateReportStatusCommand(string reportcode, ReportStatus reportstatus ,string updatedby)
+
+    public UpdateReportStatusCommand(string reportcode, ReportStatus reportstatus, string updatedby)
     {
         ReportCode = reportcode ?? throw new ArgumentNullException(nameof(reportcode));
         ReportStatus = reportstatus ?? throw new ArgumentNullException(nameof(reportstatus));
         UpdatedBy = updatedby ?? throw new ArgumentNullException(nameof(updatedby));    
     }
 
-    
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // For update commands, we typically don't modify CreatedBy
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        UpdatedBy = userId;
+    }
 }
 
 
@@ -74,12 +82,18 @@ public class UpdateReportCommand : BaseCommandBundle, IRequest<Result<Report>>, 
     }
 }
 
-public class DeleteReportCommand : BaseCommandBundle, IRequest<Result<bool>>
+public class DeleteReportCommand : BaseCommandBundle, IRequest<Result<bool>>, IDeleteCommand
 {
     public ReportID ReportId { get; set; }
+    public string DeletedBy { get; set; } = string.Empty;
 
     public DeleteReportCommand(ReportID reportId)
     {
         ReportId = reportId ?? throw new ArgumentNullException(nameof(reportId));
+    }
+
+    public void SetDeletedBy(string userId, DateTime timestamp)
+    {
+        DeletedBy = userId;
     }
 }

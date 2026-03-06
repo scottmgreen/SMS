@@ -55,29 +55,9 @@ public class GetSafetyPerformanceIndicatorByCodeQuery : BaseEventBundle, IReques
     }
 }
 
-public class GetSPIsByTypeQuery : BaseEventBundle, IRequest<Result<List<SafetyPerformanceIndicator>>>
-{
-    public string IndicatorType { get; set; }
-    public string? StatusFilter { get; set; }
 
-    public GetSPIsByTypeQuery(string indicatorType, string? statusFilter = null)
-    {
-        IndicatorType = indicatorType ?? throw new ArgumentNullException(nameof(indicatorType));
-        StatusFilter = statusFilter;
-    }
-}
 
-public class GetSPIsByDepartmentQuery : BaseEventBundle, IRequest<Result<List<SafetyPerformanceIndicator>>>
-{
-    public string Department { get; set; }
-    public string? StatusFilter { get; set; }
 
-    public GetSPIsByDepartmentQuery(string department, string? statusFilter = null)
-    {
-        Department = department ?? throw new ArgumentNullException(nameof(department));
-        StatusFilter = statusFilter;
-    }
-}
 
 // =============================================
 // SPI DASHBOARD QUERIES

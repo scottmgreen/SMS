@@ -2,20 +2,20 @@
 // <copyright file="CurrentUserService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Application service providing business logic operations for SMS domain entities.
-//                  Provides business logic operations and coordinates domain entities
-//                  through the CQRS pattern via Mediator services.
+//     Description: Enhanced current user service with full authentication state support.
+//                  Mirrors the functionality of Presentation layer AuthenticationState.
 // </copyright>
 //-----------------------------------------------------------------------
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using SMS_Application.Messaging.Queries;
 
 namespace SMS_Application.Services;
 
 /// <summary>
-/// Implementation of ICurrentUserService using SMS Session data
-/// Works with the existing SMS authentication system
+/// Enhanced Current User Service - Matches AuthenticationState functionality
+/// Provides comprehensive user context including roles and permissions from session
 /// </summary>
 public class CurrentUserService : ICurrentUserService
 {
@@ -24,39 +24,422 @@ public class CurrentUserService : ICurrentUserService
 
     public CurrentUserService(IHttpContextAccessor httpContextAccessor, ILogger<CurrentUserService> logger)
     {
-        _httpContextAccessor = httpContextAccessor;
-        _logger = logger;
+        _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public string UserId => GetUserId();
+    #region Basic Auth Properties
 
-    public string DisplayName => GetSessionValue("SMS_DisplayName") ?? GetSessionValue("SMS_UserId") ?? "SYSTEM";
-
-    public bool IsAuthenticated => !string.IsNullOrEmpty(GetSessionValue("SMS_UserId"));
-
-    private string GetUserId()
+    public bool IsAuthenticated
     {
-        var userId = GetSessionValue("SMS_UserId");
-
-        // ?? VERBOSE LOGGING for debugging
-        _logger.LogInformation("?? CurrentUserService.GetUserId() called");
-        _logger.LogInformation("?? Session SMS_UserId: '{UserId}'", userId ?? "NULL");
-        _logger.LogInformation("?? Session SMS_DisplayName: '{DisplayName}'", GetSessionValue("SMS_DisplayName") ?? "NULL");
-        _logger.LogInformation("?? Session IsAuthenticated: '{IsAuth}'", GetSessionValue("IsAuthenticated") ?? "NULL");
-
-        // Check all session keys for debugging
-        if (_httpContextAccessor.HttpContext?.Session != null)
+        get
         {
-            _logger.LogInformation("?? Available session keys: {Keys}",
-                string.Join(", ", _httpContextAccessor.HttpContext.Session.Keys));
+            try
+            {
+                var httpContext = _httpContextAccessor.HttpContext;
+                if (httpContext == null) return false;
+
+                // Check session first
+                try
+                {
+                    var sessionAuth = httpContext.Session.GetString("IsAuthenticated");
+                    var sessionUserId = httpContext.Session.GetString("SMS_UserId");
+                    
+                    if (bool.TryParse(sessionAuth, out var sessionResult) && sessionResult && !string.IsNullOrEmpty(sessionUserId))
+                    {
+                        return true;
+                    }
+                }
+                catch (InvalidOperationException)
+                {
+                    // Session not configured - skip
+                }
+
+                // Check Items as fallback
+                var itemsAuth = httpContext.Items["IsAuthenticated"]?.ToString();
+                var itemsUserId = httpContext.Items["SMS_UserId"]?.ToString();
+                
+                if (bool.TryParse(itemsAuth, out var itemsResult) && itemsResult && !string.IsNullOrEmpty(itemsUserId))
+                {
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error checking authentication status");
+                return false;
+            }
         }
-
-        return userId ?? "SYSTEM";
     }
 
-    private string? GetSessionValue(string key)
+    public string UserCode
     {
-        return _httpContextAccessor.HttpContext?.Session.GetString(key) ??
-               _httpContextAccessor.HttpContext?.Items[key]?.ToString();
+        get
+        {
+            try
+            {
+                var httpContext = _httpContextAccessor.HttpContext;
+                if (httpContext == null) return "SYSTEM";
+
+                // Try from Items first (set by middleware)
+                var userIdFromItems = httpContext.Items["SMS_UserId"]?.ToString();
+                if (!string.IsNullOrEmpty(userIdFromItems))
+                    return userIdFromItems;
+
+                // Try from session (with safe access)
+                try
+                {
+                    var userIdFromSession = httpContext.Session?.GetString("SMS_UserId");
+                    if (!string.IsNullOrEmpty(userIdFromSession))
+                        return userIdFromSession;
+                }
+                catch (InvalidOperationException)
+                {
+                    // Session not configured - skip
+                }
+
+                // Try from cookies as fallback
+                var userIdFromCookie = httpContext.Request.Cookies["SMS_SMS_UserId"];
+                if (!string.IsNullOrEmpty(userIdFromCookie))
+                    return userIdFromCookie;
+
+                return "SYSTEM";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error getting current user ID, defaulting to SYSTEM");
+                return "SYSTEM";
+            }
+        }
     }
+
+    public string? UserType
+    {
+        get
+        {
+            try
+            {
+                var httpContext = _httpContextAccessor.HttpContext;
+                if (httpContext == null) return null;
+
+                var userType = httpContext.Items["SMS_UserType"]?.ToString() ??
+                              httpContext.Session?.GetString("SMS_UserType");
+                return userType;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error getting current user type");
+                return null;
+            }
+        }
+    }
+
+    public string UserDisplayName
+    {
+        get
+        {
+            try
+            {
+                var httpContext = _httpContextAccessor.HttpContext;
+                if (httpContext == null) return "System User";
+
+                // Try from Items first
+                var displayNameFromItems = httpContext.Items["SMS_DisplayName"]?.ToString();
+                if (!string.IsNullOrEmpty(displayNameFromItems))
+                    return displayNameFromItems;
+
+                // Try from session (with safe access)
+                try
+                {
+                    var displayNameFromSession = httpContext.Session?.GetString("SMS_DisplayName");
+                    if (!string.IsNullOrEmpty(displayNameFromSession))
+                        return displayNameFromSession;
+                }
+                catch (InvalidOperationException)
+                {
+                    // Session not configured - skip
+                }
+
+                // Try from cookies
+                var displayNameFromCookie = httpContext.Request.Cookies["SMS_SMS_DisplayName"];
+                if (!string.IsNullOrEmpty(displayNameFromCookie))
+                    return displayNameFromCookie;
+
+                return "System User";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error getting current user display name");
+                return "System User";
+            }
+        }
+    }
+
+    public string? Email
+    {
+        get
+        {
+            try
+            {
+                var httpContext = _httpContextAccessor.HttpContext;
+                return httpContext?.Session?.GetString("SMS_Email");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error getting user email");
+                return null;
+            }
+        }
+    }
+
+    public string? FirstName
+    {
+        get
+        {
+            try
+            {
+                var httpContext = _httpContextAccessor.HttpContext;
+                return httpContext?.Session?.GetString("SMS_FirstName");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error getting user first name");
+                return null;
+            }
+        }
+    }
+
+    public string? LastName
+    {
+        get
+        {
+            try
+            {
+                var httpContext = _httpContextAccessor.HttpContext;
+                return httpContext?.Session?.GetString("SMS_LastName");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error getting user last name");
+                return null;
+            }
+        }
+    }
+
+    public DateTime? LoginTime
+    {
+        get
+        {
+            try
+            {
+                var httpContext = _httpContextAccessor.HttpContext;
+                var loginTimeStr = httpContext?.Session?.GetString("SMS_LoginTime");
+                
+                if (DateTime.TryParse(loginTimeStr, out var loginTime))
+                    return loginTime;
+                
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error getting login time");
+                return null;
+            }
+        }
+    }
+
+    #endregion
+
+    #region Full User and Role Access
+
+    public string? UserRoleCode
+    {
+        get
+        {
+            try
+            {
+                var httpContext = _httpContextAccessor.HttpContext;
+                return httpContext?.Session?.GetString("SMS_UserRoleCode");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error getting user role code");
+                return null;
+            }
+        }
+    }
+
+    public string? UserRoleName
+    {
+        get
+        {
+            try
+            {
+                var httpContext = _httpContextAccessor.HttpContext;
+                return httpContext?.Session?.GetString("SMS_UserRoleName");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error getting user role name");
+                return null;
+            }
+        }
+    }
+
+    public List<SMSUserRolePermission> Permissions
+    {
+        get
+        {
+            try
+            {
+                if (!IsAuthenticated) return new List<SMSUserRolePermission>();
+
+                var httpContext = _httpContextAccessor.HttpContext;
+                var permissionsString = httpContext?.Session?.GetString("SMS_UserPermissions");
+                var userRoleCode = httpContext?.Session?.GetString("SMS_UserRoleCode");
+                
+                if (string.IsNullOrEmpty(permissionsString) || string.IsNullOrEmpty(userRoleCode))
+                {
+                    return new List<SMSUserRolePermission>();
+                }
+
+                // Parse the simple permission strings back to entities
+                var permissions = new List<SMSUserRolePermission>();
+                var permissionPairs = permissionsString.Split('|');
+                
+                foreach (var pair in permissionPairs)
+                {
+                    var parts = pair.Split(':');
+                    if (parts.Length == 2)
+                    {
+                        var module = parts[0];
+                        var actions = parts[1].Split(',');
+                        
+                        var permissionId = new SMSUserRolePermissionID($"PRM-{module}");
+                        var permission = new SMSUserRolePermission(permissionId)
+                        {
+                            Code = $"PRM-{module}",
+                            SMSUserRoleCode = userRoleCode,
+                            SMSModule = module,
+                            Create = actions.Contains("Create"),
+                            Read = actions.Contains("Read"),
+                            Update = actions.Contains("Update"),
+                            Delete = actions.Contains("Delete")
+                        };
+                        permissions.Add(permission);
+                    }
+                }
+                
+                return permissions;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading user permissions from session");
+                return new List<SMSUserRolePermission>();
+            }
+        }
+    }
+
+    #endregion
+
+    #region Permission Check Methods (Same as AuthenticationState)
+
+    /// <summary>
+    /// Check if user can CREATE in a specific module
+    /// </summary>
+    public bool CanCreate(string module)
+    {
+        return IsAuthenticated &&
+               Permissions.Any(p => p.SMSModule == module && p.Create);
+    }
+
+    /// <summary>
+    /// Check if user can READ in a specific module
+    /// </summary>
+    public bool CanRead(string module)
+    {
+        return IsAuthenticated &&
+               Permissions.Any(p => p.SMSModule == module && p.Read);
+    }
+
+    /// <summary>
+    /// Check if user can UPDATE in a specific module
+    /// </summary>
+    public bool CanUpdate(string module)
+    {
+        return IsAuthenticated &&
+               Permissions.Any(p => p.SMSModule == module && p.Update);
+    }
+
+    /// <summary>
+    /// Check if user can DELETE in a specific module
+    /// </summary>
+    public bool CanDelete(string module)
+    {
+        return IsAuthenticated &&
+               Permissions.Any(p => p.SMSModule == module && p.Delete);
+    }
+
+    /// <summary>
+    /// Check if user has ANY permission in a module
+    /// </summary>
+    public bool CanAccess(string module)
+    {
+        return IsAuthenticated &&
+               Permissions.Any(p => p.SMSModule == module && (p.Create || p.Read || p.Update || p.Delete));
+    }
+
+    /// <summary>
+    /// Get user type as Smart Enum
+    /// </summary>
+    public SMSUserType? GetUserTypeEnum()
+    {
+        if (!IsAuthenticated || string.IsNullOrEmpty(UserType))
+            return null;
+
+        return SMSUserType.FromValue(UserType);
+    }
+
+    /// <summary>
+    /// Check if user has administrative access
+    /// </summary>
+    public bool HasAdministrativeAccess()
+    {
+        return IsAuthenticated &&
+               (UserType == "Application" || UserType == "Organizational");
+    }
+
+    /// <summary>
+    /// Get all modules the user has access to
+    /// </summary>
+    public List<string> GetAccessibleModules()
+    {
+        if (!IsAuthenticated) return new List<string>();
+        
+        var permissions = Permissions;
+        return permissions
+            .Where(p => p.Read || p.Create || p.Update || p.Delete)
+            .Select(p => p.SMSModule ?? "Unknown")
+            .Distinct()
+            .ToList();
+    }
+
+    #endregion
+
+    #region Session Management Methods
+
+    /// <summary>
+    /// Clear authentication for logout (delegates to ISMSSessionService)
+    /// Use ISMSSessionService.ClearSMSSessionAsync() for logout operations
+    /// </summary>
+    public async Task ClearAuthentication()
+    {
+        // This service is for reading current user info only
+        // Use ISMSSessionService.ClearSMSSessionAsync() directly for logout operations
+        throw new NotSupportedException("Use ISMSSessionService.ClearSMSSessionAsync() for logout operations");
+    }
+
+    #endregion
 }

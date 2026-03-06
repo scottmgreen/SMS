@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
-using Application.Interfaces;
+using SMS_Application.Interfaces;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 

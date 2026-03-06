@@ -51,8 +51,6 @@
     <Using Include="SMS_Application.Messaging.Commands" />
     <Using Include="SMS_Application.Services" />
     
-    
-    <Using Include="SMS_Application.States" />
     <Using Include="SMS_Domain.Common" />
     <Using Include="SMS_Domain.Entities" />
     <Using Include="SMS_Domain.Enums" />

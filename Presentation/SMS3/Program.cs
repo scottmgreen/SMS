@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 
 using SMS_Application.Configuration;
+using SMS_Application.Messaging.Commands;
 
 using SMS_Infrastructure.Configuration;
 using SMS_Infrastructure.Security;
@@ -28,15 +29,16 @@ public class Program
         builder.Services.AddHttpContextAccessor();
 
         builder.Services.AddScoped<ApiKeyAuthenticationFilter>();
-        // Register authentication service as singleton
-        builder.Services.AddSingleton<AuthenticationService>();
 
+        // ? CENTRALIZED AUTHENTICATION - All authentication services from Application layer
+        // No more Presentation layer AuthenticationService!
+        
         // Register SMS Services
         builder.Services.AddSharedServices(builder.Configuration);
         builder.Services.AddInfrastructureServices(builder.Configuration);
         builder.Services.AddApplicationServices();
 
-        // SMS Session Management
+        // ? SMS Session Management - Centralized in Application layer
         builder.Services.ConfigureSMSSession();
 
         // Configure notification settings
@@ -113,10 +115,67 @@ public class Program
 
         // Add session middleware
         app.UseSession();
+        
+        // ? ADD SMS AUTHENTICATION MIDDLEWARE
+        app.UseSMSAuthentication();
 
         app.UseAntiforgery();
 
 
+
+        // ============================================================================
+        // PIPELINE TEST ENDPOINT - FOR DEVELOPMENT/TESTING
+        // ============================================================================
+        
+        // Test endpoint to verify pipelines are working
+        app.MapPost("/api/test-pipeline", async (
+            [FromBody] string testMessage,
+            IMediator mediator,
+            ILogger<Program> logger) =>
+        {
+            try
+            {
+                logger.LogInformation("Testing pipeline execution with message: {Message}", testMessage);
+
+                var command = new TestPipelineCommand(testMessage);
+                var result = await mediator.SendAsync(command, CancellationToken.None);
+
+                if (result.IsSuccess)
+                {
+                    return Results.Ok(new
+                    {
+                        success = true,
+                        message = "Pipeline test completed successfully!",
+                        result = result.Value,
+                        timestamp = DateTime.UtcNow
+                    });
+                }
+                else
+                {
+                    return Results.BadRequest(new
+                    {
+                        success = false,
+                        message = "Pipeline test failed",
+                        error = result.Error?.Message,
+                        timestamp = DateTime.UtcNow
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error testing pipeline");
+                return Results.Problem(
+                    detail: ex.Message,
+                    title: "Pipeline Test Failed",
+                    statusCode: StatusCodes.Status500InternalServerError
+                );
+            }
+        })
+        .WithName("TestPipeline")
+        .WithTags("Development")
+        .WithSummary("Test pipeline execution")
+        .WithDescription("Tests that audit pipelines are working correctly")
+        .Produces<object>(StatusCodes.Status200OK);
 
         // ============================================================================
         // CONFIDENTIAL REPORTING MINIMAL API - FOR EXTERNAL SYSTEMS

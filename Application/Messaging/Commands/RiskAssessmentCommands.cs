@@ -56,13 +56,19 @@ public class UpdateRiskAssessmentCommand : BaseCommandBundle, IRequest<Result<Ri
     }
 }
 
-public class DeleteRiskAssessmentCommand : BaseCommandBundle, IRequest<Result<bool>>
+public class DeleteRiskAssessmentCommand : BaseCommandBundle, IRequest<Result<bool>>, IDeleteCommand
 {
     public RiskAssessmentID RiskAssessmentId { get; set; }
+    public string DeletedBy { get; set; } = string.Empty;
 
     public DeleteRiskAssessmentCommand(RiskAssessmentID riskAssessmentId)
     {
         RiskAssessmentId = riskAssessmentId ?? throw new ArgumentNullException(nameof(riskAssessmentId));
+    }
+
+    public void SetDeletedBy(string userId, DateTime timestamp)
+    {
+        DeletedBy = userId;
     }
 }
 
@@ -73,7 +79,7 @@ public class DeleteRiskAssessmentCommand : BaseCommandBundle, IRequest<Result<bo
 /// <summary>
 /// Command to save Step 1 - System Description data
 /// </summary>
-public class SaveStep1Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IHasAuditFields
+public class SaveStep1Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IUpdateCommand
 {
     public RiskAssessmentID RiskAssessmentId { get; set; }
     public string LeadAssessorId { get; set; }
@@ -128,7 +134,7 @@ public class SaveStep1Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
 /// <summary>
 /// Command to save Step 3 - Risk Analysis data
 /// </summary>
-public class SaveStep3Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IHasAuditFields
+public class SaveStep3Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IUpdateCommand
 {
     public RiskAssessmentID RiskAssessmentId { get; set; }
     //public string RiskAnalysisMethod { get; set; }
@@ -159,7 +165,7 @@ public class SaveStep3Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
 /// <summary>
 /// Command to save Step 4 - Risk Assessment data
 /// </summary>
-public class SaveStep4Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IHasAuditFields
+public class SaveStep4Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IUpdateCommand
 {
     public RiskAssessmentID RiskAssessmentId { get; set; }
     
@@ -189,14 +195,14 @@ public class SaveStep4Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
 
     public void SetUpdatedBy(string userId, DateTime timestamp)
     {
-        //UpdatedBy = userId;
+        UpdatedBy = userId;
     }
 }
 
 /// <summary>
 /// Command to save Step 5 - Implementation data
 /// </summary>
-public class SaveStep5Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IHasAuditFields
+public class SaveStep5Command : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IUpdateCommand
 {
     public RiskAssessmentID RiskAssessmentId { get; set; }
     
@@ -215,14 +221,14 @@ public class SaveStep5Command : BaseCommandBundle, IRequest<Result<RiskAssessmen
 
     public void SetUpdatedBy(string userId, DateTime timestamp)
     {
-        //UpdatedBy = userId;
+        UpdatedBy = userId;
     }
 }
 
 /// <summary>
 /// Command to update progress tracking data
 /// </summary>
-public class UpdateProgressCommand : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IHasAuditFields
+public class UpdateProgressCommand : BaseCommandBundle, IRequest<Result<RiskAssessment>>, IUpdateCommand
 {
     public RiskAssessmentID RiskAssessmentId { get; set; }
     public int CurrentStep { get; set; }
@@ -255,6 +261,6 @@ public class UpdateProgressCommand : BaseCommandBundle, IRequest<Result<RiskAsse
 
     public void SetUpdatedBy(string userId, DateTime timestamp)
     {
-        //UpdatedBy = userId;
+        UpdatedBy = userId;
     }
 }

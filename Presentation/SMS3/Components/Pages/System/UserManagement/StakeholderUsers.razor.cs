@@ -14,7 +14,7 @@ public partial class StakeholderUsers : ComponentBase
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
 
-    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
     // Data Properties
     private List<SMSStakeholderUser> StakeholderUsersList { get; set; } = new();
@@ -240,7 +240,7 @@ public partial class StakeholderUsers : ComponentBase
             CurrentEditUser.Organization = editUser.Organization;
             CurrentEditUser.IsActive = editUser.IsActive;
             CurrentEditUser.IsPOPEmployee = editUser.IsPOPEmployee;
-            CurrentEditUser.UpdatedBy = AuthService.CurrentUser.Code;
+            CurrentEditUser.UpdatedBy = CurrentUserService.UserCode;
             CurrentEditUser.SMSUserType = SMSUserType.Stakeholder;
             // Update user role if specified
             if (!string.IsNullOrWhiteSpace(editUser.UserRoleCode))
@@ -470,7 +470,7 @@ public partial class StakeholderUsers : ComponentBase
                 user.UserRole = null;
                 ShowSuccessNotification($"Role removed from {displayName} successfully.");
             }
-            user.UpdatedBy = AuthService.CurrentUserDisplayName;
+            user.UpdatedBy = CurrentUserService?.UserDisplayName;
             var updateCommand = new UpdateSMSStakeholderUserCommand(user);
             var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
 

@@ -182,7 +182,7 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
             }
 
             // Business validation - check if user exists
-            var existingUserResult = await _dataService.GetSMSOrganizationalUserByCodeAsync(user.UserId.Value, ct).ConfigureAwait(false);
+            var existingUserResult = await _dataService.GetSMSOrganizationalUserByCodeAsync(user.Code, ct).ConfigureAwait(false);
             if (existingUserResult.IsFailure)
             {
                 _logger.LogWarning("Cannot update non-existent SMS Organizational User with ID: {Id}", user.UserId);

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+﻿//-------------------------------------------------------------------------------
 // <copyright file="ServiceCollectionExtensions.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -6,9 +6,11 @@
 //                  Provides dependency injection configuration and service registration
 //                  for the Application layer in the Clean Architecture.
 // </copyright>
-//-----------------------------------------------------------------------
+//-------------------------------------------------------------------------------
 
 using SMS_Application.Messaging.Pipelines;
+using SMS_Application.Services;
+using SMS_Application.Interfaces;
 
 namespace SMS_Application.Configuration;
 
@@ -16,62 +18,52 @@ internal static class ServiceCollectionExtensions
 {
     /// <summary>
     /// Adds the mediator with pipeline support to the service collection
-    /// This is the clean wrapper you had before - restored!
+    /// This registers the mediator and all pipelines in the correct execution order
     /// </summary>
     public static IServiceCollection AddMediator(this IServiceCollection services, Assembly assembly)
     {
         // Core mediator service
-        services.AddTransient<IMediator, Mediator>();
+        services.AddScoped<IMediator, Mediator>();
 
-        // Register all command/query handlers  
-        services.Register(typeof(IRequestHandler<,>), LifeTime.Scoped);
+        // Register all pipelines in execution order (THIS IS CRITICAL!)
+        // 1. ValidationPipeline - Validates inputs first
+        services.AddScoped(typeof(IPipeline<,>), typeof(ValidationPipeline<,>));
+        
+        // 2. AuditFieldsPipeline - Sets audit fields before business logic
+        services.AddScoped(typeof(IPipeline<,>), typeof(AuditFieldsPipeline<,>));
+        
+        // 3. LoggingPipeline - Logs request/response and performance
+        services.AddScoped(typeof(IPipeline<,>), typeof(LoggingPipeline<,>));
+        
+        // 4. AuditLogPipeline - Creates audit trail after execution
+        services.AddScoped(typeof(IPipeline<,>), typeof(AuditLogPipeline<,>));
 
-        // 🔥 NEW: Register pipelines in execution order (AuditFieldsPipeline runs FIRST)
-        services.AddTransient(typeof(IPipeline<,>), typeof(AuditFieldsPipeline<,>)); // First - set audit fields
-        services.AddTransient(typeof(IPipeline<,>), typeof(LoggingPipeline<,>));     // Second - log execution
-        services.AddTransient(typeof(IPipeline<,>), typeof(AuditLogPipeline<,>));    // Third - audit logging
-
-        return services;
-    }
-
-    private static IServiceCollection Register(this IServiceCollection services, Type genericInterface, LifeTime lifetime)
-    {
-        var assembly = genericInterface.Assembly;
-        var allTypes = assembly.GetTypes();
-        var interfaceTypes = new List<Type>();
-
-        foreach (var type in assembly.GetTypes())
-        {
-            interfaceTypes.AddRange(type.GetInterfaces().Where(x => x.IsGenericType && x.GetGenericTypeDefinition() == genericInterface));
-
-        }
-
-        foreach (var @interface in interfaceTypes)
-        {
-            var @class = allTypes.First(x => x.IsAssignableTo(@interface));
-            Register(@interface, @class, services, lifetime);
-        }
+        // Register all command/query handlers from the assembly
+        RegisterHandlers(services, assembly);
 
         return services;
     }
 
-    private static void Register(Type @interface, Type @class, IServiceCollection services, LifeTime lifeTime)
+    /// <summary>
+    /// Register all request handlers from the assembly
+    /// </summary>
+    private static void RegisterHandlers(IServiceCollection services, Assembly assembly)
     {
-        switch (lifeTime)
-        {
-            case LifeTime.Singleton:
-                services.AddSingleton(@interface, @class);
-                break;
-            case LifeTime.Transient:
-                services.AddTransient(@interface, @class);
-                break;
-            case LifeTime.Scoped:
-                services.AddScoped(@interface, @class);
-                break;
-            default:
-                throw new UnreachableException();
-        }
+        var handlerTypes = assembly.GetTypes()
+            .Where(t => !t.IsAbstract && !t.IsInterface && 
+                       t.GetInterfaces()
+                        .Any(i => i.IsGenericType && 
+                                 i.GetGenericTypeDefinition() == typeof(IRequestHandler<,>)))
+            .ToList();
 
+        foreach (var handlerType in handlerTypes)
+        {
+            var interfaceType = handlerType.GetInterfaces()
+                .First(i => i.IsGenericType && 
+                           i.GetGenericTypeDefinition() == typeof(IRequestHandler<,>));
+
+            services.AddScoped(interfaceType, handlerType);
+        }
     }
 
     public enum LifeTime

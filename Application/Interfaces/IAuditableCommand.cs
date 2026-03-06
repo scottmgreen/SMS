@@ -50,3 +50,16 @@ public interface ICreateCommand : IHasAuditFields
 public interface IUpdateCommand : IHasAuditFields
 {
 }
+
+/// <summary>
+/// Interface for commands that delete existing entities
+/// </summary>
+public interface IDeleteCommand : IAuditableCommand
+{
+    /// <summary>
+    /// Set audit fields for deletion
+    /// </summary>
+    /// <param name="userId">The user performing the deletion</param>
+    /// <param name="timestamp">The timestamp of the deletion</param>
+    void SetDeletedBy(string userId, DateTime timestamp);
+}

@@ -115,7 +115,7 @@ public class GetHazardsByReportCodeQueryHandler : BaseQueryBundle, IRequestHandl
         try
         {
             _logger.LogInformation("✅ Clean Architecture: Processing GetHazardsByReportCodeQuery for ReportCode: {ReportCode}", request.ReportId.Value);
-            var result = await _hazardService.GetAllHazardsByReportCodeAsync(request.ReportId, ct).ConfigureAwait(false);
+            var result = await _hazardService.GetHazardsByReportCodeAsync(request.ReportId, ct).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex)

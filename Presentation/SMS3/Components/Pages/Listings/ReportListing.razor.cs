@@ -24,7 +24,7 @@ public partial class ReportListing : ComponentBase
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
-    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
     #endregion
 
     #region Properties
@@ -682,7 +682,7 @@ public partial class ReportListing : ComponentBase
                 var report = reportResult.Value;
 
                 // Create new ReportValidation using the static factory method
-                var validation = SMS_Domain.Entities.ReportValidation.Create(reportCode, AuthService.CurrentUserDisplayName);
+                var validation = SMS_Domain.Entities.ReportValidation.Create(reportCode, CurrentUserService?.UserDisplayName);
                 validation.ValidationComments = $"Created from Investigation return to validation workflow on {DateTime.UtcNow:yyyy-MM-dd HH:mm}";
 
                 var createCommand = new CreateReportValidationCommand(validation);
@@ -725,7 +725,7 @@ public partial class ReportListing : ComponentBase
     
     private async Task<bool> UpdateReportStatus(string reportcode, ReportStatus status)
     {
-        var updatestatuscmd = new UpdateReportStatusCommand(reportcode, status, AuthService.CurrentUserDisplayName);
+        var updatestatuscmd = new UpdateReportStatusCommand(reportcode, status, CurrentUserService?.UserDisplayName);
         var getupdateResult = await Mediator.SendAsync(updatestatuscmd, CancellationToken.None);
         if (!getupdateResult.IsSuccess)
         {

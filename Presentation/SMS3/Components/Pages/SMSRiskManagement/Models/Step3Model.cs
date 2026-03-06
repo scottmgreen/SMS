@@ -6,13 +6,12 @@
 public class Step3Model
 {
     [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
-    public Step3Model(IMediator mediator, AuthenticationService authService)
+    public Step3Model(IMediator mediator, ICurrentUserService currentUserService)
     {
         Mediator = mediator;
-        AuthService = authService;
-        
+        CurrentUserService = currentUserService;
     }
 
     public Dictionary<string, RiskAnalysis> Step3RiskAnalyses { get; set; } = new();
@@ -310,7 +309,7 @@ public class Step3Model
                 if (string.IsNullOrEmpty(analysis.RiskAssessmentCode) && assessment != null)
                 {
                     analysis.RiskAssessmentCode = assessment.Code;
-                    analysis.UpdatedBy = AuthService.CurrentUserDisplayName;
+                    analysis.UpdatedBy = CurrentUserService?.UserDisplayName;
                     analysis.UpdatedDate = DateTime.UtcNow;
                 }
 

@@ -12,7 +12,7 @@ public partial class InterviewCalendar : ComponentBase
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
-    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
     #endregion
 
     #region Component State

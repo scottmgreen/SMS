@@ -8,7 +8,7 @@ public partial class ReportValidation : ComponentBase
 {
     [Parameter] public string ReportId { get; set; } = "";
 
-    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<ReportValidation> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
@@ -124,7 +124,7 @@ public partial class ReportValidation : ComponentBase
 
                 // Set defaults for new validation
                 SelectedValidationDecision = null;
-                ValidatedBy = AuthService.CurrentUserDisplayName;
+                ValidatedBy = CurrentUserService?.UserDisplayName;
                 ValidationType = RiskAssessmentCategory.Technical;
                 ValidationComments = "";
             }
@@ -302,7 +302,7 @@ public partial class ReportValidation : ComponentBase
         var getReportQuery = new GetReportByCodeQuery(new ReportID(reportId));
         var getReportQueryResult = await Mediator.SendAsync(getReportQuery, CancellationToken.None);
 
-        var cmd = new UpdateReportStatusCommand(reportId, status, AuthService.CurrentUserDisplayName);
+        var cmd = new UpdateReportStatusCommand(reportId, status, CurrentUserService?.UserDisplayName);
         var cmdResult = await Mediator.SendAsync(cmd, CancellationToken.None);
         if (!cmdResult.IsSuccess)
         {
@@ -334,7 +334,7 @@ public partial class ReportValidation : ComponentBase
                 ExistingValidation.Stage = "COMPLETE";
                 ExistingValidation.ValidatedDate = DateTime.UtcNow;
 
-                ExistingValidation.UpdatedBy = AuthService.CurrentUserDisplayName; 
+                ExistingValidation.UpdatedBy = CurrentUserService?.UserDisplayName; 
                 ExistingValidation.UpdatedDate = DateTime.UtcNow;
 
                 var updateCommand = new UpdateReportValidationCommand(ExistingValidation);
@@ -370,7 +370,7 @@ public partial class ReportValidation : ComponentBase
                     Status = ReportValidationStatus.ValidationComplete,
                     Stage = "NEW",
                     ValidatedDate = DateTime.UtcNow,
-                    CreatedBy = AuthService.CurrentUserDisplayName,
+                    CreatedBy = CurrentUserService?.UserDisplayName,
                     CreatedDate = DateTime.UtcNow
                 };
 
@@ -529,7 +529,7 @@ public partial class ReportValidation : ComponentBase
                     Status = RiskAssessmentStatus.AssessmentCreate,
                     CurrentStep = 1,
                     UpdatedDate = DateTime.UtcNow,
-                    UpdatedBy = AuthService.CurrentUserDisplayName
+                    UpdatedBy = CurrentUserService?.UserDisplayName
                 };
 
                 CreateRiskAssessmentCommand command = new CreateRiskAssessmentCommand(riskAssessment);
@@ -634,7 +634,7 @@ public partial class ReportValidation : ComponentBase
                 Investigation investigation = new Investigation(investigationId);
                 investigation.HazardCode = ReportHazard.Code;
                 investigation.Status = InvestigationStatus.InvestigatorAssigned;
-                investigation.CreatedBy = AuthService.CurrentUserDisplayName;
+                investigation.CreatedBy = CurrentUserService?.UserDisplayName;
                 investigation.ReportCode = ReportId;
                 investigation.AssignedInvestigatorId = LeadInvestigator;
                 investigation.InvestigationObjectives = $"Investigation required based on validation decision for hazard {ReportHazard.Code}";

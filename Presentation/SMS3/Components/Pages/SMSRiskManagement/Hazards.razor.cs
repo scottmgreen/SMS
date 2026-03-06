@@ -10,7 +10,7 @@ public partial class Hazards : ComponentBase
     [Inject] private NotificationService NotificationService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
-    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
     // **CASCADING PARAMETER**: Get authentication from MainLayout (same pattern as Reports.razor)
     
@@ -23,8 +23,8 @@ public partial class Hazards : ComponentBase
     private string ErrorMessage { get; set; } = string.Empty;
 
     // Authentication Properties (same pattern as Reports.razor)
-    private bool IsAuthenticated => AuthService?.IsAuthenticated == true;
-    private string? CurrentUserName => AuthService?.CurrentUserDisplayName;
+    private bool IsAuthenticated => CurrentUserService?.IsAuthenticated == true;
+    private string? CurrentUserName => CurrentUserService?.UserDisplayName;
 
     // Pagination Properties
     private int PageSize { get; set; } = 10;

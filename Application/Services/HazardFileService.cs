@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
+using SMS_Application.Interfaces;
 
 namespace SMS_Application.Services;
 
@@ -26,6 +27,8 @@ public sealed class HazardFileService : IHazardFileService
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
+
+    #region Core CRUD Operations
 
     public async Task<Result<HazardFile>> CreateHazardFileAsync(HazardFile hazardFile, CancellationToken ct = default)
     {
@@ -49,34 +52,6 @@ public sealed class HazardFileService : IHazardFileService
         {
             _logger.LogError(ex, "Unexpected error creating hazard file");
             return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.CreateFailed);
-        }
-    }
-
-    public async Task<Result<HazardFile>> GetHazardFileByCodeAsync(string code, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving hazard file with Code: {Code}", code);
-            return await _dataService.GetHazardFileByCodeAsync(code, ct).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error retrieving hazard file with Code: {Code}", code);
-            return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.NotFound);
-        }
-    }
-
-    public async Task<Result<IEnumerable<HazardFile>>> GetHazardFilesByHazardCodeAsync(string hazardCode, bool includeFileData = false, string? category = null, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving hazard files for hazard code: {HazardCode}", hazardCode);
-            return await _dataService.GetHazardFilesByHazardCodeAsync(hazardCode, includeFileData, category, ct).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error retrieving hazard files for hazard code: {HazardCode}", hazardCode);
-            return Result<IEnumerable<HazardFile>>.Failure<IEnumerable<HazardFile>>(DomainErrors.HazardFileError.NotFound);
         }
     }
 
@@ -130,45 +105,6 @@ public sealed class HazardFileService : IHazardFileService
         }
     }
 
-    public async Task<Result<HazardFile>> GetHazardFileDataAsync(string code, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving hazard file data for Code: {Code}", code);
-            return await _dataService.GetHazardFileDataAsync(code, ct).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error retrieving hazard file data for Code: {Code}", code);
-            return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.NotFound);
-        }
-    }
-
-    public async Task<Result<IEnumerable<HazardFile>>> SearchHazardFilesAsync(
-        string? hazardCode = null,
-        string? reportCode = null,
-        string? fileType = null,
-        string? category = null,
-        string? searchText = null,
-        string? uploadedBy = null,
-        DateTime? dateFrom = null,
-        DateTime? dateTo = null,
-        bool includeConfidential = false,
-        int maxResults = 100,
-        CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Searching hazard files with criteria");
-            return await _dataService.SearchHazardFilesAsync(hazardCode, reportCode, fileType, category, searchText, uploadedBy, dateFrom, dateTo, includeConfidential, maxResults, ct).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error searching hazard files");
-            return Result<IEnumerable<HazardFile>>.Failure<IEnumerable<HazardFile>>(DomainErrors.HazardFileError.NotFound);
-        }
-    }
-
     public async Task<Result<bool>> ReactivateHazardFileAsync(int fileId, string reactivatedBy, CancellationToken ct = default)
     {
         try
@@ -218,4 +154,165 @@ public sealed class HazardFileService : IHazardFileService
             return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.UpdateFailed);
         }
     }
+
+    #endregion
+
+    #region Query Operations
+
+    public async Task<Result<HazardFile>> GetHazardFileByCodeAsync(string code, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving hazard file with Code: {Code}", code);
+            return await _dataService.GetHazardFileByCodeAsync(code, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving hazard file with Code: {Code}", code);
+            return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.NotFound);
+        }
+    }
+
+    public async Task<Result<HazardFile>> GetHazardFileDataAsync(string code, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving hazard file data for Code: {Code}", code);
+            return await _dataService.GetHazardFileDataAsync(code, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving hazard file data for Code: {Code}", code);
+            return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.NotFound);
+        }
+    }
+
+    public async Task<Result<IEnumerable<HazardFile>>> GetHazardFilesByHazardCodeAsync(string hazardCode, bool includeFileData = false, string? category = null, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving hazard files for hazard code: {HazardCode}", hazardCode);
+            return await _dataService.GetHazardFilesByHazardCodeAsync(hazardCode, includeFileData, category, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving hazard files for hazard code: {HazardCode}", hazardCode);
+            return Result<IEnumerable<HazardFile>>.Failure<IEnumerable<HazardFile>>(DomainErrors.HazardFileError.NotFound);
+        }
+    }
+
+    public async Task<Result<IEnumerable<HazardFile>>> GetHazardFilesByReportCodeAsync(string reportCode, bool includeFileData = false, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving hazard files for report code: {ReportCode}", reportCode);
+            return await _dataService.GetHazardFilesByReportCodeAsync(reportCode, includeFileData, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving hazard files for report code: {ReportCode}", reportCode);
+            return Result<IEnumerable<HazardFile>>.Failure<IEnumerable<HazardFile>>(DomainErrors.HazardFileError.NotFound);
+        }
+    }
+
+    public async Task<Result<IEnumerable<HazardFile>>> GetActiveHazardFilesAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving all active hazard files");
+            return await _dataService.GetActiveHazardFilesAsync(ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving active hazard files");
+            return Result<IEnumerable<HazardFile>>.Failure<IEnumerable<HazardFile>>(DomainErrors.HazardFileError.NotFound);
+        }
+    }
+
+    public async Task<Result<IEnumerable<HazardFile>>> SearchHazardFilesAsync(
+        string? hazardCode = null,
+        string? reportCode = null,
+        string? fileType = null,
+        string? category = null,
+        string? searchText = null,
+        string? uploadedBy = null,
+        DateTime? dateFrom = null,
+        DateTime? dateTo = null,
+        bool includeConfidential = false,
+        int maxResults = 100,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Searching hazard files with criteria");
+            return await _dataService.SearchHazardFilesAsync(hazardCode, reportCode, fileType, category, searchText, uploadedBy, dateFrom, dateTo, includeConfidential, maxResults, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error searching hazard files");
+            return Result<IEnumerable<HazardFile>>.Failure<IEnumerable<HazardFile>>(DomainErrors.HazardFileError.NotFound);
+        }
+    }
+
+    #endregion
+
+    #region File Type Specific Queries
+
+    public async Task<Result<IEnumerable<HazardFile>>> GetHazardPhotosAsync(string hazardCode, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving hazard photos for hazard code: {HazardCode}", hazardCode);
+            return await _dataService.GetHazardPhotosAsync(hazardCode, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving hazard photos for hazard code: {HazardCode}", hazardCode);
+            return Result<IEnumerable<HazardFile>>.Failure<IEnumerable<HazardFile>>(DomainErrors.HazardFileError.NotFound);
+        }
+    }
+
+    public async Task<Result<IEnumerable<HazardFile>>> GetHazardDocumentsAsync(string hazardCode, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving hazard documents for hazard code: {HazardCode}", hazardCode);
+            return await _dataService.GetHazardDocumentsAsync(hazardCode, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving hazard documents for hazard code: {HazardCode}", hazardCode);
+            return Result<IEnumerable<HazardFile>>.Failure<IEnumerable<HazardFile>>(DomainErrors.HazardFileError.NotFound);
+        }
+    }
+
+    public async Task<Result<IEnumerable<HazardFile>>> GetHazardVideosAsync(string hazardCode, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving hazard videos for hazard code: {HazardCode}", hazardCode);
+            return await _dataService.GetHazardVideosAsync(hazardCode, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving hazard videos for hazard code: {HazardCode}", hazardCode);
+            return Result<IEnumerable<HazardFile>>.Failure<IEnumerable<HazardFile>>(DomainErrors.HazardFileError.NotFound);
+        }
+    }
+
+    public async Task<Result<IEnumerable<HazardFile>>> GetConfidentialHazardFilesAsync(string hazardCode, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving confidential hazard files for hazard code: {HazardCode}", hazardCode);
+            return await _dataService.GetConfidentialHazardFilesAsync(hazardCode, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving confidential hazard files for hazard code: {HazardCode}", hazardCode);
+            return Result<IEnumerable<HazardFile>>.Failure<IEnumerable<HazardFile>>(DomainErrors.HazardFileError.NotFound);
+        }
+    }
+
+    #endregion
 }

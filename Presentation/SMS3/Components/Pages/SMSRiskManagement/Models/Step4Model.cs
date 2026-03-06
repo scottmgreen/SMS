@@ -8,12 +8,12 @@ namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 public class Step4Model
 {
     [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
-    public Step4Model(IMediator mediator, AuthenticationService authService)
+    public Step4Model(IMediator mediator, ICurrentUserService currentUserService)
     {
         Mediator = mediator;
-        AuthService = authService;
+        CurrentUserService = currentUserService;
     }
     public List<string> SelectedPanelMembers { get; set; } = new();
     public Dictionary<string, List<string>> HazardPanelMembers { get; set; } = new();

@@ -31,7 +31,7 @@ public class GetAllSMSApplicationUsersQuery : BaseQueryBundle, IRequest<Result<I
 //    /// <summary>
 //    /// The ID of the application user to retrieve
 //    /// </summary>
-//    public string UserId { get; set; }
+//    public string UserCode { get; set; }
 
 //    /// <summary>
 //    /// Initializes a new instance of the GetSMSApplicationUserByCodeQuery class.
@@ -43,7 +43,7 @@ public class GetAllSMSApplicationUsersQuery : BaseQueryBundle, IRequest<Result<I
 //        if (string.IsNullOrWhiteSpace(userId))
 //            throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
 
-//        UserId = userId;
+//        UserCode = userId;
 //    }
 //}
 

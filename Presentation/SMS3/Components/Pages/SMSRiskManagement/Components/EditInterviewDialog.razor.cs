@@ -332,7 +332,7 @@ public partial class EditInterviewDialog : ComponentBase
             }
 
             // Set audit fields
-            Interview.UpdatedBy = CurrentUserService.UserId;
+            Interview.UpdatedBy = CurrentUserService.UserCode;
             Interview.UpdatedDate = DateTime.UtcNow;
 
             // Save interview using CQRS command
@@ -342,7 +342,7 @@ public partial class EditInterviewDialog : ComponentBase
             if (result.IsSuccess)
             {
                 Logger.LogInformation("Interview updated successfully: {Code} by user {UserId}",
-                    Interview.Code, CurrentUserService.UserId);
+                    Interview.Code, CurrentUserService.UserCode);
 
                 ShowSuccessNotification("Interview updated successfully");
 

@@ -196,7 +196,7 @@ public partial class ReportProcessing : ComponentBase
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private NotificationService NotificationService { get; set; } = default!;
 
-    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
     // Data Properties
     private List<ReportProcessingSummary> PendingValidation { get; set; } = new();
@@ -1262,7 +1262,7 @@ public partial class ReportProcessing : ComponentBase
                 fullMitigation.Status = MitigationStatus.Approved;
                 fullMitigation.ApprovedBy = mitigation.ApprovedBy;
                 fullMitigation.UpdatedDate = DateTime.UtcNow;
-                fullMitigation.UpdatedBy = AuthService.CurrentUser.Code; // You might want to get the current user
+                fullMitigation.UpdatedBy = CurrentUserService.UserCode; // You might want to get the current user
 
                 var updateCommand = new UpdateMitigationCommand(fullMitigation);
                 var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
@@ -1838,7 +1838,7 @@ public partial class ReportProcessing : ComponentBase
                                 // ✅ Update mitigation status using enum value
                                 mitigation.Status = MitigationStatus.Approved; 
                                 mitigation.UpdatedDate = DateTime.UtcNow;
-                                mitigation.UpdatedBy = AuthService.CurrentUserDisplayName;
+                                mitigation.UpdatedBy = CurrentUserService?.UserDisplayName;
                                 mitigation.ApprovedBy = approverCode;
                                 var updateCommand = new UpdateMitigationCommand(mitigation);
                                 var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
@@ -1909,7 +1909,7 @@ public partial class ReportProcessing : ComponentBase
     private async Task<bool> UpdateReportStatus(string reportId, ReportStatus status)
     {
         
-            var cmd = new UpdateReportStatusCommand(reportId, status, AuthService.CurrentUserDisplayName);
+            var cmd = new UpdateReportStatusCommand(reportId, status, CurrentUserService?.UserDisplayName);
             var cmdResult = await Mediator.SendAsync(cmd, CancellationToken.None);
             if (!cmdResult.IsSuccess)
             {

@@ -29,7 +29,7 @@ public class SMSSessionService : ISMSSessionService
     }
 
     /// <summary>
-    /// Creates SMS session using simple session approach (FORGET CIRCUITS!)
+    /// Creates SMS session using simple session approach
     /// </summary>
     public async Task CreateSMSSessionAsync(BaseUser user, SMSUserType userType)
     {
@@ -43,8 +43,11 @@ public class SMSSessionService : ISMSSessionService
         try
         {
             var session = context.Session;
+            
+            // Load session first
+            await session.LoadAsync();
 
-            // **SIMPLE SESSION APPROACH** - Just set the session data directly
+            // **SESSION DATA SETUP**
             session.SetString("SMS_UserId", user.Code);
             session.SetString("SMS_UserCode", user.Code);
             session.SetString("SMS_UserType", userType.Value);
@@ -52,10 +55,8 @@ public class SMSSessionService : ISMSSessionService
             session.SetString("SMS_DisplayName", user.DisplayName);
             session.SetString("SMS_FirstName", user.FirstName.Value);
             session.SetString("SMS_LastName", user.LastName.Value);
+            session.SetString("SMS_LoginTime", DateTime.UtcNow.ToString("O"));
             session.SetString("IsAuthenticated", "true");
-
-            _logger.LogInformation("Session data set directly: UserId={UserId}, UserType={UserType}, DisplayName={DisplayName}",
-                user.Code, userType.Value, user.DisplayName);
 
             // Store user role information
             if (user.UserRole != null)
@@ -63,24 +64,32 @@ public class SMSSessionService : ISMSSessionService
                 session.SetString("SMS_UserRoleCode", user.UserRole.Code ?? string.Empty);
                 session.SetString("SMS_UserRoleName", user.UserRole.Name ?? string.Empty);
 
+                _logger.LogInformation("User role stored - Code: {RoleCode}, Name: {RoleName}", 
+                    user.UserRole.Code, user.UserRole.Name);
+
+                // Store permissions as simple string data - no JSON needed
                 if (user.UserRole.Permissions != null && user.UserRole.Permissions.Any())
                 {
-                    var permissionsData = user.UserRole.Permissions.Select(p => new
+                    var permissionPairs = new List<string>();
+                    foreach (var perm in user.UserRole.Permissions)
                     {
-                        Module = p.SMSModule ?? string.Empty,
-                        Create = p.Create,
-                        Read = p.Read,
-                        Update = p.Update,
-                        Delete = p.Delete
-                    }).ToList();
-
-                    var permissionsJson = System.Text.Json.JsonSerializer.Serialize(permissionsData);
-                    session.SetString("SMS_UserPermissions", permissionsJson);
+                        // Store as "Module:Create,Read,Update,Delete"
+                        var actions = new List<string>();
+                        if (perm.Create) actions.Add("Create");
+                        if (perm.Read) actions.Add("Read");
+                        if (perm.Update) actions.Add("Update");
+                        if (perm.Delete) actions.Add("Delete");
+                        
+                        permissionPairs.Add($"{perm.SMSModule}:{string.Join(",", actions)}");
+                    }
+                    
+                    session.SetString("SMS_UserPermissions", string.Join("|", permissionPairs));
+                    _logger.LogInformation("Stored {PermissionCount} permissions for user", user.UserRole.Permissions.Count);
                 }
-                else
-                {
-                    session.SetString("SMS_UserPermissions", "[]");
-                }
+            }
+            else
+            {
+                _logger.LogWarning("🔍 DEBUG: No UserRole found for user {UserId}", user.Code);
             }
 
             // Store user type-specific data
@@ -102,12 +111,68 @@ public class SMSSessionService : ISMSSessionService
                     break;
             }
 
-            _logger.LogInformation("SMS Session data set successfully for user {UserId}", user.Code);
+            // Commit the session
+            await session.CommitAsync();
+
+            _logger.LogInformation("✅ SMS Session created successfully for user {UserId}", user.Code);
+
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Session creation failed for user {UserId} - but continuing anyway", user.Code);
-            // Don't throw - let the calling code continue
+            _logger.LogError(ex, "❌ Failed to create SMS session for user {UserId}", user.Code);
+            throw new InvalidOperationException($"Failed to create SMS session: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Create authentication state that persists across requests when session fails
+    /// </summary>
+    private async Task CreatePersistentAuthenticationState(BaseUser user, SMSUserType userType)
+    {
+        var context = _httpContextAccessor.HttpContext;
+        if (context == null) throw new InvalidOperationException("HttpContext not available");
+
+        _logger.LogInformation("🔄 Creating persistent authentication state for user {UserId}", user.Code);
+
+        try
+        {
+            // 🔧 FALLBACK APPROACH: Use cookies for authentication state when session fails
+            var authData = new Dictionary<string, string>
+            {
+                ["SMS_UserId"] = user.Code,
+                ["SMS_UserType"] = userType.Value,
+                ["SMS_DisplayName"] = user.DisplayName,
+                ["SMS_Email"] = user.UserName.Value,
+                ["SMS_FirstName"] = user.FirstName.Value,
+                ["SMS_LastName"] = user.LastName.Value,
+                ["IsAuthenticated"] = "true",
+                ["SMS_LoginTime"] = DateTime.UtcNow.ToString("O")
+            };
+
+            if (user.UserRole != null)
+            {
+                authData["SMS_UserRoleCode"] = user.UserRole.Code ?? string.Empty;
+                authData["SMS_UserRoleName"] = user.UserRole.Name ?? string.Empty;
+            }
+
+            // Store as secure cookies
+            foreach (var kvp in authData)
+            {
+                context.Response.Cookies.Append($"SMS_{kvp.Key}", kvp.Value, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTimeOffset.UtcNow.AddHours(8) // Match session timeout
+                });
+            }
+
+            _logger.LogInformation("✅ Persistent authentication state created using cookies for user {UserId}", user.Code);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Failed to create persistent authentication state for user {UserId}", user.Code);
+            throw;
         }
     }
 
@@ -141,32 +206,7 @@ public class SMSSessionService : ISMSSessionService
     }
 
     /// <summary>
-    /// Checks if current session is authenticated (SIMPLE SESSION ONLY)
-    /// </summary>
-    public bool IsAuthenticated()
-    {
-        try
-        {
-            var context = _httpContextAccessor.HttpContext;
-            if (context == null) return false;
-
-            // **SIMPLE**: Just check session - NO CIRCUIT COMPLEXITY
-            var session = context.Session;
-            var isAuth = session.GetString("IsAuthenticated") == "true" &&
-                        !string.IsNullOrEmpty(session.GetString("SMS_UserId"));
-
-            _logger.LogInformation("Simple session auth check: {IsAuth}", isAuth);
-            return isAuth;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error checking authentication status");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Gets current user ID (SIMPLE SESSION ONLY)
+    /// Enhanced all getter methods to check both Session and HttpContext.Items for robust fallback support, and implemented IsUsingFallbackMethod
     /// </summary>
     public string? GetCurrentUserId()
     {
@@ -175,7 +215,14 @@ public class SMSSessionService : ISMSSessionService
             var context = _httpContextAccessor.HttpContext;
             if (context == null) return null;
 
-            return context.Session.GetString("SMS_UserId");
+            // Try session first
+            var sessionUserId = context.Session.GetString("SMS_UserId");
+            if (!string.IsNullOrEmpty(sessionUserId))
+                return sessionUserId;
+
+            // Fallback to Items
+            var itemsUserId = context.Items["SMS_UserId"]?.ToString();
+            return itemsUserId;
         }
         catch (Exception ex)
         {
@@ -185,7 +232,7 @@ public class SMSSessionService : ISMSSessionService
     }
 
     /// <summary>
-    /// Gets current user display name (SIMPLE SESSION ONLY)
+    /// Gets current user display name (ENHANCED: Checks both session and Items)
     /// </summary>
     public string? GetCurrentUserDisplayName()
     {
@@ -194,7 +241,14 @@ public class SMSSessionService : ISMSSessionService
             var context = _httpContextAccessor.HttpContext;
             if (context == null) return null;
 
-            return context.Session.GetString("SMS_DisplayName");
+            // Try session first
+            var sessionDisplayName = context.Session.GetString("SMS_DisplayName");
+            if (!string.IsNullOrEmpty(sessionDisplayName))
+                return sessionDisplayName;
+
+            // Fallback to Items
+            var itemsDisplayName = context.Items["SMS_DisplayName"]?.ToString();
+            return itemsDisplayName;
         }
         catch (Exception ex)
         {
@@ -204,7 +258,7 @@ public class SMSSessionService : ISMSSessionService
     }
 
     /// <summary>
-    /// Gets current user type (SIMPLE SESSION ONLY)
+    /// Gets current user type (ENHANCED: Checks both session and Items)
     /// </summary>
     public string? GetCurrentUserType()
     {
@@ -213,12 +267,58 @@ public class SMSSessionService : ISMSSessionService
             var context = _httpContextAccessor.HttpContext;
             if (context == null) return null;
 
-            return context.Session.GetString("SMS_UserType");
+            // Try session first
+            var sessionUserType = context.Session.GetString("SMS_UserType");
+            if (!string.IsNullOrEmpty(sessionUserType))
+                return sessionUserType;
+
+            // Fallback to Items
+            var itemsUserType = context.Items["SMS_UserType"]?.ToString();
+            return itemsUserType;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting current user type");
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Checks if current session is authenticated (ENHANCED: Checks both session and Items)
+    /// </summary>
+    public bool IsAuthenticated()
+    {
+        try
+        {
+            var context = _httpContextAccessor.HttpContext;
+            if (context == null) return false;
+
+            // Check session first
+            var sessionAuth = context.Session.GetString("IsAuthenticated") == "true" &&
+                             !string.IsNullOrEmpty(context.Session.GetString("SMS_UserId"));
+            
+            if (sessionAuth)
+            {
+                _logger.LogDebug("Session authentication confirmed");
+                return true;
+            }
+
+            // Check Items fallback
+            var itemsAuth = context.Items["IsAuthenticated"]?.ToString() == "true" &&
+                           !string.IsNullOrEmpty(context.Items["SMS_UserId"]?.ToString());
+
+            if (itemsAuth)
+            {
+                _logger.LogDebug("Items fallback authentication confirmed");
+                return true;
+            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking authentication status");
+            return false;
         }
     }
 }

@@ -117,7 +117,7 @@ public class GetSMSUserRolesByUserIdQuery : BaseQueryBundle, IRequest<Result<IEn
 //    /// <summary>
 //    /// The User ID to get active roles for
 //    /// </summary>
-//    public string UserId { get; set; }
+//    public string UserCode { get; set; }
 
 //    /// <summary>
 //    /// Initializes a new instance of the GetActiveSMSUserRolesByUserIdQuery class.
@@ -129,7 +129,7 @@ public class GetSMSUserRolesByUserIdQuery : BaseQueryBundle, IRequest<Result<IEn
 //        if (string.IsNullOrWhiteSpace(userId))
 //            throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
 
-//        UserId = userId;
+//        UserCode = userId;
 //    }
 //}
 
@@ -284,7 +284,7 @@ public class GetSMSUserRoleStatisticsQuery : BaseQueryBundle, IRequest<Result<Us
 //    /// <summary>
 //    /// The user ID to check
 //    /// </summary>
-//    public string UserId { get; set; }
+//    public string UserCode { get; set; }
 
 //    /// <summary>
 //    /// The role value to check for
@@ -310,7 +310,7 @@ public class GetSMSUserRoleStatisticsQuery : BaseQueryBundle, IRequest<Result<Us
 //        if (string.IsNullOrWhiteSpace(roleValue))
 //            throw new ArgumentException("Role value cannot be null or empty", nameof(roleValue));
 
-//        UserId = userId;
+//        UserCode = userId;
 //        RoleValue = roleValue;
 //        ActiveOnly = activeOnly;
 //    }

@@ -28,14 +28,14 @@
 
         <!-- Navigation Links -->
         <div class="collapse navbar-collapse" id="navbarNav">
-            @if (AuthService?.IsAuthenticated == true)
+            @if (CurrentUserService?.IsAuthenticated == true)
             {
                 <div class="navbar-nav me-auto d-flex flex-row align-items-center">
                     <!-- Dashboard -->
                     
 
                     <!-- SMS Risk Management Menu -->
-                    @if (AuthService.User.CanAccess("SMS_RiskManagement"))
+                    @if (CurrentUserService.CanAccess("SMS_RiskManagement"))
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
@@ -75,7 +75,7 @@
                     </div>
 
                     <!-- SMS Assurance Menu -->
-                    @if (AuthService.User.CanAccess("SMS_Assurance"))
+                    @if (CurrentUserService.CanAccess("SMS_Assurance"))
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
@@ -92,7 +92,7 @@
                     }
 
                     <!-- SMS Policy Menu -->
-                    @if (AuthService.User.CanAccess("SMS_Policy"))
+                    @if (CurrentUserService.CanAccess("SMS_Policy"))
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
@@ -105,7 +105,7 @@
                     }
 
                     <!-- SMS Promotion Menu -->
-                    @if (AuthService.User.CanAccess("SMS_Promotion"))
+                    @if (CurrentUserService.CanAccess("SMS_Promotion"))
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
@@ -117,7 +117,7 @@
                     }
 
                     <!-- System Administration Menu -->
-                    @if (AuthService.User.HasAdministrativeAccess())
+                    @if (CurrentUserService.HasAdministrativeAccess())
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
@@ -161,17 +161,17 @@
                         <RadzenProfileMenu class="sms-profile-menu">
                             <Template>
                                 <div class="d-flex align-items-center p-2 user-profile-template" style="cursor: pointer;">
-                                    @* @if (!string.IsNullOrEmpty(AuthService.User.Email))
+                                    @* @if (!string.IsNullOrEmpty(CurrentUserService.User.Email))
                                     {
-                                        <RadzenGravatar Email="@AuthService.User.Email" class="me-2" Size="32" />
+                                        <RadzenGravatar Email="@CurrentUserService.User.Email" class="me-2" Size="32" />
                                     }
                                     else
                                     {
                                         <RadzenIcon Icon="account_circle" class="me-2" Style="font-size: 32px; color: white;" />
                                     } *@
                                     <div class="d-flex flex-column align-items-start">
-                                        <small class="mb-0 fw-bold text-white">@AuthService.CurrentUserDisplayName</small>
-                                        <small class="text-white opacity-75">@AuthService.User.UserType User</small>
+                                        <small class="mb-0 fw-bold text-white">@CurrentUserService?.UserDisplayName</small>
+                                        <small class="text-white opacity-75">@CurrentUserService?.UserType User</small>
                                     </div>
                                 </div>
                             </Template>
@@ -231,8 +231,7 @@
 </nav>
 
 @code {
-    [CascadingParameter(Name = "AuthService")]
-    public AuthenticationService AuthService { get; set; } = default!;
+    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
     [Parameter]
     public EventCallback OnLogoutRequested { get; set; }
@@ -248,6 +247,11 @@
     {
         _sessionStartTime = DateTime.Now;
         _ = Task.Run(StartSessionTimer);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Parameters updated
     }
 
     private async Task StartSessionTimer()
@@ -286,7 +290,7 @@
     // **🔥 USER PROFILE MODAL - USING COMPONENT**
     private async Task ShowUserProfileModal()
     {
-        if (AuthService?.IsAuthenticated != true) return;
+        if (CurrentUserService?.IsAuthenticated != true) return;
 
         var options = new DialogOptions()
         {
@@ -302,7 +306,7 @@
         await DialogService.OpenAsync<UserProfileDialog>("User Profile & Permissions",
             new Dictionary<string, object>()
             {
-                { "User", AuthService.User },
+                { "CurrentUserService", CurrentUserService },
                 { "SessionDuration", SessionDurationDisplay }
             },
             options);

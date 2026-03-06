@@ -56,7 +56,7 @@ public class UpdateHazardFileCommand : BaseCommandBundle, IRequest<Result<Hazard
     }
 }
 
-public class DeactivateHazardFileCommand : BaseCommandBundle, IRequest<Result<bool>>, IHasAuditFields
+public class DeactivateHazardFileCommand : BaseCommandBundle, IRequest<Result<bool>>, IUpdateCommand
 {
     public int FileId { get; set; }
     public string Reason { get; set; }
@@ -79,7 +79,7 @@ public class DeactivateHazardFileCommand : BaseCommandBundle, IRequest<Result<bo
     }
 }
 
-public class ReactivateHazardFileCommand : BaseCommandBundle, IRequest<Result<bool>>, IHasAuditFields
+public class ReactivateHazardFileCommand : BaseCommandBundle, IRequest<Result<bool>>, IUpdateCommand
 {
     public int FileId { get; set; }
     public string ReactivatedBy { get; set; }
@@ -100,7 +100,7 @@ public class ReactivateHazardFileCommand : BaseCommandBundle, IRequest<Result<bo
     }
 }
 
-public class SetHazardFileConfidentialityCommand : BaseCommandBundle, IRequest<Result<bool>>, IHasAuditFields
+public class SetHazardFileConfidentialityCommand : BaseCommandBundle, IRequest<Result<bool>>, IUpdateCommand
 {
     public string FileCode { get; set; }
     public bool IsConfidential { get; set; }

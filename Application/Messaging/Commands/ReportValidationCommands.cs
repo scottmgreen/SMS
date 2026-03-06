@@ -52,22 +52,39 @@ public class UpdateReportValidationCommand : BaseCommandBundle, IRequest<Result<
     }
 }
 
-public class DeleteReportValidationCommand : BaseCommandBundle, IRequest<Result<bool>>
+public class DeleteReportValidationCommand : BaseCommandBundle, IRequest<Result<bool>>, IDeleteCommand
 {
     public ReportValidationID ReportValidationId { get; set; }
+    public string DeletedBy { get; set; } = string.Empty;
 
     public DeleteReportValidationCommand(ReportValidationID reportValidationId)
     {
         ReportValidationId = reportValidationId ?? throw new ArgumentNullException(nameof(reportValidationId));
     }
+
+    public void SetDeletedBy(string userId, DateTime timestamp)
+    {
+        DeletedBy = userId;
+    }
 }
 
-public class ResetReportValidationCommand : BaseCommandBundle, IRequest<Result<bool>>
+public class ResetReportValidationCommand : BaseCommandBundle, IRequest<Result<bool>>, IUpdateCommand
 {
     public ReportValidationID ReportValidationId { get; set; }
+    public string UpdatedBy { get; set; } = string.Empty;
 
     public ResetReportValidationCommand(ReportValidationID reportValidationId)
     {
         ReportValidationId = reportValidationId ?? throw new ArgumentNullException(nameof(reportValidationId));
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // For reset commands, we typically don't modify CreatedBy
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        UpdatedBy = userId;
     }
 }

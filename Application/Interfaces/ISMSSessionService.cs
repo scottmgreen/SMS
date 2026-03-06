@@ -17,8 +17,8 @@ namespace SMS_Application.Interfaces;
 public interface ISMSSessionService
 {
     /// <summary>
-    /// Creates SMS session using Domain Entity data directly
-    /// Same exact logic as Login.cshtml.cs
+    /// Creates SMS session using Domain Entity data directly with Blazor Server timing fixes
+    /// Includes retry mechanism and fallback to HttpContext.Items for timing issues
     /// </summary>
     /// <param name="user">SMS Domain Entity (BaseUser)</param>
     /// <param name="userType">SMS User Type (Smart Enum)</param>

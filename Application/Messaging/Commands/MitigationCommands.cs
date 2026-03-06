@@ -52,12 +52,18 @@ public class UpdateMitigationCommand : BaseCommandBundle, IRequest<Result<Mitiga
     }
 }
 
-public class DeleteMitigationCommand : BaseCommandBundle, IRequest<Result<bool>>
+public class DeleteMitigationCommand : BaseCommandBundle, IRequest<Result<bool>>, IDeleteCommand
 {
     public MitigationID MitigationId { get; set; }
+    public string DeletedBy { get; set; } = string.Empty;
 
     public DeleteMitigationCommand(MitigationID mitigationId)
     {
         MitigationId = mitigationId ?? throw new ArgumentNullException(nameof(mitigationId));
+    }
+
+    public void SetDeletedBy(string userId, DateTime timestamp)
+    {
+        DeletedBy = userId;
     }
 }

@@ -9,13 +9,14 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
+using SMS_Application.Interfaces;
 
 namespace SMS_Application.Services;
 
 /// <summary>
 /// Enhanced Hazard Service with comprehensive file management capabilities and complex entity population
 /// </summary>
-public sealed class HazardService
+public sealed class HazardService : IHazardService
 {
     private readonly HazardDataService _dataService;
     private readonly HazardLocationService _hazardLocationService;
@@ -31,13 +32,10 @@ public sealed class HazardService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    #region Hazard CRUD Operations
-
-
+    #region IHazardService Implementation
 
     public async Task<Result<Hazard>> CreateHazardAsync(Hazard hazard, CancellationToken ct = default)
     {
-        
         try
         {
             _logger.LogInformation("Creating hazard with code: {Code}", hazard?.Code);
@@ -61,48 +59,30 @@ public sealed class HazardService
         }
     }
 
-    public async Task<Result<Hazard>> GetHazardByCodeAsync(HazardID code, CancellationToken ct = default)
+    public async Task<Result<Hazard>> GetHazardByIdAsync(HazardID id, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Retrieving hazard with Code: {Id}", code);
-            return await _dataService.GetHazardByCodeAsync(code, ct).ConfigureAwait(false);
+            _logger.LogInformation("Retrieving hazard with ID: {Id}", id);
+            return await _dataService.GetHazardByCodeAsync(id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving hazard with Code: {Id}", code);
+            _logger.LogError(ex, "Unexpected error retrieving hazard with ID: {Id}", id);
             return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NotFound);
         }
     }
 
-    /// <summary>
-    /// Gets hazard with complete HazardLocation entity populated
-    /// This method demonstrates proper complex entity population using Application Services
-    /// </summary>
-    public async Task<Result<Hazard>> GetHazardWithLocationByIdAsync(HazardID id, CancellationToken ct = default)
+    public async Task<Result<Hazard>> GetHazardByCodeAsync(string code, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Retrieving hazard with location data for ID: {Id}", id);
-
-            // First get the basic hazard
-            var hazardResult = await _dataService.GetHazardByCodeAsync(id, ct).ConfigureAwait(false);
-            if (hazardResult.IsFailure)
-            {
-                return hazardResult;
-            }
-
-            var hazard = hazardResult.Value;
-
-            // Then populate the complex HazardLocation entity
-            await PopulateHazardLocationAsync(hazard, ct);
-
-            _logger.LogInformation("Successfully retrieved hazard with location data for ID: {Id}", id);
-            return Result<Hazard>.Success(hazard);
+            _logger.LogInformation("Retrieving hazard with Code: {Code}", code);
+            return await _dataService.GetHazardByCodeAsync(new HazardID(code), ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving hazard with location for ID: {Id}", id);
+            _logger.LogError(ex, "Unexpected error retrieving hazard with Code: {Code}", code);
             return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NotFound);
         }
     }
@@ -117,54 +97,6 @@ public sealed class HazardService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error retrieving all hazards");
-            return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
-        }
-    }
-
-    public async Task<Result<List<Hazard>>> GetAllHazardsByReportCodeAsync(ReportID code, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving all hazards");
-            return await _dataService.GetHazardsByReportCodeAsync(code,ct).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error retrieving all hazards");
-            return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
-        }
-    }
-
-
-    /// <summary>
-    /// Gets all hazards with complete HazardLocation entities populated
-    /// This method shows how to efficiently populate complex entities for collections
-    /// </summary>
-    public async Task<Result<List<Hazard>>> GetAllHazardsWithLocationAsync(CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving all hazards with location data");
-
-            // First get all basic hazards
-            var hazardsResult = await _dataService.GetAllHazardsAsync(ct).ConfigureAwait(false);
-            if (hazardsResult.IsFailure)
-            {
-                return hazardsResult;
-            }
-
-            var hazards = hazardsResult.Value;
-
-            // Then populate HazardLocation for each hazard
-            var tasks = hazards.Select(hazard => PopulateHazardLocationAsync(hazard, ct));
-            await Task.WhenAll(tasks);
-
-            _logger.LogInformation("Successfully retrieved {Count} hazards with location data", hazards.Count);
-            return Result<List<Hazard>>.Success(hazards);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error retrieving all hazards with location");
             return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
         }
     }
@@ -219,6 +151,117 @@ public sealed class HazardService
         }
     }
 
+    public async Task<Result<List<Hazard>>> GetHazardsByReportCodeAsync(string reportCode, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving hazards for report code: {ReportCode}", reportCode);
+            return await _dataService.GetHazardsByReportCodeAsync(new ReportID(reportCode), ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving hazards for report code: {ReportCode}", reportCode);
+            return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
+        }
+    }
+
+    #endregion
+
+    #region Extended Service Methods
+
+    public async Task<Result<Hazard>> GetHazardByCodeAsync(HazardID code, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving hazard with Code: {Id}", code);
+            return await _dataService.GetHazardByCodeAsync(code, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving hazard with Code: {Id}", code);
+            return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NotFound);
+        }
+    }
+
+    /// <summary>
+    /// Gets hazard with complete HazardLocation entity populated
+    /// This method demonstrates proper complex entity population using Application Services
+    /// </summary>
+    public async Task<Result<Hazard>> GetHazardWithLocationByIdAsync(HazardID id, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving hazard with location data for ID: {Id}", id);
+
+            // First get the basic hazard
+            var hazardResult = await _dataService.GetHazardByCodeAsync(id, ct).ConfigureAwait(false);
+            if (hazardResult.IsFailure)
+            {
+                return hazardResult;
+            }
+
+            var hazard = hazardResult.Value;
+
+            // Then populate the complex HazardLocation entity
+            await PopulateHazardLocationAsync(hazard, ct);
+
+            _logger.LogInformation("Successfully retrieved hazard with location data for ID: {Id}", id);
+            return Result<Hazard>.Success(hazard);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving hazard with location for ID: {Id}", id);
+            return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NotFound);
+        }
+    }
+
+    public async Task<Result<List<Hazard>>> GetHazardsByReportCodeAsync(ReportID reportId, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving hazards for report ID: {ReportId}", reportId);
+            return await _dataService.GetHazardsByReportCodeAsync(reportId, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving hazards for report ID: {ReportId}", reportId);
+            return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
+        }
+    }
+
+    /// <summary>
+    /// Gets all hazards with complete HazardLocation entities populated
+    /// This method shows how to efficiently populate complex entities for collections
+    /// </summary>
+    public async Task<Result<List<Hazard>>> GetAllHazardsWithLocationAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving all hazards with location data");
+
+            // First get all basic hazards
+            var hazardsResult = await _dataService.GetAllHazardsAsync(ct).ConfigureAwait(false);
+            if (hazardsResult.IsFailure)
+            {
+                return hazardsResult;
+            }
+
+            var hazards = hazardsResult.Value;
+
+            // Then populate HazardLocation for each hazard
+            var tasks = hazards.Select(hazard => PopulateHazardLocationAsync(hazard, ct));
+            await Task.WhenAll(tasks);
+
+            _logger.LogInformation("Successfully retrieved {Count} hazards with location data", hazards.Count);
+            return Result<List<Hazard>>.Success(hazards);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving all hazards with location");
+            return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
+        }
+    }
+
     #endregion
 
     #region Complex Entity Population Methods
@@ -263,6 +306,5 @@ public sealed class HazardService
         }
     }
 
-    
     #endregion
 }

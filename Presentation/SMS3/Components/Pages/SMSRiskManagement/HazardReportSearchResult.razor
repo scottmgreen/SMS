@@ -158,7 +158,7 @@ else if (ReportDetails != null)
                     }
 
                     <!-- Anonymous Alert (if applicable) -->
-                    @if (ReportDetails.IsAnonymous && AuthService.User.CanRead("SMS_Anonymous"))
+                    @if (ReportDetails.IsAnonymous && CurrentUserService.CanRead("SMS_Anonymous"))
                     {
                         <RadzenAlert AlertStyle="AlertStyle.Warning" ShowIcon="true" Variant="Variant.Flat">
                             <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0;">
@@ -166,7 +166,7 @@ else if (ReportDetails != null)
                             </RadzenText>
                         </RadzenAlert>
                         <!-- Contact Info for Reporter (if not anonymous) -->
-                        @if (!ReportDetails.IsAnonymous && AuthService.User.CanRead("SMS_Anonymous") && (!string.IsNullOrEmpty(ReportDetails.ContactName) || !string.IsNullOrEmpty(ReportDetails.ContactCell) || !string.IsNullOrEmpty(ReportDetails.ContactEmail)))
+                        @if (!ReportDetails.IsAnonymous && CurrentUserService.CanRead("SMS_Anonymous") && (!string.IsNullOrEmpty(ReportDetails.ContactName) || !string.IsNullOrEmpty(ReportDetails.ContactCell) || !string.IsNullOrEmpty(ReportDetails.ContactEmail)))
                         {
                             <RadzenCard class="guidance-card mb-4">
                                 <h6 class="mb-3">

@@ -5,20 +5,17 @@
 
 
 <div class="d-flex flex-column min-vh-100 sms-main-layout">
-    <!-- Cascading Authentication State to all child components -->
-    <CascadingValue Value="@AuthService" Name="AuthService">
-        <!-- Horizontal Navigation -->
-        <header class="sms-main-header">
-            <NavMenu OnLogoutRequested="@OnLogoutRequested" />
-        </header>
-        
-        <!-- Main Content Area -->
-        <main class="flex-grow-1 sms-main-content">
-            <article class="content px-4">
-                @Body
-            </article>
-        </main>
-    </CascadingValue>
+    <!-- Horizontal Navigation -->
+    <header class="sms-main-header">
+        <NavMenu OnLogoutRequested="@OnLogoutRequested" />
+    </header>
+    
+    <!-- Main Content Area -->
+    <main class="flex-grow-1 sms-main-content">
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
 </div>
 
 <!-- Radzen Dialog Components - Required for dialogs to work -->
@@ -37,17 +34,31 @@
 </div>
 
 @code {
-    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ISMSSessionService SessionService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private IWebHostEnvironment Environment { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // MainLayout initialized
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // MainLayout first render complete
+        }
+    }
 
     /// <summary>
     /// Handle logout request from NavMenu
     /// </summary>
     private async Task OnLogoutRequested()
     {
-        // Clear authentication
-        AuthService.ClearAuthentication();
+        // Clear authentication using the proper session service
+        await SessionService.ClearSMSSessionAsync();
         
         // Navigate to login page
         Navigation.NavigateTo("/login", forceLoad: true);

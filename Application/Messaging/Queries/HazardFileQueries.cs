@@ -16,15 +16,6 @@ namespace SMS_Application.Messaging.Queries;
 // HAZARD FILE QUERIES - Following Exact SMS Pattern
 // =============================================
 
-public class GetHazardFileByIdQuery : BaseQueryBundle, IRequest<Result<HazardFile>>
-{
-    public HazardFileID HazardFileId { get; set; }
-
-    public GetHazardFileByIdQuery(HazardFileID fileId)
-    {
-        HazardFileId = fileId;
-    }
-}
 
 public class GetHazardFileByCodeQuery : BaseQueryBundle, IRequest<Result<HazardFile>>
 {

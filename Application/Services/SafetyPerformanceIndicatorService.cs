@@ -750,7 +750,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting SPI alerts");
-            return Result<List<SPIAlert>>.Failure<List<SPIAlert>(DomainErrors.SPIError.NotFound);
+            return Result<List<SPIAlert>>.Failure<List<SPIAlert>>(DomainErrors.SPIError.NotFound);
         }
     }
 
@@ -800,7 +800,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting SPI compliance status");
-            return Result<List<SPIComplianceStatus>>.Failure<List<SPIComplianceStatus>(DomainErrors.SPIError.NotFound);
+            return Result<List<SPIComplianceStatus>>.Failure<List<SPIComplianceStatus>>(DomainErrors.SPIError.NotFound);
         }
     }
 

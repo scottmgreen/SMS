@@ -12,7 +12,7 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 public partial class HazardReporting : ComponentBase, IDisposable
 {
     #region Dependencies
-    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<HazardReporting> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
@@ -204,7 +204,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         if (!IsEditMode)
         {
             InitializeFormDefaults();
-            Console.Write(AuthService.CurrentUserDisplayName);
+            Console.Write(CurrentUserService?.UserDisplayName);
         }
 
         // Create DotNet reference for JavaScript callbacks
@@ -592,8 +592,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             if (successfullyProcessedFiles.Any() && failedFiles.Any())
             {
                 NotificationHelper.ShowWarning(NotificationService, $"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued.", 5000);
-            }
-            else if (successfullyProcessedFiles.Any())
+            } else if (successfullyProcessedFiles.Any())
             {
                 NotificationHelper.ShowSuccess(NotificationService, $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.", 5000);
             }
@@ -979,8 +978,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         EditingReport.ReportContactEmail = HazardReport.ReportContactEmail;
         EditingReport.Status = ReportStatus.Updated;
         EditingReport.UpdatedDate = DateTime.UtcNow;
-        EditingReport.UpdatedBy = AuthService.CurrentUserDisplayName;
-
+        EditingReport.UpdatedBy = CurrentUserService.UserCode;
 
         var updateReportCommand = new UpdateReportCommand(EditingReport);
         var reportUpdateResult = await Mediator.SendAsync(updateReportCommand, CancellationToken.None);
@@ -1001,7 +999,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         EditingHazard.HazardType = HazardReport.HazardType; // This is the actual selected hazard type, not "Initial"
         
         EditingHazard.UpdatedDate = DateTime.UtcNow;
-        EditingHazard.UpdatedBy = AuthService.CurrentUserDisplayName;
+        EditingHazard.UpdatedBy = CurrentUserService.UserCode;
 
         // Handle location updates
         await UpdateHazardLocation(EditingHazard);
@@ -1065,7 +1063,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             Description = HazardReport.Description,
             Stage = "INITIAL",
             Status = ReportStatus.NeedsValidation, //needs validation
-            CreatedBy = AuthService.CurrentUserDisplayName,
+            CreatedBy = CurrentUserService.UserCode,
             CreatedDate = DateTime.UtcNow
         };
 
@@ -1092,7 +1090,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             
             ReportCode = actualReportCode,
             IsInitialHazard = true ,
-            CreatedBy = AuthService.CurrentUserDisplayName,
+            CreatedBy = CurrentUserService.UserCode,
             CreatedDate = DateTime.UtcNow
         };
 
@@ -1148,7 +1146,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 HazardCode = createdHazard.Code,
                 ReportCode = createdHazard.ReportCode,
                 TrackingCode = "HT-0000", // This will be replaced by database
-                CreatedBy = AuthService.CurrentUserDisplayName,
+                CreatedBy = CurrentUserService?.UserDisplayName,
                 CreatedDate = DateTime.UtcNow
             };
 
@@ -1207,7 +1205,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                         hazardLocation.Latitude = SelectedGeoLocation.Latitude;
                         hazardLocation.Longitude = SelectedGeoLocation.Longitude;
                         hazardLocation.Description = SelectedGeoLocation.Description ?? "Map selected location";
-                        hazardLocation.UpdatedBy = AuthService.CurrentUserDisplayName;
+                        hazardLocation.UpdatedBy = CurrentUserService?.UserDisplayName;
                         hazardLocation.UpdatedDate = DateTime.UtcNow;
                         hazard.HazardLocation = hazardLocation;
                         
@@ -1231,7 +1229,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                         Latitude = SelectedGeoLocation.Latitude,
                         Longitude = SelectedGeoLocation.Longitude,
                         Description = SelectedGeoLocation.Description ?? "Map selected location",
-                        CreatedBy = AuthService.CurrentUserDisplayName,
+                        CreatedBy = CurrentUserService?.UserDisplayName,
                         CreatedDate = DateTime.UtcNow,
                         IsValid = true
                     };
@@ -1305,7 +1303,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                             FileSizeBytes = attachedFile.Size,
                             StorageType = "Database",
                             FileData = fileData,
-                            UploadedBy = HazardReport.SubmittedBy ?? AuthService.CurrentUserDisplayName,
+                            UploadedBy = HazardReport.SubmittedBy ?? CurrentUserService?.UserDisplayName,
                             UploadedDate = DateTime.UtcNow,
                             IsActive = true,
                             IsConfidential = HazardReport.IsAnonymous
@@ -1438,12 +1436,12 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// </summary>
     private void InitializeFormDefaults()
     {
-        var currentUser = AuthService.CurrentUserDisplayName;
+        var currentUser = CurrentUserService.UserCode;
         var tenMinutesAgo = DateTime.Now.AddMinutes(-10);
         
         HazardReport = new HazardReportForm
         {
-            SubmittedBy = AuthService.CurrentUserDisplayName ?? "Unknown",
+            SubmittedBy = CurrentUserService.UserCode ?? "Unknown",
             SubmittedDate = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day,tenMinutesAgo.Hour, tenMinutesAgo.Minute, 0),
             IncidentDateTime = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day, tenMinutesAgo.Hour, tenMinutesAgo.Minute, 0),
         };

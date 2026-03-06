@@ -8,17 +8,8 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-// -----------------------------------------------------------------------------
-// <copyright file="DependencyInjection.cs" company="SMS Safety Management System">
-//     Author: SMS Development Team
-//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Provides dependency injection configuration and service registration
-//                  for the Application layer in the Clean Architecture.
-//                  Handles mediator setup, handler discovery, and service lifetime management.
-// </copyright>
-// ----------------------------------------------------------------------------->
-
-using Application.Interfaces;
+using SMS_Application.Interfaces;
+using SMS_Application.Messaging.Pipelines;
 
 namespace SMS_Application.Configuration
 {
@@ -43,64 +34,90 @@ namespace SMS_Application.Configuration
             // 🔥 CLEANER: Use the Assembly class itself instead of a random handler
             var applicationAssembly = Assembly.GetExecutingAssembly(); // Gets current assembly (Application)
 
-            // Alternative: Use the marker interface approach
-            // var applicationAssembly = typeof(IApplicationAssemblyMarker).Assembly;
-
             services.AddApplicationMediator(applicationAssembly);
 
-            // SMS User Application Services - INTERFACE BINDINGS ONLY
+            #region SMS User Management Services
+
+            // SMS User Application Services - INTERFACE BINDINGS (Only for existing interfaces)
             services.AddScoped<ISMSApplicationUserService, SMSApplicationUserService>();
             services.AddScoped<ISMSOrganizationalUserService, SMSOrganizationalUserService>();
             services.AddScoped<ISMSStakeholderUserService, SMSStakeholderUserService>();
 
-            // SMS Group Application Services - INTERFACE BINDINGS ONLY
+            // SMS User Application Services - CONCRETE REGISTRATIONS 
+            services.AddScoped<SMSApplicationUserService>();
+            services.AddScoped<SMSOrganizationalUserService>();
+            services.AddScoped<SMSStakeholderUserService>();
+
+            // SMS Group Application Services - INTERFACE BINDINGS (Only for existing interfaces)
             services.AddScoped<ISMSOrganizationalGroupService, SMSOrganizationalGroupService>();
             services.AddScoped<ISMSApplicationGroupService, SMSApplicationGroupService>();
 
-            // SMS Workflow Services - SINGLE REGISTRATION ONLY
-            //services.AddScoped<ISMSRiskAssessmentWorkflowService, SMSRiskAssessmentWorkflowService>();
-            services.AddScoped<ISMSInvestigationWorkflowService, SMSInvestigationWorkflowService>();
+            // SMS Group Application Services - CONCRETE REGISTRATIONS (For Query Handlers)
+            services.AddScoped<SMSApplicationGroupService>();
+            services.AddScoped<SMSOrganizationalGroupService>();
+            services.AddScoped<SMSStakeholderGroupService>();
 
+            // SMS Role Management
+            services.AddScoped<SMSUserRoleService>();
 
-            // Application Services - INTERFACE BINDINGS ONLY
-            services.AddScoped<IHazardFileService, HazardFileService>();
-            services.AddScoped<IReportValidationService, ReportValidationService>();
-            services.AddScoped<IHazardReportTrackingService, HazardReportTrackingService>();
+            #endregion
 
+            #region Core Safety Management Services
 
-            // Concrete Application Services (where no interface exists)
-            services.AddScoped<SystemService>();
-            services.AddScoped<MessengerService>();
+            // Application Services - Clean Architecture Pattern
             services.AddScoped<HazardService>();
-            services.AddScoped<HazardLocationService>();
-            services.AddScoped<AirportSharedDatasetService>();
-            services.AddScoped<ReportService>();
-            services.AddScoped<HazardReportTrackingService>();
-
-            services.AddScoped<InterviewService>();
+            services.AddScoped<ReportService>(); 
+            services.AddScoped<ReportValidationService>();
             services.AddScoped<InvestigationService>();
-            services.AddScoped<RiskAnalysisService>();
-            services.AddScoped<RiskAssessmentService>();
+            services.AddScoped<InterviewService>();
             services.AddScoped<MitigationService>();
             services.AddScoped<MitigationAssignmentService>();
+            services.AddScoped<RiskAnalysisService>();
+            services.AddScoped<RiskAssessmentService>();
+            services.AddScoped<HazardReportTrackingService>();
             services.AddScoped<ScoringPanelService>();
             services.AddScoped<SafetyPerformanceIndicatorService>();
+            services.AddScoped<HazardFileService>();
 
-            // NEW: Missing Application Service Interface Bindings
-            services.AddScoped<IScoringPanelService, ScoringPanelService>();
+            // Application Service Interfaces - Clean Architecture Pattern (Only existing interfaces)
+            services.AddScoped<IHazardService, HazardService>();
+            services.AddScoped<IHazardFileService, HazardFileService>();
             services.AddScoped<IRiskAssessmentService, RiskAssessmentService>();
             services.AddScoped<IRiskAnalysisService, RiskAnalysisService>();
             services.AddScoped<IInterviewService, InterviewService>();
             services.AddScoped<IMitigationService, MitigationService>();
-            services.AddScoped<IReportValidationService, ReportValidationService>();
+            services.AddScoped<IScoringPanelService, ScoringPanelService>();
             services.AddScoped<ISafetyPerformanceIndicatorService, SafetyPerformanceIndicatorService>();
 
-            // SMS Audit Management Services (NEW) - TEMPORARILY DISABLED UNTIL INFRASTRUCTURE IS READY
+            #endregion
+
+            #region Supporting Services
+
+            // Supporting Application Services
+            services.AddScoped<HazardLocationService>();
+            services.AddScoped<AirportSharedDatasetService>();
+            services.AddScoped<SystemService>();
+            services.AddScoped<MessengerService>();
+
+            #endregion
+
+            #region SMS Workflow Services
+
+            // SMS Workflow Services - SINGLE REGISTRATION ONLY
+            services.AddScoped<ISMSInvestigationWorkflowService, SMSInvestigationWorkflowService>();
+
+            #endregion
+
+            #region SMS Audit Management Services
+
+            // SMS Audit Management Services - READY FOR USE
             services.AddScoped<SMSAuditPlanService>();
             services.AddScoped<SMSAuditService>();
 
             // NOTE: SMS Audit Data Services are registered in Infrastructure layer (ServiceCollectionExtensions.cs)
-            // These services are already available through Infrastructure registration:
+            // These services are already available through Infrastructure registration
+
+            #endregion
 
             return services;
         }
@@ -113,28 +130,35 @@ namespace SMS_Application.Configuration
         /// <returns>The updated service collection.</returns>
         public static IServiceCollection AddApplicationMediator(this IServiceCollection services, Assembly assembly)
         {
-            // Register the mediator service
-            services.AddScoped<IMediator, SMS_Application.Services.Mediator>();
-
-            // Register all command handlers
-            var handlerTypes = assembly.GetTypes()
-                .Where(t => t.GetInterfaces()
-                    .Any(i => i.IsGenericType &&
-                             (i.GetGenericTypeDefinition() == typeof(IRequestHandler<,>))))
-                .ToList();
-
-            foreach (var handlerType in handlerTypes)
-            {
-                var interfaceType = handlerType.GetInterfaces()
-                    .First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRequestHandler<,>));
-
-                services.AddScoped(interfaceType, handlerType);
-            }
+            // Use the enhanced mediator with pipeline support
+            services.AddMediator(assembly);
 
             return services;
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

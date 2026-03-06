@@ -227,12 +227,12 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
     //            return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
     //        }
 
-    //        _logger.LogInformation("Retrieving active user role assignments for user: {UserId}", userId);
+    //        _logger.LogInformation("Retrieving active user role assignments for user: {UserCode}", userId);
     //        var result = await _dataService.GetActiveSMSUserRolesByUserIdAsync(userId);
 
     //        if (result.IsSuccess)
     //        {
-    //            _logger.LogInformation("Successfully retrieved {Count} active user role assignments for user {UserId}", 
+    //            _logger.LogInformation("Successfully retrieved {Count} active user role assignments for user {UserCode}", 
     //                result.Value?.Count() ?? 0, userId);
     //        }
 
@@ -240,7 +240,7 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
     //    }
     //    catch (Exception ex)
     //    {
-    //        _logger.LogError(ex, "Unexpected error retrieving active user role assignments for user: {UserId}", userId);
+    //        _logger.LogError(ex, "Unexpected error retrieving active user role assignments for user: {UserCode}", userId);
     //        return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
     //    }
     //}
@@ -446,13 +446,13 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
     //            return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
     //        }
 
-    //        _logger.LogInformation("Validating if user {UserId} has role {RoleValue}", userId, roleValue);
+    //        _logger.LogInformation("Validating if user {UserCode} has role {RoleValue}", userId, roleValue);
 
     //        var result = await _dataService.ValidateUserRoleAsync(userId, roleValue);
 
     //        if (result.IsSuccess)
     //        {
-    //            _logger.LogInformation("User {UserId} role validation result: {HasRole}", userId, result.Value);
+    //            _logger.LogInformation("User {UserCode} role validation result: {HasRole}", userId, result.Value);
     //        }
 
     //        return result;

@@ -21,7 +21,7 @@ public partial class TechnicalAssessment : ComponentBase
 
     // Keep query parameters for backward compatibility
     // [SupplyParameterFromQuery(Name = "reportId")] public string? ReportId { get; set; }
-    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<TechnicalAssessment> Logger { get; set; } = default!;
@@ -136,9 +136,9 @@ public partial class TechnicalAssessment : ComponentBase
         Logger.LogInformation("TechnicalAssessment OnInitializedAsync - ReportId: {ReportId}, StepNumber: {StepNumber}, HazardId: {HazardId}", ReportId, StepNumber, HazardId);
 
         // Initialize step models that require dependency injection
-        Step3 = new Step3Model(Mediator, AuthService);
-        Step4 = new Step4Model(Mediator, AuthService);
-        Step5 = new Step5Model(Mediator, AuthService);
+        Step3 = new Step3Model(Mediator, CurrentUserService);
+        Step4 = new Step4Model(Mediator, CurrentUserService);
+        Step5 = new Step5Model(Mediator, CurrentUserService);
 
 
 
@@ -353,7 +353,7 @@ public partial class TechnicalAssessment : ComponentBase
                 Status = RiskAssessmentStatus.AssessmentCreate,
                 CurrentStep = 1,
                 UpdatedDate = DateTime.UtcNow,
-                UpdatedBy = AuthService.CurrentUserDisplayName
+                UpdatedBy = CurrentUserService?.UserDisplayName
             };
 
             // Save Technical assessment
@@ -781,10 +781,10 @@ public partial class TechnicalAssessment : ComponentBase
 
             // Update last modified info
             TechRiskAssessment.UpdatedDate = DateTime.UtcNow;
-            TechRiskAssessment.UpdatedBy = AuthService.CurrentUserDisplayName;
+            TechRiskAssessment.UpdatedBy = CurrentUserService?.UserDisplayName;
             if (CurrentStep == 5)
             {
-                TechRiskAssessment.CompletedBy = AuthService.CurrentUserDisplayName;
+                TechRiskAssessment.CompletedBy = CurrentUserService?.UserDisplayName;
                 TechRiskAssessment.CompletedDate = DateTime.UtcNow;
             }
             
@@ -803,7 +803,7 @@ public partial class TechnicalAssessment : ComponentBase
                 _ => ReportStatus.RiskAssessmentInProgress
             };
 
-            var cmd = new UpdateReportStatusCommand(ReportId, status, AuthService.CurrentUserDisplayName);
+            var cmd = new UpdateReportStatusCommand(ReportId, status, CurrentUserService?.UserDisplayName);
             var cmdResult = await Mediator.SendAsync(cmd, CancellationToken.None);
             
 
@@ -882,7 +882,7 @@ public partial class TechnicalAssessment : ComponentBase
                 // ✅ Use calculated risk level from scoring panels
                 hazard.HazardRiskLevel = riskLevel;
 
-                hazard.UpdatedBy = AuthService.CurrentUserDisplayName;  
+                hazard.UpdatedBy = CurrentUserService?.UserDisplayName;  
                 hazard.UpdatedDate = DateTime.UtcNow;   
 
                 // Only update if status changed
@@ -1260,7 +1260,7 @@ public partial class TechnicalAssessment : ComponentBase
         var updateCommand = new UpdateRiskAssessmentCommand(TechRiskAssessment);
         await Mediator.SendAsync(updateCommand, CancellationToken.None);
 
-        var cmd = new UpdateReportStatusCommand(ReportId, ReportStatus.ValidationCompleted, AuthService.CurrentUserDisplayName);
+        var cmd = new UpdateReportStatusCommand(ReportId, ReportStatus.ValidationCompleted, CurrentUserService?.UserDisplayName);
         var cmdResult = await Mediator.SendAsync(cmd, CancellationToken.None);
 
 
@@ -1270,7 +1270,7 @@ public partial class TechnicalAssessment : ComponentBase
     private async Task ApplyCurrentStepToAssessmentAsync()
     {
         TechRiskAssessment.UpdatedDate = DateTime.UtcNow;
-        TechRiskAssessment.UpdatedBy = AuthService.CurrentUserDisplayName;
+        TechRiskAssessment.UpdatedBy = CurrentUserService?.UserDisplayName;
 
 
         switch (CurrentStep)

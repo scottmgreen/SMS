@@ -83,12 +83,18 @@ public class ResetHazardScoresCommand : BaseCommandBundle, IRequest<Result<Hazar
 /// <summary>
 /// Command to delete a hazard (soft delete)
 /// </summary>
-public class DeleteHazardCommand : BaseCommandBundle, IRequest<Result<bool>>
+public class DeleteHazardCommand : BaseCommandBundle, IRequest<Result<bool>>, IDeleteCommand
 {
     public HazardID HazardId { get; set; }
+    public string DeletedBy { get; set; } = string.Empty;
 
     public DeleteHazardCommand(HazardID hazardId)
     {
         HazardId = hazardId ?? throw new ArgumentNullException(nameof(hazardId));
+    }
+
+    public void SetDeletedBy(string userId, DateTime timestamp)
+    {
+        DeletedBy = userId;
     }
 }

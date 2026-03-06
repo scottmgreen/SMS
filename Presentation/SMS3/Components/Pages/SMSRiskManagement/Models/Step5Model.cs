@@ -6,12 +6,12 @@
 public class Step5Model
 {
     [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
-    public Step5Model(IMediator mediator, AuthenticationService authService)
+    public Step5Model(IMediator mediator, ICurrentUserService currentUserService)
     {
         Mediator = mediator;
-        AuthService = authService;
+        CurrentUserService = currentUserService;
     }
 
     public Dictionary<string, List<string>> SavedMitigationStrategies { get; set; } = new();

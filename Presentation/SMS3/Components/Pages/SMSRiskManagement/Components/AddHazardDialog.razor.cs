@@ -19,7 +19,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
 
     [Parameter] public string RiskAssessmentId { get; set; } 
 
-    [Inject] AuthenticationService AuthService { get; set; }
+    [Inject] ICurrentUserService CurrentUserService { get; set; }
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<AddHazardDialog>? Logger { get; set; }
@@ -378,7 +378,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         EditingHazard.HazardType = NewHazardType;
         EditingHazard.IsInitialHazard = false;
         EditingHazard.UpdatedDate = DateTime.UtcNow;
-        EditingHazard.UpdatedBy = AuthService.CurrentUserDisplayName;
+        EditingHazard.UpdatedBy = CurrentUserService?.UserDisplayName;
         await UpdateHazardLocationForHazard(EditingHazard);
 
 
@@ -433,7 +433,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         
         hazard.Status = HazardStatus.InitialRiskAssessment;
         
-        hazard.CreatedBy = AuthService.CurrentUserDisplayName;
+        hazard.CreatedBy = CurrentUserService?.UserDisplayName;
         hazard.CreatedDate = DateTime.UtcNow;
         // Handle location for new hazard - EXACTLY like HazardReporting
         await UpdateHazardLocationForHazard(hazard);
@@ -517,7 +517,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                 Latitude = SelectedGeoLocation.Latitude,
                 Longitude = SelectedGeoLocation.Longitude,
                 Description = SelectedGeoLocation.Description ?? "Map selected location",
-                CreatedBy = AuthService.CurrentUserDisplayName,
+                CreatedBy = CurrentUserService?.UserDisplayName,
                 CreatedDate = DateTime.UtcNow,
                 IsValid = true
             };
@@ -583,7 +583,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                     hazardLocation.Longitude = SelectedGeoLocation.Longitude;
                     hazardLocation.Description = SelectedGeoLocation.Description ?? "Map selected location";
                     hazardLocation.UpdatedDate = DateTime.UtcNow;
-                    hazardLocation.UpdatedBy = AuthService.CurrentUserDisplayName;
+                    hazardLocation.UpdatedBy = CurrentUserService?.UserDisplayName;
                     hazard.HazardLocation = hazardLocation;
 
                     var locationUpdateResult = await Mediator.SendAsync(

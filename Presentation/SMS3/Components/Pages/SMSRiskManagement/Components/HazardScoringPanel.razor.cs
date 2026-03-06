@@ -28,7 +28,7 @@ public partial class HazardScoringPanel : ComponentBase
     [Inject] private ILogger<HazardScoringPanel> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
 
-    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
     private RadzenDataGrid<ScoringPanel>? ScoringGrid;
     private List<ScoringPanel> HazardScoringPanels = new();
@@ -799,7 +799,7 @@ public partial class HazardScoringPanel : ComponentBase
             }
 
             Hazard.UpdatedDate = DateTime.UtcNow;
-            Hazard.UpdatedBy = AuthService.CurrentUser.Code;
+            Hazard.UpdatedBy = CurrentUserService.UserCode;
 
             Logger.LogInformation("Calculated scoring data for hazard {HazardCode}: Step={Step}, IsValid={IsValid}, CalculatedRiskLevel={CalculatedRiskLevel}, MatrixCode={MatrixCode}, AverageScore={AverageScore}",
                 Hazard.Code, CurrentStep, calculation.IsValid, calculation.RiskLevel?.Value ?? "Unknown", calculation.MatrixCode, calculation.AverageScore);

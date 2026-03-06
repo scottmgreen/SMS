@@ -8,7 +8,7 @@ namespace SMS3.Components.Pages.System.UserManagement;
 /// </summary>
 public partial class ApplicationUsers : ComponentBase
 {
-    [Inject] private AuthenticationService AuthService { get; set; } = default!;
+    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<ApplicationUsers> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
@@ -233,7 +233,7 @@ public partial class ApplicationUsers : ComponentBase
             user.SMSUserType = SMSUserType.Application;
             // Update user role
             user.UserRole = selectedRole;
-            user.UpdatedBy = AuthService.CurrentUserDisplayName;
+            user.UpdatedBy = CurrentUserService?.UserDisplayName;
             user.UpdatedDate = DateTime.UtcNow;
 
             // Update user
@@ -292,7 +292,7 @@ public partial class ApplicationUsers : ComponentBase
 
             // Remove role
             user.UserRole = null;
-            user.UpdatedBy = AuthService.CurrentUserDisplayName;
+            user.UpdatedBy = CurrentUserService?.UserDisplayName;
             user.UpdatedDate = DateTime.UtcNow;
 
             // Update user
@@ -367,7 +367,7 @@ public partial class ApplicationUsers : ComponentBase
                 UserRole = selectedRole, // ?? NEW: Assign role during creation
                 IsActive = true,
                 SMSUserType = SMSUserType.Application,
-                CreatedBy = AuthService.CurrentUserDisplayName,
+                CreatedBy = CurrentUserService?.UserDisplayName,
                 CreatedDate = DateTime.UtcNow
             };
 
@@ -441,7 +441,7 @@ public partial class ApplicationUsers : ComponentBase
                 CurrentUser.UserRole = null;
             }
             // Set the UpdatedBy field to the currently logged-in user's ID
-            CurrentUser.UpdatedBy = AuthService.CurrentUserDisplayName;
+            CurrentUser.UpdatedBy = CurrentUserService?.UserDisplayName;
             CurrentUser.UpdatedDate = DateTime.UtcNow;
 
             var updateCommand = new UpdateSMSApplicationUserCommand(CurrentUser);
