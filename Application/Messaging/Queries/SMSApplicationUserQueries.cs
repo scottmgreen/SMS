@@ -11,51 +11,52 @@
 namespace SMS_Application.Messaging.Queries;
 
 /// <summary>
-/// Query to get all SMS application users
+/// Query to get all SMS application users - WITH AUDIT TRACKING
 /// </summary>
-public class GetAllSMSApplicationUsersQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSApplicationUser>>>
+public class GetAllSMSApplicationUsersQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSApplicationUser>>>, IReadQuery
 {
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
+
     /// <summary>
     /// Initializes a new instance of the GetAllSMSApplicationUsersQuery class.
     /// </summary>
     public GetAllSMSApplicationUsersQuery()
     {
     }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return "SMSApplicationUser:All";
+    }
+
+    public string GetAccessType()
+    {
+        return this.GetType().Name.Replace("Query", ""); // GetAllSMSApplicationUsers
+    }
 }
 
 /// <summary>
-/// Query to get an SMS application user by ID
+/// Query to get an SMS application user by code - WITH AUDIT TRACKING
 /// </summary>
-//public class GetSMSApplicationUserByCodeQuery : BaseQueryBundle, IRequest<Result<SMSApplicationUser>>
-//{
-//    /// <summary>
-//    /// The ID of the application user to retrieve
-//    /// </summary>
-//    public string UserCode { get; set; }
-
-//    /// <summary>
-//    /// Initializes a new instance of the GetSMSApplicationUserByCodeQuery class.
-//    /// </summary>
-//    /// <param name="userId">The ID of the application user to retrieve</param>
-//    /// <exception cref="ArgumentException">Thrown when userId is null or empty</exception>
-//    public GetSMSApplicationUserByCodeQuery(string userId)
-//    {
-//        if (string.IsNullOrWhiteSpace(userId))
-//            throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
-
-//        UserCode = userId;
-//    }
-//}
-
-/// <summary>
-/// Query to get an SMS application user by code
-/// </summary>
-public class GetSMSApplicationUserByCodeQuery : BaseQueryBundle, IRequest<Result<SMSApplicationUser>>
+public class GetSMSApplicationUserByCodeQuery : BaseQueryBundle, IRequest<Result<SMSApplicationUser>>, IReadQuery
 {
     /// <summary>
     /// The code of the application user to retrieve
     /// </summary>
     public string UserCode { get; set; }
+    
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
 
     /// <summary>
     /// Initializes a new instance of the GetSMSApplicationUserByCodeQuery class.
@@ -69,17 +70,38 @@ public class GetSMSApplicationUserByCodeQuery : BaseQueryBundle, IRequest<Result
 
         UserCode = userCode;
     }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return $"SMSApplicationUser:Code:{UserCode}";
+    }
+
+    public string GetAccessType()
+    {
+        return this.GetType().Name.Replace("Query", ""); // GetSMSApplicationUserByCode
+    }
 }
 
 /// <summary>
-/// Query to get SMS application user by username
+/// Query to get SMS application user by username - WITH AUDIT TRACKING
 /// </summary>
-public class GetSMSApplicationUserByUserNameQuery : BaseQueryBundle, IRequest<Result<SMSApplicationUser>>
+public class GetSMSApplicationUserByUserNameQuery : BaseQueryBundle, IRequest<Result<SMSApplicationUser>>, IReadQuery
 {
     /// <summary>
     /// The username of the application user to retrieve
     /// </summary>
     public string UserName { get; set; }
+    
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
 
     /// <summary>
     /// Initializes a new instance of the GetSMSApplicationUserByUserNameQuery class.
@@ -93,30 +115,72 @@ public class GetSMSApplicationUserByUserNameQuery : BaseQueryBundle, IRequest<Re
 
         UserName = userName;
     }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return $"SMSApplicationUser:UserName:{UserName}";
+    }
+
+    public string GetAccessType()
+    {
+        return this.GetType().Name.Replace("Query", ""); // GetSMSApplicationUserByUserName
+    }
 }
 
 /// <summary>
-/// Query to get all active SMS application users
+/// Query to get all active SMS application users - WITH AUDIT TRACKING
 /// </summary>
-public class GetActiveSMSApplicationUsersQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSApplicationUser>>>
+public class GetActiveSMSApplicationUsersQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSApplicationUser>>>, IReadQuery
 {
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
+
     /// <summary>
     /// Initializes a new instance of the GetActiveSMSApplicationUsersQuery class.
     /// </summary>
     public GetActiveSMSApplicationUsersQuery()
     {
     }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return "SMSApplicationUser:Active";
+    }
+
+    public string GetAccessType()
+    {
+        return this.GetType().Name.Replace("Query", ""); // GetActiveSMSApplicationUsers
+    }
 }
 
 /// <summary>
-/// Query to get SMS application users by application role
+/// Query to get SMS application users by application role - WITH AUDIT TRACKING
 /// </summary>
-public class GetSMSApplicationUsersByRoleQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSApplicationUser>>>
+public class GetSMSApplicationUsersByRoleQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSApplicationUser>>>, IReadQuery
 {
     /// <summary>
     /// The application role to filter by
     /// </summary>
     public string ApplicationRole { get; set; }
+
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
 
     /// <summary>
     /// Initializes a new instance of the GetSMSApplicationUsersByRoleQuery class.
@@ -130,17 +194,38 @@ public class GetSMSApplicationUsersByRoleQuery : BaseQueryBundle, IRequest<Resul
 
         ApplicationRole = applicationRole;
     }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return $"SMSApplicationUser:Role:{ApplicationRole}";
+    }
+
+    public string GetAccessType()
+    {
+        return this.GetType().Name.Replace("Query", ""); // GetSMSApplicationUsersByRole
+    }
 }
 
 /// <summary>
-/// Query to get SMS application users by permission level
+/// Query to get SMS application users by permission level - WITH AUDIT TRACKING
 /// </summary>
-public class GetSMSApplicationUsersByPermissionLevelQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSApplicationUser>>>
+public class GetSMSApplicationUsersByPermissionLevelQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSApplicationUser>>>, IReadQuery
 {
     /// <summary>
     /// The permission level to filter by
     /// </summary>
     public string PermissionLevel { get; set; }
+
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
 
     /// <summary>
     /// Initializes a new instance of the GetSMSApplicationUsersByPermissionLevelQuery class.
@@ -154,17 +239,38 @@ public class GetSMSApplicationUsersByPermissionLevelQuery : BaseQueryBundle, IRe
 
         PermissionLevel = permissionLevel;
     }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return $"SMSApplicationUser:PermissionLevel:{PermissionLevel}";
+    }
+
+    public string GetAccessType()
+    {
+        return this.GetType().Name.Replace("Query", ""); // GetSMSApplicationUsersByPermissionLevel
+    }
 }
 
 /// <summary>
-/// Query to get SMS application users with minimum permission level
+/// Query to get SMS application users with minimum permission level - WITH AUDIT TRACKING
 /// </summary>
-public class GetSMSApplicationUsersWithMinimumPermissionQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSApplicationUser>>>
+public class GetSMSApplicationUsersWithMinimumPermissionQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSApplicationUser>>>, IReadQuery
 {
     /// <summary>
     /// The minimum permission level required
     /// </summary>
     public string MinimumPermissionLevel { get; set; }
+
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
 
     /// <summary>
     /// Initializes a new instance of the GetSMSApplicationUsersWithMinimumPermissionQuery class.
@@ -178,17 +284,38 @@ public class GetSMSApplicationUsersWithMinimumPermissionQuery : BaseQueryBundle,
 
         MinimumPermissionLevel = minimumPermissionLevel;
     }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return $"SMSApplicationUser:MinPermissionLevel:{MinimumPermissionLevel}";
+    }
+
+    public string GetAccessType()
+    {
+        return this.GetType().Name.Replace("Query", ""); // GetSMSApplicationUsersWithMinimumPermission
+    }
 }
 
 /// <summary>
-/// Query to check if an application username exists
+/// Query to check if an application username exists - WITH AUDIT TRACKING
 /// </summary>
-public class CheckSMSApplicationUserNameExistsQuery : BaseQueryBundle, IRequest<Result<bool>>
+public class CheckSMSApplicationUserNameExistsQuery : BaseQueryBundle, IRequest<Result<bool>>, IReadQuery
 {
     /// <summary>
     /// The username to check
     /// </summary>
     public string UserName { get; set; }
+
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
 
     /// <summary>
     /// Initializes a new instance of the CheckSMSApplicationUserNameExistsQuery class.
@@ -202,12 +329,29 @@ public class CheckSMSApplicationUserNameExistsQuery : BaseQueryBundle, IRequest<
 
         UserName = userName;
     }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return $"SMSApplicationUser:CheckExists:{UserName}";
+    }
+
+    public string GetAccessType()
+    {
+        return this.GetType().Name.Replace("Query", ""); // CheckSMSApplicationUserNameExists
+    }
 }
 
 /// <summary>
-/// Query to validate application user credentials
+/// Query to validate application user credentials - WITH AUDIT TRACKING
 /// </summary>
-public class ValidateSMSApplicationUserCredentialsQuery : BaseQueryBundle, IRequest<Result<bool>>
+public class ValidateSMSApplicationUserCredentialsQuery : BaseQueryBundle, IRequest<Result<bool>>, IReadQuery
 {
     /// <summary>
     /// The username to validate
@@ -218,6 +362,10 @@ public class ValidateSMSApplicationUserCredentialsQuery : BaseQueryBundle, IRequ
     /// The password to validate
     /// </summary>
     public string Password { get; set; }
+
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
 
     /// <summary>
     /// Initializes a new instance of the ValidateSMSApplicationUserCredentialsQuery class.
@@ -236,30 +384,72 @@ public class ValidateSMSApplicationUserCredentialsQuery : BaseQueryBundle, IRequ
         UserName = userName;
         Password = password;
     }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return $"SMSApplicationUser:ValidateCredentials:{UserName}";
+    }
+
+    public string GetAccessType()
+    {
+        return this.GetType().Name.Replace("Query", ""); // ValidateSMSApplicationUserCredentials
+    }
 }
 
 /// <summary>
-/// Query to get application users requiring password change
+/// Query to get application users requiring password change - WITH AUDIT TRACKING
 /// </summary>
-public class GetSMSApplicationUsersRequiringPasswordChangeQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSApplicationUser>>>
+public class GetSMSApplicationUsersRequiringPasswordChangeQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSApplicationUser>>>, IReadQuery
 {
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
+
     /// <summary>
     /// Initializes a new instance of the GetSMSApplicationUsersRequiringPasswordChangeQuery class.
     /// </summary>
     public GetSMSApplicationUsersRequiringPasswordChangeQuery()
     {
     }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return "SMSApplicationUser:RequirePasswordChange";
+    }
+
+    public string GetAccessType()
+    {
+        return this.GetType().Name.Replace("Query", ""); // GetSMSApplicationUsersRequiringPasswordChange
+    }
 }
 
 /// <summary>
-/// Query to get stale application users (haven't logged in recently)
+/// Query to get stale application users (haven't logged in recently) - WITH AUDIT TRACKING
 /// </summary>
-public class GetStaleSMSApplicationUsersQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSApplicationUser>>>
+public class GetStaleSMSApplicationUsersQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSApplicationUser>>>, IReadQuery
 {
     /// <summary>
     /// Number of days to consider a user stale
     /// </summary>
     public int StaleDays { get; set; }
+
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
 
     /// <summary>
     /// Initializes a new instance of the GetStaleSMSApplicationUsersQuery class.
@@ -273,17 +463,55 @@ public class GetStaleSMSApplicationUsersQuery : BaseQueryBundle, IRequest<Result
 
         StaleDays = staleDays;
     }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return $"SMSApplicationUser:Stale:{StaleDays}Days";
+    }
+
+    public string GetAccessType()
+    {
+        return this.GetType().Name.Replace("Query", ""); // GetStaleSMSApplicationUsers
+    }
 }
 
 /// <summary>
-/// Query to get application user statistics
+/// Query to get application user statistics - WITH AUDIT TRACKING
 /// </summary>
-public class GetSMSApplicationUserStatisticsQuery : BaseQueryBundle, IRequest<Result<Dictionary<string, object>>>
+public class GetSMSApplicationUserStatisticsQuery : BaseQueryBundle, IRequest<Result<Dictionary<string, object>>>, IReadQuery
 {
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
+
     /// <summary>
     /// Initializes a new instance of the GetSMSApplicationUserStatisticsQuery class.
     /// </summary>
     public GetSMSApplicationUserStatisticsQuery()
     {
+    }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return "SMSApplicationUser:Statistics";
+    }
+
+    public string GetAccessType()
+    {
+        return this.GetType().Name.Replace("Query", ""); // GetSMSApplicationUserStatistics
     }
 }

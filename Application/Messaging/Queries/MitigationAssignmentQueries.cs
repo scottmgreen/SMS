@@ -11,22 +11,64 @@
 namespace SMS_Application.Messaging.Queries;
 
 // =============================================
-// MITIGATION ASSIGNMENT QUERIES
+// MITIGATION ASSIGNMENT QUERIES WITH AUDIT TRACKING
 // =============================================
 
-public class GetMitigationAssignmentByIdQuery : BaseQueryBundle, IRequest<Result<MitigationAssignment>>
+public class GetMitigationAssignmentByIdQuery : BaseQueryBundle, IRequest<Result<MitigationAssignment>>, IReadQuery
 {
     public MitigationAssignmentID MitigationAssignmentId { get; set; }
+    
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
 
     public GetMitigationAssignmentByIdQuery(MitigationAssignmentID mitigationAssignmentId)
     {
         MitigationAssignmentId = mitigationAssignmentId ?? throw new ArgumentNullException(nameof(mitigationAssignmentId));
     }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return $"MitigationAssignment:{MitigationAssignmentId?.Value ?? "Unknown"}";
+    }
+
+    public string GetAccessType()
+    {
+        return "GetById";
+    }
 }
 
-public class GetAllMitigationAssignmentsQuery : BaseQueryBundle, IRequest<Result<List<MitigationAssignment>>>
+public class GetAllMitigationAssignmentsQuery : BaseQueryBundle, IRequest<Result<List<MitigationAssignment>>>, IReadQuery
 {
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
+
     public GetAllMitigationAssignmentsQuery()
     {
+    }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return "MitigationAssignment:All";
+    }
+
+    public string GetAccessType()
+    {
+        return "GetAll";
     }
 }

@@ -63,3 +63,45 @@ public interface IDeleteCommand : IAuditableCommand
     /// <param name="timestamp">The timestamp of the deletion</param>
     void SetDeletedBy(string userId, DateTime timestamp);
 }
+
+/// <summary>
+/// Interface for queries that read data (for auditing data access)
+/// Maintains CQRS pattern consistency - Queries are separate from Commands
+/// </summary>
+public interface IReadQuery : IAuditableCommand
+{
+    /// <summary>
+    /// Set audit fields for data access
+    /// </summary>
+    /// <param name="userId">The user performing the read</param>
+    /// <param name="timestamp">The timestamp of the access</param>
+    void SetAccessedBy(string userId, DateTime timestamp);
+    
+    /// <summary>
+    /// Get the resource being accessed for audit logging
+    /// </summary>
+    string GetResourceIdentifier();
+    
+    /// <summary>
+    /// Get the access type (e.g., "GetById", "GetAll", "Search")
+    /// </summary>
+    string GetAccessType();
+}
+
+/// <summary>
+/// OPTIONAL Interface for commands that want enhanced audit tracking
+/// Commands can OPTIONALLY implement this for better audit trail detail
+/// BACKWARD COMPATIBLE - existing commands still work without this
+/// </summary>
+public interface IEnhancedAuditCommand : IAuditableCommand
+{
+    /// <summary>
+    /// Get the resource being acted upon for audit logging
+    /// </summary>
+    string GetResourceIdentifier();
+    
+    /// <summary>
+    /// Get the action type (shortened command name without "Command" suffix)
+    /// </summary>
+    string GetActionType();
+}

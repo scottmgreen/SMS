@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
+using SMS_Application.Interfaces;
 
 namespace SMS3.Components.Pages;
 
@@ -10,6 +11,7 @@ public partial class Login : ComponentBase
     [Inject] private ILogger<Login> Logger { get; set; } = default!;
     [Inject] private ISMSSessionService SessionService { get; set; } = default!;
     [Inject] private IHttpContextAccessor HttpContextAccessor { get; set; } = default!;
+    [Inject] private IAuthenticationService AuthenticationService { get; set; } = default!;
 
     private LoginFormModel LoginModel { get; set; } = new();
     private string ErrorMessage { get; set; } = string.Empty;
@@ -31,12 +33,33 @@ public partial class Login : ComponentBase
             var userAgent = httpContext?.Request?.Headers?.UserAgent.ToString() ?? "Unknown";
             var sessionId = Guid.NewGuid().ToString();
 
-            // **SMART LOGIN**: Discover user type and authenticate
-            var (user, userType) = await DiscoverAndAuthenticateUserAsync(model.Username, model.Password);
+            // **SMART LOGIN**: Use Application Layer Authentication Service
+            var authResult = await AuthenticationService.AuthenticateAsync(model.Username, model.Password, CancellationToken.None);
 
-            if (user != null)
+            if (authResult.IsSuccess && authResult.User != null)
             {
-                Logger.LogInformation("Smart Login successful for user: {Username}, Type: {UserType}", model.Username, userType.Value);
+                Logger.LogInformation("Authentication successful for user: {Username}, Type: {UserType}", model.Username, authResult.UserType.Value);
+
+                // 🔐 Record successful authentication audit FIRST (and wait for it)
+                try
+                {
+                    var authSuccessCommand = new RecordAuthenticationSuccessCommand(
+                        model.Username,
+                        authResult.UserType,
+                        authResult.User.DisplayName,
+                        ipAddress,
+                        userAgent,
+                        sessionId
+                    );
+                    var auditResult = await Mediator.SendAsync(authSuccessCommand, CancellationToken.None);
+                    Logger.LogInformation("✅ Authentication success audit recorded for user: {Username}, Result: {IsSuccess}", 
+                        model.Username, auditResult.IsSuccess);
+                }
+                catch (Exception auditEx)
+                {
+                    Logger.LogError(auditEx, "❌ Failed to record authentication success audit for {Username}", model.Username);
+                    // Continue with login even if audit fails - don't block user
+                }
 
                 // 🔧 BLAZOR SERVER FIX: Use redirect-based authentication instead of direct session creation
                 try
@@ -45,7 +68,7 @@ public partial class Login : ComponentBase
                     var authToken = Guid.NewGuid().ToString();
                     
                     // Store auth data temporarily using a service that can survive redirect
-                    await StoreTemporaryAuthData(authToken, user, userType);
+                    await StoreTemporaryAuthData(authToken, authResult.User, authResult.UserType);
                     
                     Logger.LogInformation("Authentication data stored with token: {Token} for user: {Username}", authToken, model.Username);
                     
@@ -59,63 +82,31 @@ public partial class Login : ComponentBase
                     ErrorMessage = "Authentication succeeded but login setup failed. Please try again.";
                     return;
                 }
-
-                // 🔐 Record successful authentication audit AFTER session creation (fire and forget)
-                _ = Task.Run(async () =>
-                {
-                    try
-                    {
-                        var authSuccessCommand = new RecordAuthenticationSuccessCommand(
-                            model.Username,
-                            userType,
-                            user.DisplayName,
-                            ipAddress,
-                            userAgent,
-                            sessionId
-                        );
-                        await Mediator.SendAsync(authSuccessCommand, CancellationToken.None);
-                    }
-                    catch (Exception auditEx)
-                    {
-                        Logger.LogError(auditEx, "Failed to record authentication success audit for {Username}", model.Username);
-                    }
-                });
-
-                // 🔧 BLAZOR SERVER FIX: Navigate to home page
-                IsLoading = false;
-                ErrorMessage = string.Empty;
-                StateHasChanged();
-                
-                // Use a longer delay to ensure session data is committed
-                await Task.Delay(500);
-                
-                // Navigate to home page with force refresh
-                Navigation.NavigateTo("/", forceLoad: true);
             }
             else
             {
-                // 🔐 Record failed authentication audit (fire and forget)
-                _ = Task.Run(async () =>
+                // 🔐 Record failed authentication audit (and wait for it)
+                try
                 {
-                    try
-                    {
-                        var authFailureCommand = new RecordAuthenticationFailureCommand(
-                            model.Username,
-                            "Invalid username or password",
-                            ipAddress,
-                            userAgent,
-                            1
-                        );
-                        await Mediator.SendAsync(authFailureCommand, CancellationToken.None);
-                    }
-                    catch (Exception auditEx)
-                    {
-                        Logger.LogError(auditEx, "Failed to record authentication failure audit for {Username}", model.Username);
-                    }
-                });
+                    var authFailureCommand = new RecordAuthenticationFailureCommand(
+                        model.Username,
+                        "Invalid username or password",
+                        ipAddress,
+                        userAgent,
+                        1
+                    );
+                    var auditResult = await Mediator.SendAsync(authFailureCommand, CancellationToken.None);
+                    Logger.LogInformation("✅ Authentication failure audit recorded for user: {Username}, Result: {IsSuccess}", 
+                        model.Username, auditResult.IsSuccess);
+                }
+                catch (Exception auditEx)
+                {
+                    Logger.LogError(auditEx, "❌ Failed to record authentication failure audit for {Username}", model.Username);
+                    // Continue - don't block user from seeing error message
+                }
 
-                ErrorMessage = "Invalid username or password";
-                Logger.LogWarning("Smart Login failed for user: {Username}", model.Username);
+                ErrorMessage = authResult.ErrorMessage ?? "Invalid username or password";
+                Logger.LogWarning("Authentication failed for user: {Username}", model.Username);
             }
         }
         catch (Exception ex)
@@ -128,74 +119,6 @@ public partial class Login : ComponentBase
             IsLoading = false;
             StateHasChanged();
         }
-    }
-
-    /// <summary>
-    /// Smart Login: Try each user type sequentially using the same pattern as other login implementations
-    /// This matches the logic used in Login.cshtml.cs, LoginController.cs, and SMS_Blazor Login.razor
-    /// </summary>
-    private async Task<(BaseUser? user, SMSUserType userType)> DiscoverAndAuthenticateUserAsync(string email, string password)
-    {
-        // Try SMSApplicationUser first
-        try
-        {
-            Logger.LogDebug("Checking Application User: {Email}", email);
-            var appQuery = new GetSMSApplicationUserByUserNameQuery(email);
-            var appResult = await Mediator.SendAsync(appQuery, CancellationToken.None);
-
-            if (appResult.IsSuccess && appResult.Value != null && appResult.Value.Authenticate(password))
-            {
-                appResult.Value.RecordLogin();
-                Logger.LogInformation("Application User authenticated successfully: {Email}", email);
-                return (appResult.Value, SMSUserType.Application);
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogDebug("Application user auth failed: {Error}", ex.Message);
-        }
-
-        // Try SMSOrganizationalUser
-        try
-        {
-            Logger.LogDebug("Checking Organizational User: {Email}", email);
-            var orgQuery = new GetSMSOrganizationalUserByUserNameQuery(email);
-            var orgResult = await Mediator.SendAsync(orgQuery, CancellationToken.None);
-
-            if (orgResult.IsSuccess && orgResult.Value != null && orgResult.Value.Authenticate(password))
-            {
-                orgResult.Value.RecordLogin();
-                Logger.LogInformation("Organizational User authenticated successfully: {Email}", email);
-                return (orgResult.Value, SMSUserType.Organizational);
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogDebug("Organizational user auth failed: {Error}", ex.Message);
-        }
-
-        // Try SMSStakeholderUser
-        try
-        {
-            Logger.LogDebug("Checking Stakeholder User: {Email}", email);
-            var stakeholderQuery = new GetSMSStakeholderUserByUserNameQuery(email);
-            var stakeholderResult = await Mediator.SendAsync(stakeholderQuery, CancellationToken.None);
-
-            if (stakeholderResult.IsSuccess && stakeholderResult.Value != null && stakeholderResult.Value.Authenticate(password))
-            {
-                stakeholderResult.Value.RecordLogin();
-                Logger.LogInformation("Stakeholder User authenticated successfully: {Email}", email);
-                return (stakeholderResult.Value, SMSUserType.Stakeholder);
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogDebug("Stakeholder user auth failed: {Error}", ex.Message);
-        }
-
-        // No user found or authentication failed
-        Logger.LogWarning("Smart Login failed - user not found or invalid credentials: {Email}", email);
-        return (null, SMSUserType.Application); // Default fallback
     }
 
     /// <summary>

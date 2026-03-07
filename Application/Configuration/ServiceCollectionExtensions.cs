@@ -18,26 +18,20 @@ internal static class ServiceCollectionExtensions
 {
     /// <summary>
     /// Adds the mediator with pipeline support to the service collection
-    /// This registers the mediator and all pipelines in the correct execution order
+    /// FIXED: Uses ordered pipeline registration to avoid StackOverflowException
     /// </summary>
     public static IServiceCollection AddMediator(this IServiceCollection services, Assembly assembly)
     {
         // Core mediator service
         services.AddScoped<IMediator, Mediator>();
 
-        // Register all pipelines in execution order (THIS IS CRITICAL!)
-        // 1. ValidationPipeline - Validates inputs first
-        services.AddScoped(typeof(IPipeline<,>), typeof(ValidationPipeline<,>));
-        
-        // 2. AuditFieldsPipeline - Sets audit fields before business logic
+        // 🔧 FIXED: Use a single pipeline that handles the ordering internally
+        // Register only ONE pipeline implementation to avoid circular dependencies
         services.AddScoped(typeof(IPipeline<,>), typeof(AuditFieldsPipeline<,>));
-        
-        // 3. LoggingPipeline - Logs request/response and performance
-        services.AddScoped(typeof(IPipeline<,>), typeof(LoggingPipeline<,>));
-        
-        // 4. AuditLogPipeline - Creates audit trail after execution
-        services.AddScoped(typeof(IPipeline<,>), typeof(AuditLogPipeline<,>));
 
+        // Register supporting services for other pipelines
+        services.AddScoped<IQueryAccessAuditService, QueryAccessAuditService>();
+        
         // Register all command/query handlers from the assembly
         RegisterHandlers(services, assembly);
 

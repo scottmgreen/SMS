@@ -11,33 +11,96 @@
 namespace SMS_Application.Messaging.Queries;
 
 // =============================================
-// HAZARD QUERIES
+// HAZARD QUERIES WITH AUDIT TRACKING
 // =============================================
 
-public class GetHazardByCodeQuery : BaseQueryBundle, IRequest<Result<Hazard>>
+public class GetHazardByCodeQuery : BaseQueryBundle, IRequest<Result<Hazard>>, IReadQuery
 {
     public HazardID HazardId { get; set; }
+    
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
 
     public GetHazardByCodeQuery(HazardID hazardId)
     {
         HazardId = hazardId ?? throw new ArgumentNullException(nameof(hazardId));
     }
-}
 
-public class GetAllHazardsQuery : BaseQueryBundle, IRequest<Result<List<Hazard>>>
-{
-    public GetAllHazardsQuery()
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
     {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return $"Hazard:{HazardId?.Value ?? "Unknown"}";
+    }
+
+    public string GetAccessType()
+    {
+        return this.GetType().Name.Replace("Query", ""); // GetHazardByCode
     }
 }
 
-public class GetHazardsByReportCodeQuery : BaseQueryBundle, IRequest<Result<List<Hazard>>>
+public class GetAllHazardsQuery : BaseQueryBundle, IRequest<Result<List<Hazard>>>, IReadQuery
+{
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
+
+    public GetAllHazardsQuery()
+    {
+    }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return "Hazard:All";
+    }
+
+    public string GetAccessType()
+    {
+        return this.GetType().Name.Replace("Query", ""); // GetAllHazards
+    }
+}
+
+public class GetHazardsByReportCodeQuery : BaseQueryBundle, IRequest<Result<List<Hazard>>>, IReadQuery
 {
     public ReportID ReportId { get; set; }
+    
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
 
     public GetHazardsByReportCodeQuery(ReportID reportId)
     {
         ReportId = reportId ?? throw new ArgumentNullException(nameof(reportId));
+    }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return $"Hazard:ByReport:{ReportId?.Value ?? "Unknown"}";
+    }
+
+    public string GetAccessType()
+    {
+        return this.GetType().Name.Replace("Query", ""); // GetHazardsByReportCode
     }
 }
 

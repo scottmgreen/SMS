@@ -11,34 +11,71 @@
 namespace SMS_Application.Messaging.Queries;
 
 /// <summary>
-/// Queries for SMS Organizational User operations
+/// Queries for SMS Organizational User operations - WITH AUDIT TRACKING
 /// </summary>
 
 #region Get Queries
 
 /// <summary>
-/// Query to get all SMS Organizational Users
+/// Query to get all SMS Organizational Users - WITH AUDIT TRACKING
 /// </summary>
-public class GetAllSMSOrganizationalUsersQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSOrganizationalUser>>>
+public class GetAllSMSOrganizationalUsersQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSOrganizationalUser>>>, IReadQuery
 {
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
+
     /// <summary>
     /// Initializes a new instance of the GetAllSMSOrganizationalUsersQuery class.
     /// </summary>
     public GetAllSMSOrganizationalUsersQuery()
     {
     }
+
+    // IReadQuery implementation
+    /// <summary>
+    /// Sets the access information for the query.
+    /// </summary>
+    /// <param name="userId">The ID of the user accessing the query</param>
+    /// <param name="timestamp">The timestamp of the access</param>
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    /// <summary>
+    /// Gets the resource identifier for the query.
+    /// </summary>
+    /// <returns>The resource identifier</returns>
+    public string GetResourceIdentifier()
+    {
+        return "SMSOrganizationalUser:All";
+    }
+
+    /// <summary>
+    /// Gets the access type for the query.
+    /// </summary>
+    /// <returns>The access type</returns>
+    public string GetAccessType()
+    {
+        return "GetAll";
+    }
 }
 
-
 /// <summary>
-/// Query to get SMS Organizational User by Code
+/// Query to get SMS Organizational User by Code - WITH AUDIT TRACKING
 /// </summary>
-public class GetSMSOrganizationalUserByCodeQuery : BaseQueryBundle, IRequest<Result<SMSOrganizationalUser>>
+public class GetSMSOrganizationalUserByCodeQuery : BaseQueryBundle, IRequest<Result<SMSOrganizationalUser>>, IReadQuery
 {
     /// <summary>
     /// The Code of the organizational user to retrieve
     /// </summary>
     public string UserCode { get; set; }
+    
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
 
     /// <summary>
     /// Initializes a new instance of the GetSMSOrganizationalUserByCodeQuery class.
@@ -52,17 +89,51 @@ public class GetSMSOrganizationalUserByCodeQuery : BaseQueryBundle, IRequest<Res
 
         UserCode = userCode;
     }
+
+    // IReadQuery implementation
+    /// <summary>
+    /// Sets the access information for the query.
+    /// </summary>
+    /// <param name="userId">The ID of the user accessing the query</param>
+    /// <param name="timestamp">The timestamp of the access</param>
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    /// <summary>
+    /// Gets the resource identifier for the query.
+    /// </summary>
+    /// <returns>The resource identifier</returns>
+    public string GetResourceIdentifier()
+    {
+        return $"SMSOrganizationalUser:Code:{UserCode}";
+    }
+
+    /// <summary>
+    /// Gets the access type for the query.
+    /// </summary>
+    /// <returns>The access type</returns>
+    public string GetAccessType()
+    {
+        return "GetByCode";
+    }
 }
 
 /// <summary>
-/// Query to get SMS Organizational User by username
+/// Query to get SMS Organizational User by username - WITH AUDIT TRACKING
 /// </summary>
-public class GetSMSOrganizationalUserByUserNameQuery : BaseQueryBundle, IRequest<Result<SMSOrganizationalUser>>
+public class GetSMSOrganizationalUserByUserNameQuery : BaseQueryBundle, IRequest<Result<SMSOrganizationalUser>>, IReadQuery
 {
     /// <summary>
     /// The username of the organizational user to retrieve
     /// </summary>
     public string UserName { get; set; }
+
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
 
     /// <summary>
     /// Initializes a new instance of the GetSMSOrganizationalUserByUserNameQuery class.
@@ -76,18 +147,82 @@ public class GetSMSOrganizationalUserByUserNameQuery : BaseQueryBundle, IRequest
 
         UserName = userName;
     }
+
+    // IReadQuery implementation
+    /// <summary>
+    /// Sets the access information for the query.
+    /// </summary>
+    /// <param name="userId">The ID of the user accessing the query</param>
+    /// <param name="timestamp">The timestamp of the access</param>
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    /// <summary>
+    /// Gets the resource identifier for the query.
+    /// </summary>
+    /// <returns>The resource identifier</returns>
+    public string GetResourceIdentifier()
+    {
+        return $"SMSOrganizationalUser:UserName:{UserName}";
+    }
+
+    /// <summary>
+    /// Gets the access type for the query.
+    /// </summary>
+    /// <returns>The access type</returns>
+    public string GetAccessType()
+    {
+        return "GetByUserName";
+    }
 }
 
 /// <summary>
-/// Query to get all active SMS Organizational Users
+/// Query to get all active SMS Organizational Users - WITH AUDIT TRACKING
 /// </summary>
-public class GetActiveSMSOrganizationalUsersQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSOrganizationalUser>>>
+public class GetActiveSMSOrganizationalUsersQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSOrganizationalUser>>>, IReadQuery
 {
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
+
     /// <summary>
     /// Initializes a new instance of the GetActiveSMSOrganizationalUsersQuery class.
     /// </summary>
     public GetActiveSMSOrganizationalUsersQuery()
     {
+    }
+
+    // IReadQuery implementation
+    /// <summary>
+    /// Sets the access information for the query.
+    /// </summary>
+    /// <param name="userId">The ID of the user accessing the query</param>
+    /// <param name="timestamp">The timestamp of the access</param>
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    /// <summary>
+    /// Gets the resource identifier for the query.
+    /// </summary>
+    /// <returns>The resource identifier</returns>
+    public string GetResourceIdentifier()
+    {
+        return "SMSOrganizationalUser:Active";
+    }
+
+    /// <summary>
+    /// Gets the access type for the query.
+    /// </summary>
+    /// <returns>The access type</returns>
+    public string GetAccessType()
+    {
+        return "GetActive";
     }
 }
 

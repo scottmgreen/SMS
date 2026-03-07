@@ -35,7 +35,7 @@
                     
 
                     <!-- SMS Risk Management Menu -->
-                    @if (CurrentUserService.CanAccess("SMS_RiskManagement"))
+                    @if (CurrentUserService.CanRead("SMS_RiskManagement"))
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
@@ -75,7 +75,7 @@
                     </div>
 
                     <!-- SMS Assurance Menu -->
-                    @if (CurrentUserService.CanAccess("SMS_Assurance"))
+                    @if (CurrentUserService.CanRead("SMS_Assurance"))
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
@@ -92,7 +92,7 @@
                     }
 
                     <!-- SMS Policy Menu -->
-                    @if (CurrentUserService.CanAccess("SMS_Policy"))
+                    @if (CurrentUserService.CanRead("SMS_Policy"))
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
@@ -105,7 +105,7 @@
                     }
 
                     <!-- SMS Promotion Menu -->
-                    @if (CurrentUserService.CanAccess("SMS_Promotion"))
+                    @if (CurrentUserService.CanRead("SMS_Promotion"))
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
@@ -117,7 +117,7 @@
                     }
 
                     <!-- System Administration Menu -->
-                    @if (CurrentUserService.HasAdministrativeAccess())
+                    @if (CurrentUserService.CanRead("SMS_System"))
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">

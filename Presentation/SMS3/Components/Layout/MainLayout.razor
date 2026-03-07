@@ -38,6 +38,8 @@
     [Inject] private ISMSSessionService SessionService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private IWebHostEnvironment Environment { get; set; } = default!;
+    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private ILogger<MainLayout> Logger { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -53,15 +55,91 @@
     }
 
     /// <summary>
-    /// Handle logout request from NavMenu
+    /// Handle logout request from NavMenu - NOW WITH PROPER AUDIT RECORDING
     /// </summary>
     private async Task OnLogoutRequested()
     {
-        // Clear authentication using the proper session service
-        await SessionService.ClearSMSSessionAsync();
-        
-        // Navigate to login page
-        Navigation.NavigateTo("/login", forceLoad: true);
+        var logoutStartTime = DateTime.UtcNow;
+        string currentUserName = "Unknown";
+        SMSUserType userType = SMSUserType.Application; // Fixed: Use correct enum value
+        string sessionId = "Unknown";
+        TimeSpan sessionDuration = TimeSpan.Zero;
+
+        try
+        {
+            // Get current user info BEFORE clearing session
+            if (CurrentUserService.IsAuthenticated)
+            {
+                currentUserName = CurrentUserService.UserDisplayName ?? CurrentUserService.UserCode ?? "Unknown";
+                
+                // Get user type from the service
+                var userTypeEnum = CurrentUserService.GetUserTypeEnum();
+                if (userTypeEnum != null)
+                {
+                    userType = userTypeEnum;
+                }
+                
+                // Generate a session ID for audit purposes (since we don't track it elsewhere)
+                sessionId = $"SESSION_{DateTime.UtcNow:yyyyMMddHHmmss}";
+                
+                // Calculate session duration based on login time
+                if (CurrentUserService.LoginTime.HasValue)
+                {
+                    sessionDuration = logoutStartTime - CurrentUserService.LoginTime.Value;
+                }
+                else
+                {
+                    sessionDuration = TimeSpan.FromMinutes(30); // Default fallback
+                }
+            }
+
+            Logger.LogInformation("🔐 Starting logout process for user: {UserName}", currentUserName);
+
+            // 🔐 Record logout audit BEFORE clearing session (and wait for it)
+            try
+            {
+                var logoutCommand = new RecordLogoutCommand(
+                    currentUserName,
+                    userType,
+                    sessionId,
+                    "Manual", // Logout type - user clicked logout
+                    sessionDuration
+                );
+                
+                var auditResult = await Mediator.SendAsync(logoutCommand, CancellationToken.None);
+                Logger.LogInformation("✅ Logout audit recorded for user: {UserName}, Result: {IsSuccess}", 
+                    currentUserName, auditResult.IsSuccess);
+            }
+            catch (Exception auditEx)
+            {
+                Logger.LogError(auditEx, "❌ Failed to record logout audit for {UserName}", currentUserName);
+                // Continue with logout even if audit fails - don't block user
+            }
+
+            // Clear authentication using the proper session service
+            await SessionService.ClearSMSSessionAsync();
+            
+            Logger.LogInformation("✅ Session cleared for user: {UserName}", currentUserName);
+            
+            // Navigate to login page
+            Navigation.NavigateTo("/login", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Error during logout process for user: {UserName}", currentUserName);
+            
+            // Still try to clear session and redirect even if audit fails
+            try
+            {
+                await SessionService.ClearSMSSessionAsync();
+                Navigation.NavigateTo("/login", forceLoad: true);
+            }
+            catch (Exception clearEx)
+            {
+                Logger.LogError(clearEx, "❌ Critical: Failed to clear session during logout");
+                Navigation.NavigateTo("/login", forceLoad: true);
+            }
+        }
     }
 }
 

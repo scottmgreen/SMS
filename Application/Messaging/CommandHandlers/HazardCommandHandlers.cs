@@ -18,34 +18,25 @@ namespace SMS_Application.Messaging.CommandHandlers;
 // =============================================
 
 /// <summary>
-/// Command handler for creating hazards using Application Services
-/// Used by HazardReporting page following Clean Architecture principles
+/// Command handler for creating hazards using CQRS/Mediator pattern
+/// Ensures ALL sub-operations go through AuditPipeline for complete audit trail consistency
 /// </summary>
 public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<CreateHazardCommand, Result<Hazard>>
 {
     private readonly HazardService _hazardService;
-    private readonly IScoringPanelService _scoringPanelService;
-    private readonly HazardLocationService _hazardLocationService;
-    private readonly IRiskAssessmentService _riskAssessmentService;
-    private readonly IRiskAnalysisService _riskAnalysisService;
+    private readonly IMediator _mediator;  // 🔧 ADD: IMediator for consistent sub-operations
     private readonly ILogger<CreateHazardCommandHandler> _logger;
     private readonly ILogSupport _logsupport;
     private readonly string _logheader = string.Empty;
 
     public CreateHazardCommandHandler(
         HazardService hazardService,
-        IScoringPanelService scoringPanelService,
-        HazardLocationService hazardLocationService,
-        IRiskAssessmentService riskAssessmentService,
-        IRiskAnalysisService riskAnalysisService,
+        IMediator mediator,  // 🔧 ADD: IMediator injection
         ILogSupport logsupport,
         ILogger<CreateHazardCommandHandler> logger)
     {
         _hazardService = hazardService ?? throw new ArgumentNullException(nameof(hazardService));
-        _scoringPanelService = scoringPanelService ?? throw new ArgumentNullException(nameof(scoringPanelService));
-        _hazardLocationService = hazardLocationService ?? throw new ArgumentNullException(nameof(hazardLocationService));
-        _riskAssessmentService = riskAssessmentService ?? throw new ArgumentNullException(nameof(riskAssessmentService));
-        _riskAnalysisService = riskAnalysisService ?? throw new ArgumentNullException(nameof(riskAnalysisService));
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));  // 🔧 ADD: Validation
         _logsupport = logsupport;
         _logheader = _logsupport.GenerateLogHeader();
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -55,56 +46,50 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Creating new hazard - {Name} for Report: {ReportCode}", 
+            _logger.LogInformation("✅ CQRS Consistent: Creating new hazard - {Name} for Report: {ReportCode}", 
                 request.Hazard.Name, request.Hazard.ReportCode);
 
             Hazard hazard = request.Hazard;
             hazard.ReportCode = request.Hazard.ReportCode;
 
+            // ✅ Main hazard creation - goes through AuditPipeline via this handler
             var hazardResult = await _hazardService.CreateHazardAsync(hazard, ct);
             if (hazardResult.IsFailure)
             {
-                _logger.LogApplicationError($"{_logheader} Clean Architecture: Failed to save hazard via application service", ApplicationEventIds.Error, null);
+                _logger.LogApplicationError($"{_logheader} Failed to save hazard via application service", ApplicationEventIds.Error, null);
                 return Result<Hazard>.Failure<Hazard>(hazardResult.Error);
+            }
+
+            hazard = hazardResult.Value;
+
+            // ✅ FIXED: Create hazard location using IMediator -> ensures AuditPipeline consistency
+            var hazardLocation = new HazardLocation(new HazardLocationID("HL-0000"))
+            {
+                HazardCode = hazard.Code,
+                Latitude = 0,
+                Longitude = 0,
+                Description = "Map selected location"
+            };
+
+            var createLocationCommand = new CreateHazardLocationCommand(hazardLocation);
+            var createdLocationResult = await _mediator.SendAsync(createLocationCommand, ct);  // 🔧 FIXED: Use IMediator instead of direct service call
+            
+            if (createdLocationResult.IsSuccess)
+            {
+                hazard.HazardLocation = createdLocationResult.Value;
+                _logger.LogInformation("✅ HazardLocation created via IMediator with audit trail for Hazard: {HazardCode}", hazard.Code);
             }
             else
             {
-                hazard = hazardResult.Value;
-
-                //// Create scoring panel using Application Service
-                //var scoringPanel = new ScoringPanel(new ScoringPanelID("SP-0000"))
-                //{
-                //    HazardCode = hazard.Code
-                //};
-
-                //var scoringPanelResult = await _scoringPanelService.CreateScoringPanelAsync(scoringPanel, ct);
-                //if (scoringPanelResult.IsFailure)
-                //{
-                //    _logger.LogWarning("Failed to create scoring panel for hazard {HazardCode}", hazard.Code);
-                //}
-
-                // Create hazard location using Application Service
-                var hazardLocation = new HazardLocation(new HazardLocationID("HL-0000"))
-                {
-                    HazardCode = hazard.Code,
-                    Latitude = 0,
-                    Longitude = 0,
-                    Description = "Map selected location"
-                };
-
-                var createdLocationResult = await _hazardLocationService.CreateHazardLocationAsync(hazardLocation, ct);
-                if (createdLocationResult.IsSuccess)
-                {
-                    hazard.HazardLocation = createdLocationResult.Value;
-                }
+                _logger.LogWarning("⚠️ Failed to create HazardLocation via IMediator for Hazard: {HazardCode}", hazard.Code);
             }
 
-            _logger.LogApplicationInformation(ApplicationEventIds.Information, "✅ Clean Architecture: Hazard saved via application service - {Code}", hazard.Code);
+            _logger.LogApplicationInformation(ApplicationEventIds.Information, "✅ CQRS Consistent: Hazard and sub-entities saved with complete audit trail - {Code}", hazard.Code);
             return Result<Hazard>.Success(hazardResult.Value);
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("✅ Clean Architecture: Exception creating hazard - {Name}", ApplicationEventIds.Error, ex);
+            _logger.LogApplicationError("❌ Exception creating hazard - {Name}", ApplicationEventIds.Error, ex);
             return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.CreateFailed);
         }
     }

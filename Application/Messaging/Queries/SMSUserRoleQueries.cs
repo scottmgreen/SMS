@@ -13,34 +13,70 @@ using SMS_Domain.Models;
 namespace SMS_Application.Messaging.Queries;
 
 /// <summary>
-/// Queries for SMS User Role operations
+/// Queries for SMS User Role operations - WITH AUDIT TRACKING
 /// </summary>
 
 #region Get All Queries
 
 /// <summary>
-/// Query to get all SMS User Role assignments
+/// Query to get all SMS User Role assignments - WITH AUDIT TRACKING
 /// </summary>
-public class GetAllSMSUserRolesQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSUserRole>>>
+public class GetAllSMSUserRolesQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSUserRole>>>, IReadQuery
 {
-    /// <summary>
-    /// Initializes a new instance of the GetAllSMSUserRolesQuery class.
-    /// </summary>
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
+
     public GetAllSMSUserRolesQuery()
     {
+    }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return "SMSUserRole:All";
+    }
+
+    public string GetAccessType()
+    {
+        return "GetAll";
     }
 }
 
 /// <summary>
-/// Query to get all active SMS User Role assignments
+/// Query to get all active SMS User Role assignments - WITH AUDIT TRACKING
 /// </summary>
-public class GetAllActiveSMSUserRolesQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSUserRole>>>
+public class GetAllActiveSMSUserRolesQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSUserRole>>>, IReadQuery
 {
-    /// <summary>
-    /// Initializes a new instance of the GetAllActiveSMSUserRolesQuery class.
-    /// </summary>
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
+
     public GetAllActiveSMSUserRolesQuery()
     {
+    }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return "SMSUserRole:AllActive";
+    }
+
+    public string GetAccessType()
+    {
+        return "GetAllActive";
     }
 }
 
@@ -110,28 +146,49 @@ public class GetSMSUserRolesByUserIdQuery : BaseQueryBundle, IRequest<Result<IEn
 }
 
 /// <summary>
-/// Query to get active SMS User Role assignments by User ID
+/// Query to get active SMS User Role assignments by User ID - WITH AUDIT TRACKING
 /// </summary>
-//public class GetActiveSMSUserRolesByUserIdQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSUserRole>>>
-//{
-//    /// <summary>
-//    /// The User ID to get active roles for
-//    /// </summary>
-//    public string UserCode { get; set; }
+public class GetActiveSMSUserRolesByUserIdQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSUserRole>>>, IReadQuery
+{
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
 
-//    /// <summary>
-//    /// Initializes a new instance of the GetActiveSMSUserRolesByUserIdQuery class.
-//    /// </summary>
-//    /// <param name="userId">The user ID</param>
-//    /// <exception cref="ArgumentException">Thrown when userId is null or empty</exception>
-//    public GetActiveSMSUserRolesByUserIdQuery(string userId)
-//    {
-//        if (string.IsNullOrWhiteSpace(userId))
-//            throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+    /// <summary>
+    /// The User ID to get active roles for
+    /// </summary>
+    public string UserCode { get; set; }
 
-//        UserCode = userId;
-//    }
-//}
+    /// <summary>
+    /// Initializes a new instance of the GetActiveSMSUserRolesByUserIdQuery class.
+    /// </summary>
+    /// <param name="userId">The user ID</param>
+    /// <exception cref="ArgumentException">Thrown when userId is null or empty</exception>
+    public GetActiveSMSUserRolesByUserIdQuery(string userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+            throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+
+        UserCode = userId;
+    }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return "SMSUserRole:ActiveByUser";
+    }
+
+    public string GetAccessType()
+    {
+        return "GetActiveByUser";
+    }
+}
 
 #endregion
 

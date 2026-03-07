@@ -5,21 +5,19 @@ namespace SMS3.Components.Shared;
 
 /// <summary>
 /// Base class for authenticated pages with centralized user context
-/// Uses Application layer ICurrentUserService directly - NO MORE AuthenticationState!
+/// Uses Application layer ICurrentUserService directly for explicit permission checking
 /// </summary>
 public abstract class AuthenticatedPageBase : ComponentBase
 {
     [Inject] protected ICurrentUserService CurrentUserService { get; set; } = default!;
 
     /// <summary>
-    /// Direct access to permission methods (preferred approach)
+    /// Direct access to explicit permission methods - use these in your pages
     /// </summary>
     protected bool CanRead(string module) => CurrentUserService.CanRead(module);
     protected bool CanCreate(string module) => CurrentUserService.CanCreate(module);
     protected bool CanUpdate(string module) => CurrentUserService.CanUpdate(module);
     protected bool CanDelete(string module) => CurrentUserService.CanDelete(module);
-    protected bool CanAccess(string module) => CurrentUserService.CanAccess(module);
-    protected bool HasAdminAccess() => CurrentUserService.HasAdministrativeAccess();
     
     /// <summary>
     /// Direct access to user properties

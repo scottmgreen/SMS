@@ -16,14 +16,15 @@ namespace SMS_Application.Messaging.QueryHandlers;
 
 /// <summary>
 /// Query handler for getting all SMS stakeholder groups
+/// FIXED: Uses DataService directly to prevent circular mediator calls
 /// </summary>
 public class GetAllSMSStakeholderGroupsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSStakeholderGroupsQuery, Result<IEnumerable<SMSStakeholderGroup>>>
 {
-    private readonly SMSStakeholderGroupService _dataService;
+    private readonly SMSStakeholderGroupDataService _dataService;
     private readonly ILogger<GetAllSMSStakeholderGroupsQueryHandler> _logger;
 
     public GetAllSMSStakeholderGroupsQueryHandler(
-        SMSStakeholderGroupService dataService,
+        SMSStakeholderGroupDataService dataService,
         ILogger<GetAllSMSStakeholderGroupsQueryHandler> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
@@ -36,7 +37,8 @@ public class GetAllSMSStakeholderGroupsQueryHandler : BaseQueryBundle, IRequestH
         {
             _logger.LogInformation("Processing GetAllSMSStakeholderGroupsQuery");
 
-            var result = await _dataService.GetAllStakeholderGroupsAsync();
+            // FIXED: Call DataService directly instead of Application Service to avoid circular mediator calls
+            var result = await _dataService.GetAllAsync(ct);
 
             if (result.IsSuccess)
             {

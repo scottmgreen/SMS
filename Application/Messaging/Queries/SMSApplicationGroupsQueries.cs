@@ -11,33 +11,50 @@
 namespace SMS_Application.Messaging.Queries;
 
 /// <summary>
-/// Query to get all SMS stakeholder groups
+/// Query to get all SMS application groups - WITH AUDIT TRACKING
 /// </summary>
-public class GetAllSMSApplicationGroupsQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSApplicationGroup>>>
+public class GetAllSMSApplicationGroupsQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSApplicationGroup>>>, IReadQuery
 {
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
+
     /// <summary>
     /// Initializes a new instance of the GetAllSMSApplicationGroupsQuery class.
     /// </summary>
     public GetAllSMSApplicationGroupsQuery()
     {
     }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return "SMSApplicationGroup:All";
+    }
+
+    public string GetAccessType()
+    {
+        return "GetAll";
+    }
 }
 
 /// <summary>
-/// Query to get an SMS stakeholder group by code
+/// Query to get an SMS application group by code - WITH AUDIT TRACKING
 /// </summary>
-public class GetSMSApplicationGroupByCodeQuery : BaseQueryBundle, IRequest<Result<SMSApplicationGroup>>
+public class GetSMSApplicationGroupByCodeQuery : BaseQueryBundle, IRequest<Result<SMSApplicationGroup>>, IReadQuery
 {
-    /// <summary>
-    /// The code of the stakeholder group to retrieve
-    /// </summary>
     public string GroupCode { get; set; }
+    
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
 
-    /// <summary>
-    /// Initializes a new instance of the GetSMSApplicationGroupByCodeQuery class.
-    /// </summary>
-    /// <param name="groupCode">The code of the stakeholder group to retrieve</param>
-    /// <exception cref="ArgumentException">Thrown when groupCode is null or empty</exception>
     public GetSMSApplicationGroupByCodeQuery(string groupCode)
     {
         if (string.IsNullOrWhiteSpace(groupCode))
@@ -45,23 +62,36 @@ public class GetSMSApplicationGroupByCodeQuery : BaseQueryBundle, IRequest<Resul
 
         GroupCode = groupCode;
     }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return $"SMSApplicationGroup:Code:{GroupCode}";
+    }
+
+    public string GetAccessType()
+    {
+        return "GetByCode";
+    }
 }
 
 /// <summary>
-/// Query to get SMS stakeholder groups by user code
+/// Query to get SMS application groups by user code - WITH AUDIT TRACKING
 /// </summary>
-public class GetSMSApplicationGroupsByUserCodeQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSApplicationGroup>>>
+public class GetSMSApplicationGroupsByUserCodeQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSApplicationGroup>>>, IReadQuery
 {
-    /// <summary>
-    /// The code of the user to get stakeholder groups for
-    /// </summary>
     public string UserCode { get; set; }
+    
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
 
-    /// <summary>
-    /// Initializes a new instance of the GetSMSApplicationGroupsByUserCodeQuery class.
-    /// </summary>
-    /// <param name="userCode">The code of the user to get stakeholder groups for</param>
-    /// <exception cref="ArgumentException">Thrown when userCode is null or empty</exception>
     public GetSMSApplicationGroupsByUserCodeQuery(string userCode)
     {
         if (string.IsNullOrWhiteSpace(userCode))
@@ -69,28 +99,58 @@ public class GetSMSApplicationGroupsByUserCodeQuery : BaseQueryBundle, IRequest<
 
         UserCode = userCode;
     }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return $"SMSApplicationGroup:ByUser:{UserCode}";
+    }
+
+    public string GetAccessType()
+    {
+        return "GetByUser";
+    }
 }
 
 /// <summary>
-/// Query to get users by stakeholder group code
+/// Query to get users by application group code - WITH AUDIT TRACKING
 /// </summary>
-public class GetUsersByApplicationGroupCodeQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSApplicationUser>>>
+public class GetUsersByApplicationGroupCodeQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSApplicationUser>>>, IReadQuery
 {
-    /// <summary>
-    /// The code of the stakeholder group to get users for
-    /// </summary>
     public string GroupCode { get; set; }
+    
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
 
-    /// <summary>
-    /// Initializes a new instance of the GetUsersByApplicationGroupCodeQuery class.
-    /// </summary>
-    /// <param name="groupCode">The code of the stakeholder group to get users for</param>
-    /// <exception cref="ArgumentException">Thrown when groupCode is null or empty</exception>
     public GetUsersByApplicationGroupCodeQuery(string groupCode)
     {
         if (string.IsNullOrWhiteSpace(groupCode))
             throw new ArgumentException("Group code cannot be null or empty", nameof(groupCode));
 
         GroupCode = groupCode;
+    }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return $"SMSApplicationUser:ByGroup:{GroupCode}";
+    }
+
+    public string GetAccessType()
+    {
+        return "GetUsersByGroup";
     }
 }

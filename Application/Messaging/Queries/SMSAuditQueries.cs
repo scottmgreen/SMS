@@ -14,8 +14,8 @@ namespace SMS_Application.Messaging.Queries;
 /// SMS Audit Queries for CQRS pattern
 /// </summary>
 
-// GET ALL SMS AUDITS
-public class GetAllSMSAuditsQuery : BaseQueryBundle, IRequest<Result<List<SMSAudit>>>
+// GET ALL SMS AUDITS - WITH AUDIT TRACKING
+public class GetAllSMSAuditsQuery : BaseQueryBundle, IRequest<Result<List<SMSAudit>>>, IReadQuery
 {
     public string? StatusFilter { get; set; }
     public string? AuditTypeFilter { get; set; }
@@ -25,6 +25,10 @@ public class GetAllSMSAuditsQuery : BaseQueryBundle, IRequest<Result<List<SMSAud
     public DateTime? StartDateTo { get; set; }
     public bool IncludeFindings { get; set; }
     public bool IncludeEvidence { get; set; }
+
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
 
     public GetAllSMSAuditsQuery(string? statusFilter = null, string? auditTypeFilter = null,
         string? departmentFilter = null, string? auditorFilter = null, DateTime? startDateFrom = null,
@@ -39,20 +43,60 @@ public class GetAllSMSAuditsQuery : BaseQueryBundle, IRequest<Result<List<SMSAud
         IncludeFindings = includeFindings;
         IncludeEvidence = includeEvidence;
     }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return "SMSAudit:All" + 
+               (StatusFilter != null ? $":Status:{StatusFilter}" : "") +
+               (AuditTypeFilter != null ? $":Type:{AuditTypeFilter}" : "");
+    }
+
+    public string GetAccessType()
+    {
+        return "GetAll";
+    }
 }
 
-// GET SMS AUDIT BY CODE
-public class GetSMSAuditByCodeQuery : BaseQueryBundle, IRequest<Result<SMSAudit>>
+// GET SMS AUDIT BY CODE - WITH AUDIT TRACKING
+public class GetSMSAuditByCodeQuery : BaseQueryBundle, IRequest<Result<SMSAudit>>, IReadQuery
 {
     public string AuditCode { get; set; }
     public bool IncludeFindings { get; set; }
     public bool IncludeEvidence { get; set; }
+
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
 
     public GetSMSAuditByCodeQuery(string auditCode, bool includeFindings = true, bool includeEvidence = true)
     {
         AuditCode = auditCode ?? throw new ArgumentNullException(nameof(auditCode));
         IncludeFindings = includeFindings;
         IncludeEvidence = includeEvidence;
+    }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return $"SMSAudit:Code:{AuditCode}";
+    }
+
+    public string GetAccessType()
+    {
+        return "GetByCode";
     }
 }
 

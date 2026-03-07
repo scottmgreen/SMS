@@ -101,31 +101,17 @@ public interface ICurrentUserService
     bool CanDelete(string module);
 
     /// <summary>
-    /// Check if user has ANY permission in a module
-    /// </summary>
-    bool CanAccess(string module);
-
-    /// <summary>
     /// Get user type as Smart Enum
     /// </summary>
     SMSUserType? GetUserTypeEnum();
-
-    /// <summary>
-    /// Check if user has administrative access
-    /// </summary>
-    bool HasAdministrativeAccess();
 
     /// <summary>
     /// Get all modules the user has access to
     /// </summary>
     List<string> GetAccessibleModules();
 
-    #endregion
-
-    #region Session Management Methods
-
     /// <summary>
-    /// Clear authentication for logout (delegates to ISMSSessionService)
+    /// Clear authentication for logout
     /// </summary>
     Task ClearAuthentication();
 

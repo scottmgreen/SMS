@@ -10,12 +10,13 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using SMS_Application.Messaging.Queries;
+using SMS_Application.Interfaces;
 
 namespace SMS_Application.Services;
 
 /// <summary>
-/// Enhanced Current User Service - Matches AuthenticationState functionality
-/// Provides comprehensive user context including roles and permissions from session
+/// Enhanced Current User Service - Provides direct session-based user context
+/// Optimized for synchronous access to current user information from session data
 /// </summary>
 public class CurrentUserService : ICurrentUserService
 {
@@ -344,55 +345,42 @@ public class CurrentUserService : ICurrentUserService
 
     #endregion
 
-    #region Permission Check Methods (Same as AuthenticationState)
+    #region Permission Check Methods (Use Direct Session Data - No AuthorizationService)
 
     /// <summary>
-    /// Check if user can CREATE in a specific module
+    /// Check if user can CREATE in a specific module - uses direct session data
     /// </summary>
     public bool CanCreate(string module)
     {
-        return IsAuthenticated &&
-               Permissions.Any(p => p.SMSModule == module && p.Create);
+        return IsAuthenticated && Permissions.Any(p => p.SMSModule == module && p.Create);
     }
 
     /// <summary>
-    /// Check if user can READ in a specific module
+    /// Check if user can READ in a specific module - uses direct session data
     /// </summary>
     public bool CanRead(string module)
     {
-        return IsAuthenticated &&
-               Permissions.Any(p => p.SMSModule == module && p.Read);
+        return IsAuthenticated && Permissions.Any(p => p.SMSModule == module && p.Read);
     }
 
     /// <summary>
-    /// Check if user can UPDATE in a specific module
+    /// Check if user can UPDATE in a specific module - uses direct session data
     /// </summary>
     public bool CanUpdate(string module)
     {
-        return IsAuthenticated &&
-               Permissions.Any(p => p.SMSModule == module && p.Update);
+        return IsAuthenticated && Permissions.Any(p => p.SMSModule == module && p.Update);
     }
 
     /// <summary>
-    /// Check if user can DELETE in a specific module
+    /// Check if user can DELETE in a specific module - uses direct session data
     /// </summary>
     public bool CanDelete(string module)
     {
-        return IsAuthenticated &&
-               Permissions.Any(p => p.SMSModule == module && p.Delete);
+        return IsAuthenticated && Permissions.Any(p => p.SMSModule == module && p.Delete);
     }
 
     /// <summary>
-    /// Check if user has ANY permission in a module
-    /// </summary>
-    public bool CanAccess(string module)
-    {
-        return IsAuthenticated &&
-               Permissions.Any(p => p.SMSModule == module && (p.Create || p.Read || p.Update || p.Delete));
-    }
-
-    /// <summary>
-    /// Get user type as Smart Enum
+    /// Get user type as Smart Enum - uses direct session data
     /// </summary>
     public SMSUserType? GetUserTypeEnum()
     {
@@ -403,16 +391,7 @@ public class CurrentUserService : ICurrentUserService
     }
 
     /// <summary>
-    /// Check if user has administrative access
-    /// </summary>
-    public bool HasAdministrativeAccess()
-    {
-        return IsAuthenticated &&
-               (UserType == "Application" || UserType == "Organizational");
-    }
-
-    /// <summary>
-    /// Get all modules the user has access to
+    /// Get all modules the user has access to - uses direct session data
     /// </summary>
     public List<string> GetAccessibleModules()
     {

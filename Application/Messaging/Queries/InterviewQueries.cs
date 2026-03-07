@@ -11,22 +11,64 @@
 namespace SMS_Application.Messaging.Queries;
 
 // =============================================
-// INTERVIEW QUERIES
+// INTERVIEW QUERIES WITH AUDIT TRACKING
 // =============================================
 
-public class GetInterviewByCodeQuery : BaseQueryBundle, IRequest<Result<Interview>>
+public class GetInterviewByCodeQuery : BaseQueryBundle, IRequest<Result<Interview>>, IReadQuery
 {
     public InterviewID InterviewId { get; set; }
+    
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
 
     public GetInterviewByCodeQuery(InterviewID interviewId)
     {
         InterviewId = interviewId ?? throw new ArgumentNullException(nameof(interviewId));
     }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return $"Interview:{InterviewId?.Value ?? "Unknown"}";
+    }
+
+    public string GetAccessType()
+    {
+        return "GetById";
+    }
 }
 
-public class GetAllInterviewsQuery : BaseQueryBundle, IRequest<Result<List<Interview>>>
+public class GetAllInterviewsQuery : BaseQueryBundle, IRequest<Result<List<Interview>>>, IReadQuery
 {
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
+
     public GetAllInterviewsQuery()
     {
+    }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return "Interview:All";
+    }
+
+    public string GetAccessType()
+    {
+        return "GetAll";
     }
 }
