@@ -2,6 +2,7 @@
 @using SMS3.Components.Layout
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
+@using SMS_Application.Services
 
 
 <div class="d-flex flex-column min-vh-100 sms-main-layout">
@@ -55,19 +56,19 @@
     }
 
     /// <summary>
-    /// Handle logout request from NavMenu - NOW WITH PROPER AUDIT RECORDING
+    /// Handle logout request from NavMenu - STATIC AUTHENTICATION APPROACH
     /// </summary>
     private async Task OnLogoutRequested()
     {
         var logoutStartTime = DateTime.UtcNow;
         string currentUserName = "Unknown";
-        SMSUserType userType = SMSUserType.Application; // Fixed: Use correct enum value
+        SMSUserType userType = SMSUserType.Application;
         string sessionId = "Unknown";
         TimeSpan sessionDuration = TimeSpan.Zero;
 
         try
         {
-            // Get current user info BEFORE clearing session
+            // Get current user info BEFORE clearing static authentication
             if (CurrentUserService.IsAuthenticated)
             {
                 currentUserName = CurrentUserService.UserDisplayName ?? CurrentUserService.UserCode ?? "Unknown";
@@ -79,8 +80,8 @@
                     userType = userTypeEnum;
                 }
                 
-                // Generate a session ID for audit purposes (since we don't track it elsewhere)
-                sessionId = $"SESSION_{DateTime.UtcNow:yyyyMMddHHmmss}";
+                // Generate a session ID for audit purposes
+                sessionId = $"STATIC_SESSION_{DateTime.UtcNow:yyyyMMddHHmmss}";
                 
                 // Calculate session duration based on login time
                 if (CurrentUserService.LoginTime.HasValue)
@@ -95,7 +96,7 @@
 
             Logger.LogInformation("🔐 Starting logout process for user: {UserName}", currentUserName);
 
-            // 🔐 Record logout audit BEFORE clearing session (and wait for it)
+            // 🔐 Record logout audit BEFORE clearing authentication (and wait for it)
             try
             {
                 var logoutCommand = new RecordLogoutCommand(
@@ -113,113 +114,34 @@
             catch (Exception auditEx)
             {
                 Logger.LogError(auditEx, "❌ Failed to record logout audit for {UserName}", currentUserName);
-                // Continue with logout even if audit fails - don't block user
+                // Continue with logout even if audit fails
             }
 
-            // Clear authentication using the proper session service
-            await SessionService.ClearSMSSessionAsync();
+            // **CLEAR STATIC AUTHENTICATION - No session clearing needed**
+            StaticCurrentUserService.ClearAuthenticationState();
             
-            Logger.LogInformation("✅ Session cleared for user: {UserName}", currentUserName);
+            Logger.LogInformation("✅ Static authentication cleared for user: {UserName}", currentUserName);
             
-            // Navigate to login page
-            Navigation.NavigateTo("/login", forceLoad: true);
+            // Navigate to HOME PAGE, not login - let them see the guest view
+            Navigation.NavigateTo("/", forceLoad: true);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "❌ Error during logout process for user: {UserName}", currentUserName);
             
-            // Still try to clear session and redirect even if audit fails
+            // Still try to clear authentication and redirect even if audit fails
             try
             {
-                await SessionService.ClearSMSSessionAsync();
-                Navigation.NavigateTo("/login", forceLoad: true);
+                StaticCurrentUserService.ClearAuthenticationState();
+                Navigation.NavigateTo("/", forceLoad: true);
             }
             catch (Exception clearEx)
             {
-                Logger.LogError(clearEx, "❌ Critical: Failed to clear session during logout");
-                Navigation.NavigateTo("/login", forceLoad: true);
+                Logger.LogError(clearEx, "❌ Critical: Failed to clear static authentication during logout");
+                Navigation.NavigateTo("/", forceLoad: true);
             }
         }
     }
 }
 
-<style>
-/* =============================================================================
-   SMS MAIN LAYOUT - SIMPLE AND CLEAN
-   ============================================================================= */
-
-.sms-main-layout {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.sms-main-header {
-    position: sticky;
-    top: 0;
-    z-index: 1030;
-    background-color: #212e61 !important;
-    color: white !important;
-}
-
-.sms-main-content {
-    min-height: calc(100vh - 70px);
-}
-
-/* Error UI Styling */
-.sms-error-ui {
-    background: #212e61 !important;
-    color: white !important;
-    padding: 1rem;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 9999;
-    display: none;
-    border-top: 2px solid white !important;
-}
-
-.sms-error-content {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 500;
-}
-
-.sms-error-reload {
-    color: white !important;
-    text-decoration: underline;
-    margin-left: 1rem;
-    font-weight: 600;
-}
-
-.sms-error-reload:hover {
-    color: white !important;
-    opacity: 0.8;
-}
-
-.sms-error-dismiss {
-    margin-left: 1rem;
-    background: none;
-    border: none;
-    color: white !important;
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 0 0.5rem;
-    border-radius: 0.25rem;
-    transition: background-color 0.2s;
-}
-
-.sms-error-dismiss:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-/* Ensure consistent spacing */
-.container-fluid {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-}
-
-/* =============================================================================
-   END SMS MAIN LAYOUT
-   ============================================================================= */
-</style>
+<!-- Shared layout styles are now in wwwroot/css/shared-layouts.css -->

@@ -43,7 +43,7 @@ public class QueryAuditPipeline<TRequest, TResult> : IPipeline<TRequest, TResult
         cancellationToken.ThrowIfCancellationRequested();
 
         var queryType = request.GetType().Name;
-        var currentUserId = _currentUserService.UserCode;
+        var currentUserId = _currentUserService.UserDisplayName;
         var isAuthenticated = _currentUserService.IsAuthenticated;
 
         // Only audit queries that implement IReadQuery

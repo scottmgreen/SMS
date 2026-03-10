@@ -44,7 +44,7 @@ public class AuditLogPipeline<TRequest, TResult> : IPipeline<TRequest, TResult>
         cancellation.ThrowIfCancellationRequested();
 
         var commandName = request.GetType().Name;
-        var currentUserId = _currentUserService.UserCode;
+        var currentUserId = _currentUserService.UserDisplayName;
         var timestamp = DateTime.UtcNow;
 
         _logger.LogInformation("✅ Clean Architecture: Audit pipeline processing {CommandType} by user {UserId}", 
@@ -82,10 +82,10 @@ public class AuditLogPipeline<TRequest, TResult> : IPipeline<TRequest, TResult>
     {
         try
         {
-            if (!ShouldAuditCommand(request.GetType().Name))
+            if (!ShouldAuditCommand(request))
                 return;
 
-            var auditEntry = new AuditLogEntry(new AuditLogEntryID(Guid.NewGuid().ToString()))
+            var auditEntry = new AuditLogEntry(new AuditLogEntryID("AL-0000"))
             {
                 UserID = userId,
                 EventDateTime = timestamp.ToString("yyyy-MM-dd HH:mm:ss"),
@@ -123,7 +123,7 @@ public class AuditLogPipeline<TRequest, TResult> : IPipeline<TRequest, TResult>
     {
         try
         {
-            var auditEntry = new AuditLogEntry(new AuditLogEntryID(Guid.NewGuid().ToString()))
+            var auditEntry = new AuditLogEntry(new AuditLogEntryID("AL-0000"))
             {
                 UserID = userId,
                 EventDateTime = timestamp.ToString("yyyy-MM-dd HH:mm:ss"),
@@ -144,40 +144,42 @@ public class AuditLogPipeline<TRequest, TResult> : IPipeline<TRequest, TResult>
     }
 
     /// <summary>
-    /// Determine if a command should be audited based on business requirements
+    /// Determine if a command should be audited based on implemented interfaces
     /// </summary>
-    private static bool ShouldAuditCommand(string commandName)
+    private static bool ShouldAuditCommand(TRequest request)
     {
-        var auditableCommands = new[]
-        {
-            "CreateHazardCommand", "UpdateHazardCommand", "DeleteHazardCommand",
-            "CreateReportCommand", "UpdateReportCommand", "DeleteReportCommand",
-            "CreateInvestigationCommand", "UpdateInvestigationCommand", "DeleteInvestigationCommand",
-            "CreateMitigationCommand", "UpdateMitigationCommand", "DeleteMitigationCommand",
-            "CreateRiskAssessmentCommand", "UpdateRiskAssessmentCommand", "DeleteRiskAssessmentCommand",
-            "CreateSMSApplicationUserCommand", "UpdateSMSApplicationUserCommand", "DeleteSMSApplicationUserCommand",
-            "CreateSMSOrganizationalUserCommand", "UpdateSMSOrganizationalUserCommand", "DeleteSMSOrganizationalUserCommand",
-            "CreateSMSStakeholderUserCommand", "UpdateSMSStakeholderUserCommand", "DeleteSMSStakeholderUserCommand",
-            "UpdateReportStatusCommand", "SaveStep", "UpdateProgressCommand"
-        };
-
-        return auditableCommands.Any(cmd => commandName.Contains(cmd, StringComparison.OrdinalIgnoreCase));
+        var requestType = request.GetType();
+        
+        // Check if implements any auditable interfaces - no magic strings!
+        return typeof(ICreateCommand).IsAssignableFrom(requestType) ||
+               typeof(IUpdateCommand).IsAssignableFrom(requestType) ||
+               typeof(IDeleteCommand).IsAssignableFrom(requestType) ||
+               typeof(IReadQuery).IsAssignableFrom(requestType);
     }
 
     /// <summary>
-    /// Get audit event type based on command characteristics
+    /// Get audit event type based on command interfaces
     /// </summary>
     private static string GetAuditEventType(TRequest request)
     {
-        return request switch
-        {
-            ICreateCommand => "ENTITY_CREATED",
-            IUpdateCommand => "ENTITY_UPDATED",
-            IDeleteCommand => "ENTITY_DELETED",
-            _ when request.GetType().Name.Contains("Validate") => "VALIDATION_PERFORMED",
-            _ when request.GetType().Name.Contains("Authenticate") => "AUTHENTICATION_ATTEMPT",
-            _ => "BUSINESS_ACTION"
-        };
+        var requestType = request.GetType();
+        
+        if (typeof(ICreateCommand).IsAssignableFrom(requestType))
+            return "ENTITY_CREATED";
+        if (typeof(IUpdateCommand).IsAssignableFrom(requestType))
+            return "ENTITY_UPDATED";
+        if (typeof(IDeleteCommand).IsAssignableFrom(requestType))
+            return "ENTITY_DELETED";
+        if (typeof(IReadQuery).IsAssignableFrom(requestType))
+            return "DATA_ACCESSED";
+        
+        // Fallback for other types
+        if (request.GetType().Name.Contains("Validate"))
+            return "VALIDATION_PERFORMED";
+        if (request.GetType().Name.Contains("Authenticate"))
+            return "AUTHENTICATION_ATTEMPT";
+            
+        return "BUSINESS_ACTION";
     }
 
     /// <summary>

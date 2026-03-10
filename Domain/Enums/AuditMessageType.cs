@@ -20,27 +20,27 @@ public sealed class AuditMessageType : IEquatable<AuditMessageType>
     /// <summary>
     /// CRUD Read operations (Queries) - Data access and retrieval
     /// </summary>
-    public static readonly AuditMessageType CrudRead = new("CRUD_READ", "Data read/query operations");
+    public static readonly AuditMessageType CrudRead = new("READ", "Data read/query operations");
 
     /// <summary>
     /// CRUD Create operations (Commands) - Creating new entities
     /// </summary>
-    public static readonly AuditMessageType CrudCreate = new("CRUD_CREATE", "Entity creation operations");
+    public static readonly AuditMessageType CrudCreate = new("CREATE", "Entity creation operations");
 
     /// <summary>
     /// CRUD Update operations (Commands) - Modifying existing entities
     /// </summary>
-    public static readonly AuditMessageType CrudUpdate = new("CRUD_UPDATE", "Entity modification operations");
+    public static readonly AuditMessageType CrudUpdate = new("UPDATE", "Entity modification operations");
 
     /// <summary>
     /// CRUD Delete operations (Commands) - Removing entities
     /// </summary>
-    public static readonly AuditMessageType CrudDelete = new("CRUD_DELETE", "Entity deletion operations");
+    public static readonly AuditMessageType CrudDelete = new("DELETE", "Entity deletion operations");
 
     /// <summary>
     /// Complex business actions that don't fit standard CRUD patterns
     /// </summary>
-    public static readonly AuditMessageType CrudAction = new("CRUD_ACTION", "Complex business actions");
+    public static readonly AuditMessageType CrudAction = new("ACTION", "Complex business actions");
 
     /// <summary>
     /// Authentication related operations (login, logout, validation)

@@ -1,0 +1,76 @@
+@using Radzen
+@using Radzen.Blazor
+@inject NavigationManager Navigation
+@inject IWebHostEnvironment Environment
+
+<!-- Anonymous Navigation Component - Uses Radzen like NavMenu -->
+<nav class="navbar navbar-expand-lg sms-nav">
+    <div class="container-fluid">
+        <!-- Brand Logo with Environment Detection -->
+        <a class="navbar-brand sms-brand @BrandCssClass" href="/">
+            <i class="fas fa-plane-departure me-2"></i>
+            PDX SMS@EnvironmentSuffix
+        </a>
+        
+        <!-- Mobile Toggle -->
+        <button class="navbar-toggler sms-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Anonymous Navigation Links using Radzen Menu -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                <!-- Anonymous Menu Items using Radzen -->
+                <div class="nav-item me-3">
+                    <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
+                        <RadzenMenuItem Text="PDX SMS Reporting" Icon="shield" class="sms-menu-item">
+                            <RadzenMenuItem Text="Submit Report" Path="/SMSRiskManagement/ConfidentialReporting" Icon="add_circle"></RadzenMenuItem>
+                            <RadzenMenuItem Text="Track Report Status" Path="/ConfidentialReporting/TrackStatus" Icon="search"></RadzenMenuItem>
+                        </RadzenMenuItem>
+                    </RadzenMenu>
+                </div>
+                
+                <!-- Login Link -->
+                <div class="nav-item">
+                    <a class="nav-link sms-nav-link" href="/login">
+                        <i class="fas fa-sign-in-alt me-1"></i>
+                        Login
+                    </a>
+                </div>
+            </div>
+            
+            @if (!string.IsNullOrEmpty(Subtitle))
+            {
+                <div class="navbar-text sms-anonymous-subtitle">
+                    <small>@Subtitle</small>
+                </div>
+            }
+        </div>
+    </div>
+</nav>
+
+@code {
+    /// <summary>
+    /// Optional subtitle for specific anonymous sections
+    /// </summary>
+    [Parameter] public string? Subtitle { get; set; }
+
+    // Environment Detection
+    private string BrandCssClass => Environment.IsDevelopment() ? "development" : "";
+    private string EnvironmentSuffix => Environment.IsDevelopment() ? " [DEV]" : "";
+
+    /// <summary>
+    /// Handle menu clicks for navigation
+    /// </summary>
+    private void OnMenuClick(MenuItemEventArgs args)
+    {
+        if (!string.IsNullOrEmpty(args.Value?.ToString()))
+        {
+            var value = args.Value.ToString();
+            if (value.StartsWith("/"))
+            {
+                Navigation.NavigateTo(value);
+            }
+        }
+    }
+}

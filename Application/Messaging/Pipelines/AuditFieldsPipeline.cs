@@ -45,7 +45,7 @@ public class AuditFieldsPipeline<TRequest, TResult> : IPipeline<TRequest, TResul
         cancellationToken.ThrowIfCancellationRequested();
 
         var requestType = request.GetType().Name;
-        var currentUserId = _currentUserService.UserCode;
+        var currentUserId = _currentUserService.UserDisplayName;
         var isAuthenticated = _currentUserService.IsAuthenticated;
 
         _logger.LogInformation("🔄 Comprehensive Audit Pipeline: Processing {RequestType}, User: {UserId}, Auth: {IsAuth}",

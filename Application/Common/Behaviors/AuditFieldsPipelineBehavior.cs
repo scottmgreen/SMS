@@ -6,8 +6,8 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using SMS_Application.Interfaces;
 using Microsoft.Extensions.Logging;
+using SMS_Application.Interfaces;
 
 namespace SMS_Application.Common.Behaviors;
 
@@ -58,34 +58,54 @@ public class AuditFieldsPipelineBehavior<TRequest, TResponse> : IPipelineBehavio
 
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
-        var timestamp = DateTime.UtcNow;
-        var currentUserId = _currentUserService.UserCode;
+        var commandName = typeof(TRequest).Name;
+        var shouldAudit = ShouldAuditCommand(request);
 
-        // Handle Create Commands
+        if (shouldAudit)
+        {
+            _logger.LogInformation("🔍 Audit Pipeline: Processing {CommandName} by {User}", commandName, _currentUserService.UserCode);
+            SetAuditFields(request, "AUTO");
+        }
+
+        // Execute the command
+        var response = await next();
+
+        _logger.LogInformation("✅ Audit Pipeline: Completed {CommandName}", commandName);
+        return response;
+    }
+
+    /// <summary>
+    /// Determines if a command should be audited based on its implemented interfaces
+    /// </summary>
+    private static bool ShouldAuditCommand(IRequest request)
+    {
+        var requestType = request.GetType();
+        
+        // Simple interface check - no magic strings needed
+        return typeof(ICreateCommand).IsAssignableFrom(requestType) ||
+               typeof(IUpdateCommand).IsAssignableFrom(requestType) ||
+               typeof(IDeleteCommand).IsAssignableFrom(requestType) ||
+               typeof(IReadQuery).IsAssignableFrom(requestType);
+    }
+
+    /// <summary>
+    /// Sets audit fields using the interface methods - simple and clean
+    /// </summary>
+    private void SetAuditFields(TRequest request, string auditAction)
+    {
+        var currentUser = _currentUserService.UserCode;
+        var currentTime = DateTime.UtcNow;
+
+        // Use the interface methods that already exist
         if (request is ICreateCommand createCommand)
-        {
-            _logger.LogInformation("✅ Clean Architecture: Setting audit fields for CREATE command: {CommandType}, User: {UserId}", 
-                typeof(TRequest).Name, currentUserId);
-                
-            createCommand.SetCreatedBy(currentUserId, timestamp);
-        }
-        // Handle Update Commands  
+            createCommand.SetCreatedBy(currentUser, currentTime);
         else if (request is IUpdateCommand updateCommand)
-        {
-            _logger.LogInformation("✅ Clean Architecture: Setting audit fields for UPDATE command: {CommandType}, User: {UserId}", 
-                typeof(TRequest).Name, currentUserId);
-                
-            updateCommand.SetUpdatedBy(currentUserId, timestamp);
-        }
-        // Handle Delete Commands
+            updateCommand.SetUpdatedBy(currentUser, currentTime);
         else if (request is IDeleteCommand deleteCommand)
-        {
-            _logger.LogInformation("✅ Clean Architecture: Setting audit fields for DELETE command: {CommandType}, User: {UserId}", 
-                typeof(TRequest).Name, currentUserId);
-                
-            deleteCommand.SetDeletedBy(currentUserId, timestamp);
-        }
+            deleteCommand.SetDeletedBy(currentUser, currentTime);
+        else if (request is IReadQuery readQuery)
+            readQuery.SetAccessedBy(currentUser, currentTime);
 
-        return await next();
+        _logger.LogInformation("🔧 Audit fields set for {CommandName} by {User}", typeof(TRequest).Name, currentUser);
     }
 }

@@ -1,68 +1,16 @@
 @inherits LayoutComponentBase
+@using SMS3.Components.Layout
 
 <div class="sms-anonymous-layout">
-    <!-- SMS Header - Uses shared navigation styling -->
-    <nav class="navbar navbar-expand-lg sms-nav">
-        <div class="container-fluid">
-            <a class="navbar-brand sms-brand" href="/">
-                <i class="fas fa-plane-departure me-2"></i>
-                PDX SMS
-            </a>
-            <div class="navbar-text sms-anonymous-subtitle">
-                <small>Anonymous Confidential Reporting</small>
-            </div>
-            
-            <!-- Anonymous Navigation Links -->
-            <div class="navbar-nav ms-auto d-flex flex-row gap-3">
-                <a class="nav-link text-white" href="/ConfidentialReporting/TrackStatus">
-                    <i class="fas fa-search me-1"></i>
-                    Track Report
-                </a>
-                <a class="nav-link text-white" href="/login">
-                    <i class="fas fa-sign-in-alt me-1"></i>
-                    Login
-                </a>
-            </div>
-            
-            @* <!-- Security Notice for Anonymous Users -->
-            <div class="navbar-text sms-anonymous-notice">
-                <small>
-                    <i class="fas fa-shield-alt me-1"></i>
-                    Secure Anonymous Session
-                </small>
-            </div> *@
-        </div>
-    </nav>
+    <!-- SMS Header - Uses AnonymousMenu component -->
+    <header class="sms-main-header">
+        <AnonymousMenu Subtitle="Anonymous Confidential Reporting" />
+    </header>
 
     <!-- Main Content -->
     <main class="sms-anonymous-container">
         @Body
     </main>
-
-    <!-- Security Footer for Anonymous Users -->
-    @* <footer class="sms-anonymous-footer">
-        <div class="container-fluid">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <small>
-                        <i class="fas fa-lock me-1"></i>
-                        This is an anonymous session. Your identity is protected and no login information is stored.
-                    </small>
-                </div>
-                <div class="col-md-3 text-center">
-                    <small>
-                        Need help? Call: <strong>(503) 555-0199</strong>
-                    </small>
-                </div>
-                <div class="col-md-3 text-end">
-                    <a href="/login" class="btn btn-outline-light btn-sm">
-                        <i class="fas fa-sign-in-alt me-1"></i>
-                        Return to Login
-                    </a>
-                </div>
-            </div>
-        </div>
-    </footer> *@
 </div>
 
 <!-- Anonymous Session Security Script -->
@@ -130,92 +78,45 @@
 <style>
 /* =============================================================================
    ANONYMOUS LAYOUT SPECIFIC STYLING ONLY
-   Navigation styling is shared from app.css
+   Shared navigation and layout styles are in shared-layouts.css
    ============================================================================= */
-
-body.sms-anonymous-body {
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
-    background: #212e61 !important;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
 
 .sms-anonymous-layout {
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Anonymous-specific navigation additions */
-.sms-anonymous-subtitle {
+    background: #212e61 !important;
     color: white !important;
-    font-weight: 600 !important;
-    font-size: 0.9rem !important;
 }
 
-.sms-anonymous-notice {
-    color: white !important;
-    font-weight: 400 !important;
-    font-size: 0.8rem !important;
-    margin-left: auto !important;
-}
-
-/* Main Content Container */
+/* Main Content Container - Fixed positioning for consistent header height */
 .sms-anonymous-container {
-    flex: 1;
-    padding: 2rem 1rem;
+    position: absolute;
+    top: 65px; /* Updated to match the new fixed header height */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: calc(100vh - 65px); /* Updated to match the new remaining viewport height */
     overflow-y: auto;
     background: white !important;
     color: #212e61 !important;
+    padding: 2rem 1rem;
+    margin: 0; /* Remove any default margins */
 }
 
-/* ONLY target the specific content areas that need dark text - NO MORE WILDCARDS */
+/* ONLY target the specific content areas that need dark text */
 .sms-anonymous-container .rz-card,
 .sms-anonymous-container .rz-alert {
     color: #212e61 !important;
 }
 
-/* Anonymous Footer */
-.sms-anonymous-footer {
-    background-color: #212e61 !important;
-    border-top: 1px solid white !important;
-    padding: 1rem 0 !important;
-    margin-top: auto;
-    flex-shrink: 0;
-    color: white !important;
-}
-
-.sms-anonymous-footer small {
-    color: white !important;
-}
-
-.sms-anonymous-footer strong {
-    color: white !important;
-}
-
-/* Return to Login Button */
-.sms-anonymous-footer .btn-outline-light {
-    border-color: white !important;
-    color: white !important;
-    font-size: 0.875rem !important;
-    transition: all 0.2s ease-in-out !important;
-}
-
-.sms-anonymous-footer .btn-outline-light:hover {
-    background-color: white !important;
-    border-color: white !important;
-    color: #212e61 !important;
-}
-
-/* Page Header Adjustments for Anonymous Layout - KEEP DARK BACKGROUND */
+/* Page Header Adjustments for Anonymous Layout */
 ::deep .sms-page-header {
-    background: #212e61 !important; /* Keep dark blue background like navmenu */
+    background: #212e61 !important;
     border: 2px solid white !important;
     border-radius: 0.5rem !important;
     padding: 1.5rem !important;
     margin-bottom: 2rem !important;
-    color: white !important; /* White text on dark background */
+    color: white !important;
 }
 
 ::deep .sms-page-header h1,
@@ -224,7 +125,7 @@ body.sms-anonymous-body {
 ::deep .sms-page-header h4,
 ::deep .sms-page-header h5,
 ::deep .sms-page-header h6 {
-    color: white !important; /* Ensure all heading levels are white */
+    color: white !important;
 }
 
 ::deep .sms-page-header .text-white-50 {
@@ -232,59 +133,10 @@ body.sms-anonymous-body {
 }
 
 ::deep .sms-page-header i {
-    color: white !important; /* White icons */
-}
-
-/* Error UI Styling */
-.sms-error-ui {
-    background: #212e61 !important;
     color: white !important;
-    padding: 1rem;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 9999;
-    display: none;
-    border-top: 2px solid white !important;
 }
 
-.sms-error-content {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 500;
-}
-
-.sms-error-reload {
-    color: white !important;
-    text-decoration: underline;
-    margin-left: 1rem;
-    font-weight: 600;
-}
-
-.sms-error-reload:hover {
-    color: white !important;
-    opacity: 0.8;
-}
-
-.sms-error-dismiss {
-    margin-left: 1rem;
-    background: none;
-    border: none;
-    color: white !important;
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 0 0.5rem;
-    border-radius: 0.25rem;
-    transition: background-color 0.2s;
-}
-
-.sms-error-dismiss:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-/* Content Area Styling - WHITE BACKGROUND SUPPORT */
+/* Content Area Styling */
 .sms-anonymous-container .container-fluid {
     max-width: 1400px;
     background: white !important;

@@ -1,0 +1,188 @@
+/* =============================================================================
+   SMS SHARED NAVIGATION STYLES
+   Used by NavMenu and AnonymousMenu components
+   ============================================================================= */
+
+/* SMS Navigation Base */
+.sms-nav {
+    background-color: #212e61 !important;
+    padding: 0.75rem 0;
+    height: 65px; /* Increased from 60px to accommodate Radzen components */
+    display: flex;
+    align-items: center;
+}
+
+/* Navigation container alignment */
+.sms-nav .container-fluid {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.sms-brand {
+    color: white !important;
+    font-weight: 600;
+    font-size: 1.5rem;
+    text-decoration: none;
+    order: 1; /* Brand stays on the left */
+}
+
+.sms-brand:hover {
+    color: white !important;
+    text-decoration: none;
+}
+
+/* Development Environment Brand Styling */
+.sms-brand.development {
+    color: #ffd700 !important; /* Bright yellow for development */
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.sms-brand.development:hover {
+    color: #ffed4a !important; /* Lighter yellow on hover */
+    text-decoration: none;
+}
+
+.sms-brand.development i {
+    color: #ffd700 !important; /* Yellow plane icon in development */
+}
+
+.sms-brand-icon {
+    color: #fa9a46;
+}
+
+/* Navigation collapse content - push to the right */
+.navbar-collapse {
+    order: 3; /* Collapse content goes to the right */
+    justify-content: flex-end !important;
+}
+
+/* Mobile toggle button */
+.navbar-toggler {
+    order: 2; /* Toggle button between brand and content */
+}
+
+.sms-nav-link {
+    color: white !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s;
+    text-decoration: none;
+}
+
+.sms-nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white !important;
+    text-decoration: none;
+}
+
+/* Mobile Toggle */
+.sms-toggler {
+    border-color: white;
+}
+
+.sms-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.75%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='m4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* Anonymous-specific navigation */
+.sms-anonymous-subtitle {
+    color: white !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+}
+
+/* =============================================================================
+   SMS SHARED LAYOUT STYLES
+   Used by MainLayout, AnonymousLayout, and LoginLayout
+   ============================================================================= */
+
+/* Layout Base */
+.sms-main-layout,
+.sms-anonymous-layout,
+.sms-login-layout {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Header - Fixed height and position */
+.sms-main-header {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    background-color: #212e61 !important;
+    color: white !important;
+    height: 65px; /* Increased from 60px to accommodate Radzen components */
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Main Content Areas - Exact height calculations */
+.sms-main-content,
+.sms-anonymous-container,
+.sms-login-container {
+    min-height: calc(100vh - 65px); /* Updated to 65px */
+    margin-top: 0; /* Ensure no extra spacing */
+    padding-top: 0; /* Ensure no extra spacing */
+}
+
+.sms-main-content {
+    flex-grow: 1;
+}
+
+/* Error UI Styling */
+.sms-error-ui {
+    background: #212e61 !important;
+    color: white !important;
+    padding: 1rem;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    display: none;
+    border-top: 2px solid white !important;
+}
+
+.sms-error-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+}
+
+.sms-error-reload {
+    color: white !important;
+    text-decoration: underline;
+    margin-left: 1rem;
+    font-weight: 600;
+}
+
+.sms-error-reload:hover {
+    color: white !important;
+    opacity: 0.8;
+}
+
+.sms-error-dismiss {
+    margin-left: 1rem;
+    background: none;
+    border: none;
+    color: white !important;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 0.5rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s;
+}
+
+.sms-error-dismiss:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Ensure consistent spacing */
+.container-fluid {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}

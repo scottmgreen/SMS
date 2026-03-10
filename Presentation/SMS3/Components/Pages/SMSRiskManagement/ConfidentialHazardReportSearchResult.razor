@@ -6,12 +6,12 @@
 @layout SMS3.Components.Layout.AnonymousLayout
 @inherits ComponentBase
 
-<PageTitle>Report Status - @TrackingCode</PageTitle>
+<PageTitle>Confidential Report Details - @TrackingCode</PageTitle>
 
 <!-- SMS Page Header using standard component -->
 <PageHeader Title="@PageTitle"
            Subtitle="@PageSubtitle"
-           Icon="fas fa-clipboard-list"
+           Icon="fas fa-description"
            AdditionalContent="@AdditionalHeaderContent" />
 
 <!-- Loading State -->
@@ -19,235 +19,357 @@
 {
     <div class="text-center py-5">
         <RadzenProgressBarCircular ShowValue="false" class="mb-3" />
-        <h6 class="text-muted">Loading report status...</h6>
+        <h6 class="text-muted">Loading report details...</h6>
     </div>
 }
 else if (ReportDetails != null)
 {
-    <!-- Tracking Information Card -->
-    <RadzenCard class="mb-4">
-        <div class="tracking-header">
-            <h5 class="mb-3">
-                <RadzenIcon Icon="track_changes" class="me-2" />
-                Tracking Information
-            </h5>
-            
-            <div class="row g-3">
-                <div class="col-lg-6">
-                    <div class="info-item">
-                        <label class="info-label">Tracking ID</label>
-                        <div class="info-value tracking-id">@TrackingCode</div>
+    <!-- SMS Standard 8x4 Layout -->
+    <RadzenRow Gap="1rem">
+        <!-- Main Content - 8 Columns -->
+        <RadzenColumn Size="12" SizeLG="8">
+           
+            <!-- Report Information Card -->
+            <RadzenCard class="report-details-card mb-4">
+                <RadzenStack Gap="1.5rem">
+                    <!-- Header Section -->
+                    <div class="card-header-section">
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                            <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: var(--rz-primary);">
+                                <RadzenIcon Icon="assignment" Style="margin-right: 0.5rem;" />
+                                Report Information
+                            </RadzenText>
+                            <RadzenBadge Text="Anonymous" BadgeStyle="BadgeStyle.Warning" />
+                        </RadzenStack>
                     </div>
-                </div>
-                <div class="col-lg-6">
-                    <div class="info-item">
-                        <label class="info-label">Report Type</label>
-                        <div class="info-value">@(ReportDetails.HazardType ?? "Confidential Safety Report")</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </RadzenCard>
 
-    <!-- Basic Information Card -->
-    <RadzenCard class="mb-4">
-        <h5 class="mb-3">
-            <RadzenIcon Icon="info" class="me-2" />
-            Report Information
-        </h5>
-        
-        <div class="row g-3">
-            <div class="col-lg-6">
-                <div class="info-item">
-                    <label class="info-label">Submitted</label>
-                    <div class="info-value">
-                        @ReportDetails.SubmittedDate.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt")
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <div class="info-item">
-                    <label class="info-label">Reporter</label>
-                    <div class="info-value">
-                        <i class="fas fa-shield-alt me-2 text-success"></i>
-                        Anonymous (Identity Protected)
-                    </div>
-                </div>
-            </div>
-            <div class="col-12">
-                <div class="info-item">
-                    <label class="info-label">Report Description</label>
-                    <div class="info-value">
-                        @if (ReportDetails.IsAnonymous)
-                        {
-                            <span class="text-muted">
-                                <i class="fas fa-lock me-2"></i>
-                                Anonymous report - details available to authorized safety personnel only
-                            </span>
-                        }
-                        else
-                        {
-                            <span>@(ReportDetails.Description ?? "Report details under review")</span>
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
-    </RadzenCard>
+                    <!-- Identification Section -->
+                    <RadzenFieldset Text="Report Identification">
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <div class="info-group">
+                                    <label class="info-label">Tracking Code</label>
+                                    <div class="info-value tracking-code">@(ReportDetails.TrackingCode ?? "Not Assigned")</div>
+                                </div>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <div class="info-group">
+                                    <label class="info-label">Report Code</label>
+                                    <div class="info-value report-code">@(ReportDetails.ReportCode ?? "Not Assigned")</div>
+                                </div>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <div class="info-group">
+                                    <label class="info-label">Hazard Code</label>
+                                    <div class="info-value hazard-code">@(ReportDetails.HazardCode ?? "Not Assigned")</div>
+                                </div>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenFieldset>
 
-    <!-- Status Information Card -->
-    <RadzenCard class="mb-4">
-        <h5 class="mb-3">
-            <RadzenIcon Icon="assignment_turned_in" class="me-2" />
-            Current Status
-        </h5>
-        
-        <div class="row g-3">
-            <div class="col-lg-6">
-                <div class="info-item">
-                    <label class="info-label">Processing Status</label>
-                    <div class="info-value">
-                        <RadzenBadge Text="@ReportDetails.CurrentStatus" 
-                                     BadgeStyle="@GetStatusBadgeStyle(ReportDetails.CurrentStatus)" 
-                                     class="status-badge-large" />
-                    </div>
-                </div>
-            </div>
+                    <!-- Hazard Classification Section -->
+                    <RadzenFieldset Text="Hazard Classification">
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <div class="info-group">
+                                    <label class="info-label">Hazard Category</label>
+                                    <div class="info-value hazard-category">
+                                        @if (!string.IsNullOrEmpty(ReportDetails.HazardCategory))
+                                        {
+                                            <RadzenBadge Text="@ReportDetails.HazardCategory"  />
+                                        }
+                                        else
+                                        {
+                                            <span class="not-specified">Not Specified</span>
+                                        }
+                                    </div>
+                                </div>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <div class="info-group">
+                                    <label class="info-label">Hazard Type</label>
+                                    <div class="info-value hazard-type">
+                                        @if (!string.IsNullOrEmpty(ReportDetails.HazardType))
+                                        {
+                                            <RadzenBadge Text="@ReportDetails.HazardType"  />
+                                        }
+                                        else
+                                        {
+                                            <span class="not-specified">Not Specified</span>
+                                        }
+                                    </div>
+                                </div>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenFieldset>
+
+                    <!-- Submission Details Section -->
+                    <RadzenFieldset Text="Submission Details">
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <div class="info-group">
+                                    <label class="info-label">Submitted By</label>
+                                    <div class="info-value">
+                                        <RadzenIcon Icon="person" Style="margin-right: 0.5rem; color: var(--rz-primary);" />
+                                        Anonymous (Protected Identity)
+                                    </div>
+                                </div>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <div class="info-group">
+                                    <label class="info-label">Submission Date</label>
+                                    <div class="info-value">
+                                        <RadzenIcon Icon="schedule" Style="margin-right: 0.5rem; color: var(--rz-primary);" />
+                                        @(ReportDetails.SubmittedDate?.ToString("MMMM dd, yyyy 'at' HH:mm") ?? "Not Specified")
+                                    </div>
+                                </div>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <div class="info-group">
+                                    <label class="info-label">Department</label>
+                                    <div class="info-value">
+                                        <RadzenIcon Icon="business" Style="margin-right: 0.5rem; color: var(--rz-primary);" />
+                                        @(ReportDetails.SubmittingDepartment ?? "Not Specified")
+                                    </div>
+                                </div>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <div class="info-group">
+                                    <label class="info-label">Job Function</label>
+                                    <div class="info-value">
+                                        <RadzenIcon Icon="work" Style="margin-right: 0.5rem; color: var(--rz-primary);" />
+                                        @(ReportDetails.JobFunction ?? "Not Specified")
+                                    </div>
+                                </div>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenFieldset>
+
+                    <!-- Description Section -->
+                    @if (!string.IsNullOrEmpty(ReportDetails.Description))
+                    {
+                        <RadzenFieldset Text="Report Description">
+                            <div class="description-content">
+                                @ReportDetails.Description
+                            </div>
+                        </RadzenFieldset>
+                    }
+
+                    <!-- Anonymous Alert -->
+                    <RadzenAlert AlertStyle="AlertStyle.Warning" ShowIcon="true" Variant="Variant.Flat">
+                        <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0;">
+                            <strong>Anonymous Report:</strong> This report contains anonymous information and should be handled with appropriate confidentiality measures.
+                        </RadzenText>
+                    </RadzenAlert>
+                </RadzenStack>
+            </RadzenCard>
             
-            @if (!string.IsNullOrEmpty(ReportDetails.ValidationDecision))
+            <!-- Validation Status Card -->
+            <RadzenCard class="mb-4">
+                <h5 class="mb-3">
+                    <RadzenIcon Icon="verified" class="me-2" />
+                    Validation Status
+                </h5>
+                
+                @if (ReportValidation != null)
+                {
+                    <div class="row g-3">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Validation Decision</label>
+                                <RadzenBadge Text="@GetValidationDecisionDisplay(ReportValidation.ValidationDecision)" 
+                                             BadgeStyle="@GetValidationBadgeStyle(ReportValidation.ValidationDecision)" 
+                                             class="validation-badge" />
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Validated By</label>
+                                <div class="info-value">@(ReportValidation.ValidatedBy ?? "N/A")</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Validation Date</label>
+                                <div class="info-value">@(ReportValidation.ValidatedDate?.ToString("MM/dd/yyyy HH:mm tt") ?? "Not Completed")</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Validation Type</label>
+                                <div class="info-value">@(ReportValidation.ValidationType ?? "N/A")</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    @if (!string.IsNullOrEmpty(ReportValidation.ValidationComments))
+                    {
+                        <div class="mt-4">
+                            <div class="info-item">
+                                <label class="info-label">Validation Comments</label>
+                                <div class="info-value validation-comments">@ReportValidation.ValidationComments</div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="validation-pending">
+                        <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true">
+                            <strong>Validation Pending:</strong> This report has not yet been validated by SMS personnel.
+                        </RadzenAlert>
+                    </div>
+                }
+            </RadzenCard>
+
+            <!-- Processing Status Card -->
+            <RadzenCard class="mb-4">
+                <h5 class="mb-3">
+                    <RadzenIcon Icon="settings" class="me-2" />
+                    Processing Status
+                </h5>
+                
+                <div class="processing-timeline">
+                    <!-- Report Submitted -->
+                    <div class="timeline-item completed">
+                        <div class="timeline-icon">
+                            <RadzenIcon Icon="assignment" />
+                        </div>
+                        <div class="timeline-content">
+                            <h6>Report Submitted</h6>
+                            <small class="text-muted">@(ReportDetails.SubmittedDate?.ToString("MMMM dd, yyyy 'at' HH:mm tt") ?? "Not Available")</small>
+                        </div>
+                    </div>
+
+                    <!-- Validation -->
+                    <div class="timeline-item @(ReportValidation != null ? "completed" : "pending")">
+                        <div class="timeline-icon">
+                            <RadzenIcon Icon="@(ReportValidation != null ? "verified_user" : "schedule")" />
+                        </div>
+                        <div class="timeline-content">
+                            <h6>SMS Validation</h6>
+                            @if (ReportValidation != null)
+                            {
+                                <p class="text-success">
+                                   @ReportValidation.Code.ToUpper() - @GetValidationDecisionDisplay(ReportValidation.ValidationDecision).ToUpper()
+                                    <br />
+                                    <small class="text-muted">@(ReportValidation.CreatedDate?.ToString("MMMM dd, yyyy 'at' HH:mm tt"))</small>
+                                </p>
+                            }
+                            else
+                            {
+                                <p class="text-muted">Awaiting SMS validation</p>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Further Processing based on Validation Decision -->
+                    @if (ReportValidation != null)
+                    {
+                       
+                        @if(ReportValidation.ValidationDecision == ValidationDecision.SmsRisk)
+                        {
+                            if (CurrentRiskAssessment != null)
+                            {
+                                if(CurrentRiskAssessment.CurrentStep == 5)
+                                {
+                                    // Completed
+                                    <div class="timeline-item completed">
+                                        <div class="timeline-icon">
+                                            <RadzenIcon Icon="assessment" />
+                                        </div>
+                                        <div class="timeline-content">
+                                            <h6>Risk Assessment</h6>
+                                            @if (CurrentRiskAssessment != null)
+                                            {
+                                                string msg = $"{CurrentRiskAssessment.Code} Completed ";
+                                                <div class="text-success">
+                                                    <p class="@GetProcessingStatusTextClass()">@(msg.ToUpper())</p>
+                                                    <small class="text-muted">@(CurrentRiskAssessment.UpdatedDate?.ToString("MMMM dd, yyyy 'at' HH:mm tt"))</small>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <p class="text-muted">Awaiting SMS risk assessment </p>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    @if(CurrentMitigation != null)
+                                    {
+                                        if (CurrentMitigation.Status == MitigationStatus.Approved.Value)
+                                        {
+                                            <div class="timeline-item completed">
+                                                <div class="timeline-icon">
+                                                    <RadzenIcon Icon="assessment" />
+                                                </div>
+                                                <div class="timeline-content">
+                                                    <h6>Mitigation</h6>
+                                                    @if (CurrentMitigation != null)
+                                                    {
+                                                        <div class="text-success">
+                                                            <p class="@GetProcessingStatusTextClass()">@($"{CurrentMitigation.Code} {CurrentMitigation.Status}  %{CurrentMitigation.Progress} COMPLETE")</p>
+                                                            <small class="text-muted">@(CurrentMitigation.UpdatedDate?.ToString("MMMM dd, yyyy 'at' HH:mm tt"))</small>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <p class="text-muted">Awaiting SMS risk assessment </p>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="timeline-content">
+                                                <div class="timeline-item in-progress">
+                                                    <div class="timeline-icon">
+                                                        <RadzenIcon Icon="assessment" />
+                                                    </div>
+                                                    <div class="timeline-item in-progress">
+                                                        <div class="timeline-content">
+                                                            <h6>Mitigation</h6>
+                                                            <p class="@GetProcessingStatusTextClass()">@($"{CurrentMitigation.Code} {CurrentMitigation.Status}")</p>
+                                                            <small class="text-muted">@(CurrentMitigation.UpdatedDate?.ToString("MMMM dd, yyyy 'at' HH:mm tt"))</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="timeline-content">
+                                        <div class="timeline-item in-progress">
+                                            <div class="timeline-icon">
+                                                <RadzenIcon Icon="assessment" />
+                                            </div>
+                                            <div class="timeline-item in-progress">
+                                                <div class="timeline-content">
+                                                    <h6>Risk Assessment</h6>
+                                                    <p class="@GetProcessingStatusTextClass()">@($"{CurrentRiskAssessment.Code} {CurrentRiskAssessment.Stage}")</p>
+                                                    <small class="text-muted">@(CurrentRiskAssessment.UpdatedDate?.ToString("MMMM dd, yyyy 'at' HH:mm tt"))</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        }
+                    }
+                </div>
+            </RadzenCard>
+
+            <!-- Location Information Card -->
+            @if (HazardLocation != null)
             {
-                <div class="col-lg-6">
-                    <div class="info-item">
-                        <label class="info-label">SMS Review Decision</label>
-                        <div class="info-value">
-                            <RadzenBadge Text="@GetValidationDecisionDisplay(ReportDetails.ValidationDecision)" 
-                                         BadgeStyle="@GetValidationBadgeStyle(ReportDetails.ValidationDecision)" 
-                                         class="status-badge-large" />
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-        
-        @if (ReportDetails.ValidationDate.HasValue)
-        {
-            <div class="row g-3 mt-2">
-                <div class="col-lg-6">
-                    <div class="info-item">
-                        <label class="info-label">Review Completed</label>
-                        <div class="info-value">
-                            @ReportDetails.ValidationDate.Value.ToString("MMMM dd, yyyy")
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6">
-                    <div class="info-item">
-                        <label class="info-label">Reviewed By</label>
-                        <div class="info-value">SMS Safety Team</div>
-                    </div>
-                </div>
-            </div>
-        }
-    </RadzenCard>
-
-    <!-- Processing Timeline -->
-    <RadzenCard class="mb-4">
-        <h5 class="mb-3">
-            <RadzenIcon Icon="timeline" class="me-2" />
-            Processing Timeline
-        </h5>
-        
-        <div class="processing-timeline">
-            <!-- Report Submitted -->
-            <div class="timeline-item completed">
-                <div class="timeline-icon">
-                    <i class="fas fa-file-alt"></i>
-                </div>
-                <div class="timeline-content">
-                    <h6 class="mb-1">Report Submitted</h6>
-                    <p class="mb-0 text-muted">
-                        @ReportDetails.SubmittedDate.ToString("MMMM dd, yyyy 'at' h:mm tt")
-                    </p>
-                    <small class="text-success">? Complete</small>
-                </div>
-            </div>
-
-            <!-- Initial Review -->
-            <div class="timeline-item @(IsStepCompleted("InitialReview") ? "completed" : "current")">
-                <div class="timeline-icon">
-                    <i class="fas fa-search"></i>
-                </div>
-                <div class="timeline-content">
-                    <h6 class="mb-1">Initial Review</h6>
-                    <p class="mb-0 text-muted">
-                        Safety team reviewing report details and categorization
-                    </p>
-                    @if (IsStepCompleted("InitialReview"))
-                    {
-                        <small class="text-success">? Complete</small>
-                    }
-                    else
-                    {
-                        <small class="text-primary">?? In Progress</small>
-                    }
-                </div>
-            </div>
-
-            <!-- SMS Risk Assessment -->
-            <div class="timeline-item @(IsStepCompleted("RiskAssessment") ? "completed" : "current")">
-                <div class="timeline-icon">
-                    <i class="fas fa-clipboard-check"></i>
-                </div>
-                <div class="timeline-content">
-                    <h6 class="mb-1">SMS Risk Assessment</h6>
-                    <p class="mb-0 text-muted">
-                        Evaluating if report qualifies as SMS risk requiring formal action
-                    </p>
-                    @if (IsStepCompleted("RiskAssessment"))
-                    {
-                        <small class="text-success">? Complete</small>
-                    }
-                    else
-                    {
-                        <small class="text-primary">?? In Progress</small>
-                    }
-                </div>
-            </div>
-
-            <!-- Final Processing -->
-            <div class="timeline-item @(IsStepCompleted("FinalProcessing") ? "completed" : "current")">
-                <div class="timeline-icon">
-                    <i class="fas fa-flag-checkered"></i>
-                </div>
-                <div class="timeline-content">
-                    <h6 class="mb-1">Final Processing</h6>
-                    <p class="mb-0 text-muted">
-                        Implementation of corrective actions and process closure
-                    </p>
-                    @if (IsStepCompleted("FinalProcessing"))
-                    {
-                        <small class="text-success">? Complete</small>
-                    }
-                    else
-                    {
-                        <small class="text-primary">?? In Progress</small>
-                    }
-                </div>
-            </div>
-        </div>
-    </RadzenCard>
-
-    <!-- Location Information Card -->
-    @if (HazardLocation != null)
-    {
-        <RadzenCard class="mb-4">
-            <h5 class="mb-3">
-                <RadzenIcon Icon="place" class="me-2" />
-                Location Information
-            </h5>
-            
-            <RadzenRow>
-                <RadzenColumn Size="8">
+                <RadzenCard class="mb-4">
+                    <h5 class="mb-3">
+                        <RadzenIcon Icon="place" class="me-2" />
+                        Location Information
+                    </h5>
+                    
                     <div class="row g-3">
                         @if (HazardLocation.Latitude.HasValue && HazardLocation.Longitude.HasValue)
                         {
@@ -277,22 +399,11 @@ else if (ReportDetails != null)
                                 </div>
                             </div>
                         }
-
-                        @if (HazardLocation.CreatedDate.HasValue)
-                        {
-                            <div class="col-lg-6">
-                                <div class="info-item">
-                                    <label class="info-label">Location Recorded</label>
-                                    <div class="info-value">@HazardLocation.CreatedDate.Value.ToString("MM/dd/yyyy")</div>
-                                </div>
-                            </div>
-                        }
                     </div>
-                </RadzenColumn>
-                <RadzenColumn Size="4">
+
                     @if (HazardLocation.Latitude.HasValue && HazardLocation.Longitude.HasValue)
                     {
-                        <div class="text-center">
+                        <div class="mt-3">
                             <ReadOnlyLocationMap Latitude="@HazardLocation.Latitude.Value"
                                                Longitude="@HazardLocation.Longitude.Value"
                                                LocationDescription="@(HazardLocation.Description ?? ReportDetails?.HazardCode ?? "Location")"
@@ -301,222 +412,439 @@ else if (ReportDetails != null)
                                                ShowCoordinates="false"
                                                ShowLocationDetails="false"
                                                ZoomLevel="16" />
-                            <small class="text-muted d-block mt-2">
-                                <i class="fas fa-info-circle me-1"></i>
-                                Interactive map view
-                            </small>
                         </div>
                     }
-                    else
-                    {
-                        <div class="text-center text-muted p-4">
-                            <i class="fas fa-map-marker-alt fa-3x mb-3" style="color: #dee2e6;"></i>
-                            <div><strong>No Coordinates Available</strong></div>
-                            <small>Location data does not include geographic coordinates</small>
-                        </div>
-                    }
-                </RadzenColumn>
-            </RadzenRow>
-        </RadzenCard>
-    }
-    else if (ReportDetails != null && (!string.IsNullOrEmpty(ReportDetails.LocationArea) || !string.IsNullOrEmpty(ReportDetails.LocationSubArea)))
-    {
-        <!-- Fallback Location Card for text-based location info -->
-        <RadzenCard class="mb-4">
-            <h5 class="mb-3">
-                <RadzenIcon Icon="place" class="me-2" />
-                Location Information
-            </h5>
-            
-            <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true">
-                <strong>Text-Based Location:</strong> This report contains location information but no geographic coordinates for mapping.
-            </RadzenAlert>
-            
-            <div class="row g-3 mt-2">
-                @if (!string.IsNullOrEmpty(ReportDetails.LocationArea))
-                {
-                    <div class="col-lg-6">
-                        <div class="info-item">
-                            <label class="info-label">Location Area</label>
-                            <div class="info-value">@ReportDetails.LocationArea</div>
-                        </div>
+                </RadzenCard>
+            }
+            else if (ReportDetails != null && (!string.IsNullOrEmpty(ReportDetails.LocationArea) || !string.IsNullOrEmpty(ReportDetails.LocationSubArea)))
+            {
+                <!-- Fallback Location Card for text-based location info -->
+                <RadzenCard class="mb-4">
+                    <h5 class="mb-3">
+                        <RadzenIcon Icon="place" class="me-2" />
+                        Location Information
+                    </h5>
+                    
+                    <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true">
+                        <strong>Text-Based Location:</strong> This report contains location information but no geographic coordinates.
+                    </RadzenAlert>
+                    
+                    <div class="row g-3 mt-2">
+                        @if (!string.IsNullOrEmpty(ReportDetails.LocationArea))
+                        {
+                            <div class="col-lg-6">
+                                <div class="info-item">
+                                    <label class="info-label">Location Area</label>
+                                    <div class="info-value">@ReportDetails.LocationArea</div>
+                                </div>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(ReportDetails.LocationSubArea))
+                        {
+                            <div class="col-lg-6">
+                                <div class="info-item">
+                                    <label class="info-label">Location Sub-Area</label>
+                                    <div class="info-value">@ReportDetails.LocationSubArea</div>
+                                </div>
+                            </div>
+                        }
                     </div>
-                }
-                @if (!string.IsNullOrEmpty(ReportDetails.LocationSubArea))
-                {
-                    <div class="col-lg-6">
-                        <div class="info-item">
-                            <label class="info-label">Location Sub-Area</label>
-                            <div class="info-value">@ReportDetails.LocationSubArea</div>
-                        </div>
-                    </div>
-                }
-            </div>
-        </RadzenCard>
-    }
+                </RadzenCard>
+            }
 
-    <!-- Contact Information -->
-    <RadzenCard class="mb-4">
-        <h5 class="mb-3">
-            <RadzenIcon Icon="contact_phone" class="me-2" />
-            Need More Information?
-        </h5>
-        
-        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
-            <div class="row">
-                <div class="col-md-6">
-                    <h6 class="mb-2">Confidential Safety Hotline</h6>
-                    <p class="mb-2">
-                        <i class="fas fa-phone me-2"></i>
-                        <strong>(503) 555-0199</strong>
+            <!-- Files and Attachments Card -->
+            @if (AttachedFiles.Any())
+            {
+                <RadzenCard class="mb-4">
+                    <h5 class="mb-3">
+                        <RadzenIcon Icon="attach_file" class="me-2" />
+                        Attachments (@AttachedFiles.Count)
+                    </h5>
+                    
+                    <RadzenDataList Data="@AttachedFiles" TItem="HazardFile" class="file-list">
+                        <Template Context="file">
+                            <div class="file-item d-flex justify-content-between align-items-center">
+                                <div class="file-info d-flex align-items-center">
+                                    <RadzenIcon Icon="@GetFileIcon(file.FileType)" class="me-3 file-icon" />
+                                    <div>
+                                        <div class="file-name">@file.FileName</div>
+                                        <small class="text-muted">
+                                            @FormatFileSize(file.FileSizeBytes) ? 
+                                            Uploaded @(file.UploadedDate?.ToString("MM/dd/yyyy") ?? "Unknown date")
+                                            @if (file.IsConfidential)
+                                            {
+                                                <span class="ms-2">
+                                                    <RadzenBadge Text="Confidential" BadgeStyle="BadgeStyle.Warning" />
+                                                </span>
+                                            }
+                                        </small>
+                                    </div>
+                                </div>
+                                <RadzenButton ButtonType="ButtonType.Button"
+                                              Text="View"
+                                              Icon="visibility"
+                                              Size="ButtonSize.Small"
+                                              ButtonStyle="ButtonStyle.Primary"
+                                              Variant="Variant.Outlined"
+                                              Disabled="true"
+                                              Title="File viewing not available in search results" />
+                            </div>
+                        </Template>
+                    </RadzenDataList>
+                </RadzenCard>
+            }
+        </RadzenColumn>
+
+        <!-- Guidance Panel - 4 Columns -->
+        <RadzenColumn Size="12" SizeLG="4">
+            <!-- Contact Information Card - Main Guidance -->
+            <RadzenCard class="guidance-card mb-4">
+                <h5 class="mb-3">
+                    <RadzenIcon Icon="contact_support" class="me-2" />
+                    Need Help?
+                </h5>
+                
+                <div class="contact-info">
+                    <p class="mb-3">
+                        If you have questions about this report or need to provide additional information, 
+                        please contact the SMS team with your tracking ID: <strong>@TrackingCode</strong>
                     </p>
-                    <p class="mb-0 small">
-                        Available 24/7 for questions about your confidential report
-                    </p>
+                    
+                    <div class="contact-methods">
+                        <div class="contact-method mb-3">
+                            <RadzenIcon Icon="email" class="me-2" />
+                            <div>
+                                <strong>Email Support</strong><br>
+                                <a href="mailto:sms@pdx.com" class="contact-link">sms@pdx.com</a>
+                            </div>
+                        </div>
+                        <div class="contact-method mb-3">
+                            <RadzenIcon Icon="phone" class="me-2" />
+                            <div>
+                                <strong>Phone Support</strong><br>
+                                <a href="tel:+15034604000" class="contact-link">(503) 460-4000</a>
+                            </div>
+                        </div>
+                        <div class="contact-method">
+                            <RadzenIcon Icon="access_time" class="me-2" />
+                            <div>
+                                <strong>Business Hours</strong><br>
+                                <span class="text-muted">Monday - Friday<br>8:00 AM - 5:00 PM PST</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <h6 class="mb-2">Email Support</h6>
-                    <p class="mb-2">
-                        <i class="fas fa-envelope me-2"></i>
-                        <strong>safety@pdxairport.com</strong>
-                    </p>
-                    <p class="mb-0 small">
-                        Reference your tracking ID: <strong>@TrackingCode</strong>
-                    </p>
-                </div>
-            </div>
-        </RadzenAlert>
-    </RadzenCard>
+            </RadzenCard>
+
+            <!-- Additional Guidance Cards -->
+            <RadzenCard class="guidance-card mb-4">
+                <h6 class="mb-3">
+                    <RadzenIcon Icon="info" class="me-2" />
+                    Report Status Guide
+                </h6>
+                
+                <RadzenStack Gap="0.5rem">
+                    <div class="status-guide-item">
+                        <RadzenBadge Text="Submitted" BadgeStyle="BadgeStyle.Info" class="me-2" />
+                        <small>Report received and awaiting validation</small>
+                    </div>
+                    <div class="status-guide-item">
+                        <RadzenBadge Text="Validated" BadgeStyle="BadgeStyle.Success" class="me-2" />
+                        <small>Report reviewed and accepted for processing</small>
+                    </div>
+                    <div class="status-guide-item">
+                        <RadzenBadge Text="In Progress" BadgeStyle="BadgeStyle.Warning" class="me-2" />
+                        <small>Report is being actively investigated</small>
+                    </div>
+                    <div class="status-guide-item">
+                        <RadzenBadge Text="Completed" BadgeStyle="BadgeStyle.Primary" class="me-2" />
+                        <small>Investigation completed and closed</small>
+                    </div>
+                </RadzenStack>
+            </RadzenCard>
+
+            <!-- Anonymous Report Guide -->
+            <RadzenCard class="guidance-card mb-4">
+                <h6 class="mb-3">
+                    <RadzenIcon Icon="security" class="me-2" />
+                    Anonymous Report
+                </h6>
+                
+                <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="false" Variant="Variant.Flat" class="mb-0">
+                    <small>
+                        This is an anonymous report. Your identity is protected and will not be shared. 
+                        Use your tracking ID for any follow-up communication.
+                    </small>
+                </RadzenAlert>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
 }
-else
+else if (!IsLoading && HasSearched)
 {
-    <!-- Error State -->
-    <RadzenCard>
-        <div class="text-center py-5">
-            <RadzenIcon Icon="error" Style="font-size: 3rem; color: var(--rz-danger);" class="mb-3" />
-            <h5 class="text-danger mb-3">Report Not Found</h5>
-            <p class="text-muted mb-4">
-                We couldn't find a report with tracking ID: <strong>@TrackingCode</strong>
-            </p>
-            
-            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" class="text-start mb-4">
-                <h6 class="mb-2">Please verify:</h6>
-                <ul class="mb-2">
-                    <li>Tracking ID is entered correctly (format: HT-YYYY-NNNN)</li>
-                    <li>Report was submitted recently (may take a few minutes to appear)</li>
-                    <li>You have the complete tracking ID from your submission confirmation</li>
-                </ul>
-            </RadzenAlert>
-            
-            <div class="d-flex justify-content-center gap-3">
-                <RadzenButton Text="Try Different ID" 
-                              Icon="search" 
-                              ButtonStyle="ButtonStyle.Primary" 
-                              Click="@BackToSearch" />
-                <RadzenButton Text="Submit New Report" 
-                              Icon="add" 
-                              ButtonStyle="ButtonStyle.Success" 
-                              Click="@NavigateToReporting" />
-            </div>
-        </div>
+    <!-- No Results Found -->
+    <RadzenCard class="text-center py-5">
+        <RadzenIcon Icon="search_off" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" class="mb-3" />
+        <h5 class="text-muted">Report Not Found</h5>
+        <p class="text-muted mb-4">
+            No confidential report found for tracking ID: <strong>@TrackingCode</strong>
+        </p>
+        <RadzenButton ButtonType="ButtonType.Button"
+                      Click="@BackToSearch"
+                      Text="Back to Search"
+                      Icon="arrow_back"
+                      ButtonStyle="ButtonStyle.Primary" />
     </RadzenCard>
 }
 
 <style>
-    .info-item {
+    /* SMS Standard Layout Styles */
+    .guidance-card {
+        background: linear-gradient(135deg, rgba(201, 227, 237, 0.05) 0%, rgba(205, 235, 241, 0.05) 100%);
+        border-color: #c9e3ed !important;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .guidance-card h5, .guidance-card h6 {
+        color: var(--rz-primary);
         margin-bottom: 1rem;
     }
 
+    .contact-methods {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .contact-method {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .contact-method .rz-icon {
+        color: var(--rz-primary);
+        margin-top: 0.125rem;
+        flex-shrink: 0;
+    }
+
+    .contact-link {
+        color: var(--rz-primary);
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .contact-link:hover {
+        text-decoration: underline;
+    }
+
+    .status-guide-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .contact-info-item {
+        display: flex;
+        align-items: center;
+        color: var(--rz-text-color);
+    }
+
+    .contact-info-item .rz-icon {
+        color: var(--rz-primary);
+        flex-shrink: 0;
+    }
+
+    /* Report Details Card Styling */
+    .report-details-card {
+        border: 1px solid var(--rz-border-color);
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header-section {
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--rz-border-color);
+        margin-bottom: 0.5rem;
+    }
+
+    /* Info Group Styling */
+    .info-group {
+        padding: 0.75rem;
+        background-color: var(--rz-base-50);
+        border-radius: 6px;
+        border: 1px solid var(--rz-border-color);
+        transition: all 0.2s ease;
+    }
+
+    .info-group:hover {
+        border-color: var(--rz-primary);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
     .info-label {
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: #6c757d;
-        margin-bottom: 0.25rem;
         display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--rz-text-secondary-color);
+        margin-bottom: 0.25rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     .info-value {
         font-size: 1rem;
         font-weight: 500;
-        color: #212e61;
+        color: var(--rz-text-color);
+        display: flex;
+        align-items: center;
+        min-height: 1.5rem;
     }
 
-    .tracking-id {
-        font-family: 'Courier New', monospace;
-        font-size: 1.2rem;
-        color: #0d6efd;
+    /* Special styling for codes */
+    .tracking-code, .report-code, .hazard-code, .tracking-id {
+        background-color: var(--rz-base-100);
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        border: 1px solid var(--rz-border-color);
         font-weight: 700;
+        color: var(--rz-primary);
     }
 
-    .status-badge-large {
-        font-size: 1rem !important;
-        padding: 0.5rem 1rem !important;
+    /* Category and Type badges */
+    .hazard-category .rz-badge,
+    .hazard-type .rz-badge {
+        font-size: 0.875rem;
+        padding: 0.375rem 0.75rem;
     }
 
-    .coordinates {
-        font-family: 'Courier New', monospace;
-        font-weight: 600;
+    /* Not specified styling */
+    .not-specified {
+        color: var(--rz-text-disabled-color);
+        font-style: italic;
+    }
+
+    /* Description content */
+    .description-content {
+        background-color: var(--rz-base-50);
+        padding: 1rem;
+        border-radius: 6px;
+        border: 1px solid var(--rz-border-color);
+        white-space: pre-wrap;
+        line-height: 1.6;
+        font-size: 0.95rem;
     }
 
     /* Processing Timeline Styles */
     .processing-timeline {
         position: relative;
-        padding-left: 3rem;
-    }
-
-    .processing-timeline::before {
-        content: '';
-        position: absolute;
-        left: 1rem;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background: #e9ecef;
+        padding-left: 2rem;
     }
 
     .timeline-item {
         position: relative;
-        margin-bottom: 2rem;
+        padding-bottom: 2rem;
+        display: flex;
+        align-items: flex-start;
+    }
+
+    .timeline-item:not(:last-child)::before {
+        content: '';
+        position: absolute;
+        left: -1.75rem;
+        top: 2.5rem;
+        width: 2px;
+        height: calc(100% - 1rem);
+        background-color: var(--rz-border-color);
+    }
+
+    .timeline-item.completed::before {
+        background-color: var(--rz-success);
     }
 
     .timeline-icon {
         position: absolute;
-        left: -2rem;
+        left: -2.25rem;
         top: 0;
-        width: 2rem;
-        height: 2rem;
+        width: 2.5rem;
+        height: 2.5rem;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.8rem;
-        z-index: 1;
+        background-color: var(--rz-background-color);
+        border: 2px solid var(--rz-border-color);
     }
 
     .timeline-item.completed .timeline-icon {
-        background: #28a745;
+        background-color: var(--rz-success);
+        border-color: var(--rz-success);
         color: white;
-        border: 3px solid white;
-        box-shadow: 0 0 0 3px #28a745;
     }
 
-    .timeline-item.current .timeline-icon {
-        background: #007bff;
-        color: white;
-        border: 3px solid white;
-        box-shadow: 0 0 0 3px #007bff;
+    .timeline-item.pending .timeline-icon {
+        background-color: var(--rz-warning-lighter);
+        border-color: var(--rz-warning);
+        color: var(--rz-warning);
+    }
+
+    .timeline-item.in-progress .timeline-icon {
+        background-color: var(--rz-info-lighter);
+        border-color: var(--rz-info);
+        color: var(--rz-info);
     }
 
     .timeline-content {
-        margin-left: 0.5rem;
+        margin-left: 1rem;
+        flex: 1;
     }
 
     .timeline-content h6 {
-        color: #212e61;
         margin-bottom: 0.5rem;
+        font-weight: 600;
     }
 
-    @@media (max-width: 768px) {
+    .timeline-content p {
+        margin-bottom: 0;
+    }
+
+    /* File List Styles */
+    .file-list .rz-datalist-item {
+        border-bottom: 1px solid var(--rz-border-color);
+        padding: 1rem;
+    }
+
+    .file-list .rz-datalist-item:last-child {
+        border-bottom: none;
+    }
+
+    .file-item {
+        width: 100%;
+    }
+
+    .file-icon {
+        font-size: 1.5rem;
+        color: var(--rz-info);
+    }
+
+    .file-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    /* Badge Styles */
+    .status-badge, .validation-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 992px) {
+        .guidance-card {
+            margin-top: 2rem;
+        }
+        
         .processing-timeline {
             padding-left: 1.5rem;
         }
@@ -530,5 +858,51 @@ else
         .timeline-content {
             margin-left: 0.5rem;
         }
+    }
+
+    /* Additional Info Item Styles */
+    .info-item {
+        margin-bottom: 0.75rem;
+    }
+
+    .hazard-type {
+        color: var(--rz-info);
+        font-weight: 600;
+    }
+
+    .validation-comments {
+        background-color: var(--rz-background-color);
+        padding: 0.75rem;
+        border-radius: var(--rz-border-radius);
+        border: 1px solid var(--rz-border-color);
+        font-style: italic;
+    }
+
+    .coordinates {
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+    }
+
+    .confidential-alert {
+        border-left: 4px solid var(--rz-warning);
+    }
+
+    /* Fieldset styling enhancements */
+    .rz-fieldset {
+        border: 1px solid var(--rz-border-color);
+        border-radius: 6px;
+        margin: 0;
+    }
+
+    .rz-fieldset-content {
+        padding: 1rem;
+    }
+
+    .rz-fieldset-legend {
+        font-weight: 600;
+        color: var(--rz-primary);
+        background-color: white;
+        padding: 0 0.75rem;
+        margin-left: 1rem;
     }
 </style>

@@ -11,14 +11,15 @@
 @inject ILogger<NavMenu> Logger
 @inject NavigationManager Navigation
 @inject Radzen.DialogService DialogService
+@inject IWebHostEnvironment Environment
 
 <!-- SMS Navigation with FULL Original Menu Structure -->
 <nav class="navbar navbar-expand-lg sms-nav">
     <div class="container-fluid">
-        <!-- Brand Logo -->
-        <a class="navbar-brand sms-brand" href="/">
-            <i class="fas fa-plane-departure me-2 sms-brand-icon"></i>
-            PDX SMS
+        <!-- Brand Logo with Environment Detection -->
+        <a class="navbar-brand sms-brand @BrandCssClass" href="/">
+            <i class="fas fa-plane-departure me-2"></i>
+            PDX SMS @EnvironmentSuffix
         </a>
 
         <!-- Mobile Toggle -->
@@ -243,6 +244,10 @@
     private bool _timerRunning = true;
     private CancellationTokenSource _cancellationTokenSource = new();
 
+    // Environment Detection
+    private string BrandCssClass => Environment.IsDevelopment() ? "development" : "";
+    private string EnvironmentSuffix => Environment.IsDevelopment() ? " [DEV]" : "";
+
     protected override async Task OnInitializedAsync()
     {
         _sessionStartTime = DateTime.Now;
@@ -321,55 +326,27 @@
 }
 
 <style>
-    /* SMS Navigation Styling */
-    .sms-nav {
-        background-color: #212e61 !important;
-        padding: 0.75rem 0;
-    }
+/* NavMenu-specific styling - base nav styles are in shared-layouts.css */
+.sms-radzen-menu {
+    background: transparent !important;
+}
 
-    .sms-brand {
-        color: white !important;
-        font-weight: 600;
-        font-size: 1.5rem;
-    }
+.sms-menu-item {
+    color: white !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+}
 
-    .sms-brand-icon {
-        color: #fa9a46;
-    }
+.user-profile-template:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 0.25rem;
+}
 
-    .sms-nav-link {
-        color: white !important;
-        font-weight: 500;
-        padding: 0.5rem 1rem;
-        border-radius: 0.25rem;
-        transition: background-color 0.2s;
-    }
+.text-white {
+    color: white !important;
+}
 
-        .sms-nav-link:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white !important;
-        }
-
-    .sms-radzen-menu {
-        background: transparent !important;
-    }
-
-    .sms-menu-item {
-        color: white !important;
-        font-weight: 500;
-        padding: 0.5rem 1rem;
-    }
-
-    .user-profile-template:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-        border-radius: 0.25rem;
-    }
-
-    .text-white {
-        color: white !important;
-    }
-
-    .opacity-75 {
-        opacity: 0.75;
-    }
+.opacity-75 {
+    opacity: 0.75;
+}
 </style>

@@ -1,8 +1,6 @@
 ﻿using SMS_Domain.Enums;
 using Radzen;
-using SMS3.Configuration;
-using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Http;
+using SMS_Shared.Configuration;
 
 namespace SMS3.Components.Shared.UIHelpers;
 
@@ -358,20 +356,15 @@ public static class DropdownHelper
 }
 
 /// <summary>
-/// Centralized notification helper methods with configuration support
+/// Centralized notification helper methods - simplified approach
 /// </summary>
 public static class NotificationHelper
 {
     /// <summary>
-    /// Show success notification (respects configuration)
+    /// Show success notification
     /// </summary>
-    public static void ShowSuccess(NotificationService notificationService, string message, int duration = 4000, NotificationSettings? settings = null)
+    public static void ShowSuccess(NotificationService notificationService, string message, int duration = 4000)
     {
-        // If settings not provided, try to get from current HTTP context
-        settings ??= GetNotificationSettings();
-        
-        if (settings?.AllowSuccessNotifications == false) return;
-        
         notificationService.Notify(new NotificationMessage
         {
             Severity = NotificationSeverity.Success,
@@ -382,15 +375,10 @@ public static class NotificationHelper
     }
 
     /// <summary>
-    /// Show error notification (respects configuration)
+    /// Show error notification
     /// </summary>
-    public static void ShowError(NotificationService notificationService, string message, int duration = 6000, NotificationSettings? settings = null)
+    public static void ShowError(NotificationService notificationService, string message, int duration = 6000)
     {
-        // If settings not provided, try to get from current HTTP context
-        settings ??= GetNotificationSettings();
-        
-        if (settings?.AllowErrorNotifications == false) return;
-        
         notificationService.Notify(new NotificationMessage
         {
             Severity = NotificationSeverity.Error,
@@ -401,15 +389,10 @@ public static class NotificationHelper
     }
 
     /// <summary>
-    /// Show info notification (respects configuration)
+    /// Show info notification
     /// </summary>
-    public static void ShowInfo(NotificationService notificationService, string message, int duration = 4000, NotificationSettings? settings = null)
+    public static void ShowInfo(NotificationService notificationService, string message, int duration = 4000)
     {
-        // If settings not provided, try to get from current HTTP context
-        settings ??= GetNotificationSettings();
-        
-        if (settings?.AllowInfoNotifications == false) return;
-        
         notificationService.Notify(new NotificationMessage
         {
             Severity = NotificationSeverity.Info,
@@ -420,15 +403,10 @@ public static class NotificationHelper
     }
 
     /// <summary>
-    /// Show warning notification (respects configuration)
+    /// Show warning notification
     /// </summary>
-    public static void ShowWarning(NotificationService notificationService, string message, int duration = 5000, NotificationSettings? settings = null)
+    public static void ShowWarning(NotificationService notificationService, string message, int duration = 5000)
     {
-        // If settings not provided, try to get from current HTTP context
-        settings ??= GetNotificationSettings();
-        
-        if (settings?.AllowWarningNotifications == false) return;
-        
         notificationService.Notify(new NotificationMessage
         {
             Severity = NotificationSeverity.Warning,
@@ -436,31 +414,6 @@ public static class NotificationHelper
             Detail = message,
             Duration = duration
         });
-    }
-
-    /// <summary>
-    /// Try to get NotificationSettings from current HTTP context
-    /// </summary>
-    private static NotificationSettings? GetNotificationSettings()
-    {
-        try
-        {
-            // Access current HTTP context to get services
-            var httpContextAccessor = ServiceLocator.Current?.GetService<IHttpContextAccessor>();
-            if (httpContextAccessor?.HttpContext?.RequestServices == null)
-                return null;
-
-            var optionsAccessor = httpContextAccessor.HttpContext.RequestServices
-                .GetService<IOptions<NotificationSettings>>();
-            
-            return optionsAccessor?.Value;
-        }
-        catch
-        {
-            // If we can't get the settings, return null and let notifications through
-            // (fail-open approach for better user experience)
-            return null;
-        }
     }
 }
 

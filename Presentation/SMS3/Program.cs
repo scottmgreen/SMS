@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 
 using SMS_Application.Configuration;
+using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Commands;
+using SMS_Application.Services;
 
 using SMS_Infrastructure.Configuration;
 using SMS_Infrastructure.Security;
@@ -10,8 +12,8 @@ using SMS_Infrastructure.Security;
 using SMS_Shared.Configuration;
 
 using SMS3.Components;
-using SMS3.Configuration;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration;
 
 namespace SMS3;
 public class Program
@@ -30,21 +32,24 @@ public class Program
 
         builder.Services.AddScoped<ApiKeyAuthenticationFilter>();
 
-        // ? CENTRALIZED AUTHENTICATION - All authentication services from Application layer
-        // No more Presentation layer AuthenticationService!
-        
+                
         // Register SMS Services
         builder.Services.AddSharedServices(builder.Configuration);
         builder.Services.AddInfrastructureServices(builder.Configuration);
         builder.Services.AddApplicationServices();
 
-        // ? SMS Session Management - Centralized in Application layer
-        builder.Services.ConfigureSMSSession();
+        // **STATIC AUTHENTICATION APPROACH - No HttpContext/Session dependencies**
+        builder.Services.AddScoped<ISMSSessionService, SMSSessionService>();
+        builder.Services.AddScoped<ICurrentUserService, StaticCurrentUserService>();
 
-        // Configure notification settings
-        builder.Services.Configure<NotificationSettings>(
-            builder.Configuration.GetSection(NotificationSettings.SectionName));
+        // Configure for IIS
+        builder.Services.Configure<IISServerOptions>(options =>
+        {
+            options.AutomaticAuthentication = false;
+            options.AllowSynchronousIO = true;
+        });
 
+        
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>
         {
@@ -113,12 +118,6 @@ public class Program
         app.UseHttpsRedirection();
         app.UseStaticFiles();
 
-        // Add session middleware
-        app.UseSession();
-        
-        // ? ADD SMS AUTHENTICATION MIDDLEWARE
-        app.UseSMSAuthentication();
-
         app.UseAntiforgery();
 
 
@@ -128,68 +127,67 @@ public class Program
         // ============================================================================
         
         // Test endpoint to verify pipelines are working
-        app.MapPost("/api/test-pipeline", async (
-            [FromBody] string testMessage,
-            IMediator mediator,
-            ILogger<Program> logger) =>
-        {
-            try
-            {
-                logger.LogInformation("Testing pipeline execution with message: {Message}", testMessage);
+        //app.MapPost("/api/test-pipeline", async (
+        //    [FromBody] string testMessage,
+        //    IMediator mediator,
+        //    ILogger<Program> logger) =>
+        //{
+        //    try
+        //    {
+        //        logger.LogInformation("Testing pipeline execution with message: {Message}", testMessage);
 
-                var command = new TestPipelineCommand(testMessage);
-                var result = await mediator.SendAsync(command, CancellationToken.None);
+        //        var command = new TestPipelineCommand(testMessage);
+        //        var result = await mediator.SendAsync(command, CancellationToken.None);
 
-                if (result.IsSuccess)
-                {
-                    return Results.Ok(new
-                    {
-                        success = true,
-                        message = "Pipeline test completed successfully!",
-                        result = result.Value,
-                        timestamp = DateTime.UtcNow
-                    });
-                }
-                else
-                {
-                    return Results.BadRequest(new
-                    {
-                        success = false,
-                        message = "Pipeline test failed",
-                        error = result.Error?.Message,
-                        timestamp = DateTime.UtcNow
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error testing pipeline");
-                return Results.Problem(
-                    detail: ex.Message,
-                    title: "Pipeline Test Failed",
-                    statusCode: StatusCodes.Status500InternalServerError
-                );
-            }
-        })
-        .WithName("TestPipeline")
-        .WithTags("Development")
-        .WithSummary("Test pipeline execution")
-        .WithDescription("Tests that audit pipelines are working correctly")
-        .Produces<object>(StatusCodes.Status200OK);
+        //        if (result.IsSuccess)
+        //        {
+        //            return Results.Ok(new
+        //            {
+        //                success = true,
+        //                message = "Pipeline test completed successfully!",
+        //                result = result.Value,
+        //                timestamp = DateTime.UtcNow
+        //            });
+        //        }
+        //        else
+        //        {
+        //            return Results.BadRequest(new
+        //            {
+        //                success = false,
+        //                message = "Pipeline test failed",
+        //                error = result.Error?.Message,
+        //                timestamp = DateTime.UtcNow
+        //            });
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        logger.LogError(ex, "Error testing pipeline");
+        //        return Results.Problem(
+        //            detail: ex.Message,
+        //            title: "Pipeline Test Failed",
+        //            statusCode: StatusCodes.Status500InternalServerError
+        //        );
+        //    }
+        //})
+        //.WithName("TestPipeline")
+        //.WithTags("Development")
+        //.WithSummary("Test pipeline execution")
+        //.WithDescription("Tests that audit pipelines are working correctly")
+        //.Produces<object>(StatusCodes.Status200OK);
 
         // ============================================================================
         // CONFIDENTIAL REPORTING MINIMAL API - FOR EXTERNAL SYSTEMS
         // ============================================================================
-        app.MapPost("/api/confidential-reports", async (
-            [FromBody] ConfidentialReportApiRequest request,
+        app.MapPost("/api/pdxsms", async (
+            [FromBody] PDXSMSReportApiRequest request,
             IMediator mediator,
-            ILogger<Program> logger) =>
+            ILogger<Program> logger,
+            HttpContext httpContext) =>
         {
             try
             {
-                logger.LogInformation("External confidential report submission started from: {Source}",
-                    request.SourceSystem ?? "Unknown");
-
+                
                 // ? Enhanced validation with proper error responses
                 var validationErrors = new List<string>();
                 
@@ -199,7 +197,7 @@ public class Program
                 if (string.IsNullOrEmpty(request.Description))
                     validationErrors.Add("description is required");
                 
-                if (string.IsNullOrEmpty(request.Location))
+                if (string.IsNullOrEmpty(request.LocationDescription))
                     validationErrors.Add("location is required");
 
                 if (request.Description?.Length > 2000)
@@ -221,17 +219,17 @@ public class Program
                 var report = new Report(new ReportID("RP-0000"))
                 {
                     Code = "RP-0000", // Database will generate actual code
-                    Name = $"External Confidential - {request.HazardCategory} - {request.HazardType}",
+                    Name = $"External - {request.HazardCategory} - {request.HazardType}",
                     Description = request.Description,
                     SubmittedBy = "EXTERNAL_SYSTEM",
                     SubmittedDate = DateTime.UtcNow,
-                    SubmittingDepartment = request.SourceSystem ?? "EXTERNAL_API",
-                    SubmittingDepartmentJobFunction = "API_SUBMISSION",
-                    IncidentDateTime = DateTime.UtcNow, // Could be enhanced to accept from request
-                    IsAnonymous = true,
-                    ReportContactName = string.Empty, // Anonymous
-                    ReportContactCell = string.Empty,
-                    ReportContactEmail = string.Empty,
+                    SubmittingDepartment = request.SubmittingDepartment ?? "EXTERNAL_API",
+                    SubmittingDepartmentJobFunction = request.SubmittingDepartmentJobFunction ?? "API_SUBMISSION",
+                    IncidentDateTime = request.IncidentDateTime ??   DateTime.UtcNow, // Could be enhanced to accept from request
+                    IsAnonymous = request.IsAnonymous ?? true,
+                    ReportContactName = request.ReportContactName ?? string.Empty, // Anonymous
+                    ReportContactCell = request.ReportContactCell ?? string.Empty,
+                    ReportContactEmail = request.ReportContactEmail ?? string.Empty,
                     Stage = "INITIAL",
                     Status = ReportStatus.NeedsValidation,
                     CreatedBy = "EXTERNAL_SYSTEM",
@@ -265,20 +263,36 @@ public class Program
                     HazardType = request.HazardType,
                     ReportCode = actualReportCode,
                     IsInitialHazard = true,
-                    LocationArea = request.Location,
                     Status = HazardStatus.InitialRiskAssessment,
                     CreatedBy = "EXTERNAL_SYSTEM",
                     CreatedDate = DateTime.UtcNow
                 };
 
                 // Handle geographic coordinates if provided (aligned with UI)
-                if (request.Latitude.HasValue && request.Longitude.HasValue)
-                {
-                    hazard.LocationSubArea = $"Lat: {request.Latitude:F6}, Lng: {request.Longitude:F6}";
-                }
+                //if (request.Latitude.HasValue && request.Longitude.HasValue)
+                //{
+                //    hazard.LocationSubArea = $"Lat: {request.Latitude:F6}, Lng: {request.Longitude:F6}";
+                //}
 
                 var createHazardCommand = new CreateHazardCommand(hazard);
                 var createdHazardResult = await mediator.SendAsync(createHazardCommand, CancellationToken.None);
+
+                var hazardLocation = new HazardLocation(new HazardLocationID("HL-0000"))
+                {
+                    HazardCode = hazard.Code,
+                    Latitude = request.Latitude,
+                    Longitude = request.Longitude,
+                    Description = request.LocationDescription
+                };
+
+                var createLocationCommand = new CreateHazardLocationCommand(hazardLocation);
+                var createdLocationResult = await mediator.SendAsync(createLocationCommand, CancellationToken.None); 
+
+
+
+
+
+
 
                 if (createdHazardResult.IsFailure)
                 {
@@ -414,7 +428,7 @@ public class Program
                 // ===============================
                 // SUCCESS RESPONSE (Production-ready)
                 // ===============================
-                var response = new ConfidentialReportApiResponse
+                var response = new PDXSMSReportApiResponse
                 {
                     TrackingId = actualTrackingCode,
                     HazardId = createdHazard.Code,
@@ -422,11 +436,12 @@ public class Program
                     SubmissionDateTime = DateTime.UtcNow,
                     Status = "Submitted",
                     Message = $"Confidential report submitted successfully. Tracking ID: {actualTrackingCode}",
+                    TrackingUrl = $"https://{httpContext.Request.Host}/ConfidentialReporting/TrackStatus/{actualTrackingCode}",
                     ProcessedFiles = processedFiles,
                     FailedFiles = failedFiles
                 };
 
-                logger.LogInformation("? External confidential report submitted successfully. " +
+                logger.LogInformation("? PDX SMS API report submitted successfully. " +
                     "TrackingId: {TrackingId}, ReportId: {ReportId}, HazardId: {HazardId}, Files: {ProcessedFiles}/{TotalFiles}", 
                     actualTrackingCode, actualReportCode, createdHazard.Code, processedFiles, 
                     request.Attachments?.Count ?? 0);
@@ -444,11 +459,11 @@ public class Program
             }
         })
         .AddEndpointFilter<ApiKeyAuthenticationFilter>()
-        .WithName("SubmitConfidentialReport")
-        .WithTags("ConfidentialReporting")
+        .WithName("SubmitPDXSMSReport")
+        .WithTags("PDXSMSReporting")
         .WithSummary("Submit a confidential safety report from external systems")
         .WithDescription("Allows external systems to submit confidential safety reports")
-        .Produces<ConfidentialReportApiResponse>(StatusCodes.Status200OK)
+        .Produces<PDXSMSReportApiResponse>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status500InternalServerError);
         // <-- Add this line
@@ -458,7 +473,7 @@ public class Program
         // ============================================================================
 
         // Get all available hazard categories
-        app.MapGet("/api/confidential-reports/hazard-categories", () =>
+        app.MapGet("/api/pdxsms/hazard-categories", () =>
         {
             var categories = HazardCategory.GetAllValues()
                 .Select(hc => new
@@ -480,13 +495,13 @@ public class Program
         })
         .AddEndpointFilter<ApiKeyAuthenticationFilter>()
         .WithName("GetHazardCategories")
-        .WithTags("ConfidentialReporting")
+        .WithTags("PDXSMSReporting")
         .WithSummary("Get all available hazard categories")
         .WithDescription("Returns all valid hazard category values for API submissions")
         .Produces<object>(StatusCodes.Status200OK);
 
         // Get hazard types (optionally filtered by category)
-        app.MapGet("/api/confidential-reports/hazard-types", (string? category) =>
+        app.MapGet("/api/pdxsms/hazard-types", (string? category) =>
         {
             IEnumerable<HazardType> hazardTypes;
 
@@ -523,13 +538,13 @@ public class Program
         })
         .AddEndpointFilter<ApiKeyAuthenticationFilter>()
         .WithName("GetHazardTypes")
-        .WithTags("ConfidentialReporting")
+        .WithTags("PDXSMSReporting")
         .WithSummary("Get available hazard types")
         .WithDescription("Get hazard types. Use ?category=INCIDENT to filter by category")
         .Produces<object>(StatusCodes.Status200OK);
 
         // Get complete reference data in hierarchical format
-        app.MapGet("/api/confidential-reports/reference-data", () =>
+        app.MapGet("/api/pdxsms/reference-data", () =>
         {
             var categories = HazardCategory.GetAllValues()
                 .Select(hc => new
@@ -572,7 +587,7 @@ public class Program
         })
         .AddEndpointFilter<ApiKeyAuthenticationFilter>()
         .WithName("GetReferenceData")
-        .WithTags("ConfidentialReporting")
+        .WithTags("PDXSMSReporting")
         .WithSummary("Get complete reference data")
         .WithDescription("Returns all categories and hazard types in hierarchical structure")
         .Produces<object>(StatusCodes.Status200OK);
@@ -595,7 +610,7 @@ public class Program
 /// <summary>
 /// Request model for external confidential report submissions
 /// </summary>
-public record ConfidentialReportApiRequest
+public record PDXSMSReportApiRequest
 {
     /// <summary>
     /// The category of the hazard (required). Use GET /api/confidential-reports/hazard-categories to see all valid values.
@@ -618,11 +633,21 @@ public record ConfidentialReportApiRequest
     /// <example>Aircraft experienced engine failure during takeoff roll, aborting takeoff safely</example>
     public string Description { get; init; } = string.Empty;
 
+    public string? SubmittedBy { get; init; }
+    public DateTime? SubmittedDate { get; init; }
+    public string? SubmittingDepartment { get; init; } = "EXTERNAL_SYSTEM";
+    public string? SubmittingDepartmentJobFunction { get; init; } = "EXTERNAL_SYSTEM";
+    public bool? IsAnonymous { get; init; }
+    public string? ReportContactName { get; init; }
+    public string? ReportContactCell { get; init; }
+    public string? ReportContactEmail { get; init; }
+
+
     /// <summary>
     /// Location where the hazard occurred (required)
     /// </summary>
     /// <example>Runway 28L, approximately 2000ft from threshold</example>
-    public string Location { get; init; } = string.Empty;
+    public string LocationDescription { get; init; } = string.Empty;
 
     /// <summary>
     /// Optional latitude coordinate for precise location (decimal degrees)
@@ -640,7 +665,7 @@ public record ConfidentialReportApiRequest
     /// Name/identifier of the external system submitting the report
     /// </summary>
     /// <example>MAINTENANCE_SYSTEM_v2.1</example>
-    public string? SourceSystem { get; init; }
+    //public string? SourceSystem { get; init; }
 
     /// <summary>
     /// Optional incident date/time (if not provided, current time is used)
@@ -653,16 +678,13 @@ public record ConfidentialReportApiRequest
     /// </summary>
     public List<FileAttachment>? Attachments { get; init; }
 
-    /// <summary>
-    /// Additional metadata or context information
-    /// </summary>
-    public Dictionary<string, string>? Metadata { get; init; }
+    
 }
 
 /// <summary>
 /// Response model for confidential report submissions - Enhanced for production
 /// </summary>
-public record ConfidentialReportApiResponse
+public record PDXSMSReportApiResponse
 {
     /// <summary>
     /// Database-generated tracking ID for the submitted report
@@ -693,6 +715,12 @@ public record ConfidentialReportApiResponse
     /// Success or error message
     /// </summary>
     public string Message { get; init; } = string.Empty;
+    
+    /// <summary>
+    /// Direct URL to track the status of this report
+    /// </summary>
+    /// <example>https://your-sms-domain.com/ConfidentialReporting/TrackStatus/HT-2024-001234</example>
+    public string TrackingUrl { get; init; } = string.Empty;
     
     /// <summary>
     /// Number of files successfully processed

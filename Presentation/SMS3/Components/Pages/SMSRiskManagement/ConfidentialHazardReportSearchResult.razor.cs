@@ -1,4 +1,12 @@
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using SMS_Application.Messaging.Queries;
+using Microsoft.Extensions.Logging;
+using Radzen;
+using Radzen.Blazor;
+using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
+using SMS_Domain.Enums;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -30,21 +38,46 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
     public bool IsLoading { get; set; } = true;
 
     /// <summary>
-    /// Report details for display
+    /// Indicates if a search has been performed
     /// </summary>
-    public HazardReportSearchResult? ReportDetails { get; set; }
+    public bool HasSearched { get; set; }
+
+    /// <summary>
+    /// Main report details model
+    /// </summary>
+    public HazardReportDetails? ReportDetails { get; set; }
+
+    /// <summary>
+    /// Report validation information
+    /// </summary>
+    public SMS_Domain.Entities.ReportValidation? ReportValidation { get; set; }
 
     /// <summary>
     /// Hazard location information
     /// </summary>
     public HazardLocation? HazardLocation { get; set; }
+
+    /// <summary>
+    /// Attached files list
+    /// </summary>
+    public List<HazardFile> AttachedFiles { get; set; } = new();
+
+    /// <summary>
+    /// Current risk assessment information
+    /// </summary>
+    public RiskAssessment? CurrentRiskAssessment { get; set; }
+
+    /// <summary>
+    /// Current mitigation information
+    /// </summary>
+    public Mitigation? CurrentMitigation { get; set; }
     #endregion
 
     #region UI Properties
     /// <summary>
     /// Page title for header component
     /// </summary>
-    public string PageTitle => "Confidential Report Status";
+    public string PageTitle => "Confidential Report Details";
 
     /// <summary>
     /// Page subtitle for header component
@@ -83,50 +116,70 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
     #region Data Loading Methods
 
     /// <summary>
-    /// Load report details for the tracking code (anonymous version with filtered information)
+    /// Load comprehensive report details for the tracking code
     /// </summary>
     private async Task LoadReportDetails()
     {
-        if (string.IsNullOrWhiteSpace(TrackingCode))
-        {
-            Logger.LogWarning("No tracking code provided for anonymous report details");
-            return;
-        }
-
         try
         {
             IsLoading = true;
+            HasSearched = false;
             StateHasChanged();
 
-            Logger.LogInformation("Loading anonymous report details for tracking code: {TrackingCode}", TrackingCode);
+            Logger.LogInformation("Loading detailed report information for tracking code: {TrackingCode}", TrackingCode);
 
-            // Get tracking information
+            // Step 1: Get tracking record
             var trackingQuery = new GetHazardReportTrackingByTrackingCodeQuery(TrackingCode);
             var trackingResult = await Mediator.SendAsync(trackingQuery, CancellationToken.None);
 
-            if (trackingResult.IsSuccess && trackingResult.Value != null)
+            if (trackingResult.IsFailure || trackingResult.Value == null)
             {
-                ReportDetails = await BuildAnonymousReportDetails(trackingResult.Value);
+                Logger.LogWarning("No tracking record found for: {TrackingCode}", TrackingCode);
+                HasSearched = true;
+                return;
+            }
 
-                if (ReportDetails != null)
-                {
-                    Logger.LogInformation("Successfully loaded anonymous report details for tracking code: {TrackingCode}", TrackingCode);
-                }
-                else
-                {
-                    Logger.LogWarning("Could not build report details for tracking code: {TrackingCode}", TrackingCode);
-                }
-            }
-            else
+            var tracking = trackingResult.Value;
+
+            // Initialize report details
+            ReportDetails = new HazardReportDetails
             {
-                Logger.LogInformation("No report found for anonymous tracking code: {TrackingCode}", TrackingCode);
-                ReportDetails = null;
+                TrackingCode = tracking.TrackingCode,
+                HazardCode = tracking.HazardCode,
+                ReportCode = tracking.ReportCode,
+                CreatedDate = tracking.CreatedDate
+            };
+
+            // Step 2: Load hazard information
+            await LoadHazardInformation(tracking.HazardCode);
+
+            // Step 3: Load report information
+            await LoadReportInformation(tracking.ReportCode);
+
+            // Step 4: Load validation information
+            await LoadValidationInformation(tracking.ReportCode);
+
+            // Step 5: Load risk assessment information if SMS_RISK validation
+            if (ReportValidation?.ValidationDecision == "SMS_RISK")
+            {
+                await LoadRiskAssessmentInformation(tracking.HazardCode);
             }
+            await LoadMitigationInformation(tracking.HazardCode);
+
+            // Step 6: Load location information
+            await LoadLocationInformation(tracking.HazardCode);
+
+            // Step 7: Load attached files
+            await LoadAttachedFiles(tracking.HazardCode);
+
+            HasSearched = true;
+
+            Logger.LogInformation("Successfully loaded all details for tracking code: {TrackingCode}", TrackingCode);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading anonymous report details for tracking code: {TrackingCode}", TrackingCode);
-            ReportDetails = null;
+            Logger.LogError(ex, "Error loading report details for tracking code: {TrackingCode}", TrackingCode);
+            ShowErrorNotification("Error loading report details. Please try again.");
         }
         finally
         {
@@ -136,100 +189,207 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
     }
 
     /// <summary>
-    /// Build anonymous report details with filtered/anonymized information
+    /// Load hazard-specific information
     /// </summary>
-    /// <param name="tracking">Tracking information from database</param>
-    /// <returns>Anonymized report details</returns>
-    private async Task<HazardReportSearchResult?> BuildAnonymousReportDetails(HazardReportTrackingDetails tracking)
+    private async Task LoadHazardInformation(string hazardCode)
     {
+        if (string.IsNullOrEmpty(hazardCode) || ReportDetails == null) return;
+
         try
         {
-            var reportDetails = new HazardReportSearchResult
+            var hazardQuery = new GetHazardByCodeQuery(new HazardID(hazardCode));
+            var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
+
+            if (hazardResult.IsSuccess && hazardResult.Value != null)
             {
-                TrackingCode = tracking.TrackingCode,
-                HazardCode = tracking.HazardCode,
-                ReportCode = tracking.ReportCode,
-                CreatedDate = tracking.CreatedDate,
-                // Anonymous-specific defaults
-                SubmittedBy = "Anonymous Reporter",
-                CurrentStatus = "Under Review",
-                HazardType = "Confidential Safety Report",
-                Description = "Report details are confidential and available to authorized safety personnel only."
-            };
+                var hazard = hazardResult.Value;
 
-            // Get basic hazard information (filtered for anonymous access)
-            if (!string.IsNullOrEmpty(tracking.HazardCode))
-            {
-                try
-                {
-                    var hazardQuery = new GetHazardByCodeQuery(new HazardID(tracking.HazardCode));
-                    var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
+                ReportDetails.HazardType = hazard.HazardType ?? "Unknown";
+                ReportDetails.HazardCategory = hazard.HazardCategory ?? "Unknown";
+                ReportDetails.Description = hazard.Description ?? "";
+                ReportDetails.CurrentStatus = hazard.Status ?? "Unknown";
+                
+                // Add location information for fallback display
+                ReportDetails.LocationArea = hazard.LocationArea ?? "";
+                ReportDetails.LocationSubArea = hazard.LocationSubArea ?? "";
 
-                    if (hazardResult.IsSuccess && hazardResult.Value != null)
-                    {
-                        var hazard = hazardResult.Value;
-
-                        // Only show non-sensitive information
-                        
-
-                        // Add location information for fallback display
-                        reportDetails.LocationArea = hazard.LocationArea ?? "";
-                        reportDetails.LocationSubArea = hazard.LocationSubArea ?? "";
-
-                        // Show generic hazard type rather than specific details
-                        if (!string.IsNullOrEmpty(hazard.HazardType))
-                        {
-                            reportDetails.HazardType = GetGenericHazardType(hazard.HazardType);
-                        }
-
-                        // Set appropriate status based on hazard info
-                        if (!string.IsNullOrEmpty(hazard.Status))
-                        {
-                            reportDetails.CurrentStatus = GetAnonymousStatus(hazard.Status);
-                        }
-
-                        // Load location information for map display
-                        await LoadLocationInformation(tracking.HazardCode);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogWarning(ex, "Could not load hazard details for anonymous view, code: {HazardCode}", tracking.HazardCode);
-                }
+                Logger.LogInformation("Loaded hazard information for code: {HazardCode}", hazardCode);
             }
-
-            // Get validation information (anonymized)
-            if (!string.IsNullOrEmpty(tracking.ReportCode))
+            else
             {
-                try
-                {
-                    var validationQuery = new GetReportValidationByReportIdQuery(new ReportID(tracking.ReportCode));
-                    var validationResult = await Mediator.SendAsync(validationQuery, CancellationToken.None);
-
-                    if (validationResult.IsSuccess && validationResult.Value != null)
-                    {
-                        reportDetails.ValidationDecision = validationResult.Value.ValidationDecision ?? "";
-                        reportDetails.ValidationDate = validationResult.Value.ValidatedDate;
-                        reportDetails.ValidatedBy = "SMS Safety Team"; // Anonymized
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogWarning(ex, "Could not load validation details for anonymous view, report: {ReportCode}", tracking.ReportCode);
-                }
+                Logger.LogWarning("Could not load hazard information for code: {HazardCode}", hazardCode);
             }
-
-            return reportDetails;
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error building anonymous report details for tracking: {TrackingCode}", tracking.TrackingCode);
-            return null;
+            Logger.LogWarning(ex, "Error loading hazard information for code: {HazardCode}", hazardCode);
         }
     }
 
     /// <summary>
-    /// Load location information for map display
+    /// Load report-specific information
+    /// </summary>
+    private async Task LoadReportInformation(string reportCode)
+    {
+        if (string.IsNullOrEmpty(reportCode) || ReportDetails == null) return;
+
+        try
+        {
+            var reportQuery = new GetReportByCodeQuery(new ReportID(reportCode));
+            var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
+
+            if (reportResult.IsSuccess && reportResult.Value != null)
+            {
+                var report = reportResult.Value;
+
+                ReportDetails.IsAnonymous = report.IsAnonymous;
+                // Fill in any missing information from report if not already set by hazard
+                if (string.IsNullOrEmpty(ReportDetails.SubmittedBy))
+                {
+                    ReportDetails.SubmittedBy = report.SubmittedBy ?? "Unknown";
+                }
+                if (!ReportDetails.SubmittedDate.HasValue)
+                {
+                    ReportDetails.SubmittedDate = report.SubmittedDate;
+                }
+                if (string.IsNullOrEmpty(ReportDetails.SubmittingDepartment))
+                {
+                    ReportDetails.SubmittingDepartment = report.SubmittingDepartment ?? "";
+                }
+                if (string.IsNullOrEmpty(ReportDetails.JobFunction))
+                {
+                    ReportDetails.JobFunction = report.SubmittingDepartmentJobFunction ?? "";
+                }
+                if (string.IsNullOrEmpty(ReportDetails.CurrentStatus))
+                {
+                    ReportDetails.CurrentStatus = report.Status ?? "Unknown";
+                }
+                if (string.IsNullOrEmpty(ReportDetails.Description))
+                {
+                    ReportDetails.Description = report.Description ?? "";
+                }
+                if (string.IsNullOrEmpty(ReportDetails.ContactName))
+                {
+                    ReportDetails.ContactName = report.ReportContactName ?? "";
+                }
+                if (string.IsNullOrEmpty(ReportDetails.ContactCell))
+                {
+                    ReportDetails.ContactCell = report.ReportContactCell ?? "";
+                }
+                if (string.IsNullOrEmpty(ReportDetails.ContactEmail))
+                {
+                    ReportDetails.ContactEmail = report.ReportContactEmail ?? "";
+                }
+
+                Logger.LogInformation("Loaded report information for code: {ReportCode}", reportCode);
+            }
+            else
+            {
+                Logger.LogWarning("Could not load report information for code: {ReportCode}", reportCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error loading report information for code: {ReportCode}", reportCode);
+        }
+    }
+
+    /// <summary>
+    /// Load validation information
+    /// </summary>
+    private async Task LoadValidationInformation(string reportCode)
+    {
+        if (string.IsNullOrEmpty(reportCode)) return;
+
+        try
+        {
+            var validationQuery = new GetReportValidationByReportIdQuery(new ReportID(reportCode));
+            var validationResult = await Mediator.SendAsync(validationQuery, CancellationToken.None);
+
+            if (validationResult.IsSuccess && validationResult.Value != null)
+            {
+                ReportValidation = validationResult.Value;
+                Logger.LogInformation("Loaded validation information for report: {ReportCode}", reportCode);
+            }
+            else
+            {
+                Logger.LogInformation("No validation information found for report: {ReportCode}", reportCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error loading validation information for report: {ReportCode}", reportCode);
+        }
+    }
+
+    /// <summary>
+    /// Load risk assessment information based on hazard code
+    /// </summary>
+    private async Task LoadRiskAssessmentInformation(string hazardCode)
+    {
+        if (string.IsNullOrEmpty(hazardCode)) return;
+
+        try
+        {
+            var riskAssessmentQuery = new GetRiskAssessmentsByHazardCodeQuery(new HazardID(hazardCode));
+            var riskAssessmentResult = await Mediator.SendAsync(riskAssessmentQuery, CancellationToken.None);
+
+            if (riskAssessmentResult.IsSuccess && riskAssessmentResult.Value?.Any() == true)
+            {
+                var assessments = riskAssessmentResult.Value.ToList();
+                
+                // Find the Technical assessment first, fallback to any assessment
+                CurrentRiskAssessment = assessments.FirstOrDefault(ra => ra.RiskAssessmentCategory == RiskAssessmentCategory.Technical) 
+                                     ?? assessments.FirstOrDefault();
+
+                Logger.LogInformation("Loaded risk assessment information for hazard: {HazardCode}, Found {Count} assessments", 
+                    hazardCode, assessments.Count);
+            }
+            else
+            {
+                Logger.LogInformation("No risk assessment information found for hazard: {HazardCode}", hazardCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error loading risk assessment information for hazard: {HazardCode}", hazardCode);
+        }
+    }
+
+    /// <summary>
+    /// Load mitigation information based on hazard code
+    /// </summary>
+    private async Task LoadMitigationInformation(string hazardCode)
+    {
+        if (string.IsNullOrEmpty(hazardCode)) return;
+
+        try
+        {
+            var mitigationQuery = new GetMitigationsByHazardCodeQuery(hazardCode);
+            var mitigationResult = await Mediator.SendAsync(mitigationQuery, CancellationToken.None);
+
+            if (mitigationResult.IsSuccess && mitigationResult.Value?.Any() == true)
+            {
+                var mitigations = mitigationResult.Value.ToList();
+
+                // Find the first mitigation
+                CurrentMitigation = mitigations.FirstOrDefault();
+
+                Logger.LogInformation("Loaded mitigation information for hazard: {HazardCode}, Found {Count} mitigations",hazardCode, mitigations.Count);
+            }
+            else
+            {
+                Logger.LogInformation("No mitigation information found for hazard: {HazardCode}", hazardCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error loading mitigation information for hazard: {HazardCode}", hazardCode);
+        }
+    }
+
+    /// <summary>
+    /// Load location information
     /// </summary>
     private async Task LoadLocationInformation(string hazardCode)
     {
@@ -243,16 +403,46 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
             if (locationResult.IsSuccess && locationResult.Value?.Any() == true)
             {
                 HazardLocation = locationResult.Value.FirstOrDefault();
-                Logger.LogInformation("Loaded location information for confidential hazard: {HazardCode}", hazardCode);
+                Logger.LogInformation("Loaded location information for hazard: {HazardCode}", hazardCode);
             }
             else
             {
-                Logger.LogInformation("No location information found for confidential hazard: {HazardCode}", hazardCode);
+                Logger.LogInformation("No location information found for hazard: {HazardCode}", hazardCode);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogWarning(ex, "Error loading location information for confidential hazard: {HazardCode}", hazardCode);
+            Logger.LogWarning(ex, "Error loading location information for hazard: {HazardCode}", hazardCode);
+        }
+    }
+
+    /// <summary>
+    /// Load attached files
+    /// </summary>
+    private async Task LoadAttachedFiles(string hazardCode)
+    {
+        if (string.IsNullOrEmpty(hazardCode)) return;
+
+        try
+        {
+            var filesQuery = new GetHazardFilesByHazardCodeQuery(hazardCode);
+            var filesResult = await Mediator.SendAsync(filesQuery, CancellationToken.None);
+
+            if (filesResult.IsSuccess && filesResult.Value?.Any() == true)
+            {
+                AttachedFiles = filesResult.Value.ToList();
+                Logger.LogInformation("Loaded {Count} attached files for hazard: {HazardCode}", AttachedFiles.Count, hazardCode);
+            }
+            else
+            {
+                Logger.LogInformation("No attached files found for hazard: {HazardCode}", hazardCode);
+                AttachedFiles = new List<HazardFile>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error loading attached files for hazard: {HazardCode}", hazardCode);
+            AttachedFiles = new List<HazardFile>();
         }
     }
 
@@ -261,69 +451,14 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
     #region UI Helper Methods
 
     /// <summary>
-    /// Get generic hazard type for anonymous display
-    /// </summary>
-    /// <param name="specificType">Specific hazard type</param>
-    /// <returns>Generic type for anonymous display</returns>
-    private string GetGenericHazardType(string specificType)
-    {
-        return specificType?.ToUpper() switch
-        {
-            "RWY_INCURSION" => "Runway Safety Report",
-            "ACFT_DAMAGE" => "Aircraft Safety Report",
-            "GROUND_VEHICLE" => "Ground Operations Report",
-            "WILDLIFE_STRIKE" => "Wildlife Safety Report",
-            "FOD" => "Foreign Object Report",
-            "EQUIPMENT_FAIL" => "Equipment Safety Report",
-            "PERSONNEL_INJURY" => "Personnel Safety Report",
-            _ => "Safety Report"
-        };
-    }
-
-    /// <summary>
-    /// Get anonymized status for public display
-    /// </summary>
-    /// <param name="internalStatus">Internal status from system</param>
-    /// <returns>Anonymized status for public display</returns>
-    private string GetAnonymousStatus(string internalStatus)
-    {
-        return internalStatus?.ToLower() switch
-        {
-            "active" or "open" or "initial" => "Under Review",
-            "processing" or "investigation" => "Being Evaluated",
-            "completed" or "closed" => "Review Complete",
-            "cancelled" or "invalid" => "Closed",
-            _ => "Under Review"
-        };
-    }
-
-    /// <summary>
-    /// Get badge style for report status
-    /// </summary>
-    /// <param name="status">Report status</param>
-    /// <returns>Badge style</returns>
-    public BadgeStyle GetStatusBadgeStyle(string status)
-    {
-        return status?.ToLower() switch
-        {
-            "review complete" or "closed" => BadgeStyle.Success,
-            "being evaluated" or "under review" => BadgeStyle.Info,
-            "submitted" => BadgeStyle.Warning,
-            _ => BadgeStyle.Secondary
-        };
-    }
-
-    /// <summary>
     /// Get badge style for validation decision
     /// </summary>
-    /// <param name="decision">Validation decision</param>
-    /// <returns>Badge style</returns>
-    public BadgeStyle GetValidationBadgeStyle(string decision)
+    public BadgeStyle GetValidationBadgeStyle(string? decision)
     {
         return decision?.ToUpper() switch
         {
             "SMS_RISK" => BadgeStyle.Success,
-            "NOT_SMS_RISK" => BadgeStyle.Info,
+            "NOT_SMS_RISK" => BadgeStyle.Danger,
             "NEEDS_INVESTIGATION" => BadgeStyle.Warning,
             _ => BadgeStyle.Secondary
         };
@@ -332,36 +467,70 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
     /// <summary>
     /// Get display text for validation decision
     /// </summary>
-    /// <param name="decision">Validation decision value</param>
-    /// <returns>Display text</returns>
-    public string GetValidationDecisionDisplay(string decision)
+    public string GetValidationDecisionDisplay(string? decision)
     {
         return decision?.ToUpper() switch
         {
-            "SMS_RISK" => "SMS Risk Identified",
-            "NOT_SMS_RISK" => "No SMS Risk",
-            "NEEDS_INVESTIGATION" => "Under Investigation",
-            _ => "Under Review"
+            "SMS_RISK" => "SMS Risk",
+            "NOT_SMS_RISK" => "Not SMS Risk",
+            "NEEDS_INVESTIGATION" => "Needs Investigation",
+            _ => decision ?? "Unknown"
         };
     }
 
     /// <summary>
-    /// Check if a processing step is completed based on current status and validation
+    /// Get processing status text CSS class
     /// </summary>
-    /// <param name="step">Step to check (InitialReview, RiskAssessment, FinalProcessing)</param>
-    /// <returns>True if step is completed</returns>
-    public bool IsStepCompleted(string step)
+    public string GetProcessingStatusTextClass()
     {
-        if (ReportDetails == null) return false;
+        if (ReportValidation?.ValidationDecision == null) return "text-muted";
 
-        return step switch
+        return ReportValidation.ValidationDecision.ToUpper() switch
         {
-            "InitialReview" => !string.IsNullOrEmpty(ReportDetails.CurrentStatus) &&
-                              ReportDetails.CurrentStatus != "Under Review",
-            "RiskAssessment" => !string.IsNullOrEmpty(ReportDetails.ValidationDecision),
-            "FinalProcessing" => ReportDetails.CurrentStatus?.ToLower() == "review complete",
-            _ => false
+            "SMS_RISK" => "text-info",
+            "NEEDS_INVESTIGATION" => "text-info",
+            "NOT_SMS_RISK" => "text-success",
+            _ => "text-muted"
         };
+    }
+
+    /// <summary>
+    /// Get file icon based on file type
+    /// </summary>
+    public string GetFileIcon(string? fileType)
+    {
+        if (string.IsNullOrEmpty(fileType)) return "insert_drive_file";
+
+        return fileType.ToLower() switch
+        {
+            "pdf" => "picture_as_pdf",
+            "doc" or "docx" => "description",
+            "xls" or "xlsx" => "grid_on",
+            "ppt" or "pptx" => "slideshow",
+            "jpg" or "jpeg" or "png" or "gif" or "bmp" => "image",
+            "mp4" or "avi" or "mov" or "wmv" => "movie",
+            "txt" => "text_snippet",
+            "zip" or "rar" or "7z" => "folder_zip",
+            _ => "insert_drive_file"
+        };
+    }
+
+    /// <summary>
+    /// Format file size for display
+    /// </summary>
+    public string FormatFileSize(long bytes)
+    {
+        const int scale = 1024;
+        string[] orders = { "GB", "MB", "KB", "Bytes" };
+        long max = (long)Math.Pow(scale, orders.Length - 1);
+
+        foreach (string order in orders)
+        {
+            if (bytes > max)
+                return $"{decimal.Divide(bytes, max):##.##} {order}";
+            max /= scale;
+        }
+        return "0 Bytes";
     }
 
     #endregion
@@ -376,12 +545,22 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
         Navigation.NavigateTo("/ConfidentialReporting/TrackStatus");
     }
 
+    #endregion
+
+    #region Notification Methods
+
     /// <summary>
-    /// Navigate to confidential reporting page
+    /// Show error notification
     /// </summary>
-    public void NavigateToReporting()
+    private void ShowErrorNotification(string message)
     {
-        Navigation.NavigateTo("/ConfidentialReporting");
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Error,
+            Summary = "Error",
+            Detail = message,
+            Duration = 6000
+        });
     }
 
     #endregion
@@ -389,24 +568,27 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
     #region Models
 
     /// <summary>
-    /// Search result model for display (same as search page)
+    /// Comprehensive report details model for display
     /// </summary>
-    public class HazardReportSearchResult
+    public class HazardReportDetails
     {
         public string TrackingCode { get; set; } = string.Empty;
         public string HazardCode { get; set; } = string.Empty;
         public string ReportCode { get; set; } = string.Empty;
         public string HazardType { get; set; } = string.Empty;
+        public string HazardCategory { get; set; } = string.Empty;
         public string SubmittedBy { get; set; } = string.Empty;
-        public DateTime SubmittedDate { get; set; }
+        public DateTime? SubmittedDate { get; set; }
+        public string SubmittingDepartment { get; set; } = string.Empty;
+        public string JobFunction { get; set; } = string.Empty;
+        public string ContactName { get; set; } = string.Empty;
+        public string ContactCell { get; set; } = string.Empty;
+        public string ContactEmail { get; set; } = string.Empty;
         public string CurrentStatus { get; set; } = string.Empty;
-        public string ValidationDecision { get; set; } = string.Empty;
-        public DateTime? ValidationDate { get; set; }
-        public string ValidatedBy { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public bool IsAnonymous { get; set; }
         public DateTime CreatedDate { get; set; }
-        
+
         // Location fallback properties for text-based location info
         public string LocationArea { get; set; } = string.Empty;
         public string LocationSubArea { get; set; } = string.Empty;
